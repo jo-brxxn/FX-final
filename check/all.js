@@ -34,6 +34,10 @@ const PRUEFUNGEN = [
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
   { n: 'nav',       d: 'Sidebar-Klickregel, mit Maus UND mit Touch',          f: 'check/nav.js',       args: [],           browser: true },
+  // ⚠ Gehoert zur ZWEITEN App dieses Repos (Perfect Rezept, siehe
+  // docs/rezept.md). Prueft dort Handler, Buttons, den kompletten Ablauf,
+  // die Nachfrage bei ungespeicherten Eingaben und den Kontrast jeder Palette.
+  { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 
 function serverErreichbar() {

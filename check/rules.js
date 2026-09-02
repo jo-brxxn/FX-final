@@ -95,6 +95,23 @@ if (indexGeaendert) {
     fail('VERSION-CHECK', `Nummer nicht hochgezaehlt (vorher ${vorher}, jetzt ${jetzt}).`);
 }
 
+// ── Regel 1b: dasselbe fuer die ZWEITE App (Perfect Rezept) ──────────────
+// rezept.html + js/rezept/* sind eine eigenstaendige App im selben Repo
+// (siehe docs/rezept.md). Sie hat ein eigenes Banner (REZEPT-CHECK-<n>) und
+// dieselbe Pflicht: der Nutzer soll an der Nummer erkennen, dass eine neue
+// Fassung live ist. Ohne diese Regel waere die Rezept-App genau der blinde
+// Fleck, den Regel 1 fuer den FX Analyst Pro schliesst.
+const rezeptGeaendert = geaendert.some(f => f === 'rezept.html' || f.startsWith('js/rezept/'));
+if (rezeptGeaendert && fs.existsSync('rezept.html')) {
+  const jetztR = wertIn(fs.readFileSync('rezept.html', 'utf8'), /id="rezVerName">REZEPT-CHECK-(\d+)</);
+  let vorherR = null;
+  try { vorherR = wertIn(git(`show ${BASE}:rezept.html`), /id="rezVerName">REZEPT-CHECK-(\d+)</); }
+  catch (e) { /* Datei gab es im Basis-Stand noch nicht - erste Fassung */ }
+  if (jetztR == null) fail('REZEPT-CHECK', 'Banner-Nummer in rezept.html nicht gefunden.');
+  else if (vorherR != null && Number(jetztR) <= Number(vorherR))
+    fail('REZEPT-CHECK', `Nummer nicht hochgezaehlt (vorher ${vorherR}, jetzt ${jetztR}).`);
+}
+
 // ── Regel 2: Score-Formel geaendert -> SCORE_MODEL_VERSION hochzaehlen ──
 // Grund (2026-08-16): die Formel wurde korrigiert, die Nummer blieb stehen -
 // dadurch standen im History-Fenster Werte aus zwei verschiedenen Rechnungen

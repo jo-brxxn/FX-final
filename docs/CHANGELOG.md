@@ -8526,7 +8526,676 @@ ebenfalls gepueft. `docs/state-sync.md` um den `research`/`researchFolders`/
 Abschnitt, inkl. der Lock-Vollstaendigkeits-Falle als Warnung fuer
 kuenftige aehnliche Faelle).
 
-## 2026-09-02 — Verlaufschart bei vielen Indikatoren dauerhaft leer (TE-Fallback ergaenzte nie historyFull) + Kartennamen nur im Bearbeitungsmodus (VERSION-CHECK-462)
+---
+
+## 2026-09-01 — ZWEITE APP IM REPO: „Perfect Rezept" (REZEPT-CHECK-1, VERSION-CHECK-462)
+
+Nutzer-Wunsch: beim Öffnen der Webseite soll ein Fenster kommen, in dem man
+zwischen **FX Analyst Pro** und **Perfect Rezept** wählt; Perfect Rezept ist
+eine eigene Webseite innerhalb derselben Website, mit hellbraunem Design,
+aber demselben Aufbau (gleiche Kopfleiste, gleiche Kategorien-Sidebar links).
+
+**Ausdrückliche Trennungs-Vorgabe (wörtlich):** *„es sind wirklich zwei
+verschiedene Apps, also zwei verschiedene Webseiten … ich möchte auch, dass
+du den ganzen Code in neuen Dateien schreibst und das im cloud.md-File
+deutlich machst … wenn man am FX Analyst Pro arbeitet, sollen nicht die
+anderen ganzen Dateien durchgelesen werden und andersrum. Allerdings sollst
+du aus dem FX Analyst Pro rauskopieren und diese nutzen und die generelle
+Struktur davon nutzen."* → Umgesetzt als `rezept.html` + `js/rezept/*.js`
+mit eigener Doku `docs/rezept.md`; `CLAUDE.md` sagt jetzt in der ERSTEN
+Sektion, welche Dateien zu welcher App gehören und was man bei welcher
+Aufgabe NICHT lesen muss.
+
+**Was gebaut wurde**
+- **App-Weiche:** `#appChoiceOv` in `index.html` (nur beim allerersten
+  Öffnen), Wahl in `localStorage['dmfx_app_choice']`, plus eine
+  `location.replace()`-Weiche ganz oben im `<head>` — sonst würde der
+  komplette FX-Boot laufen, nur um verworfen zu werden. Wechsel in BEIDEN
+  Apps unter *Settings → Apps*.
+- **Overview** mit drei Karten: `Today's Meal` und `Random Picker` als
+  ausdrückliche Platzhalter, `Add New Meal` führt in die Kategorie *Recipes*
+  UND öffnet dort direkt das Hinzufügen-Fenster.
+- **Recipes:** Raster mit drei Karten pro Reihe (2 unter 1000px, 1 unter
+  620px), Bild mit Titel darin, Dauer unten rechts, Favoriten-Stern oben
+  rechts; Suche, Zeit-Filter, Tag-Filter, Favoriten-Filter.
+- **Hinzufügen/Bearbeiten:** Titelbild (Pflicht), Titel, Dauer-Dropdown in
+  5-Minuten-Schritten, Tags, Zutatenliste, und eine Zubereitung aus
+  **Blöcken** — Text und Bild beliebig gemischt und sortierbar (Nutzer:
+  *„entweder in die Zubereitung Text schreiben oder auch ein Bild hinzufügen
+  und Text schreiben. Beides ist möglich"*).
+- **Detailfenster:** Bild oben, Titel, Dauer/Tags, Zutaten, Zubereitung;
+  Drei-Punkte-Menü oben rechts (Bearbeiten / Favorit / Papierkorb).
+- **Papierkorb, 30 Tage**, Wiederherstellung unter *Settings → Trash*.
+- **Vier braune Themes** (`clay`, `mocha`, `paper`, `sand`), umschaltbar
+  unter *Settings → Appearance* — der Nutzer wollte sie alle ausprobieren
+  können; Standard ist `clay` (Terracotta/Espresso).
+
+**Die eine Entscheidung, die wirklich zählt — wohin die Bilder gehen.**
+Der naheliegende Weg (Rezepte in `snap()`/`cloudPush()` des FX Analyst Pro
+hängen) wäre ein Fehler gewesen: dieser Push schiebt bei JEDER Änderung den
+kompletten Zustand als eine JSON-Zeile hoch — jeder beliebige FX-Autosave
+(z. B. der stündliche Kalender-Refresh) hätte damit sämtliche Rezeptbilder
+erneut hochgeladen. Stattdessen eigene Zeilen in der BESTEHENDEN
+`fx_sync`-Tabelle (kein neues Supabase-Setup): `<syncId>:rez:index` fürs
+Verzeichnis inkl. Mini-Thumbnails (ein Request rendert das ganze Raster),
+`<syncId>:rez:r:<id>` je Rezept für die Vollbilder (erst beim Öffnen geholt,
+in IndexedDB gecacht). Hochgeladen wird nur das GEÄNDERTE Rezept.
+Bilder werden im Browser iterativ auf ein **Byte-Budget** gerechnet
+(Titelbild ≤ 260 KB, Block ≤ 180 KB, Thumbnail ≤ 34 KB), nicht nur auf eine
+Kantenlänge — bei 100 Rezepten sind das ~35 MB von 500 MB im Supabase-Free-
+Tarif. localStorage schied für Bilder aus (~5 MB Limit), deshalb IndexedDB.
+
+**Wiederholungsfalle vermieden:** `mergeIndex()` statt Overwrite, mit
+Grabsteinen für gelöschte Rezepte und `navigator.locks` um den
+Lies-Merge-Schreib-Zyklus — exakt das Muster, das bei `scoreHist`
+(2026-07-20) und den Research-Notizen (2026-09-01) erst NACH einem
+Datenverlust nachgerüstet werden musste. Hier von Anfang an drin, weil zwei
+Geräte typischerweise unabhängig voneinander neue Rezepte anlegen.
+
+**Wächter mitgezogen** (sonst wäre die halbe ausgelieferte Codebasis blind):
+`check/syntax.js` prüft jetzt beide HTML-Seiten und `js/rezept/*`;
+`check/rules.js` bekam Regel 1b (REZEPT-CHECK-Nummer muss bei jeder
+Änderung an `rezept.html`/`js/rezept/*` steigen); alle neun Browser-Prüfungen
+setzen `dmfx_app_choice='fx'` und entfernen `#appChoiceOv`, sonst hätte das
+Auswahlfenster jeden Playwright-Lauf blockiert.
+
+**Verifiziert per Playwright** (nicht nur „sieht gut aus"): Auswahlfenster →
+Weiterleitung → Rezept mit echtem Bild-Upload anlegen → Karte im Raster →
+Detailfenster mit Zutaten und Text-/Bild-Blöcken → Reload (Persistenz aus
+IndexedDB) → Suche/Filter → Papierkorb + Wiederherstellen → App-Wechsel
+zurück; dazu Überlauf-Messung auf 1920/1440/1100/900/700/500/390px
+(3/3/3/2/2/1/1 Spalten, kein Überlauf, kein Text außerhalb einer Karte) und
+null JS-Fehler.
+
+**Offen/bewusst weggelassen:** die Funktion hinter `Today's Meal` und
+`Random Picker` (ausdrücklich als Platzhalter bestellt); Perfect Rezept hat
+keine PIN-Sperre (die Seite liegt ohnehin hinter Cloudflare Access, und
+Rezepte sind keine schützenswerten Daten).
+
+---
+
+## 2026-09-01 (2) — ZWEI REPRODUZIERTE FEHLER, NACHFRAGE BEI UNGESPEICHERTEN EINGABEN, NEUE PALETTEN (VERSION-CHECK-463 / REZEPT-CHECK-2)
+
+Nutzer-Meldung: *„Das speichern klappt nicht das Bild hinzufügen geht nicht …
+mach das alle Buttons usw auch wirklich eine Funktion haben und auch
+funktionieren aktuell klappt fast nix."* Beides zuerst reproduziert, dann
+gefixt (CLAUDE.md-Regel), nicht anhand einer Vermutung repariert.
+
+### Fehler 1 — „das Bild hinzufügen geht nicht": Datei-Dialog hing nicht im DOM
+
+`pickFile()` in `js/rezept/app.js` hat einen frei erzeugten, **nicht
+eingehängten** `<input type="file">` geklickt. Chromium öffnet den Dialog so
+trotzdem — **iOS/macOS Safari nicht**, und genau darauf läuft die App des
+Nutzers (iPad/iPhone). Der Klick verpufft dabei ohne jede Fehlermeldung.
+Nachweis im Repro-Lauf: `document.body.contains(inp) === false`.
+**Fix:** einhängen (unsichtbar, `position:fixed;left:-9999px`), klicken,
+danach wieder entfernen; Aufräumen auch, wenn der Dialog abgebrochen wird.
+**Folgefehler, der die zweite Meldung erklärt:** ohne Bild verweigert
+`rezSaveForm()` das Speichern — für den Nutzer sah das aus wie „Speichern
+klappt nicht", war aber nur die Pflicht-Prüfung nach dem ausgefallenen
+Bild-Dialog.
+
+### Fehler 2 — „das Speichern klappt nicht": stille Promise-Rejection
+
+Der Speicherpfad hatte **kein einziges `try/catch`**. Per Playwright mit
+blockierter IndexedDB-Transaktion (`QuotaExceededError`, wie im Privatmodus
+oder bei vollem Speicher) reproduziert: das Hinzufügen-Fenster blieb offen,
+es erschien KEINE Meldung, gespeichert wurde nichts — die Ausnahme landete
+als unbehandelte Promise-Rejection nur in der Konsole.
+**Fix, zwei Ebenen:** (1) jede IndexedDB-Operation fängt jetzt selbst ab und
+fällt auf eine Speicher-Map zurück (`state.dbBroken`, Kopfzeile zeigt
+„No local storage — cloud sync only") — der Cloud-Sync speichert weiter, die
+Sitzung läuft; (2) `rezSaveForm()` fängt ab, zeigt die echte Fehlermeldung im
+Formular und gibt `true`/`false` zurück, damit „Save & close" das Fenster
+nicht schließt, wenn gar nicht gespeichert wurde.
+**Merksatz:** eine unbehandelte Promise-Rejection sieht für den Nutzer exakt
+aus wie „die App macht nichts". Kein Schreibpfad ohne sichtbare Meldung.
+
+### Ungespeicherte Eingaben — in BEIDEN Apps
+
+Nutzer: *„wenn man eine Notiz oder ein Rezept hinzufügt und man neben das
+Fenster schließt, ist das was man eingegeben hat weg."* Ursache im FX Analyst
+Pro: der generische Overlay-Klick-Handler (`js/main.js`, `_ovPressId`)
+schließt JEDES `.ov`-Fenster sofort, ohne zu fragen. Statt einer Sonderlösung
+je Fenster gibt es jetzt **`MODAL_GUARDS`** — eine Registrierstelle
+`{dirty, save}` pro Fenster; `closeMGuarded()` zeigt bei ungespeicherten
+Änderungen das zentrierte `#mUnsaved` mit drei Wegen: *Discard & close*
+(rot = bearish), *Save & close* (grau), *Keep editing* (blau = bullish), also
+in den Bias-Farben dieser App wie vom Nutzer verlangt. Registriert ist
+zunächst der Notiz-Editor (`resNoteDirty`/`saveResNote`); **ein neues
+Eingabe-Fenster gehört dort eingetragen**, nicht mit eigenem Code versehen.
+In der Rezept-App macht `rezRequestClose()` dasselbe für Klick-daneben,
+Escape und *Cancel*.
+Verifiziert: leeres Formular schließt ohne Nachfrage; getipptes fragt nach;
+*Keep editing* behält den Text; *Save & close* speichert wirklich;
+*Discard & close* verwirft; der *Cancel*-Button geht denselben Weg.
+
+**Nebenbefund, bewusst NICHT angefasst:** ein Klick neben ein frisch
+geöffnetes, noch leeres Notiz-Fenster schließt es manchmal nicht — ein in der
+Capture-Phase registrierter „Klick-außerhalb"-Handler eines Pickers
+(`biasPickerOutside` & Verwandte) schluckt den ersten Klick. Verhalten ist
+identisch auf `origin/main`, also nicht neu, und es scheitert SICHER (das
+Fenster bleibt offen, nichts geht verloren). Ein Eingriff in die
+Picker-Handler hätte echtes Regressionsrisiko für einen Fehler, der Daten
+schützt statt sie zu kosten.
+
+### Paletten: acht braun raus, neun weiß/grau rein
+
+Nutzer-Wunsch: *„entfern die aktuellen Paletten außer papercookbook"* und
+*„probier mal was weißes mit Grautönen … mach ruhig so 8 unterschiedliche"*.
+`clay`/`mocha`/`sand` sind weg; neu sind `linear`, `notion`, `vercel`,
+`github`, `stripe`, `ios`, `swiss`, `fog`, `graphite` — jede an einem real
+existierenden Design-System orientiert statt frei erfunden. Standard ist
+jetzt `linear`.
+**Migration nicht vergessen:** ein Gerät mit `clay` im Speicher hätte GAR
+KEIN `[data-rez-theme]`-Regelwerk getroffen und ohne eine einzige
+Farbvariable dagestanden. Die Migrationsliste steht in der Früh-Weiche im
+`<head>` und als `THEME_IDS` in `app.js`; `check/rezept.js` prüft den Fall
+mit einem echten zweiten Seitenaufruf.
+**Kontrast nachgerechnet, nicht geschätzt:** die erste Fassung hatte 25
+Textfarben unter AA (bis hinunter auf 2,86:1) — alle 14 betroffenen Werte
+wurden nachgezogen. Drei Stellen hingen außerdem noch an den alten braunen
+Annahmen und wären bei hellen Paletten unsichtbar geworden: der Toast
+(`var(--chrome-bg)` mit hellem Text → weiß auf weiß, jetzt fest dunkel), der
+Profil-Kreis (`--avatar-bg`/`--avatar-fg`) und der LIVE-Punkt (`--live`).
+
+### Neuer Wächter `check/rezept.js`
+
+Fünf Stufen, weil beide Fehler oben von einer Prüfung hätten gefunden werden
+können: **A** jeder Inline-Handler löst sich zu einer echten Funktion auf
+(bei ES-Modulen ist eine vergessene Zeile in der `window`-Brücke der
+häufigste Grund für „der Button tut nichts"), **B** jeder sichtbare Button
+verändert wirklich den DOM, **C** der komplette Ablauf (anlegen mit echtem
+Bild-Upload, bearbeiten, favorisieren, alle Filter, Papierkorb,
+Wiederherstellen, alle Themes durchschalten, Theme-Migration), **D** die
+Nachfrage bei ungespeicherten Eingaben, **E** Kontrast jeder Palette gegen
+jede ihrer Flächen.
+Der erste Lauf meldete 11 Punkte, davon **9 Messfehler des Wächters selbst** —
+`event.stopPropagation()` ist keine globale Funktion; ein Schalter, der schon
+in seinem Zielzustand steht, darf nichts ändern; und vor allem: Stufe B setzt
+beim Durchklicken Filter, sodass der nächste Klick den Stern einer
+AUSGEBLENDETEN Karte trifft und das sichtbare Raster gleich bleibt, obwohl
+der Schalter korrekt arbeitet. Merksatz für künftige „klick alles"-Wächter:
+**vor jedem Klick den Zustand zurücksetzen und die Elementliste neu abfragen**,
+sonst misst man die Nachwirkungen des vorherigen Klicks.
+
+---
+
+## 2026-09-02 — VIER NEUE KATEGORIEN + REEL-IMPORT (REZEPT-CHECK-3)
+
+Nutzer: *„Ja bau das alles ein aber achte auf Qualität ich hoffe du kannst das
+umsetzen dass man Instagram Reels importieren kann und die automatisch zu
+einem Rezept werden."*
+
+### Instagram-Import — was geht und was nicht (bitte vor dem nächsten Anlauf lesen)
+
+**Der Text eines Reels lässt sich aus dem Browser heraus NICHT automatisch
+holen.** Drei unabhängige Gründe, keiner davon eine Einstellung, die man
+umgehen kann: `fetch()` auf instagram.com scheitert an CORS (kein
+`Access-Control-Allow-Origin`); die offizielle oEmbed-Schnittstelle verlangt
+seit 2020 ein Meta-Business-Token, also einen eigenen Server; und der
+Einbett-Rahmen zeigt das Video zwar an, sein Inhalt ist cross-origin und
+damit für uns unlesbar. Wer es künftig doch automatisieren will, braucht
+einen Serverdienst (z. B. GitHub Actions mit Meta-Token), der die Caption
+holt und in die Supabase-Zeile schreibt — ohne den wäre jede „automatische"
+Lösung geraten, und geraten wird hier nicht.
+
+**Gebaut ist deshalb der Weg, der zu 100 % trägt:** einmal den kopierten
+Beitragstext einfügen (Link und Caption dürfen im selben Block stehen), alles
+Weitere läuft automatisch. `js/rezept/import.js` erkennt Instagram/TikTok/
+YouTube samt Einbett-Adresse und zerlegt die Caption in Titel, Dauer,
+Zutaten, Schritte und Tags — zweisprachig DE/EN, weil Koch-Captions oft
+deutsch sind. Zwei Wege: mit Überschriften („Zutaten:"/„Zubereitung:") oder,
+wenn keine da sind, nach Form (Mengenangabe = Zutat, Nummerierung = Schritt).
+„Convert to recipe" öffnet den fertig ausgefüllten Formular-Entwurf
+**sichtbar zum Korrigieren**, statt still zu speichern. Nichts wird erfunden:
+fehlt die Dauer in der Caption, bleibt der Standard stehen.
+
+### Vier neue Kategorien
+
+- **Inspiration**: Reels/Links/Notizen sammeln, Video eingebettet (9:16,
+  gedeckelt auf halbe Fensterhöhe), „Convert to recipe", Herkunftslink bleibt
+  am erzeugten Rezept hängen (`source`, im Detailfenster als „Original post").
+- **Week**: Wochenplan Mo–So, Woche vor/zurück, Rezepte zuweisen, und
+  „Add ingredients to shopping list" für die ganze Woche.
+- **Shopping**: abhakbare Liste, eigene Einträge, aus dem Plan füllbar.
+  Zweimal übernehmen verdoppelt nichts (`normIngredient`).
+- **Cooked**: Verlauf mit Sterne-Bewertung und „Cook again".
+
+Damit haben **Today's Meal und Random Picker echte Funktion** statt
+Platzhalter. Today's Meal ist bewusst kein eigenes Feld, sondern der erste
+Eintrag im Wochenplan für heute — zwei Wahrheiten würden auseinanderlaufen,
+sobald jemand die Woche umplant. Der Zufallsgenerator filtert nach Zeit und
+Tag, meidet standardmäßig alles aus den letzten sieben Tagen (dafür ist der
+Verlauf da) und zieht bei mehreren Kandidaten nie zweimal hintereinander
+dasselbe.
+
+### Merge: vier neue Bereiche, vier eigene Regeln
+
+Ein pauschales „Cloud gewinnt" hätte hier wieder Daten gekostet (dieselbe
+Falle wie `scoreHist` 2026-07-20 und die Research-Notizen 2026-09-01):
+`inspo` nach id mit `up`; **`plan` mit einem Zeitstempel JE TAG** — sonst
+verliert ein Gerät, das Montag plant, den Donnerstag des anderen;
+`shopping.items` nach id, gelöschte bleiben sieben Tage als `del`-Marke
+stehen, sonst legt ein länger nicht geöffnetes Gerät sie wieder an; `cooked`
+als reines Anhängen. Grabsteine im Papierkorb tragen jetzt `kind`, damit ein
+gelöschtes Rezept und eine gelöschte Idee unterscheidbar bleiben.
+`normalizeIndex()` ergänzt fehlende Bereiche — ohne das wäre die App für
+Bestandsnutzer sofort kaputt gewesen, obwohl bei einem Neustart alles ging.
+
+### Zwei Regressionstests, die etwas gefunden haben
+
+1. **Der Wächter ließ eine kaputte Zutaten-Erkennung durch.** Absichtlich
+   kaputt gemacht → `check/rezept.js` meldete trotzdem „ok". Grund: die
+   Test-Caption hatte Überschriften, und dieser Weg kommt ohne die
+   Mengen-Erkennung aus — der zweite Weg war komplett ungeprüft. Neue Stufe H
+   prüft beide Wege plus alle Dauer-Schreibweisen (`1h30`, `2 Std 30`,
+   `ca. 20 Min`, `90 mins`, `1 hour`). **Merksatz: eine Prüfung, die nur den
+   bequemen Pfad nimmt, ist keine Prüfung.** Die zweite Mutation (Wochenplan-
+   Merge auf „Cloud gewinnt" zurückgedreht) wurde von Stufe G sofort gefangen.
+2. **Import-Fenster zeigte erkannte Werte nicht an.** Link und Tags landeten
+   still im Entwurf, während der Nutzer leere Felder sah — beim Tippen hätte
+   er sie überschrieben, ohne es zu merken. Gefunden beim Ansehen des eigenen
+   Screenshots, nicht durch den Wächter; Stufe F prüft es jetzt.
+
+Ebenfalls nachgezogen: die Nachfrage bei ungespeicherten Eingaben deckt jetzt
+**beide** Eingabemasken ab (`offeneEingabe()`). Die Inspirations-Maske war
+beim Bau zunächst vergessen — dort hätte ein Klick daneben wieder alles
+verworfen, obwohl das Rezept-Formular längst geschützt war.
+
+---
+
+## 2026-09-02 (2) — SYNC-401 BEHOBEN + NEUE EINKAUFSLISTE (REZEPT-CHECK-4)
+
+### „Sync failed: HTTP 401" — die Ursache war eine selbst erfundene Kopfzeile
+
+Nutzer-Meldung: *„Sync failed: HTTP 401. sync geht nicht."* Gegen einen
+nachgebauten Supabase-Endpunkt reproduziert, nicht geraten:
+
+| Anfrage | Antwort |
+|---|---|
+| nur `apikey` (so macht es der FX Analyst Pro) | **200** |
+| `apikey` + `Authorization: Bearer sb_publishable_…` (so machte es die Rezept-App) | **401** |
+| `apikey` + `Authorization: Bearer eyJ…` (alter JWT-Schlüssel) | 200 |
+
+`js/rezept/store.js` schickte zusätzlich `Authorization: Bearer <key>`.
+Bei den heutigen Supabase-Schlüsseln (`sb_publishable_…`) ist das **kein
+gültiges JWT** — der API-Gateway prüft den Header, sobald er da ist, und
+lehnt ab, obwohl der `apikey` völlig in Ordnung ist. `js/main.js`
+(`cloudHeaders`) schickt seit jeher nur `apikey` und funktionierte deshalb:
+derselbe Schlüssel, dieselbe Tabelle, anderes Ergebnis. **Merksatz: beim
+Sprechen mit derselben Gegenstelle wie der FX Analyst Pro die Kopfzeilen
+nicht neu erfinden, sondern dort abschreiben.** `check/rezept.js` vergleicht
+sie jetzt statisch und meldet jede Abweichung — per Mutation nachgewiesen.
+
+Dazu drei Dinge, die den Fehler beim nächsten Mal selbsterklärend machen:
+`httpFehler()` übersetzt 401/403/404/429/5xx in Meldungen, die sagen **wo man
+nachsieht**; die Zugangsdaten sind jetzt auch in der Rezept-App editierbar
+(vorher hieß es „richte das im FX Analyst Pro ein" — eine Reparatur zwang
+zum App-Wechsel); und ein „Test"-Knopf sagt in einem Satz, was die
+Gegenstelle antwortet.
+
+### Einkaufsliste neu gebaut
+
+Nutzer: *„mach die Einkaufsliste besser … schöneres Listen-Design … wenn man
+ein Produkt sucht schon Vorschläge da … unterteilt in Kategorien wie
+Backwaren und Gemüse."*
+
+Neu ist `js/rezept/groceries.js` — neun Abteilungen und ein Wörterbuch mit
+rund 150 Produktgruppen. **Jeder Eintrag trägt einen englischen Anzeigenamen
+und deutsche Suchwörter**, weil die Oberfläche englisch ist, der Nutzer aber
+deutsch tippt: „Milch" findet „Milk", „zwie" findet „Onions". Frei getippter
+Text bleibt unangetastet — ersetzt wird nur, was aus der Vorschlagsliste
+gewählt wird.
+
+Funktionen: Gruppierung nach Abteilung (einklappbar, mit Anzahl), Vorschläge
+beim Tippen aus **eigener Historie zuerst** (trifft den Sprachgebrauch besser
+als jedes Wörterbuch) und dann dem Wörterbuch, Pfeiltasten + Enter,
+Mengen-Erkennung mit eigenem Badge (`500 g Mehl` → `500 g` + `Mehl`),
+Fortschrittsbalken, Sortierung nach Abteilung oder Alter, alles abhaken,
+erledigte löschen, Schnellwahl häufig gekaufter Artikel, und ein
+Bearbeiten-Fenster, in dem **die Abteilung korrigierbar** ist — die
+automatische Zuordnung ist eine Hilfe, keine Behauptung.
+
+**Nichts wird geraten:** was das Wörterbuch nicht kennt, landet in „Other".
+
+Zwei Fehler, die der erste Testlauf der Warenkunde gefunden hat und die
+deshalb jetzt Tests haben: „Bio-Zitrone" landete in „Other", weil der
+Bindestrich die Wortsuche blockierte (Bindestriche werden jetzt zu
+Leerzeichen); und „Tomatensauce" landete beim Gemüse, weil die
+Zusammensetzungs-Regel an „Tomaten" hängen blieb — verarbeitete Produkte
+brauchen einen eigenen Wörterbuch-Eintrag.
+
+Ebenfalls gefunden beim Ansehen des eigenen Screenshots: ein „1×"-Badge an
+jeder Zeile ohne echte Menge. Eine Einheit ohne Aussage macht die Liste nur
+unruhig — wird jetzt weggelassen, echte Mengen bleiben.
+
+`check/rezept.js` prüft die Einkaufsliste als eigene Stufe I: Abteilungen,
+Mengen-Anzeige, Vorschläge auf deutsche Eingabe, Übernehmen, Abhaken,
+Fortschritt, „Check all", Sortier-Umschaltung und die von Hand gesetzte
+Abteilung.
+
+---
+
+## 2026-09-02 (3) — TYPOGRAFIE UND BEWEGUNG (REZEPT-CHECK-5)
+
+Nutzer: *„mach überall hochwertige Animationen ein und verbesser Schriften."*
+
+**Bewusst NUR die Rezept-App angefasst.** Die Schrift-Entscheidungen des FX
+Analyst Pro sind in `docs/design-system.md` ausführlich begründet (kein
+globales `!important` auf `font-family`, dicktengleiche Ziffern als
+Terminal-Merkmal) und wurden schon einmal teuer korrigiert. Sie ungefragt
+neu aufzurollen wäre genau der Fehler, vor dem die CLAUDE.md warnt.
+
+### Schrift
+
+**Keine Web-Fonts über ein CDN** — die App muss offline laufen, eine
+nachzuladende Schrift wäre genau dort weg, wo sie am meisten stört.
+Stattdessen stehen die `ui-*`-Familien **zuerst** im Stapel: das sind die
+echten System-Schnitte des Geräts — auf iPhone/iPad/Mac SF Pro Text bzw.
+SF Pro Display statt einer Ersatzschrift, auf Windows Segoe UI Variable.
+Kostet nichts und ist auf genau den Geräten des Nutzers der größte sichtbare
+Unterschied.
+
+Vier Rollen statt einer (`--ff-text`, `--ff-title`, `--ff-num`, `--ff-mono`),
+und **die Titel-Schrift ist jetzt Teil des Themes**: Serife bei *Paper
+Cookbook*, `ui-rounded` (SF Pro Rounded) bei *iOS Light*, eng gesetzte
+Grotesk bei *Swiss Editorial*. Neu auf einer Skala: Zeilenhöhen
+(`--lh-tight/snug/base/loose`) und Laufweiten (`--ls-title` negativ für große
+Schrift, `--ls-label` weit für Versal-Beschriftungen) — vorher stand an jeder
+Stelle ein eigener, geratener Wert. Größen sind fluid (`clamp()`).
+25 Regeln wurden auf die Tokens umgestellt, Mengen und Zeiten laufen auf
+dicktengleiche Ziffern.
+
+### Bewegung
+
+Grundsatz: **eine Animation erklärt, WOHER etwas kommt und WOHIN es geht.
+Was nichts erklärt, bewegt sich nicht.** Dauern und Kurven kommen aus Tokens
+(`--t-fast/base/slow`, `--e-out/in/spring`); alles über ~250 ms fühlt sich
+bei täglicher Nutzung nach Warten an.
+
+Gebaut: gestaffelt hereinkommende Karten (gedeckelt bei 14 — sonst erschiene
+die letzte von 40 erst nach über einer Sekunde), eine **gleitende
+Auswahl-Markierung** in der Sidebar statt sechs Stellen, die an- und ausgehen,
+Fenster mit **echter Abgangs-Animation**, eine Würfel-Geste beim
+Zufallsgenerator, Haken-Echo und durchlaufende Durchstreichung in der
+Einkaufsliste, kurzes Aufleuchten einer neu eingefügten Zeile (auf einer
+sortierten Liste landet sie sonst unauffindbar in der Mitte), aufblendende
+Bilder, Druckfeedback auf allen Bedienelementen.
+
+⚠ **Animiert werden nur `transform` und `opacity`** — alles andere lässt den
+Browser bei jedem Bild neu rechnen und ruckelt auf dem Handy.
+
+⚠ **Zwei Abschalter:** `prefers-reduced-motion` (Barrierefreiheit, keine
+Geschmacksfrage) und ein eigener Schalter in den Einstellungen. Beide werden
+geprüft.
+
+⚠ **`rezCloseModal()` räumt den Zustand SOFORT und den DOM erst nach 140 ms.**
+Andersherum hätte man kurz ein Fenster, das noch Eingaben annimmt, obwohl es
+logisch schon zu ist.
+
+### Was der Wächter dabei gefunden hat
+
+1. **Ein Theme in zwei `:root`-Blöcken.** Beim Einführen der Typo-Tokens hatte
+   ich `--ls-title` für *Vercel Mono* in eine eigene Regel geschrieben. Für
+   den Browser egal — für die Kontrast-Prüfung war das plötzlich ein Theme
+   ohne Textfarben. Der Wächter verlangt jetzt genau einen Inhalts-Block je
+   Theme.
+2. **Zwei Mutationstests bestanden:** `fadeInImages()` entfernt → „5 von 5
+   Kartenbildern bleiben unsichtbar" (das CSS setzt Bilder auf `opacity:0`,
+   eine vergessene `afterRender()`-Stelle heißt also unsichtbare Bilder, nicht
+   nur eine fehlende Animation); das DOM-Aufräumen nach der Abgangs-Animation
+   entfernt → „Fenster bleibt im DOM hängen".
+
+---
+
+## 2026-09-02 (4) — KOCHMODUS, TIMER, PORTIONEN, SUCHE, TEILEN, INSPIRATIONS-AUSBAU (REZEPT-CHECK-6)
+
+Nutzer: alle Ideen außer Punkt 6 (Vorratskammer) umsetzen, Timer als digitale
+Uhr mit Ton und Stumm-Hinweis, Abspielleiste fürs Video, „der Link soll
+reichen", und in Inspiration viele Reels nach Künstler filterbar.
+
+### Was gebaut wurde
+
+**Kochmodus**: Vollbild, große Schrift, `wakeLock` (nach Rückkehr aus dem
+Hintergrund neu angefordert), Zutaten und Schritte einzeln abhakbar, Schritte
+werden aus den Blöcken zerlegt statt als Textwand gezeigt, „Finish & log"
+schreibt direkt in den Verlauf.
+
+**Timer**: aus dem Schritt gelesen — *alle* Zeitangaben, damit „5 Minuten
+anbraten, dann 20 Minuten schmoren" zwei Knöpfe ergibt; bei einer Spanne
+gewinnt die obere Zahl. Digitale Countdown-Uhr in dicktengleichen Ziffern,
+mehrere Timer gleichzeitig, Pause/+1 Minute. Restzeit wird aus der **Zielzeit**
+gerechnet, nicht heruntergezählt — ein Intervall wird im Hintergrund-Tab
+gedrosselt und ein Zähler wäre danach falsch.
+
+**Portionen**: Regler im Detailfenster und im Kochmodus. Erkennt Zahlen,
+Komma-Werte, `1 1/2` und `½`. Zeilen ohne Zahl bleiben unverändert.
+
+**Notizen am Rezept**, direkt im Detailfenster editierbar — sonst schreibt sie
+niemand auf. **Globale Suche** über Titel, Zutaten, Notizen, Ideen und
+Verlauf. **„Was kann ich kochen?"** mit Trefferquote und „Fehlendes auf die
+Einkaufsliste". **Teilen** als gerendertes Bild (Canvas, kein Nachladen) über
+`navigator.share`, mit Download als Rückfallebene.
+
+**Inspiration**: viele Links auf einmal (eine Zeile je Link), Künstler
+automatisch aus der Adresse, Filter nach Künstler und Thema, vier
+Sortierungen, Doppel-Adressen werden übersprungen.
+
+### Ton und Stumm-Hinweis — die ehrliche Grenze
+
+Der Klingelton wird per WebAudio **erzeugt** (offline-fest). **Es gibt keine
+Browser-Schnittstelle, die den Stummschalter eines iPhones abfragt** — weder
+WebAudio noch das Media-API. Erkennbar ist nur, ob die Wiedergabe überhaupt
+erlaubt wurde; genau das wird geprüft, und nur dann erscheint der Hinweis.
+Weil ein stummes iPhone den Kontext trotzdem normal laufen lässt, klingelt der
+Timer **immer zusätzlich sichtbar** und vibriert.
+
+### Abspielleiste — nur YouTube ist steuerbar
+
+Instagram und TikTok bieten **keine** Schnittstelle, um von außen zu spulen,
+anzuhalten oder die Position zu lesen. Die App sagt das sichtbar, statt eine
+Leiste vorzutäuschen. Für YouTube gibt es eine echte Leiste über die
+dokumentierte `postMessage`-Schnittstelle — ohne deren Skript nachzuladen.
+Meldet sich der Player binnen 3 s nicht, verschwindet die Leiste wieder.
+
+### „Der Link soll reichen" — warum das weiterhin nicht geht
+
+Unverändert: `fetch()` auf instagram.com scheitert an CORS, oEmbed verlangt
+ein Meta-Token, der Rahmen ist cross-origin. **Diesmal wollte ich es
+serverseitig testen** (GitHub Actions könnte fetchen) — die Netz-Policy dieser
+Arbeitsumgebung blockt instagram.com, tiktok.com **und** youtube.com
+(`HTTP 000`, nur `api.github.com` antwortet). Eine Automatik, die ich nicht
+testen kann und deren Fehlermodus still ist (Workflow läuft, bekommt eine
+Login-Wand, schreibt nichts), gehört nicht ins Repo. Bleibt: einmal einfügen,
+Rest automatisch.
+
+### Was der Wächter dabei gefunden hat
+
+1. **Async-Fenster überschreiben einander.** „What can I cook?" lädt erst alle
+   Volldokumente und zeichnet danach — auch wenn man längst weitergeklickt
+   hat. Behoben mit einer **Modal-Generation**: jeder asynchrone Öffner merkt
+   sich den Zähler und bricht ab, wenn er sich geändert hat.
+2. **Die Timer-Leiste lag über der Schritt-Navigation** (im eigenen Screenshot
+   gesehen). Behoben über `body.timers-on`; der Wächter misst jetzt die
+   Rechtecke gegeneinander.
+3. **Drei Scheinfehler im Wächter selbst**, alle mit derselben Ursache — die
+   Prüfung stellte nicht die Lage her, in der ein echter Nutzer klickt: ein
+   **deaktivierter** Knopf tut richtigerweise nichts, ein „Add"-Knopf **ohne
+   Eingabe** auch, und zwei aufeinanderfolgende Klicks mit **derselben
+   Toast-Meldung** sahen aus wie „keine Wirkung". Der Wächter setzt jetzt vor
+   jedem Klick Filter und Toast zurück, füllt leere Eingabefelder und
+   überspringt deaktivierte sowie navigierende Knöpfe.
+4. **Drei Mutationstests bestanden**: Brüche aus der Portionsrechnung
+   entfernt → „Bruch verdoppeln: ½ TL statt 1 TL"; Schritt-Zerlegung entfernt
+   → „Zubereitung wird nicht in einzelne Schritte zerlegt"; Künstler-Erkennung
+   entfernt → „Der Instagram-Künstler wird nicht aus der Adresse gelesen".
+
+---
+
+## 2026-09-02 (5) — BILDER ÜBERALL SICHTBAR, REEL-VORSCHAUBILD, VIDEO AM REZEPT (REZEPT-CHECK-7)
+
+Nutzer: *„die Bilder die man bei Rezepten hinzufügt sollen immer zu sehen sein
+also von außen und im Rezept und im Cook Mode oder halt das Video. Und nimm
+als Hintergrundbild für ein Rezept aus einem Reel das Vorschaubild von dem
+Reel."*
+
+### Bilder
+
+Bis dahin lagen die Bilder aus der Zubereitung **nur** im Detailfenster: auf
+der Karte sah man das Titelbild, im Kochmodus standen sie als eigene,
+textlose Schritte dazwischen. Jetzt speist **eine** Quelle (`recipeImages`)
+alle drei Stellen — Zähler-Abzeichen auf der Karte, Bilderstreifen im
+Detailfenster mit Großansicht (Blättern, Escape, Pfeiltasten), und im
+Kochmodus hängt das Bild **am** Schritt plus ein Fotostreifen in der
+Seitenspalte.
+
+Zwei Dinge, die dabei leicht zu übersehen gewesen wären:
+- **Der Zähler muss ins Verzeichnis** — die Karte im Raster hat das
+  Volldokument gar nicht geladen. Und er muss bei **Bestandsdaten**
+  nachgetragen werden (`getFull`), sonst bliebe das Abzeichen bei allen
+  älteren Rezepten für immer aus.
+- **Escape in der Großansicht darf nur die Großansicht schließen**, nicht das
+  Rezept darunter — sonst ist man mit einem Tastendruck zwei Ebenen weg.
+  Handler in der Capture-Phase mit `stopPropagation`, vom Wächter geprüft.
+
+### Reel-Vorschaubild — was geht und was nicht
+
+**YouTube**: echtes Vorschaubild über `img.youtube.com/vi/<id>/hqdefault.jpg`,
+öffentlich und ohne Schlüssel. `hqdefault` bewusst statt `maxres` — das gibt
+es für jedes Video. Wird versucht lokal einzulesen, damit das Rezept auch
+offline ein Bild hat.
+
+**Instagram und TikTok geben ihre Vorschaubilder nicht öffentlich heraus** —
+kurzlebig signierte Adressen, nur über eine API mit Konto-Token. ⚠ Statt eine
+Adresse zu **raten**, die später als kaputtes Bild beim Nutzer landet, entsteht
+dort ein erkennbar **erzeugtes** Titelbild aus Titel, Künstler und Plattform,
+mit dem Hinweis „Tap to add your own photo". Der Wächter schlägt fehl, wenn
+für Instagram doch eine Adresse gebildet wird — genau das ist die Sorte
+„sieht funktionierend aus, ist es aber nicht", die dieses Projekt vermeiden
+will.
+
+Nebenwirkung, bewusst: ein aus einer Inspiration erzeugtes Rezept hat damit
+immer ein Titelbild und wird beim Speichern nicht mehr abgelehnt; von Hand
+angelegte Rezepte ohne Foto weiterhin schon. Beides wird geprüft.
+
+### Video am Rezept
+
+Stammt ein Rezept aus einem Reel, lässt sich das Video jetzt **vom Rezept
+aus** abspielen — im Detailfenster („Watch video" über dem Titelbild) und im
+Kochmodus (Knopf in der Kopfzeile). Es gelten dieselben Grenzen wie in der
+Inspiration: Abspielleiste nur bei YouTube.
+
+### Wächter
+
+Neue Stufe L, drei Mutationen nachgewiesen: Bild wieder als eigener Schritt →
+„Bilder werden weiter als eigene Schritte gezählt (Step 1 of 4 statt 1 of 2)";
+Foto-Abzeichen entfernt → „Bilder sind von außen nicht erkennbar";
+Instagram-Vorschaubild geraten → „das landet als kaputtes Bild beim Nutzer".
+
+---
+
+## 2026-09-02 — Perfect Rezept: Kochmodus in drei Spalten, Titelbild aus dem Reel, Caption-Zerlegung (REZEPT-CHECK-8)
+
+Drei Punkte aus **einer** Nutzer-Nachricht (mit Screenshot als Beleg):
+„Screenshot aus dem Reel als Titelbild direkt in der App auswählbar machen …
+du siehst die caption wird nicht richtig zerlegt … im Kochmodus links die
+Zutaten, in der Mitte das Bild oder das Video … rechts die Zubereitung und
+oben mittig die Timer Funktion".
+
+### Caption-Zerlegung — zuerst reproduziert, dann repariert
+
+Repro mit genau der Caption aus dem Screenshot: Ergebnis **11 Zutaten, 0
+Schritte** — der komplette Anleitungs-Absatz und das abschließende „enjoy"
+standen in der Zutatenliste. Ursache: die Caption hat eine Überschrift
+`Ingredients:`, aber **keine** für die Zubereitung; der Überschriften-Weg lief
+bis zum Textende, weil er auf eine nächste Überschrift wartete, die nie kam.
+
+Behoben über die **Form** der Zeile (`istZutat`/`istFliesstext`): eine lange
+Zeile oder mehrere Sätze beenden den Zutaten-Abschnitt auch ohne Überschrift.
+Anleitungs-Absätze über 170 Zeichen werden in Sätze zerlegt, damit im
+Kochmodus lesbare Schritte stehen. Ergebnis danach: 9 Zutaten, 8 Schritte.
+
+Ein Fall blieb noch: `½ tsp black pepper 150 g baby spinach` (zwei Zutaten in
+einer Zeile, weil beim Kopieren ein Zeilenumbruch verloren ging) wurde nicht
+getrennt — `trenneMehrfach()` stieg sofort aus, weil die Mengen-Erkennung nur
+eine **ASCII-Ziffer** am Zeilenanfang akzeptierte und die Zeile mit `½`
+beginnt. Unicode-Brüche (`½ ⅓ ⅔ ¼ ¾ ⅕ ⅙ ⅛`, auch gemischt wie `1 ½ cups`)
+gelten jetzt als Mengenanfang. Ergebnis: **10 Zutaten, 8 Schritte**, Anleitung
+sauber getrennt. Die Caption steht als Testfall in Stufe H.
+
+### Titelbild aus dem Reel (neues Cover-Fenster)
+
+Eigener Host `#rezCover` **über** dem Formular — das Formular darunter bleibt
+offen und ungespeichert, `Escape` schließt nur die obere Ebene.
+
+- **YouTube**: echte Standbilder aus dem Video zur Auswahl (`frameUrls()`:
+  `maxresdefault`, `hqdefault`, `1/2/3.jpg` = erstes, mittleres, letztes
+  Drittel).
+- **Instagram/TikTok**: das Reel läuft **links im selben Fenster**, rechts
+  wird das Bildschirmfoto eingefügt (Klick, Ziehen-und-Ablegen, ⌘V/Strg+V).
+  ⚠ Ein „Frame aus dem Video holen" ist dort technisch **nicht möglich**: das
+  Video liegt in einem cross-origin `<iframe>` (weder auslesbar noch auf eine
+  Canvas abmalbar), die Vorschaubilder hinter kurzlebig signierten Adressen.
+  `frameUrls()` gibt dort bewusst eine leere Liste zurück statt einer Attrappe.
+- **Zuschneiden** mit festen Verhältnissen (frei, 4:3, 3:4, 1:1, 16:9, 9:16),
+  gerechnet in Bildpunkten des Originals — sonst hinge die Schärfe an der
+  Fenstergröße. Ein Handy-Screenshot ist hochkant und hat die Telefonleisten
+  mit drauf; ohne Zuschnitt wäre das Titelbild zur Hälfte Telefon.
+
+### Kochmodus: drei Spalten, Timer oben mittig
+
+Vorher war die Mitte ein Assistent, der **einen** Schritt zeigte. Jetzt:
+links Zutaten (+ Fotostreifen), Mitte Bild **oder** Video, rechts alle
+Schritte als Liste mit hervorgehobenem aktivem Schritt, oben mittig die Timer,
+rechts der Portionsregler.
+
+Drei Fallen, alle geprüft:
+- **Das Medienfeld nimmt das Seitenverhältnis des Bildes an** (`--ck-ar`,
+  beim `load` gesetzt) — ein fester 16:9-Kasten lässt ein hochkantes
+  Reel-Bild wie einen Fehler aussehen.
+- **Der Video-Rahmen wird beim Schrittwechsel aus dem DOM gelöst und wieder
+  eingehängt** statt neu geschrieben — sonst springt das Video bei jedem
+  Klick an den Anfang. Aus demselben Grund schreibt das Timer-Ereignis nur
+  die Timer-Zeile neu, nicht den ganzen Kochmodus.
+- **Die untere Timer-Leiste ist im Kochmodus ausgeblendet** — dieselbe Uhr an
+  zwei Stellen, und genau die untere Leiste verdeckte früher „Back/Next".
+
+### Wächter
+
+Stufe K auf das neue Layout umgestellt (Spalten überlappen nicht, genau ein
+aktiver Schritt, Klick auf einen Schritt springt dorthin, Uhr oben mittig in
+der Kopfzeile, untere Leiste im Kochmodus aus), Stufe L um die
+Seitenverhältnis-Prüfung des Medienfelds ergänzt, neue **Stufe M** für das
+Cover-Fenster (YouTube-Standbilder vorhanden, für Instagram/TikTok keine
+geraten, Bildschirmfoto-Weg da, Zuschnitt auf 1:1 ergibt ein quadratisches
+Titelbild, Escape schließt nur die obere Ebene, jeder Handler im Fenster zeigt
+auf eine echte Funktion).
+
+### Nachtrag am selben Tag: zwei Fehler aus dem zweiten Bugreport (REZEPT-CHECK-9)
+
+Nutzer: *„er schreibt die zubereitung immernoch als ingridient … er erkennt
+auch sachen wie enjoy als ingridient"*.
+
+**1. Kurze Anweisungszeilen.** Die erste Reparatur erkannte nur lange Absätze
+als Zubereitung. Reels schreiben sie aber meist in kurzen Zeilen („Sear the
+chicken for 5 minutes."), und die rutschten alle als Zutat durch — samt
+abschließendem „enjoy". Reproduziert: 9 Zutaten, 0 Schritte. Jetzt zählt
+zusätzlich, ob eine Zeile auf `.`/`!`/`?` endet oder mit einem Kochverb
+beginnt (Deutsch und Englisch, „enjoy"/„Guten Appetit" eingeschlossen) →
+4 Zutaten, 5 Schritte. ⚠ Das Verb zählt nur am Zeilenanfang, sonst hätte
+„Fresh basil to serve" die Zutatenliste vorzeitig beendet; die Gegenprobe
+steht als eigener Fall im Wächter.
+
+**2. Der eigentliche Grund für „es ist wie davor".** `sw.js` lieferte
+`js/rezept/*.js` über den Cache-First-Zweig aus: nach einem Push lief auf dem
+Gerät weiter der alte Code, der neue wirkte frühestens beim übernächsten
+Öffnen. Jede Reparatur kam damit eine Sitzung zu spät an — von außen nicht zu
+unterscheiden von „nicht behoben". Seit `fxpro-v11` laufen `.js`/`.mjs`/`.css`
+über den Netz-zuerst-Zweig (Cache nur offline), der Seiten-Rückfall gilt nur
+noch für Navigationen. Statisch geprüft, Mutation nachgewiesen: Zweig
+zurückgebaut → „sw.js liefert JS/CSS aus dem Cache aus".
+## 2026-09-02 — Verlaufschart bei vielen Indikatoren dauerhaft leer (TE-Fallback ergaenzte nie historyFull) + Kartennamen nur im Bearbeitungsmodus (VERSION-CHECK-464)
 
 **Bugreport:** *"Bei vielen Indikatoren gibt es wenn ich sie ausklappe nicht
 das Säulendiagramm mit den Daten. Aber die Indikatoren haben Werte und das

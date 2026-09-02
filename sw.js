@@ -12,10 +12,29 @@
 // Manifest laeuft ueber den Cache-First-Zweig unten, wuerde also weiter aus
 // dem alten Cache kommen; erst der Versions-Bump erzwingt ein frisches
 // Einspielen der App-Shell.
-const CACHE_VERSION = 'fxpro-v6';
+// v7 (2026-09-01): zweite App im selben Repo (Perfect Rezept, rezept.html +
+// js/rezept/*). Der Service Worker bedient jetzt BEIDE Seiten - rezept.html
+// gehoert deshalb in die App-Shell, und der Offline-Fallback fuer eine
+// fehlgeschlagene Navigation darf nicht mehr blind index.html liefern
+// (sonst bekommt man offline die falsche App zu sehen).
+// v11 (2026-09-02): ⚠ NUTZER-BUGREPORT "es ist wie davor". Die Ursache lag
+// NICHT in der App, sondern hier: js/rezept/*.js lief ueber den
+// Cache-First-Zweig unten. Nach einem Push bekam das Geraet also weiter den
+// ALTEN Code - der neue wurde nur im Hintergrund nachgeladen und wirkte
+// fruehestens beim UEBERNAECHSTEN Oeffnen. Jede Code-Aenderung kam damit
+// eine Sitzung zu spaet beim Nutzer an, was von aussen exakt so aussieht,
+// als waere der Fehler nicht behoben worden. Skripte laufen ab jetzt ueber
+// den Netz-zuerst-Zweig (Cache nur als Offline-Rueckfall).
+const CACHE_VERSION = 'fxpro-v11';
 const APP_SHELL = [
   './',
   './index.html',
+  './rezept.html',
+  './js/rezept/app.js',
+  './js/rezept/store.js',
+  './js/rezept/import.js',
+  './js/rezept/groceries.js',
+  './js/rezept/cook.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -53,8 +72,13 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin) return;
 
   const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data)\.json$/.test(url.pathname);
+  // ⚠ Der Programmcode BEIDER Apps gehoert zum Netz-zuerst-Zweig. Kaeme er
+  // aus dem Cache, liefe nach einem Push weiter die alte Fassung - siehe
+  // die Notiz zu v11 oben. Bilder, Icons und das Manifest bleiben
+  // Cache-zuerst: die aendern sich selten und sollen sofort da sein.
+  const isCode = /\.(?:js|mjs|css)$/.test(url.pathname);
 
-  if (req.mode === 'navigate' || isDataFile) {
+  if (req.mode === 'navigate' || isDataFile || isCode) {
     // Cache-Key ohne die "?t=..."-Cache-Busting-Query, damit wiederholte
     // Live-Fetches (mit wechselndem Zeitstempel) denselben Eintrag treffen.
     const cacheKey = isDataFile ? url.pathname : req;
@@ -64,7 +88,15 @@ self.addEventListener('fetch', event => {
         caches.open(CACHE_VERSION).then(cache => cache.put(cacheKey, copy));
         return res;
       }).catch(() =>
-        caches.match(cacheKey).then(cached => cached || caches.match('./index.html'))
+        caches.match(cacheKey).then(cached => {
+          if (cached) return cached;
+          // ⚠ Der Seiten-Rueckfall gilt NUR fuer eine Navigation. Fuer eine
+          // fehlende .js-Datei eine HTML-Seite auszuliefern waere schlimmer
+          // als der Fehler selbst: der Browser wuerde sie als Skript
+          // auswerten und die App bliebe weiss.
+          if (req.mode !== 'navigate') return Response.error();
+          return caches.match(/rezept/.test(url.pathname) ? './rezept.html' : './index.html');
+        })
       )
     );
     return;

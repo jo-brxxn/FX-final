@@ -26,9 +26,9 @@ const REGEL_MAUS='PC/Maus: der erste Klick soll sofort navigieren (kein Zwei-Kli
 
 async function seite(ctx){
   const p=await ctx.newPage();
-  await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
+  await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('dmfx_app_choice','fx');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
   await p.goto(URL,{waitUntil:'networkidle'});
-  await p.evaluate(()=>{const e=document.getElementById('lockScreen');if(e)e.remove();document.querySelectorAll('.ov').forEach(o=>o.style.display='none');});
+  await p.evaluate(()=>{['lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});document.querySelectorAll('.ov').forEach(o=>o.style.display='none');});
   await p.waitForTimeout(1200);
   await p.evaluate(()=>{document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none');try{showTab('dash');}catch(e){}});
   await p.waitForTimeout(600);

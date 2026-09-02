@@ -1,3 +1,31 @@
+# Projektkonventionen
+
+## ⚠ ZUERST: dieses Repo liefert ZWEI eigenständige Apps aus
+
+Nutzer-Vorgabe 2026-09-01: *„es sind wirklich zwei verschiedene Apps, also
+zwei verschiedene Webseiten … wenn man am FX Analyst Pro arbeitet, sollen
+nicht die anderen ganzen Dateien durchgelesen werden und andersrum."*
+
+| App | Einstieg | Code | Doku |
+|---|---|---|---|
+| **FX Analyst Pro** | `index.html` | `js/*.js` (main, score, calendar, globe, constants, data-feeds, asset-notes-seed) | diese Datei + `docs/*` |
+| **Perfect Rezept** | `rezept.html` | `js/rezept/*.js` | **nur** `docs/rezept.md` |
+
+**Bei einer Rezept-Aufgabe: `docs/rezept.md` lesen und sonst nichts** aus der
+Tabelle unten — Score-Modell, Datenquellen, Navigation und State-Sync des FX
+Analyst Pro sind dort ohne Bedeutung. Umgekehrt genauso: bei einer
+FX-Aufgabe ist `docs/rezept.md`/`js/rezept/` irrelevant.
+
+Geteilt wird nur: Repo, `sw.js`, Icons/`manifest.json` und die
+Supabase-Zugangsdaten (`fxpro_cloud_cfg`). Welche App beim Öffnen startet,
+entscheidet das Auswahlfenster in `index.html`, gemerkt PRO GERÄT in
+`localStorage['dmfx_app_choice']` — bewusst nicht gesynct.
+
+**Alles auf der Oberfläche ist Englisch — in BEIDEN Apps** (Nutzer-Regel
+2026-09-01, ausdrücklich als Dauerregel gesetzt).
+
+---
+
 # FX Analyst Pro — Projektkonventionen
 
 Die App ist primär eine `index.html` (HTML + CSS + Hauptskript), die seit
@@ -25,6 +53,7 @@ betrifft.
 | Modul-Aufteilung von `index.html` in `js/*.js` (Vorgehen, window-Bruecke, AST-Verifikation) | `docs/module-split.md` |
 | Prüfskripte (`check/*.js`), was sie prüfen und warum | `check/README.md` |
 | Volle Änderungshistorie (jeder Bugfix/jede Iteration mit Datum) | `docs/CHANGELOG.md` |
+| **Perfect Rezept (die andere App)** — Trennung, Datenmodell, Bild-Budgets, Themes | `docs/rezept.md` |
 
 Bei einem Bugreport, der nach einem bekannten Muster riecht, oder um zu
 prüfen, ob eine Entscheidung schon bewusst getroffen wurde: gezielt in der
@@ -41,7 +70,8 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Design-/Geschmacksentscheidungen ausdrücklich eingeschlossen. Sonst per
    `AskUserQuestion` mit konkreten Optionen nachfragen. Details:
    `docs/workflow.md`.
-3. **VERSION-CHECK-Nummer bei JEDER `index.html`-Änderung bumpen** — auch bei
+3. **VERSION-CHECK-Nummer bei JEDER `index.html`-Änderung bumpen** (bzw.
+   **REZEPT-CHECK bei jeder Änderung an `rezept.html`/`js/rezept/*`**) — auch bei
    kleinen Bugfixes ohne UI-Sichtbarkeit — und die neue Nummer als letzten
    Satz der Chat-Antwort nennen. Bei Score-Formel-Änderungen zusätzlich
    `SCORE_MODEL_VERSION`, bei Formulierungs-Logik `SUMMARY_ENGINE_VERSION`.
@@ -51,7 +81,16 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Werts. Policy-Details: `docs/data-sources.md`.
 5. **`node check/all.js` vor jedem Push** (bzw. `--static` für den schnellen
    Teil ohne Browser). Details: `check/README.md`.
-6. **Immer auch auf `main` pushen** (das ist der Branch, der die
+6. **Jedes Bedienelement muss auch wirklich etwas tun.** Ein Button, dessen
+   Handler auf keine (exportierte) Funktion zeigt, wirft beim Klick still ein
+   `ReferenceError` und sieht für den Nutzer einfach kaputt aus — bei
+   ES-Modulen der häufigste Grund dafür ist eine vergessene Zeile in der
+   `window`-Brücke. Ebenso gilt: **kein Speicher-/Schreibpfad ohne
+   `try/catch` mit sichtbarer Meldung** — eine unbehandelte
+   Promise-Rejection sieht für den Nutzer exakt aus wie „die App macht
+   nichts". Beides wird geprüft (`check/structure.js` für den FX Analyst
+   Pro, `check/rezept.js` für Perfect Rezept).
+7. **Immer auch auf `main` pushen** (das ist der Branch, der die
    Produktivadresse — ein Cloudflare Worker hinter Cloudflare Access,
    NICHT primär GitHub Pages — sowie den ungeschützten GitHub-Pages-Mirror
    speist; nicht der Session-Dev-Branch). Details: `docs/workflow.md`.
@@ -72,7 +111,20 @@ dokumentieren als auslassen. Faustregel für WOHIN:
 
 ## Sprache
 
-**Antworten auf Deutsch.**
+**Antworten auf Deutsch. Die Oberfläche beider Apps ist Englisch** — jeder
+neue Text, jedes neue Label, jede neue Meldung wird auf Englisch geschrieben,
+ohne Rückfrage (Nutzer-Regel 2026-09-01).
+
+**⚠ Deutsche Begriffe des Nutzers werden automatisch übersetzt** (Nutzer-Regel
+2026-09-01, wörtlich: *„selbst wenn ich dir deutsche Begriffe nenne übersetz
+sie automatisch"*). Nennt der Nutzer eine Kategorie „Zufallsgenerator", einen
+Button „Weiterbearbeiten" oder eine Karte „Heutiges Essen", steht in der App
+`Random Picker`, `Keep editing`, `Today's Meal` — **ohne Rückfrage**, es ist
+keine Interpretationsentscheidung. Die deutsche Formulierung des Nutzers
+gehört in den Code-Kommentar bzw. ins `docs/CHANGELOG.md`, damit später
+nachvollziehbar bleibt, was gemeint war; auf der Oberfläche erscheint sie nie.
+Das gilt auch für Beschriftungen, die aus einem Screenshot oder einer
+Sprachnachricht übernommen werden.
 
 ## Berichte gehoeren in den Chat
 

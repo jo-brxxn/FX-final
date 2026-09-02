@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en" data-rez-theme="linear">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Perfect Rezept</title>
+<!-- ══════════════════════════════════════════════════════════════════════
+     PERFECT REZEPT - EIGENSTAENDIGE APP
+     ══════════════════════════════════════════════════════════════════════
+     ⚠ Das hier ist NICHT der FX Analyst Pro. Beide Apps liegen im selben
+     Repo und teilen sich Service Worker, Icons und die Supabase-Zugangs-
+     daten - sonst NICHTS. Kein gemeinsames CSS, kein gemeinsames Skript,
+     kein gemeinsamer Zustand. Wer am FX Analyst Pro arbeitet, muss diese
+     Datei nicht lesen (und umgekehrt). Konventionen: docs/rezept.md.
+
+     Die STRUKTUR (Kopfzeile, dunkle Nav-Sidebar links, Seitenbereich rechts,
+     Karten, Modals) ist bewusst 1:1 vom FX Analyst Pro uebernommen - der
+     Nutzer will dieselbe Bedienung. Uebernommen sind die Bauteile, nicht
+     die Datei: Farben laufen hier ueber einen eigenen, braunen Token-Satz.
+
+     Alles auf der Oberflaeche ist ENGLISCH (feste Projektregel, wie im
+     FX Analyst Pro).
+     ══════════════════════════════════════════════════════════════════════ -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#F1F2F5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+// ⚠ LAEUFT VOR DEM ERSTEN PIXEL. Zwei Aufgaben:
+// 1. Wer hier landet, hat "Perfect Rezept" gewaehlt - Wahl festhalten.
+// 2. Das gespeicherte Theme sofort setzen, sonst blitzt eine Palette auf,
+//    die der Nutzer gar nicht ausgewaehlt hat (FOUC).
+(function(){
+  try{localStorage.setItem('dmfx_app_choice','rezept');}catch(e){}
+  try{
+    // ⚠ MIGRATION: clay/mocha/sand sind am 2026-09-01 entfernt worden. Ein
+    // Geraet mit einem dieser Werte im Speicher haette sonst GAR KEIN
+    // passendes [data-rez-theme]-Regelwerk getroffen - keine einzige
+    // Farbvariable waere gesetzt gewesen und die Seite haette unlesbar
+    // ausgesehen. Beim Entfernen eines Themes IMMER migrieren.
+    var LEB={linear:1,notion:1,vercel:1,github:1,stripe:1,ios:1,swiss:1,fog:1,graphite:1,paper:1};
+    var t=localStorage.getItem('rez_theme');
+    if(t&&!LEB[t]){t='linear';localStorage.setItem('rez_theme',t);}
+    if(t)document.documentElement.setAttribute('data-rez-theme',t);
+  }catch(e){}
+})();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;overflow:hidden;overscroll-behavior:none}
+*,*::before,*::after{font-family:var(--ff-text)}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
+
+/* ── SKALEN (uebernommen aus docs/design-system.md - dieselben sieben
+     Schriftstufen und dasselbe 4px-Abstandsraster wie im FX Analyst Pro,
+     damit sich beide Apps trotz anderer Farben gleich "anfuehlen"). ── */
+:root{
+  /* ══ SCHRIFT ═══════════════════════════════════════════════════════════
+     ⚠ KEINE Web-Fonts ueber ein CDN. Die App muss offline laufen (Service
+     Worker, siehe sw.js) - eine nachzuladende Schrift waere genau dort weg,
+     wo sie am meisten stoert. Dieselbe Entscheidung wie im FX Analyst Pro
+     (docs/design-system.md, Abschnitt SCHRIFT).
+
+     Stattdessen die ui-*-Familien ZUERST: das sind die echten
+     System-Schnitte des jeweiligen Geraets - auf iPhone/iPad/Mac also SF Pro
+     Text bzw. SF Pro Display statt einer Ersatzschrift, auf Windows Segoe UI
+     Variable. Kostet nichts, laedt nichts nach und sieht auf den Geraeten
+     des Nutzers deutlich besser aus als ein fester Stapel.
+     Vier Rollen statt einer:
+       --ff-text   Fliesstext und Bedienelemente
+       --ff-title  Ueberschriften/Rezepttitel (je Theme anders, s.u.)
+       --ff-num    Zahlen: dieselbe Familie, aber dicktengleich
+       --ff-mono   nur wo Zeichen untereinander stehen muessen           */
+  --ff-text:ui-sans-serif,-apple-system,'SF Pro Text',BlinkMacSystemFont,'Segoe UI Variable Text','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-title:ui-sans-serif,-apple-system,'SF Pro Display',BlinkMacSystemFont,'Segoe UI Variable Display','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-num:var(--ff-text);
+  --ff-mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+
+  /* Fluide Groessen: auf dem Handy kleiner, auf dem Bildschirm groesser -
+     ohne einen zweiten Satz Media Queries. Die sieben Stufen aus
+     docs/design-system.md bleiben, sie atmen jetzt nur mit. */
+  --fs-hero:clamp(25px,1.4vw + 20px,32px);
+  --fs-xl:clamp(20px,.8vw + 17px,24px);
+  --fs-lg:clamp(16px,.3vw + 15px,18px);
+  --fs-md:15px;--fs-base:13.5px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:10px;
+  /* Zeilenhoehen und Laufweiten gehoeren genauso auf eine Skala wie die
+     Groessen - vorher stand an jeder Stelle ein eigener Wert. */
+  --lh-tight:1.18;--lh-snug:1.32;--lh-base:1.5;--lh-loose:1.65;
+  --ls-title:-.022em;   /* grosse Schrift braucht enger */
+  --ls-body:0;
+  --ls-label:.09em;     /* Versal-Beschriftungen brauchen weiter */
+
+  --gap-block:14px;
+  --r:12px;--rs:8px;--rss:6px;
+  --shadow-card:0 1px 3px rgba(60,40,26,.10);
+  --shadow-pop:0 6px 22px rgba(60,40,26,.18);
+
+  /* ══ BEWEGUNG ══════════════════════════════════════════════════════════
+     Eine Skala statt frei gewaehlter Werte - genau wie bei Schrift und
+     Abstaenden. Grundsatz: Bewegung erklaert, WOHER etwas kommt und WOHIN
+     es geht. Was nichts erklaert, bewegt sich nicht.
+     Dauern bewusst kurz: alles ueber ~250 ms fuehlt sich bei einer App, die
+     man taeglich benutzt, nach Warten an. */
+  --t-fast:120ms;      /* Hover, Druckfeedback */
+  --t-base:190ms;      /* Ein-/Ausblenden, Zustandswechsel */
+  --t-slow:280ms;      /* Fenster, Seitenwechsel */
+  --e-out:cubic-bezier(.22,.68,.36,1);        /* laeuft aus - Standard */
+  --e-in:cubic-bezier(.55,.06,.68,.19);       /* zieht an - fuer Abgaenge */
+  --e-spring:cubic-bezier(.34,1.42,.5,1);     /* leichter Ueberschwinger */
+  --stagger:26ms;      /* Versatz je Karte in einer Reihe */
+}
+
+/* ══ THEMES ═══════════════════════════════════════════════════════════════
+   Neun Paletten, umschaltbar in den Einstellungen. Jede besteht aus GENAU
+   zwei Bloecken:
+     :root[data-rez-theme=X]            - die Inhaltsflaeche
+     [data-rez-theme=X] .hdr,#rezNav    - dieselben Variablen fuer den
+                                          Chrome-Bereich (Kopfzeile+Sidebar)
+   ⚠ Dasselbe Muster wie im FX Analyst Pro (gescopte Variablen-Ueberschreibung
+   statt Einzelstellen anfassen, siehe docs/navigation.md): jede Komponente
+   faerbt ausschliesslich ueber var(--...), ein Theme-Wechsel ist deshalb ein
+   reiner Token-Tausch und kein Umbau.
+
+   ⚠ JEDER Block MUSS alle diese Tokens setzen, sonst erbt das Theme still
+   den Wert des vorherigen: --chrome-bg --bg0..--bg5 --bd --bd2 --t0..--t3
+   --accent --accent-soft --live --avatar-bg --avatar-fg (+ optional
+   --ff-title). Fehlt eins, faellt es auf :root zurueck - genau so entstehen
+   "fast richtige" Paletten mit einem falschen Grauton drin.
+
+   Stand 2026-09-01 (Nutzer-Wunsch): die drei uebrigen braunen Paletten
+   (clay/mocha/sand) sind ENTFERNT, "Paper Cookbook" ist als einzige davon
+   geblieben. Dazu acht weiss/graue Paletten, jede an einem echten, real
+   existierenden Design-System orientiert statt frei erfunden.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1) LINEAR LIGHT (Standard) — kuehles Fastweiss, Indigo-Akzent ────── */
+:root[data-rez-theme="linear"]{
+  --chrome-bg:#F1F2F5;
+  --bg0:#F7F8F9;--bg1:#FBFBFC;--bg2:#FFFFFF;--bg3:#F5F6F8;--bg4:#EDEEF1;--bg5:#E1E3E8;
+  --bd:rgba(22,23,26,.11);--bd2:rgba(22,23,26,.20);
+  --t0:#16171A;--t1:#3C4149;--t2:#5B606A;--t3:#5E636D;
+  --accent:#4B55B8;--accent-soft:rgba(75,85,184,.11);
+  --live:#C0342B;--avatar-bg:#4B55B8;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="linear"] .hdr,[data-rez-theme="linear"] #rezNav{
+  --bg1:#EBECF0;--bg2:#E7E8ED;--bg3:#E4E5EB;--bg4:#DEE0E6;--bg5:#D5D7DF;
+  --bd:rgba(22,23,26,.13);--bd2:rgba(22,23,26,.22);
+  --t0:#16171A;--t1:#33373E;--t2:#565B64;--t3:#595E67;
+  --accent:#4B55B8;
+}
+/* ── 2) NOTION GREY — warmes Off-White, sehr ruhig ────────────────────── */
+:root[data-rez-theme="notion"]{
+  --chrome-bg:#F7F7F5;
+  --bg0:#FAFAF9;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F3;--bg4:#EFEFED;--bg5:#E3E3E0;
+  --bd:rgba(55,53,47,.13);--bd2:rgba(55,53,47,.23);
+  --t0:#37352F;--t1:#4A473F;--t2:#605C52;--t3:#676257;
+  --accent:#286FB4;--accent-soft:rgba(40,111,180,.11);
+  --live:#BF3A2F;--avatar-bg:#37352F;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="notion"] .hdr,[data-rez-theme="notion"] #rezNav{
+  --bg1:#F1F1EF;--bg2:#EDEDEA;--bg3:#EAEAE7;--bg4:#E4E4E0;--bg5:#DBDBD6;
+  --bd:rgba(55,53,47,.14);--bd2:rgba(55,53,47,.24);
+  --t0:#37352F;--t1:#48453E;--t2:#5C584F;--t3:#665F55;
+  --accent:#286FB4;
+}
+/* ── 3) VERCEL MONO — schwarze Kopfzeile, reines Schwarzweiss ─────────── */
+:root[data-rez-theme="vercel"]{
+  --chrome-bg:#000000;
+  --bg0:#FAFAFA;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F5;--bg4:#EDEDED;--bg5:#E0E0E0;
+  --bd:rgba(0,0,0,.12);--bd2:rgba(0,0,0,.23);
+  --t0:#000000;--t1:#2E2E2E;--t2:#4D4D4D;--t3:#585858;
+  --accent:#171717;--accent-soft:rgba(0,0,0,.07);
+  --live:#B62F25;--avatar-bg:#171717;--avatar-fg:#FFFFFF;
+  --ls-title:-.032em;   /* Monochrom lebt von enger, harter Typografie */
+}
+[data-rez-theme="vercel"] .hdr,[data-rez-theme="vercel"] #rezNav{
+  --bg1:#111111;--bg2:#161616;--bg3:#1C1C1C;--bg4:#242424;--bg5:#2E2E2E;
+  --bd:rgba(255,255,255,.15);--bd2:rgba(255,255,255,.26);
+  --t0:#FFFFFF;--t1:#EDEDED;--t2:#B4B4B4;--t3:#9E9E9E;
+  --accent:#FFFFFF;--live:#FF6B5E;--avatar-bg:#2E2E2E;--avatar-fg:#FFFFFF;
+}
+/* ── 4) GITHUB LIGHT — dunkle Kopfzeile, heller Inhalt ────────────────── */
+:root[data-rez-theme="github"]{
+  --chrome-bg:#24292F;
+  --bg0:#F6F8FA;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F6F8FA;--bg4:#EFF2F5;--bg5:#E2E7EC;
+  --bd:rgba(31,35,40,.13);--bd2:rgba(31,35,40,.24);
+  --t0:#1F2328;--t1:#343A41;--t2:#55606B;--t3:#5E6873;
+  --accent:#0969DA;--accent-soft:rgba(9,105,218,.10);
+  --live:#B62F25;--avatar-bg:#0969DA;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="github"] .hdr,[data-rez-theme="github"] #rezNav{
+  --bg1:#2D333B;--bg2:#2D333B;--bg3:#343B45;--bg4:#3C444F;--bg5:#474F5B;
+  --bd:rgba(205,217,229,.16);--bd2:rgba(205,217,229,.27);
+  --t0:#F0F6FC;--t1:#DCE3EA;--t2:#BAC3CD;--t3:#B9C2CC;
+  --accent:#6CB6FF;--live:#FF7B72;--avatar-bg:#316DCA;--avatar-fg:#FFFFFF;
+}
+/* ── 5) STRIPE SLATE — sehr helles Blaugrau, Violett-Akzent ───────────── */
+:root[data-rez-theme="stripe"]{
+  --chrome-bg:#EEF3F9;
+  --bg0:#F6F9FC;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F3F7FB;--bg4:#E9EFF6;--bg5:#DBE4EF;
+  --bd:rgba(10,37,64,.11);--bd2:rgba(10,37,64,.20);
+  --t0:#0A2540;--t1:#33415C;--t2:#54607A;--t3:#58647C;
+  --accent:#5145CD;--accent-soft:rgba(81,69,205,.10);
+  --live:#B3261E;--avatar-bg:#5145CD;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="stripe"] .hdr,[data-rez-theme="stripe"] #rezNav{
+  --bg1:#E6EDF6;--bg2:#E2EAF4;--bg3:#DEE7F2;--bg4:#D6E1EF;--bg5:#CBD8EA;
+  --bd:rgba(10,37,64,.13);--bd2:rgba(10,37,64,.22);
+  --t0:#0A2540;--t1:#2E3D58;--t2:#4E5A74;--t3:#4F5B73;
+  --accent:#5145CD;
+}
+/* ── 6) IOS LIGHT — Systemgrau-Flaeche, weisse Karten, Blau ───────────── */
+:root[data-rez-theme="ios"]{
+  --chrome-bg:#F9F9FB;
+  --bg0:#F2F2F7;--bg1:#FFFFFF;--bg2:#FFFFFF;--bg3:#F5F5F8;--bg4:#EBEBF0;--bg5:#DEDEE4;
+  --bd:rgba(28,28,30,.12);--bd2:rgba(28,28,30,.21);
+  --t0:#1C1C1E;--t1:#3A3A3C;--t2:#545458;--t3:#5E5E63;
+  --accent:#0A62C9;--accent-soft:rgba(10,98,201,.10);
+  --live:#C4302B;--avatar-bg:#0A62C9;--avatar-fg:#FFFFFF;
+  --r:16px;--rs:11px;--rss:8px;
+  /* ui-rounded ist auf Apple-Geraeten SF Pro Rounded - genau der Schnitt,
+     der dieses Theme ausmacht; anderswo faellt es sauber zurueck. */
+  --ff-title:ui-rounded,-apple-system,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',Inter,sans-serif;
+  --ls-title:-.012em;
+}
+[data-rez-theme="ios"] .hdr,[data-rez-theme="ios"] #rezNav{
+  --bg1:#F1F1F5;--bg2:#EDEDF1;--bg3:#E9E9EF;--bg4:#E3E3EA;--bg5:#D9D9E1;
+  --bd:rgba(28,28,30,.13);--bd2:rgba(28,28,30,.22);
+  --t0:#1C1C1E;--t1:#38383A;--t2:#4F4F54;--t3:#5A5A5F;
+  --accent:#0A62C9;
+}
+/* ── 7) SWISS EDITORIAL — reines Weiss, Haarlinien, kein Farbakzent ───── */
+:root[data-rez-theme="swiss"]{
+  --chrome-bg:#FFFFFF;
+  --bg0:#FFFFFF;--bg1:#FCFCFC;--bg2:#FFFFFF;--bg3:#F7F7F7;--bg4:#F0F0F0;--bg5:#E3E3E3;
+  --bd:rgba(0,0,0,.16);--bd2:rgba(0,0,0,.30);
+  --t0:#000000;--t1:#242424;--t2:#454545;--t3:#525252;
+  --accent:#000000;--accent-soft:rgba(0,0,0,.06);
+  --live:#B01911;--avatar-bg:#000000;--avatar-fg:#FFFFFF;
+  --r:4px;--rs:3px;--rss:2px;
+  /* Schweizer Typografie: eine Grotesk, eng gesetzt, keine Rundungen. */
+  --ff-title:'Helvetica Neue',Helvetica,ui-sans-serif,-apple-system,'Segoe UI',Arial,sans-serif;
+  --ls-title:-.03em;
+}
+[data-rez-theme="swiss"] .hdr,[data-rez-theme="swiss"] #rezNav{
+  --bg1:#FAFAFA;--bg2:#F7F7F7;--bg3:#F2F2F2;--bg4:#EBEBEB;--bg5:#DEDEDE;
+  --bd:rgba(0,0,0,.18);--bd2:rgba(0,0,0,.32);
+  --t0:#000000;--t1:#1F1F1F;--t2:#3D3D3D;--t3:#4A4A4A;
+  --accent:#000000;
+}
+/* ── 8) NORDIC FOG — kuehles Blaugrau, dunkle Kopfzeile ───────────────── */
+:root[data-rez-theme="fog"]{
+  --chrome-bg:#2B3440;
+  --bg0:#EDF1F5;--bg1:#F7F9FB;--bg2:#FFFFFF;--bg3:#F2F5F8;--bg4:#E6EBF0;--bg5:#D6DEE6;
+  --bd:rgba(19,26,33,.13);--bd2:rgba(19,26,33,.23);
+  --t0:#131A21;--t1:#303C48;--t2:#4C5A68;--t3:#556372;
+  --accent:#2C6091;--accent-soft:rgba(44,96,145,.11);
+  --live:#B3302A;--avatar-bg:#2C6091;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="fog"] .hdr,[data-rez-theme="fog"] #rezNav{
+  --bg1:#36414F;--bg2:#36414F;--bg3:#3D4A59;--bg4:#465364;--bg5:#505F71;
+  --bd:rgba(210,224,238,.16);--bd2:rgba(210,224,238,.27);
+  --t0:#F4F7FA;--t1:#DEE5ED;--t2:#CFDAE6;--t3:#CEDAE8;
+  --accent:#7FB3E0;--live:#FF7B72;--avatar-bg:#2C6091;--avatar-fg:#FFFFFF;
+}
+/* ── 9) GRAPHITE — dunkelgraue Kopfzeile, neutrales Grau ──────────────── */
+:root[data-rez-theme="graphite"]{
+  --chrome-bg:#33383D;
+  --bg0:#F4F5F6;--bg1:#FBFBFC;--bg2:#FFFFFF;--bg3:#F3F4F5;--bg4:#EAEBED;--bg5:#DCDEE1;
+  --bd:rgba(28,31,35,.12);--bd2:rgba(28,31,35,.22);
+  --t0:#1C1F23;--t1:#383D43;--t2:#565C63;--t3:#595F67;
+  --accent:#5A6570;--accent-soft:rgba(90,101,112,.12);
+  --live:#B3302A;--avatar-bg:#33383D;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="graphite"] .hdr,[data-rez-theme="graphite"] #rezNav{
+  --bg1:#3D4348;--bg2:#3D4348;--bg3:#454B51;--bg4:#4E555C;--bg5:#585F67;
+  --bd:rgba(226,230,235,.16);--bd2:rgba(226,230,235,.27);
+  --t0:#F5F6F7;--t1:#DFE2E5;--t2:#D4D9DF;--t3:#D3D9E0;
+  --accent:#CBD3DB;--live:#FF7B72;--avatar-bg:#5A6570;--avatar-fg:#FFFFFF;
+}
+/* ── 10) PAPER COOKBOOK — die einzige gebliebene braune Palette ───────── */
+:root[data-rez-theme="paper"]{
+  --chrome-bg:#2E241E;
+  --ff-title:ui-serif,'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,'Times New Roman',serif;
+  --ls-title:-.006em;   /* Serifen brauchen weniger Enge als eine Grotesk */
+  --bg0:#EFE7DA;--bg1:#F6F1E7;--bg2:#FBF7F0;--bg3:#F2EBDF;--bg4:#E9DFCF;--bg5:#DCCFBA;
+  --bd:rgba(70,55,35,.17);--bd2:rgba(70,55,35,.30);
+  --t0:#241B12;--t1:#413225;--t2:#5C4A38;--t3:#665342;
+  --accent:#8A5626;--accent-soft:rgba(138,86,38,.12);
+  --live:#A0332C;--avatar-bg:#8A5626;--avatar-fg:#FFFFFF;
+}
+[data-rez-theme="paper"] .hdr,[data-rez-theme="paper"] #rezNav{
+  --bg1:#3D3027;--bg2:#3D3027;--bg3:#493A2F;--bg4:#554438;--bg5:#614E40;
+  --bd:rgba(235,215,190,.16);--bd2:rgba(235,215,190,.28);
+  --t0:#FAF4EC;--t1:#E6D9C9;--t2:#D5C2AB;--t3:#D6C2AB;
+  --accent:#D9A05B;--live:#FF8A7A;--avatar-bg:#8A5626;--avatar-fg:#FFFFFF;
+}
+
+body{
+  font-family:var(--ff-text);background-color:var(--bg0);color:var(--t0);
+  font-optical-sizing:auto;letter-spacing:var(--ls-body);
+  height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;
+  font-variant-numeric:tabular-nums;font-kerning:normal;
+  font-feature-settings:'kern' 1,'liga' 1,'calt' 1}
+
+/* ══ KOPFZEILE (Aufbau 1:1 wie FX Analyst Pro) ════════════════════════ */
+.hdr{background:var(--chrome-bg);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;align-items:center;gap:14px;color:var(--t0)}
+.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px;font-family:var(--ff-title)}
+.logo-a{font-weight:900;color:var(--accent);font-size:1.05em;letter-spacing:.5px;font-family:var(--ff-title)}
+.logo-b{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
+.hdr-search{flex:0 1 320px;min-width:0;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
+@media (hover:hover){.hdr-search:hover{border-color:var(--bd2);color:var(--t1)}}
+.hdr-search-lbl{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-status{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;white-space:nowrap}
+.saved{flex-shrink:0;font-size:11px;color:var(--t2);font-family:var(--ff-num)}
+.hdr-r{flex-shrink:0;margin-left:auto;display:flex;gap:5px;align-items:center}
+.hdr-r .btn{background:transparent;border-color:transparent;color:var(--t2)}
+@media (hover:hover){.hdr-r .btn:hover:not(:disabled){background:var(--bg3);border-color:var(--bd);color:var(--t0)}}
+.profile-btn{display:flex;align-items:center;background:none;border:none;cursor:pointer;padding:0;margin-left:4px;font-family:inherit}
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--avatar-bg,var(--accent));color:var(--avatar-fg,#fff);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}
+@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+.profile-circle svg{width:18px;height:18px}
+/* Versions-Banner - eigenes Gegenstueck zum VERSION-CHECK des FX Analyst
+   Pro. Muss bei JEDER Aenderung an rezept.html/js/rezept/* hochgezaehlt
+   werden (erzwungen von check/rules.js). */
+.hdr-livebanner{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-family:var(--ff-num);color:var(--t2);min-width:0;overflow:hidden}
+.hlb-dot{width:6px;height:6px;border-radius:50%;background:var(--live,#D93A34);display:block;animation:hlbPulse 2.2s ease-in-out infinite}
+@keyframes hlbPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.hlb-lbl{font-weight:800;letter-spacing:.6px;color:var(--live,#D93A34)}
+.hlb-sep{opacity:.5}
+.hlb-name{font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis}
+
+/* ══ APP-SHELL + NAV-SIDEBAR (1:1 uebernommene Geometrie) ═════════════ */
+.app-shell{flex:1;display:flex;min-height:0}
+#rezNav{width:max-content;min-width:170px;max-width:230px;flex-shrink:0;background:var(--chrome-bg);border-right:1px solid var(--bd);overflow-y:auto;overflow-x:hidden;padding:10px 6px;display:flex;flex-direction:column;gap:1px;color:var(--t0);-webkit-overflow-scrolling:touch}
+#rezPageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
+.np{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border:none;border-left:3px solid transparent;background:transparent;color:var(--t2);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--ff-text);border-radius:0 var(--rss) var(--rss) 0;text-align:left;white-space:nowrap;transition:all .15s}
+.np-ic{flex-shrink:0;width:17px;height:17px;display:flex;align-items:center;justify-content:center;color:var(--t3)}
+.np-ic svg{width:17px;height:17px}
+.np-lbl{overflow:hidden;text-overflow:ellipsis;flex:1}
+.np-count{flex:none;font-size:10.5px;font-weight:700;color:var(--t3);font-family:var(--ff-num)}
+@media (hover:hover){.np:hover:not(.on){color:var(--t0);background:var(--bg2)}.np:hover:not(.on) .np-ic{color:var(--t1)}}
+.np.on{color:var(--t0);background:var(--bg3);border-left-color:var(--accent);font-weight:700}
+.np.on .np-ic{color:var(--accent)}
+@media (max-width:760px){
+  #rezNav{min-width:56px;max-width:56px;width:56px}
+  .np-lbl,.np-count{display:none}
+  .np{justify-content:center;padding:9px 0}
+}
+.pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;min-width:0;-webkit-overflow-scrolling:touch}
+
+.ptitle{font-size:var(--fs-hero);font-weight:800;letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+  margin-bottom:3px;font-family:var(--ff-title);text-wrap:balance}
+.psub{font-size:var(--fs-base);color:var(--t2);line-height:var(--lh-base);margin-bottom:var(--gap-block)}
+
+/* ══ BUTTONS / FORMULARE ═════════════════════════════════════════════ */
+.btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 10px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4;outline:none;display:inline-flex;align-items:center;gap:6px}
+@media (hover:hover){.btn:hover:not(:disabled){background:var(--bg4);border-color:var(--accent);color:var(--accent)}}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+@media (hover:hover){.btn-primary:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:#fff;filter:brightness(1.09)}}
+.btn-danger{color:var(--danger);border-color:var(--bd2)}
+@media (hover:hover){.btn-danger:hover:not(:disabled){background:rgba(168,54,47,.1);border-color:var(--danger);color:var(--danger)}}
+.m-inp,.m-sel,.m-area{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:13px;outline:none;font-family:var(--ff-text);margin-bottom:10px}
+.m-area{min-height:96px;resize:vertical;line-height:1.55}
+.m-inp:focus,.m-sel:focus,.m-area:focus{border-color:var(--accent)}
+.m-inp::placeholder,.m-area::placeholder{color:var(--t3)}
+.dm-lbl{font-size:var(--fs-2xs);color:var(--t3);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;display:block;margin-bottom:5px}
+.m-btns{display:flex;gap:7px;justify-content:flex-end;margin-top:4px}
+
+/* ══ MODALS (Aufbau wie FX Analyst Pro) ══════════════════════════════ */
+.ov{position:fixed;inset:0;background:rgba(40,26,17,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;
+  animation:ovIn var(--t-base) var(--e-out) both;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);
+  max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.modal h3{font-size:var(--fs-lg);font-weight:800;color:var(--t0);margin-bottom:12px;font-family:var(--ff-title);
+  letter-spacing:var(--ls-title);line-height:var(--lh-snug);text-wrap:balance}
+.modal-wide{max-width:min(840px,96vw)}
+
+/* ══ DASHBOARD-KARTEN (Overview) ═════════════════════════════════════ */
+.ov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-block);align-items:start}
+@media (max-width:1000px){.ov-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:660px){.ov-grid{grid-template-columns:1fr}}
+.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card)}
+@media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
+.dw-click{cursor:pointer}
+.dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:11px}
+.dw-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);display:flex;align-items:center;gap:8px;
+  font-family:var(--ff-title);letter-spacing:-.008em}
+.dw-title svg{width:16px;height:16px;color:var(--accent)}
+.dw-body{font-size:var(--fs-base);color:var(--t2);line-height:1.55}
+.dw-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 10px;border:1px dashed var(--bd2);border-radius:var(--rs);background:var(--bg3);color:var(--t3);font-size:var(--fs-sm);text-align:center}
+.dw-ph-big{font-size:var(--fs-xl);color:var(--t2);font-weight:700;font-family:var(--ff-title)}
+.pill{display:inline-block;font-size:var(--fs-2xs);font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 7px}
+
+/* ══ REZEPT-RASTER ═══════════════════════════════════════════════════ */
+.rez-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:var(--gap-block)}
+.rez-search{flex:1 1 220px;min-width:160px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 11px}
+.rez-search input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:13px;color:var(--t0);font-family:var(--ff-text)}
+.rez-search svg{width:15px;height:15px;color:var(--t3);flex-shrink:0}
+.rez-sel{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 9px;color:var(--t1);font-size:12px;font-family:var(--ff-num);cursor:pointer;outline:none}
+.rez-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--gap-block)}
+.tag-chip{font-size:var(--fs-sm);font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);cursor:pointer;transition:all .14s;font-family:var(--ff-text)}
+@media (hover:hover){.tag-chip:hover{border-color:var(--accent);color:var(--accent)}}
+.tag-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.rez-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-block);align-items:start}
+@media (max-width:1000px){.rez-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:620px){.rez-grid{grid-template-columns:1fr}}
+.rez-card{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--bd);background:var(--bg2);cursor:pointer;box-shadow:var(--shadow-card);transition:transform .14s ease,box-shadow .14s ease,border-color .14s}
+@media (hover:hover){.rez-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-pop);border-color:var(--bd2)}}
+.rez-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--bg4)}
+.rez-card-ov{position:absolute;left:0;right:0;bottom:0;padding:30px 12px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+  background:linear-gradient(to top,rgba(28,17,10,.88) 0%,rgba(28,17,10,.55) 48%,rgba(28,17,10,0) 100%)}
+.rez-card-title{font-size:var(--fs-md);font-weight:700;color:#fff;line-height:var(--lh-snug);letter-spacing:-.008em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-family:var(--ff-title);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.rez-card-dur{flex-shrink:0;font-size:var(--fs-xs);font-weight:700;font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(3px)}
+.rez-card-dur svg{width:11px;height:11px}
+.rez-card-star{position:absolute;top:9px;right:9px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(20,12,7,.42);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(3px);transition:transform .14s,background .14s;padding:0}
+.rez-card-star svg{width:15px;height:15px}
+.rez-card-star.on{color:var(--star)}
+@media (hover:hover){.rez-card-star:hover{transform:scale(1.12);background:rgba(20,12,7,.62)}}
+.rez-empty{grid-column:1/-1;border:1px dashed var(--bd2);border-radius:var(--r);background:var(--bg2);padding:44px 18px;text-align:center;color:var(--t2)}
+.rez-empty h4{font-size:var(--fs-lg);color:var(--t0);margin-bottom:6px;font-family:var(--ff-title);letter-spacing:var(--ls-title)}
+.rez-empty p{font-size:var(--fs-base);margin-bottom:14px}
+
+/* ══ DETAIL-FENSTER ══════════════════════════════════════════════════ */
+.rd-hero{position:relative;margin:-22px -22px 16px;border-radius:var(--r) var(--r) 0 0;overflow:hidden}
+.rd-hero img{width:100%;max-height:340px;object-fit:cover;display:block;background:var(--bg4)}
+.rd-menu-btn{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(20,12,7,.5);color:#fff;cursor:pointer;font-size:17px;line-height:1;backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:0}
+@media (hover:hover){.rd-menu-btn:hover{background:rgba(20,12,7,.72)}}
+/* ⚠ Das Menue haengt bewusst am body (position:fixed), nicht im Modal:
+   ein Kind eines overflow-Containers wuerde am Rand abgeschnitten - genau
+   der Fehler, vor dem docs/design-system.md warnt. */
+.rd-menu{position:fixed;z-index:400;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);box-shadow:var(--shadow-pop);padding:5px;min-width:172px}
+.rd-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--rss);text-align:left;font-family:var(--ff-text)}
+@media (hover:hover){.rd-menu-item:hover{background:var(--bg4);color:var(--t0)}}
+.rd-menu-item.danger{color:var(--danger)}
+.rd-title{font-size:var(--fs-hero);font-weight:800;letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+  margin-bottom:8px;font-family:var(--ff-title);text-wrap:balance}
+.rd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
+.rd-chip{font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg3);border:1px solid var(--bd);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px}
+.rd-chip svg{width:12px;height:12px;color:var(--accent)}
+.rd-sec{margin-bottom:20px}
+.rd-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.rd-ing{list-style:none;display:flex;flex-direction:column;gap:1px}
+.rd-ing li{display:flex;align-items:flex-start;gap:9px;font-size:var(--fs-base);color:var(--t1);line-height:var(--lh-base);padding:7px 2px;border-bottom:1px solid var(--bd)}
+.rd-ing li:last-child{border-bottom:none}
+.rd-ing li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px}
+.rd-block{margin-bottom:12px}
+.rd-block p{font-size:var(--fs-base);color:var(--t1);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:anywhere}
+.rd-block img{width:100%;border-radius:var(--rs);border:1px solid var(--bd);display:block}
+.rd-empty{font-size:var(--fs-base);color:var(--t3);font-style:italic}
+
+/* ══ HINZUFUEGEN / BEARBEITEN ════════════════════════════════════════ */
+.rf-drop{position:relative;border:1px dashed var(--bd2);border-radius:var(--rs);background:var(--bg3);min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;color:var(--t3);font-size:var(--fs-sm);text-align:center;padding:16px;overflow:hidden;margin-bottom:14px;transition:border-color .14s,color .14s}
+@media (hover:hover){.rf-drop:hover{border-color:var(--accent);color:var(--accent)}}
+.rf-drop svg{width:26px;height:26px}
+.rf-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rf-drop-badge{position:absolute;right:9px;bottom:9px;z-index:2;font-size:var(--fs-xs);font-weight:700;color:#fff;background:rgba(20,12,7,.6);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 10px;backdrop-filter:blur(3px)}
+.rf-row{display:grid;grid-template-columns:1fr 190px;gap:12px}
+@media (max-width:600px){.rf-row{grid-template-columns:1fr}}
+.rf-line{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+.rf-line .m-inp{margin-bottom:0}
+.rf-x{flex-shrink:0;width:30px;height:30px;border-radius:var(--rss);border:1px solid var(--bd2);background:var(--bg2);color:var(--t3);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+@media (hover:hover){.rf-x:hover{color:var(--danger);border-color:var(--danger)}}
+.rf-blk{border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg3);padding:10px;margin-bottom:9px}
+.rf-blk-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.rf-blk-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
+.rf-blk-acts{display:flex;gap:4px}
+.rf-blk img{width:100%;border-radius:var(--rss);border:1px solid var(--bd);display:block}
+.rf-blk .m-area,.rf-blk .m-inp{margin-bottom:0}
+.rf-add{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.rf-hint{font-size:var(--fs-sm);color:var(--t3);margin-bottom:12px;line-height:var(--lh-base)}
+.rf-err{font-size:var(--fs-sm);color:var(--danger);font-weight:600;margin-bottom:10px;display:none}
+.rf-busy{font-size:var(--fs-sm);color:var(--t2);margin-bottom:10px;display:none}
+
+/* ══ EINSTELLUNGEN ═══════════════════════════════════════════════════ */
+.set-sec{margin-bottom:18px}
+.set-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.set-row:last-child{border-bottom:none}
+.set-row-t{font-size:var(--fs-base);color:var(--t1);font-weight:600}
+.set-row-s{font-size:var(--fs-sm);color:var(--t3);margin-top:2px}
+.theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:520px){.theme-grid{grid-template-columns:1fr}}
+.theme-card{border:1px solid var(--bd2);border-radius:var(--rs);padding:10px;cursor:pointer;background:var(--bg2);text-align:left;transition:border-color .14s,box-shadow .14s;font-family:var(--ff-text)}
+@media (hover:hover){.theme-card:hover{border-color:var(--accent)}}
+.theme-card.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.theme-sw{display:flex;height:34px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd);margin-bottom:8px}
+.theme-sw span{flex:1}
+.theme-nm{font-size:var(--fs-base);font-weight:700;color:var(--t0)}
+.theme-ds{font-size:var(--fs-sm);color:var(--t3)}
+.set-adv{margin-top:10px;border-top:1px solid var(--bd);padding-top:10px}
+.set-adv summary{font-size:var(--fs-sm);font-weight:700;color:var(--t2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:4px 0}
+.set-adv summary::-webkit-details-marker{display:none}
+.set-adv summary::before{content:'▸';font-size:11px;transition:transform .15s}
+.set-adv[open] summary::before{transform:rotate(90deg)}
+.trash-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.trash-row:last-child{border-bottom:none}
+.trash-thumb{width:44px;height:44px;border-radius:var(--rss);object-fit:cover;flex-shrink:0;background:var(--bg4);border:1px solid var(--bd)}
+.trash-main{flex:1;min-width:0}
+.trash-nm{font-size:var(--fs-base);font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trash-sub{font-size:var(--fs-sm);color:var(--t3)}
+
+/* ══ OVERVIEW: Today's Meal / Random Picker ══════════════════════════ */
+.today-wrap{display:flex;gap:11px;align-items:center;padding:9px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg3);cursor:pointer;transition:border-color .14s}
+@media (hover:hover){.today-wrap:hover{border-color:var(--accent)}}
+.today-img{width:74px;height:56px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd)}
+.today-meta{min-width:0;flex:1}
+.today-nm{font-size:var(--fs-md);font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--ff-title);letter-spacing:-.01em}
+.today-sub{font-size:var(--fs-sm);color:var(--t2);display:flex;align-items:center;gap:5px;margin-top:3px}
+.today-sub svg{width:12px;height:12px}
+.dw-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.rnd-opts{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:11px}
+.rnd-chk{display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--t2);cursor:pointer}
+
+/* ══ REZEPT-AUSWAHL (gemeinsamer Baustein) ═══════════════════════════ */
+.pick-list{max-height:min(440px,52vh);overflow-y:auto;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg3)}
+.pick-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:none;border-bottom:1px solid var(--bd);background:transparent;cursor:pointer;text-align:left;font-family:var(--ff-text)}
+.pick-row:last-child{border-bottom:none}
+@media (hover:hover){.pick-row:hover{background:var(--bg4)}}
+.pick-thumb{width:44px;height:34px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd);display:block}
+.pick-main{min-width:0;flex:1;display:flex;flex-direction:column}
+.pick-nm{font-size:var(--fs-base);font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-sub{font-size:var(--fs-sm);color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ══ INSPIRATION ════════════════════════════════════════════════════ */
+.insp-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--t3);background:var(--bg3);font-size:var(--fs-sm);font-weight:600}
+.insp-badge{position:absolute;top:9px;left:9px;font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:3px 8px;backdrop-filter:blur(3px)}
+.insp-detect{font-size:var(--fs-sm);color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px;margin:-4px 0 12px}
+.insp-detect svg{width:13px;height:13px;flex-shrink:0}
+/* ⚠ Der Einbett-Rahmen ist cross-origin - wir koennen seine Hoehe nicht
+   messen. Deshalb ein festes Hochformat (9:16 wie ein Reel), gedeckelt auf
+   die halbe Fensterhoehe, damit das Fenster auf dem Handy nicht explodiert. */
+.insp-frame{position:relative;width:100%;max-width:420px;margin:0 auto 10px;aspect-ratio:9/16;max-height:52vh;border-radius:var(--rs);overflow:hidden;border:1px solid var(--bd);background:var(--bg4)}
+.insp-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.insp-note{font-size:var(--fs-sm);color:var(--t3);text-align:center;margin-bottom:14px;line-height:1.5}
+
+/* ══ WOCHENPLAN ═════════════════════════════════════════════════════ */
+.week-range{font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);padding:0 4px}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:start}
+@media (max-width:1200px){.week-grid{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:820px){.week-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.week-grid{grid-template-columns:1fr}}
+.week-day{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-height:150px;box-shadow:var(--shadow-card)}
+.week-day.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft),var(--shadow-card)}
+.week-hd{display:flex;align-items:baseline;justify-content:space-between;gap:6px;border-bottom:1px solid var(--bd);padding-bottom:6px}
+.week-wd{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
+.week-day.on .week-wd{color:var(--accent)}
+.week-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
+.week-body{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.week-item{display:flex;align-items:center;gap:7px;min-width:0}
+.week-thumb{width:30px;height:24px;flex-shrink:0;border-radius:4px;object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
+.week-nm{flex:1;min-width:0;font-size:var(--fs-sm);color:var(--t1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.week-x{flex-shrink:0;width:20px;height:20px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:14px;line-height:1;border-radius:4px;padding:0}
+@media (hover:hover){.week-x:hover{color:var(--danger);background:var(--bg4)}}
+.week-empty{font-size:var(--fs-sm);color:var(--t3);opacity:.6}
+.week-add{width:100%;border:1px dashed var(--bd2);background:transparent;color:var(--t3);border-radius:var(--rss);padding:6px;font-size:var(--fs-sm);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--ff-text)}
+@media (hover:hover){.week-add:hover{border-color:var(--accent);color:var(--accent)}}
+
+/* ══ EINKAUFSLISTE ══════════════════════════════════════════════════ */
+.shop-add{position:relative;display:flex;gap:8px;align-items:stretch;margin-bottom:var(--gap-block)}
+.shop-inp{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:9px 12px}
+.shop-inp:focus-within{border-color:var(--accent)}
+.shop-inp svg{width:15px;height:15px;color:var(--t3);flex-shrink:0}
+.shop-inp input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:var(--fs-base);color:var(--t0);font-family:var(--ff-text)}
+/* Vorschlagsliste haengt unter dem Feld. Kein overflow-Container darueber -
+   sonst wuerde sie abgeschnitten (Overlay-Regel, docs/design-system.md). */
+.shop-sugg{display:none;position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:60;background:var(--bg2);
+  border:1px solid var(--bd2);border-radius:var(--rs);box-shadow:var(--shadow-pop);overflow:hidden;max-height:320px;overflow-y:auto}
+.shop-sugg.on{display:block}
+.shop-sugg-row{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;border-bottom:1px solid var(--bd);
+  background:transparent;cursor:pointer;text-align:left;font-family:var(--ff-text)}
+.shop-sugg-row:last-child{border-bottom:none}
+.shop-sugg-row.on,.shop-sugg-row:hover{background:var(--bg4)}
+.shop-sugg-ic{flex-shrink:0;font-size:15px;line-height:1}
+.shop-sugg-nm{flex:1;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop-sugg-cat{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:var(--ls-label);font-weight:700}
+.shop-sugg-tag{flex-shrink:0;font-size:var(--fs-2xs);font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 7px}
+.shop-quick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:var(--gap-block)}
+.shop-quick-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin-right:2px}
+.shop-bar{height:5px;border-radius:999px;background:var(--bg5);overflow:hidden;margin-bottom:10px}
+.shop-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease}
+.shop-tools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:var(--gap-block)}
+.shop-tools-sp{flex:1}
+.shop-count{font-size:var(--fs-sm);color:var(--t2);font-family:var(--ff-num);font-weight:600}
+.shop-list{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card)}
+.shop-cat+.shop-cat{border-top:1px solid var(--bd)}
+.shop-cat-hd{display:flex;align-items:center;gap:9px;width:100%;padding:9px 13px;border:none;background:var(--bg3);cursor:pointer;text-align:left;font-family:var(--ff-text)}
+.shop-cat-done{cursor:default;opacity:.85}
+@media (hover:hover){button.shop-cat-hd:hover{background:var(--bg4)}}
+.shop-cat-ic{flex-shrink:0;font-size:15px;line-height:1;display:flex;align-items:center}
+.shop-cat-ic svg{width:14px;height:14px}
+.shop-cat-nm{flex:1;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t2)}
+.shop-cat-n{flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;color:var(--t3);background:var(--bg5);border-radius:999px;padding:2px 8px;font-family:var(--ff-num)}
+.shop-cat-ar{flex-shrink:0;font-size:11px;color:var(--t3);transition:transform .15s}
+.shop-cat.zu .shop-cat-ar{transform:rotate(-90deg)}
+.shop-cat.zu .shop-cat-body{display:none}
+.shop-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--bd);cursor:pointer}
+.shop-cat-body .shop-row:last-child{border-bottom:none}
+.shop-list>.shop-row:last-child{border-bottom:none}
+@media (hover:hover){.shop-row:hover{background:var(--bg3)}}
+.shop-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
+.shop-txt{flex:1;min-width:0;font-size:var(--fs-base);color:var(--t0);overflow-wrap:anywhere}
+.shop-row.done .shop-txt{text-decoration:line-through;color:var(--t3)}
+.shop-qty{flex-shrink:0;font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:var(--t1);background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 8px}
+.shop-src{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop-sep{padding:9px 13px;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);background:var(--bg3)}
+.cat-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+@media (max-width:560px){.cat-pick{grid-template-columns:repeat(2,1fr)}}
+.cat-opt{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--bg2);
+  color:var(--t1);font-size:var(--fs-sm);font-weight:600;cursor:pointer;font-family:var(--ff-text);text-align:left}
+@media (hover:hover){.cat-opt:hover{border-color:var(--accent)}}
+.cat-opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* ══ KOCH-VERLAUF ═══════════════════════════════════════════════════ */
+.cook-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+.cook-row:last-child{border-bottom:none}
+.cook-thumb{width:44px;height:34px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
+.cook-main{flex:1;min-width:120px}
+.cook-nm{font-size:var(--fs-base);font-weight:600;color:var(--t0);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cook-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
+.cook-stars{display:flex;gap:1px;flex-shrink:0}
+.cook-star{border:none;background:transparent;color:var(--t3);cursor:pointer;padding:2px;line-height:0;border-radius:4px}
+.cook-star.on{color:var(--star)}
+@media (hover:hover){.cook-star:hover{color:var(--star)}}
+
+/* ══ NACHFRAGE BEI UNGESPEICHERTEN EINGABEN ══════════════════════════
+   Nutzer-Bugreport 2026-09-01: Klick neben das Fenster hat die Eingaben
+   kommentarlos verworfen. Drei eindeutige Wege, farblich klar getrennt -
+   rot = weg, grau = sichern, blau = zurueck ins Formular. Liegt ueber dem
+   Formular-Fenster (eigener Host #rezConfirm), damit man im Hintergrund
+   noch sieht, worum es geht. */
+.uc-ov{z-index:520;background:rgba(20,20,24,.55)}
+.uc-box{max-width:min(430px,94vw);text-align:center;padding:24px 22px}
+.uc-txt{font-size:var(--fs-base);color:var(--t2);line-height:1.6;margin-bottom:18px}
+.uc-btns{display:flex;flex-direction:column;gap:8px}
+.uc-btn{width:100%;padding:11px 14px;border-radius:var(--rs);font-size:var(--fs-base);font-weight:700;
+  cursor:pointer;border:1px solid transparent;font-family:var(--ff-text);transition:filter .14s,background .14s}
+@media (hover:hover){.uc-btn:hover{filter:brightness(1.07)}}
+.uc-discard{background:#B3352C;border-color:#B3352C;color:#FFFFFF}
+.uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
+.uc-keep{background:#1E63C0;border-color:#1E63C0;color:#FFFFFF}
+
+/* ══ KOCHMODUS ══════════════════════════════════════════════════════
+   Vollbild, grosse Schrift, wenige Elemente. Beim Kochen steht das Geraet
+   zwei Meter weg und man hat nasse Haende - hier gelten andere Groessen als
+   im Rest der App, das ist kein Bruch der Typo-Skala, sondern ihr Zweck. */
+#rezCook{position:fixed;inset:0;z-index:700;background:var(--bg0);display:none;flex-direction:column}
+body.cooking #rezCook{display:flex}
+body.cooking{overflow:hidden}
+.ck-bar{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--bg1);border-bottom:1px solid var(--bd)}
+.ck-x{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:17px;cursor:pointer;line-height:1}
+.ck-title{flex:1;min-width:0;font-family:var(--ff-title);font-size:var(--fs-xl);font-weight:800;letter-spacing:var(--ls-title);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t0)}
+.ck-serv{flex-shrink:0;display:flex;align-items:center;gap:9px;font-size:var(--fs-base);font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
+.ck-sv{width:30px;height:30px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg2);color:var(--t0);font-size:17px;line-height:1;cursor:pointer;font-family:var(--ff-num)}
+@media (hover:hover){.ck-sv:hover{border-color:var(--accent);color:var(--accent)}}
+/* Drei Spalten (Nutzer-Wunsch 2026-09-02: "links die Zutaten, in der Mitte
+   das Bild oder das Video, rechts die Zubereitung"). Die Mitte ist die
+   breiteste Spalte, weil dort das Bild steht; die beiden Textspalten sind
+   fest, damit die Zeilenlaenge beim Lesen nicht springt. */
+.ck-body{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 380px}
+@media (max-width:1200px){.ck-body{grid-template-columns:260px minmax(0,1fr) 320px}}
+@media (max-width:1000px){.ck-body{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;overflow-y:auto}}
+.ck-side{border-right:1px solid var(--bd);background:var(--bg1);padding:16px;overflow-y:auto}
+.ck-side-r{border-right:none;border-left:1px solid var(--bd)}
+@media (max-width:1000px){.ck-side{border-right:none;border-bottom:1px solid var(--bd);max-height:none;overflow:visible}
+  .ck-side-r{border-left:none}}
+.ck-side-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.ck-ing{display:flex;align-items:flex-start;gap:11px;padding:11px 4px;border-bottom:1px solid var(--bd);font-size:var(--fs-lg);color:var(--t0);cursor:pointer;line-height:var(--lh-snug)}
+.ck-ing:last-child{border-bottom:none}
+.ck-ing input{width:22px;height:22px;flex-shrink:0;margin-top:1px;accent-color:var(--accent);cursor:pointer}
+.ck-ing.done span{text-decoration:line-through;color:var(--t3)}
+.ck-empty{font-size:var(--fs-base);color:var(--t3)}
+.ck-main{padding:22px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:flex-start}
+@media (max-width:1000px){.ck-main{overflow:visible}}
+/* ⚠ Das Medienfeld nimmt das Seitenverhaeltnis des Bildes an, statt eines
+   fest verdrahteten 16:9-Kastens: ein Hochkant-Reel und ein Querformat-Foto
+   sehen im selben Kasten sonst beide falsch aus (Nutzer-Wunsch: "es soll
+   sich anpassen an das Format des Bildes"). Das Verhaeltnis setzt der
+   JS-Teil, sobald das Bild geladen ist - vorher steht ein neutrales 4:3. */
+.ck-media{width:100%;max-width:min(100%,calc((100vh - 230px) * var(--ck-ar, 1.3333)));
+  aspect-ratio:var(--ck-ar,4/3);border-radius:var(--r);border:1px solid var(--bd);background:var(--bg1);
+  overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
+.ck-media img{width:100%;height:100%;object-fit:contain;cursor:zoom-in}
+.ck-media iframe{width:100%;height:100%;border:0;display:block}
+.ck-media-empty{font-size:var(--fs-base);color:var(--t3);padding:20px;text-align:center}
+.ck-mtabs{display:flex;gap:8px;align-self:center}
+.ck-mtab{padding:7px 14px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);
+  font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:var(--ff-text);
+  transition:background var(--t-fast),color var(--t-fast),border-color var(--t-fast)}
+.ck-mtab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.ck-cap{font-size:var(--fs-sm);color:var(--t3);text-align:center;max-width:38em}
+/* Zubereitung als LISTE: der aktive Schritt ist gross und hervorgehoben,
+   die uebrigen bleiben lesbar daneben stehen - beim Kochen will man sehen,
+   was als Naechstes kommt, ohne zu blaettern. */
+.ck-steps{display:flex;flex-direction:column;gap:8px}
+.ck-stp{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;border-radius:var(--rs);border:1px solid transparent;
+  background:transparent;text-align:left;width:100%;cursor:pointer;font-family:var(--ff-text);color:var(--t2);
+  font-size:var(--fs-base);line-height:var(--lh-normal);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
+@media (hover:hover){.ck-stp:hover{background:var(--bg2)}}
+.ck-stp.on{background:var(--bg2);border-color:var(--accent);color:var(--t0);font-size:var(--fs-lg);font-weight:600}
+.ck-stp.done .ck-stp-t{text-decoration:line-through;color:var(--t3)}
+.ck-stp-n{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--bg4);color:var(--t2);
+  font-family:var(--ff-num);font-size:var(--fs-sm);font-weight:800;display:flex;align-items:center;justify-content:center}
+.ck-stp.on .ck-stp-n{background:var(--accent);color:#fff}
+.ck-stp.done .ck-stp-n{background:var(--accent-soft);color:var(--t1)}
+.ck-stp-t{flex:1;min-width:0}
+.ck-stp-thumb{width:44px;height:34px;object-fit:cover;border-radius:var(--rss);border:1px solid var(--bd);flex-shrink:0}
+/* Timer oben in der Mitte (Nutzer-Wunsch 2026-09-02). Im Kochmodus ersetzt
+   diese Leiste die untere Timer-Leiste - zwei Orte fuer dieselbe Uhr waeren
+   genau die Art Doppelung, die beim Kochen verwirrt. */
+.ck-tmwrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.ck-tm{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg2)}
+.ck-tm.ring{border-color:var(--accent);animation:tmRing 900ms var(--e-out) infinite}
+.ck-tm-clock{font-family:var(--ff-num);font-variant-numeric:tabular-nums;font-size:24px;font-weight:800;color:var(--t0);min-width:3.2em;text-align:center}
+.ck-tm.ring .ck-tm-clock{color:var(--accent)}
+.ck-tm-lbl{font-size:var(--fs-xs);font-weight:700;color:var(--t3);max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ck-tm-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg3);color:var(--t1);
+  font-size:13px;line-height:1;cursor:pointer;font-family:var(--ff-text)}
+@media (hover:hover){.ck-tm-btn:hover{border-color:var(--accent);color:var(--accent)}}
+.ck-tm-mute{width:100%;text-align:center;font-size:var(--fs-xs);color:var(--t2)}
+@media (max-width:1000px){.ck-bar{flex-wrap:wrap}.ck-tmwrap{order:3;width:100%;flex:0 0 auto}}
+.ck-prog{display:flex;align-items:center;gap:12px;font-size:var(--fs-sm);font-weight:700;color:var(--t3);letter-spacing:var(--ls-label);text-transform:uppercase}
+.ck-prog-bar{flex:1;height:4px;border-radius:999px;background:var(--bg5);overflow:hidden}
+.ck-prog-bar span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width var(--t-slow) var(--e-out)}
+.ck-step{font-size:clamp(21px,2.1vw + 13px,34px);line-height:var(--lh-snug);color:var(--t0);font-weight:600;max-width:22em}
+.ck-img{max-width:100%;border-radius:var(--r);border:1px solid var(--bd)}
+.ck-timers{display:flex;flex-wrap:wrap;gap:8px}
+.ck-nav{margin-top:auto;display:flex;flex-wrap:wrap;gap:9px;padding-top:14px;border-top:1px solid var(--bd)}
+.ck-nav .btn{font-size:var(--fs-base);padding:11px 16px}
+
+/* ══ TIMER-LEISTE ═══════════════════════════════════════════════════ */
+#rezTimers{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:750;width:min(520px,calc(100vw - 24px));
+  display:none;flex-direction:column;gap:8px}
+#rezTimers.on{display:flex}
+/* ⚠ Im Kochmodus zeigt die Kopfleiste die Timer (oben mittig), deshalb
+   bleibt die untere Leiste dort weg - sonst laeuft dieselbe Uhr zweimal. */
+body.cooking #rezTimers{display:none}
+/* Platz fuer die Leiste schaffen, statt Inhalt darunter zu verstecken. */
+body.timers-on .ck-nav{margin-bottom:84px}
+body.cooking.timers-on .ck-nav{margin-bottom:0}
+body.timers-on .pc{padding-bottom:96px}
+.tm-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--bd2);
+  background:var(--bg2);box-shadow:var(--shadow-pop);animation:riseIn var(--t-base) var(--e-out) both}
+.tm-row.ring{border-color:var(--accent);animation:tmRing 900ms var(--e-out) infinite}
+@keyframes tmRing{0%,100%{box-shadow:var(--shadow-pop)}50%{box-shadow:0 0 0 4px var(--accent-soft),var(--shadow-pop)}}
+/* Die Uhr ist die Hauptsache: gross und dicktengleich, damit sie beim
+   Laufen nicht zappelt. */
+.tm-clock{flex-shrink:0;font-size:26px;font-weight:800;font-family:var(--ff-num);font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;color:var(--t0);min-width:3.4em;text-align:center}
+.tm-row.ring .tm-clock{color:var(--accent)}
+.tm-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.tm-lbl{font-size:var(--fs-sm);color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-bar{height:4px;border-radius:999px;background:var(--bg5);overflow:hidden}
+.tm-bar span{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width 1s linear}
+.tm-mute{padding:9px 12px;border-radius:var(--r);border:1px solid var(--bd2);background:var(--bg4);color:var(--t1);
+  font-size:var(--fs-sm);line-height:var(--lh-base);box-shadow:var(--shadow-pop)}
+.tm-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tm-custom{display:flex;align-items:center;gap:9px}
+.tm-custom .m-inp{flex:1}
+.tm-unit{font-size:var(--fs-sm);color:var(--t2);flex-shrink:0}
+
+/* ══ ABSPIELLEISTE (nur YouTube) ════════════════════════════════════ */
+.yt-bar{display:flex;align-items:center;gap:9px;max-width:420px;margin:0 auto 8px;padding:8px 10px;
+  border:1px solid var(--bd2);border-radius:var(--rs);background:var(--bg3)}
+.yt-btn{flex-shrink:0;min-width:38px;height:32px;border-radius:var(--rss);border:1px solid var(--bd2);background:var(--bg2);
+  color:var(--t0);font-size:var(--fs-sm);font-weight:700;cursor:pointer;font-family:var(--ff-num)}
+@media (hover:hover){.yt-btn:hover{border-color:var(--accent);color:var(--accent)}}
+.yt-time{flex-shrink:0;font-size:var(--fs-sm);font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:var(--t2);min-width:3.1em;text-align:center}
+.yt-range{flex:1;min-width:0;accent-color:var(--accent);cursor:pointer}
+
+/* ══ "WAS KANN ICH KOCHEN?" ═════════════════════════════════════════ */
+.mt-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:230px;overflow-y:auto;padding:2px}
+.mt-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.mt-row:last-child{border-bottom:none}
+.mt-main{flex:1;min-width:0}
+.mt-nm{font-size:var(--fs-base);font-weight:700;color:var(--t0);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-sub{font-size:var(--fs-sm);color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ══ SONSTIGES ══════════════════════════════════════════════════════ */
+.rd-serv{float:right;display:flex;align-items:center;gap:8px;font-family:var(--ff-num);font-variant-numeric:tabular-nums;
+  text-transform:none;letter-spacing:0;font-size:var(--fs-sm);color:var(--t1)}
+.rd-notes-state{font-size:var(--fs-sm);color:var(--t3);min-height:1.2em;margin-top:-4px}
+.rd-chip-btn{cursor:pointer;font-family:var(--ff-text)}
+@media (hover:hover){.rd-chip-btn:hover{border-color:var(--accent);color:var(--accent)}}
+.rez-card-tw{min-width:0;flex:1}
+.rez-card-by{font-size:var(--fs-xs);color:rgba(255,255,255,.82);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.chip-n{opacity:.55;font-size:.85em;font-variant-numeric:tabular-nums}
+.gs-grp{margin-bottom:14px}
+.gs-grp-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);
+  border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:6px}
+.gs-res{max-height:min(460px,54vh);overflow-y:auto}
+
+/* ══ BILDER: STREIFEN, GROSSANSICHT, VIDEO ══════════════════════════
+   Nutzer-Wunsch 2026-09-02: die Bilder eines Rezepts sollen ueberall zu
+   sehen sein - auf der Karte, im Rezept und im Kochmodus. */
+.rez-card-imgs{position:absolute;top:9px;left:9px;display:inline-flex;align-items:center;gap:4px;
+  font-size:var(--fs-2xs);font-weight:800;color:#fff;background:rgba(20,12,7,.55);
+  border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:3px 8px;backdrop-filter:blur(3px);
+  font-variant-numeric:tabular-nums}
+.rez-card-imgs svg{width:11px;height:11px}
+.rd-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin:-4px 0 16px;scroll-snap-type:x proximity}
+.rd-strip img{flex:0 0 auto;width:96px;height:72px;object-fit:cover;border-radius:var(--rs);border:1px solid var(--bd);
+  cursor:zoom-in;scroll-snap-align:start;transition:transform var(--t-fast) var(--e-out),border-color var(--t-fast)}
+@media (hover:hover){.rd-strip img:hover{transform:translateY(-2px);border-color:var(--accent)}}
+.ck-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ck-strip img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--rss);border:1px solid var(--bd);cursor:zoom-in}
+.ck-step-img{max-height:38vh;object-fit:contain;align-self:flex-start}
+.rd-play{position:absolute;left:14px;bottom:14px;display:inline-flex;align-items:center;gap:8px;
+  padding:9px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(20,12,7,.58);
+  color:#fff;font-size:var(--fs-sm);font-weight:700;cursor:pointer;backdrop-filter:blur(4px);font-family:var(--ff-text)}
+@media (hover:hover){.rd-play:hover{background:rgba(20,12,7,.78)}}
+.rd-play svg{width:18px;height:18px}
+
+/* ══ TITELBILD AUS DEM VIDEO ════════════════════════════════════════
+   Zwei Spalten: links laeuft das Reel, rechts liegen die Quellen fuer das
+   Titelbild. Genau so, damit man das Video an der richtigen Stelle anhalten,
+   ein Bildschirmfoto machen und es SOFORT daneben einsetzen kann, ohne die
+   App zu verlassen (Nutzer-Wunsch 2026-09-02). */
+#rezCover{display:none}
+#rezCover.on{display:block}
+.cs-ov{position:fixed;inset:0;z-index:950;background:rgba(12,9,6,.92);display:flex;align-items:center;
+  justify-content:center;padding:20px;animation:ovIn var(--t-base) var(--e-out) both}
+.cs-box{width:min(1080px,96vw);max-height:92vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:var(--r);padding:20px;animation:modalIn var(--t-slow) var(--e-spring) both}
+.cs-hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cs-hd h3{flex:1;min-width:0;font-family:var(--ff-title);font-size:var(--fs-xl);font-weight:800;color:var(--t0);margin:0}
+.cs-x{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1px solid var(--bd2);background:var(--bg3);color:var(--t0);font-size:16px;cursor:pointer;line-height:1}
+.cs-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px}
+@media (max-width:900px){.cs-grid{grid-template-columns:1fr}}
+.cs-note{font-size:var(--fs-sm);color:var(--t2);line-height:var(--lh-normal);margin-bottom:12px}
+.cs-sec{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin:14px 0 8px}
+.cs-sec:first-child{margin-top:0}
+.cs-frames{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cs-frame{padding:0;border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;background:var(--bg3);cursor:pointer;
+  transition:border-color var(--t-fast),transform var(--t-fast) var(--e-out)}
+@media (hover:hover){.cs-frame:hover{border-color:var(--accent);transform:translateY(-2px)}}
+.cs-frame img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+.cs-frame span{display:block;padding:5px 6px;font-size:var(--fs-xs);font-weight:700;color:var(--t2)}
+.cs-drop{border:1.5px dashed var(--bd2);border-radius:var(--r);padding:18px;text-align:center;color:var(--t2);
+  font-size:var(--fs-sm);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+.cs-drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.cs-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cs-err{display:none;margin-top:10px;padding:9px 11px;border-radius:var(--rs);border:1px solid #B3352C;
+  background:rgba(179,53,44,.1);color:var(--t0);font-size:var(--fs-sm)}
+/* Zuschneiden: Bildschirmfotos vom Handy sind hochkant und haben oben und
+   unten die Bedienleisten des Telefons darauf - ohne Zuschnitt waere das
+   Titelbild zur Haelfte Telefon statt Essen. */
+.cs-crop{position:relative;display:inline-block;max-width:100%;line-height:0;touch-action:none;user-select:none}
+.cs-crop img{display:block;max-width:100%;max-height:56vh;border-radius:var(--rs)}
+.cs-sel{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);cursor:move;border-radius:2px}
+.cs-h{position:absolute;right:-9px;bottom:-9px;width:20px;height:20px;border-radius:50%;background:#fff;
+  border:2px solid var(--accent);cursor:nwse-resize}
+.cs-ratios{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.cs-ratio{padding:6px 12px;border-radius:999px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);
+  font-size:var(--fs-xs);font-weight:700;cursor:pointer;font-family:var(--ff-text)}
+.cs-ratio.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.cs-embed{border-radius:var(--r);overflow:hidden;border:1px solid var(--bd);background:#000}
+.cs-embed iframe{width:100%;aspect-ratio:9/16;max-height:56vh;border:0;display:block}
+.cs-embed.yt iframe{aspect-ratio:16/9}
+
+#rezLight,#rezVideo{display:none}
+#rezLight.on,#rezVideo.on{display:block}
+.lb-ov,.vd-ov{position:fixed;inset:0;z-index:900;background:rgba(12,9,6,.92);display:flex;align-items:center;
+  justify-content:center;padding:22px;animation:ovIn var(--t-base) var(--e-out) both}
+.lb-img{max-width:min(1200px,94vw);max-height:88vh;object-fit:contain;border-radius:var(--rs);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.lb-x{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:17px;cursor:pointer;line-height:1}
+@media (hover:hover){.lb-x:hover{background:rgba(255,255,255,.24)}}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.lb-prev{left:16px}.lb-next{right:16px}
+@media (hover:hover){.lb-nav:hover{background:rgba(255,255,255,.24)}}
+.lb-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.82);
+  font-size:var(--fs-sm);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
+.vd-box{width:100%;max-width:min(520px,94vw);max-height:92vh;overflow-y:auto;background:var(--bg2);
+  border:1px solid var(--bd);border-radius:var(--r);padding:16px;box-shadow:var(--shadow-pop);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.vd-hd{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.vd-title{flex:1;min-width:0;font-family:var(--ff-title);font-size:var(--fs-lg);font-weight:800;
+  letter-spacing:var(--ls-title);color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vd-hd .lb-x{position:static;width:32px;height:32px;border-color:var(--bd2);background:var(--bg3);color:var(--t0)}
+
+/* ══ BEWEGUNG ════════════════════════════════════════════════════════
+   Grundsatz: eine Animation erklaert, WOHER etwas kommt und WOHIN es geht.
+   Was nichts erklaert, bewegt sich nicht. Dauern und Kurven kommen aus den
+   Tokens oben, keine frei gewaehlten Werte.
+
+   ⚠ Zwei Abschalter, beide ernst gemeint:
+     1. prefers-reduced-motion (Systemeinstellung des Nutzers) - Pflicht,
+        das ist eine Barrierefreiheits-Anforderung, keine Geschmacksfrage.
+     2. body.no-anim (Schalter in den Einstellungen), damit man sie auch
+        ohne Systemeinstellung loswird - wie die vier Animationsschalter
+        im FX Analyst Pro.
+   ⚠ Animiert werden nur transform und opacity. Alles andere (width, top,
+   height) laesst den Browser bei jedem Bild neu rechnen und ruckelt auf dem
+   Handy - die einzige Ausnahme ist der Fortschrittsbalken, dessen Breite
+   die Aussage IST. */
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+@keyframes ovOut{from{opacity:1}to{opacity:0}}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes modalOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.985)}}
+@keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}to{transform:scale(1);opacity:1}}
+@keyframes rollFlip{0%{transform:translateY(0);opacity:1}45%{transform:translateY(-14px);opacity:0}
+  55%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes checkSweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* Fenster: echter Abgang statt Verschwinden. Ohne den wirkt jedes Schliessen
+   wie ein Sprung - der teuerste Qualitaetsunterschied fuer den geringsten
+   Aufwand. rezCloseModal() setzt .closing und raeumt danach auf. */
+.ov.closing{animation:ovOut var(--t-fast) var(--e-in) both;pointer-events:none}
+.ov.closing .modal{animation:modalOut var(--t-fast) var(--e-in) both}
+
+/* Seitenwechsel: die Seite blendet auf, die Karten darin folgen gestaffelt.
+   --i setzt renderStagger() je Kind, gedeckelt - bei 40 Karten wuerde die
+   letzte sonst erst nach einer Sekunde erscheinen. */
+.page-fade-in{animation:fadeIn var(--t-base) var(--e-out) both}
+.page-fade-in .ptitle{animation:riseIn var(--t-slow) var(--e-out) both}
+.page-fade-in .psub{animation:riseIn var(--t-slow) var(--e-out) both;animation-delay:30ms}
+.stagger>*{animation:riseIn var(--t-slow) var(--e-out) both;animation-delay:calc(var(--i,0) * var(--stagger))}
+
+/* Karten: Druckfeedback. Ein Element, das sich beim Antippen nicht regt,
+   fuehlt sich auf dem Handy tot an. */
+.rez-card:active,.dw-click:active,.pick-row:active,.week-item:active{transform:scale(.985)}
+.btn:active:not(:disabled),.tag-chip:active,.uc-btn:active,.cat-opt:active,.week-add:active{transform:scale(.97)}
+.btn,.tag-chip,.uc-btn,.cat-opt,.week-add,.rez-card,.dw-click,.pick-row{transition:transform var(--t-fast) var(--e-out),
+  background var(--t-fast) linear,border-color var(--t-fast) linear,color var(--t-fast) linear,box-shadow var(--t-base) var(--e-out)}
+
+/* Bilder blenden auf, statt hart zu erscheinen - besonders sichtbar beim
+   Blaettern durch das Raster, wo Thumbnails nacheinander fertig werden. */
+.rez-card-img,.today-img,.pick-thumb,.week-thumb,.cook-thumb,.trash-thumb,.rd-hero img{
+  opacity:0;transition:opacity var(--t-base) var(--e-out)}
+.rez-card-img.rdy,.today-img.rdy,.pick-thumb.rdy,.week-thumb.rdy,.cook-thumb.rdy,.trash-thumb.rdy,.rd-hero img.rdy,
+div.rez-card-img,span.pick-thumb,span.week-thumb,span.cook-thumb,div.trash-thumb{opacity:1}
+
+/* Gleitende Auswahl-Markierung in der Sidebar: EIN Balken, der zum aktiven
+   Eintrag wandert, statt an sechs Stellen an- und auszugehen. Das zeigt den
+   Zusammenhang zwischen alter und neuer Auswahl. */
+#rezNav{position:relative}
+#rezNavInd{position:absolute;left:0;width:3px;border-radius:0 2px 2px 0;background:var(--accent);
+  transform:translateY(var(--y,0));height:var(--h,0);opacity:0;
+  transition:transform var(--t-base) var(--e-out),height var(--t-base) var(--e-out),opacity var(--t-fast) linear;
+  pointer-events:none;z-index:1}
+#rezNavInd.on{opacity:1}
+.np.on{border-left-color:transparent}   /* der Balken uebernimmt die Markierung */
+
+/* Zufallsgenerator: der Vorschlag dreht sich einmal durch, statt lautlos
+   ausgetauscht zu werden - dieselbe Geste wie ein Wuerfel. */
+.rnd-flip{animation:rollFlip 420ms var(--e-out) both}
+
+/* Einkaufsliste: der Haken bekommt ein Echo, und die Durchstreichung faehrt
+   von links nach rechts durch, statt einfach dazusein. */
+.shop-row .shop-txt{position:relative;display:inline-block}
+.shop-row.done .shop-txt{text-decoration:none}
+.shop-row.done .shop-txt::after{content:'';position:absolute;left:0;right:0;top:52%;height:1.5px;
+  background:currentColor;transform-origin:left center;animation:checkSweep var(--t-base) var(--e-out) both}
+.shop-row input[type=checkbox]{transition:transform var(--t-fast) var(--e-spring)}
+.shop-row input[type=checkbox]:checked{transform:scale(1.12)}
+.shop-sugg.on{animation:riseIn var(--t-fast) var(--e-out) both}
+.shop-sugg-row{animation:fadeIn var(--t-fast) var(--e-out) both;animation-delay:calc(var(--i,0) * 18ms)}
+.shop-bar-fill{transition:width var(--t-slow) var(--e-out)}
+
+/* Neu eingefuegte Zeile hebt sich kurz hervor - sonst weiss man auf einer
+   langen Liste nicht, wo der Eintrag gelandet ist. */
+@keyframes justAdded{from{background:var(--accent-soft)}to{background:transparent}}
+.just-added{animation:justAdded 900ms var(--e-out) both}
+
+/* Sterne im Verlauf */
+.cook-star{transition:transform var(--t-fast) var(--e-spring),color var(--t-fast) linear}
+.cook-star:active{transform:scale(1.25)}
+.cook-star.on svg{animation:popIn var(--t-base) var(--e-spring) both}
+
+/* ⚠ Beide Abschalter. Der Stern-Selektor ist bewusst grob: eine vergessene
+   Einzelregel waere genau die, die jemanden mit Bewegungsempfindlichkeit
+   trifft. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;
+    transition-duration:1ms!important;scroll-behavior:auto!important}
+  .rez-card-img,.today-img,.pick-thumb,.week-thumb,.cook-thumb,.trash-thumb,.rd-hero img{opacity:1}
+}
+body.no-anim *,body.no-anim *::before,body.no-anim *::after{
+  animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+body.no-anim .rez-card-img,body.no-anim .today-img,body.no-anim .pick-thumb,
+body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body.no-anim .rd-hero img{opacity:1}
+
+/* ══ TOAST ═══════════════════════════════════════════════════════════ */
+#rezToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:600;background:#1F2328;color:#FFFFFF;font-size:var(--fs-base);font-weight:600;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#rezToast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo"><span class="logo-a">Perfect</span><span class="logo-b">Rezept</span></div>
+  <div class="hdr-search" onclick="rezFocusSearch()" title="Search recipes">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span class="hdr-search-lbl">Search recipes...</span>
+  </div>
+  <div class="hdr-status">
+    <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-9 - Zwei Fehler aus dem zweiten Bugreport: die Zubereitung landete weiter in der Zutatenliste, wenn sie in kurzen Zeilen geschrieben ist (auch "enjoy" wurde als Zutat gefuehrt) - jetzt entscheidet zusaetzlich, ob eine Zeile wie ein Satz aussieht oder mit einem Kochverb beginnt, waehrend Zutaten ohne Menge wie "Fresh basil to serve" Zutaten bleiben. Und der eigentliche Grund, warum Reparaturen "wie davor" aussahen: der Service Worker lieferte den Programmcode aus dem Cache aus, neue Fassungen wirkten erst beim uebernaechsten Oeffnen - Skripte kommen jetzt zuerst aus dem Netz. Ausserdem: Kochmodus in drei Spalten (links Zutaten, Mitte Bild ODER Video im Format des Bildes, rechts die Zubereitung, oben mittig die Timer) und ein neues Titelbild-Fenster, das bei YouTube echte Standbilder anbietet und bei Instagram/TikTok das Reel neben dem Bildschirmfoto-Auswahl laufen laesst, samt Zuschnitt.">
+      <span class="hlb-dot"></span>
+      <span class="hlb-lbl">LIVE</span>
+      <span class="hlb-sep">·</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-9</span>
+    </span>
+  </div>
+  <div class="hdr-r">
+    <button class="btn" onclick="rezOpenTimerDialog()" title="Start a kitchen timer">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.6"/><path d="M9 2h6"/></svg>
+      <span> Timer</span>
+    </button>
+    <button class="btn" onclick="rezOpenSettings()" title="Settings, themes, trash &amp; app switch">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span> Settings</span>
+    </button>
+    <button class="profile-btn" onclick="rezOpenSettings()" title="Cloud sync">
+      <span class="profile-circle" id="rezProfileCircle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+    </button>
+  </div>
+</div>
+
+<div class="app-shell">
+  <nav id="rezNav"><span id="rezNavInd"></span></nav>
+  <div id="rezPageArea">
+    <div class="pc" id="pgOverview"></div>
+    <div class="pc" id="pgRecipes" style="display:none"></div>
+    <div class="pc" id="pgInspo" style="display:none"></div>
+    <div class="pc" id="pgWeek" style="display:none"></div>
+    <div class="pc" id="pgShopping" style="display:none"></div>
+    <div class="pc" id="pgCooked" style="display:none"></div>
+  </div>
+</div>
+
+<div id="rezModals"></div>
+<div id="rezConfirm"></div>
+<!-- Kochmodus (Vollbild) und die Timer-Leiste liegen AUSSERHALB der App-Shell:
+     der Kochmodus deckt alles ab, die Timer-Leiste muss auch dann sichtbar
+     bleiben, wenn man den Kochmodus verlaesst - ein Timer, den man beim
+     Wegklicken verliert, ist keiner. -->
+<div id="rezCook"></div>
+<div id="rezTimers"></div>
+<!-- Grossansicht und Video liegen ueber ALLEM - sie muessen auch aus dem
+     Kochmodus heraus funktionieren, und der deckt bereits die App-Shell ab. -->
+<div id="rezLight"></div>
+<div id="rezVideo"></div>
+<!-- Titelbild aus dem Video: liegt UEBER dem Rezept-Formular, damit das
+     Formular darunter offen (und ungespeichert) bleiben darf. -->
+<div id="rezCover"></div>
+<div id="rezToast"></div>
+
+<script type="module" src="js/rezept/app.js"></script>
+<script>
+// Service Worker wie beim FX Analyst Pro (dieselbe sw.js bedient beide
+// Seiten - siehe APP_SHELL dort).
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
+</script>
+</body>
+</html>
