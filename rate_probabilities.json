@@ -839,11 +839,11 @@
     [
      [
       "2026-09-16",
-      17
+      16
      ],
      [
       "2026-10-28",
-      8
+      7
      ],
      [
       "2026-12-09",
@@ -859,21 +859,21 @@
     "date": "2026-09-16",
     "label": "Sep 15-16, 2026",
     "rateBefore": 3.63,
-    "rateAfter": 3.8,
-    "deltaBp": 17
+    "rateAfter": 3.79,
+    "deltaBp": 16
    },
    {
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
-    "rateBefore": 3.8,
-    "rateAfter": 3.88,
-    "deltaBp": 8
+    "rateBefore": 3.79,
+    "rateAfter": 3.86,
+    "deltaBp": 7
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.88,
-    "rateAfter": 4.03,
+    "rateBefore": 3.86,
+    "rateAfter": 4.02,
     "deltaBp": 16
    }
   ],
@@ -1598,7 +1598,7 @@
     [
      [
       "2026-09-10",
-      7
+      6
      ],
      [
       "2026-10-29",
@@ -1617,9 +1617,9 @@
    {
     "date": "2026-09-10",
     "label": "Sep 10, 2026",
-    "rateBefore": 2.63,
+    "rateBefore": 2.62,
     "rateAfter": 2.69,
-    "deltaBp": 7,
+    "deltaBp": 6,
     "approx": true
    },
    {
@@ -1634,7 +1634,7 @@
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
     "rateBefore": 2.8,
-    "rateAfter": 2.93,
+    "rateAfter": 2.92,
     "deltaBp": 12,
     "approx": true
    }
@@ -2385,7 +2385,7 @@
      ],
      [
       "2026-12-17",
-      17
+      18
      ]
     ]
    ]
@@ -2405,16 +2405,16 @@
     "date": "2026-11-05",
     "label": "Nov 5, 2026",
     "rateBefore": 4.11,
-    "rateAfter": 4.15,
+    "rateAfter": 4.14,
     "deltaBp": 4,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 4.15,
+    "rateBefore": 4.14,
     "rateAfter": 4.32,
-    "deltaBp": 17,
+    "deltaBp": 18,
     "approx": true
    }
   ],
@@ -3139,15 +3139,15 @@
     [
      [
       "2026-09-02",
-      9
+      14
      ],
      [
       "2026-10-28",
-      10
+      14
      ],
      [
       "2026-12-09",
-      11
+      14
      ]
     ]
    ]
@@ -3159,24 +3159,24 @@
     "date": "2026-09-02",
     "label": "Sep 2, 2026",
     "rateBefore": 2.25,
-    "rateAfter": 2.34,
-    "deltaBp": 9,
+    "rateAfter": 2.39,
+    "deltaBp": 14,
     "approx": true
    },
    {
     "date": "2026-10-28",
     "label": "Oct 28, 2026",
-    "rateBefore": 2.34,
-    "rateAfter": 2.44,
-    "deltaBp": 10,
+    "rateBefore": 2.39,
+    "rateAfter": 2.53,
+    "deltaBp": 14,
     "approx": true
    },
    {
     "date": "2026-12-09",
     "label": "Dec 9, 2026",
-    "rateBefore": 2.44,
-    "rateAfter": 2.55,
-    "deltaBp": 11,
+    "rateBefore": 2.53,
+    "rateAfter": 2.66,
+    "deltaBp": 14,
     "approx": true
    }
   ],
@@ -3966,7 +3966,7 @@
     [
      [
       "2026-09-29",
-      18
+      19
      ],
      [
       "2026-11-03",
@@ -3986,13 +3986,13 @@
     "date": "2026-09-29",
     "label": "Sep 28-29, 2026",
     "rateBefore": 4.35,
-    "rateAfter": 4.53,
-    "deltaBp": 18
+    "rateAfter": 4.54,
+    "deltaBp": 19
    },
    {
     "date": "2026-11-03",
     "label": "Nov 2-3, 2026",
-    "rateBefore": 4.53,
+    "rateBefore": 4.54,
     "rateAfter": 4.66,
     "deltaBp": 12
    },
