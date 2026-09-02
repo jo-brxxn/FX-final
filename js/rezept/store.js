@@ -169,8 +169,61 @@ export function getCloudCfg(){
   }catch(e){}
   return null;
 }
-function cloudHeaders(cfg){return{'apikey':cfg.key,'Authorization':'Bearer '+cfg.key,'Content-Type':'application/json'};}
+// ⚠ NUR `apikey`, KEIN `Authorization: Bearer`.
+// Nutzer-Bugreport 2026-09-02 ("Sync failed: HTTP 401"), gegen einen
+// nachgebauten Supabase-Endpunkt reproduziert: diese Datei schickte
+// zusaetzlich `Authorization: Bearer <key>`. Bei den heutigen
+// Supabase-Schluesseln (`sb_publishable_...`) ist das KEIN gueltiges JWT -
+// der API-Gateway prueft den Header, sobald er da ist, und antwortet 401,
+// obwohl der apikey voellig in Ordnung ist. Der FX Analyst Pro schickt seit
+// jeher nur `apikey` (js/main.js, cloudHeaders) und funktionierte deshalb -
+// genau derselbe Schluessel, dieselbe Tabelle, anderes Ergebnis.
+// Messung (curl gegen den Nachbau, selber Schluessel):
+//   nur apikey ......................... 200
+//   apikey + Bearer sb_publishable_.. .. 401
+//   apikey + Bearer eyJ... (alt) ....... 200
+// MERKSATZ: Beim Sprechen mit derselben Gegenstelle wie der FX Analyst Pro
+// die Kopfzeilen NICHT neu erfinden - dort abschreiben.
+function cloudHeaders(cfg){return{'apikey':cfg.key,'Content-Type':'application/json'};}
+// Aus einer Antwort eine Meldung machen, mit der der Nutzer etwas anfangen
+// kann. "HTTP 401" allein sagt ihm nichts - er soll wissen, WO er nachsieht.
+async function httpFehler(res){
+  let detail='';
+  try{const t=await res.text();if(t)detail=' — '+t.slice(0,160);}catch(e){}
+  if(res.status===401)return new Error('API key rejected (401). Open Settings → Cloud sync and paste a fresh key from Supabase → Project Settings → API'+detail);
+  if(res.status===403)return new Error('Access denied (403). The table exists but its row-level security rules block this key'+detail);
+  if(res.status===404)return new Error('Table "fx_sync" not found (404). Check the project URL'+detail);
+  if(res.status===429)return new Error('Too many requests (429). Supabase is rate limiting — try again in a moment');
+  if(res.status>=500)return new Error('Supabase is unavailable ('+res.status+'). Try again later');
+  return new Error('HTTP '+res.status+detail);
+}
 function rowId(cfg,suffix){return cfg.syncId+':rez:'+suffix;}
+// Schreibt DIESELBEN Zugangsdaten, die der FX Analyst Pro nutzt (ein
+// gemeinsamer Schluessel, siehe docs/rezept.md) - damit laesst sich ein
+// abgelehnter Schluessel in jeder der beiden Apps reparieren.
+export function saveCloudCfg(url,key,syncId){
+  const alt=(()=>{try{return JSON.parse(localStorage.getItem(FX_CLOUD_CFG))||{};}catch(e){return{};}})();
+  const cfg=Object.assign({},alt,{url:String(url||'').trim().replace(/\/+$/,''),
+    key:String(key||'').trim(),syncId:String(syncId||'').trim()});
+  if(!cfg.url||!cfg.key||!cfg.syncId)throw new Error('URL, API key and Sync ID are all required');
+  localStorage.setItem(FX_CLOUD_CFG,JSON.stringify(cfg));
+  return cfg;
+}
+// Einmal hin und zurueck, damit der Nutzer eine klare Auskunft bekommt statt
+// eines stummen "irgendwas klemmt".
+export async function testConnection(){
+  const cfg=getCloudCfg();
+  if(!cfg)return{ok:false,msg:'No credentials saved yet.'};
+  try{
+    const res=await fetch(cfg.url+'/rest/v1/fx_sync?select=id&limit=1',
+      {headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
+    if(!res.ok){const e=await httpFehler(res);return{ok:false,msg:e.message};}
+    await res.json();
+    return{ok:true,msg:'Connection works — table fx_sync is reachable.'};
+  }catch(e){
+    return{ok:false,msg:(e&&e.name==='TimeoutError')?'No answer within 12 s — check the project URL or your connection.':(e&&e.message||String(e))};
+  }
+}
 
 // ⚠ Der Zeitstempel entscheidet bei JEDER Kollision, welche Fassung gewinnt.
 // Ohne Bump propagiert eine Aenderung nicht - exakt dieselbe Falle wie
@@ -363,7 +416,7 @@ export async function getFull(id){
 async function fetchIndexRow(cfg){
   const res=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(rowId(cfg,'index'))+'&select=data,updated_at',
     {headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
-  if(!res.ok)throw new Error('HTTP '+res.status);
+  if(!res.ok)throw await httpFehler(res);
   const rows=await res.json();
   return rows.length?rows[0]:null;
 }
@@ -374,7 +427,7 @@ async function putRow(cfg,id,data,updated){
     body:JSON.stringify([{id,data,updated_at:updated}]),
     signal:AbortSignal.timeout(20000)
   });
-  if(!res.ok)throw new Error('HTTP '+res.status);
+  if(!res.ok)throw await httpFehler(res);
 }
 
 // Ein vollstaendiger lies-merge-schreib-Zyklus fuer das Verzeichnis.
@@ -407,11 +460,13 @@ export async function syncIndex(manual){
         try{localStorage.setItem(LS_SEEN,stamp);}catch(e){}
       }
       _indexDirty=false;
+      state.lastError='';
       setStatus('Synced '+new Date().toLocaleTimeString());
       emit('index');
       return true;
     }catch(e){
-      setStatus('Sync failed: '+e.message);
+      state.lastError=e.message||String(e);
+      setStatus('Sync failed: '+state.lastError);
       return false;
     }
   });
@@ -606,13 +661,25 @@ async function commitShopping(){
   emit('index');
   scheduleSync();
 }
-export async function addShopping(text,src){
+export async function addShopping(text,src,cat){
   const t=(text||'').trim();
   if(!t)return null;
-  const it={id:uid(),text:t,done:false,src:src||'',up:nowIso()};
+  const it={id:uid(),text:t,done:false,src:src||'',cat:cat||'',up:nowIso()};
   state.index.shopping.items.push(it);
   await commitShopping();
   return it.id;
+}
+export async function updateShopping(id,felder){
+  const it=state.index.shopping.items.find(x=>x.id===id);
+  if(!it)return;
+  Object.assign(it,felder,{up:nowIso()});
+  await commitShopping();
+}
+export async function setAllShoppingDone(done){
+  let n=0;
+  state.index.shopping.items.forEach(i=>{if(!i.del&&!!i.done!==!!done){i.done=!!done;i.up=nowIso();n++;}});
+  if(n)await commitShopping();
+  return n;
 }
 export async function toggleShopping(id){
   const it=state.index.shopping.items.find(x=>x.id===id);
@@ -661,7 +728,7 @@ export async function addIngredients(liste){
     const key=normIngredient(text);
     if(!key||vorhanden.has(key))return;
     vorhanden.add(key);
-    state.index.shopping.items.push({id:uid(),text:String(text).trim(),done:false,src:src||'',up:nowIso()});
+    state.index.shopping.items.push({id:uid(),text:String(text).trim(),done:false,src:src||'',cat:'',up:nowIso()});
     n++;
   });
   if(n)await commitShopping();

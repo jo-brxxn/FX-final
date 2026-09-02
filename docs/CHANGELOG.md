@@ -8802,3 +8802,75 @@ Ebenfalls nachgezogen: die Nachfrage bei ungespeicherten Eingaben deckt jetzt
 **beide** Eingabemasken ab (`offeneEingabe()`). Die Inspirations-Maske war
 beim Bau zunächst vergessen — dort hätte ein Klick daneben wieder alles
 verworfen, obwohl das Rezept-Formular längst geschützt war.
+
+---
+
+## 2026-09-02 (2) — SYNC-401 BEHOBEN + NEUE EINKAUFSLISTE (REZEPT-CHECK-4)
+
+### „Sync failed: HTTP 401" — die Ursache war eine selbst erfundene Kopfzeile
+
+Nutzer-Meldung: *„Sync failed: HTTP 401. sync geht nicht."* Gegen einen
+nachgebauten Supabase-Endpunkt reproduziert, nicht geraten:
+
+| Anfrage | Antwort |
+|---|---|
+| nur `apikey` (so macht es der FX Analyst Pro) | **200** |
+| `apikey` + `Authorization: Bearer sb_publishable_…` (so machte es die Rezept-App) | **401** |
+| `apikey` + `Authorization: Bearer eyJ…` (alter JWT-Schlüssel) | 200 |
+
+`js/rezept/store.js` schickte zusätzlich `Authorization: Bearer <key>`.
+Bei den heutigen Supabase-Schlüsseln (`sb_publishable_…`) ist das **kein
+gültiges JWT** — der API-Gateway prüft den Header, sobald er da ist, und
+lehnt ab, obwohl der `apikey` völlig in Ordnung ist. `js/main.js`
+(`cloudHeaders`) schickt seit jeher nur `apikey` und funktionierte deshalb:
+derselbe Schlüssel, dieselbe Tabelle, anderes Ergebnis. **Merksatz: beim
+Sprechen mit derselben Gegenstelle wie der FX Analyst Pro die Kopfzeilen
+nicht neu erfinden, sondern dort abschreiben.** `check/rezept.js` vergleicht
+sie jetzt statisch und meldet jede Abweichung — per Mutation nachgewiesen.
+
+Dazu drei Dinge, die den Fehler beim nächsten Mal selbsterklärend machen:
+`httpFehler()` übersetzt 401/403/404/429/5xx in Meldungen, die sagen **wo man
+nachsieht**; die Zugangsdaten sind jetzt auch in der Rezept-App editierbar
+(vorher hieß es „richte das im FX Analyst Pro ein" — eine Reparatur zwang
+zum App-Wechsel); und ein „Test"-Knopf sagt in einem Satz, was die
+Gegenstelle antwortet.
+
+### Einkaufsliste neu gebaut
+
+Nutzer: *„mach die Einkaufsliste besser … schöneres Listen-Design … wenn man
+ein Produkt sucht schon Vorschläge da … unterteilt in Kategorien wie
+Backwaren und Gemüse."*
+
+Neu ist `js/rezept/groceries.js` — neun Abteilungen und ein Wörterbuch mit
+rund 150 Produktgruppen. **Jeder Eintrag trägt einen englischen Anzeigenamen
+und deutsche Suchwörter**, weil die Oberfläche englisch ist, der Nutzer aber
+deutsch tippt: „Milch" findet „Milk", „zwie" findet „Onions". Frei getippter
+Text bleibt unangetastet — ersetzt wird nur, was aus der Vorschlagsliste
+gewählt wird.
+
+Funktionen: Gruppierung nach Abteilung (einklappbar, mit Anzahl), Vorschläge
+beim Tippen aus **eigener Historie zuerst** (trifft den Sprachgebrauch besser
+als jedes Wörterbuch) und dann dem Wörterbuch, Pfeiltasten + Enter,
+Mengen-Erkennung mit eigenem Badge (`500 g Mehl` → `500 g` + `Mehl`),
+Fortschrittsbalken, Sortierung nach Abteilung oder Alter, alles abhaken,
+erledigte löschen, Schnellwahl häufig gekaufter Artikel, und ein
+Bearbeiten-Fenster, in dem **die Abteilung korrigierbar** ist — die
+automatische Zuordnung ist eine Hilfe, keine Behauptung.
+
+**Nichts wird geraten:** was das Wörterbuch nicht kennt, landet in „Other".
+
+Zwei Fehler, die der erste Testlauf der Warenkunde gefunden hat und die
+deshalb jetzt Tests haben: „Bio-Zitrone" landete in „Other", weil der
+Bindestrich die Wortsuche blockierte (Bindestriche werden jetzt zu
+Leerzeichen); und „Tomatensauce" landete beim Gemüse, weil die
+Zusammensetzungs-Regel an „Tomaten" hängen blieb — verarbeitete Produkte
+brauchen einen eigenen Wörterbuch-Eintrag.
+
+Ebenfalls gefunden beim Ansehen des eigenen Screenshots: ein „1×"-Badge an
+jeder Zeile ohne echte Menge. Eine Einheit ohne Aussage macht die Liste nur
+unruhig — wird jetzt weggelassen, echte Mengen bleiben.
+
+`check/rezept.js` prüft die Einkaufsliste als eigene Stufe I: Abteilungen,
+Mengen-Anzeige, Vorschläge auf deutsche Eingabe, Übernehmen, Abhaken,
+Fortschritt, „Check all", Sortier-Umschaltung und die von Hand gesetzte
+Abteilung.

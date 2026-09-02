@@ -12,6 +12,7 @@
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
 import {detectLink,parseCaption,captionToRecipe} from './import.js';
+import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
 
 // ── Konstanten ───────────────────────────────────────────────────────────
 const PAGES={overview:'pgOverview',recipes:'pgRecipes',inspo:'pgInspo',
@@ -708,36 +709,177 @@ export async function rezWeekToShopping(){
 }
 
 // ══ EINKAUFSLISTE ════════════════════════════════════════════════════════
+// Nach Abteilungen sortiert, wie man durch den Laden laeuft (Nutzer-Wunsch
+// 2026-09-02: "die Liste unterteilt in Kategorien wie Backwaren und Gemüse").
+// Die Abteilung kommt aus js/rezept/groceries.js und ist je Eintrag
+// ueberschreibbar - was das Woerterbuch nicht kennt, landet in "Other" statt
+// in einer plausibel klingenden, aber geratenen Abteilung.
+const shopState={sort:'cat',zu:new Set(),vorschlag:-1,letzteQ:''};
+function catOf(i){return i.cat||categorize(i.text);}
+// Eigene Historie: alles, was schon einmal auf der Liste stand - nach
+// Haeufigkeit. Trifft den Sprachgebrauch des Nutzers besser als jedes
+// Woerterbuch, deshalb steht sie in den Vorschlaegen vorn.
+function shopVerlauf(){
+  const z=new Map();
+  (S.state.index.shopping.items||[]).forEach(i=>{
+    const k=i.text.trim();
+    if(!k)return;
+    const e=z.get(k.toLowerCase())||{text:k,cat:i.cat||'',n:0};
+    e.n++;if(i.cat)e.cat=i.cat;
+    z.set(k.toLowerCase(),e);
+  });
+  return[...z.values()].sort((a,b)=>b.n-a.n);
+}
 export function renderShopping(){
   const el=$('pgShopping');if(!el)return;
   const items=S.shoppingItems();
   const offen=items.filter(i=>!i.done),erledigt=items.filter(i=>i.done);
-  const zeile=i=>`<label class="shop-row${i.done?' done':''}">`
-      +`<input type="checkbox" ${i.done?'checked':''} onchange="rezShopToggle('${i.id}')">`
-      +`<span class="shop-txt">${escH(i.text)}</span>`
-      +(i.src?`<span class="shop-src">${escH(i.src)}</span>`:'')
-      +`<button class="rf-x" onclick="event.preventDefault();rezShopRemove('${i.id}')" title="Remove" aria-label="Remove">×</button></label>`;
+  const fortschritt=items.length?Math.round(erledigt.length/items.length*100):0;
+  const haeufig=shopVerlauf().filter(v=>v.n>1&&!items.some(i=>!i.done&&i.text.toLowerCase()===v.text.toLowerCase())).slice(0,6);
+
   el.innerHTML=
      `<div class="ptitle">Shopping</div>`
     +`<div class="psub">${items.length?`${offen.length} still to buy · ${erledigt.length} done`:'Your shopping list is empty'}</div>`
-    +`<div class="rez-toolbar">`
-      +`<div class="rez-search"><input id="shopNew" type="text" placeholder="Add an item and press Enter..." onkeydown="if(event.key==='Enter')rezShopAdd()"></div>`
-      +`<button class="btn btn-primary" onclick="rezShopAdd()">${icn('plus',14)} Add</button>`
-      +`<button class="btn" onclick="rezWeekToShopping()">${icn('week',13)} From this week's plan</button>`
-      +(erledigt.length?`<button class="btn" onclick="rezShopClearDone()">Clear ${erledigt.length} done</button>`:'')
+    +`<div class="shop-add">`
+      +`<div class="shop-inp">${icn('plus',15)}`
+        +`<input id="shopNew" type="text" autocomplete="off" placeholder="Add an item — suggestions appear as you type"`
+        +` oninput="rezShopSuggest(this.value)" onkeydown="rezShopKey(event)" onfocus="rezShopSuggest(this.value)"></div>`
+      +`<button class="btn btn-primary" onclick="rezShopAdd()">Add</button>`
+      +`<div class="shop-sugg" id="shopSugg"></div>`
     +`</div>`
-    +(items.length
-      ? `<div class="shop-list">`+offen.map(zeile).join('')
-        +(erledigt.length?`<div class="shop-sep">Done</div>`+erledigt.map(zeile).join(''):'')+`</div>`
-      : `<div class="rez-empty"><h4>Nothing to buy</h4>`
-        +`<p>Add items by hand, or plan your week and pull the ingredients in automatically.</p>`
-        +`<button class="btn btn-primary" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button></div>`);
+    +(haeufig.length?`<div class="shop-quick"><span class="shop-quick-lbl">Often bought</span>`
+      +haeufig.map((v,i)=>`<button class="tag-chip" onclick="rezShopQuick(${i})">${escH(v.text)}</button>`).join('')+`</div>`:'')
+    +(items.length?
+       `<div class="shop-bar"><div class="shop-bar-fill" style="width:${fortschritt}%"></div></div>`
+      +`<div class="shop-tools">`
+        +`<span class="shop-count">${erledigt.length} of ${items.length} done</span>`
+        +`<span class="shop-tools-sp"></span>`
+        +`<button class="btn" onclick="rezWeekToShopping()">${icn('week',13)} From this week's plan</button>`
+        +`<button class="btn" onclick="rezShopSort()">${shopState.sort==='cat'?'Sorted by aisle':'Sorted by newest'}</button>`
+        +`<button class="btn" onclick="rezShopAll(${offen.length?'true':'false'})">${offen.length?'Check all':'Uncheck all'}</button>`
+        +(erledigt.length?`<button class="btn btn-danger" onclick="rezShopClearDone()">${icn('trashIcon',13)} Clear done</button>`:'')
+      +`</div>`
+      +shopBody(items)
+      :`<div class="rez-empty"><h4>Nothing to buy</h4>`
+       +`<p>Type an item above — it is sorted into the right aisle automatically. Or plan your week and pull the ingredients in.</p>`
+       +`<button class="btn btn-primary" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button>`
+       +`<button class="btn" onclick="rezWeekToShopping()">${icn('shopping',13)} From this week's plan</button></div>`);
+}
+function shopZeile(i){
+  const g=splitQty(i.text);
+  const name=g.name;
+  // "1×" ist keine Information - eine Einheit ohne Aussage macht die Zeile
+  // nur unruhig. Echte Mengen ("500 g", "2×") bleiben stehen.
+  const qty=(g.qty==='1×')?'':g.qty;
+  return`<label class="shop-row${i.done?' done':''}">`
+    +`<input type="checkbox" ${i.done?'checked':''} onchange="rezShopToggle('${i.id}')">`
+    +`<span class="shop-txt">${escH(name)}</span>`
+    +(qty?`<span class="shop-qty">${escH(qty)}</span>`:'')
+    +(i.src?`<span class="shop-src" title="${escH(i.src)}">${escH(i.src)}</span>`:'')
+    +`<button class="rf-x" onclick="event.preventDefault();rezShopEdit('${i.id}')" title="Edit" aria-label="Edit">✎</button>`
+    +`<button class="rf-x" onclick="event.preventDefault();rezShopRemove('${i.id}')" title="Remove" aria-label="Remove">×</button></label>`;
+}
+function shopBody(items){
+  if(shopState.sort!=='cat'){
+    const sortiert=[...items].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.up||'').localeCompare(a.up||''));
+    return`<div class="shop-list">`+sortiert.map(shopZeile).join('')+`</div>`;
+  }
+  // Nach Abteilung gruppiert; erledigte Eintraege sammeln sich unten, damit
+  // die Liste beim Einkaufen kuerzer wird statt gleich lang zu bleiben.
+  const offen=items.filter(i=>!i.done),erledigt=items.filter(i=>i.done);
+  let html='';
+  CATS.forEach(c=>{
+    const drin=offen.filter(i=>catOf(i)===c.id);
+    if(!drin.length)return;
+    const zu=shopState.zu.has(c.id);
+    html+=`<div class="shop-cat${zu?' zu':''}">`
+      +`<button class="shop-cat-hd" onclick="rezShopFold('${c.id}')">`
+        +`<span class="shop-cat-ic">${c.icon}</span><span class="shop-cat-nm">${escH(c.label)}</span>`
+        +`<span class="shop-cat-n">${drin.length}</span><span class="shop-cat-ar">▾</span></button>`
+      +`<div class="shop-cat-body">`+drin.map(shopZeile).join('')+`</div></div>`;
+  });
+  if(erledigt.length){
+    html+=`<div class="shop-cat"><div class="shop-cat-hd shop-cat-done">`
+      +`<span class="shop-cat-ic">${icn('check',14)}</span><span class="shop-cat-nm">Done</span>`
+      +`<span class="shop-cat-n">${erledigt.length}</span></div>`
+      +`<div class="shop-cat-body">`+erledigt.map(shopZeile).join('')+`</div></div>`;
+  }
+  return`<div class="shop-list">`+(html||`<div class="shop-sep">Everything done</div>`)+`</div>`;
+}
+export function rezShopFold(id){
+  if(shopState.zu.has(id))shopState.zu.delete(id);else shopState.zu.add(id);
+  renderShopping();
+}
+export function rezShopSort(){
+  shopState.sort=shopState.sort==='cat'?'new':'cat';
+  renderShopping();
+}
+export async function rezShopAll(done){
+  const n=await S.setAllShoppingDone(done);
+  renderShopping();renderNav();
+  toast(n?`${n} item${n===1?'':'s'} updated`:'Nothing to change');
+}
+
+// ── Vorschlaege ────────────────────────────────────────────────────────
+let _shopSugg=[],_shopQuick=[];
+export function rezShopSuggest(v){
+  shopState.letzteQ=v;
+  _shopSugg=suggest(v,shopVerlauf(),7);
+  shopState.vorschlag=-1;
+  const host=$('shopSugg');
+  if(!host)return;
+  if(!_shopSugg.length||!v.trim()){host.innerHTML='';host.classList.remove('on');return;}
+  host.classList.add('on');
+  host.innerHTML=_shopSugg.map((sg,i)=>{
+    const c=CAT_BY_ID[sg.cat]||CAT_BY_ID.other;
+    return`<button class="shop-sugg-row${i===shopState.vorschlag?' on':''}" onclick="rezShopPick(${i})">`
+      +`<span class="shop-sugg-ic">${c.icon}</span><span class="shop-sugg-nm">${escH(sg.text)}</span>`
+      +`<span class="shop-sugg-cat">${escH(c.label)}</span>`
+      +(sg.source==='recent'?`<span class="shop-sugg-tag">recent</span>`:'')+`</button>`;
+  }).join('');
+}
+// Pfeiltasten + Enter, damit man die Liste ohne Maus fuellen kann.
+export function rezShopKey(ev){
+  const host=$('shopSugg');
+  const n=_shopSugg.length;
+  if(ev.key==='ArrowDown'&&n){ev.preventDefault();shopState.vorschlag=(shopState.vorschlag+1)%n;markSugg();return;}
+  if(ev.key==='ArrowUp'&&n){ev.preventDefault();shopState.vorschlag=(shopState.vorschlag-1+n)%n;markSugg();return;}
+  if(ev.key==='Escape'){if(host){host.innerHTML='';host.classList.remove('on');}shopState.vorschlag=-1;return;}
+  if(ev.key==='Enter'){
+    ev.preventDefault();
+    if(shopState.vorschlag>=0&&_shopSugg[shopState.vorschlag]){rezShopPick(shopState.vorschlag);return;}
+    rezShopAdd();
+  }
+}
+function markSugg(){
+  const host=$('shopSugg');if(!host)return;
+  [...host.children].forEach((el,i)=>el.classList.toggle('on',i===shopState.vorschlag));
+}
+export async function rezShopPick(i){
+  const sg=_shopSugg[i];
+  if(!sg)return;
+  // Eine getippte Menge bleibt erhalten: "2 " + Vorschlag "Milk" -> "2 Milk".
+  const roh=($('shopNew')||{}).value||'';
+  const menge=(roh.match(/^\s*(\d+(?:[.,]\d+)?\s*[a-zA-Z×x]*)\s+\S/)||[])[1];
+  const text=menge?menge.trim()+' '+sg.text:sg.text;
+  await S.addShopping(text,'',sg.cat);
+  const inp=$('shopNew');if(inp)inp.value='';
+  _shopSugg=[];
+  renderShopping();renderNav();
+  const wieder=$('shopNew');if(wieder)wieder.focus();
+}
+export async function rezShopQuick(i){
+  const v=shopVerlauf().filter(x=>x.n>1&&!S.shoppingItems().some(it=>!it.done&&it.text.toLowerCase()===x.text.toLowerCase())).slice(0,6)[i];
+  if(!v)return;
+  await S.addShopping(v.text,'',v.cat||categorize(v.text));
+  renderShopping();renderNav();
 }
 export async function rezShopAdd(){
   const inp=$('shopNew');
   if(!inp||!inp.value.trim())return;
-  await S.addShopping(inp.value,'');
+  await S.addShopping(inp.value,'',categorize(inp.value));
   inp.value='';
+  _shopSugg=[];
   renderShopping();renderNav();
   const wieder=$('shopNew');if(wieder)wieder.focus();
 }
@@ -747,6 +889,44 @@ export async function rezShopClearDone(){
   const n=await S.clearShoppingDone();
   renderShopping();renderNav();
   toast(n?`${n} item${n===1?'':'s'} cleared`:'Nothing to clear');
+}
+// Eintrag bearbeiten: Text UND Abteilung. Die automatische Zuordnung ist
+// eine Hilfe, keine Behauptung - der Nutzer muss sie korrigieren koennen.
+export function rezShopEdit(id){
+  const it=S.shoppingItems().find(x=>x.id===id);
+  if(!it)return;
+  const aktuell=catOf(it);
+  openModal(
+     `<h3>Edit item</h3>`
+    +`<label class="dm-lbl">Item</label>`
+    +`<input class="m-inp" id="shopEditTxt" value="${escH(it.text)}">`
+    +`<label class="dm-lbl">Aisle</label>`
+    +`<div class="cat-pick">`+CATS.map(c=>
+        `<button class="cat-opt${c.id===aktuell?' on':''}" data-cat="${c.id}" onclick="rezShopPickCat('${c.id}')">`
+        +`<span>${c.icon}</span>${escH(c.label)}</button>`).join('')+`</div>`
+    +`<div class="m-btns"><button class="btn btn-danger" style="margin-right:auto" onclick="rezShopRemoveFromEdit('${id}')">Remove</button>`
+      +`<button class="btn" onclick="rezCloseModal()">Cancel</button>`
+      +`<button class="btn btn-primary" onclick="rezShopSaveEdit('${id}')">Save</button></div>`);
+  _editCat=aktuell;
+}
+let _editCat='other';
+export function rezShopPickCat(c){
+  _editCat=c;
+  document.querySelectorAll('.cat-opt').forEach(el=>el.classList.toggle('on',el.dataset.cat===c));
+}
+export async function rezShopSaveEdit(id){
+  const txt=(($('shopEditTxt')||{}).value||'').trim();
+  if(!txt){toast('The item needs a name');return;}
+  await S.updateShopping(id,{text:txt,cat:_editCat});
+  rezCloseModal();
+  renderShopping();renderNav();
+  toast('Item updated');
+}
+export async function rezShopRemoveFromEdit(id){
+  await S.removeShopping(id);
+  rezCloseModal();
+  renderShopping();renderNav();
+  toast('Removed');
 }
 
 // ══ KOCH-VERLAUF ═════════════════════════════════════════════════════════
@@ -1135,10 +1315,25 @@ export function rezOpenSettings(){
       +`</div></div>`
     +`<div class="set-sec"><div class="set-sec-h">Cloud sync</div>`
       +`<div class="set-row"><div><div class="set-row-t">${cfg?'Connected':'Not connected'}</div>`
-        +`<div class="set-row-s">${cfg?'Recipes sync across your devices using the same Supabase project as FX Analyst Pro.'
-          :'Set up Supabase sync in FX Analyst Pro once — Perfect Rezept then uses the same connection automatically.'}</div></div>`
-        +`<button class="btn" onclick="rezSyncNow()"${cfg?'':' disabled'}>Sync now</button></div>`
-      +`<div class="set-row"><div><div class="set-row-t">Status</div><div class="set-row-s" id="rezSyncStatus">${escH(S.state.status||'Idle')}</div></div></div>`
+        +`<div class="set-row-s">Perfect Rezept and FX Analyst Pro share one Supabase project — changing the credentials here changes them for both apps.</div></div>`
+        +`<div style="display:flex;gap:6px;flex-shrink:0"><button class="btn" onclick="rezTestCloud()"${cfg?'':' disabled'}>Test</button>`
+        +`<button class="btn" onclick="rezSyncNow()"${cfg?'':' disabled'}>Sync now</button></div></div>`
+      +`<div class="set-row"><div style="min-width:0"><div class="set-row-t">Status</div>`
+        +`<div class="set-row-s" id="rezSyncStatus">${escH(S.state.lastError||S.state.status||'Idle')}</div></div></div>`
+      // ⚠ Die Zugangsdaten sind hier bewusst editierbar. Bis REZEPT-CHECK-3
+      // stand hier nur "richte das im FX Analyst Pro ein" - bei einem
+      // abgelehnten Schluessel (401) musste der Nutzer die App wechseln, um
+      // ein Problem zu reparieren, das er hier gemeldet bekommt.
+      +`<details class="set-adv"${S.state.lastError?' open':''}><summary>Credentials</summary>`
+        +`<label class="dm-lbl">Project URL</label>`
+        +`<input class="m-inp" id="rezCloudUrl" placeholder="https://xxxxx.supabase.co" value="${escH(cfg?cfg.url:'')}">`
+        +`<label class="dm-lbl">API key (anon / publishable)</label>`
+        +`<input class="m-inp" id="rezCloudKey" placeholder="sb_publishable_… or eyJ…" value="${escH(cfg?cfg.key:'')}">`
+        +`<label class="dm-lbl">Sync ID</label>`
+        +`<input class="m-inp" id="rezCloudId" placeholder="e.g. jonathan" value="${escH(cfg?cfg.syncId:'')}">`
+        +`<div class="set-row-s" style="margin-bottom:10px">Supabase → Project Settings → API. Use the publishable/anon key, never the secret one.</div>`
+        +`<button class="btn btn-primary" onclick="rezSaveCloud()">Save credentials</button>`
+      +`</details>`
     +`</div>`
     +`<div class="set-sec"><div class="set-sec-h">Trash (${trash.length})</div>`
       +(trash.length?trash.map(t=>
@@ -1169,8 +1364,27 @@ export async function rezSetTheme(id){
   toast('Theme: '+(t?t.name:id));
 }
 export async function rezSyncNow(){
+  const el=$('rezSyncStatus');if(el)el.textContent='Syncing…';
   await S.flushSync();
-  const el=$('rezSyncStatus');if(el)el.textContent=S.state.status||'Idle';
+  const el2=$('rezSyncStatus');if(el2)el2.textContent=S.state.lastError||S.state.status||'Idle';
+}
+export async function rezTestCloud(){
+  const el=$('rezSyncStatus');if(el)el.textContent='Testing…';
+  const r=await S.testConnection();
+  const el2=$('rezSyncStatus');if(el2)el2.textContent=(r.ok?'✓ ':'✗ ')+r.msg;
+  toast(r.ok?'Connection works':'Connection failed');
+}
+export async function rezSaveCloud(){
+  try{
+    S.saveCloudCfg(($('rezCloudUrl')||{}).value,($('rezCloudKey')||{}).value,($('rezCloudId')||{}).value);
+  }catch(e){
+    const el=$('rezSyncStatus');if(el)el.textContent='✗ '+(e&&e.message||'Could not save');
+    return;
+  }
+  toast('Credentials saved');
+  await rezTestCloud();
+  await S.flushSync();
+  const el=$('rezSyncStatus');if(el)el.textContent=S.state.lastError||S.state.status||'Idle';
 }
 export async function rezRestore(id){
   await S.restoreRecipe(id);
@@ -1238,7 +1452,7 @@ S.onChange(what=>{
 Object.assign(window,{
   rezShowPage,rezOpenDetail,rezOpenForm,rezCloseModal,rezRequestClose,rezSaveForm,rezOpenSettings,
   rezKeepEditing,rezDiscardClose,rezSaveClose,
-  rezSetTheme,rezSyncNow,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
+  rezSetTheme,rezSyncNow,rezTestCloud,rezSaveCloud,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
   rezSetQuery,rezSetMaxMin,rezSetTag,rezSetTagIdx,rezToggleFavFilter,rezClearFilters,rezFocusSearch,
   rezAddFromOverview,rezOpenRowMenu,rezCloseRowMenu,rezAskDelete,rezConfirmDelete,
   rezFormField,rezFormTags,rezSetIngredient,rezAddIngredient,rezDelIngredient,
@@ -1254,6 +1468,8 @@ Object.assign(window,{
   renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,
   // Einkaufsliste
   renderShopping,rezShopAdd,rezShopToggle,rezShopRemove,rezShopClearDone,
+  rezShopSuggest,rezShopKey,rezShopPick,rezShopQuick,rezShopFold,rezShopSort,rezShopAll,
+  rezShopEdit,rezShopPickCat,rezShopSaveEdit,rezShopRemoveFromEdit,
   // Verlauf
   renderCooked,rezRate,rezRemoveCooked,
   // von den Waechtern gebraucht

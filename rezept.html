@@ -434,6 +434,11 @@ body{
 .theme-sw span{flex:1}
 .theme-nm{font-size:var(--fs-base);font-weight:700;color:var(--t0)}
 .theme-ds{font-size:var(--fs-sm);color:var(--t3)}
+.set-adv{margin-top:10px;border-top:1px solid var(--bd);padding-top:10px}
+.set-adv summary{font-size:var(--fs-sm);font-weight:700;color:var(--t2);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;padding:4px 0}
+.set-adv summary::-webkit-details-marker{display:none}
+.set-adv summary::before{content:'▸';font-size:11px;transition:transform .15s}
+.set-adv[open] summary::before{transform:rotate(90deg)}
 .trash-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
 .trash-row:last-child{border-bottom:none}
 .trash-thumb{width:44px;height:44px;border-radius:var(--rss);object-fit:cover;flex-shrink:0;background:var(--bg4);border:1px solid var(--bd)}
@@ -497,16 +502,62 @@ body{
 .week-add{width:100%;border:1px dashed var(--bd2);background:transparent;color:var(--t3);border-radius:var(--rss);padding:6px;font-size:var(--fs-sm);font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-family:var(--ff-text)}
 @media (hover:hover){.week-add:hover{border-color:var(--accent);color:var(--accent)}}
 
-/* ══ EINKAUFSLISTE + VERLAUF ════════════════════════════════════════ */
+/* ══ EINKAUFSLISTE ══════════════════════════════════════════════════ */
+.shop-add{position:relative;display:flex;gap:8px;align-items:stretch;margin-bottom:var(--gap-block)}
+.shop-inp{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:9px 12px}
+.shop-inp:focus-within{border-color:var(--accent)}
+.shop-inp svg{width:15px;height:15px;color:var(--t3);flex-shrink:0}
+.shop-inp input{flex:1;min-width:0;border:none;background:transparent;outline:none;font-size:var(--fs-base);color:var(--t0);font-family:var(--ff-text)}
+/* Vorschlagsliste haengt unter dem Feld. Kein overflow-Container darueber -
+   sonst wuerde sie abgeschnitten (Overlay-Regel, docs/design-system.md). */
+.shop-sugg{display:none;position:absolute;left:0;right:0;top:calc(100% + 5px);z-index:60;background:var(--bg2);
+  border:1px solid var(--bd2);border-radius:var(--rs);box-shadow:var(--shadow-pop);overflow:hidden;max-height:320px;overflow-y:auto}
+.shop-sugg.on{display:block}
+.shop-sugg-row{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;border-bottom:1px solid var(--bd);
+  background:transparent;cursor:pointer;text-align:left;font-family:var(--ff-text)}
+.shop-sugg-row:last-child{border-bottom:none}
+.shop-sugg-row.on,.shop-sugg-row:hover{background:var(--bg4)}
+.shop-sugg-ic{flex-shrink:0;font-size:15px;line-height:1}
+.shop-sugg-nm{flex:1;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop-sugg-cat{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-weight:700}
+.shop-sugg-tag{flex-shrink:0;font-size:var(--fs-2xs);font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 7px}
+.shop-quick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:var(--gap-block)}
+.shop-quick-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);margin-right:2px}
+.shop-bar{height:5px;border-radius:999px;background:var(--bg5);overflow:hidden;margin-bottom:10px}
+.shop-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease}
+.shop-tools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:var(--gap-block)}
+.shop-tools-sp{flex:1}
+.shop-count{font-size:var(--fs-sm);color:var(--t2);font-family:var(--ff-num);font-weight:600}
 .shop-list{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-card)}
+.shop-cat+.shop-cat{border-top:1px solid var(--bd)}
+.shop-cat-hd{display:flex;align-items:center;gap:9px;width:100%;padding:9px 13px;border:none;background:var(--bg3);cursor:pointer;text-align:left;font-family:var(--ff-text)}
+.shop-cat-done{cursor:default;opacity:.85}
+@media (hover:hover){button.shop-cat-hd:hover{background:var(--bg4)}}
+.shop-cat-ic{flex-shrink:0;font-size:15px;line-height:1;display:flex;align-items:center}
+.shop-cat-ic svg{width:14px;height:14px}
+.shop-cat-nm{flex:1;font-size:var(--fs-xs);font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--t2)}
+.shop-cat-n{flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;color:var(--t3);background:var(--bg5);border-radius:999px;padding:2px 8px;font-family:var(--ff-num)}
+.shop-cat-ar{flex-shrink:0;font-size:11px;color:var(--t3);transition:transform .15s}
+.shop-cat.zu .shop-cat-ar{transform:rotate(-90deg)}
+.shop-cat.zu .shop-cat-body{display:none}
 .shop-row{display:flex;align-items:center;gap:10px;padding:10px 13px;border-bottom:1px solid var(--bd);cursor:pointer}
-.shop-row:last-child{border-bottom:none}
+.shop-cat-body .shop-row:last-child{border-bottom:none}
+.shop-list>.shop-row:last-child{border-bottom:none}
 @media (hover:hover){.shop-row:hover{background:var(--bg3)}}
-.shop-row input[type=checkbox]{width:17px;height:17px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
+.shop-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
 .shop-txt{flex:1;min-width:0;font-size:var(--fs-base);color:var(--t0);overflow-wrap:anywhere}
 .shop-row.done .shop-txt{text-decoration:line-through;color:var(--t3)}
-.shop-src{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.shop-sep{padding:8px 13px;font-size:var(--fs-xs);font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);background:var(--bg3);border-bottom:1px solid var(--bd);border-top:1px solid var(--bd)}
+.shop-qty{flex-shrink:0;font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 8px}
+.shop-src{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shop-sep{padding:9px 13px;font-size:var(--fs-xs);font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);background:var(--bg3)}
+.cat-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+@media (max-width:560px){.cat-pick{grid-template-columns:repeat(2,1fr)}}
+.cat-opt{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--bg2);
+  color:var(--t1);font-size:var(--fs-sm);font-weight:600;cursor:pointer;font-family:var(--ff-text);text-align:left}
+@media (hover:hover){.cat-opt:hover{border-color:var(--accent)}}
+.cat-opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* ══ KOCH-VERLAUF ═══════════════════════════════════════════════════ */
 .cook-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
 .cook-row:last-child{border-bottom:none}
 .cook-thumb{width:44px;height:34px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
@@ -551,11 +602,11 @@ body{
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-3 - Vier neue Kategorien: Inspiration (Instagram-/TikTok-/YouTube-Links eingebettet, eingefuegte Caption wird per Parser automatisch in Titel, Dauer, Zutaten, Schritte und Tags zerlegt -> 'Convert to recipe'), Week (Wochenplan, Zutaten in die Einkaufsliste uebernehmen), Shopping und Cooked (Verlauf mit Bewertung). Dadurch haben Today's Meal und Random Picker jetzt echte Funktion statt Platzhalter; der Zufallsgenerator filtert nach Zeit/Tag und meidet, was in den letzten 7 Tagen schon dran war.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-4 - Sync-Fehler behoben: die Rezept-App schickte zusaetzlich einen Authorization-Bearer-Header, den der FX Analyst Pro nicht schickt - mit einem modernen sb_publishable-Schluessel ist das kein gueltiges JWT und Supabase antwortete 401 (gegen einen nachgebauten Endpunkt reproduziert). Ausserdem: HTTP-Codes werden jetzt zu verstaendlichen Meldungen, Zugangsdaten und ein Verbindungstest stehen in den Einstellungen. Neue Einkaufsliste: nach Abteilungen gruppiert (Fruit &amp; Veg, Bakery, Dairy ...), Vorschlaege beim Tippen aus eigener Historie und einem DE/EN-Warenwoerterbuch, Mengen-Erkennung, Fortschrittsbalken, Sortierung, alles abhaken, Abteilung je Eintrag korrigierbar.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-3</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-4</span>
     </span>
   </div>
   <div class="hdr-r">

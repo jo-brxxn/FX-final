@@ -90,6 +90,36 @@ Lies-Merge-Schreib-Zyklus läuft unter `navigator.locks`.
 **IndexedDB statt localStorage:** localStorage liegt bei ~5 MB, ein einziges
 Titelbild frisst davon 5 %. Für Bilder ist das keine Option.
 
+## Einkaufsliste
+
+Nach **Abteilungen** gruppiert, wie man durch den Laden läuft — `Fruit & Veg`,
+`Bakery`, `Dairy & Eggs`, `Meat & Fish`, `Pantry`, `Frozen`, `Drinks`,
+`Household`, `Other`. Die Zuordnung kommt aus `js/rezept/groceries.js`.
+
+**Sprache:** die Oberfläche ist Englisch (feste Projektregel), der Nutzer
+tippt aber deutsch. Deshalb trägt jeder Wörterbuch-Eintrag einen **englischen
+Anzeigenamen und deutsche Suchwörter**: „Milch" findet „Milk", „zwie" findet
+„Onions". Wer frei tippt, behält seinen eigenen Text — ersetzt wird nur, was
+aus der Vorschlagsliste ausgewählt wird.
+
+**Nichts wird geraten:** was das Wörterbuch nicht kennt, landet in `Other` und
+nicht in einer plausibel klingenden Abteilung. Die Zuordnung ist je Eintrag
+über das Bearbeiten-Fenster korrigierbar (`item.cat` schlägt die automatische
+Erkennung).
+
+Erkennungsstufen in `categorize()`, in dieser Reihenfolge: ganzer Text →
+Mehrwort-Begriff (längste Treffer zuerst, damit „olivenoel" nicht an „oel"
+hängen bleibt) → wortweise inkl. grober Einzahl-Form → zusammengesetzte
+Wörter. Zwei Fallen, die beim ersten Test zugeschlagen haben und deshalb
+Tests haben: **Bindestriche werden zu Leerzeichen** (sonst findet „Bio-Zitrone"
+die Zitrone nicht), und **verarbeitete Produkte brauchen einen eigenen
+Eintrag** (sonst schiebt die Zusammensetzungs-Regel „Tomatensauce" zum Gemüse).
+
+Weitere Funktionen: Mengen werden vom Namen getrennt angezeigt (`500 g Mehl` →
+Badge `500 g`), Fortschrittsbalken, Sortierung nach Abteilung oder Alter,
+alles abhaken, erledigte löschen, häufig gekaufte Artikel als Schnellwahl,
+Abteilungen einklappbar, Pfeiltasten + Enter in der Vorschlagsliste.
+
 ## Feste Regeln dieser App
 
 1. **Alles auf der Oberfläche ist Englisch** — wie im FX Analyst Pro
@@ -142,7 +172,22 @@ Titelbild frisst davon 5 %. Für Bilder ist das keine Option.
    (Privatmodus, Speicherkontingent), läuft die App auf einer Speicher-Map
    weiter, `state.dbBroken` wird gesetzt und die Kopfzeile sagt
    „No local storage — cloud sync only".
-11. **Ungespeicherte Eingaben werden nie kommentarlos verworfen.** Klick
+11. **⚠ Beim Sprechen mit Supabase die Kopfzeilen NICHT neu erfinden — beim
+   FX Analyst Pro abschreiben.** Diese App schickte zusätzlich
+   `Authorization: Bearer <key>`; bei den heutigen Supabase-Schlüsseln
+   (`sb_publishable_…`) ist das kein gültiges JWT, der Gateway prüft den
+   Header sobald er da ist und antwortet **401** — mit demselben Schlüssel,
+   mit dem der FX Analyst Pro (nur `apikey`) einwandfrei arbeitet. Gemessen
+   gegen einen nachgebauten Endpunkt: nur `apikey` → 200, `apikey` + Bearer
+   `sb_publishable_…` → 401, `apikey` + Bearer `eyJ…` → 200.
+   `check/rezept.js` vergleicht die Kopfzeilen beider Apps statisch.
+12. **HTTP-Codes werden zu Meldungen, mit denen der Nutzer etwas anfangen
+   kann** (`httpFehler()`): 401 nennt den Weg zu den Zugangsdaten, 403 die
+   RLS-Regeln, 404 die Tabelle. „HTTP 401" allein sagt niemandem, wo er
+   nachsieht. Zugangsdaten und ein Verbindungstest stehen in den
+   Einstellungen **beider** Apps — eine Reparatur darf keinen App-Wechsel
+   verlangen.
+13. **Ungespeicherte Eingaben werden nie kommentarlos verworfen.** Klick
    daneben, Escape und *Cancel* laufen alle über `rezRequestClose()`; bei
    Änderungen erscheint das zentrierte Fenster mit *Discard & close* (rot),
    *Save & close* (grau), *Keep editing* (blau). Im FX Analyst Pro macht

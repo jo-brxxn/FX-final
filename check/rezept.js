@@ -59,6 +59,29 @@ function testPng() {
     chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(roh)), chunk('IEND', Buffer.alloc(0))]);
 }
 
+// ── Statisch: die Sync-Kopfzeilen muessen zum FX Analyst Pro passen ──────
+// Nutzer-Bugreport 2026-09-02 ("Sync failed: HTTP 401"): diese App schickte
+// zusaetzlich `Authorization: Bearer <key>`. Bei den heutigen
+// Supabase-Schluesseln (sb_publishable_...) ist das kein gueltiges JWT und
+// der Gateway antwortet 401 - mit demselben Schluessel, mit dem der FX
+// Analyst Pro (nur `apikey`) einwandfrei arbeitet.
+function pruefeSyncKopfzeilen() {
+  const s = fs.readFileSync('js/rezept/store.js', 'utf8');
+  const m = s.match(/function cloudHeaders\([^)]*\)\s*\{([^}]*)\}/);
+  if (!m) { fail('SYNC', 'cloudHeaders() in js/rezept/store.js nicht gefunden'); return; }
+  if (/Authorization/i.test(m[1]))
+    fail('SYNC', 'cloudHeaders() setzt einen Authorization-Header — genau das hat den 401 verursacht. Nur `apikey` senden, wie js/main.js.');
+  if (!/apikey/.test(m[1]))
+    fail('SYNC', 'cloudHeaders() sendet keinen apikey-Header');
+  const fx = fs.readFileSync('js/main.js', 'utf8');
+  const mf = fx.match(/function cloudHeaders\([^)]*\)\s*\{([^}]*)\}/);
+  if (mf) {
+    const norm = t => (t.match(/'[\w-]+':/g) || []).sort().join(',');
+    if (norm(m[1]) !== norm(mf[1]))
+      fail('SYNC', `Die Kopfzeilen weichen vom FX Analyst Pro ab: Rezept [${norm(m[1])}] vs FX [${norm(mf[1])}]. Beide reden mit derselben Gegenstelle.`);
+  }
+}
+
 // ── E) Kontrast: rein statisch, braucht keinen Browser ───────────────────
 function pruefeKontrast() {
   const s = fs.readFileSync('rezept.html', 'utf8');
@@ -105,6 +128,7 @@ function pruefeKontrast() {
 
 (async () => {
   const themeAnzahl = pruefeKontrast();
+  pruefeSyncKopfzeilen();
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rezcheck-'));
   const foto = path.join(tmp, 'dish.png');
   fs.writeFileSync(foto, testPng());
@@ -557,7 +581,7 @@ function pruefeKontrast() {
   const eink = await p.locator('.shop-row').count();
   if (!eink) fail('F', 'Die Zutaten des Wochenplans landen nicht auf der Einkaufsliste');
   // Doppelt uebernehmen darf die Liste nicht verdoppeln
-  await p.click('.rez-toolbar .btn:has-text("From this week")');
+  await p.click('.shop-tools .btn:has-text("From this week")');
   await p.waitForTimeout(1200);
   const eink2 = await p.locator('.shop-row').count();
   if (eink2 !== eink) fail('F', `Zweimal uebernehmen verdoppelt die Liste (${eink} -> ${eink2})`);
@@ -586,6 +610,76 @@ function pruefeKontrast() {
   await p.locator('.cook-star').nth(3).click();
   await p.waitForTimeout(700);
   if (!(await p.locator('.cook-star.on').count())) fail('F', 'Die Bewertung im Verlauf laesst sich nicht setzen');
+
+  // ── I) Einkaufsliste: Abteilungen, Vorschlaege, Mengen, Bearbeiten ──
+  await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    // Sauberer Ausgangszustand - Stufe F hat die Liste schon gefuellt.
+    for (const it of S.shoppingItems()) await S.removeShopping(it.id);
+  });
+  await p.evaluate(() => window.rezShowPage('shopping'));
+  await p.waitForTimeout(500);
+  for (const t of ['Milch', '500 g Mehl', 'Brötchen', '2 Zwiebeln', 'Klopapier', 'Schraubenzieher']) {
+    await p.fill('#shopNew', t);
+    await p.evaluate(() => window.rezShopAdd());
+    await p.waitForTimeout(350);
+  }
+  const abteilungen = await p.evaluate(() =>
+    [...document.querySelectorAll('.shop-cat-nm')].map(e => e.textContent.trim()));
+  ['Dairy & Eggs', 'Pantry', 'Bakery', 'Fruit & Veg', 'Household', 'Other'].forEach(a => {
+    if (!abteilungen.includes(a)) fail('I', `Abteilung "${a}" fehlt in der Einkaufsliste (da: ${abteilungen.join(', ')})`);
+  });
+  // Menge muss vom Namen getrennt angezeigt werden
+  const mengen = await p.evaluate(() => [...document.querySelectorAll('.shop-qty')].map(e => e.textContent.trim()));
+  if (!mengen.includes('500 g')) fail('I', `Die Menge "500 g" wird nicht getrennt angezeigt (da: ${mengen.join(', ')})`);
+  // Vorschlaege beim Tippen
+  await p.fill('#shopNew', 'zwie');
+  await p.evaluate(() => window.rezShopSuggest('zwie'));
+  await p.waitForTimeout(350);
+  const vorschlaege = await p.evaluate(() =>
+    [...document.querySelectorAll('.shop-sugg-row .shop-sugg-nm')].map(e => e.textContent.trim()));
+  if (!vorschlaege.length) fail('I', 'Beim Tippen erscheinen keine Vorschlaege');
+  else if (!vorschlaege.some(v => /onion/i.test(v))) fail('I', `Deutsche Eingabe "zwie" schlaegt nichts Passendes vor (da: ${vorschlaege.join(', ')})`);
+  // Vorschlag uebernehmen
+  await p.evaluate(() => window.rezShopPick(0));
+  await p.waitForTimeout(600);
+  if ((await p.inputValue('#shopNew')) !== '') fail('I', 'Nach dem Uebernehmen bleibt der Text im Eingabefeld stehen');
+  // Abhaken, Fortschritt, alles abhaken
+  await p.locator('.shop-row input[type=checkbox]').first().click();
+  await p.waitForTimeout(600);
+  if (!(await p.locator('.shop-row.done').count())) fail('I', 'Ein Eintrag laesst sich nicht abhaken');
+  const breite = await p.evaluate(() => (document.querySelector('.shop-bar-fill') || {}).style?.width || '');
+  if (!breite || breite === '0%') fail('I', 'Der Fortschrittsbalken bewegt sich nicht');
+  await p.click('.shop-tools .btn:has-text("Check all")');
+  await p.waitForTimeout(700);
+  const offenDanach = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    return S.shoppingItems().filter(i => !i.done).length;
+  });
+  if (offenDanach !== 0) fail('I', `"Check all" laesst ${offenDanach} Eintraege offen`);
+  // Sortierung umschalten
+  await p.click('.shop-tools .btn:has-text("Sorted by")');
+  await p.waitForTimeout(400);
+  if (await p.locator('.shop-cat-hd').count()) fail('I', 'Nach dem Umschalten auf "newest" wird weiter nach Abteilung gruppiert');
+  await p.click('.shop-tools .btn:has-text("Sorted by")');
+  await p.waitForTimeout(400);
+  // Eintrag bearbeiten: Abteilung korrigierbar
+  await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const it = S.shoppingItems().find(i => /Schraubenzieher/.test(i.text));
+    if (it) window.rezShopEdit(it.id);
+  });
+  await p.waitForTimeout(500);
+  if (!(await p.locator('.cat-opt').count())) fail('I', 'Im Bearbeiten-Fenster fehlt die Abteilungs-Auswahl');
+  await p.click('.cat-opt:has-text("Household")');
+  await p.click('.modal button:has-text("Save")');
+  await p.waitForTimeout(700);
+  const korrigiert = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const it = S.shoppingItems().find(i => /Schraubenzieher/.test(i.text));
+    return it ? it.cat : null;
+  });
+  if (korrigiert !== 'household') fail('I', `Eine von Hand gesetzte Abteilung haelt nicht (war "${korrigiert}")`);
 
   // ── G) Merge-Regeln: der Fall, der auf zwei Geraeten Daten kostet ────
   // Rein rechnerisch im Seitenkontext - kein zweites Geraet noetig, aber
