@@ -1136,6 +1136,11 @@ body.compact-view .rub-summary{display:block}
    Button und der Bias-Long-Press bleiben davon unberuehrt, immer verfuegbar. */
 .ind-edit-ctrls{display:none;align-items:center;gap:0}
 body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
+/* Kartennamen (rub-inp) nur im Bearbeitungsmodus umbenennbar (Nutzer-Wunsch
+   2026-09-02: versehentliches Umbenennen beim Antippen/Scrollen verhindern) -
+   dasselbe An/Aus wie .ind-edit-ctrls oben, rein CSS (kein Re-Render noetig,
+   der Wert bleibt jederzeit sichtbar, nur nicht mehr fokussierbar/tippbar). */
+body:not(.ind-edit-mode) .rub-inp{pointer-events:none;cursor:default}
 /* ── RESEARCH-ORDNERBAUM (Nutzer-Wunsch 2026-08-04) ── Windows-Explorer-
    artiger Klappbaum: Wurzel = 5 feste Kategorien + eigene Ordner, darunter
    Asset-Ordner (auto) + eigene Unterordner, darunter die zwei festen
@@ -3774,11 +3779,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-461 - Papierkorb fuer Notizen/Ordner (Nutzer-Wunsch 2026-09-01): geloeschte Notizen und Ordner (delResNote/researchDelFolder) landen jetzt 30 Tage im Papierkorb (Einstellungen -> 'Trash') statt sofort weg zu sein, mit Restdauer je Eintrag und Einzel-Wiederherstellung. Ausserdem eine zweite, hartnaeckigere Runde am Cross-Tab-Notizen-Datenverlust: navigator.locks serialisiert jetzt jeden save()/cloudPull()-Schreibzyklus tabuebergreifend, schliesst die zuvor per Playwright unter Last weiterhin reproduzierbare Race strukturell."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-462 - Kartennamen nur noch im Bearbeitungsmodus umbenennbar (Nutzer-Wunsch 2026-09-02): das rub-inp-Namensfeld jeder Karte (Inflation, Interest Rates, ...) war bisher IMMER editierbar, ein versehentliches Antippen/Tippen beim Scrollen konnte den Namen unbemerkt aendern - jetzt nur noch aktiv, wenn body.ind-edit-mode gesetzt ist (5s-Long-Press, dieselbe Schaltflaeche wie fuer die uebrigen Karten-Bearbeitungs-Knoepfe). Ausserdem serverseitiger Fix in update-ff-calendar.yml: der Trading-Economics-Fallback fuer PMI & Co. (S&P/HCOB/Jibun liefern bei TradingView nie ein Actual) aktualisierte bisher nur den aktuellen Wert, aber NIE historyFull - der Verlaufschart blieb dadurch dauerhaft leer, obwohl der Wert seit Monaten stimmte."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-461</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-462</span>
     </span>
   </div>
   <div class="hdr-r">
