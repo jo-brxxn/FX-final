@@ -517,6 +517,9 @@ export function metaOf(doc){
   return{id:doc.id,title:doc.title,min:doc.min,tags:doc.tags||[],fav:!!doc.fav,
     thumb:doc.thumb||'',created:doc.created,up:doc.up};
 }
+// ⚠ servings/notes/source leben im VOLLDOKUMENT, nicht im Verzeichnis: sie
+// werden nur beim Oeffnen eines Rezepts gebraucht und wuerden die
+// Index-Zeile (die bei jedem Start komplett geladen wird) unnoetig aufblaehen.
 export async function saveRecipe(doc){
   doc.up=nowIso();
   if(!doc.created)doc.created=doc.up;

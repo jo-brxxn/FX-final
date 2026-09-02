@@ -216,7 +216,10 @@ function pruefeKontrast() {
   // ── B) Bewirkt jeder sichtbare Button tatsaechlich etwas? ─────────────
   // Gemessen am DOM: veraendert der Klick den sichtbaren Inhalt, den
   // Fenster-Zustand oder eine Klasse? Tut er nichts, ist der Button tot.
-  const NAVIGIERT = /rezSwitchApp|rezCloseModal|rezRequestClose|rezKeepEditing|rezDiscardClose/;
+  // ⚠ rezShowPage gehoert dazu: ein Navigations-Knopf wechselt die Seite,
+  // die Schleife klickt danach Knoepfe einer ANDEREN Seite und meldet sie
+  // unter dem falschen Namen als wirkungslos. Navigation prueft Stufe C/F.
+  const NAVIGIERT = /rezSwitchApp|chooseApp|rezCloseModal|rezRequestClose|rezKeepEditing|rezDiscardClose|rezShowPage/;
   for (const v of ansichten) {
     await p.evaluate(id => window.rezShowPage(id), v);
     await p.waitForTimeout(300);
@@ -238,14 +241,37 @@ function pruefeKontrast() {
       const fingerAbdruck = () => document.getElementById('rezPageArea').innerHTML
         + '|' + document.getElementById('rezModals').innerHTML
         + '|' + (document.querySelector('#rezNav .np.on') || {}).textContent
-        + '|' + (document.activeElement && (document.activeElement.id || document.activeElement.className));
+        + '|' + (document.activeElement && (document.activeElement.id || document.activeElement.className))
+        // ⚠ Der Toast gehoert dazu: "From this week's plan" bei leerem Plan
+        // sagt "nothing planned" - das IST die richtige Rueckmeldung und kein
+        // toter Button. Ohne diese Zeile meldete die Pruefung drei
+        // Scheinfehler.
+        + '|' + ((document.getElementById('rezToast') || {}).textContent || '')
+        + '|' + (document.getElementById('rezToast') || {className:''}).className;
       const gesehen = new Set();
       for (let i = 0; i < 200; i++) {
         if (window.rezClearFilters) window.rezClearFilters();
+        if (window.rezInspoClear) window.rezInspoClear();
+        // ⚠ Toast VOR jedem Klick leeren: zwei aufeinanderfolgende Klicks mit
+        // derselben Meldung ("nothing planned") sahen sonst wie "keine
+        // Wirkung" aus, obwohl die Rueckmeldung korrekt kam.
+        const tst = document.getElementById('rezToast');
+        if (tst) { tst.textContent = ''; tst.classList.remove('on'); }
+        // ⚠ Leere Eingabefelder fuellen: ein "Add"-Knopf ohne Eingabe tut
+        // richtigerweise nichts. Ein echter Nutzer haette vorher getippt -
+        // die Pruefung muss dieselbe Ausgangslage herstellen, sonst meldet
+        // sie korrektes Verhalten als toten Button.
+        document.querySelectorAll('#rezPageArea input[type=text], #rezPageArea input[type=search]').forEach(el => {
+          if (!el.value) { el.value = 'probe'; el.dispatchEvent(new Event('input', { bubbles: true })); }
+        });
         await new Promise(r => setTimeout(r, 120));
         const liste = frisch();
         const b = liste.find(el => {
           const oc = el.getAttribute('onclick') || '';
+          // Ein DEAKTIVIERTER Knopf tut richtigerweise nichts - ihn als tot
+          // zu melden waere ein Scheinfehler ("Add ingredients" bei leerem
+          // Wochenplan ist absichtlich aus).
+          if (el.disabled || el.getAttribute('disabled') !== null) return false;
           return !gesehen.has(oc) && !re.test(oc) && !el.classList.contains('on');
         });
         if (!b) break;
@@ -267,11 +293,11 @@ function pruefeKontrast() {
   // ⚠ Stufe B hat beim Durchklicken Such-/Zeit-/Tag-/Favoritenfilter gesetzt.
   // Ohne Zuruecksetzen zaehlt die naechste Pruefung ein GEFILTERTES Raster
   // und meldet einen Fehler, den es nicht gibt.
-  await p.evaluate(() => window.rezClearFilters());
+  await p.evaluate(() => { window.rezClearFilters(); if (window.rezInspoClear) window.rezInspoClear(); });
   await p.waitForTimeout(300);
   await p.evaluate(() => window.rezShowPage('overview'));
   await p.waitForTimeout(300);
-  await p.click('.dw-click');                                  // "Add New Meal"
+  await p.click('.dw-click:has-text("Add New Meal")');
   await p.waitForTimeout(500);
   if (!(await p.locator('#rfTitle').isVisible().catch(() => false)))
     fail('C', '"Add New Meal" oeffnet das Hinzufuegen-Fenster nicht');
@@ -500,7 +526,7 @@ function pruefeKontrast() {
   ].join('\n');
 
   // F1: Idee anlegen, Link muss erkannt und der Titel gefuellt werden
-  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.evaluate(() => { if (window.rezInspoClear) window.rezInspoClear(); window.rezShowPage('inspo'); });
   await p.waitForTimeout(400);
   await p.evaluate(() => window.rezOpenInspoForm(null));
   await p.waitForTimeout(400);
@@ -632,6 +658,14 @@ function pruefeKontrast() {
     await p.fill('#shopNew', t);
     await p.evaluate(() => window.rezShopAdd());
     await p.waitForTimeout(350);
+  }
+  // ⚠ Stufe B hat beim Durchklicken auch die Sortierung umgestellt. Ohne
+  // Zuruecksetzen prueft die naechste Zeile eine Liste OHNE Abteilungen und
+  // meldet einen Fehler, den es nicht gibt.
+  const sortBtn = p.locator('.shop-tools .btn:has-text("Sorted by")');
+  if ((await sortBtn.count()) && !/aisle/i.test(await sortBtn.first().textContent())) {
+    await sortBtn.first().click();
+    await p.waitForTimeout(400);
   }
   const abteilungen = await p.evaluate(() =>
     [...document.querySelectorAll('.shop-cat-nm')].map(e => e.textContent.trim()));
@@ -851,6 +885,204 @@ function pruefeKontrast() {
     fail('J', 'Mit reduzierter Bewegung bleibt das Fenster im DOM haengen');
   await p3.close();
 
+  // ── K) Kochmodus, Timer, Portionen, Notizen, Suche, Vorschlag ────────
+  // K1: Mengen-Rechnung und Timer-Erkennung rein rechnerisch
+  const rechen = await p.evaluate(async () => {
+    const C = await import('./js/rezept/cook.js');
+    const out = [];
+    const t = (n, ist, soll) => out.push({ n, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
+    t('200 g verdoppeln', C.scaleIngredient('200 g Spaghetti', 2), '400 g Spaghetti');
+    t('ohne Zahl bleibt gleich', C.scaleIngredient('Salz & Pfeffer', 2), 'Salz & Pfeffer');
+    t('halbieren wird Bruch', C.scaleIngredient('1 EL Öl', 0.5), '½ EL Öl');
+    t('Komma-Menge', C.scaleIngredient('1,5 kg Braten', 2), '3 kg Braten');
+    t('Bruch verdoppeln', C.scaleIngredient('½ TL Salz', 2), '1 TL Salz');
+    t('zwei Timer im Schritt', C.findTimers('5 Minuten anbraten, dann 20 Minuten schmoren').map(x => x.sek), [300, 1200]);
+    t('Spanne nimmt Obergrenze', C.findTimers('15-20 Minuten backen').map(x => x.sek), [1200]);
+    t('Stunde', C.findTimers('1 Stunde ruhen lassen').map(x => x.sek), [3600]);
+    t('keine Zeit im Text', C.findTimers('Alles vermengen').length, 0);
+    t('Temperatur ist keine Zeit', C.findTimers('bei 200 Grad backen').length, 0);
+    t('Uhr mit Stunden', C.fmtClock(3661), '1:01:01');
+    t('Uhr ohne Stunden', C.fmtClock(90), '01:30');
+    return out;
+  });
+  rechen.filter(r => !r.ok).forEach(r =>
+    fail('K', `${r.n}: ${JSON.stringify(r.ist)} statt ${JSON.stringify(r.soll)}`));
+
+  // K2: Kochmodus oeffnet, zeigt Schritte, rechnet Portionen um
+  await p.evaluate(() => { window.rezClearFilters(); window.rezShowPage('recipes'); });
+  await p.waitForTimeout(400);
+  const ersteRez = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const r = S.state.index.recipes[0];
+    if (!r) return null;
+    const d = await S.getFull(r.id);
+    if (d) { d.servings = 2; d.ingredients = ['200 g Spaghetti', 'Salz & Pfeffer']; d.blocks = [{ t: 'text', v: '1. Nudeln 10 Minuten kochen.\n2. Servieren.' }]; await S.saveRecipe(d); }
+    return r.id;
+  });
+  if (!ersteRez) fail('K', 'Kein Rezept fuer den Kochmodus vorhanden');
+  else {
+    await p.evaluate(id => window.rezCook(id), ersteRez);
+    await p.waitForTimeout(700);
+    if (!(await p.evaluate(() => document.body.classList.contains('cooking'))))
+      fail('K', 'Der Kochmodus oeffnet sich nicht');
+    const schritt1 = await p.evaluate(() => (document.querySelector('.ck-step') || {}).textContent || '');
+    if (!/Nudeln/.test(schritt1)) fail('K', `Der erste Schritt fehlt im Kochmodus ("${schritt1.slice(0, 40)}")`);
+    // Schritte werden einzeln gezeigt, nicht als Block
+    if (/Servieren/.test(schritt1)) fail('K', 'Die Zubereitung wird nicht in einzelne Schritte zerlegt');
+    // Ein Timer aus dem Schritt muss angeboten werden
+    if (!(await p.locator('.ck-timers .btn').count())) fail('K', 'Aus "10 Minuten" entsteht kein Timer-Knopf');
+    // Portionen verdoppeln muss die Menge verdoppeln
+    const vorher = await p.evaluate(() => (document.querySelector('.ck-ing span') || {}).textContent || '');
+    await p.click('.ck-serv .ck-sv:last-child');
+    await p.waitForTimeout(350);
+    const nachher = await p.evaluate(() => (document.querySelector('.ck-ing span') || {}).textContent || '');
+    if (vorher === nachher) fail('K', `Der Portionsregler aendert die Mengen nicht ("${vorher}")`);
+    if (!/300 g/.test(nachher)) fail('K', `2 -> 3 Portionen ergibt "${nachher}" statt "300 g Spaghetti"`);
+    // Nur die Mengen, nicht der Text ohne Zahl
+    const zweite = await p.evaluate(() => [...document.querySelectorAll('.ck-ing span')].map(e => e.textContent)[1] || '');
+    if (zweite !== 'Salz & Pfeffer') fail('K', `Eine Zutat ohne Menge wurde veraendert ("${zweite}")`);
+    // Vor/Zurueck
+    await p.click('.ck-nav .btn:has-text("Next")');
+    await p.waitForTimeout(300);
+    if (!/Servieren/.test(await p.evaluate(() => (document.querySelector('.ck-step') || {}).textContent || '')))
+      fail('K', '"Next" blaettert nicht zum naechsten Schritt');
+    // Timer starten und die Uhr pruefen
+    await p.evaluate(() => window.rezStartTimer(90, 'test'));
+    await p.waitForTimeout(600);
+    const uhr = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
+    if (!/^0?1:2\d|^0?1:3\d/.test(uhr)) fail('K', `Die Countdown-Uhr zeigt "${uhr}" statt einer Zeit um 01:30`);
+    if (!(await p.locator('#rezTimers.on').count())) fail('K', 'Die Timer-Leiste erscheint nicht');
+    await p.waitForTimeout(1400);
+    const uhr2 = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
+    if (uhr2 === uhr) fail('K', 'Die Uhr laeuft nicht herunter');
+    // Pause haelt sie an
+    await p.click('.tm-row .btn:has-text("Pause")');
+    await p.waitForTimeout(1200);
+    const uhr3 = await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '');
+    await p.waitForTimeout(1200);
+    if ((await p.evaluate(() => (document.querySelector('.tm-clock') || {}).textContent || '')) !== uhr3)
+      fail('K', 'Ein pausierter Timer laeuft weiter');
+    // ⚠ Die Leiste darf die Schritt-Navigation nicht verdecken - beim ersten
+    // Screenshot lag sie genau ueber "Back / Next".
+    const ueberdeckt = await p.evaluate(() => {
+      const nav = document.querySelector('.ck-nav'), tm = document.getElementById('rezTimers');
+      if (!nav || !tm || !tm.classList.contains('on')) return false;
+      const a = nav.getBoundingClientRect(), b = tm.getBoundingClientRect();
+      return !(a.bottom <= b.top || a.top >= b.bottom || a.right <= b.left || a.left >= b.right);
+    });
+    if (ueberdeckt) fail('K', 'Die Timer-Leiste verdeckt die Schritt-Navigation im Kochmodus');
+    await p.evaluate(() => document.querySelectorAll('.tm-row .rf-x').forEach(b => b.click()));
+    await p.waitForTimeout(400);
+    if (await p.locator('#rezTimers.on').count()) fail('K', 'Ein gestoppter Timer verschwindet nicht');
+    // ⚠ Der Kochmodus muss den Bildschirm-Wachhalter beim Verlassen wieder
+    // freigeben - sonst bleibt das Geraet dauerhaft an.
+    await p.evaluate(() => window.rezCookExit());
+    await p.waitForTimeout(400);
+    if (await p.evaluate(() => document.body.classList.contains('cooking')))
+      fail('K', 'Der Kochmodus laesst sich nicht verlassen');
+  }
+
+  // K3: Portionen und Notizen im Detailfenster
+  if (ersteRez) {
+    await p.evaluate(id => window.rezOpenDetail(id), ersteRez);
+    await p.waitForTimeout(800);
+    const iv = await p.evaluate(() => (document.querySelector('#rdIng li') || {}).textContent || '');
+    await p.click('.rd-serv .ck-sv:last-child');
+    await p.waitForTimeout(350);
+    const iv2 = await p.evaluate(() => (document.querySelector('#rdIng li') || {}).textContent || '');
+    if (iv === iv2) fail('K', 'Der Portionsregler im Detailfenster wirkt nicht');
+    await p.fill('#rdNotes', 'Beim naechsten Mal weniger Salz');
+    await p.evaluate(id => window.rezSaveNotes(id), ersteRez);
+    await p.waitForTimeout(900);
+    const notiz = await p.evaluate(async (id) => {
+      const S = await import('./js/rezept/store.js');
+      const d = await S.getFull(id);
+      return d ? (d.notes || '') : '';
+    }, ersteRez);
+    if (!/weniger Salz/.test(notiz)) fail('K', `Die Notiz wird nicht gespeichert (gelesen: "${notiz}")`);
+    await p.evaluate(() => window.rezCloseModal());
+    await p.waitForTimeout(400);
+  }
+
+  // K4: Globale Suche findet auch ueber Zutaten und Notizen
+  await p.evaluate(() => window.rezFocusSearch());
+  await p.waitForTimeout(500);
+  await p.evaluate(() => window.rezSearchQuery('spaghetti'));
+  await p.waitForTimeout(500);
+  if (!(await p.locator('.gs-res .pick-row').count()))
+    fail('K', 'Die globale Suche findet ein Rezept nicht ueber seine Zutat');
+  await p.evaluate(() => window.rezSearchQuery('weniger salz'));
+  await p.waitForTimeout(500);
+  if (!(await p.locator('.gs-res .pick-row').count()))
+    fail('K', 'Die globale Suche findet ein Rezept nicht ueber seine Notiz');
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
+  // K5: "Was kann ich kochen?" rechnet die Trefferquote
+  await p.evaluate(() => window.rezOpenMatch());
+  await p.waitForTimeout(1200);
+  if (!(await p.locator('.mt-chips .tag-chip').count()))
+    fail('K', '"Was kann ich kochen?" listet keine Zutaten auf');
+  else {
+    await p.locator('.mt-chips .tag-chip').first().click();
+    await p.waitForTimeout(600);
+    if (!(await p.locator('.mt-row').count()))
+      fail('K', 'Nach dem Abhaken einer Zutat erscheint kein Rezept-Vorschlag');
+    const quote = await p.evaluate(() => (document.querySelector('.mt-sub') || {}).textContent || '');
+    if (!/%/.test(quote)) fail('K', `Der Vorschlag zeigt keine Trefferquote ("${quote}")`);
+  }
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
+  // K6: Inspiration - Massenimport, Kuenstler-Erkennung, Filter
+  await p.evaluate(() => { if (window.rezInspoClear) window.rezInspoClear(); window.rezShowPage('inspo'); });
+  await p.waitForTimeout(400);
+  const vorherIdeen = await p.locator('#pgInspo .rez-card').count();
+  await p.evaluate(() => window.rezOpenBulk());
+  await p.waitForTimeout(400);
+  await p.fill('#bulkTxt', [
+    'https://www.instagram.com/kochenmitchef/reel/AbCdEf123/',
+    'https://www.tiktok.com/@pastaqueen/video/7211122334455',
+    'https://youtu.be/dQw4w9WgXcQ',
+    'kein link in dieser zeile',
+  ].join('\n'));
+  await p.click('.modal button:has-text("Add all")');
+  await p.waitForTimeout(1500);
+  const nachherIdeen = await p.locator('#pgInspo .rez-card').count();
+  if (nachherIdeen !== vorherIdeen + 3)
+    fail('K', `Massenimport legte ${nachherIdeen - vorherIdeen} statt 3 Ideen an (die vierte Zeile hat keinen Link)`);
+  const kuenstler = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    return S.state.index.inspo.map(i => i.creator || '').filter(Boolean);
+  });
+  if (!kuenstler.includes('@kochenmitchef')) fail('K', `Der Instagram-Kuenstler wird nicht aus der Adresse gelesen (${kuenstler.join(', ')})`);
+  if (!kuenstler.includes('@pastaqueen')) fail('K', 'Der TikTok-Kuenstler wird nicht aus der Adresse gelesen');
+  if (!(await p.locator('#pgInspo .tag-chip').count()))
+    fail('K', 'Es gibt keine Filterleiste fuer Kuenstler/Themen');
+  else {
+    const vorFilter = await p.locator('#pgInspo .rez-card').count();
+    await p.evaluate(() => window.rezInspoCreator(0));
+    await p.waitForTimeout(500);
+    const nachFilter = await p.locator('#pgInspo .rez-card').count();
+    if (nachFilter >= vorFilter) fail('K', `Der Kuenstler-Filter filtert nicht (${vorFilter} -> ${nachFilter})`);
+    await p.evaluate(() => window.rezInspoClear());
+    await p.waitForTimeout(400);
+  }
+  // Sortierung schaltet wirklich um
+  const sortVor = await p.evaluate(() => (document.querySelector('#pgInspo .rez-toolbar .btn') || {}).textContent || '');
+  await p.evaluate(() => window.rezInspoSort());
+  await p.waitForTimeout(400);
+  if ((await p.evaluate(() => (document.querySelector('#pgInspo .rez-toolbar .btn') || {}).textContent || '')) === sortVor)
+    fail('K', 'Die Sortierung der Inspirationen schaltet nicht um');
+  // Doppelte Adresse darf nicht zweimal angelegt werden
+  await p.evaluate(() => window.rezOpenBulk());
+  await p.waitForTimeout(400);
+  await p.fill('#bulkTxt', 'https://youtu.be/dQw4w9WgXcQ');
+  await p.click('.modal button:has-text("Add all")');
+  await p.waitForTimeout(1200);
+  if ((await p.locator('#pgInspo .rez-card').count()) !== nachherIdeen)
+    fail('K', 'Eine bereits vorhandene Adresse wird ein zweites Mal angelegt');
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -861,5 +1093,12 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung)`);
-})().catch(e => { console.error('REZEPT-WAECHTER abgestuerzt: ' + e.message); process.exit(1); });
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus)`);
+})().catch(e => {
+  // ⚠ Bei einem Absturz AUCH die bis dahin gesammelten Befunde ausgeben.
+  // Ohne das sieht man nur "Timeout" und raet, was vorher schon schieflief -
+  // genau das hat beim Kochmodus-Umbau eine Viertelstunde gekostet.
+  console.error('REZEPT-WAECHTER abgestuerzt: ' + e.message);
+  if (F.length) { console.error('\nBis dahin gefunden:'); F.forEach(x => console.error('  ' + x)); }
+  process.exit(1);
+});

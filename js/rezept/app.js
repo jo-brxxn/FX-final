@@ -11,8 +11,9 @@
 // onclick="..." im HTML sieht Modul-Variablen sonst nicht - identisches
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
-import {detectLink,parseCaption,captionToRecipe} from './import.js';
+import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText} from './import.js';
 import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
+import * as CK from './cook.js';
 
 // ── Konstanten ───────────────────────────────────────────────────────────
 const PAGES={overview:'pgOverview',recipes:'pgRecipes',inspo:'pgInspo',
@@ -70,6 +71,8 @@ const ICONS={
   arrowL:'<path d="M15 5l-7 7 7 7"/>',
   arrowR:'<path d="M9 5l7 7-7 7"/>',
   search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  share:'<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/>',
+  basket:'<path d="M5 11h14l-1.3 8.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8z"/><path d="M9 11V7a3 3 0 0 1 6 0v4"/>',
 };
 function icn(k,size){const s=size||17;return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]||''}</svg>`;}
 
@@ -210,6 +213,10 @@ export function renderOverview(){
    +`<div class="ov-grid stagger">`
    +todayCardHtml(heute)
    +randomCardHtml()
+   +`<div class="dw dw-click" onclick="rezOpenMatch()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezOpenMatch()">`
+     +`<div class="dw-hdr"><div class="dw-title">${icn('basket',16)} What can I cook?</div></div>`
+     +`<div class="dw-ph"><div class="dw-ph-big">${icn('basket',26)}</div>`
+       +`<div>Tick what you have at home — the app ranks your recipes by how much of it you already have.</div></div></div>`
    +`<div class="dw dw-click" onclick="rezAddFromOverview()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezAddFromOverview()">`
      +`<div class="dw-hdr"><div class="dw-title">${icn('plus',16)} Add New Meal</div></div>`
      +`<div class="dw-ph" style="border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-soft)">`
@@ -419,15 +426,170 @@ function refreshGridOnly(){
   if(sub)sub.textContent=total?`${list.length} of ${total} shown`:'Nothing here yet — add your first recipe';
   afterRender($('pgRecipes'));
 }
-export function rezFocusSearch(){
-  rezShowPage('recipes');
-  const inp=$('rezSearchInp');if(inp){inp.focus();inp.select();}
-}
 export async function rezToggleFav(id){
   await S.toggleFav(id);
   refreshGridOnly();
   if(detailId===id)rezOpenDetail(id);
 }
+
+// ══ KOCHMODUS ════════════════════════════════════════════════════════════
+// Vollbild, grosse Schrift, Bildschirm bleibt an. Beim Kochen steht das
+// Geraet zwei Meter weg und man hat nasse Haende - 13px-Text und eine
+// Bildschirmsperre nach 30 Sekunden machen die App dort unbrauchbar.
+let cookDoc=null,cookStep=0,cookDone=new Set(),cookServ=0;
+export async function rezCook(id){
+  const g=modalGen();
+  const doc=await S.getFull(id);
+  if(modalVeraltet(g)&&document.body.classList.contains('cooking'))return;
+  if(!doc){toast('Recipe not available on this device yet');return;}
+  cookDoc=doc;cookStep=0;cookDone=new Set();
+  cookServ=doc.servings||2;
+  document.body.classList.add('cooking');
+  CK.keepAwake(true);
+  CK.audioReady();          // im Nutzer-Gestus, sonst darf der Timer spaeter nicht klingeln
+  renderCook();
+}
+export function rezCookExit(){
+  document.body.classList.remove('cooking');
+  CK.keepAwake(false);
+  cookDoc=null;
+  const h=$('rezCook');if(h)h.innerHTML='';
+  renderNav();
+}
+function cookSteps(doc){
+  // Die Zubereitung steht als Bloecke da. Fuer den Kochmodus wird sie in
+  // einzelne Schritte zerlegt - Textbloecke an Zeilenumbruechen, Bilder
+  // bleiben eigene Schritte.
+  const out=[];
+  (doc.blocks||[]).forEach(b=>{
+    if(b.t==='img'){out.push({t:'img',v:b.v});return;}
+    String(b.v||'').split(/\n+/).forEach(z=>{
+      const t=z.replace(/^\s*\d{1,2}[.)]\s*/,'').trim();
+      if(t)out.push({t:'text',v:t});
+    });
+  });
+  return out.length?out:[{t:'text',v:'No preparation steps written down yet.'}];
+}
+export function renderCook(){
+  const host=$('rezCook');
+  if(!host||!cookDoc)return;
+  const schritte=cookSteps(cookDoc);
+  cookStep=Math.max(0,Math.min(cookStep,schritte.length-1));
+  const s=schritte[cookStep];
+  const basis=cookDoc.servings||2;
+  const faktor=basis?cookServ/basis:1;
+  const zut=(cookDoc.ingredients||[]).map((z,i)=>{
+    const txt=CK.scaleIngredient(z,faktor);
+    return`<label class="ck-ing${cookDone.has('i'+i)?' done':''}">`
+      +`<input type="checkbox" ${cookDone.has('i'+i)?'checked':''} onchange="rezCookTick('i${i}')">`
+      +`<span>${escH(txt)}</span></label>`;
+  }).join('');
+  const timer=CK.findTimers(s.t==='text'?s.v:'');
+  host.innerHTML=
+     `<div class="ck-bar">`
+      +`<button class="ck-x" onclick="rezCookExit()" aria-label="Close cook mode">✕</button>`
+      +`<div class="ck-title">${escH(cookDoc.title)}</div>`
+      +`<div class="ck-serv"><button class="ck-sv" onclick="rezCookServ(-1)" aria-label="Fewer servings">−</button>`
+        +`<span>${cookServ} ${cookServ===1?'serving':'servings'}</span>`
+        +`<button class="ck-sv" onclick="rezCookServ(1)" aria-label="More servings">+</button></div>`
+    +`</div>`
+    +`<div class="ck-body">`
+      +`<aside class="ck-side"><div class="ck-side-h">Ingredients</div>${zut||'<div class="ck-empty">No ingredients listed.</div>'}</aside>`
+      +`<main class="ck-main">`
+        +`<div class="ck-prog">Step ${cookStep+1} of ${schritte.length}`
+          +`<span class="ck-prog-bar"><span style="width:${Math.round((cookStep+1)/schritte.length*100)}%"></span></span></div>`
+        +(s.t==='img'?`<img class="ck-img" src="${s.v}" alt="">`
+          :`<div class="ck-step">${escH(s.v)}</div>`)
+        +(timer.length?`<div class="ck-timers">`+timer.map(t=>
+            `<button class="btn btn-primary" onclick="rezStartTimer(${t.sek},'${escH(t.label).replace(/'/g,'')}')">${icn('clock',14)} ${escH(t.label)}</button>`).join('')+`</div>`:'')
+        +`<div class="ck-nav">`
+          +`<button class="btn" onclick="rezCookStep(-1)" ${cookStep===0?'disabled':''}>${icn('arrowL',14)} Back</button>`
+          +`<button class="btn" onclick="rezCookTick('s${cookStep}')">${cookDone.has('s'+cookStep)?'✓ Done':'Mark step done'}</button>`
+          +(cookStep<schritte.length-1
+            ?`<button class="btn btn-primary" onclick="rezCookStep(1)">Next ${icn('arrowR',14)}</button>`
+            :`<button class="btn btn-primary" onclick="rezCookFinish()">${icn('check',14)} Finish &amp; log</button>`)
+        +`</div>`
+      +`</main>`
+    +`</div>`;
+  renderTimerPanel();
+}
+export function rezCookStep(d){cookStep+=d;renderCook();}
+export function rezCookTick(k){if(cookDone.has(k))cookDone.delete(k);else cookDone.add(k);renderCook();}
+export function rezCookServ(d){cookServ=Math.max(1,Math.min(24,cookServ+d));renderCook();}
+export async function rezCookFinish(){
+  const id=cookDoc&&cookDoc.id;
+  rezCookExit();
+  if(id){await S.logCooked(id,0);toast('Logged in your cooking history');}
+  rezShowPage('cooked');
+}
+
+// ══ TIMER-LEISTE ═════════════════════════════════════════════════════════
+// Liegt ueber allem und bleibt sichtbar, auch wenn man den Kochmodus
+// verlaesst - ein Timer, den man beim Wegklicken verliert, ist keiner.
+export function rezStartTimer(sek,label){
+  CK.addTimer(sek,label);
+  toast('Timer started: '+CK.fmtClock(sek));
+}
+export function rezTimerPause(id){CK.pauseTimer(id);}
+export function rezTimerResume(id){CK.resumeTimer(id);}
+export function rezTimerPlus(id){CK.addMinute(id,1);}
+export function rezTimerStop(id){CK.stopTimer(id);}
+export function rezOpenTimerDialog(){
+  openModal(
+     `<h3>Start a timer</h3>`
+    +`<div class="tm-quick">`+[1,3,5,10,15,20,30,45,60].map(m=>
+        `<button class="btn" onclick="rezStartTimer(${m*60},'${m} min');rezCloseModal()">${m} min</button>`).join('')+`</div>`
+    +`<label class="dm-lbl" style="margin-top:14px">Custom</label>`
+    +`<div class="tm-custom"><input class="m-inp" id="tmMin" type="number" min="1" max="360" value="10" style="margin-bottom:0">`
+      +`<span class="tm-unit">minutes</span>`
+      +`<button class="btn btn-primary" onclick="rezStartCustomTimer()">Start</button></div>`
+    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Cancel</button></div>`);
+}
+export function rezStartCustomTimer(){
+  const v=+(($('tmMin')||{}).value||0);
+  if(!v||v<1){toast('Enter a number of minutes');return;}
+  rezStartTimer(Math.min(360,v)*60,v+' min');
+  rezCloseModal();
+}
+function renderTimerPanel(){
+  const host=$('rezTimers');
+  if(!host)return;
+  const liste=CK.activeTimers();
+  if(!liste.length){
+    host.innerHTML='';host.classList.remove('on');
+    document.body.classList.remove('timers-on','timer-ring');
+    return;
+  }
+  host.classList.add('on');
+  const klingelt=liste.some(t=>t.state==='done');
+  // ⚠ Der Hinweis auf ein stummes Geraet erscheint NUR, wenn die Wiedergabe
+  // wirklich fehlgeschlagen ist - nicht vorsorglich. Den Stummschalter
+  // eines iPhones kann kein Browser abfragen (siehe cook.js), deshalb
+  // klingelt es zusaetzlich immer sichtbar.
+  const stumm=liste.some(t=>t.state==='done'&&t.blocked);
+  host.innerHTML=
+     (stumm?`<div class="tm-mute">🔇 No sound came out — your device may be on silent. The timer is shown here and vibrates instead.</div>`:'')
+    +liste.map(t=>{
+      const p=t.total?Math.max(0,Math.min(100,(t.rest/t.total)*100)):0;
+      return`<div class="tm-row${t.state==='done'?' ring':''}">`
+        +`<span class="tm-clock">${CK.fmtClock(t.rest)}</span>`
+        +`<span class="tm-meta"><span class="tm-lbl">${escH(t.label)}</span>`
+          +`<span class="tm-bar"><span style="width:${p}%"></span></span></span>`
+        +(t.state==='done'
+          ?`<button class="btn btn-primary" onclick="rezTimerStop('${t.id}')">${icn('check',13)} Stop</button>`
+          :`<button class="btn" onclick="rezTimer${t.state==='run'?'Pause':'Resume'}('${t.id}')">${t.state==='run'?'Pause':'Resume'}</button>`)
+        +`<button class="btn" onclick="rezTimerPlus('${t.id}')" title="Add a minute">+1</button>`
+        +`<button class="rf-x" onclick="rezTimerStop('${t.id}')" aria-label="Remove timer">×</button>`
+      +`</div>`;
+    }).join('');
+  document.body.classList.toggle('timer-ring',klingelt);
+  // ⚠ Die Timer-Leiste liegt fest am unteren Rand. Ohne diese Klasse
+  // verdeckt sie im Kochmodus die Schritt-Navigation ("Back / Next") und auf
+  // den normalen Seiten die letzte Zeile - beim ersten Screenshot genau so
+  // passiert. Die Klasse schafft unten Platz, solange ein Timer laeuft.
+  document.body.classList.add('timers-on');
+}
+CK.onTimers(()=>{renderTimerPanel();});
 
 // ══ REZEPT-AUSWAHL (gemeinsamer Baustein) ════════════════════════════════
 // EIN Auswahlfenster fuer alle Stellen, die ein Rezept brauchen (Today's
@@ -477,6 +639,250 @@ export function rezPickChoose(id){
   if(cb)cb(id);
 }
 
+// ══ GLOBALE SUCHE ════════════════════════════════════════════════════════
+// Die Kopfzeilen-Suche durchsuchte bisher nur Rezepttitel. Jetzt alles, was
+// man suchen wuerde: Titel, Zutaten, Notizen, Inspirationen, Verlauf.
+let _sucheQ='';
+export function rezFocusSearch(){
+  _sucheQ='';
+  zeichneSuche();
+  setTimeout(()=>{const i=$('gsInp');if(i){i.focus();}},60);
+}
+function trefferListe(q){
+  const n=(x)=>String(x||'').toLowerCase();
+  const k=n(q).trim();
+  if(!k)return{rez:[],insp:[],cook:[]};
+  const rez=S.state.index.recipes.filter(r=>
+    n(r.title).includes(k)||(r.tags||[]).some(t=>n(t).includes(k))
+    ||n((S.state.full.get(r.id)||{}).ingredients?(S.state.full.get(r.id).ingredients||[]).join(' '):'').includes(k)
+    ||n((S.state.full.get(r.id)||{}).notes).includes(k)).slice(0,12);
+  const insp=S.state.index.inspo.filter(i=>
+    n(i.title).includes(k)||n(i.caption).includes(k)||n(i.creator).includes(k)
+    ||(i.tags||[]).some(t=>n(t).includes(k))).slice(0,8);
+  const cook=S.state.index.cooked.filter(c=>n(c.title).includes(k)).slice(0,6);
+  return{rez,insp,cook};
+}
+function zeichneSuche(){
+  const t=trefferListe(_sucheQ);
+  const block=(titel,eintraege,bauen)=>eintraege.length
+    ?`<div class="gs-grp"><div class="gs-grp-h">${titel} · ${eintraege.length}</div>${eintraege.map(bauen).join('')}</div>`:'';
+  openModal(
+     `<h3>Search</h3>`
+    +`<div class="rez-search" style="margin-bottom:12px">${icn('search',15)}`
+      +`<input id="gsInp" type="search" placeholder="Recipes, ingredients, notes, ideas…" value="${escH(_sucheQ)}" oninput="rezSearchQuery(this.value)"></div>`
+    +`<div class="gs-res" id="gsRes">`+(
+      _sucheQ.trim()
+        ?(block('Recipes',t.rez,r=>`<button class="pick-row" onclick="rezCloseModal();rezOpenDetail('${r.id}')">`
+            +(r.thumb?`<img class="pick-thumb" src="${r.thumb}" alt="">`:`<span class="pick-thumb"></span>`)
+            +`<span class="pick-main"><span class="pick-nm">${escH(r.title)}</span>`
+            +`<span class="pick-sub">${fmtDur(r.min)}${(r.tags||[]).length?' · '+escH(r.tags.join(', ')):''}</span></span></button>`)
+         +block('Ideas',t.insp,i=>`<button class="pick-row" onclick="rezCloseModal();rezShowPage('inspo');rezOpenInspo('${i.id}')">`
+            +(i.thumb?`<img class="pick-thumb" src="${i.thumb}" alt="">`:`<span class="pick-thumb"></span>`)
+            +`<span class="pick-main"><span class="pick-nm">${escH(i.title||'Idea')}</span>`
+            +`<span class="pick-sub">${escH(i.creator||i.label||'')}</span></span></button>`)
+         +block('Cooked',t.cook,c=>`<button class="pick-row" onclick="rezCloseModal();rezOpenDetail('${c.recipeId}')">`
+            +(c.thumb?`<img class="pick-thumb" src="${c.thumb}" alt="">`:`<span class="pick-thumb"></span>`)
+            +`<span class="pick-main"><span class="pick-nm">${escH(c.title||'Recipe')}</span>`
+            +`<span class="pick-sub">${new Date(c.date).toLocaleDateString()}</span></span></button>`)
+         ||`<div class="rd-empty" style="padding:22px 0;text-align:center">Nothing matches “${escH(_sucheQ)}”.</div>`)
+        :`<div class="rd-empty" style="padding:22px 0;text-align:center">Type to search across recipes, ingredients, notes, ideas and your cooking history.</div>`)
+    +`</div>`
+    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Close</button></div>`
+  ,'modal-wide');
+}
+export function rezSearchQuery(v){
+  _sucheQ=v;
+  const host=$('gsRes');
+  if(!host){zeichneSuche();return;}
+  // Nur die Trefferliste neu bauen - ein voller Neuaufbau wuerde den Fokus
+  // und die Schreibmarke aus dem Feld werfen.
+  const merk=$('gsInp')&&$('gsInp').selectionStart;
+  zeichneSucheNurTreffer();
+  const i=$('gsInp');
+  if(i){i.focus();try{i.setSelectionRange(merk,merk);}catch(e){}}
+}
+function zeichneSucheNurTreffer(){
+  const alt=$('gsRes');if(!alt)return;
+  const hoehe=alt.offsetHeight;
+  zeichneSuche();
+  const neu=$('gsRes');if(neu&&hoehe)neu.style.minHeight='';
+}
+
+// ══ "WAS KANN ICH KOCHEN?" ═══════════════════════════════════════════════
+// Man hakt ab, was da ist; die App sortiert die Rezepte nach Trefferquote
+// und sagt, was fehlt. ⚠ Bewusst OHNE dauerhafte Vorratskammer (vom Nutzer
+// ausdruecklich gestrichen) - die Auswahl gilt nur fuer diesen Durchgang.
+let _habe=new Set(),_habeQ='';
+export async function rezOpenMatch(){
+  _habe=new Set();_habeQ='';
+  const g=modalGen();
+  // Zutaten aller Rezepte brauchen die Volldokumente - einmal nachladen.
+  for(const r of S.state.index.recipes){
+    if(!S.state.full.has(r.id))await S.getFull(r.id);
+    if(modalVeraltet(g))return;      // inzwischen woanders hingeklickt
+  }
+  if(modalVeraltet(g))return;
+  zeichneMatch();
+}
+function alleZutaten(){
+  const z=new Map();
+  S.state.index.recipes.forEach(r=>{
+    const d=S.state.full.get(r.id);
+    (d&&d.ingredients||[]).forEach(i=>{
+      const k=zutKey(i);
+      if(!k)return;
+      const e=z.get(k)||{key:k,text:zutName(i),n:0};
+      e.n++;z.set(k,e);
+    });
+  });
+  return[...z.values()].sort((a,b)=>b.n-a.n);
+}
+// Vergleichsform: Menge weg, Kleinschreibung, Umlaute ausgeschrieben - sonst
+// gilt "200 g Spaghetti" und "Spaghetti" als zwei verschiedene Dinge.
+function zutKey(t){
+  const ohne=splitQty(String(t||'')).name;
+  return ohne.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function zutName(t){return splitQty(String(t||'')).name||String(t||'');}
+function matchListe(){
+  const out=[];
+  S.state.index.recipes.forEach(r=>{
+    const d=S.state.full.get(r.id);
+    const zut=(d&&d.ingredients||[]).filter(x=>x&&x.trim());
+    if(!zut.length)return;
+    const fehlt=zut.filter(z=>!_habe.has(zutKey(z)));
+    out.push({r,gesamt:zut.length,fehlt,quote:(zut.length-fehlt.length)/zut.length});
+  });
+  return out.filter(x=>x.quote>0).sort((a,b)=>b.quote-a.quote||a.fehlt.length-b.fehlt.length);
+}
+function zeichneMatch(){
+  const alle=alleZutaten();
+  const q=_habeQ.trim().toLowerCase();
+  const sicht=alle.filter(z=>!q||z.text.toLowerCase().includes(q)).slice(0,60);
+  const treffer=_habe.size?matchListe().slice(0,10):[];
+  openModal(
+     `<h3>What can I cook?</h3>`
+    +`<div class="rf-hint">Tick what you have at home. Nothing is stored — this is just for right now.</div>`
+    +`<div class="rez-search" style="margin-bottom:10px">${icn('search',15)}`
+      +`<input id="mtQ" type="search" placeholder="Filter ingredients…" value="${escH(_habeQ)}" oninput="rezMatchQuery(this.value)"></div>`
+    +`<div class="mt-chips">`+(sicht.length?sicht.map((z,i)=>
+        `<button class="tag-chip${_habe.has(z.key)?' on':''}" onclick="rezMatchTick(${i})">${escH(z.text)}</button>`).join('')
+      :`<div class="rd-empty">No ingredients yet — add a recipe first.</div>`)+`</div>`
+    +(_habe.size?`<div class="rd-sec-h" style="margin-top:16px">Best matches</div>`
+      +(treffer.length?treffer.map(t=>
+        `<div class="mt-row">`
+          +(t.r.thumb?`<img class="pick-thumb" src="${t.r.thumb}" alt="" onclick="rezCloseModal();rezOpenDetail('${t.r.id}')">`:`<span class="pick-thumb"></span>`)
+          +`<div class="mt-main"><div class="mt-nm" onclick="rezCloseModal();rezOpenDetail('${t.r.id}')">${escH(t.r.title)}</div>`
+            +`<div class="mt-sub">${Math.round(t.quote*100)}% · ${t.fehlt.length?escH('missing: '+t.fehlt.map(zutName).slice(0,4).join(', ')):'you have everything'}</div></div>`
+          +(t.fehlt.length?`<button class="btn" onclick="rezMatchToShopping('${t.r.id}')">${icn('shopping',13)} Missing</button>`:'')
+        +`</div>`).join('')
+        :`<div class="rd-empty">Nothing matches yet.</div>`)
+      :'')
+    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Close</button></div>`
+  ,'modal-wide');
+  _matchSicht=sicht;
+}
+let _matchSicht=[];
+export function rezMatchQuery(v){_habeQ=v;zeichneMatch();const i=$('mtQ');if(i){i.focus();i.setSelectionRange(v.length,v.length);}}
+export function rezMatchTick(i){
+  const z=_matchSicht[i];if(!z)return;
+  if(_habe.has(z.key))_habe.delete(z.key);else _habe.add(z.key);
+  zeichneMatch();
+}
+export async function rezMatchToShopping(id){
+  const d=S.state.full.get(id)||await S.getFull(id);
+  if(!d)return;
+  const fehlt=(d.ingredients||[]).filter(z=>z&&z.trim()&&!_habe.has(zutKey(z)));
+  const n=await S.addIngredients(fehlt.map(z=>({text:z,src:d.title})));
+  renderNav();
+  toast(n?`${n} item${n===1?'':'s'} added to the shopping list`:'Everything was already on the list');
+}
+
+// ══ REZEPT TEILEN ════════════════════════════════════════════════════════
+// Als BILD, damit es auch bei jemandem ankommt, der die App nicht hat.
+// Gezeichnet auf ein Canvas - kein Nachladen, funktioniert offline.
+export async function rezShareRecipe(id){
+  const doc=await S.getFull(id);
+  if(!doc){toast('Recipe not available on this device yet');return;}
+  toast('Preparing image…');
+  try{
+    const blob=await rezeptBild(doc);
+    const datei=new File([blob],(doc.title||'recipe').replace(/[^\w -]/g,'').slice(0,40)+'.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[datei]})){
+      await navigator.share({files:[datei],title:doc.title||'Recipe'});
+      return;
+    }
+    // Rueckfallebene: herunterladen. Ein Link mit download-Attribut ist der
+    // einzige Weg, der ohne Share-Schnittstelle ueberall funktioniert.
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=datei.name;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+    toast('Saved as an image');
+  }catch(e){
+    if(e&&e.name==='AbortError')return;   // Nutzer hat den Teilen-Dialog abgebrochen
+    toast('Could not create the image: '+(e&&e.message||'unknown error'));
+  }
+}
+function rezeptBild(doc){
+  return new Promise((res,rej)=>{
+    const B=1080,rand=64;
+    const cv=document.createElement('canvas');
+    const ctx=cv.getContext('2d');
+    const cs=getComputedStyle(document.documentElement);
+    const v=(k,f)=>(cs.getPropertyValue(k).trim()||f);
+    const bg=v('--bg2','#ffffff'),t0=v('--t0','#111111'),t2=v('--t2','#555555'),akz=v('--accent','#444444');
+    const ff=v('--ff-title','sans-serif'),ft=v('--ff-text','sans-serif');
+    const zut=(doc.ingredients||[]).filter(x=>x&&x.trim());
+    const schritte=[];
+    (doc.blocks||[]).forEach(b=>{if(b.t!=='img')String(b.v||'').split(/\n+/).forEach(z=>{const t=z.trim();if(t)schritte.push(t);});});
+    const zeichne=(bild)=>{
+      const bildH=bild?Math.round(B*0.62):0;
+      // Hoehe vorher rechnen, damit nichts abgeschnitten wird.
+      ctx.font=`400 30px ${ft}`;
+      const umbruch=(txt,breite)=>{
+        const w=String(txt).split(/\s+/),z=[];let akt='';
+        w.forEach(x=>{const p=akt?akt+' '+x:x;if(ctx.measureText(p).width>breite&&akt){z.push(akt);akt=x;}else akt=p;});
+        if(akt)z.push(akt);return z;
+      };
+      const nutz=B-rand*2;
+      const zZ=zut.map(x=>umbruch('•  '+x,nutz).length).reduce((a,b)=>a+b,0);
+      const sZ=schritte.map((x,i)=>umbruch((i+1)+'.  '+x,nutz).length).reduce((a,b)=>a+b,0);
+      const H=bildH+rand*2+90+50+(zut.length?60+zZ*44:0)+(schritte.length?60+sZ*44:0)+80;
+      cv.width=B;cv.height=H;
+      ctx.fillStyle=bg;ctx.fillRect(0,0,B,H);
+      if(bild)ctx.drawImage(bild,0,0,B,bildH);
+      let y=bildH+rand+40;
+      ctx.fillStyle=t0;ctx.font=`800 58px ${ff}`;
+      umbruch(doc.title||'Recipe',nutz).slice(0,2).forEach(z=>{ctx.fillText(z,rand,y);y+=64;});
+      ctx.fillStyle=t2;ctx.font=`600 30px ${ft}`;
+      ctx.fillText(fmtDur(doc.min)+(doc.servings?'  ·  '+doc.servings+' servings':''),rand,y);y+=54;
+      const abschnitt=(titel,zeilen)=>{
+        if(!zeilen.length)return;
+        ctx.fillStyle=akz;ctx.font=`800 24px ${ft}`;
+        ctx.fillText(titel.toUpperCase(),rand,y);y+=16;
+        ctx.strokeStyle=akz;ctx.globalAlpha=.35;ctx.beginPath();ctx.moveTo(rand,y);ctx.lineTo(B-rand,y);ctx.stroke();ctx.globalAlpha=1;y+=40;
+        ctx.fillStyle=t0;ctx.font=`400 30px ${ft}`;
+        zeilen.forEach(z=>{umbruch(z,nutz).forEach(w=>{ctx.fillText(w,rand,y);y+=44;});});
+        y+=20;
+      };
+      abschnitt('Ingredients',zut.map(x=>'•  '+x));
+      abschnitt('Preparation',schritte.map((x,i)=>(i+1)+'.  '+x));
+      ctx.fillStyle=t2;ctx.font=`600 24px ${ft}`;
+      ctx.fillText('Perfect Rezept',rand,H-rand+10);
+      cv.toBlob(b=>b?res(b):rej(new Error('Canvas could not be exported')),'image/png');
+    };
+    if(doc.cover){
+      const im=new Image();
+      im.onload=()=>zeichne(im);
+      im.onerror=()=>zeichne(null);
+      im.src=doc.cover;
+    }else zeichne(null);
+  });
+}
+
 // ══ INSPIRATION ══════════════════════════════════════════════════════════
 // Ideen-Sammlung: eingebettete Reels/Videos, Links, Fotos, Notizen. Der
 // Unterschied zu "Recipes" ist die Absicht - hier liegt, was man MAL kochen
@@ -484,37 +890,126 @@ export function rezPickChoose(id){
 // "Convert to recipe" laesst den Parser aus js/rezept/import.js die
 // eingefuegte Caption in Titel/Dauer/Zutaten/Schritte zerlegen und oeffnet
 // damit das fertig ausgefuellte Rezept-Formular.
-let inspoFilter='';
+let inspoFilter='',inspoCreator='',inspoTag='',inspoSort='new';
+function inspoCreators(){
+  const z=new Map();
+  S.state.index.inspo.forEach(i=>{
+    const c=(i.creator||'').trim();
+    if(!c)return;
+    z.set(c,(z.get(c)||0)+1);
+  });
+  return[...z.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+}
+function inspoTags(){
+  const z=new Map();
+  S.state.index.inspo.forEach(i=>(i.tags||[]).forEach(t=>z.set(t,(z.get(t)||0)+1)));
+  return[...z.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+}
+function inspoListe(){
+  const q=inspoFilter.trim().toLowerCase();
+  let l=S.state.index.inspo.filter(i=>{
+    if(inspoCreator&&(i.creator||'')!==inspoCreator)return false;
+    if(inspoTag&&!(i.tags||[]).includes(inspoTag))return false;
+    if(q&&!((i.title||'')+' '+(i.caption||'')+' '+(i.creator||'')+' '+(i.tags||[]).join(' ')).toLowerCase().includes(q))return false;
+    return true;
+  });
+  if(inspoSort==='creator')l=l.slice().sort((a,b)=>(a.creator||'~').localeCompare(b.creator||'~')||(a.title||'').localeCompare(b.title||''));
+  else if(inspoSort==='title')l=l.slice().sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  else if(inspoSort==='dur')l=l.slice().sort((a,b)=>(a.min||9999)-(b.min||9999));
+  return l;
+}
 export function renderInspo(){
   const el=$('pgInspo');if(!el)return;
   const alle=S.state.index.inspo;
-  const q=inspoFilter.trim().toLowerCase();
-  const liste=alle.filter(i=>!q||((i.title||'')+' '+(i.caption||'')+' '+(i.tags||[]).join(' ')).toLowerCase().includes(q));
+  const liste=inspoListe();
+  const kuenstler=inspoCreators(),themen=inspoTags();
+  _inspoCreatorListe=kuenstler;_inspoTagListe=themen;
+  const sortLbl={new:'Newest first',creator:'By creator',title:'By title',dur:'By duration'}[inspoSort];
   el.innerHTML=
      `<div class="ptitle">Inspiration</div>`
-    +`<div class="psub">${alle.length?`${liste.length} of ${alle.length} shown`:'Save reels, links and ideas you want to cook one day'}</div>`
+    +`<div class="psub">${alle.length?`${liste.length} of ${alle.length} shown`
+        +(kuenstler.length?` · ${kuenstler.length} creator${kuenstler.length===1?'':'s'}`:'')
+      :'Save reels, links and ideas you want to cook one day'}</div>`
     +`<div class="rez-toolbar">`
-      +`<div class="rez-search">${icn('search',15)}<input id="inspoQ" type="search" placeholder="Search ideas..." value="${escH(inspoFilter)}" oninput="rezInspoQuery(this.value)"></div>`
+      +`<div class="rez-search">${icn('search',15)}<input id="inspoQ" type="search" placeholder="Search ideas, creators, tags..." value="${escH(inspoFilter)}" oninput="rezInspoQuery(this.value)"></div>`
+      +`<button class="btn" onclick="rezInspoSort()">${sortLbl}</button>`
+      +`<button class="btn" onclick="rezOpenBulk()">${icn('link',14)} Add many</button>`
       +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add idea</button>`
     +`</div>`
+    +(kuenstler.length?`<div class="rez-tags"><span class="shop-quick-lbl">Creators</span>`
+        +`<button class="tag-chip${inspoCreator?'':' on'}" onclick="rezInspoCreator(-1)">All</button>`
+        +kuenstler.map(([c,n],i)=>`<button class="tag-chip${inspoCreator===c?' on':''}" onclick="rezInspoCreator(${i})">${escH(c)} <span class="chip-n">${n}</span></button>`).join('')
+      +`</div>`:'')
+    +(themen.length?`<div class="rez-tags"><span class="shop-quick-lbl">Topics</span>`
+        +`<button class="tag-chip${inspoTag?'':' on'}" onclick="rezInspoTag(-1)">All</button>`
+        +themen.map(([t,n],i)=>`<button class="tag-chip${inspoTag===t?' on':''}" onclick="rezInspoTag(${i})">${escH(t)} <span class="chip-n">${n}</span></button>`).join('')
+      +`</div>`:'')
     +`<div class="rez-grid stagger">`+(liste.length?liste.map(inspoCardHtml).join(''):inspoEmptyHtml(alle.length))+`</div>`;
   afterRender(el);
 }
 function inspoEmptyHtml(total){
   if(!total)return`<div class="rez-empty"><h4>No ideas saved yet</h4>`
-    +`<p>Paste an Instagram reel, a TikTok, a YouTube link or just a note. Later you turn it into a real recipe with one click.</p>`
-    +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add your first idea</button></div>`;
-  return`<div class="rez-empty"><h4>Nothing matches</h4><p>No idea matches your search.</p>`
-    +`<button class="btn" onclick="rezInspoQuery('')">Clear search</button></div>`;
+    +`<p>Paste an Instagram reel, a TikTok, a YouTube link or just a note — or add many links at once. Later you turn one into a real recipe with a single click.</p>`
+    +`<button class="btn btn-primary" onclick="rezOpenBulk()">${icn('link',14)} Add many links</button>`
+    +`<button class="btn" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add one idea</button></div>`;
+  return`<div class="rez-empty"><h4>Nothing matches</h4><p>No idea matches your search or filters.</p>`
+    +`<button class="btn" onclick="rezInspoClear()">Clear filters</button></div>`;
 }
+export function rezInspoClear(){inspoFilter='';inspoCreator='';inspoTag='';renderInspo();}
 function inspoCardHtml(i){
   const bild=i.thumb?`<img class="rez-card-img" src="${i.thumb}" alt="" loading="lazy">`
     :`<div class="rez-card-img insp-ph">${icn(i.platform==='link'?'link':'play',34)}<span>${escH(i.label||i.platform||'Idea')}</span></div>`;
   return`<div class="rez-card" onclick="rezOpenInspo('${i.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezOpenInspo('${i.id}')">`
     +bild
     +(i.platform&&i.platform!=='note'?`<span class="insp-badge">${escH(i.label||i.platform)}</span>`:'')
-    +`<div class="rez-card-ov"><div class="rez-card-title">${escH(i.title||'Untitled idea')}</div>`
+    +`<div class="rez-card-ov"><div class="rez-card-tw"><div class="rez-card-title">${escH(i.title||'Untitled idea')}</div>`
+      +(i.creator?`<div class="rez-card-by">${escH(i.creator)}</div>`:'')+`</div>`
       +(i.min?`<span class="rez-card-dur">${icn('clock',11)}${fmtDur(i.min)}</span>`:'')+`</div></div>`;
+}
+let _inspoCreatorListe=[],_inspoTagListe=[];
+export function rezInspoCreator(i){inspoCreator=i<0?'':(_inspoCreatorListe[i]||['',0])[0];renderInspo();}
+export function rezInspoTag(i){inspoTag=i<0?'':(_inspoTagListe[i]||['',0])[0];renderInspo();}
+export function rezInspoSort(){
+  const f=['new','creator','title','dur'];
+  inspoSort=f[(f.indexOf(inspoSort)+1)%f.length];
+  renderInspo();
+}
+// ── Viele Links auf einmal ─────────────────────────────────────────────
+// Der ehrliche Weg zu "ganz vielen Reels": eine Adresse je Zeile einfuegen.
+// Die App erkennt Plattform und Kuenstler selbst und legt je Zeile einen
+// Eintrag an.
+export function rezOpenBulk(){
+  openModal(
+     `<h3>Add many links at once</h3>`
+    +`<div class="rf-hint">One link per line. Platform and creator are detected automatically. `
+      +`If a line also contains the caption, title, duration and tags are read from it too.</div>`
+    +`<textarea class="m-area" id="bulkTxt" style="min-height:190px" placeholder="https://www.instagram.com/kochenmitchef/reel/…&#10;https://www.tiktok.com/@pastaqueen/video/…&#10;https://youtu.be/…"></textarea>`
+    +`<div class="rf-err" id="bulkErr"></div>`
+    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Cancel</button>`
+      +`<button class="btn btn-primary" onclick="rezRunBulk()">Add all</button></div>`);
+}
+export async function rezRunBulk(){
+  const txt=(($('bulkTxt')||{}).value||'');
+  const zeilen=txt.split('\n').map(z=>z.trim()).filter(Boolean);
+  const fehler=$('bulkErr');
+  if(!zeilen.length){if(fehler){fehler.textContent='Paste at least one link.';fehler.style.display='block';}return;}
+  let n=0,uebersprungen=0;
+  for(const z of zeilen){
+    const p=parseCaption(z);
+    if(!p.link){uebersprungen++;continue;}
+    // Doppelte Adressen nicht zweimal anlegen.
+    if(S.state.index.inspo.some(x=>x.url===p.link.url)){uebersprungen++;continue;}
+    try{
+      await S.saveInspo({id:S.uid(),title:p.title||p.link.label+' video',url:p.link.url,
+        platform:p.link.platform,label:p.link.label,embedUrl:p.link.embedUrl,
+        caption:z.includes('\n')?z:'',creator:p.creator||'',thumb:'',tags:p.tags,min:p.min,created:'',up:''});
+      n++;
+    }catch(e){uebersprungen++;}
+  }
+  rezCloseModal();
+  renderInspo();renderNav();
+  toast(n?`${n} idea${n===1?'':'s'} added${uebersprungen?`, ${uebersprungen} skipped`:''}`
+        :'No usable link found — every line needs a full https:// address');
 }
 export function rezInspoQuery(v){inspoFilter=v;renderInspo();}
 
@@ -527,7 +1022,7 @@ export function rezOpenInspoForm(id){
     inspoForm=JSON.parse(JSON.stringify(it));
   }else{
     inspoForm={id:S.uid(),title:'',url:'',platform:'',label:'',embedUrl:'',
-      caption:'',thumb:'',tags:[],min:null,created:'',up:''};
+      caption:'',thumb:'',tags:[],min:null,creator:'',created:'',up:''};
   }
   inspoBase=JSON.stringify(inspoForm);
   zeichneInspoForm();
@@ -548,6 +1043,8 @@ function zeichneInspoForm(){
       +`<div><label class="dm-lbl">Title</label><input class="m-inp" id="ifTitle" placeholder="e.g. Pasta al limone" value="${escH(inspoForm.title)}" oninput="rezInspoField('title',this.value)"></div>`
       +`<div><label class="dm-lbl">Link (optional)</label><input class="m-inp" id="ifUrl" placeholder="https://..." value="${escH(inspoForm.url)}" oninput="rezInspoUrl(this.value)"></div>`
     +`</div>`
+    +`<label class="dm-lbl">Creator</label>`
+    +`<input class="m-inp" id="ifCreator" placeholder="@handle — detected from the link where possible" value="${escH(inspoForm.creator||'')}" oninput="rezInspoField('creator',this.value)">`
     +`<label class="dm-lbl">Tags (comma separated)</label>`
     +`<input class="m-inp" id="ifTags" placeholder="e.g. Dinner, Pasta" value="${escH((inspoForm.tags||[]).join(', '))}" oninput="rezInspoTags(this.value)">`
     +`<label class="dm-lbl">Cover image (optional)</label>`
@@ -564,7 +1061,9 @@ export function rezInspoTags(v){inspoForm.tags=v.split(',').map(x=>x.trim()).fil
 export function rezInspoUrl(v){
   inspoForm.url=v.trim();
   const l=detectLink(v);
-  if(l){inspoForm.platform=l.platform;inspoForm.label=l.label;inspoForm.embedUrl=l.embedUrl;inspoForm.url=l.url;}
+  if(l){inspoForm.platform=l.platform;inspoForm.label=l.label;inspoForm.embedUrl=l.embedUrl;inspoForm.url=l.url;
+    const c=creatorFromUrl(v);if(c)inspoForm.creator=c;
+    const cf=$('ifCreator');if(cf&&inspoForm.creator)cf.value=inspoForm.creator;}
   else{inspoForm.platform='';inspoForm.label='';inspoForm.embedUrl='';}
 }
 // Ein einziges Einfuegen genuegt: der Link wird aus dem Text herausgefischt,
@@ -579,7 +1078,9 @@ export function rezInspoPaste(v){
   const titelWarAbgeleitet=!inspoForm.title||inspoForm.title===inspoForm._autoTitle;
   if(p.title&&titelWarAbgeleitet){inspoForm.title=p.title;inspoForm._autoTitle=p.title;}
   if(p.min)inspoForm.min=p.min;
+  if(p.creator&&!inspoForm.creator)inspoForm.creator=p.creator;
   if(p.tags.length&&!(inspoForm.tags||[]).length)inspoForm.tags=p.tags;
+  const cf=$('ifCreator');if(cf&&cf.value!==(inspoForm.creator||''))cf.value=inspoForm.creator||'';
   // ⚠ Die abgeleiteten Werte muessen auch SICHTBAR werden. Erst stand nur der
   // Titel im Feld, waehrend Link und Tags still im Modell landeten - der
   // Nutzer sah leere Felder, obwohl die Werte gespeichert worden waeren, und
@@ -635,22 +1136,45 @@ export function rezOpenInspo(id){
   // ist fuer uns aber nicht lesbar (Browser-Regel, nicht umgehbar). Deshalb
   // steht darunter immer der Weg nach draussen - und offline faellt der
   // Rahmen ohnehin aus, dann bleibt der Link das Einzige, was traegt.
+  // ⚠ WAS BEIM EINBETTEN GEHT UND WAS NICHT:
+  // Der Rahmen ist cross-origin. Instagram und TikTok bieten KEINE
+  // Schnittstelle, um von aussen zu spulen, anzuhalten oder die Position zu
+  // lesen - dort bleibt nur die Bedienung IM Video selbst. YouTube dagegen
+  // hat eine dokumentierte postMessage-Schnittstelle (enablejsapi=1); nur
+  // dort gibt es unten eine echte Abspielleiste. Vorgetaeuscht wird nichts:
+  // meldet sich der Player nicht, verschwindet die Leiste wieder.
+  const ytId=(i.platform==='youtube')?i.id||(i.url.match(/[?&]v=([\w-]+)|youtu\.be\/([\w-]+)|shorts\/([\w-]+)/)||[]).slice(1).find(Boolean):'';
+  const src=i.embedUrl+(i.platform==='youtube'
+    ?(i.embedUrl.includes('?')?'&':'?')+'enablejsapi=1&playsinline=1&origin='+encodeURIComponent(location.origin)
+    :'');
   const einbetten=i.embedUrl
-    ? `<div class="insp-frame"><iframe src="${escH(i.embedUrl)}" loading="lazy" allowfullscreen`
-      +` referrerpolicy="origin-when-cross-origin"`
+    ? `<div class="insp-frame${i.platform==='youtube'?' yt':''}"><iframe id="inspFrame" src="${escH(src)}" loading="lazy" allowfullscreen`
+      +` referrerpolicy="origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture"`
       +` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"`
       +` title="${escH(i.title||'Embedded video')}"></iframe></div>`
-      +`<div class="insp-note">If the video stays blank you are offline, or the post is private — use the button below.</div>`
+      +(i.platform==='youtube'
+        ?`<div class="yt-bar" id="ytBar" hidden>`
+          +`<button class="yt-btn" id="ytPlay" onclick="rezYtToggle()" aria-label="Play or pause">▶</button>`
+          +`<button class="yt-btn" onclick="rezYtSeek(-10)" aria-label="Back 10 seconds">−10</button>`
+          +`<span class="yt-time" id="ytCur">0:00</span>`
+          +`<input class="yt-range" id="ytRange" type="range" min="0" max="1000" value="0"`
+          +` oninput="rezYtScrub(this.value)" onchange="rezYtScrubEnd(this.value)" aria-label="Position in the video">`
+          +`<span class="yt-time" id="ytDur">0:00</span>`
+          +`<button class="yt-btn" onclick="rezYtSeek(10)" aria-label="Forward 10 seconds">+10</button></div>`
+          +`<div class="insp-note" id="ytNote">Loading the player…</div>`
+        :`<div class="insp-note">Instagram and TikTok do not allow an app to control their player from the outside — use the controls inside the video. If it stays blank you are offline, or the post is private.</div>`)
     : (i.thumb?`<div class="rd-hero" style="margin-bottom:14px"><img src="${i.thumb}" alt=""></div>`:'');
   openModal(
      einbetten
     +`<div class="rd-title" style="font-size:var(--fs-xl)">${escH(i.title||'Untitled idea')}</div>`
     +`<div class="rd-meta">`
+      +(i.creator?`<button class="rd-chip rd-chip-btn" onclick="rezInspoByCreator('${escH(i.creator).replace(/'/g,'')}')">${escH(i.creator)}</button>`:'')
       +(i.label?`<span class="rd-chip">${icn('link',12)}${escH(i.label)}</span>`:'')
       +(i.min?`<span class="rd-chip">${icn('clock',12)}${fmtDur(i.min)}</span>`:'')
       +(i.tags||[]).map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('')
     +`</div>`
-    +(i.caption?`<div class="rd-sec"><div class="rd-sec-h">Saved text</div><div class="rd-block"><p>${escH(i.caption)}</p></div></div>`:'')
+    +(i.caption?`<div class="rd-sec"><div class="rd-sec-h">Saved text</div><div class="rd-block"><p>${escH(i.caption)}</p></div></div>`
+      :`<div class="rd-empty" style="margin-bottom:14px">No caption saved. Paste the post text into this idea and “Convert to recipe” fills in ingredients and steps for you.</div>`)
     +`<div class="m-btns" style="flex-wrap:wrap">`
       +`<button class="btn btn-danger" style="margin-right:auto" onclick="rezTrashInspo('${i.id}')">${icn('trashIcon',13)} Delete</button>`
       +(i.url?`<a class="btn" href="${escH(i.url)}" target="_blank" rel="noopener">Open in ${escH(i.label||'browser')}</a>`:'')
@@ -658,7 +1182,108 @@ export function rezOpenInspo(id){
       +`<button class="btn btn-primary" onclick="rezInspoToRecipe('${i.id}')">${icn('recipes',13)} Convert to recipe</button>`
     +`</div>`
   ,'modal-wide');
+  if(i.platform==='youtube')ytStart();
 }
+export function rezInspoByCreator(c){
+  const i=_inspoCreatorListe.findIndex(x=>x[0]===c);
+  rezCloseModal();
+  rezShowPage('inspo');
+  if(i>=0)rezInspoCreator(i);
+}
+
+// ══ ABSPIELLEISTE (nur YouTube) ══════════════════════════════════════════
+// Ueber die dokumentierte postMessage-Schnittstelle - ohne deren Skript
+// nachzuladen (die App muss offline lauffaehig bleiben). Meldet sich der
+// Player nicht innerhalb von 3 Sekunden, verschwindet die Leiste wieder:
+// lieber keine Leiste als eine, die nichts tut.
+let ytState={dur:0,cur:0,playing:false,ok:false,scrub:false},_ytT=null,_ytPoll=null;
+function ytFrame(){const f=$('inspFrame');return f&&f.contentWindow?f.contentWindow:null;}
+function ytSend(func,args){
+  const w=ytFrame();if(!w)return;
+  try{w.postMessage(JSON.stringify({event:'command',func,args:args||[]}),'*');}catch(e){}
+}
+function ytOnMessage(ev){
+  if(!/youtube(-nocookie)?\.com$/.test((()=>{try{return new URL(ev.origin).hostname;}catch(e){return'';}})()))return;
+  let d=ev.data;
+  if(typeof d==='string'){try{d=JSON.parse(d);}catch(e){return;}}
+  if(!d||!d.info)return;
+  const i=d.info;
+  if(typeof i.duration==='number'&&i.duration>0)ytState.dur=i.duration;
+  if(typeof i.currentTime==='number')ytState.cur=i.currentTime;
+  if(typeof i.playerState==='number')ytState.playing=(i.playerState===1);
+  if(!ytState.ok&&ytState.dur>0){ytState.ok=true;ytShowBar();}
+  ytPaint();
+}
+function ytShowBar(){
+  const bar=$('ytBar'),note=$('ytNote');
+  if(bar)bar.hidden=false;
+  if(note)note.textContent='Play, pause and scrub from here — the video stays in sync.';
+}
+function ytPaint(){
+  if(!ytState.ok)return;
+  const cur=$('ytCur'),dur=$('ytDur'),rg=$('ytRange'),pl=$('ytPlay');
+  if(cur)cur.textContent=ytClock(ytState.cur);
+  if(dur)dur.textContent=ytClock(ytState.dur);
+  if(rg&&!ytState.scrub&&ytState.dur)rg.value=String(Math.round(ytState.cur/ytState.dur*1000));
+  if(pl)pl.textContent=ytState.playing?'❚❚':'▶';
+}
+function ytClock(s){
+  s=Math.max(0,Math.round(s||0));
+  const m=Math.floor(s/60),r=s%60;
+  return m+':'+String(r).padStart(2,'0');
+}
+function ytStart(){
+  ytState={dur:0,cur:0,playing:false,ok:false,scrub:false};
+  window.addEventListener('message',ytOnMessage);
+  const f=$('inspFrame');
+  const anmelden=()=>{const w=ytFrame();if(!w)return;
+    try{w.postMessage(JSON.stringify({event:'listening',id:'rezYt',channel:'widget'}),'*');}catch(e){}};
+  if(f)f.addEventListener('load',anmelden,{once:true});
+  _ytPoll=setInterval(anmelden,400);
+  clearTimeout(_ytT);
+  _ytT=setTimeout(()=>{
+    clearInterval(_ytPoll);_ytPoll=null;
+    if(!ytState.ok){
+      const bar=$('ytBar'),note=$('ytNote');
+      if(bar)bar.remove();
+      if(note)note.textContent='The player did not answer — use the controls inside the video. (Offline, or the video does not allow embedding.)';
+    }else{
+      // Weiterhin nachfragen, damit die Position mitlaeuft.
+      _ytPoll=setInterval(()=>ytSend('getCurrentTime'),500);
+    }
+  },3000);
+}
+function ytStop(){
+  window.removeEventListener('message',ytOnMessage);
+  clearTimeout(_ytT);clearInterval(_ytPoll);_ytT=null;_ytPoll=null;
+  ytState.ok=false;
+}
+export function rezYtToggle(){
+  ytState.playing=!ytState.playing;
+  ytSend(ytState.playing?'playVideo':'pauseVideo');
+  ytPaint();
+}
+export function rezYtSeek(d){
+  const ziel=Math.max(0,Math.min(ytState.dur||1e9,ytState.cur+d));
+  ytState.cur=ziel;
+  ytSend('seekTo',[ziel,true]);
+  ytPaint();
+}
+export function rezYtScrub(v){
+  ytState.scrub=true;
+  if(!ytState.dur)return;
+  ytState.cur=(+v/1000)*ytState.dur;
+  const cur=$('ytCur');if(cur)cur.textContent=ytClock(ytState.cur);
+}
+export function rezYtScrubEnd(v){
+  ytState.scrub=false;
+  if(!ytState.dur)return;
+  const ziel=(+v/1000)*ytState.dur;
+  ytState.cur=ziel;
+  ytSend('seekTo',[ziel,true]);
+  ytPaint();
+}
+
 export async function rezTrashInspo(id){
   await S.trashInspo(id);
   rezCloseModal();
@@ -678,7 +1303,7 @@ export function rezInspoToRecipe(id){
     title:entwurf.title||i.title||'',
     min:i.min||entwurf.min||30,
     tags:(entwurf.tags&&entwurf.tags.length)?entwurf.tags:(i.tags||[]),
-    fav:false,cover:i.thumb||'',thumb:i.thumb||'',
+    fav:false,servings:2,notes:'',cover:i.thumb||'',thumb:i.thumb||'',
     ingredients:entwurf.ingredients,
     blocks:entwurf.blocks,
     created:'',up:'',source:i.url||'',
@@ -1043,8 +1668,20 @@ export async function rezRate(id,n){await S.rateCooked(id,n);renderCooked();}
 export async function rezRemoveCooked(id){await S.removeCooked(id);renderCooked();renderNav();toast('Removed from history');}
 
 // ── MODAL-INFRASTRUKTUR ──────────────────────────────────────────────────
+// ⚠ FENSTER-GENERATION. Mehrere Oeffner laden erst etwas nach (getFull,
+// Bilder) und zeichnen DANACH. Ohne Zaehler passiert Folgendes: man tippt
+// "What can I cook?", schliesst gleich wieder, und Sekunden spaeter springt
+// das Fenster von selbst auf - oder schlimmer, es ueberschreibt ein
+// inzwischen geoeffnetes anderes Fenster. Vom Waechter gefunden, als er
+// erst alle Karten durchklickte und danach das Hinzufuegen-Fenster nicht
+// mehr fand. Jeder asynchrone Oeffner merkt sich modalGen() und bricht ab,
+// wenn sich die Generation seither geaendert hat.
+let _modalGen=0;
+function modalGen(){return _modalGen;}
+function modalVeraltet(g){return g!==_modalGen;}
 function openModal(html,cls){
   const host=$('rezModals');
+  _modalGen++;
   clearTimeout(_closeT);
   host.innerHTML=`<div class="ov" id="rezOv" onclick="if(event.target===this)rezRequestClose()"><div class="modal ${cls||''}">${html}</div></div>`;
   // ⚠ Erst abmelden, dann anmelden: openModal() wird beim Neuzeichnen des
@@ -1073,8 +1710,10 @@ function offeneEingabe(){
 }
 let _closeT=null;
 export function rezCloseModal(){
+  _modalGen++;
   closeRowMenu();
   closeUnsavedDialog();
+  ytStop();
   const host=$('rezModals');
   // ⚠ Der Zustand wird SOFORT geraeumt, das Aufraeumen des DOM erst nach der
   // Abgangs-Animation. Andersherum haette man 140 ms lang ein Fenster, das
@@ -1137,6 +1776,7 @@ export async function rezOpenDetail(id){
     return;
   }
   const tags=(doc.tags||[]).map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('');
+  detailServ=doc.servings||2;
   const ing=(doc.ingredients||[]).filter(x=>x&&x.trim());
   const blocks=(doc.blocks||[]).filter(b=>b&&(b.v||'').trim());
   openModal(
@@ -1149,21 +1789,68 @@ export async function rezOpenDetail(id){
     +`<div class="rd-meta"><span class="rd-chip">${icn('clock',12)}${fmtDur(doc.min)}</span>`
       +(doc.fav?`<span class="rd-chip" style="color:var(--star)">${icn('star',12)}Favourite</span>`:'')
       +tags+`</div>`
-    +(ing.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients</div><ul class="rd-ing">${ing.map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:'')
+    +(ing.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients`
+        +`<span class="rd-serv"><button class="ck-sv" onclick="rezDetailServ('${id}',-1)" aria-label="Fewer servings">−</button>`
+        +`<span id="rdServN">${detailServ}</span><button class="ck-sv" onclick="rezDetailServ('${id}',1)" aria-label="More servings">+</button></span></div>`
+        +`<ul class="rd-ing" id="rdIng">${ingHtml(doc,detailServ)}</ul></div>`:'')
     +`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
       +(blocks.length?blocks.map(b=>b.t==='img'
           ?`<div class="rd-block"><img src="${b.v}" alt=""></div>`
           :`<div class="rd-block"><p>${escH(b.v)}</p></div>`).join('')
         :`<div class="rd-empty">No preparation steps written down yet.</div>`)
     +`</div>`
+    // Notizen: die Information, die beim ZWEITEN Kochen zaehlt ("weniger
+    // Salz"). Direkt im Detailfenster editierbar, nicht nur im Formular -
+    // sonst schreibt sie niemand auf.
+    +`<div class="rd-sec"><div class="rd-sec-h">Notes for next time</div>`
+      +`<textarea class="m-area" id="rdNotes" placeholder="e.g. less salt, 5 minutes longer in the oven..."`
+      +` oninput="rezNotesDirty()" onblur="rezSaveNotes('${id}')">${escH(doc.notes||'')}</textarea>`
+      +`<div class="rd-notes-state" id="rdNotesState"></div></div>`
     +`<div class="m-btns" style="flex-wrap:wrap">`
-      +(doc.source?`<a class="btn" style="margin-right:auto" href="${escH(doc.source)}" target="_blank" rel="noopener">${icn('link',13)} Original post</a>`:'')
+      +(doc.source?`<a class="btn" href="${escH(doc.source)}" target="_blank" rel="noopener">${icn('link',13)} Original post</a>`:'')
+      +`<button class="btn" onclick="rezShareRecipe('${id}')">${icn('share',13)} Share</button>`
       +`<button class="btn" onclick="rezMarkCooked('${id}')">${icn('check',13)} Mark as cooked</button>`
       +`<button class="btn" onclick="rezCookThis('${id}')">Cook today</button>`
-      +`<button class="btn" onclick="rezCloseModal()">Close</button>`
-      +`<button class="btn btn-primary" onclick="rezOpenForm('${id}')">Edit recipe</button></div>`
+      +`<button class="btn" onclick="rezOpenForm('${id}')">Edit</button>`
+      +`<button class="btn btn-primary" onclick="rezCloseModal();rezCook('${id}')">${icn('cooked',13)} Cook mode</button>`
+    +`</div>`
   ,'modal-wide');
 }
+let detailServ=2;
+function ingHtml(doc,serv){
+  const basis=doc.servings||2;
+  const f=basis?serv/basis:1;
+  return(doc.ingredients||[]).filter(x=>x&&x.trim())
+    .map(z=>`<li>${escH(CK.scaleIngredient(z,f))}</li>`).join('');
+}
+export async function rezDetailServ(id,d){
+  const doc=await S.getFull(id);
+  if(!doc)return;
+  detailServ=Math.max(1,Math.min(24,detailServ+d));
+  const n=$('rdServN');if(n)n.textContent=detailServ;
+  const host=$('rdIng');if(host)host.innerHTML=ingHtml(doc,detailServ);
+}
+let _notesDirty=false;
+export function rezNotesDirty(){
+  _notesDirty=true;
+  const el=$('rdNotesState');if(el)el.textContent='Unsaved…';
+}
+export async function rezSaveNotes(id){
+  if(!_notesDirty)return;
+  const doc=await S.getFull(id);
+  if(!doc)return;
+  const v=(($('rdNotes')||{}).value||'');
+  if((doc.notes||'')===v){_notesDirty=false;return;}
+  doc.notes=v;
+  try{
+    await S.saveRecipe(doc);
+    _notesDirty=false;
+    const el=$('rdNotesState');if(el)el.textContent='Saved';
+  }catch(e){
+    const el=$('rdNotesState');if(el)el.textContent='Could not save: '+(e&&e.message||'unknown error');
+  }
+}
+
 // ⚠ Am body, position:fixed - ein Kind des scrollenden Modals wuerde am
 // Rand abgeschnitten (docs/design-system.md, Overlay-Regel).
 export function rezOpenRowMenu(ev,id){
@@ -1204,15 +1891,19 @@ export async function rezConfirmDelete(id){
 
 // ── HINZUFUEGEN / BEARBEITEN ─────────────────────────────────────────────
 export async function rezOpenForm(id){
+  const g=modalGen();
   if(id){
     const doc=await S.getFull(id);
+    if(modalVeraltet(g))return;
     if(!doc){toast('Recipe not available on this device yet');return;}
     form=JSON.parse(JSON.stringify(doc));
     form.source=form.source||'';
+    form.servings=+form.servings||2;
+    form.notes=form.notes||'';
     form.ingredients=(form.ingredients&&form.ingredients.length)?form.ingredients:[''];
     form.blocks=(form.blocks&&form.blocks.length)?form.blocks:[{t:'text',v:''}];
   }else{
-    form={id:S.uid(),title:'',min:30,tags:[],fav:false,cover:'',thumb:'',ingredients:[''],blocks:[{t:'text',v:''}],created:'',up:'',source:''};
+    form={id:S.uid(),title:'',min:30,servings:2,tags:[],fav:false,cover:'',thumb:'',ingredients:[''],blocks:[{t:'text',v:''}],created:'',up:'',source:'',notes:''};
   }
   formBase=JSON.stringify(form);
   renderForm();
@@ -1233,6 +1924,8 @@ function renderForm(){
       +`<div><label class="dm-lbl">Title</label><input class="m-inp" id="rfTitle" placeholder="e.g. Pasta al limone" value="${escH(form.title)}" oninput="rezFormField('title',this.value)"></div>`
       +`<div><label class="dm-lbl">Duration</label><select class="m-sel" onchange="rezFormField('min',this.value)">${durOpts}</select></div>`
     +`</div>`
+    +`<label class="dm-lbl">Servings (the amounts above are for this many)</label>`
+    +`<input class="m-inp" type="number" min="1" max="24" value="${+form.servings||2}" oninput="rezFormField('servings',this.value)">`
     +`<label class="dm-lbl">Tags (comma separated)</label>`
     +`<input class="m-inp" placeholder="e.g. Dinner, Pasta, Quick" value="${escH((form.tags||[]).join(', '))}" oninput="rezFormTags(this.value)">`
     +`<label class="dm-lbl">Ingredients</label>`
@@ -1266,7 +1959,7 @@ function blockLine(b,i){
   return`<div class="rf-blk"><div class="rf-blk-hd"><span class="rf-blk-lbl">Text</span>${acts}</div>`
     +`<textarea class="m-area" placeholder="1. Bring a large pot of salted water to the boil..." oninput="rezSetBlock(${i},this.value)">${escH(b.v)}</textarea></div>`;
 }
-export function rezFormField(k,v){form[k]=k==='min'?+v:v;}
+export function rezFormField(k,v){form[k]=(k==='min'||k==='servings')?+v:v;}
 export function rezFormTags(v){form.tags=v.split(',').map(s=>s.trim()).filter(Boolean);}
 export function rezSetIngredient(i,v){form.ingredients[i]=v;}
 export function rezAddIngredient(){form.ingredients.push('');renderPart('rfIng',form.ingredients.map(ingLine).join(''));}
@@ -1369,6 +2062,8 @@ export async function rezSaveForm(){
     ingredients:(form.ingredients||[]).map(s=>(s||'').trim()).filter(Boolean),
     blocks:(form.blocks||[]).filter(b=>b&&(b.v||'').trim()),
     created:form.created||'',
+    servings:Math.max(1,Math.min(24,+form.servings||2)),
+    notes:form.notes||'',
     // Herkunft eines importierten Rezepts - bleibt am Volldokument haengen,
     // damit man vom Rezept aus zum urspruenglichen Reel zurueckkommt.
     source:form.source||'',
@@ -1569,10 +2264,17 @@ Object.assign(window,{
   rezSetBlock,rezAddBlock,rezDelBlock,rezMoveBlock,rezPickCover,rezPickBlockImage,
   // Overview
   rezRandomOpt,rezRoll,rezCookThis,rezMarkCooked,rezClearToday,rezPickToday,
+  // Kochmodus + Timer
+  rezCook,rezCookExit,rezCookStep,rezCookTick,rezCookServ,rezCookFinish,renderCook,
+  rezStartTimer,rezTimerPause,rezTimerResume,rezTimerPlus,rezTimerStop,
+  rezOpenTimerDialog,rezStartCustomTimer,
+  // Portionen, Notizen, Suche, Vorschlag, Teilen
+  rezDetailServ,rezNotesDirty,rezSaveNotes,rezSearchQuery,
+  rezOpenMatch,rezMatchQuery,rezMatchTick,rezMatchToShopping,rezShareRecipe,
   // Rezept-Auswahl
   rezPickQuery,rezPickChoose,
   // Inspiration
-  renderInspo,rezInspoQuery,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
+  renderInspo,rezInspoQuery,rezInspoClear,rezInspoCreator,rezInspoTag,rezInspoSort,rezOpenBulk,rezRunBulk,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
   rezInspoPaste,rezPickInspoImage,rezSaveInspo,rezOpenInspo,rezTrashInspo,rezInspoToRecipe,
   // Woche
   renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,

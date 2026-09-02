@@ -166,6 +166,63 @@ Bilder**, nicht nur eine fehlende Animation. Stufe J prüft es.
 **sofort** und den DOM erst nach 140 ms — andersherum hätte man kurz ein
 Fenster, das noch Eingaben annimmt, obwohl es logisch schon zu ist.
 
+## Kochmodus, Timer und Portionen (`js/rezept/cook.js`)
+
+**Kochmodus** ist Vollbild mit großer Schrift, weil das Gerät beim Kochen
+zwei Meter weg steht und man nasse Hände hat. `wakeLock` hält den Bildschirm
+an — und wird nach der Rückkehr aus dem Hintergrund **neu angefordert**, weil
+das System sie dort freigibt.
+
+**Portionen skalieren** (`scaleIngredient`): erkennt Zahl, Komma-Wert,
+Schreibbruch (`1 1/2`) und Unicode-Bruch (`½`). ⚠ **Steht keine Zahl da
+(„Salz & Pfeffer"), bleibt die Zeile unverändert** — eine erfundene Menge
+wäre schlimmer als keine. Ergebnisse werden als Bruch (½, ⅓, ¾) oder mit
+höchstens einer Nachkommastelle ausgegeben; „0,6666 Zwiebeln" hilft niemandem.
+
+**Timer** werden aus dem Schritt gelesen (`findTimers`): *alle* Zeitangaben
+eines Schrittes, damit „5 Minuten anbraten, dann 20 Minuten schmoren" **zwei**
+Knöpfe ergibt. Bei einer Spanne („15–20 Minuten") gewinnt die **obere** Zahl —
+lieber einmal nachsehen als etwas anbrennen lassen. Unplausibles (< 5 s,
+> 6 h) und Temperaturen werden ignoriert.
+
+⚠ **Die Restzeit wird aus der Zielzeit gerechnet, nicht heruntergezählt.**
+Ein Intervall wird im Hintergrund-Tab gedrosselt; ein Zähler wäre danach
+falsch.
+
+### Ton und der Stumm-Hinweis — was geht und was nicht
+
+Der Klingelton wird per WebAudio **erzeugt**, nicht als Datei geladen: die App
+muss offline laufen, und eine fehlende `mp3` wäre genau beim Klingeln weg.
+
+⚠ **Es gibt keine Browser-Schnittstelle, die den Stummschalter eines iPhones
+abfragt.** Weder WebAudio noch das Media-API liest den Ringer-Switch.
+Erkennbar ist nur, ob die Wiedergabe überhaupt *erlaubt/gestartet* wurde
+(`AudioContext` bleibt `suspended`). Genau das wird geprüft, und **nur dann**
+erscheint der Hinweis — wie vom Nutzer gewünscht („wenn das Gerät auf stumm
+ist auch ein Hinweis, sonst nicht"). Bei einem stummgeschalteten iPhone läuft
+der Kontext allerdings normal weiter, man hört nur nichts. Deshalb klingelt
+der Timer **immer zusätzlich sichtbar** und vibriert, wo unterstützt. Auf eine
+Erkennung, die es nicht gibt, wird sich nicht verlassen.
+
+## Video-Wiedergabe: nur YouTube ist steuerbar
+
+⚠ Der Einbett-Rahmen ist cross-origin. **Instagram und TikTok bieten keine
+Schnittstelle, um von außen zu spulen, anzuhalten oder die Position zu
+lesen** — dort bleibt nur die Bedienung im Video selbst, und die App sagt das
+sichtbar, statt eine Leiste vorzutäuschen, die nichts tut. **YouTube** hat
+eine dokumentierte `postMessage`-Schnittstelle (`enablejsapi=1`); nur dort
+gibt es Play/Pause, Position und ±10 s. Deren Skript wird **nicht**
+nachgeladen (Offline-Regel) — die Befehle gehen direkt per `postMessage`.
+Meldet sich der Player binnen 3 s nicht, **verschwindet die Leiste wieder**:
+lieber keine Leiste als eine, die nichts bewirkt.
+
+## Modal-Generation
+
+⚠ Mehrere Fenster-Öffner laden erst nach (`getFull`, Bilder) und zeichnen
+danach. Ohne Zähler springt ein Fenster Sekunden später von selbst auf oder
+überschreibt ein inzwischen geöffnetes anderes. Jeder asynchrone Öffner merkt
+sich `modalGen()` und bricht ab, wenn sich die Generation geändert hat.
+
 ## Feste Regeln dieser App
 
 1. **Alles auf der Oberfläche ist Englisch** — wie im FX Analyst Pro

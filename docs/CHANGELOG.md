@@ -8946,3 +8946,87 @@ logisch schon zu ist.
    eine vergessene `afterRender()`-Stelle heißt also unsichtbare Bilder, nicht
    nur eine fehlende Animation); das DOM-Aufräumen nach der Abgangs-Animation
    entfernt → „Fenster bleibt im DOM hängen".
+
+---
+
+## 2026-09-02 (4) — KOCHMODUS, TIMER, PORTIONEN, SUCHE, TEILEN, INSPIRATIONS-AUSBAU (REZEPT-CHECK-6)
+
+Nutzer: alle Ideen außer Punkt 6 (Vorratskammer) umsetzen, Timer als digitale
+Uhr mit Ton und Stumm-Hinweis, Abspielleiste fürs Video, „der Link soll
+reichen", und in Inspiration viele Reels nach Künstler filterbar.
+
+### Was gebaut wurde
+
+**Kochmodus**: Vollbild, große Schrift, `wakeLock` (nach Rückkehr aus dem
+Hintergrund neu angefordert), Zutaten und Schritte einzeln abhakbar, Schritte
+werden aus den Blöcken zerlegt statt als Textwand gezeigt, „Finish & log"
+schreibt direkt in den Verlauf.
+
+**Timer**: aus dem Schritt gelesen — *alle* Zeitangaben, damit „5 Minuten
+anbraten, dann 20 Minuten schmoren" zwei Knöpfe ergibt; bei einer Spanne
+gewinnt die obere Zahl. Digitale Countdown-Uhr in dicktengleichen Ziffern,
+mehrere Timer gleichzeitig, Pause/+1 Minute. Restzeit wird aus der **Zielzeit**
+gerechnet, nicht heruntergezählt — ein Intervall wird im Hintergrund-Tab
+gedrosselt und ein Zähler wäre danach falsch.
+
+**Portionen**: Regler im Detailfenster und im Kochmodus. Erkennt Zahlen,
+Komma-Werte, `1 1/2` und `½`. Zeilen ohne Zahl bleiben unverändert.
+
+**Notizen am Rezept**, direkt im Detailfenster editierbar — sonst schreibt sie
+niemand auf. **Globale Suche** über Titel, Zutaten, Notizen, Ideen und
+Verlauf. **„Was kann ich kochen?"** mit Trefferquote und „Fehlendes auf die
+Einkaufsliste". **Teilen** als gerendertes Bild (Canvas, kein Nachladen) über
+`navigator.share`, mit Download als Rückfallebene.
+
+**Inspiration**: viele Links auf einmal (eine Zeile je Link), Künstler
+automatisch aus der Adresse, Filter nach Künstler und Thema, vier
+Sortierungen, Doppel-Adressen werden übersprungen.
+
+### Ton und Stumm-Hinweis — die ehrliche Grenze
+
+Der Klingelton wird per WebAudio **erzeugt** (offline-fest). **Es gibt keine
+Browser-Schnittstelle, die den Stummschalter eines iPhones abfragt** — weder
+WebAudio noch das Media-API. Erkennbar ist nur, ob die Wiedergabe überhaupt
+erlaubt wurde; genau das wird geprüft, und nur dann erscheint der Hinweis.
+Weil ein stummes iPhone den Kontext trotzdem normal laufen lässt, klingelt der
+Timer **immer zusätzlich sichtbar** und vibriert.
+
+### Abspielleiste — nur YouTube ist steuerbar
+
+Instagram und TikTok bieten **keine** Schnittstelle, um von außen zu spulen,
+anzuhalten oder die Position zu lesen. Die App sagt das sichtbar, statt eine
+Leiste vorzutäuschen. Für YouTube gibt es eine echte Leiste über die
+dokumentierte `postMessage`-Schnittstelle — ohne deren Skript nachzuladen.
+Meldet sich der Player binnen 3 s nicht, verschwindet die Leiste wieder.
+
+### „Der Link soll reichen" — warum das weiterhin nicht geht
+
+Unverändert: `fetch()` auf instagram.com scheitert an CORS, oEmbed verlangt
+ein Meta-Token, der Rahmen ist cross-origin. **Diesmal wollte ich es
+serverseitig testen** (GitHub Actions könnte fetchen) — die Netz-Policy dieser
+Arbeitsumgebung blockt instagram.com, tiktok.com **und** youtube.com
+(`HTTP 000`, nur `api.github.com` antwortet). Eine Automatik, die ich nicht
+testen kann und deren Fehlermodus still ist (Workflow läuft, bekommt eine
+Login-Wand, schreibt nichts), gehört nicht ins Repo. Bleibt: einmal einfügen,
+Rest automatisch.
+
+### Was der Wächter dabei gefunden hat
+
+1. **Async-Fenster überschreiben einander.** „What can I cook?" lädt erst alle
+   Volldokumente und zeichnet danach — auch wenn man längst weitergeklickt
+   hat. Behoben mit einer **Modal-Generation**: jeder asynchrone Öffner merkt
+   sich den Zähler und bricht ab, wenn er sich geändert hat.
+2. **Die Timer-Leiste lag über der Schritt-Navigation** (im eigenen Screenshot
+   gesehen). Behoben über `body.timers-on`; der Wächter misst jetzt die
+   Rechtecke gegeneinander.
+3. **Drei Scheinfehler im Wächter selbst**, alle mit derselben Ursache — die
+   Prüfung stellte nicht die Lage her, in der ein echter Nutzer klickt: ein
+   **deaktivierter** Knopf tut richtigerweise nichts, ein „Add"-Knopf **ohne
+   Eingabe** auch, und zwei aufeinanderfolgende Klicks mit **derselben
+   Toast-Meldung** sahen aus wie „keine Wirkung". Der Wächter setzt jetzt vor
+   jedem Klick Filter und Toast zurück, füllt leere Eingabefelder und
+   überspringt deaktivierte sowie navigierende Knöpfe.
+4. **Drei Mutationstests bestanden**: Brüche aus der Portionsrechnung
+   entfernt → „Bruch verdoppeln: ½ TL statt 1 TL"; Schritt-Zerlegung entfernt
+   → „Zubereitung wird nicht in einzelne Schritte zerlegt"; Künstler-Erkennung
+   entfernt → „Der Instagram-Künstler wird nicht aus der Adresse gelesen".

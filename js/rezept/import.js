@@ -43,6 +43,26 @@ const MUSTER=[
    embed:id=>`https://www.youtube-nocookie.com/embed/${id}`,
    open:id=>`https://www.youtube.com/watch?v=${id}`,label:'YouTube'},
 ];
+// Kuenstler/Kanal aus der Adresse lesen, wo er drinsteht. Instagram kennt
+// beide Formen (mit und ohne Handle), TikTok hat ihn immer, YouTube nie.
+// ⚠ Steht er nicht drin, bleibt das Feld LEER - ein geratener Name waere
+// schlimmer als keiner.
+export function creatorFromUrl(text){
+  const t=String(text||'');
+  const ig=t.match(/instagram\.com\/([A-Za-z0-9._]+)\/(?:reels?|p|tv)\//i);
+  if(ig&&!/^(reels?|p|tv|explore|stories)$/i.test(ig[1]))return'@'+ig[1];
+  const tt=t.match(/tiktok\.com\/@([A-Za-z0-9._]+)/i);
+  if(tt)return'@'+tt[1];
+  return'';
+}
+// Sonst aus dem Beitragstext: das erste @handle, das nicht offensichtlich
+// eine Erwaehnung mitten im Satz ist (Zeilenanfang oder "by @...").
+export function creatorFromText(text){
+  const t=String(text||'');
+  const m=t.match(/(?:^|\n)\s*(?:by\s+|von\s+|rezept von\s+|recipe by\s+)?@([A-Za-z0-9._]{2,30})/i)
+        ||t.match(/(?:by|von)\s+@([A-Za-z0-9._]{2,30})/i);
+  return m?'@'+m[1]:'';
+}
 export function detectLink(text){
   const t=String(text||'');
   for(const m of MUSTER){
@@ -203,6 +223,7 @@ export function parseCaption(text){
 
   return{
     link,
+    creator:creatorFromUrl(roh)||creatorFromText(roh),
     title:titel,
     min:parseDuration(roh),
     ingredients:zutaten.filter(Boolean),
