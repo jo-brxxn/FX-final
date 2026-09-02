@@ -149,10 +149,80 @@ Titelbild frisst davon 5 %. Für Bilder ist das keine Option.
    `MODAL_GUARDS` in `js/main.js` dasselbe — **ein neues Eingabe-Fenster
    gehört dort registriert**, statt eine eigene Sonderlösung zu bauen.
 
+## Die sechs Kategorien
+
+| Kategorie | Was sie tut | Wo im Code |
+|---|---|---|
+| **Overview** | Today's Meal (= erster Eintrag im Wochenplan für heute), Random Picker, Add New Meal | `renderOverview`, `todayCardHtml`, `randomCardHtml` |
+| **Recipes** | Rezept-Raster, Suche/Zeit-/Tag-/Favoritenfilter, Hinzufügen/Bearbeiten/Detail | `renderRecipes`, `renderForm`, `rezOpenDetail` |
+| **Inspiration** | Reels/Links/Notizen sammeln, Video einbetten, **Convert to recipe** | `renderInspo`, `rezOpenInspo`, `rezInspoToRecipe` |
+| **Week** | Wochenplan Mo–So, Woche vor/zurück, Zutaten in die Einkaufsliste | `renderWeek`, `rezWeekToShopping` |
+| **Shopping** | Einkaufsliste, abhakbar, eigene Einträge, aus dem Plan füllen | `renderShopping` |
+| **Cooked** | Verlauf mit Bewertung, „Cook again" | `renderCooked` |
+
+**Today's Meal ist bewusst KEIN eigenes Feld**, sondern der erste Eintrag im
+Wochenplan für heute (`S.todaysMeal()`). Zwei Wahrheiten würden auseinander-
+laufen, sobald jemand die Woche umplant.
+
+**Der Zufallsgenerator meidet standardmäßig alles, was in den letzten sieben
+Tagen schon auf dem Tisch stand** — dafür gibt es den Koch-Verlauf. Er zieht
+bei mehreren Kandidaten nie zweimal hintereinander dasselbe, sonst wirkt er
+kaputt, obwohl der Zufall korrekt ist.
+
+**Ein gemeinsamer Auswahl-Baustein** (`openRecipePicker`) bedient alle
+Stellen, die ein Rezept brauchen (Today's Meal, Wochenplan). Beim Anlegen
+einer weiteren solchen Stelle zuerst prüfen, ob er passt, statt eine zweite,
+leicht andere Liste zu bauen (Regel aus `docs/design-system.md`).
+
+## Reel-Import: was geht und was NICHT
+
+**Der Text eines Instagram-Reels lässt sich aus dem Browser heraus nicht
+automatisch holen.** Drei unabhängige Gründe, alle nicht umgehbar:
+
+1. `fetch()` auf `instagram.com` scheitert an CORS — Instagram sendet keinen
+   `Access-Control-Allow-Origin`-Header.
+2. Die offizielle oEmbed-Schnittstelle verlangt seit 2020 ein
+   Meta-Business-Token, also einen eigenen Server mit Anmeldedaten.
+3. Der Einbett-Rahmen zeigt das Video zwar, sein Inhalt ist cross-origin —
+   Text daraus zu lesen verbietet der Browser.
+
+**Wer das künftig doch automatisieren will, braucht einen Serverdienst**
+(z. B. einen GitHub-Actions-Lauf mit Meta-Token), der die Caption holt und in
+die Supabase-Zeile schreibt. Ohne den ist jede „automatische" Lösung geraten
+— und geraten wird in diesem Projekt nicht.
+
+**Was stattdessen gebaut ist** (`js/rezept/import.js`): der Nutzer fügt
+**einmal** den kopierten Beitragstext ein (Link und Caption dürfen im selben
+Block stehen), der Rest läuft automatisch:
+
+- `detectLink()` erkennt Instagram, TikTok, YouTube und beliebige Links und
+  liefert Einbett- und Öffnen-Adresse.
+- `parseCaption()` zerlegt die Caption in **Titel, Dauer, Zutaten, Schritte,
+  Tags** — zweisprachig DE/EN, weil Koch-Captions häufig deutsch sind. Zwei
+  Wege: mit Überschriften („Zutaten:"/„Zubereitung:") oder, wenn keine da
+  sind, nach Form (Mengenangaben = Zutat, Nummerierung = Schritt).
+- `captionToRecipe()` baut daraus den Formular-Entwurf; „Convert to recipe"
+  öffnet ihn **sichtbar zum Korrigieren**, statt still zu speichern.
+
+**Nichts wird erfunden:** steht keine Dauer in der Caption, bleibt der
+Formular-Standard und der Nutzer wählt selbst. Reine Reichweiten-Hashtags
+(`#reels`, `#fyp`, `#foodporn`, …) fliegen raus, sonst müllen sie die
+Filterleiste zu.
+
+**⚠ Beide Parser-Wege gehören geprüft.** Ein Regressionstest hat gezeigt: die
+Mengen-Erkennung absichtlich kaputtzumachen blieb unbemerkt, weil die
+Test-Caption Überschriften hatte und dieser Weg ohne Mengen auskommt.
+`check/rezept.js` Stufe H prüft seither beide Wege plus alle
+Dauer-Schreibweisen.
+
 ## Was noch fehlt (bewusste Platzhalter)
 
-`Today's Meal` und `Random Picker` auf der Overview sind ausdrückliche
-Platzhalter (Nutzer: *„Mach nur einen Platzhalter hin. Die Funktion kommt
-noch."*). Sie zeigen bewusst KEINEN erfundenen Inhalt — das entspricht auch
-der Projektregel „nie schätzen/raten/hart eintragen". Beim Ausbau: der
-Zufallsgenerator kann über die bereits vorhandenen Tags gefiltert werden.
+Stand 2026-09-02: **keine.** `Today's Meal` und `Random Picker` waren bis
+REZEPT-CHECK-2 Platzhalter und haben seit REZEPT-CHECK-3 echte Funktion.
+
+Naheliegende nächste Schritte, falls das Thema wieder aufkommt:
+- Mengen auf der Einkaufsliste zusammenrechnen. **Bewusst NICHT gebaut:**
+  „1 EL Öl" und „200 g Öl" zu addieren wäre geraten. Aktuell wird nur eine
+  exakte Wiederholung übersprungen (`normIngredient`).
+- Reel-Caption serverseitig holen (siehe oben — braucht Meta-Token).
+- Vorratskammer/„was habe ich da" als Gegenstück zur Einkaufsliste.

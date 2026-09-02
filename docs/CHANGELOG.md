@@ -8718,3 +8718,87 @@ AUSGEBLENDETEN Karte trifft und das sichtbare Raster gleich bleibt, obwohl
 der Schalter korrekt arbeitet. Merksatz für künftige „klick alles"-Wächter:
 **vor jedem Klick den Zustand zurücksetzen und die Elementliste neu abfragen**,
 sonst misst man die Nachwirkungen des vorherigen Klicks.
+
+---
+
+## 2026-09-02 — VIER NEUE KATEGORIEN + REEL-IMPORT (REZEPT-CHECK-3)
+
+Nutzer: *„Ja bau das alles ein aber achte auf Qualität ich hoffe du kannst das
+umsetzen dass man Instagram Reels importieren kann und die automatisch zu
+einem Rezept werden."*
+
+### Instagram-Import — was geht und was nicht (bitte vor dem nächsten Anlauf lesen)
+
+**Der Text eines Reels lässt sich aus dem Browser heraus NICHT automatisch
+holen.** Drei unabhängige Gründe, keiner davon eine Einstellung, die man
+umgehen kann: `fetch()` auf instagram.com scheitert an CORS (kein
+`Access-Control-Allow-Origin`); die offizielle oEmbed-Schnittstelle verlangt
+seit 2020 ein Meta-Business-Token, also einen eigenen Server; und der
+Einbett-Rahmen zeigt das Video zwar an, sein Inhalt ist cross-origin und
+damit für uns unlesbar. Wer es künftig doch automatisieren will, braucht
+einen Serverdienst (z. B. GitHub Actions mit Meta-Token), der die Caption
+holt und in die Supabase-Zeile schreibt — ohne den wäre jede „automatische"
+Lösung geraten, und geraten wird hier nicht.
+
+**Gebaut ist deshalb der Weg, der zu 100 % trägt:** einmal den kopierten
+Beitragstext einfügen (Link und Caption dürfen im selben Block stehen), alles
+Weitere läuft automatisch. `js/rezept/import.js` erkennt Instagram/TikTok/
+YouTube samt Einbett-Adresse und zerlegt die Caption in Titel, Dauer,
+Zutaten, Schritte und Tags — zweisprachig DE/EN, weil Koch-Captions oft
+deutsch sind. Zwei Wege: mit Überschriften („Zutaten:"/„Zubereitung:") oder,
+wenn keine da sind, nach Form (Mengenangabe = Zutat, Nummerierung = Schritt).
+„Convert to recipe" öffnet den fertig ausgefüllten Formular-Entwurf
+**sichtbar zum Korrigieren**, statt still zu speichern. Nichts wird erfunden:
+fehlt die Dauer in der Caption, bleibt der Standard stehen.
+
+### Vier neue Kategorien
+
+- **Inspiration**: Reels/Links/Notizen sammeln, Video eingebettet (9:16,
+  gedeckelt auf halbe Fensterhöhe), „Convert to recipe", Herkunftslink bleibt
+  am erzeugten Rezept hängen (`source`, im Detailfenster als „Original post").
+- **Week**: Wochenplan Mo–So, Woche vor/zurück, Rezepte zuweisen, und
+  „Add ingredients to shopping list" für die ganze Woche.
+- **Shopping**: abhakbare Liste, eigene Einträge, aus dem Plan füllbar.
+  Zweimal übernehmen verdoppelt nichts (`normIngredient`).
+- **Cooked**: Verlauf mit Sterne-Bewertung und „Cook again".
+
+Damit haben **Today's Meal und Random Picker echte Funktion** statt
+Platzhalter. Today's Meal ist bewusst kein eigenes Feld, sondern der erste
+Eintrag im Wochenplan für heute — zwei Wahrheiten würden auseinanderlaufen,
+sobald jemand die Woche umplant. Der Zufallsgenerator filtert nach Zeit und
+Tag, meidet standardmäßig alles aus den letzten sieben Tagen (dafür ist der
+Verlauf da) und zieht bei mehreren Kandidaten nie zweimal hintereinander
+dasselbe.
+
+### Merge: vier neue Bereiche, vier eigene Regeln
+
+Ein pauschales „Cloud gewinnt" hätte hier wieder Daten gekostet (dieselbe
+Falle wie `scoreHist` 2026-07-20 und die Research-Notizen 2026-09-01):
+`inspo` nach id mit `up`; **`plan` mit einem Zeitstempel JE TAG** — sonst
+verliert ein Gerät, das Montag plant, den Donnerstag des anderen;
+`shopping.items` nach id, gelöschte bleiben sieben Tage als `del`-Marke
+stehen, sonst legt ein länger nicht geöffnetes Gerät sie wieder an; `cooked`
+als reines Anhängen. Grabsteine im Papierkorb tragen jetzt `kind`, damit ein
+gelöschtes Rezept und eine gelöschte Idee unterscheidbar bleiben.
+`normalizeIndex()` ergänzt fehlende Bereiche — ohne das wäre die App für
+Bestandsnutzer sofort kaputt gewesen, obwohl bei einem Neustart alles ging.
+
+### Zwei Regressionstests, die etwas gefunden haben
+
+1. **Der Wächter ließ eine kaputte Zutaten-Erkennung durch.** Absichtlich
+   kaputt gemacht → `check/rezept.js` meldete trotzdem „ok". Grund: die
+   Test-Caption hatte Überschriften, und dieser Weg kommt ohne die
+   Mengen-Erkennung aus — der zweite Weg war komplett ungeprüft. Neue Stufe H
+   prüft beide Wege plus alle Dauer-Schreibweisen (`1h30`, `2 Std 30`,
+   `ca. 20 Min`, `90 mins`, `1 hour`). **Merksatz: eine Prüfung, die nur den
+   bequemen Pfad nimmt, ist keine Prüfung.** Die zweite Mutation (Wochenplan-
+   Merge auf „Cloud gewinnt" zurückgedreht) wurde von Stufe G sofort gefangen.
+2. **Import-Fenster zeigte erkannte Werte nicht an.** Link und Tags landeten
+   still im Entwurf, während der Nutzer leere Felder sah — beim Tippen hätte
+   er sie überschrieben, ohne es zu merken. Gefunden beim Ansehen des eigenen
+   Screenshots, nicht durch den Wächter; Stufe F prüft es jetzt.
+
+Ebenfalls nachgezogen: die Nachfrage bei ungespeicherten Eingaben deckt jetzt
+**beide** Eingabemasken ab (`offeneEingabe()`). Die Inspirations-Maske war
+beim Bau zunächst vergessen — dort hätte ein Klick daneben wieder alles
+verworfen, obwohl das Rezept-Formular längst geschützt war.

@@ -53,8 +53,20 @@ export const TRASH_DAYS=30;
 // ── Laufzeit-Zustand ─────────────────────────────────────────────────────
 // index = das Verzeichnis (Metadaten aller Rezepte), full = Cache der bereits
 // geladenen Volldokumente.
+// ⚠ FORM DES VERZEICHNISSES (Version 2, 2026-09-02)
+//   recipes  [meta]                    - Rezept-Kurzdaten inkl. Thumbnail
+//   inspo    [{id,url,platform,...}]   - Inspirationen (Reels/Links/Notizen)
+//   trash    [{...,delAt,kind}]        - Grabsteine, 30 Tage
+//   plan     {'YYYY-MM-DD':{ids,up}}   - Wochenplan, Zeitstempel JE TAG
+//   shopping {items:[{id,text,done,del,up}]}
+//   cooked   [{id,recipeId,date,rating}] - reines Anhaengen
+//   settings {theme}  + settingsUp
+// Alles liegt in EINER Cloud-Zeile (<syncId>:rez:index) - die Vollbilder der
+// Rezepte liegen weiterhin je Rezept in einer eigenen Zeile.
+export const LEER_INDEX=()=>({v:2,recipes:[],inspo:[],trash:[],plan:{},
+  shopping:{items:[]},cooked:[],settings:{theme:'linear'},settingsUp:''});
 export const state={
-  index:{v:1,recipes:[],trash:[],settings:{theme:'clay'},settingsUp:''},
+  index:LEER_INDEX(),
   full:new Map(),
   ready:false,
   online:navigator.onLine,
@@ -170,28 +182,56 @@ function bumpUpdated(){try{localStorage.setItem(LS_UPDATED,nowIso());}catch(e){}
 // bearbeitete Eintrag (`up`). Papierkorb-Eintraege sind Grabsteine: ein auf
 // Geraet A geloeschtes Rezept darf nicht dadurch wieder auferstehen, dass
 // Geraet B es noch im Verzeichnis stehen hat.
+// Vereinigt zwei Verzeichnisse. Jeder Bereich hat seine EIGENE Regel - ein
+// pauschales "Cloud gewinnt" wuerde Arbeit des jeweils anderen Geraets
+// loeschen (die Falle, die im FX Analyst Pro zweimal Notizen gekostet hat,
+// siehe docs/state-sync.md).
+function mergeById(base,over,stempel){
+  const m=new Map();
+  (base||[]).forEach(x=>x&&x.id&&m.set(x.id,x));
+  (over||[]).forEach(x=>{
+    if(!x||!x.id)return;
+    const ex=m.get(x.id);
+    if(!ex||(x[stempel]||'')>=(ex[stempel]||''))m.set(x.id,x);
+  });
+  return m;
+}
 export function mergeIndex(base,over){
-  const out={v:1,recipes:[],trash:[],settings:null,settingsUp:''};
-  const byId=new Map();
-  (base&&base.recipes||[]).forEach(r=>byId.set(r.id,r));
-  (over&&over.recipes||[]).forEach(r=>{
-    const ex=byId.get(r.id);
-    if(!ex||(r.up||'')>=(ex.up||''))byId.set(r.id,r);
-  });
-  const trash=new Map();
-  [...(base&&base.trash||[]),...(over&&over.trash||[])].forEach(t=>{
-    const ex=trash.get(t.id);
-    if(!ex||(t.delAt||'')>=(ex.delAt||''))trash.set(t.id,t);
-  });
-  // Grabstein schlaegt Verzeichniseintrag, ausser das Rezept wurde NACH dem
+  const out=LEER_INDEX();
+  out.settings=null;out.settingsUp='';
+  const byId=mergeById(base&&base.recipes,over&&over.recipes,'up');
+  const inspo=mergeById(base&&base.inspo,over&&over.inspo,'up');
+  const trash=mergeById(base&&base.trash,over&&over.trash,'delAt');
+  // Grabstein schlaegt Verzeichniseintrag, ausser der Eintrag wurde NACH dem
   // Loeschen noch einmal bearbeitet (= auf dem anderen Geraet wiederhergestellt).
+  // Gilt fuer Rezepte UND Inspirationen - der Grabstein sagt ueber `kind`,
+  // worum es geht, alte Eintraege ohne `kind` sind Rezepte.
   trash.forEach((t,id)=>{
-    const r=byId.get(id);
+    const ziel=(t.kind==='inspo')?inspo:byId;
+    const r=ziel.get(id);
     if(r&&(r.up||'')>(t.delAt||''))trash.delete(id);
-    else byId.delete(id);
+    else ziel.delete(id);
   });
   out.recipes=[...byId.values()].sort((a,b)=>(b.created||'').localeCompare(a.created||''));
+  out.inspo=[...inspo.values()].sort((a,b)=>(b.created||'').localeCompare(a.created||''));
   out.trash=[...trash.values()];
+  // Wochenplan: Zeitstempel JE TAG, nicht fuer die ganze Karte. Sonst
+  // verliert ein Geraet, das Montag plant, den Donnerstag des anderen.
+  out.plan={};
+  const tage=new Set([...Object.keys((base&&base.plan)||{}),...Object.keys((over&&over.plan)||{})]);
+  tage.forEach(d=>{
+    const a=(base&&base.plan&&base.plan[d])||null,b=(over&&over.plan&&over.plan[d])||null;
+    if(!a){out.plan[d]=b;return;}
+    if(!b){out.plan[d]=a;return;}
+    out.plan[d]=((b.up||'')>=(a.up||''))?b:a;
+  });
+  // Einkaufsliste: je Eintrag, geloeschte bleiben als del-Marke stehen
+  // (sonst legt das andere Geraet sie beim naechsten Abgleich wieder an).
+  out.shopping={items:[...mergeById(base&&base.shopping&&base.shopping.items,
+                                    over&&over.shopping&&over.shopping.items,'up').values()]};
+  // Koch-Verlauf: reines Anhaengen, Kollisionen gibt es praktisch nicht.
+  out.cooked=[...mergeById(base&&base.cooked,over&&over.cooked,'up').values()]
+    .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   // Einstellungen (Theme): reines Last-Write-Wins ueber settingsUp.
   const bUp=(base&&base.settingsUp)||'',oUp=(over&&over.settingsUp)||'';
   if(oUp>=bUp&&over&&over.settings){out.settings=over.settings;out.settingsUp=oUp;}
@@ -210,8 +250,20 @@ export function purgeTrash(idx){
     if(ts&&ts<cutoff)drop.push(t);else keep.push(t);
   });
   idx.trash=keep;
-  drop.forEach(t=>{idbDel('recipes',t.id).catch(()=>{});state.full.delete(t.id);});
-  return drop.length>0;
+  drop.forEach(t=>{
+    if(t.kind!=='inspo'){idbDel('recipes',t.id).catch(()=>{});state.full.delete(t.id);}
+  });
+  // Geloeschte Einkaufs-Eintraege: die del-Marke muss laenger leben als ein
+  // typischer Sync-Abstand, sonst legt ein lange nicht geoeffnetes Geraet den
+  // Eintrag wieder an. Sieben Tage sind reichlich und halten die Liste klein.
+  let weg=drop.length;
+  const sCut=Date.now()-7*86400000;
+  if(idx.shopping&&Array.isArray(idx.shopping.items)){
+    const vorher=idx.shopping.items.length;
+    idx.shopping.items=idx.shopping.items.filter(i=>!(i.del&&(Date.parse(i.up||'')||0)<sCut));
+    weg+=vorher-idx.shopping.items.length;
+  }
+  return weg>0;
 }
 
 // ── Bild-Pipeline ────────────────────────────────────────────────────────
@@ -270,13 +322,27 @@ export async function processCover(file){
   return{cover:encodeToBudget(img,IMG_COVER),thumb:encodeToBudget(img,IMG_THUMB)};
 }
 
+// Ein Verzeichnis aus einer aelteren Fassung (oder von einem Geraet mit
+// aelterer App) bekommt die fehlenden Bereiche ergaenzt. ⚠ Ohne das wirft
+// jede Stelle, die z.B. idx.plan liest, auf "undefined" - und die App waere
+// fuer Bestandsnutzer sofort kaputt, obwohl bei einem Neustart alles geht.
+export function normalizeIndex(idx){
+  const out=Object.assign(LEER_INDEX(),idx||{});
+  out.v=2;
+  ['recipes','inspo','trash','cooked'].forEach(k=>{if(!Array.isArray(out[k]))out[k]=[];});
+  if(!out.plan||typeof out.plan!=='object'||Array.isArray(out.plan))out.plan={};
+  if(!out.shopping||!Array.isArray(out.shopping.items))out.shopping={items:[]};
+  if(!out.settings)out.settings={theme:'linear'};
+  return out;
+}
+
 // ── Lokales Laden/Speichern ──────────────────────────────────────────────
 export async function loadLocal(){
   try{
     const idx=await idbGet('kv','index');
-    if(idx&&idx.recipes)state.index=Object.assign({v:1,recipes:[],trash:[],settings:{theme:'clay'},settingsUp:''},idx);
+    if(idx&&idx.recipes)state.index=normalizeIndex(idx);
   }catch(e){console.warn('[rezept] local index unreadable',e);}
-  if(!state.index.settings)state.index.settings={theme:'clay'};
+  if(!state.index.settings)state.index.settings={theme:'linear'};
   state.ready=true;
   emit('index');
 }
@@ -330,7 +396,7 @@ export async function syncIndex(manual){
       const before=JSON.stringify(state.index);
       // Beim Merge gewinnt bei gleichem Zeitstempel der LOKALE Stand - die
       // frisch getippte Aenderung darf nicht von der Cloud verschluckt werden.
-      state.index=mergeIndex(cloud||{},state.index);
+      state.index=mergeIndex(normalizeIndex(cloud||{}),normalizeIndex(state.index));
       purgeTrash(state.index);
       const changedLocally=JSON.stringify(state.index)!==before||_indexDirty;
       await saveLocalIndex();
@@ -460,6 +526,186 @@ export async function deleteForever(id){
   emit('index');
   scheduleSync();
 }
+// ══ INSPIRATIONEN ════════════════════════════════════════════════════════
+// Leichtgewichtig: Link + Caption + optionales Vorschaubild leben komplett im
+// Verzeichnis (kein eigenes Volldokument), weil hier keine grossen Bilder
+// anfallen - das Video liegt bei Instagram, nicht bei uns.
+export async function saveInspo(doc){
+  doc.up=nowIso();
+  if(!doc.created)doc.created=doc.up;
+  const i=state.index.inspo.findIndex(x=>x.id===doc.id);
+  if(i>=0)state.index.inspo[i]=doc;else state.index.inspo.unshift(doc);
+  state.index.trash=(state.index.trash||[]).filter(t=>t.id!==doc.id);
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+export async function trashInspo(id){
+  const it=state.index.inspo.find(x=>x.id===id);
+  if(!it)return;
+  state.index.inspo=state.index.inspo.filter(x=>x.id!==id);
+  state.index.trash.push({id,title:it.title,thumb:it.thumb||'',kind:'inspo',delAt:nowIso()});
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+
+// ══ WOCHENPLAN ═══════════════════════════════════════════════════════════
+// Schluessel ist das Datum als YYYY-MM-DD in ORTSZEIT (nicht toISOString() -
+// das rechnet nach UTC um und schiebt abends den ganzen Plan auf den
+// Folgetag). Jeder Tag traegt seinen eigenen Zeitstempel, damit der Merge
+// tageweise entscheiden kann.
+export function dayKey(d){
+  const x=d||new Date();
+  const m=String(x.getMonth()+1).padStart(2,'0'),t=String(x.getDate()).padStart(2,'0');
+  return x.getFullYear()+'-'+m+'-'+t;
+}
+export function planFor(key){
+  const e=state.index.plan[key];
+  return(e&&Array.isArray(e.ids))?e.ids:[];
+}
+async function setPlan(key,ids){
+  if(ids.length)state.index.plan[key]={ids,up:nowIso()};
+  else state.index.plan[key]={ids:[],up:nowIso()};
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+export async function addToPlan(key,recipeId){
+  const ids=planFor(key);
+  if(ids.includes(recipeId))return;
+  await setPlan(key,[...ids,recipeId]);
+}
+export async function removeFromPlan(key,recipeId){
+  await setPlan(key,planFor(key).filter(x=>x!==recipeId));
+}
+// "Today's Meal" ist bewusst kein eigenes Feld, sondern der erste Eintrag im
+// Plan fuer heute - sonst haette man zwei Wahrheiten, die auseinanderlaufen.
+export function todaysMeal(){
+  const ids=planFor(dayKey());
+  return ids.length?state.index.recipes.find(r=>r.id===ids[0])||null:null;
+}
+export async function setTodaysMeal(recipeId){
+  const k=dayKey(),ids=planFor(k).filter(x=>x!==recipeId);
+  await setPlan(k,[recipeId,...ids]);
+}
+
+// ══ EINKAUFSLISTE ════════════════════════════════════════════════════════
+// Geloeschte Eintraege bleiben als del-Marke stehen, bis purgeTrash sie nach
+// sieben Tagen wegraeumt - sonst legt ein laenger nicht geoeffnetes Geraet
+// sie beim naechsten Abgleich wieder an.
+export function shoppingItems(){
+  return (state.index.shopping.items||[]).filter(i=>!i.del);
+}
+async function commitShopping(){
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+export async function addShopping(text,src){
+  const t=(text||'').trim();
+  if(!t)return null;
+  const it={id:uid(),text:t,done:false,src:src||'',up:nowIso()};
+  state.index.shopping.items.push(it);
+  await commitShopping();
+  return it.id;
+}
+export async function toggleShopping(id){
+  const it=state.index.shopping.items.find(x=>x.id===id);
+  if(!it)return;
+  it.done=!it.done;it.up=nowIso();
+  await commitShopping();
+}
+export async function removeShopping(id){
+  const it=state.index.shopping.items.find(x=>x.id===id);
+  if(!it)return;
+  it.del=true;it.up=nowIso();
+  await commitShopping();
+}
+export async function clearShoppingDone(){
+  let n=0;
+  state.index.shopping.items.forEach(i=>{if(i.done&&!i.del){i.del=true;i.up=nowIso();n++;}});
+  if(n)await commitShopping();
+  return n;
+}
+// Zutat normalisiert vergleichen, damit "2 Eier" und "2 eier " nicht zweimal
+// auf der Liste stehen. Bewusst KEINE Mengen-Addition: "1 EL Öl" + "200 g Öl"
+// zusammenzurechnen waere geraten, und geraten wird in diesem Projekt nicht
+// (CLAUDE.md). Stattdessen bleiben beide Zeilen stehen, aber eine exakte
+// Wiederholung wird uebersprungen.
+export function normIngredient(s){
+  return String(s||'').toLowerCase().replace(/\s+/g,' ').replace(/[.,;]+$/,'').trim();
+}
+// Sammelt die Zutaten aller Rezepte, die in den angegebenen Tagen geplant
+// sind. Braucht die Volldokumente - die kommen aus dem lokalen Cache bzw.
+// werden einzeln nachgeladen.
+export async function ingredientsForDays(keys){
+  const ids=[];
+  keys.forEach(k=>planFor(k).forEach(id=>{if(!ids.includes(id))ids.push(id);}));
+  const out=[];
+  for(const id of ids){
+    const doc=await getFull(id);
+    if(!doc)continue;
+    (doc.ingredients||[]).forEach(z=>out.push({text:z,src:doc.title}));
+  }
+  return out;
+}
+export async function addIngredients(liste){
+  const vorhanden=new Set(shoppingItems().map(i=>normIngredient(i.text)));
+  let n=0;
+  liste.forEach(({text,src})=>{
+    const key=normIngredient(text);
+    if(!key||vorhanden.has(key))return;
+    vorhanden.add(key);
+    state.index.shopping.items.push({id:uid(),text:String(text).trim(),done:false,src:src||'',up:nowIso()});
+    n++;
+  });
+  if(n)await commitShopping();
+  return n;
+}
+
+// ══ KOCH-VERLAUF ═════════════════════════════════════════════════════════
+export async function logCooked(recipeId,rating){
+  const r=state.index.recipes.find(x=>x.id===recipeId);
+  const e={id:uid(),recipeId,title:r?r.title:'',thumb:r?r.thumb:'',
+    date:new Date().toISOString(),rating:+rating||0,up:nowIso()};
+  state.index.cooked.unshift(e);
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+  return e.id;
+}
+export async function rateCooked(id,rating){
+  const e=state.index.cooked.find(x=>x.id===id);
+  if(!e)return;
+  e.rating=+rating||0;e.up=nowIso();
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+export async function removeCooked(id){
+  state.index.cooked=state.index.cooked.filter(x=>x.id!==id);
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+// Wie oft/zuletzt gekocht - speist den Zufallsgenerator ("nichts, was du
+// diese Woche schon hattest") und die Rezeptkarte.
+export function cookedStats(recipeId){
+  const l=state.index.cooked.filter(e=>e.recipeId===recipeId);
+  if(!l.length)return{count:0,last:null,rating:0};
+  const bew=l.filter(e=>e.rating>0);
+  return{count:l.length,last:l[0].date,
+    rating:bew.length?Math.round(bew.reduce((a,e)=>a+e.rating,0)/bew.length*10)/10:0};
+}
+
 export async function setSetting(key,val){
   state.index.settings=state.index.settings||{};
   state.index.settings[key]=val;

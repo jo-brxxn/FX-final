@@ -11,12 +11,21 @@
 // onclick="..." im HTML sieht Modul-Variablen sonst nicht - identisches
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
+import {detectLink,parseCaption,captionToRecipe} from './import.js';
 
 // ── Konstanten ───────────────────────────────────────────────────────────
-const PAGES={overview:'pgOverview',recipes:'pgRecipes'};
+const PAGES={overview:'pgOverview',recipes:'pgRecipes',inspo:'pgInspo',
+  week:'pgWeek',shopping:'pgShopping',cooked:'pgCooked'};
+// Reihenfolge = Reihenfolge in der Sidebar. Overview bleibt oben (Nutzer-
+// Vorgabe), danach der Weg, den man im Alltag geht: Rezepte -> Inspiration
+// -> Woche planen -> einkaufen -> was gekocht wurde.
 const NAV=[
   {id:'overview',label:'Overview'},
   {id:'recipes',label:'Recipes'},
+  {id:'inspo',label:'Inspiration'},
+  {id:'week',label:'Week'},
+  {id:'shopping',label:'Shopping'},
+  {id:'cooked',label:'Cooked'},
 ];
 // Zeitauswahl in 5-Minuten-Schritten (Nutzer-Wunsch). 5-180 deckt vom
 // Ruehrei bis zum Schmorbraten alles ab; darueber wird die Liste unbrauchbar
@@ -49,6 +58,16 @@ const ICONS={
   dice:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/>',
   plate:'<circle cx="12" cy="12" r="8.4"/><circle cx="12" cy="12" r="4"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.6" cy="9.6" r="1.6"/><path d="M21 16l-5-5-6.5 6.5"/>',
+  inspo:'<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 3.6 10.8c-.6.5-.9 1.1-.9 1.7H9.3c0-.6-.3-1.2-.9-1.7A6 6 0 0 1 12 3z"/>',
+  week:'<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18"/><path d="M8 2.5v4"/><path d="M16 2.5v4"/>',
+  shopping:'<path d="M4 5h2l1.6 9.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20 8H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/>',
+  cooked:'<path d="M12 21a7 7 0 0 0 7-7H5a7 7 0 0 0 7 7z"/><path d="M3.5 14h17"/><path d="M9 6.5c0-1 1.5-1.4 1.5-2.5"/><path d="M12.5 6.5c0-1 1.5-1.4 1.5-2.5"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="M10.2 8.6l5.2 3.4-5.2 3.4z"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
+  link:'<path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 1 0-5.7-5.7l-1.5 1.5"/><path d="M13.4 10.6a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 1 0 5.7 5.7l1.5-1.5"/>',
+  trashIcon:'<path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6.5 7l1 13h9l1-13"/>',
+  arrowL:'<path d="M15 5l-7 7 7 7"/>',
+  arrowR:'<path d="M9 5l7 7-7 7"/>',
   search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
 };
 function icn(k,size){const s=size||17;return`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]||''}</svg>`;}
@@ -82,11 +101,22 @@ let formBase=null;      // JSON-Schnappschuss beim Oeffnen - Grundlage fuer "ung
 let detailId=null;
 
 // ── Navigation ───────────────────────────────────────────────────────────
+// Zahl rechts im Navigationseintrag. Zeigt nur, was gerade zaehlt - eine
+// "0" waere ein Zaehler ohne Aussage und wird deshalb weggelassen.
+function navZaehler(id){
+  const ix=S.state.index;
+  if(id==='recipes')return ix.recipes.length;
+  if(id==='inspo')return ix.inspo.length;
+  if(id==='shopping')return S.shoppingItems().filter(i=>!i.done).length;
+  if(id==='week')return wochenTage(wochenAnker).reduce((a,d)=>a+S.planFor(S.dayKey(d)).length,0);
+  if(id==='cooked')return ix.cooked.length;
+  return 0;
+}
 export function renderNav(){
   const nav=$('rezNav');if(!nav)return;
   nav.innerHTML=NAV.map(n=>{
     const on=curPage===n.id;
-    const cnt=n.id==='recipes'?S.state.index.recipes.length:0;
+    const cnt=navZaehler(n.id);
     return`<button class="np${on?' on':''}" onclick="rezShowPage('${n.id}')" title="${escH(n.label)}" aria-label="${escH(n.label)}">`
       +`<span class="np-ic">${icn(n.id)}</span><span class="np-lbl">${escH(n.label)}</span>`
       +(cnt?`<span class="np-count">${cnt}</span>`:'')+`</button>`;
@@ -102,7 +132,12 @@ export function rezShowPage(id){
     el.scrollTop=0;
   }
   renderNav();
-  if(id==='overview')renderOverview();else renderRecipes();
+  if(id==='overview')renderOverview();
+  else if(id==='recipes')renderRecipes();
+  else if(id==='inspo')renderInspo();
+  else if(id==='week')renderWeek();
+  else if(id==='shopping')renderShopping();
+  else if(id==='cooked')renderCooked();
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────────────────────
@@ -114,23 +149,130 @@ export function rezShowPage(id){
 export function renderOverview(){
   const el=$('pgOverview');if(!el)return;
   const n=S.state.index.recipes.length;
+  const heute=S.todaysMeal();
+  const offen=S.shoppingItems().filter(i=>!i.done).length;
   el.innerHTML=
     `<div class="ptitle">Overview</div>`
-   +`<div class="psub">${n?`${n} recipe${n===1?'':'s'} in your collection`:'Your collection is still empty'}</div>`
+   +`<div class="psub">${n?`${n} recipe${n===1?'':'s'} in your collection`:'Your collection is still empty'}`
+     +(offen?` · ${offen} item${offen===1?'':'s'} on the shopping list`:'')+`</div>`
    +`<div class="ov-grid">`
-   +`<div class="dw"><div class="dw-hdr"><div class="dw-title">${icn('plate',16)} Today's Meal</div><span class="pill">Coming soon</span></div>`
-     +`<div class="dw-ph"><div class="dw-ph-big">Not set yet</div><div>Pick what you are cooking today. This card will show it here.</div></div></div>`
-   +`<div class="dw"><div class="dw-hdr"><div class="dw-title">${icn('dice',16)} Random Picker</div><span class="pill">Coming soon</span></div>`
-     +`<div class="dw-ph"><div class="dw-ph-big">—</div><div>Let the app choose a recipe for you when you cannot decide.</div></div></div>`
+   +todayCardHtml(heute)
+   +randomCardHtml()
    +`<div class="dw dw-click" onclick="rezAddFromOverview()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezAddFromOverview()">`
      +`<div class="dw-hdr"><div class="dw-title">${icn('plus',16)} Add New Meal</div></div>`
      +`<div class="dw-ph" style="border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-soft)">`
        +`<div class="dw-ph-big" style="color:var(--accent)">+</div><div>Add a photo, a title, the duration and how it is made.</div></div></div>`
    +`</div>`;
 }
-// Fuehrt in die Rezepte-Kategorie UND oeffnet dort direkt das
-// Hinzufuegen-Fenster (Nutzer-Wunsch: "wird man in eine zweite Kategorie
-// weitergeleitet ... dann ist man automatisch auf den Rezepte-hinzufuegen").
+// ── Karte "Today's Meal" ────────────────────────────────────────────────
+// Kein eigenes Feld: was heute ansteht, ist der erste Eintrag im Wochenplan
+// fuer heute (S.todaysMeal). Sonst haette man zwei Wahrheiten, die
+// auseinanderlaufen, sobald jemand die Woche umplant.
+function todayCardHtml(r){
+  const kopf=`<div class="dw-hdr"><div class="dw-title">${icn('plate',16)} Today's Meal</div>`
+    +(r?`<button class="btn" onclick="rezPickToday()">Change</button>`:'')+`</div>`;
+  if(!r){
+    return`<div class="dw">${kopf}<div class="dw-ph"><div class="dw-ph-big">Nothing planned</div>`
+      +`<div>Pick what you are cooking today.</div>`
+      +`<button class="btn btn-primary" style="margin-top:4px" onclick="rezPickToday()">Pick a recipe</button></div></div>`;
+  }
+  const st=S.cookedStats(r.id);
+  return`<div class="dw">${kopf}`
+    +`<div class="today-wrap" onclick="rezOpenDetail('${r.id}')" role="button" tabindex="0">`
+      +(r.thumb?`<img class="today-img" src="${r.thumb}" alt="">`:`<div class="today-img"></div>`)
+      +`<div class="today-meta"><div class="today-nm">${escH(r.title)}</div>`
+        +`<div class="today-sub">${icn('clock',12)} ${fmtDur(r.min)}${st.count?` · cooked ${st.count}×`:''}</div></div>`
+    +`</div>`
+    +`<div class="dw-acts"><button class="btn btn-primary" onclick="rezMarkCooked('${r.id}')">${icn('check',13)} Mark as cooked</button>`
+      +`<button class="btn" onclick="rezClearToday('${r.id}')">Clear</button></div></div>`;
+}
+// ── Karte "Random Picker" ──────────────────────────────────────────────
+// Zieht aus den Rezepten, die den eingestellten Filtern entsprechen, und
+// meidet standardmaessig alles, was in den letzten 7 Tagen schon auf dem
+// Tisch stand - genau dafuer gibt es den Koch-Verlauf.
+let randomPick=null;
+const randomOpts={maxMin:0,tag:'',skipRecent:true};
+function randomKandidaten(){
+  const grenze=Date.now()-7*86400000;
+  return S.state.index.recipes.filter(r=>{
+    if(randomOpts.maxMin&&(+r.min||0)>randomOpts.maxMin)return false;
+    if(randomOpts.tag&&!(r.tags||[]).includes(randomOpts.tag))return false;
+    if(randomOpts.skipRecent){
+      const st=S.cookedStats(r.id);
+      if(st.last&&(Date.parse(st.last)||0)>grenze)return false;
+    }
+    return true;
+  });
+}
+function randomCardHtml(){
+  const kand=randomKandidaten();
+  const tags=allTags();
+  const durOpts=[0,15,30,45,60,90].map(m=>`<option value="${m}"${randomOpts.maxMin===m?' selected':''}>${m?'≤ '+fmtDur(m):'Any duration'}</option>`).join('');
+  const tagOpts=`<option value="">All tags</option>`+tags.map(t=>`<option value="${escH(t)}"${randomOpts.tag===t?' selected':''}>${escH(t)}</option>`).join('');
+  let mitte;
+  if(randomPick){
+    mitte=`<div class="today-wrap" onclick="rezOpenDetail('${randomPick.id}')" role="button" tabindex="0">`
+      +(randomPick.thumb?`<img class="today-img" src="${randomPick.thumb}" alt="">`:`<div class="today-img"></div>`)
+      +`<div class="today-meta"><div class="today-nm">${escH(randomPick.title)}</div>`
+      +`<div class="today-sub">${icn('clock',12)} ${fmtDur(randomPick.min)}</div></div></div>`;
+  }else{
+    mitte=`<div class="dw-ph"><div class="dw-ph-big">${kand.length?'?':'—'}</div>`
+      +`<div>${kand.length?`${kand.length} recipe${kand.length===1?'':'s'} match — let the app choose one.`
+        :'No recipe matches these settings.'}</div></div>`;
+  }
+  return`<div class="dw"><div class="dw-hdr"><div class="dw-title">${icn('dice',16)} Random Picker</div></div>`
+    +`<div class="rnd-opts">`
+      +`<select class="rez-sel" onchange="rezRandomOpt('maxMin',this.value)">${durOpts}</select>`
+      +(tags.length?`<select class="rez-sel" onchange="rezRandomOpt('tag',this.value)">${tagOpts}</select>`:'')
+      +`<label class="rnd-chk"><input type="checkbox" ${randomOpts.skipRecent?'checked':''} onchange="rezRandomOpt('skipRecent',this.checked)"> Skip last 7 days</label>`
+    +`</div>`
+    +mitte
+    +`<div class="dw-acts"><button class="btn btn-primary" onclick="rezRoll()" ${kand.length?'':'disabled'}>${icn('dice',13)} ${randomPick?'Roll again':'Surprise me'}</button>`
+      +(randomPick?`<button class="btn" onclick="rezCookThis('${randomPick.id}')">Cook this today</button>`:'')
+    +`</div></div>`;
+}
+export function rezRandomOpt(k,v){
+  randomOpts[k]=(k==='maxMin')?(+v||0):(k==='skipRecent'?!!v:v);
+  randomPick=null;
+  renderOverview();
+}
+export function rezRoll(){
+  const k=randomKandidaten();
+  if(!k.length){toast('No recipe matches these settings');return;}
+  // Bei mehr als einem Kandidaten nie zweimal hintereinander dasselbe ziehen -
+  // sonst wirkt der Generator kaputt, obwohl der Zufall korrekt ist.
+  let n=k[Math.floor(Math.random()*k.length)];
+  if(k.length>1&&randomPick){
+    let schutz=0;
+    while(n.id===randomPick.id&&schutz++<12)n=k[Math.floor(Math.random()*k.length)];
+  }
+  randomPick=n;
+  renderOverview();
+}
+export async function rezCookThis(id){
+  await S.setTodaysMeal(id);
+  randomPick=null;
+  renderOverview();
+  toast('Planned for today');
+}
+export async function rezMarkCooked(id){
+  await S.logCooked(id,0);
+  renderOverview();
+  toast('Added to your cooking history');
+}
+export async function rezClearToday(id){
+  await S.removeFromPlan(S.dayKey(),id);
+  renderOverview();
+  toast('Cleared');
+}
+export function rezPickToday(){
+  openRecipePicker('Pick today\'s meal',async id=>{
+    await S.setTodaysMeal(id);
+    rezCloseModal();
+    renderOverview();
+    toast('Planned for today');
+  });
+}
 export function rezAddFromOverview(){
   rezShowPage('recipes');
   rezOpenForm(null);
@@ -225,6 +367,421 @@ export async function rezToggleFav(id){
   if(detailId===id)rezOpenDetail(id);
 }
 
+// ══ REZEPT-AUSWAHL (gemeinsamer Baustein) ════════════════════════════════
+// EIN Auswahlfenster fuer alle Stellen, die ein Rezept brauchen (Today's
+// Meal, Wochenplan, Zufallsgenerator). Projektregel: wiederkehrende
+// UI-Bausteine sind ueberall gleich aufgebaut (docs/design-system.md) - eine
+// zweite, leicht andere Auswahlliste waere genau der Fehler, den die Regel
+// verhindern soll.
+let _pickCb=null,_pickQ='';
+function openRecipePicker(titel,cb){
+  _pickCb=cb;_pickQ='';
+  zeichnePicker(titel);
+}
+function zeichnePicker(titel){
+  const q=_pickQ.trim().toLowerCase();
+  const liste=S.state.index.recipes.filter(r=>!q||(r.title||'').toLowerCase().includes(q));
+  openModal(
+     `<h3>${escH(titel)}</h3>`
+    +`<div class="rez-search" style="margin-bottom:12px">${icn('search',15)}`
+      +`<input id="pickQ" type="search" placeholder="Search recipes..." value="${escH(_pickQ)}" oninput="rezPickQuery(this.value)"></div>`
+    +`<div class="pick-list">`+(liste.length?liste.map(r=>
+        `<button class="pick-row" onclick="rezPickChoose('${r.id}')">`
+        +(r.thumb?`<img class="pick-thumb" src="${r.thumb}" alt="">`:`<span class="pick-thumb"></span>`)
+        +`<span class="pick-main"><span class="pick-nm">${escH(r.title)}</span>`
+        +`<span class="pick-sub">${fmtDur(r.min)}${(r.tags||[]).length?' · '+escH(r.tags.join(', ')):''}</span></span></button>`).join('')
+      :`<div class="rd-empty" style="padding:22px 0;text-align:center">No recipes yet — add one first.</div>`)
+    +`</div>`
+    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Cancel</button></div>`
+  ,'modal-wide');
+  _pickTitel=titel;
+}
+let _pickTitel='';
+export function rezPickQuery(v){
+  _pickQ=v;
+  const host=document.querySelector('.pick-list');
+  if(!host){zeichnePicker(_pickTitel);return;}
+  const q=v.trim().toLowerCase();
+  const liste=S.state.index.recipes.filter(r=>!q||(r.title||'').toLowerCase().includes(q));
+  host.innerHTML=liste.length?liste.map(r=>
+      `<button class="pick-row" onclick="rezPickChoose('${r.id}')">`
+      +(r.thumb?`<img class="pick-thumb" src="${r.thumb}" alt="">`:`<span class="pick-thumb"></span>`)
+      +`<span class="pick-main"><span class="pick-nm">${escH(r.title)}</span>`
+      +`<span class="pick-sub">${fmtDur(r.min)}${(r.tags||[]).length?' · '+escH(r.tags.join(', ')):''}</span></span></button>`).join('')
+    :`<div class="rd-empty" style="padding:22px 0;text-align:center">Nothing matches.</div>`;
+}
+export function rezPickChoose(id){
+  const cb=_pickCb;
+  if(cb)cb(id);
+}
+
+// ══ INSPIRATION ══════════════════════════════════════════════════════════
+// Ideen-Sammlung: eingebettete Reels/Videos, Links, Fotos, Notizen. Der
+// Unterschied zu "Recipes" ist die Absicht - hier liegt, was man MAL kochen
+// will, dort was man kochen KANN. Der Weg dazwischen ist ein Knopf:
+// "Convert to recipe" laesst den Parser aus js/rezept/import.js die
+// eingefuegte Caption in Titel/Dauer/Zutaten/Schritte zerlegen und oeffnet
+// damit das fertig ausgefuellte Rezept-Formular.
+let inspoFilter='';
+export function renderInspo(){
+  const el=$('pgInspo');if(!el)return;
+  const alle=S.state.index.inspo;
+  const q=inspoFilter.trim().toLowerCase();
+  const liste=alle.filter(i=>!q||((i.title||'')+' '+(i.caption||'')+' '+(i.tags||[]).join(' ')).toLowerCase().includes(q));
+  el.innerHTML=
+     `<div class="ptitle">Inspiration</div>`
+    +`<div class="psub">${alle.length?`${liste.length} of ${alle.length} shown`:'Save reels, links and ideas you want to cook one day'}</div>`
+    +`<div class="rez-toolbar">`
+      +`<div class="rez-search">${icn('search',15)}<input id="inspoQ" type="search" placeholder="Search ideas..." value="${escH(inspoFilter)}" oninput="rezInspoQuery(this.value)"></div>`
+      +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add idea</button>`
+    +`</div>`
+    +`<div class="rez-grid">`+(liste.length?liste.map(inspoCardHtml).join(''):inspoEmptyHtml(alle.length))+`</div>`;
+}
+function inspoEmptyHtml(total){
+  if(!total)return`<div class="rez-empty"><h4>No ideas saved yet</h4>`
+    +`<p>Paste an Instagram reel, a TikTok, a YouTube link or just a note. Later you turn it into a real recipe with one click.</p>`
+    +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add your first idea</button></div>`;
+  return`<div class="rez-empty"><h4>Nothing matches</h4><p>No idea matches your search.</p>`
+    +`<button class="btn" onclick="rezInspoQuery('')">Clear search</button></div>`;
+}
+function inspoCardHtml(i){
+  const bild=i.thumb?`<img class="rez-card-img" src="${i.thumb}" alt="" loading="lazy">`
+    :`<div class="rez-card-img insp-ph">${icn(i.platform==='link'?'link':'play',34)}<span>${escH(i.label||i.platform||'Idea')}</span></div>`;
+  return`<div class="rez-card" onclick="rezOpenInspo('${i.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezOpenInspo('${i.id}')">`
+    +bild
+    +(i.platform&&i.platform!=='note'?`<span class="insp-badge">${escH(i.label||i.platform)}</span>`:'')
+    +`<div class="rez-card-ov"><div class="rez-card-title">${escH(i.title||'Untitled idea')}</div>`
+      +(i.min?`<span class="rez-card-dur">${icn('clock',11)}${fmtDur(i.min)}</span>`:'')+`</div></div>`;
+}
+export function rezInspoQuery(v){inspoFilter=v;renderInspo();}
+
+// ── Idee hinzufuegen/bearbeiten ────────────────────────────────────────
+let inspoForm=null,inspoBase=null;
+export function rezOpenInspoForm(id){
+  if(id){
+    const it=S.state.index.inspo.find(x=>x.id===id);
+    if(!it){toast('Idea not found');return;}
+    inspoForm=JSON.parse(JSON.stringify(it));
+  }else{
+    inspoForm={id:S.uid(),title:'',url:'',platform:'',label:'',embedUrl:'',
+      caption:'',thumb:'',tags:[],min:null,created:'',up:''};
+  }
+  inspoBase=JSON.stringify(inspoForm);
+  zeichneInspoForm();
+}
+function zeichneInspoForm(){
+  const neu=!S.state.index.inspo.some(x=>x.id===inspoForm.id);
+  const erkannt=inspoForm.url?`<div class="insp-detect">${icn('link',13)} ${escH(inspoForm.label||'Link')} detected`
+    +(inspoForm.embedUrl?' — the video will play inside the app':' — will be saved as a link')+`</div>`:'';
+  openModal(
+     `<h3>${neu?'Add idea':'Edit idea'}</h3>`
+    +`<div class="rf-err" id="ifErr"></div>`
+    +`<div class="rf-hint">Copy the whole post from Instagram, TikTok or YouTube and paste it here — link and caption together. `
+      +`The link is detected automatically, and “Convert to recipe” turns the caption into ingredients and steps for you.</div>`
+    +`<label class="dm-lbl">Paste link &amp; caption</label>`
+    +`<textarea class="m-area" id="ifPaste" style="min-height:130px" placeholder="https://www.instagram.com/reel/...&#10;&#10;Pasta al Limone in 20 minutes&#10;Ingredients:&#10;- 200 g spaghetti&#10;..." oninput="rezInspoPaste(this.value)">${escH(inspoForm.caption)}</textarea>`
+    +erkannt
+    +`<div class="rf-row">`
+      +`<div><label class="dm-lbl">Title</label><input class="m-inp" id="ifTitle" placeholder="e.g. Pasta al limone" value="${escH(inspoForm.title)}" oninput="rezInspoField('title',this.value)"></div>`
+      +`<div><label class="dm-lbl">Link (optional)</label><input class="m-inp" id="ifUrl" placeholder="https://..." value="${escH(inspoForm.url)}" oninput="rezInspoUrl(this.value)"></div>`
+    +`</div>`
+    +`<label class="dm-lbl">Tags (comma separated)</label>`
+    +`<input class="m-inp" id="ifTags" placeholder="e.g. Dinner, Pasta" value="${escH((inspoForm.tags||[]).join(', '))}" oninput="rezInspoTags(this.value)">`
+    +`<label class="dm-lbl">Cover image (optional)</label>`
+    +`<div class="rf-drop" style="min-height:130px" onclick="rezPickInspoImage()">`
+      +(inspoForm.thumb?`<img src="${inspoForm.thumb}" alt=""><span class="rf-drop-badge">Change image</span>`
+        :`${icn('image',24)}<div>Screenshot of the dish — optional, the video is shown anyway</div>`)
+    +`</div>`
+    +`<div class="m-btns" style="margin-top:16px"><button class="btn" onclick="rezRequestClose()">Cancel</button>`
+      +`<button class="btn btn-primary" onclick="rezSaveInspo()">${neu?'Add idea':'Save changes'}</button></div>`
+  ,'modal-wide');
+}
+export function rezInspoField(k,v){inspoForm[k]=v;}
+export function rezInspoTags(v){inspoForm.tags=v.split(',').map(x=>x.trim()).filter(Boolean);}
+export function rezInspoUrl(v){
+  inspoForm.url=v.trim();
+  const l=detectLink(v);
+  if(l){inspoForm.platform=l.platform;inspoForm.label=l.label;inspoForm.embedUrl=l.embedUrl;inspoForm.url=l.url;}
+  else{inspoForm.platform='';inspoForm.label='';inspoForm.embedUrl='';}
+}
+// Ein einziges Einfuegen genuegt: der Link wird aus dem Text herausgefischt,
+// Titel/Dauer/Tags kommen aus derselben Caption. Das Feld selbst bleibt
+// unangetastet - nur die abgeleiteten Werte werden nachgezogen, und ein vom
+// Nutzer selbst getippter Titel wird NICHT ueberschrieben.
+export function rezInspoPaste(v){
+  inspoForm.caption=v;
+  const p=parseCaption(v);
+  if(p.link){inspoForm.platform=p.link.platform;inspoForm.label=p.link.label;
+    inspoForm.embedUrl=p.link.embedUrl;inspoForm.url=p.link.url;}
+  const titelWarAbgeleitet=!inspoForm.title||inspoForm.title===inspoForm._autoTitle;
+  if(p.title&&titelWarAbgeleitet){inspoForm.title=p.title;inspoForm._autoTitle=p.title;}
+  if(p.min)inspoForm.min=p.min;
+  if(p.tags.length&&!(inspoForm.tags||[]).length)inspoForm.tags=p.tags;
+  // ⚠ Die abgeleiteten Werte muessen auch SICHTBAR werden. Erst stand nur der
+  // Titel im Feld, waehrend Link und Tags still im Modell landeten - der
+  // Nutzer sah leere Felder, obwohl die Werte gespeichert worden waeren, und
+  // haette sie beim Tippen ueberschrieben, ohne es zu merken.
+  const t=$('ifTitle');if(t&&t.value!==inspoForm.title)t.value=inspoForm.title;
+  const u=$('ifUrl');if(u&&u.value!==inspoForm.url)u.value=inspoForm.url;
+  const g=$('ifTags');
+  if(g){const soll=(inspoForm.tags||[]).join(', ');if(g.value!==soll)g.value=soll;}
+  const host=document.querySelector('.insp-detect');
+  const txt=inspoForm.url?`${icn('link',13)} ${escH(inspoForm.label||'Link')} detected`
+    +(inspoForm.embedUrl?' — the video will play inside the app':' — will be saved as a link'):'';
+  if(host)host.innerHTML=txt;
+  else if(txt){
+    const ta=$('ifPaste');
+    if(ta){const d=document.createElement('div');d.className='insp-detect';d.innerHTML=txt;ta.insertAdjacentElement('afterend',d);}
+  }
+}
+export function rezPickInspoImage(){
+  pickFile(async f=>{
+    try{inspoForm.thumb=await S.processImage(f,S.IMG_THUMB);zeichneInspoForm();}
+    catch(e){const el=$('ifErr');if(el){el.textContent='That image could not be read: '+(e&&e.message||'unknown error');el.style.display='block';}}
+  });
+}
+export async function rezSaveInspo(){
+  if(!inspoForm)return false;
+  const titel=(inspoForm.title||'').trim();
+  // Eine Idee braucht mindestens IRGENDETWAS, woran man sie erkennt.
+  if(!titel&&!inspoForm.url&&!(inspoForm.caption||'').trim()){
+    const el=$('ifErr');
+    if(el){el.textContent='Add a link, a title or some text first.';el.style.display='block';}
+    return false;
+  }
+  const doc=Object.assign({},inspoForm,{title:titel||inspoForm.label||'Saved idea'});
+  delete doc._autoTitle;
+  try{await S.saveInspo(doc);}
+  catch(e){
+    const el=$('ifErr');
+    if(el){el.textContent='Could not save: '+(e&&e.message||'unknown error');el.style.display='block';}
+    return false;
+  }
+  inspoForm=null;inspoBase=null;
+  rezCloseModal();
+  rezShowPage('inspo');
+  toast('Idea saved');
+  return true;
+}
+
+// ── Idee ansehen: Video einbetten + in ein Rezept verwandeln ───────────
+export function rezOpenInspo(id){
+  const i=S.state.index.inspo.find(x=>x.id===id);
+  if(!i)return;
+  // ⚠ Der Einbett-Rahmen ist cross-origin: er ZEIGT das Video, sein Inhalt
+  // ist fuer uns aber nicht lesbar (Browser-Regel, nicht umgehbar). Deshalb
+  // steht darunter immer der Weg nach draussen - und offline faellt der
+  // Rahmen ohnehin aus, dann bleibt der Link das Einzige, was traegt.
+  const einbetten=i.embedUrl
+    ? `<div class="insp-frame"><iframe src="${escH(i.embedUrl)}" loading="lazy" allowfullscreen`
+      +` referrerpolicy="origin-when-cross-origin"`
+      +` sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"`
+      +` title="${escH(i.title||'Embedded video')}"></iframe></div>`
+      +`<div class="insp-note">If the video stays blank you are offline, or the post is private — use the button below.</div>`
+    : (i.thumb?`<div class="rd-hero" style="margin-bottom:14px"><img src="${i.thumb}" alt=""></div>`:'');
+  openModal(
+     einbetten
+    +`<div class="rd-title" style="font-size:var(--fs-xl)">${escH(i.title||'Untitled idea')}</div>`
+    +`<div class="rd-meta">`
+      +(i.label?`<span class="rd-chip">${icn('link',12)}${escH(i.label)}</span>`:'')
+      +(i.min?`<span class="rd-chip">${icn('clock',12)}${fmtDur(i.min)}</span>`:'')
+      +(i.tags||[]).map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('')
+    +`</div>`
+    +(i.caption?`<div class="rd-sec"><div class="rd-sec-h">Saved text</div><div class="rd-block"><p>${escH(i.caption)}</p></div></div>`:'')
+    +`<div class="m-btns" style="flex-wrap:wrap">`
+      +`<button class="btn btn-danger" style="margin-right:auto" onclick="rezTrashInspo('${i.id}')">${icn('trashIcon',13)} Delete</button>`
+      +(i.url?`<a class="btn" href="${escH(i.url)}" target="_blank" rel="noopener">Open in ${escH(i.label||'browser')}</a>`:'')
+      +`<button class="btn" onclick="rezOpenInspoForm('${i.id}')">Edit</button>`
+      +`<button class="btn btn-primary" onclick="rezInspoToRecipe('${i.id}')">${icn('recipes',13)} Convert to recipe</button>`
+    +`</div>`
+  ,'modal-wide');
+}
+export async function rezTrashInspo(id){
+  await S.trashInspo(id);
+  rezCloseModal();
+  renderInspo();renderNav();
+  toast('Moved to trash');
+}
+// Der eigentliche "wird automatisch zum Rezept"-Schritt: Caption durch den
+// Parser, Ergebnis direkt ins Rezept-Formular. Bewusst NICHT still im
+// Hintergrund speichern - der Nutzer sieht, was erkannt wurde, und kann
+// korrigieren, bevor daraus ein Rezept wird.
+export function rezInspoToRecipe(id){
+  const i=S.state.index.inspo.find(x=>x.id===id);
+  if(!i)return;
+  const entwurf=captionToRecipe(i.caption||'',{});
+  form={
+    id:S.uid(),
+    title:entwurf.title||i.title||'',
+    min:i.min||entwurf.min||30,
+    tags:(entwurf.tags&&entwurf.tags.length)?entwurf.tags:(i.tags||[]),
+    fav:false,cover:i.thumb||'',thumb:i.thumb||'',
+    ingredients:entwurf.ingredients,
+    blocks:entwurf.blocks,
+    created:'',up:'',source:i.url||'',
+  };
+  formBase=JSON.stringify(form);
+  rezShowPage('recipes');
+  renderForm();
+  const gefunden=entwurf.ingredients.filter(Boolean).length;
+  const schritte=(entwurf.blocks[0]&&entwurf.blocks[0].v||'').split('\n').filter(Boolean).length;
+  toast(gefunden||schritte
+    ? `Parsed ${gefunden} ingredient${gefunden===1?'':'s'} and ${schritte} step${schritte===1?'':'s'}`
+    : 'No recipe text found — fill it in yourself');
+}
+
+// ══ WOCHENPLAN ═══════════════════════════════════════════════════════════
+// Montag als Wochenanfang (europaeisch). wochenAnker ist ein Datum IN der
+// gezeigten Woche, nicht ihr Anfang - Vor/Zurueck verschiebt es um 7 Tage.
+let wochenAnker=new Date();
+function wochenStart(d){
+  const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const wt=(x.getDay()+6)%7;              // 0 = Montag
+  x.setDate(x.getDate()-wt);
+  return x;
+}
+function wochenTage(anker){
+  const a=wochenStart(anker);
+  return Array.from({length:7},(_,i)=>new Date(a.getFullYear(),a.getMonth(),a.getDate()+i));
+}
+const WT=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+export function renderWeek(){
+  const el=$('pgWeek');if(!el)return;
+  const tage=wochenTage(wochenAnker);
+  const heute=S.dayKey();
+  const von=tage[0],bis=tage[6];
+  const spanne=`${von.getDate()} ${MON[von.getMonth()]} – ${bis.getDate()} ${MON[bis.getMonth()]} ${bis.getFullYear()}`;
+  const geplant=tage.reduce((a,d)=>a+S.planFor(S.dayKey(d)).length,0);
+  el.innerHTML=
+     `<div class="ptitle">Week</div>`
+    +`<div class="psub">${geplant?`${geplant} meal${geplant===1?'':'s'} planned this week`:'Nothing planned for this week yet'}</div>`
+    +`<div class="rez-toolbar">`
+      +`<button class="btn" onclick="rezWeekShift(-7)">${icn('arrowL',13)} Previous</button>`
+      +`<button class="btn" onclick="rezWeekToday()">This week</button>`
+      +`<button class="btn" onclick="rezWeekShift(7)">Next ${icn('arrowR',13)}</button>`
+      +`<span class="week-range">${escH(spanne)}</span>`
+      +`<button class="btn btn-primary" onclick="rezWeekToShopping()" ${geplant?'':'disabled'}>${icn('shopping',13)} Add ingredients to shopping list</button>`
+    +`</div>`
+    +`<div class="week-grid">`+tage.map(d=>{
+        const k=S.dayKey(d),ids=S.planFor(k),ist=k===heute;
+        return`<div class="week-day${ist?' on':''}">`
+          +`<div class="week-hd"><span class="week-wd">${WT[(d.getDay()+6)%7]}</span>`
+            +`<span class="week-dt">${d.getDate()} ${MON[d.getMonth()]}</span></div>`
+          +`<div class="week-body">`+(ids.length?ids.map(id=>{
+              const r=S.state.index.recipes.find(x=>x.id===id);
+              if(!r)return'';
+              return`<div class="week-item">`
+                +(r.thumb?`<img class="week-thumb" src="${r.thumb}" alt="" onclick="rezOpenDetail('${r.id}')">`:`<span class="week-thumb"></span>`)
+                +`<span class="week-nm" onclick="rezOpenDetail('${r.id}')">${escH(r.title)}</span>`
+                +`<button class="week-x" onclick="rezWeekRemove('${k}','${r.id}')" title="Remove" aria-label="Remove">×</button></div>`;
+            }).join(''):`<div class="week-empty">—</div>`)
+          +`</div>`
+          +`<button class="week-add" onclick="rezWeekAdd('${k}')">${icn('plus',13)} Add</button>`
+        +`</div>`;
+      }).join('')+`</div>`;
+}
+export function rezWeekShift(t){
+  wochenAnker=new Date(wochenAnker.getFullYear(),wochenAnker.getMonth(),wochenAnker.getDate()+t);
+  renderWeek();renderNav();
+}
+export function rezWeekToday(){wochenAnker=new Date();renderWeek();renderNav();}
+export function rezWeekAdd(key){
+  openRecipePicker('Add to '+key,async id=>{
+    await S.addToPlan(key,id);
+    rezCloseModal();
+    renderWeek();renderNav();
+    toast('Added to the plan');
+  });
+}
+export async function rezWeekRemove(key,id){
+  await S.removeFromPlan(key,id);
+  renderWeek();renderNav();
+}
+export async function rezWeekToShopping(){
+  const keys=wochenTage(wochenAnker).map(d=>S.dayKey(d));
+  const zutaten=await S.ingredientsForDays(keys);
+  if(!zutaten.length){toast('The planned recipes have no ingredients listed');return;}
+  const n=await S.addIngredients(zutaten);
+  renderNav();
+  toast(n?`${n} item${n===1?'':'s'} added to the shopping list`:'Everything was already on the list');
+}
+
+// ══ EINKAUFSLISTE ════════════════════════════════════════════════════════
+export function renderShopping(){
+  const el=$('pgShopping');if(!el)return;
+  const items=S.shoppingItems();
+  const offen=items.filter(i=>!i.done),erledigt=items.filter(i=>i.done);
+  const zeile=i=>`<label class="shop-row${i.done?' done':''}">`
+      +`<input type="checkbox" ${i.done?'checked':''} onchange="rezShopToggle('${i.id}')">`
+      +`<span class="shop-txt">${escH(i.text)}</span>`
+      +(i.src?`<span class="shop-src">${escH(i.src)}</span>`:'')
+      +`<button class="rf-x" onclick="event.preventDefault();rezShopRemove('${i.id}')" title="Remove" aria-label="Remove">×</button></label>`;
+  el.innerHTML=
+     `<div class="ptitle">Shopping</div>`
+    +`<div class="psub">${items.length?`${offen.length} still to buy · ${erledigt.length} done`:'Your shopping list is empty'}</div>`
+    +`<div class="rez-toolbar">`
+      +`<div class="rez-search"><input id="shopNew" type="text" placeholder="Add an item and press Enter..." onkeydown="if(event.key==='Enter')rezShopAdd()"></div>`
+      +`<button class="btn btn-primary" onclick="rezShopAdd()">${icn('plus',14)} Add</button>`
+      +`<button class="btn" onclick="rezWeekToShopping()">${icn('week',13)} From this week's plan</button>`
+      +(erledigt.length?`<button class="btn" onclick="rezShopClearDone()">Clear ${erledigt.length} done</button>`:'')
+    +`</div>`
+    +(items.length
+      ? `<div class="shop-list">`+offen.map(zeile).join('')
+        +(erledigt.length?`<div class="shop-sep">Done</div>`+erledigt.map(zeile).join(''):'')+`</div>`
+      : `<div class="rez-empty"><h4>Nothing to buy</h4>`
+        +`<p>Add items by hand, or plan your week and pull the ingredients in automatically.</p>`
+        +`<button class="btn btn-primary" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button></div>`);
+}
+export async function rezShopAdd(){
+  const inp=$('shopNew');
+  if(!inp||!inp.value.trim())return;
+  await S.addShopping(inp.value,'');
+  inp.value='';
+  renderShopping();renderNav();
+  const wieder=$('shopNew');if(wieder)wieder.focus();
+}
+export async function rezShopToggle(id){await S.toggleShopping(id);renderShopping();renderNav();}
+export async function rezShopRemove(id){await S.removeShopping(id);renderShopping();renderNav();}
+export async function rezShopClearDone(){
+  const n=await S.clearShoppingDone();
+  renderShopping();renderNav();
+  toast(n?`${n} item${n===1?'':'s'} cleared`:'Nothing to clear');
+}
+
+// ══ KOCH-VERLAUF ═════════════════════════════════════════════════════════
+export function renderCooked(){
+  const el=$('pgCooked');if(!el)return;
+  const log=S.state.index.cooked;
+  const monat=d=>{const x=new Date(d);return MON[x.getMonth()]+' '+x.getFullYear();};
+  let letzter='';
+  const zeilen=log.map(e=>{
+    const m=monat(e.date);
+    const kopf=(m!==letzter)?(letzter=m,`<div class="shop-sep">${escH(m)}</div>`):'';
+    const d=new Date(e.date);
+    return kopf+`<div class="cook-row">`
+      +(e.thumb?`<img class="cook-thumb" src="${e.thumb}" alt="" onclick="rezOpenDetail('${e.recipeId}')">`:`<span class="cook-thumb"></span>`)
+      +`<div class="cook-main"><div class="cook-nm" onclick="rezOpenDetail('${e.recipeId}')">${escH(e.title||'Recipe')}</div>`
+        +`<div class="cook-dt">${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}</div></div>`
+      +`<div class="cook-stars">`+[1,2,3,4,5].map(n=>
+          `<button class="cook-star${e.rating>=n?' on':''}" onclick="rezRate('${e.id}',${n})" title="${n} of 5" aria-label="${n} of 5">`
+          +`<svg width="15" height="15" viewBox="0 0 24 24" fill="${e.rating>=n?'currentColor':'none'}" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">${ICONS.star}</svg></button>`).join('')
+      +`</div>`
+      +`<button class="btn" onclick="rezCookThis('${e.recipeId}')">Cook again</button>`
+      +`<button class="rf-x" onclick="rezRemoveCooked('${e.id}')" title="Remove" aria-label="Remove">×</button>`
+    +`</div>`;
+  }).join('');
+  el.innerHTML=
+     `<div class="ptitle">Cooked</div>`
+    +`<div class="psub">${log.length?`${log.length} meal${log.length===1?'':'s'} logged`:'Nothing logged yet'}</div>`
+    +(log.length?`<div class="shop-list">${zeilen}</div>`
+      :`<div class="rez-empty"><h4>No history yet</h4>`
+       +`<p>Every time you tap “Mark as cooked” on the Overview, the meal lands here — with a rating, and the Random Picker learns to skip what you just had.</p>`
+       +`<button class="btn btn-primary" onclick="rezShowPage('overview')">Go to Overview</button></div>`);
+}
+export async function rezRate(id,n){await S.rateCooked(id,n);renderCooked();}
+export async function rezRemoveCooked(id){await S.removeCooked(id);renderCooked();renderNav();toast('Removed from history');}
+
 // ── MODAL-INFRASTRUKTUR ──────────────────────────────────────────────────
 function openModal(html,cls){
   const host=$('rezModals');
@@ -239,14 +796,24 @@ function escClose(e){if(e.key==='Escape')rezRequestClose();}
 // Der EINE Weg nach draussen (Klick daneben, Escape, Cancel-Button). Steht
 // ungespeicherte Arbeit im Formular, fragt er nach, statt sie wegzuwerfen.
 export function rezRequestClose(){
-  if(form&&formDirty()){openUnsavedDialog();return;}
+  if(offeneEingabe()){openUnsavedDialog();return;}
   rezCloseModal();
+}
+// ⚠ JEDES Eingabe-Fenster gehoert hier hinein. Die Inspirations-Maske wurde
+// beim Bau zunaechst vergessen - dort haette ein Klick daneben wieder alles
+// verworfen, obwohl das Rezept-Formular laengst geschuetzt war. Genau diese
+// Sorte "an einer Stelle gefixt, an der naechsten nicht" soll die eine
+// gemeinsame Abfrage verhindern.
+function offeneEingabe(){
+  if(form&&formBase&&JSON.stringify(form)!==formBase)return true;
+  if(inspoForm&&inspoBase&&JSON.stringify(inspoForm)!==inspoBase)return true;
+  return false;
 }
 export function rezCloseModal(){
   closeRowMenu();
   closeUnsavedDialog();
   $('rezModals').innerHTML='';
-  detailId=null;form=null;formBase=null;
+  detailId=null;form=null;formBase=null;inspoForm=null;inspoBase=null;
   document.removeEventListener('keydown',escClose);
 }
 
@@ -257,10 +824,7 @@ export function rezCloseModal(){
 // will, ein zentriertes Fenster mit drei eindeutigen Wegen. Dieselbe Loesung
 // steckt im FX Analyst Pro (#mUnsaved) - beide Apps verhalten sich hier
 // gleich, obwohl der Code getrennt ist.
-function formDirty(){
-  if(!form||!formBase)return false;
-  return JSON.stringify(form)!==formBase;
-}
+function formDirty(){return offeneEingabe();}
 function openUnsavedDialog(){
   const host=$('rezConfirm');
   if(!host)return;
@@ -276,10 +840,10 @@ function openUnsavedDialog(){
 }
 function closeUnsavedDialog(){const h=$('rezConfirm');if(h)h.innerHTML='';}
 export function rezKeepEditing(){closeUnsavedDialog();}
-export function rezDiscardClose(){closeUnsavedDialog();form=null;formBase=null;rezCloseModal();toast('Changes discarded');}
+export function rezDiscardClose(){closeUnsavedDialog();form=null;formBase=null;inspoForm=null;inspoBase=null;rezCloseModal();toast('Changes discarded');}
 export async function rezSaveClose(){
   closeUnsavedDialog();
-  const ok=await rezSaveForm();
+  const ok=inspoForm?await rezSaveInspo():await rezSaveForm();
   // Schlaegt das Speichern fehl (z.B. fehlender Titel oder fehlendes Bild),
   // bleibt das Formular offen - sonst waere genau das passiert, was der
   // Nutzer verhindern wollte: Eingaben weg, ohne dass etwas gespeichert ist.
@@ -319,7 +883,11 @@ export async function rezOpenDetail(id){
           :`<div class="rd-block"><p>${escH(b.v)}</p></div>`).join('')
         :`<div class="rd-empty">No preparation steps written down yet.</div>`)
     +`</div>`
-    +`<div class="m-btns"><button class="btn" onclick="rezCloseModal()">Close</button>`
+    +`<div class="m-btns" style="flex-wrap:wrap">`
+      +(doc.source?`<a class="btn" style="margin-right:auto" href="${escH(doc.source)}" target="_blank" rel="noopener">${icn('link',13)} Original post</a>`:'')
+      +`<button class="btn" onclick="rezMarkCooked('${id}')">${icn('check',13)} Mark as cooked</button>`
+      +`<button class="btn" onclick="rezCookThis('${id}')">Cook today</button>`
+      +`<button class="btn" onclick="rezCloseModal()">Close</button>`
       +`<button class="btn btn-primary" onclick="rezOpenForm('${id}')">Edit recipe</button></div>`
   ,'modal-wide');
 }
@@ -367,10 +935,11 @@ export async function rezOpenForm(id){
     const doc=await S.getFull(id);
     if(!doc){toast('Recipe not available on this device yet');return;}
     form=JSON.parse(JSON.stringify(doc));
+    form.source=form.source||'';
     form.ingredients=(form.ingredients&&form.ingredients.length)?form.ingredients:[''];
     form.blocks=(form.blocks&&form.blocks.length)?form.blocks:[{t:'text',v:''}];
   }else{
-    form={id:S.uid(),title:'',min:30,tags:[],fav:false,cover:'',thumb:'',ingredients:[''],blocks:[{t:'text',v:''}],created:'',up:''};
+    form={id:S.uid(),title:'',min:30,tags:[],fav:false,cover:'',thumb:'',ingredients:[''],blocks:[{t:'text',v:''}],created:'',up:'',source:''};
   }
   formBase=JSON.stringify(form);
   renderForm();
@@ -527,6 +1096,9 @@ export async function rezSaveForm(){
     ingredients:(form.ingredients||[]).map(s=>(s||'').trim()).filter(Boolean),
     blocks:(form.blocks||[]).filter(b=>b&&(b.v||'').trim()),
     created:form.created||'',
+    // Herkunft eines importierten Rezepts - bleibt am Volldokument haengen,
+    // damit man vom Rezept aus zum urspruenglichen Reel zurueckkommt.
+    source:form.source||'',
   };
   // ⚠ OHNE dieses try/catch endete jede Ausnahme des Speicherpfads als
   // unbehandelte Promise-Rejection: das Fenster blieb offen, es erschien
@@ -542,6 +1114,7 @@ export async function rezSaveForm(){
   formBase=null;form=null;
   rezCloseModal();
   rezShowPage('recipes');
+  renderNav();
   toast(S.state.dbBroken?'Saved (this device cannot store offline copies)':'Recipe saved');
   return true;
 }
@@ -633,7 +1206,15 @@ S.onChange(what=>{
   if(what==='index'){
     applyStoredTheme();
     renderNav();
-    if(curPage==='overview')renderOverview();else refreshGridOnly();
+    // ⚠ Jede Kategorie muss hier auftauchen. Fehlt eine, bleibt sie nach
+    // einer Aenderung auf einem anderen Geraet (Cloud-Pull) auf einem alten
+    // Stand stehen, ohne dass irgendetwas kaputt aussieht.
+    if(curPage==='overview')renderOverview();
+    else if(curPage==='recipes')refreshGridOnly();
+    else if(curPage==='inspo')renderInspo();
+    else if(curPage==='week')renderWeek();
+    else if(curPage==='shopping')renderShopping();
+    else if(curPage==='cooked')renderCooked();
   }else if(what==='settings'){
     applyStoredTheme();
   }else if(what==='status'){
@@ -662,4 +1243,19 @@ Object.assign(window,{
   rezAddFromOverview,rezOpenRowMenu,rezCloseRowMenu,rezAskDelete,rezConfirmDelete,
   rezFormField,rezFormTags,rezSetIngredient,rezAddIngredient,rezDelIngredient,
   rezSetBlock,rezAddBlock,rezDelBlock,rezMoveBlock,rezPickCover,rezPickBlockImage,
+  // Overview
+  rezRandomOpt,rezRoll,rezCookThis,rezMarkCooked,rezClearToday,rezPickToday,
+  // Rezept-Auswahl
+  rezPickQuery,rezPickChoose,
+  // Inspiration
+  renderInspo,rezInspoQuery,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
+  rezInspoPaste,rezPickInspoImage,rezSaveInspo,rezOpenInspo,rezTrashInspo,rezInspoToRecipe,
+  // Woche
+  renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,
+  // Einkaufsliste
+  renderShopping,rezShopAdd,rezShopToggle,rezShopRemove,rezShopClearDone,
+  // Verlauf
+  renderCooked,rezRate,rezRemoveCooked,
+  // von den Waechtern gebraucht
+  renderRecipes,renderOverview,
 });

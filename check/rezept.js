@@ -137,7 +137,9 @@ function pruefeKontrast() {
   // Das ist die haeufigste Ursache fuer "der Button tut nichts": eine
   // Funktion existiert im Modul, wurde aber nie ueber die window-Bruecke
   // exportiert. Der Klick wirft dann ein stilles ReferenceError.
-  const ansichten = ['overview', 'recipes'];
+  // ⚠ ALLE Kategorien, nicht nur die ersten beiden: ein toter Button auf
+  // einer nicht geprueften Seite faellt sonst niemandem auf.
+  const ansichten = ['overview', 'recipes', 'inspo', 'week', 'shopping', 'cooked'];
   const unaufloesbar = new Set();
   async function sammleHandler(wo) {
     const namen = await p.evaluate(() => {
@@ -173,7 +175,7 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezCloseModal());
   const ersteId = await p.evaluate(() => (window.__rezIds = null, document.querySelector('.rez-card') ? 1 : 0));
   await p.evaluate(() => window.rezShowPage('recipes')); await p.waitForTimeout(300);
-  await p.click('.rez-card'); await p.waitForTimeout(700); await sammleHandler('detail');
+  await p.click('#pgRecipes .rez-card'); await p.waitForTimeout(700); await sammleHandler('detail');
   await p.click('.rd-menu-btn'); await p.waitForTimeout(300); await sammleHandler('detail-menu');
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);
   unaufloesbar.forEach(x => fail('A', 'Handler zeigt auf keine Funktion: ' + x));
@@ -259,20 +261,20 @@ function pruefeKontrast() {
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
   await p.click('.modal button:has-text("Add recipe")');
   await p.waitForTimeout(1200);
-  const nachSpeichern = await p.locator('.rez-card').count();
+  const nachSpeichern = await p.locator('#pgRecipes .rez-card').count();
   if (nachSpeichern !== 4) fail('C', `Nach dem Speichern stehen ${nachSpeichern} statt 4 Karten im Raster`);
   if (await p.locator('#rfTitle').count()) fail('C', 'Das Formular bleibt nach dem Speichern offen');
 
   // Suche / Zeitfilter / Tag / Favoriten
   await p.fill('#rezSearchInp', 'zzzz'); await p.waitForTimeout(300);
-  if (await p.locator('.rez-card').count() !== 0) fail('C', 'Die Suche filtert nicht');
+  if (await p.locator('#pgRecipes .rez-card').count() !== 0) fail('C', 'Die Suche filtert nicht');
   await p.fill('#rezSearchInp', 'alpha'); await p.waitForTimeout(300);
-  if (await p.locator('.rez-card').count() !== 1) fail('C', 'Die Suche findet den erwarteten Treffer nicht');
+  if (await p.locator('#pgRecipes .rez-card').count() !== 1) fail('C', 'Die Suche findet den erwarteten Treffer nicht');
   await p.fill('#rezSearchInp', ''); await p.waitForTimeout(300);
-  await p.selectOption('.rez-sel', '15'); await p.waitForTimeout(300);
-  const kurz = await p.locator('.rez-card').count();
+  await p.selectOption('#pgRecipes .rez-sel', '15'); await p.waitForTimeout(300);
+  const kurz = await p.locator('#pgRecipes .rez-card').count();
   if (kurz !== 2) fail('C', `Zeitfilter "<= 15 min" zeigt ${kurz} statt 2 Karten`);
-  await p.selectOption('.rez-sel', '0'); await p.waitForTimeout(300);
+  await p.selectOption('#pgRecipes .rez-sel', '0'); await p.waitForTimeout(300);
   // Definierter Ausgangszustand: genau EIN Favorit. Stufe B hat beim
   // Durchklicken Sterne umgeschaltet - ohne dieses Zuruecksetzen prueft die
   // naechste Zeile gegen eine Zahl, die vom Klickpfad abhaengt.
@@ -284,23 +286,23 @@ function pruefeKontrast() {
   await p.waitForTimeout(700);
   await p.evaluate(() => window.renderRecipes ? window.renderRecipes() : window.rezShowPage('recipes'));
   await p.waitForTimeout(300);
-  await p.click('.rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
-  const favN = await p.locator('.rez-card').count();
+  await p.click('#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
+  const favN = await p.locator('#pgRecipes .rez-card').count();
   if (favN !== 1) fail('C', `Der Favoriten-Filter zeigt ${favN} statt 1 Karte`);
-  await p.click('.rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
-  const tagChips = await p.locator('.tag-chip').count();
+  await p.click('#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
+  const tagChips = await p.locator('#pgRecipes .tag-chip').count();
   if (tagChips < 2) fail('C', 'Es werden keine Tag-Chips gerendert');
-  await p.locator('.tag-chip').nth(1).click(); await p.waitForTimeout(300);
-  if (await p.locator('.rez-card').count() === 4) fail('C', 'Ein Tag-Chip filtert nicht');
-  await p.locator('.tag-chip').first().click(); await p.waitForTimeout(300);
+  await p.locator('#pgRecipes .tag-chip').nth(1).click(); await p.waitForTimeout(300);
+  if (await p.locator('#pgRecipes .rez-card').count() === 4) fail('C', 'Ein Tag-Chip filtert nicht');
+  await p.locator('#pgRecipes .tag-chip').first().click(); await p.waitForTimeout(300);
 
   // Favoriten-Stern auf der Karte
-  const vorFav = await p.locator('.rez-card-star.on').count();
-  await p.locator('.rez-card-star').first().click(); await p.waitForTimeout(700);
-  if (await p.locator('.rez-card-star.on').count() === vorFav) fail('C', 'Der Stern auf der Karte schaltet den Favoriten nicht um');
+  const vorFav = await p.locator('#pgRecipes .rez-card-star.on').count();
+  await p.locator('#pgRecipes .rez-card-star').first().click(); await p.waitForTimeout(700);
+  if (await p.locator('#pgRecipes .rez-card-star.on').count() === vorFav) fail('C', 'Der Stern auf der Karte schaltet den Favoriten nicht um');
 
   // Detail -> Bearbeiten -> speichern
-  await p.locator('.rez-card').first().click(); await p.waitForTimeout(800);
+  await p.locator('#pgRecipes .rez-card').first().click(); await p.waitForTimeout(800);
   if (!(await p.locator('.rd-title').count())) fail('C', 'Das Detailfenster oeffnet sich nicht');
   await p.click('.rd-menu-btn'); await p.waitForTimeout(300);
   await p.click('.rd-menu-item:has-text("Edit recipe")'); await p.waitForTimeout(700);
@@ -308,22 +310,22 @@ function pruefeKontrast() {
   await p.fill('#rfTitle', 'Renamed Dish');
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
   await p.click('.modal button:has-text("Save changes")'); await p.waitForTimeout(1200);
-  if (!(await p.locator('.rez-card-title:has-text("Renamed Dish")').count()))
+  if (!(await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count()))
     fail('C', 'Eine Umbenennung landet nicht im Raster');
 
   // Papierkorb + Wiederherstellen
-  await p.locator('.rez-card-title:has-text("Renamed Dish")').click(); await p.waitForTimeout(800);
+  await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').click(); await p.waitForTimeout(800);
   await p.click('.rd-menu-btn'); await p.waitForTimeout(300);
   await p.click('.rd-menu-item.danger'); await p.waitForTimeout(400);
   await p.click('.modal button.btn-danger'); await p.waitForTimeout(1000);
-  if (await p.locator('.rez-card-title:has-text("Renamed Dish")').count())
+  if (await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count())
     fail('C', 'Ein geloeschtes Rezept steht weiter im Raster');
   await p.evaluate(() => window.rezOpenSettings()); await p.waitForTimeout(500);
   if (!(await p.locator('.trash-row').count())) fail('C', 'Der Papierkorb bleibt nach dem Loeschen leer');
   await p.click('.trash-row button:has-text("Restore")'); await p.waitForTimeout(1000);
   await p.evaluate(() => window.rezCloseModal());
   await p.evaluate(() => window.rezShowPage('recipes')); await p.waitForTimeout(500);
-  if (!(await p.locator('.rez-card-title:has-text("Renamed Dish")').count()))
+  if (!(await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count()))
     fail('C', 'Wiederherstellen aus dem Papierkorb bringt das Rezept nicht zurueck');
 
   // Alle Themes durchschalten - jedes muss die Variablen wirklich setzen
@@ -387,6 +389,242 @@ function pruefeKontrast() {
   await p.click('.uc-discard'); await p.waitForTimeout(400);
   if (await p.locator('#rfTitle').count()) fail('D', '"Discard & close" schliesst das Formular nicht');
 
+  // ── H) Der Caption-Parser, beide Wege ────────────────────────────────
+  // ⚠ Diese Stufe existiert wegen eines Regressionstests: die Zutaten-
+  // Erkennung wurde absichtlich kaputt gemacht und der Waechter meldete
+  // trotzdem "ok". Grund: die Test-Caption in Stufe F hat Ueberschriften
+  // ("Zutaten:"), und dieser Weg kommt ohne die Mengen-Erkennung aus. Der
+  // zweite Weg - Caption OHNE Ueberschriften, Zutaten nur an der Mengen-
+  // angabe erkennbar - war komplett ungeprueft. Beide Wege gehoeren hierher.
+  const parserFaelle = await p.evaluate(async () => {
+    const I = await import('./js/rezept/import.js');
+    const out = [];
+    const pruef = (name, ist, soll) => out.push({ name, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
+
+    // Weg 1: mit Ueberschriften
+    const a = I.parseCaption([
+      '🍜 Ramen in 35 Minuten 🔥', 'Zutaten:', '- 2 Portionen Nudeln', '- 1 l Brühe',
+      'Zubereitung:', '1. Brühe erhitzen.', '2. Nudeln kochen.',
+      '#ramen #reels', 'https://www.instagram.com/reel/AbC123XyZ/'].join('\n'));
+    pruef('mit Ueberschrift: Zutaten', a.ingredients.length, 2);
+    pruef('mit Ueberschrift: Schritte', a.steps.length, 2);
+    pruef('mit Ueberschrift: Dauer', a.min, 35);
+    pruef('mit Ueberschrift: Titel ohne Emoji', a.title, 'Ramen in 35 Minuten');
+    pruef('mit Ueberschrift: Reichweiten-Tag gefiltert', a.tags, ['Ramen']);
+    pruef('mit Ueberschrift: Instagram erkannt', a.link && a.link.platform, 'instagram');
+
+    // Weg 2: OHNE Ueberschriften - Zutaten nur an der Mengenangabe erkennbar
+    const b = I.parseCaption([
+      'Crispy Chicken Bowl ready in 25 mins',
+      '400g chicken thighs', '2 tbsp soy sauce', '1 cup jasmine rice', '2 cloves garlic',
+      '1. Marinate the chicken.', '2. Sear on high heat.', '#mealprep #fyp'].join('\n'));
+    pruef('ohne Ueberschrift: Zutaten an der Menge erkannt', b.ingredients.length, 4);
+    pruef('ohne Ueberschrift: Schritte', b.steps.length, 2);
+    pruef('ohne Ueberschrift: Dauer', b.min, 25);
+    pruef('ohne Ueberschrift: Tags', b.tags, ['Mealprep']);
+
+    // Dauer-Schreibweisen
+    [['1h30', 90], ['2 Std 30 Minuten', 150], ['ca. 20 Min', 20], ['90 mins', 90],
+     ['1 hour', 60], ['13 min', 15], ['ohne Angabe', null]].forEach(([t, soll]) =>
+      pruef('Dauer ' + JSON.stringify(t), I.parseDuration(t), soll));
+
+    // Andere Plattformen
+    pruef('TikTok erkannt', (I.detectLink('https://www.tiktok.com/@chef/video/7211122334455') || {}).platform, 'tiktok');
+    pruef('YouTube erkannt', (I.detectLink('https://youtu.be/dQw4w9WgXcQ') || {}).platform, 'youtube');
+
+    // Nichts erfinden: ohne Angabe bleibt die Dauer leer
+    pruef('keine erfundene Dauer', I.parseCaption('One pan salmon').min, null);
+
+    // Randfaelle duerfen nicht werfen
+    [null, undefined, '', '   ', '#nur #hashtags', '😀😀😀'].forEach(x => {
+      try { pruef('Randfall ' + JSON.stringify(x), typeof I.parseCaption(x).title, 'string'); }
+      catch (e) { out.push({ name: 'Randfall ' + JSON.stringify(x), ist: 'Absturz: ' + e.message, soll: 'kein Absturz', ok: false }); }
+    });
+    return out;
+  });
+  parserFaelle.filter(f => !f.ok).forEach(f =>
+    fail('H', `Parser "${f.name}": ${JSON.stringify(f.ist)} statt ${JSON.stringify(f.soll)}`));
+
+  // ── F) Die vier neuen Kategorien inhaltlich ──────────────────────────
+  // Stufe B sieht nur, DASS ein Button etwas tut. Hier wird geprueft, ob er
+  // das RICHTIGE tut - inklusive des Wegs "Reel einfuegen -> Rezept".
+  const CAPTION = [
+    '🍝 Pasta al Limone in 20 Minuten',
+    'Das cremigste Rezept überhaupt!',
+    '',
+    'Zutaten:',
+    '- 200 g Spaghetti',
+    '- 1 Bio-Zitrone',
+    '- 100 ml Sahne',
+    '',
+    'Zubereitung:',
+    '1. Nudeln al dente kochen.',
+    '2. Sahne mit Zitrone erhitzen.',
+    '3. Alles vermengen.',
+    '',
+    '#pasta #zitrone #reels',
+    'https://www.instagram.com/reel/CxYz123AbC/',
+  ].join('\n');
+
+  // F1: Idee anlegen, Link muss erkannt und der Titel gefuellt werden
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(400);
+  await p.evaluate(() => window.rezOpenInspoForm(null));
+  await p.waitForTimeout(400);
+  await p.fill('#ifPaste', CAPTION);
+  await p.waitForTimeout(400);
+  const erkannt = await p.evaluate(() => ({
+    titel: (document.getElementById('ifTitle') || {}).value || '',
+    hinweis: (document.querySelector('.insp-detect') || {}).textContent || '',
+    url: (document.getElementById('ifUrl') || {}).value || '',
+    tags: (document.getElementById('ifTags') || {}).value || '',
+  }));
+  if (!/Instagram/.test(erkannt.hinweis)) fail('F', 'Der Instagram-Link wird beim Einfuegen nicht erkannt');
+  if (!/Pasta al Limone/.test(erkannt.titel)) fail('F', `Titel wird nicht aus der Caption uebernommen (war "${erkannt.titel}")`);
+  // ⚠ Nicht nur im Modell, sondern SICHTBAR im Feld: erst standen Link und
+  // Tags still im Entwurf, waehrend der Nutzer leere Felder sah.
+  if (!/instagram\.com/.test(erkannt.url)) fail('F', `Der erkannte Link steht nicht im Link-Feld (war "${erkannt.url}")`);
+  if (!/Pasta/.test(erkannt.tags)) fail('F', `Die erkannten Tags stehen nicht im Tag-Feld (war "${erkannt.tags}")`);
+  await p.click('.modal button:has-text("Add idea")');
+  await p.waitForTimeout(900);
+  const inspoN = await p.locator('#pgInspo .rez-card').count();
+  if (inspoN !== 1) fail('F', `Nach dem Anlegen stehen ${inspoN} statt 1 Idee im Raster`);
+
+  // F2: "Convert to recipe" - der Kern des Reel-Imports
+  await p.click('#pgInspo .rez-card');
+  await p.waitForTimeout(700);
+  if (!(await p.locator('.insp-frame iframe').count()))
+    fail('F', 'Das Reel wird im Detailfenster nicht eingebettet');
+  await p.click('.modal button:has-text("Convert to recipe")');
+  await p.waitForTimeout(900);
+  const entwurf = await p.evaluate(() => ({
+    titel: (document.getElementById('rfTitle') || {}).value || '',
+    zutaten: [...document.querySelectorAll('#rfIng .m-inp')].map(i => i.value).filter(Boolean),
+    schritte: (document.querySelector('#rfBlocks textarea') || {}).value || '',
+    dauer: (document.querySelector('.rf-row select') || {}).value || '',
+  }));
+  if (!/Pasta al Limone/.test(entwurf.titel)) fail('F', `Convert: Titel nicht uebernommen ("${entwurf.titel}")`);
+  if (entwurf.zutaten.length !== 3) fail('F', `Convert: ${entwurf.zutaten.length} statt 3 Zutaten erkannt`);
+  if (!/1\. Nudeln/.test(entwurf.schritte)) fail('F', 'Convert: Zubereitungsschritte nicht uebernommen');
+  if (entwurf.dauer !== '20') fail('F', `Convert: Dauer ${entwurf.dauer} statt 20 aus der Caption`);
+  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
+  // Ohne Bild verweigert das Formular - genau richtig, hier nur bestaetigen.
+  await p.click('.modal button:has-text("Add recipe")');
+  await p.waitForTimeout(500);
+  if (!(await p.locator('#rfErr').isVisible().catch(() => false)))
+    fail('F', 'Ein Rezept ohne Titelbild wird kommentarlos angenommen');
+  const fc2 = p.waitForEvent('filechooser', { timeout: 8000 });
+  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 0));
+  await p.click('.rf-drop');
+  await fc2.then(c => c.setFiles(foto)).catch(() => fail('F', 'Datei-Dialog im Convert-Formular oeffnet nicht'));
+  await p.waitForFunction(() => !!document.querySelector('.rf-drop img'), { timeout: 20000 }).catch(() => {});
+  await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
+  await p.click('.modal button:has-text("Add recipe")');
+  await p.waitForTimeout(1200);
+  const mitQuelle = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const r = S.state.index.recipes.find(x => /Pasta al Limone/.test(x.title));
+    if (!r) return null;
+    const d = await S.getFull(r.id);
+    return d ? { id: r.id, source: d.source || '', zutaten: (d.ingredients || []).length } : null;
+  });
+  if (!mitQuelle) fail('F', 'Das umgewandelte Rezept wurde nicht gespeichert');
+  else {
+    if (!/instagram\.com/.test(mitQuelle.source)) fail('F', 'Die Herkunft (Reel-Link) fehlt am Rezept');
+    if (mitQuelle.zutaten !== 3) fail('F', `Gespeichertes Rezept hat ${mitQuelle.zutaten} statt 3 Zutaten`);
+  }
+
+  // F3: Wochenplan + Einkaufsliste
+  await p.evaluate(() => window.rezShowPage('week'));
+  await p.waitForTimeout(400);
+  const tage = await p.locator('.week-day').count();
+  if (tage !== 7) fail('F', `Der Wochenplan zeigt ${tage} statt 7 Tage`);
+  await p.locator('.week-add').first().click();
+  await p.waitForTimeout(500);
+  await p.locator('.pick-row').first().click();
+  await p.waitForTimeout(900);
+  if (!(await p.locator('.week-item').count())) fail('F', 'Ein zugewiesenes Rezept erscheint nicht im Wochenplan');
+  const wocheVor = await p.locator('.week-range').textContent();
+  await p.click('.rez-toolbar .btn:has-text("Next")');
+  await p.waitForTimeout(400);
+  if ((await p.locator('.week-range').textContent()) === wocheVor) fail('F', '"Next" wechselt die Woche nicht');
+  await p.click('.rez-toolbar .btn:has-text("This week")');
+  await p.waitForTimeout(400);
+  await p.click('.rez-toolbar .btn:has-text("Add ingredients")');
+  await p.waitForTimeout(1200);
+  await p.evaluate(() => window.rezShowPage('shopping'));
+  await p.waitForTimeout(500);
+  const eink = await p.locator('.shop-row').count();
+  if (!eink) fail('F', 'Die Zutaten des Wochenplans landen nicht auf der Einkaufsliste');
+  // Doppelt uebernehmen darf die Liste nicht verdoppeln
+  await p.click('.rez-toolbar .btn:has-text("From this week")');
+  await p.waitForTimeout(1200);
+  const eink2 = await p.locator('.shop-row').count();
+  if (eink2 !== eink) fail('F', `Zweimal uebernehmen verdoppelt die Liste (${eink} -> ${eink2})`);
+  await p.locator('.shop-row input[type=checkbox]').first().click();
+  await p.waitForTimeout(700);
+  if (!(await p.locator('.shop-row.done').count())) fail('F', 'Ein Eintrag laesst sich nicht abhaken');
+
+  // F4: Overview - Zufallsgenerator, heute kochen, als gekocht markieren
+  await p.evaluate(() => window.rezShowPage('overview'));
+  await p.waitForTimeout(500);
+  await p.click('.dw button:has-text("Surprise me")');
+  await p.waitForTimeout(600);
+  if (!(await p.locator('.dw .today-nm').count())) fail('F', '"Surprise me" liefert keinen Vorschlag');
+  await p.click('.dw button:has-text("Cook this today")');
+  await p.waitForTimeout(900);
+  const heuteGesetzt = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    return !!S.todaysMeal();
+  });
+  if (!heuteGesetzt) fail('F', '"Cook this today" setzt Today\'s Meal nicht');
+  await p.click('.dw button:has-text("Mark as cooked")');
+  await p.waitForTimeout(900);
+  await p.evaluate(() => window.rezShowPage('cooked'));
+  await p.waitForTimeout(500);
+  if (!(await p.locator('.cook-row').count())) fail('F', 'Ein als gekocht markiertes Gericht fehlt im Verlauf');
+  await p.locator('.cook-star').nth(3).click();
+  await p.waitForTimeout(700);
+  if (!(await p.locator('.cook-star.on').count())) fail('F', 'Die Bewertung im Verlauf laesst sich nicht setzen');
+
+  // ── G) Merge-Regeln: der Fall, der auf zwei Geraeten Daten kostet ────
+  // Rein rechnerisch im Seitenkontext - kein zweites Geraet noetig, aber
+  // genau die Situation, die im FX Analyst Pro zweimal Notizen gekostet hat.
+  const merge = await p.evaluate(async () => {
+    const S = await import('./js/rezept/store.js');
+    const A = S.normalizeIndex({
+      recipes: [{ id: 'r1', title: 'A', up: '2026-01-02' }],
+      inspo: [{ id: 'i1', title: 'IA', up: '2026-01-02' }],
+      plan: { '2026-01-05': { ids: ['r1'], up: '2026-01-02' } },
+      shopping: { items: [{ id: 's1', text: 'Milk', done: false, up: '2026-01-02' }] },
+      cooked: [{ id: 'c1', recipeId: 'r1', date: '2026-01-02', up: '2026-01-02' }],
+    });
+    const B = S.normalizeIndex({
+      recipes: [{ id: 'r2', title: 'B', up: '2026-01-03' }],
+      inspo: [{ id: 'i2', title: 'IB', up: '2026-01-03' }],
+      plan: { '2026-01-06': { ids: ['r2'], up: '2026-01-03' } },
+      shopping: { items: [{ id: 's2', text: 'Bread', done: false, up: '2026-01-03' }] },
+      cooked: [{ id: 'c2', recipeId: 'r2', date: '2026-01-03', up: '2026-01-03' }],
+    });
+    const m = S.mergeIndex(A, B);
+    // Grabstein: auf Geraet B geloescht, auf A noch vorhanden
+    const C = S.normalizeIndex({ recipes: [{ id: 'r1', title: 'A', up: '2026-01-02' }], trash: [] });
+    const D = S.normalizeIndex({ recipes: [], trash: [{ id: 'r1', delAt: '2026-01-04', kind: 'recipe' }] });
+    const m2 = S.mergeIndex(C, D);
+    // Wiederhergestellt: nach dem Loeschen erneut bearbeitet
+    const E = S.normalizeIndex({ recipes: [{ id: 'r1', title: 'A', up: '2026-01-09' }], trash: [] });
+    const m3 = S.mergeIndex(D, E);
+    return {
+      rezepte: m.recipes.length, ideen: m.inspo.length,
+      tage: Object.keys(m.plan).length, eink: m.shopping.items.length, verlauf: m.cooked.length,
+      grabstein: m2.recipes.length, wiederher: m3.recipes.length,
+    };
+  });
+  const soll = { rezepte: 2, ideen: 2, tage: 2, eink: 2, verlauf: 2, grabstein: 0, wiederher: 1 };
+  Object.entries(soll).forEach(([k, v]) => {
+    if (merge[k] !== v) fail('G', `Merge "${k}": ${merge[k]} statt ${v} - zwei Geraete wuerden sich gegenseitig Daten loeschen`);
+  });
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -397,5 +635,5 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast)`);
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge)`);
 })().catch(e => { console.error('REZEPT-WAECHTER abgestuerzt: ' + e.message); process.exit(1); });
