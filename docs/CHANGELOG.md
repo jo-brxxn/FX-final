@@ -8874,3 +8874,75 @@ unruhig — wird jetzt weggelassen, echte Mengen bleiben.
 Mengen-Anzeige, Vorschläge auf deutsche Eingabe, Übernehmen, Abhaken,
 Fortschritt, „Check all", Sortier-Umschaltung und die von Hand gesetzte
 Abteilung.
+
+---
+
+## 2026-09-02 (3) — TYPOGRAFIE UND BEWEGUNG (REZEPT-CHECK-5)
+
+Nutzer: *„mach überall hochwertige Animationen ein und verbesser Schriften."*
+
+**Bewusst NUR die Rezept-App angefasst.** Die Schrift-Entscheidungen des FX
+Analyst Pro sind in `docs/design-system.md` ausführlich begründet (kein
+globales `!important` auf `font-family`, dicktengleiche Ziffern als
+Terminal-Merkmal) und wurden schon einmal teuer korrigiert. Sie ungefragt
+neu aufzurollen wäre genau der Fehler, vor dem die CLAUDE.md warnt.
+
+### Schrift
+
+**Keine Web-Fonts über ein CDN** — die App muss offline laufen, eine
+nachzuladende Schrift wäre genau dort weg, wo sie am meisten stört.
+Stattdessen stehen die `ui-*`-Familien **zuerst** im Stapel: das sind die
+echten System-Schnitte des Geräts — auf iPhone/iPad/Mac SF Pro Text bzw.
+SF Pro Display statt einer Ersatzschrift, auf Windows Segoe UI Variable.
+Kostet nichts und ist auf genau den Geräten des Nutzers der größte sichtbare
+Unterschied.
+
+Vier Rollen statt einer (`--ff-text`, `--ff-title`, `--ff-num`, `--ff-mono`),
+und **die Titel-Schrift ist jetzt Teil des Themes**: Serife bei *Paper
+Cookbook*, `ui-rounded` (SF Pro Rounded) bei *iOS Light*, eng gesetzte
+Grotesk bei *Swiss Editorial*. Neu auf einer Skala: Zeilenhöhen
+(`--lh-tight/snug/base/loose`) und Laufweiten (`--ls-title` negativ für große
+Schrift, `--ls-label` weit für Versal-Beschriftungen) — vorher stand an jeder
+Stelle ein eigener, geratener Wert. Größen sind fluid (`clamp()`).
+25 Regeln wurden auf die Tokens umgestellt, Mengen und Zeiten laufen auf
+dicktengleiche Ziffern.
+
+### Bewegung
+
+Grundsatz: **eine Animation erklärt, WOHER etwas kommt und WOHIN es geht.
+Was nichts erklärt, bewegt sich nicht.** Dauern und Kurven kommen aus Tokens
+(`--t-fast/base/slow`, `--e-out/in/spring`); alles über ~250 ms fühlt sich
+bei täglicher Nutzung nach Warten an.
+
+Gebaut: gestaffelt hereinkommende Karten (gedeckelt bei 14 — sonst erschiene
+die letzte von 40 erst nach über einer Sekunde), eine **gleitende
+Auswahl-Markierung** in der Sidebar statt sechs Stellen, die an- und ausgehen,
+Fenster mit **echter Abgangs-Animation**, eine Würfel-Geste beim
+Zufallsgenerator, Haken-Echo und durchlaufende Durchstreichung in der
+Einkaufsliste, kurzes Aufleuchten einer neu eingefügten Zeile (auf einer
+sortierten Liste landet sie sonst unauffindbar in der Mitte), aufblendende
+Bilder, Druckfeedback auf allen Bedienelementen.
+
+⚠ **Animiert werden nur `transform` und `opacity`** — alles andere lässt den
+Browser bei jedem Bild neu rechnen und ruckelt auf dem Handy.
+
+⚠ **Zwei Abschalter:** `prefers-reduced-motion` (Barrierefreiheit, keine
+Geschmacksfrage) und ein eigener Schalter in den Einstellungen. Beide werden
+geprüft.
+
+⚠ **`rezCloseModal()` räumt den Zustand SOFORT und den DOM erst nach 140 ms.**
+Andersherum hätte man kurz ein Fenster, das noch Eingaben annimmt, obwohl es
+logisch schon zu ist.
+
+### Was der Wächter dabei gefunden hat
+
+1. **Ein Theme in zwei `:root`-Blöcken.** Beim Einführen der Typo-Tokens hatte
+   ich `--ls-title` für *Vercel Mono* in eine eigene Regel geschrieben. Für
+   den Browser egal — für die Kontrast-Prüfung war das plötzlich ein Theme
+   ohne Textfarben. Der Wächter verlangt jetzt genau einen Inhalts-Block je
+   Theme.
+2. **Zwei Mutationstests bestanden:** `fadeInImages()` entfernt → „5 von 5
+   Kartenbildern bleiben unsichtbar" (das CSS setzt Bilder auf `opacity:0`,
+   eine vergessene `afterRender()`-Stelle heißt also unsichtbare Bilder, nicht
+   nur eine fehlende Animation); das DOM-Aufräumen nach der Abgangs-Animation
+   entfernt → „Fenster bleibt im DOM hängen".

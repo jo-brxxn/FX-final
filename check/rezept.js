@@ -107,6 +107,15 @@ function pruefeKontrast() {
   }
   const namen = Object.keys(themes);
   if (namen.length < 2) fail('E', 'keine Theme-Bloecke gefunden - Regex kaputt?');
+  // ⚠ Genau EIN Inhalts- und EIN Chrome-Block je Theme. Ein zweiter Block
+  // mit demselben Selektor ist fuer den Browser egal, macht aber jedes
+  // Nachschlagen (und diese Pruefung) blind fuer die Haelfte der Tokens -
+  // beim Einfuehren der Typo-Tokens 2026-09-02 genau so passiert.
+  const zaehle = (sel) => (s.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length;
+  namen.forEach(n => {
+    const c = zaehle(`:root[data-rez-theme="${n}"]{`);
+    if (c > 1) fail('E', `Theme "${n}" hat ${c} Inhalts-Bloecke - zusammenfuehren, sonst liest jede Pruefung nur einen davon`);
+  });
   for (const [name, v] of Object.entries(themes)) {
     if (!v.content || !v.chrome) { fail('E', `Theme "${name}" hat nur einen der beiden Bloecke`); continue; }
     for (const scope of ['content', 'chrome']) {
@@ -719,6 +728,129 @@ function pruefeKontrast() {
     if (merge[k] !== v) fail('G', `Merge "${k}": ${merge[k]} statt ${v} - zwei Geraete wuerden sich gegenseitig Daten loeschen`);
   });
 
+  // ── J) Bewegung und Typografie ───────────────────────────────────────
+  // Animationen duerfen die Bedienung NIE blockieren. Der teuerste Fehler
+  // dieser Art: ein Fenster mit Abgangs-Animation, dessen DOM haengen
+  // bleibt - dann nimmt eine unsichtbare Flaeche weiter Klicks entgegen.
+  await p.evaluate(() => window.rezShowPage('recipes'));
+  await p.waitForTimeout(400);
+
+  // J1: Staffelung gesetzt UND gedeckelt
+  const stag = await p.evaluate(() => {
+    const g = document.querySelector('#pgRecipes .rez-grid.stagger');
+    if (!g) return null;
+    return [...g.children].map(c => +(c.style.getPropertyValue('--i') || -1));
+  });
+  if (!stag) fail('J', 'Das Rezept-Raster traegt keine .stagger-Klasse - die Karten kommen ohne Staffelung');
+  else {
+    if (stag.some(v => v < 0)) fail('J', 'Nicht jede Karte bekommt einen --i-Wert (renderStagger vergessen?)');
+    if (stag.some(v => v > 14)) fail('J', `Die Staffelung ist nicht gedeckelt (hoechster Wert ${Math.max(...stag)}) - die letzte Karte erschiene erst nach einer Sekunde`);
+  }
+  // J2: Bilder werden sichtbar geschaltet (im CSS stehen sie auf opacity:0)
+  const bilder = await p.evaluate(() => {
+    const im = [...document.querySelectorAll('#pgRecipes img.rez-card-img')];
+    return { n: im.length, rdy: im.filter(i => i.classList.contains('rdy')).length,
+      sichtbar: im.filter(i => +getComputedStyle(i).opacity > 0.9).length };
+  });
+  if (bilder.n && bilder.sichtbar !== bilder.n)
+    fail('J', `${bilder.n - bilder.sichtbar} von ${bilder.n} Kartenbildern bleiben unsichtbar - fadeInImages() vergessen (CSS setzt opacity:0)`);
+
+  // J3: Die Auswahl-Markierung wandert wirklich
+  const indA = await p.evaluate(() => (document.getElementById('rezNavInd') || {}).style?.getPropertyValue('--y'));
+  await p.evaluate(() => window.rezShowPage('cooked'));
+  await p.waitForTimeout(500);
+  const indB = await p.evaluate(() => {
+    const el = document.getElementById('rezNavInd');
+    return el ? { y: el.style.getPropertyValue('--y'), h: el.style.getPropertyValue('--h'), on: el.classList.contains('on') } : null;
+  });
+  if (!indB) fail('J', 'Die gleitende Auswahl-Markierung (#rezNavInd) fehlt');
+  else {
+    if (!indB.on) fail('J', 'Die Auswahl-Markierung ist nicht sichtbar');
+    if (indB.y === indA) fail('J', 'Die Auswahl-Markierung bewegt sich beim Seitenwechsel nicht');
+    if (!indB.h || indB.h === '0px') fail('J', 'Die Auswahl-Markierung hat keine Hoehe');
+  }
+
+  // J4: Fenster gehen trotz Abgangs-Animation WIRKLICH zu
+  await p.evaluate(() => window.rezShowPage('recipes'));
+  await p.waitForTimeout(300);
+  await p.evaluate(() => window.rezOpenForm(null));
+  await p.waitForTimeout(400);
+  await p.evaluate(() => window.rezCloseModal());
+  // Direkt nach dem Schliessen darf nichts mehr Eingaben annehmen
+  const sofort = await p.evaluate(() => ({
+    zeigt: !!document.querySelector('#rezModals .ov'),
+    klickbar: getComputedStyle(document.querySelector('#rezModals .ov') || document.body).pointerEvents,
+  }));
+  if (sofort.zeigt && sofort.klickbar !== 'none')
+    fail('J', 'Ein schliessendes Fenster nimmt waehrend der Abgangs-Animation weiter Klicks an');
+  await p.waitForTimeout(400);
+  const spaeter = await p.evaluate(() => document.getElementById('rezModals').innerHTML.length);
+  if (spaeter !== 0) fail('J', 'Nach der Abgangs-Animation bleibt das Fenster im DOM haengen');
+
+  // J5: Der Schalter in den Einstellungen greift wirklich
+  await p.evaluate(() => window.rezToggleAnim());
+  await p.waitForTimeout(600);
+  const aus = await p.evaluate(() => ({
+    klasse: document.body.classList.contains('no-anim'),
+    dauer: getComputedStyle(document.querySelector('.modal') || document.body).animationDuration,
+  }));
+  if (!aus.klasse) fail('J', 'Der Animations-Schalter setzt body.no-anim nicht');
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(120);
+  if (await p.evaluate(() => document.getElementById('rezModals').innerHTML.length))
+    fail('J', 'Mit abgeschalteten Animationen muss ein Fenster SOFORT verschwinden, nicht nach 140 ms');
+  await p.evaluate(() => window.rezToggleAnim());
+  await p.waitForTimeout(500);
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(300);
+
+  // J6: Typografie-Tokens vollstaendig - je Theme, nicht nur im Standard
+  const typo = await p.evaluate(async () => {
+    const ids = Array.from(document.styleSheets)
+      .flatMap(sh => { try { return [...sh.cssRules]; } catch (e) { return []; } })
+      .map(r => (r.selectorText || '').match(/^:root\[data-rez-theme="(\w+)"\]$/))
+      .filter(Boolean).map(m => m[1]);
+    const out = [];
+    const vorher = document.documentElement.getAttribute('data-rez-theme');
+    for (const id of ids) {
+      document.documentElement.setAttribute('data-rez-theme', id);
+      const cs = getComputedStyle(document.documentElement);
+      const w = k => cs.getPropertyValue(k).trim();
+      out.push({ id, title: w('--ff-title'), text: w('--ff-text'), ls: w('--ls-title'),
+        lh: w('--lh-base'), hero: w('--fs-hero'), tf: w('--t-fast'), eo: w('--e-out') });
+    }
+    document.documentElement.setAttribute('data-rez-theme', vorher);
+    return out;
+  });
+  typo.forEach(t => {
+    ['title', 'text', 'ls', 'lh', 'hero', 'tf', 'eo'].forEach(k => {
+      if (!t[k]) fail('J', `Theme "${t.id}": Typo-/Bewegungs-Token "${k}" ist leer`);
+    });
+    // ⚠ Ohne ui-*-Familie faellt das Geraet auf eine Ersatzschrift zurueck -
+    // genau der Unterschied zwischen SF Pro und "irgendeine Grotesk".
+    if (!/ui-(sans-serif|serif|rounded)|Helvetica Neue/.test(t.title))
+      fail('J', `Theme "${t.id}": --ff-title nennt keine System-Schriftfamilie (${t.title.slice(0, 60)})`);
+    // Keine Web-Fonts nachladen - die App muss offline laufen.
+    if (/url\(|@import/.test(t.title + t.text))
+      fail('J', `Theme "${t.id}": laedt eine Schrift nach - die App muss offline laufen`);
+  });
+  if (/@import|fonts\.googleapis|fonts\.gstatic/.test(fs.readFileSync('rezept.html', 'utf8')))
+    fail('J', 'rezept.html laedt eine Web-Schrift nach - die App muss offline laufen (siehe docs/rezept.md)');
+
+  // J7: Mit "reduce motion" darf nichts haengen bleiben
+  const p3 = await ctx.newPage();
+  await p3.emulateMedia({ reducedMotion: 'reduce' });
+  await p3.goto(URL, { waitUntil: 'load' });
+  await p3.waitForTimeout(1200);
+  await p3.evaluate(() => window.rezOpenForm(null));
+  await p3.waitForTimeout(300);
+  if (!(await p3.locator('#rfTitle').count())) fail('J', 'Mit reduzierter Bewegung oeffnet sich das Formular nicht');
+  await p3.evaluate(() => window.rezCloseModal());
+  await p3.waitForTimeout(200);
+  if (await p3.evaluate(() => document.getElementById('rezModals').innerHTML.length))
+    fail('J', 'Mit reduzierter Bewegung bleibt das Fenster im DOM haengen');
+  await p3.close();
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -729,5 +861,5 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge)`);
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung)`);
 })().catch(e => { console.error('REZEPT-WAECHTER abgestuerzt: ' + e.message); process.exit(1); });

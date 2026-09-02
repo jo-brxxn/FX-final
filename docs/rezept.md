@@ -120,6 +120,52 @@ Badge `500 g`), Fortschrittsbalken, Sortierung nach Abteilung oder Alter,
 alles abhaken, erledigte löschen, häufig gekaufte Artikel als Schnellwahl,
 Abteilungen einklappbar, Pfeiltasten + Enter in der Vorschlagsliste.
 
+## Typografie und Bewegung
+
+**Keine Web-Fonts über ein CDN** — dieselbe Entscheidung wie im FX Analyst
+Pro: die App muss offline laufen (Service Worker), eine nachzuladende Schrift
+wäre genau dort weg, wo sie am meisten stört. Stattdessen stehen die
+`ui-*`-Familien **zuerst** im Stapel: das sind die echten System-Schnitte des
+Geräts, auf iPhone/iPad/Mac also SF Pro Text bzw. SF Pro Display, auf Windows
+Segoe UI Variable. Kostet nichts, lädt nichts nach, sieht deutlich besser aus
+als ein fester Stapel. `check/rezept.js` Stufe J prüft, dass keine Schrift
+nachgeladen wird.
+
+Vier Rollen statt einer: `--ff-text` (Fließtext), `--ff-title`
+(Überschriften, **je Theme anders** — Serife bei `paper`, `ui-rounded` bei
+`ios`, enge Grotesk bei `swiss`), `--ff-num` (dieselbe Familie, dicktengleich)
+und `--ff-mono`.
+
+Auf einer Skala liegen jetzt auch **Zeilenhöhen** (`--lh-tight/snug/base/loose`)
+und **Laufweiten** (`--ls-title` negativ für große Schrift, `--ls-label` weit
+für Versal-Beschriftungen) — vorher stand an jeder Stelle ein eigener Wert.
+Die Größen sind fluid (`clamp()`), atmen also mit der Fensterbreite statt
+einen zweiten Satz Media Queries zu brauchen.
+
+**Bewegung: eine Animation erklärt, WOHER etwas kommt und WOHIN es geht. Was
+nichts erklärt, bewegt sich nicht.** Dauern (`--t-fast/base/slow`) und Kurven
+(`--e-out/in/spring`) kommen aus Tokens, keine frei gewählten Werte. Alles
+über ~250 ms fühlt sich bei täglicher Nutzung nach Warten an.
+
+⚠ **Animiert werden nur `transform` und `opacity`.** Alles andere (width,
+top, height) lässt den Browser bei jedem Bild neu rechnen und ruckelt auf dem
+Handy. Einzige Ausnahme: der Fortschrittsbalken, dessen Breite die Aussage
+ist.
+
+⚠ **Zwei Abschalter, beide ernst gemeint:** `prefers-reduced-motion` (eine
+Barrierefreiheits-Anforderung, keine Geschmacksfrage) und ein eigener Schalter
+in den Einstellungen (`body.no-anim`, gesynct). Beide werden geprüft.
+
+⚠ **`afterRender()` nach JEDEM Neuzeichnen aufrufen.** Es setzt die
+Staffelung (`--i`, gedeckelt bei 14 — sonst erschiene die letzte von 40
+Karten erst nach über einer Sekunde) und schaltet Bilder sichtbar. Das CSS
+setzt Bilder auf `opacity:0`; eine vergessene Stelle heißt **unsichtbare
+Bilder**, nicht nur eine fehlende Animation. Stufe J prüft es.
+
+⚠ **Fenster haben einen echten Abgang.** `rezCloseModal()` räumt den Zustand
+**sofort** und den DOM erst nach 140 ms — andersherum hätte man kurz ein
+Fenster, das noch Eingaben annimmt, obwohl es logisch schon zu ist.
+
 ## Feste Regeln dieser App
 
 1. **Alles auf der Oberfläche ist Englisch** — wie im FX Analyst Pro

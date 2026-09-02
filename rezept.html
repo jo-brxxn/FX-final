@@ -56,14 +56,59 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
      Schriftstufen und dasselbe 4px-Abstandsraster wie im FX Analyst Pro,
      damit sich beide Apps trotz anderer Farben gleich "anfuehlen"). ── */
 :root{
-  --ff-text:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
-  --ff-num:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
-  --ff-title:var(--ff-text);
-  --fs-hero:30px;--fs-xl:24px;--fs-lg:17px;--fs-md:15px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:10px;
+  /* ══ SCHRIFT ═══════════════════════════════════════════════════════════
+     ⚠ KEINE Web-Fonts ueber ein CDN. Die App muss offline laufen (Service
+     Worker, siehe sw.js) - eine nachzuladende Schrift waere genau dort weg,
+     wo sie am meisten stoert. Dieselbe Entscheidung wie im FX Analyst Pro
+     (docs/design-system.md, Abschnitt SCHRIFT).
+
+     Stattdessen die ui-*-Familien ZUERST: das sind die echten
+     System-Schnitte des jeweiligen Geraets - auf iPhone/iPad/Mac also SF Pro
+     Text bzw. SF Pro Display statt einer Ersatzschrift, auf Windows Segoe UI
+     Variable. Kostet nichts, laedt nichts nach und sieht auf den Geraeten
+     des Nutzers deutlich besser aus als ein fester Stapel.
+     Vier Rollen statt einer:
+       --ff-text   Fliesstext und Bedienelemente
+       --ff-title  Ueberschriften/Rezepttitel (je Theme anders, s.u.)
+       --ff-num    Zahlen: dieselbe Familie, aber dicktengleich
+       --ff-mono   nur wo Zeichen untereinander stehen muessen           */
+  --ff-text:ui-sans-serif,-apple-system,'SF Pro Text',BlinkMacSystemFont,'Segoe UI Variable Text','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-title:ui-sans-serif,-apple-system,'SF Pro Display',BlinkMacSystemFont,'Segoe UI Variable Display','Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-num:var(--ff-text);
+  --ff-mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+
+  /* Fluide Groessen: auf dem Handy kleiner, auf dem Bildschirm groesser -
+     ohne einen zweiten Satz Media Queries. Die sieben Stufen aus
+     docs/design-system.md bleiben, sie atmen jetzt nur mit. */
+  --fs-hero:clamp(25px,1.4vw + 20px,32px);
+  --fs-xl:clamp(20px,.8vw + 17px,24px);
+  --fs-lg:clamp(16px,.3vw + 15px,18px);
+  --fs-md:15px;--fs-base:13.5px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:10px;
+  /* Zeilenhoehen und Laufweiten gehoeren genauso auf eine Skala wie die
+     Groessen - vorher stand an jeder Stelle ein eigener Wert. */
+  --lh-tight:1.18;--lh-snug:1.32;--lh-base:1.5;--lh-loose:1.65;
+  --ls-title:-.022em;   /* grosse Schrift braucht enger */
+  --ls-body:0;
+  --ls-label:.09em;     /* Versal-Beschriftungen brauchen weiter */
+
   --gap-block:14px;
   --r:12px;--rs:8px;--rss:6px;
   --shadow-card:0 1px 3px rgba(60,40,26,.10);
   --shadow-pop:0 6px 22px rgba(60,40,26,.18);
+
+  /* ══ BEWEGUNG ══════════════════════════════════════════════════════════
+     Eine Skala statt frei gewaehlter Werte - genau wie bei Schrift und
+     Abstaenden. Grundsatz: Bewegung erklaert, WOHER etwas kommt und WOHIN
+     es geht. Was nichts erklaert, bewegt sich nicht.
+     Dauern bewusst kurz: alles ueber ~250 ms fuehlt sich bei einer App, die
+     man taeglich benutzt, nach Warten an. */
+  --t-fast:120ms;      /* Hover, Druckfeedback */
+  --t-base:190ms;      /* Ein-/Ausblenden, Zustandswechsel */
+  --t-slow:280ms;      /* Fenster, Seitenwechsel */
+  --e-out:cubic-bezier(.22,.68,.36,1);        /* laeuft aus - Standard */
+  --e-in:cubic-bezier(.55,.06,.68,.19);       /* zieht an - fuer Abgaenge */
+  --e-spring:cubic-bezier(.34,1.42,.5,1);     /* leichter Ueberschwinger */
+  --stagger:26ms;      /* Versatz je Karte in einer Reihe */
 }
 
 /* ══ THEMES ═══════════════════════════════════════════════════════════════
@@ -127,6 +172,7 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
   --t0:#000000;--t1:#2E2E2E;--t2:#4D4D4D;--t3:#585858;
   --accent:#171717;--accent-soft:rgba(0,0,0,.07);
   --live:#B62F25;--avatar-bg:#171717;--avatar-fg:#FFFFFF;
+  --ls-title:-.032em;   /* Monochrom lebt von enger, harter Typografie */
 }
 [data-rez-theme="vercel"] .hdr,[data-rez-theme="vercel"] #rezNav{
   --bg1:#111111;--bg2:#161616;--bg3:#1C1C1C;--bg4:#242424;--bg5:#2E2E2E;
@@ -173,6 +219,10 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
   --accent:#0A62C9;--accent-soft:rgba(10,98,201,.10);
   --live:#C4302B;--avatar-bg:#0A62C9;--avatar-fg:#FFFFFF;
   --r:16px;--rs:11px;--rss:8px;
+  /* ui-rounded ist auf Apple-Geraeten SF Pro Rounded - genau der Schnitt,
+     der dieses Theme ausmacht; anderswo faellt es sauber zurueck. */
+  --ff-title:ui-rounded,-apple-system,'SF Pro Rounded','Segoe UI Variable Display','Segoe UI',Inter,sans-serif;
+  --ls-title:-.012em;
 }
 [data-rez-theme="ios"] .hdr,[data-rez-theme="ios"] #rezNav{
   --bg1:#F1F1F5;--bg2:#EDEDF1;--bg3:#E9E9EF;--bg4:#E3E3EA;--bg5:#D9D9E1;
@@ -189,6 +239,9 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
   --accent:#000000;--accent-soft:rgba(0,0,0,.06);
   --live:#B01911;--avatar-bg:#000000;--avatar-fg:#FFFFFF;
   --r:4px;--rs:3px;--rss:2px;
+  /* Schweizer Typografie: eine Grotesk, eng gesetzt, keine Rundungen. */
+  --ff-title:'Helvetica Neue',Helvetica,ui-sans-serif,-apple-system,'Segoe UI',Arial,sans-serif;
+  --ls-title:-.03em;
 }
 [data-rez-theme="swiss"] .hdr,[data-rez-theme="swiss"] #rezNav{
   --bg1:#FAFAFA;--bg2:#F7F7F7;--bg3:#F2F2F2;--bg4:#EBEBEB;--bg5:#DEDEDE;
@@ -229,7 +282,8 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
 /* ── 10) PAPER COOKBOOK — die einzige gebliebene braune Palette ───────── */
 :root[data-rez-theme="paper"]{
   --chrome-bg:#2E241E;
-  --ff-title:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,'Times New Roman',serif;
+  --ff-title:ui-serif,'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Georgia,'Times New Roman',serif;
+  --ls-title:-.006em;   /* Serifen brauchen weniger Enge als eine Grotesk */
   --bg0:#EFE7DA;--bg1:#F6F1E7;--bg2:#FBF7F0;--bg3:#F2EBDF;--bg4:#E9DFCF;--bg5:#DCCFBA;
   --bd:rgba(70,55,35,.17);--bd2:rgba(70,55,35,.30);
   --t0:#241B12;--t1:#413225;--t2:#5C4A38;--t3:#665342;
@@ -245,15 +299,17 @@ html{height:100%;overflow:hidden;overscroll-behavior:none}
 
 body{
   font-family:var(--ff-text);background-color:var(--bg0);color:var(--t0);
+  font-optical-sizing:auto;letter-spacing:var(--ls-body);
   height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;
   position:fixed;inset:0;display:flex;flex-direction:column;
   font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;
-  font-variant-numeric:tabular-nums}
+  font-variant-numeric:tabular-nums;font-kerning:normal;
+  font-feature-settings:'kern' 1,'liga' 1,'calt' 1}
 
 /* ══ KOPFZEILE (Aufbau 1:1 wie FX Analyst Pro) ════════════════════════ */
 .hdr{background:var(--chrome-bg);border-bottom:1px solid var(--bd);padding:8px 14px;flex-shrink:0;display:flex;align-items:center;gap:14px;color:var(--t0)}
-.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px;font-family:var(--ff-title)}
 .logo-a{font-weight:900;color:var(--accent);font-size:1.05em;letter-spacing:.5px;font-family:var(--ff-title)}
 .logo-b{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
 .hdr-search{flex:0 1 320px;min-width:0;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 12px;color:var(--t3);cursor:pointer;transition:border-color .12s,color .12s}
@@ -296,10 +352,10 @@ body{
   .np{justify-content:center;padding:9px 0}
 }
 .pc{padding:14px;overflow-y:auto;overflow-x:auto;overscroll-behavior-x:none;flex:1;min-height:0;min-width:0;-webkit-overflow-scrolling:touch}
-.page-fade-in{animation:pgIn .22s ease both}
-@keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.ptitle{font-size:28px;font-weight:800;letter-spacing:-.3px;margin-bottom:2px;font-family:var(--ff-title)}
-.psub{font-size:var(--fs-base);color:var(--t2);margin-bottom:var(--gap-block)}
+
+.ptitle{font-size:var(--fs-hero);font-weight:800;letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+  margin-bottom:3px;font-family:var(--ff-title);text-wrap:balance}
+.psub{font-size:var(--fs-base);color:var(--t2);line-height:var(--lh-base);margin-bottom:var(--gap-block)}
 
 /* ══ BUTTONS / FORMULARE ═════════════════════════════════════════════ */
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 10px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4;outline:none;display:inline-flex;align-items:center;gap:6px}
@@ -313,15 +369,17 @@ body{
 .m-area{min-height:96px;resize:vertical;line-height:1.55}
 .m-inp:focus,.m-sel:focus,.m-area:focus{border-color:var(--accent)}
 .m-inp::placeholder,.m-area::placeholder{color:var(--t3)}
-.dm-lbl{font-size:10px;color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.dm-lbl{font-size:var(--fs-2xs);color:var(--t3);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;display:block;margin-bottom:5px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end;margin-top:4px}
 
 /* ══ MODALS (Aufbau wie FX Analyst Pro) ══════════════════════════════ */
-.ov{position:fixed;inset:0;background:rgba(40,26,17,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
-@keyframes ovFadeIn{from{opacity:0}to{opacity:1}}
-.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
-@keyframes modalPopIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
-.modal h3{font-size:var(--fs-lg);font-weight:800;color:var(--t0);margin-bottom:12px;font-family:var(--ff-title)}
+.ov{position:fixed;inset:0;background:rgba(40,26,17,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;
+  animation:ovIn var(--t-base) var(--e-out) both;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);
+  max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);
+  animation:modalIn var(--t-slow) var(--e-spring) both}
+.modal h3{font-size:var(--fs-lg);font-weight:800;color:var(--t0);margin-bottom:12px;font-family:var(--ff-title);
+  letter-spacing:var(--ls-title);line-height:var(--lh-snug);text-wrap:balance}
 .modal-wide{max-width:min(840px,96vw)}
 
 /* ══ DASHBOARD-KARTEN (Overview) ═════════════════════════════════════ */
@@ -332,7 +390,8 @@ body{
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 .dw-click{cursor:pointer}
 .dw-hdr{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:11px}
-.dw-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);display:flex;align-items:center;gap:8px}
+.dw-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);display:flex;align-items:center;gap:8px;
+  font-family:var(--ff-title);letter-spacing:-.008em}
 .dw-title svg{width:16px;height:16px;color:var(--accent)}
 .dw-body{font-size:var(--fs-base);color:var(--t2);line-height:1.55}
 .dw-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 10px;border:1px dashed var(--bd2);border-radius:var(--rs);background:var(--bg3);color:var(--t3);font-size:var(--fs-sm);text-align:center}
@@ -357,15 +416,15 @@ body{
 .rez-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--bg4)}
 .rez-card-ov{position:absolute;left:0;right:0;bottom:0;padding:30px 12px 11px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
   background:linear-gradient(to top,rgba(28,17,10,.88) 0%,rgba(28,17,10,.55) 48%,rgba(28,17,10,0) 100%)}
-.rez-card-title{font-size:var(--fs-md);font-weight:700;color:#fff;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-family:var(--ff-title);text-shadow:0 1px 3px rgba(0,0,0,.5)}
-.rez-card-dur{flex-shrink:0;font-size:var(--fs-xs);font-weight:700;font-family:var(--ff-num);color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(3px)}
+.rez-card-title{font-size:var(--fs-md);font-weight:700;color:#fff;line-height:var(--lh-snug);letter-spacing:-.008em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-family:var(--ff-title);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.rez-card-dur{flex-shrink:0;font-size:var(--fs-xs);font-weight:700;font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:3px 8px;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(3px)}
 .rez-card-dur svg{width:11px;height:11px}
 .rez-card-star{position:absolute;top:9px;right:9px;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(20,12,7,.42);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(3px);transition:transform .14s,background .14s;padding:0}
 .rez-card-star svg{width:15px;height:15px}
 .rez-card-star.on{color:var(--star)}
 @media (hover:hover){.rez-card-star:hover{transform:scale(1.12);background:rgba(20,12,7,.62)}}
 .rez-empty{grid-column:1/-1;border:1px dashed var(--bd2);border-radius:var(--r);background:var(--bg2);padding:44px 18px;text-align:center;color:var(--t2)}
-.rez-empty h4{font-size:var(--fs-lg);color:var(--t0);margin-bottom:6px;font-family:var(--ff-title)}
+.rez-empty h4{font-size:var(--fs-lg);color:var(--t0);margin-bottom:6px;font-family:var(--ff-title);letter-spacing:var(--ls-title)}
 .rez-empty p{font-size:var(--fs-base);margin-bottom:14px}
 
 /* ══ DETAIL-FENSTER ══════════════════════════════════════════════════ */
@@ -380,18 +439,19 @@ body{
 .rd-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border:none;background:transparent;color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--rss);text-align:left;font-family:var(--ff-text)}
 @media (hover:hover){.rd-menu-item:hover{background:var(--bg4);color:var(--t0)}}
 .rd-menu-item.danger{color:var(--danger)}
-.rd-title{font-size:var(--fs-hero);font-weight:800;letter-spacing:-.4px;line-height:1.2;margin-bottom:8px;font-family:var(--ff-title)}
+.rd-title{font-size:var(--fs-hero);font-weight:800;letter-spacing:var(--ls-title);line-height:var(--lh-tight);
+  margin-bottom:8px;font-family:var(--ff-title);text-wrap:balance}
 .rd-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:18px}
 .rd-chip{font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg3);border:1px solid var(--bd);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px}
 .rd-chip svg{width:12px;height:12px;color:var(--accent)}
 .rd-sec{margin-bottom:20px}
-.rd-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.rd-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
 .rd-ing{list-style:none;display:flex;flex-direction:column;gap:1px}
-.rd-ing li{display:flex;align-items:flex-start;gap:9px;font-size:var(--fs-base);color:var(--t1);padding:6px 2px;border-bottom:1px solid var(--bd)}
+.rd-ing li{display:flex;align-items:flex-start;gap:9px;font-size:var(--fs-base);color:var(--t1);line-height:var(--lh-base);padding:7px 2px;border-bottom:1px solid var(--bd)}
 .rd-ing li:last-child{border-bottom:none}
 .rd-ing li::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:7px}
 .rd-block{margin-bottom:12px}
-.rd-block p{font-size:var(--fs-base);color:var(--t1);line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.rd-block p{font-size:var(--fs-base);color:var(--t1);line-height:var(--lh-loose);white-space:pre-wrap;overflow-wrap:anywhere}
 .rd-block img{width:100%;border-radius:var(--rs);border:1px solid var(--bd);display:block}
 .rd-empty{font-size:var(--fs-base);color:var(--t3);font-style:italic}
 
@@ -409,18 +469,18 @@ body{
 @media (hover:hover){.rf-x:hover{color:var(--danger);border-color:var(--danger)}}
 .rf-blk{border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg3);padding:10px;margin-bottom:9px}
 .rf-blk-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
-.rf-blk-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num)}
+.rf-blk-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
 .rf-blk-acts{display:flex;gap:4px}
 .rf-blk img{width:100%;border-radius:var(--rss);border:1px solid var(--bd);display:block}
 .rf-blk .m-area,.rf-blk .m-inp{margin-bottom:0}
 .rf-add{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
-.rf-hint{font-size:var(--fs-sm);color:var(--t3);margin-bottom:12px;line-height:1.5}
+.rf-hint{font-size:var(--fs-sm);color:var(--t3);margin-bottom:12px;line-height:var(--lh-base)}
 .rf-err{font-size:var(--fs-sm);color:var(--danger);font-weight:600;margin-bottom:10px;display:none}
 .rf-busy{font-size:var(--fs-sm);color:var(--t2);margin-bottom:10px;display:none}
 
 /* ══ EINSTELLUNGEN ═══════════════════════════════════════════════════ */
 .set-sec{margin-bottom:18px}
-.set-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
+.set-sec-h{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--bd);padding-bottom:6px;margin-bottom:11px}
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--bd)}
 .set-row:last-child{border-bottom:none}
 .set-row-t{font-size:var(--fs-base);color:var(--t1);font-weight:600}
@@ -451,7 +511,8 @@ body{
 @media (hover:hover){.today-wrap:hover{border-color:var(--accent)}}
 .today-img{width:74px;height:56px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd)}
 .today-meta{min-width:0;flex:1}
-.today-nm{font-size:var(--fs-md);font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--ff-title)}
+.today-nm{font-size:var(--fs-md);font-weight:700;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--ff-title);letter-spacing:-.01em}
 .today-sub{font-size:var(--fs-sm);color:var(--t2);display:flex;align-items:center;gap:5px;margin-top:3px}
 .today-sub svg{width:12px;height:12px}
 .dw-acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
@@ -470,7 +531,7 @@ body{
 
 /* ══ INSPIRATION ════════════════════════════════════════════════════ */
 .insp-ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:var(--t3);background:var(--bg3);font-size:var(--fs-sm);font-weight:600}
-.insp-badge{position:absolute;top:9px;left:9px;font-size:var(--fs-2xs);font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:3px 8px;backdrop-filter:blur(3px)}
+.insp-badge{position:absolute;top:9px;left:9px;font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:#fff;background:rgba(20,12,7,.55);border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:3px 8px;backdrop-filter:blur(3px)}
 .insp-detect{font-size:var(--fs-sm);color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px;margin:-4px 0 12px}
 .insp-detect svg{width:13px;height:13px;flex-shrink:0}
 /* ⚠ Der Einbett-Rahmen ist cross-origin - wir koennen seine Hoehe nicht
@@ -489,9 +550,9 @@ body{
 .week-day{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-height:150px;box-shadow:var(--shadow-card)}
 .week-day.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft),var(--shadow-card)}
 .week-hd{display:flex;align-items:baseline;justify-content:space-between;gap:6px;border-bottom:1px solid var(--bd);padding-bottom:6px}
-.week-wd{font-size:var(--fs-xs);font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--ff-num)}
+.week-wd{font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
 .week-day.on .week-wd{color:var(--accent)}
-.week-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num)}
+.week-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
 .week-body{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
 .week-item{display:flex;align-items:center;gap:7px;min-width:0}
 .week-thumb{width:30px;height:24px;flex-shrink:0;border-radius:4px;object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
@@ -519,10 +580,10 @@ body{
 .shop-sugg-row.on,.shop-sugg-row:hover{background:var(--bg4)}
 .shop-sugg-ic{flex-shrink:0;font-size:15px;line-height:1}
 .shop-sugg-nm{flex:1;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.shop-sugg-cat{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-weight:700}
+.shop-sugg-cat{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);text-transform:uppercase;letter-spacing:var(--ls-label);font-weight:700}
 .shop-sugg-tag{flex-shrink:0;font-size:var(--fs-2xs);font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 7px}
 .shop-quick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:var(--gap-block)}
-.shop-quick-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--t3);margin-right:2px}
+.shop-quick-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);margin-right:2px}
 .shop-bar{height:5px;border-radius:999px;background:var(--bg5);overflow:hidden;margin-bottom:10px}
 .shop-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease}
 .shop-tools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:var(--gap-block)}
@@ -535,7 +596,7 @@ body{
 @media (hover:hover){button.shop-cat-hd:hover{background:var(--bg4)}}
 .shop-cat-ic{flex-shrink:0;font-size:15px;line-height:1;display:flex;align-items:center}
 .shop-cat-ic svg{width:14px;height:14px}
-.shop-cat-nm{flex:1;font-size:var(--fs-xs);font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--t2)}
+.shop-cat-nm{flex:1;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t2)}
 .shop-cat-n{flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;color:var(--t3);background:var(--bg5);border-radius:999px;padding:2px 8px;font-family:var(--ff-num)}
 .shop-cat-ar{flex-shrink:0;font-size:11px;color:var(--t3);transition:transform .15s}
 .shop-cat.zu .shop-cat-ar{transform:rotate(-90deg)}
@@ -547,9 +608,9 @@ body{
 .shop-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent);cursor:pointer}
 .shop-txt{flex:1;min-width:0;font-size:var(--fs-base);color:var(--t0);overflow-wrap:anywhere}
 .shop-row.done .shop-txt{text-decoration:line-through;color:var(--t3)}
-.shop-qty{flex-shrink:0;font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 8px}
+.shop-qty{flex-shrink:0;font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:var(--t1);background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 8px}
 .shop-src{flex-shrink:0;font-size:var(--fs-2xs);color:var(--t3);background:var(--bg4);border:1px solid var(--bd);border-radius:999px;padding:2px 8px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.shop-sep{padding:9px 13px;font-size:var(--fs-xs);font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:var(--t3);background:var(--bg3)}
+.shop-sep{padding:9px 13px;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3);background:var(--bg3)}
 .cat-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
 @media (max-width:560px){.cat-pick{grid-template-columns:repeat(2,1fr)}}
 .cat-opt{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--bg2);
@@ -563,7 +624,7 @@ body{
 .cook-thumb{width:44px;height:34px;flex-shrink:0;border-radius:var(--rss);object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
 .cook-main{flex:1;min-width:120px}
 .cook-nm{font-size:var(--fs-base);font-weight:600;color:var(--t0);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cook-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num)}
+.cook-dt{font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);font-variant-numeric:tabular-nums}
 .cook-stars{display:flex;gap:1px;flex-shrink:0}
 .cook-star{border:none;background:transparent;color:var(--t3);cursor:pointer;padding:2px;line-height:0;border-radius:4px}
 .cook-star.on{color:var(--star)}
@@ -586,10 +647,114 @@ body{
 .uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
 .uc-keep{background:#1E63C0;border-color:#1E63C0;color:#FFFFFF}
 
+/* ══ BEWEGUNG ════════════════════════════════════════════════════════
+   Grundsatz: eine Animation erklaert, WOHER etwas kommt und WOHIN es geht.
+   Was nichts erklaert, bewegt sich nicht. Dauern und Kurven kommen aus den
+   Tokens oben, keine frei gewaehlten Werte.
+
+   ⚠ Zwei Abschalter, beide ernst gemeint:
+     1. prefers-reduced-motion (Systemeinstellung des Nutzers) - Pflicht,
+        das ist eine Barrierefreiheits-Anforderung, keine Geschmacksfrage.
+     2. body.no-anim (Schalter in den Einstellungen), damit man sie auch
+        ohne Systemeinstellung loswird - wie die vier Animationsschalter
+        im FX Analyst Pro.
+   ⚠ Animiert werden nur transform und opacity. Alles andere (width, top,
+   height) laesst den Browser bei jedem Bild neu rechnen und ruckelt auf dem
+   Handy - die einzige Ausnahme ist der Fortschrittsbalken, dessen Breite
+   die Aussage IST. */
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+@keyframes ovOut{from{opacity:1}to{opacity:0}}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes modalOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(8px) scale(.985)}}
+@keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{transform:scale(.7);opacity:0}60%{transform:scale(1.06)}to{transform:scale(1);opacity:1}}
+@keyframes rollFlip{0%{transform:translateY(0);opacity:1}45%{transform:translateY(-14px);opacity:0}
+  55%{transform:translateY(14px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes checkSweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* Fenster: echter Abgang statt Verschwinden. Ohne den wirkt jedes Schliessen
+   wie ein Sprung - der teuerste Qualitaetsunterschied fuer den geringsten
+   Aufwand. rezCloseModal() setzt .closing und raeumt danach auf. */
+.ov.closing{animation:ovOut var(--t-fast) var(--e-in) both;pointer-events:none}
+.ov.closing .modal{animation:modalOut var(--t-fast) var(--e-in) both}
+
+/* Seitenwechsel: die Seite blendet auf, die Karten darin folgen gestaffelt.
+   --i setzt renderStagger() je Kind, gedeckelt - bei 40 Karten wuerde die
+   letzte sonst erst nach einer Sekunde erscheinen. */
+.page-fade-in{animation:fadeIn var(--t-base) var(--e-out) both}
+.page-fade-in .ptitle{animation:riseIn var(--t-slow) var(--e-out) both}
+.page-fade-in .psub{animation:riseIn var(--t-slow) var(--e-out) both;animation-delay:30ms}
+.stagger>*{animation:riseIn var(--t-slow) var(--e-out) both;animation-delay:calc(var(--i,0) * var(--stagger))}
+
+/* Karten: Druckfeedback. Ein Element, das sich beim Antippen nicht regt,
+   fuehlt sich auf dem Handy tot an. */
+.rez-card:active,.dw-click:active,.pick-row:active,.week-item:active{transform:scale(.985)}
+.btn:active:not(:disabled),.tag-chip:active,.uc-btn:active,.cat-opt:active,.week-add:active{transform:scale(.97)}
+.btn,.tag-chip,.uc-btn,.cat-opt,.week-add,.rez-card,.dw-click,.pick-row{transition:transform var(--t-fast) var(--e-out),
+  background var(--t-fast) linear,border-color var(--t-fast) linear,color var(--t-fast) linear,box-shadow var(--t-base) var(--e-out)}
+
+/* Bilder blenden auf, statt hart zu erscheinen - besonders sichtbar beim
+   Blaettern durch das Raster, wo Thumbnails nacheinander fertig werden. */
+.rez-card-img,.today-img,.pick-thumb,.week-thumb,.cook-thumb,.trash-thumb,.rd-hero img{
+  opacity:0;transition:opacity var(--t-base) var(--e-out)}
+.rez-card-img.rdy,.today-img.rdy,.pick-thumb.rdy,.week-thumb.rdy,.cook-thumb.rdy,.trash-thumb.rdy,.rd-hero img.rdy,
+div.rez-card-img,span.pick-thumb,span.week-thumb,span.cook-thumb,div.trash-thumb{opacity:1}
+
+/* Gleitende Auswahl-Markierung in der Sidebar: EIN Balken, der zum aktiven
+   Eintrag wandert, statt an sechs Stellen an- und auszugehen. Das zeigt den
+   Zusammenhang zwischen alter und neuer Auswahl. */
+#rezNav{position:relative}
+#rezNavInd{position:absolute;left:0;width:3px;border-radius:0 2px 2px 0;background:var(--accent);
+  transform:translateY(var(--y,0));height:var(--h,0);opacity:0;
+  transition:transform var(--t-base) var(--e-out),height var(--t-base) var(--e-out),opacity var(--t-fast) linear;
+  pointer-events:none;z-index:1}
+#rezNavInd.on{opacity:1}
+.np.on{border-left-color:transparent}   /* der Balken uebernimmt die Markierung */
+
+/* Zufallsgenerator: der Vorschlag dreht sich einmal durch, statt lautlos
+   ausgetauscht zu werden - dieselbe Geste wie ein Wuerfel. */
+.rnd-flip{animation:rollFlip 420ms var(--e-out) both}
+
+/* Einkaufsliste: der Haken bekommt ein Echo, und die Durchstreichung faehrt
+   von links nach rechts durch, statt einfach dazusein. */
+.shop-row .shop-txt{position:relative;display:inline-block}
+.shop-row.done .shop-txt{text-decoration:none}
+.shop-row.done .shop-txt::after{content:'';position:absolute;left:0;right:0;top:52%;height:1.5px;
+  background:currentColor;transform-origin:left center;animation:checkSweep var(--t-base) var(--e-out) both}
+.shop-row input[type=checkbox]{transition:transform var(--t-fast) var(--e-spring)}
+.shop-row input[type=checkbox]:checked{transform:scale(1.12)}
+.shop-sugg.on{animation:riseIn var(--t-fast) var(--e-out) both}
+.shop-sugg-row{animation:fadeIn var(--t-fast) var(--e-out) both;animation-delay:calc(var(--i,0) * 18ms)}
+.shop-bar-fill{transition:width var(--t-slow) var(--e-out)}
+
+/* Neu eingefuegte Zeile hebt sich kurz hervor - sonst weiss man auf einer
+   langen Liste nicht, wo der Eintrag gelandet ist. */
+@keyframes justAdded{from{background:var(--accent-soft)}to{background:transparent}}
+.just-added{animation:justAdded 900ms var(--e-out) both}
+
+/* Sterne im Verlauf */
+.cook-star{transition:transform var(--t-fast) var(--e-spring),color var(--t-fast) linear}
+.cook-star:active{transform:scale(1.25)}
+.cook-star.on svg{animation:popIn var(--t-base) var(--e-spring) both}
+
+/* ⚠ Beide Abschalter. Der Stern-Selektor ist bewusst grob: eine vergessene
+   Einzelregel waere genau die, die jemanden mit Bewegungsempfindlichkeit
+   trifft. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;
+    transition-duration:1ms!important;scroll-behavior:auto!important}
+  .rez-card-img,.today-img,.pick-thumb,.week-thumb,.cook-thumb,.trash-thumb,.rd-hero img{opacity:1}
+}
+body.no-anim *,body.no-anim *::before,body.no-anim *::after{
+  animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}
+body.no-anim .rez-card-img,body.no-anim .today-img,body.no-anim .pick-thumb,
+body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body.no-anim .rd-hero img{opacity:1}
+
 /* ══ TOAST ═══════════════════════════════════════════════════════════ */
 #rezToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);z-index:600;background:#1F2328;color:#FFFFFF;font-size:var(--fs-base);font-weight:600;padding:10px 18px;border-radius:999px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
 #rezToast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
 </style>
 </head>
 <body>
@@ -602,11 +767,11 @@ body{
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-4 - Sync-Fehler behoben: die Rezept-App schickte zusaetzlich einen Authorization-Bearer-Header, den der FX Analyst Pro nicht schickt - mit einem modernen sb_publishable-Schluessel ist das kein gueltiges JWT und Supabase antwortete 401 (gegen einen nachgebauten Endpunkt reproduziert). Ausserdem: HTTP-Codes werden jetzt zu verstaendlichen Meldungen, Zugangsdaten und ein Verbindungstest stehen in den Einstellungen. Neue Einkaufsliste: nach Abteilungen gruppiert (Fruit &amp; Veg, Bakery, Dairy ...), Vorschlaege beim Tippen aus eigener Historie und einem DE/EN-Warenwoerterbuch, Mengen-Erkennung, Fortschrittsbalken, Sortierung, alles abhaken, Abteilung je Eintrag korrigierbar.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-5 - Typografie und Bewegung. Schrift: ui-sans-serif/ui-serif/ui-rounded zuerst (auf Apple-Geraeten also SF Pro statt Ersatzschrift), eigene Titel-Schrift je Theme, fluide Groessen per clamp(), Zeilenhoehen- und Laufweiten-Tokens, dicktengleiche Ziffern fuer Mengen und Dauer, keine Web-Fonts (die App muss offline laufen). Bewegung: gemeinsame Zeit-/Kurven-Tokens, gestaffelte Karten, gleitende Auswahl-Markierung in der Sidebar, Fenster mit echter Abgangs-Animation, Wuerfel-Geste beim Zufallsgenerator, Haken-Feedback in der Einkaufsliste, Bilder blenden auf, Druckfeedback auf Buttons - abschaltbar per Systemeinstellung UND eigenem Schalter.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-4</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-5</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -621,7 +786,7 @@ body{
 </div>
 
 <div class="app-shell">
-  <nav id="rezNav"></nav>
+  <nav id="rezNav"><span id="rezNavInd"></span></nav>
   <div id="rezPageArea">
     <div class="pc" id="pgOverview"></div>
     <div class="pc" id="pgRecipes" style="display:none"></div>

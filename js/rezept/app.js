@@ -87,6 +87,50 @@ function daysLeft(delAt){
   if(!ts)return 0;
   return Math.max(0,Math.ceil((ts+S.TRASH_DAYS*86400000-Date.now())/86400000));
 }
+// ══ BEWEGUNG ═════════════════════════════════════════════════════════════
+// Die Regeln stehen im CSS (rezept.html, Abschnitt BEWEGUNG); hier steht nur,
+// was das CSS nicht allein kann.
+
+// Setzt --i je Kind, damit die Karten gestaffelt hereinkommen. GEDECKELT:
+// bei 40 Karten waere die letzte sonst erst nach ueber einer Sekunde da -
+// aus "lebendig" wird dann "langsam".
+const STAGGER_MAX=14;
+function renderStagger(host){
+  if(!host)return;
+  host.querySelectorAll('.stagger').forEach(g=>{
+    [...g.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,STAGGER_MAX)));
+  });
+}
+// Bilder blenden auf, sobald sie wirklich da sind. Aus dem Cache geladene
+// Bilder sind schon fertig, wenn dieser Code laeuft - deshalb complete
+// abfragen, sonst blieben sie unsichtbar.
+function fadeInImages(host){
+  if(!host)return;
+  host.querySelectorAll('img').forEach(img=>{
+    if(img.classList.contains('rdy'))return;
+    if(img.complete&&img.naturalWidth)img.classList.add('rdy');
+    else img.addEventListener('load',()=>img.classList.add('rdy'),{once:true});
+    img.addEventListener('error',()=>img.classList.add('rdy'),{once:true});
+  });
+}
+// Nach JEDEM Neuzeichnen aufrufen. Eine vergessene Stelle heisst: Karten
+// ohne Staffelung und Bilder, die unsichtbar bleiben (opacity:0 im CSS).
+function afterRender(host){
+  const el=typeof host==='string'?$(host):host;
+  renderStagger(el);
+  fadeInImages(el);
+}
+// Der gleitende Balken in der Sidebar. Muss NACH dem Zeichnen laufen, weil
+// er die Geometrie des aktiven Eintrags misst.
+function moveNavIndicator(){
+  const nav=$('rezNav'),ind=$('rezNavInd');
+  if(!nav||!ind)return;
+  const akt=nav.querySelector('.np.on');
+  if(!akt){ind.classList.remove('on');return;}
+  ind.style.setProperty('--y',akt.offsetTop+'px');
+  ind.style.setProperty('--h',akt.offsetHeight+'px');
+  ind.classList.add('on');
+}
 let _toastT=null;
 export function toast(msg){
   const el=$('rezToast');if(!el)return;
@@ -115,6 +159,9 @@ function navZaehler(id){
 }
 export function renderNav(){
   const nav=$('rezNav');if(!nav)return;
+  // ⚠ Der Indikator ist ein Kind von #rezNav und darf beim Neuaufbau nicht
+  // mit weggeworfen werden - sonst springt die Markierung statt zu gleiten.
+  const ind=$('rezNavInd');
   nav.innerHTML=NAV.map(n=>{
     const on=curPage===n.id;
     const cnt=navZaehler(n.id);
@@ -122,6 +169,10 @@ export function renderNav(){
       +`<span class="np-ic">${icn(n.id)}</span><span class="np-lbl">${escH(n.label)}</span>`
       +(cnt?`<span class="np-count">${cnt}</span>`:'')+`</button>`;
   }).join('');
+  if(ind)nav.appendChild(ind);
+  // Zwei Bilder warten: erst danach steht das frische Layout, und der
+  // Balken misst die richtige Position statt der alten.
+  requestAnimationFrame(()=>requestAnimationFrame(moveNavIndicator));
 }
 export function rezShowPage(id){
   curPage=id;
@@ -156,7 +207,7 @@ export function renderOverview(){
     `<div class="ptitle">Overview</div>`
    +`<div class="psub">${n?`${n} recipe${n===1?'':'s'} in your collection`:'Your collection is still empty'}`
      +(offen?` · ${offen} item${offen===1?'':'s'} on the shopping list`:'')+`</div>`
-   +`<div class="ov-grid">`
+   +`<div class="ov-grid stagger">`
    +todayCardHtml(heute)
    +randomCardHtml()
    +`<div class="dw dw-click" onclick="rezAddFromOverview()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezAddFromOverview()">`
@@ -164,6 +215,7 @@ export function renderOverview(){
      +`<div class="dw-ph" style="border-style:solid;border-color:var(--accent);color:var(--accent);background:var(--accent-soft)">`
        +`<div class="dw-ph-big" style="color:var(--accent)">+</div><div>Add a photo, a title, the duration and how it is made.</div></div></div>`
    +`</div>`;
+  afterRender(el);
 }
 // ── Karte "Today's Meal" ────────────────────────────────────────────────
 // Kein eigenes Feld: was heute ansteht, ist der erste Eintrag im Wochenplan
@@ -249,6 +301,13 @@ export function rezRoll(){
   }
   randomPick=n;
   renderOverview();
+  // Die Karte dreht sich einmal durch - dieselbe Geste wie ein Wuerfel, und
+  // sie macht sichtbar, DASS neu gezogen wurde (bei zwei Kandidaten sonst
+  // schwer zu erkennen). Rein visuell, ohne Wartezeit: das Ergebnis steht
+  // bereits, die Animation laeuft darueber.
+  const karte=document.querySelectorAll('#pgOverview .dw')[1];
+  const ziel=karte&&karte.querySelector('.today-wrap');
+  if(ziel){ziel.classList.remove('rnd-flip');void ziel.offsetWidth;ziel.classList.add('rnd-flip');}
 }
 export async function rezCookThis(id){
   await S.setTodaysMeal(id);
@@ -318,7 +377,8 @@ export function renderRecipes(){
      +`<button class="tag-chip${filters.tag?'':' on'}" onclick="rezSetTag('')">All</button>`
      +tags.map((t,i)=>`<button class="tag-chip${filters.tag===t?' on':''}" onclick="rezSetTagIdx(${i})">${escH(t)}</button>`).join('')
    +`</div>`:'')
-   +`<div class="rez-grid">`+(list.length?list.map(cardHtml).join(''):emptyHtml(total))+`</div>`;
+   +`<div class="rez-grid stagger">`+(list.length?list.map(cardHtml).join(''):emptyHtml(total))+`</div>`;
+  afterRender(el);
 }
 function emptyHtml(total){
   if(!total)return`<div class="rez-empty"><h4>No recipes yet</h4><p>Add a photo of a dish, give it a title and write down how it is made.</p><button class="btn btn-primary" onclick="rezOpenForm(null)">${icn('plus',14)} Add your first recipe</button></div>`;
@@ -357,6 +417,7 @@ function refreshGridOnly(){
   const sub=document.querySelector('#pgRecipes .psub');
   const total=S.state.index.recipes.length;
   if(sub)sub.textContent=total?`${list.length} of ${total} shown`:'Nothing here yet — add your first recipe';
+  afterRender($('pgRecipes'));
 }
 export function rezFocusSearch(){
   rezShowPage('recipes');
@@ -436,7 +497,8 @@ export function renderInspo(){
       +`<div class="rez-search">${icn('search',15)}<input id="inspoQ" type="search" placeholder="Search ideas..." value="${escH(inspoFilter)}" oninput="rezInspoQuery(this.value)"></div>`
       +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add idea</button>`
     +`</div>`
-    +`<div class="rez-grid">`+(liste.length?liste.map(inspoCardHtml).join(''):inspoEmptyHtml(alle.length))+`</div>`;
+    +`<div class="rez-grid stagger">`+(liste.length?liste.map(inspoCardHtml).join(''):inspoEmptyHtml(alle.length))+`</div>`;
+  afterRender(el);
 }
 function inspoEmptyHtml(total){
   if(!total)return`<div class="rez-empty"><h4>No ideas saved yet</h4>`
@@ -664,7 +726,7 @@ export function renderWeek(){
       +`<span class="week-range">${escH(spanne)}</span>`
       +`<button class="btn btn-primary" onclick="rezWeekToShopping()" ${geplant?'':'disabled'}>${icn('shopping',13)} Add ingredients to shopping list</button>`
     +`</div>`
-    +`<div class="week-grid">`+tage.map(d=>{
+    +`<div class="week-grid stagger">`+tage.map(d=>{
         const k=S.dayKey(d),ids=S.planFor(k),ist=k===heute;
         return`<div class="week-day${ist?' on':''}">`
           +`<div class="week-hd"><span class="week-wd">${WT[(d.getDay()+6)%7]}</span>`
@@ -681,6 +743,7 @@ export function renderWeek(){
           +`<button class="week-add" onclick="rezWeekAdd('${k}')">${icn('plus',13)} Add</button>`
         +`</div>`;
       }).join('')+`</div>`;
+  afterRender(el);
 }
 export function rezWeekShift(t){
   wochenAnker=new Date(wochenAnker.getFullYear(),wochenAnker.getMonth(),wochenAnker.getDate()+t);
@@ -764,6 +827,7 @@ export function renderShopping(){
        +`<p>Type an item above — it is sorted into the right aisle automatically. Or plan your week and pull the ingredients in.</p>`
        +`<button class="btn btn-primary" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button>`
        +`<button class="btn" onclick="rezWeekToShopping()">${icn('shopping',13)} From this week's plan</button></div>`);
+  afterRender(el);
 }
 function shopZeile(i){
   const g=splitQty(i.text);
@@ -832,7 +896,7 @@ export function rezShopSuggest(v){
   host.classList.add('on');
   host.innerHTML=_shopSugg.map((sg,i)=>{
     const c=CAT_BY_ID[sg.cat]||CAT_BY_ID.other;
-    return`<button class="shop-sugg-row${i===shopState.vorschlag?' on':''}" onclick="rezShopPick(${i})">`
+    return`<button class="shop-sugg-row${i===shopState.vorschlag?' on':''}" style="--i:${i}" onclick="rezShopPick(${i})">`
       +`<span class="shop-sugg-ic">${c.icon}</span><span class="shop-sugg-nm">${escH(sg.text)}</span>`
       +`<span class="shop-sugg-cat">${escH(c.label)}</span>`
       +(sg.source==='recent'?`<span class="shop-sugg-tag">recent</span>`:'')+`</button>`;
@@ -862,26 +926,41 @@ export async function rezShopPick(i){
   const roh=($('shopNew')||{}).value||'';
   const menge=(roh.match(/^\s*(\d+(?:[.,]\d+)?\s*[a-zA-Z×x]*)\s+\S/)||[])[1];
   const text=menge?menge.trim()+' '+sg.text:sg.text;
-  await S.addShopping(text,'',sg.cat);
+  const id=await S.addShopping(text,'',sg.cat);
   const inp=$('shopNew');if(inp)inp.value='';
   _shopSugg=[];
   renderShopping();renderNav();
+  markNeu(id);
   const wieder=$('shopNew');if(wieder)wieder.focus();
 }
 export async function rezShopQuick(i){
   const v=shopVerlauf().filter(x=>x.n>1&&!S.shoppingItems().some(it=>!it.done&&it.text.toLowerCase()===x.text.toLowerCase())).slice(0,6)[i];
   if(!v)return;
-  await S.addShopping(v.text,'',v.cat||categorize(v.text));
+  const id=await S.addShopping(v.text,'',v.cat||categorize(v.text));
   renderShopping();renderNav();
+  markNeu(id);
 }
 export async function rezShopAdd(){
   const inp=$('shopNew');
   if(!inp||!inp.value.trim())return;
-  await S.addShopping(inp.value,'',categorize(inp.value));
+  const text=inp.value;
+  const id=await S.addShopping(text,'',categorize(text));
   inp.value='';
   _shopSugg=[];
   renderShopping();renderNav();
+  markNeu(id);
   const wieder=$('shopNew');if(wieder)wieder.focus();
+}
+// Auf einer nach Abteilungen sortierten Liste landet ein neuer Eintrag
+// irgendwo in der Mitte. Ohne kurzes Aufleuchten sucht man ihn.
+function markNeu(id){
+  if(!id)return;
+  const zeilen=[...document.querySelectorAll('#pgShopping .shop-row')];
+  const treffer=zeilen.find(z=>{
+    const cb=z.querySelector('input[type=checkbox]');
+    return cb&&(cb.getAttribute('onchange')||'').includes(id);
+  });
+  if(treffer){treffer.classList.add('just-added');treffer.scrollIntoView({block:'nearest',behavior:'smooth'});}
 }
 export async function rezShopToggle(id){await S.toggleShopping(id);renderShopping();renderNav();}
 export async function rezShopRemove(id){await S.removeShopping(id);renderShopping();renderNav();}
@@ -958,6 +1037,7 @@ export function renderCooked(){
       :`<div class="rez-empty"><h4>No history yet</h4>`
        +`<p>Every time you tap “Mark as cooked” on the Overview, the meal lands here — with a rating, and the Random Picker learns to skip what you just had.</p>`
        +`<button class="btn btn-primary" onclick="rezShowPage('overview')">Go to Overview</button></div>`);
+  afterRender(el);
 }
 export async function rezRate(id,n){await S.rateCooked(id,n);renderCooked();}
 export async function rezRemoveCooked(id){await S.removeCooked(id);renderCooked();renderNav();toast('Removed from history');}
@@ -965,12 +1045,14 @@ export async function rezRemoveCooked(id){await S.removeCooked(id);renderCooked(
 // ── MODAL-INFRASTRUKTUR ──────────────────────────────────────────────────
 function openModal(html,cls){
   const host=$('rezModals');
+  clearTimeout(_closeT);
   host.innerHTML=`<div class="ov" id="rezOv" onclick="if(event.target===this)rezRequestClose()"><div class="modal ${cls||''}">${html}</div></div>`;
   // ⚠ Erst abmelden, dann anmelden: openModal() wird beim Neuzeichnen des
   // Formulars mehrfach aufgerufen, sonst haengen am Ende N Escape-Handler
   // am document und ein Tastendruck loest N Schliess-Versuche aus.
   document.removeEventListener('keydown',escClose);
   document.addEventListener('keydown',escClose);
+  afterRender(host);
 }
 function escClose(e){if(e.key==='Escape')rezRequestClose();}
 // Der EINE Weg nach draussen (Klick daneben, Escape, Cancel-Button). Steht
@@ -989,12 +1071,23 @@ function offeneEingabe(){
   if(inspoForm&&inspoBase&&JSON.stringify(inspoForm)!==inspoBase)return true;
   return false;
 }
+let _closeT=null;
 export function rezCloseModal(){
   closeRowMenu();
   closeUnsavedDialog();
-  $('rezModals').innerHTML='';
+  const host=$('rezModals');
+  // ⚠ Der Zustand wird SOFORT geraeumt, das Aufraeumen des DOM erst nach der
+  // Abgangs-Animation. Andersherum haette man 140 ms lang ein Fenster, das
+  // noch Eingaben annimmt, obwohl es logisch schon zu ist.
   detailId=null;form=null;formBase=null;inspoForm=null;inspoBase=null;
   document.removeEventListener('keydown',escClose);
+  if(!host||!host.firstChild)return;
+  const ov=host.querySelector('.ov');
+  clearTimeout(_closeT);
+  if(!ov||document.body.classList.contains('no-anim')||
+     matchMedia('(prefers-reduced-motion: reduce)').matches){host.innerHTML='';return;}
+  ov.classList.add('closing');
+  _closeT=setTimeout(()=>{if(host.querySelector('.ov.closing'))host.innerHTML='';},140);
 }
 
 // ══ NACHFRAGE BEI UNGESPEICHERTEN EINGABEN ═══════════════════════════════
@@ -1312,7 +1405,11 @@ export function rezOpenSettings(){
         `<button class="theme-card${cur===t.id?' on':''}" onclick="rezSetTheme('${t.id}')">`
         +`<div class="theme-sw">${t.sw.map(c=>`<span style="background:${c}"></span>`).join('')}</div>`
         +`<div class="theme-nm">${escH(t.name)}</div><div class="theme-ds">${escH(t.desc)}</div></button>`).join('')
-      +`</div></div>`
+      +`</div>`
+      +`<div class="set-row" style="margin-top:12px"><div><div class="set-row-t">Animations</div>`
+        +`<div class="set-row-s">Motion when pages, cards and windows change. Your system's “reduce motion” setting always wins over this.</div></div>`
+        +`<button class="btn${animAn()?' btn-primary':''}" onclick="rezToggleAnim()">${animAn()?'On':'Off'}</button></div>`
+    +`</div>`
     +`<div class="set-sec"><div class="set-sec-h">Cloud sync</div>`
       +`<div class="set-row"><div><div class="set-row-t">${cfg?'Connected':'Not connected'}</div>`
         +`<div class="set-row-s">Perfect Rezept and FX Analyst Pro share one Supabase project — changing the credentials here changes them for both apps.</div></div>`
@@ -1402,6 +1499,18 @@ export function rezSwitchApp(){
 }
 
 // ── Start ────────────────────────────────────────────────────────────────
+// Animationen an/aus. Standard ist AN; gespeichert wird nur die Abweichung,
+// damit ein Geraet ohne gesetzten Wert nicht versehentlich stumm bleibt.
+export function animAn(){return (S.state.index.settings||{}).anim!==false;}
+function applyAnim(){
+  document.body.classList.toggle('no-anim',!animAn());
+}
+export async function rezToggleAnim(){
+  await S.setSetting('anim',!animAn());
+  applyAnim();
+  rezOpenSettings();
+  toast(animAn()?'Animations on':'Animations off');
+}
 function applyStoredTheme(){
   let t=(S.state.index.settings||{}).theme;
   if(t&&THEME_IDS.indexOf(t)<0)t=THEME_DEFAULT;   // entferntes Theme -> Standard
@@ -1418,7 +1527,7 @@ function applyStoredTheme(){
 }
 S.onChange(what=>{
   if(what==='index'){
-    applyStoredTheme();
+    applyStoredTheme();applyAnim();
     renderNav();
     // ⚠ Jede Kategorie muss hier auftauchen. Fehlt eine, bleibt sie nach
     // einer Aenderung auf einem anderen Geraet (Cloud-Pull) auf einem alten
@@ -1430,7 +1539,7 @@ S.onChange(what=>{
     else if(curPage==='shopping')renderShopping();
     else if(curPage==='cooked')renderCooked();
   }else if(what==='settings'){
-    applyStoredTheme();
+    applyStoredTheme();applyAnim();
   }else if(what==='status'){
     const el=$('rezSyncStatus');if(el)el.textContent=S.state.status||'Idle';
     const b=$('rezSaveBadge');
@@ -1445,6 +1554,7 @@ S.onChange(what=>{
 (async function start(){
   await S.boot();
   applyStoredTheme();
+  applyAnim();
   rezShowPage('overview');
 })();
 
@@ -1452,7 +1562,7 @@ S.onChange(what=>{
 Object.assign(window,{
   rezShowPage,rezOpenDetail,rezOpenForm,rezCloseModal,rezRequestClose,rezSaveForm,rezOpenSettings,
   rezKeepEditing,rezDiscardClose,rezSaveClose,
-  rezSetTheme,rezSyncNow,rezTestCloud,rezSaveCloud,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
+  rezSetTheme,rezToggleAnim,animAn,rezSyncNow,rezTestCloud,rezSaveCloud,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
   rezSetQuery,rezSetMaxMin,rezSetTag,rezSetTagIdx,rezToggleFavFilter,rezClearFilters,rezFocusSearch,
   rezAddFromOverview,rezOpenRowMenu,rezCloseRowMenu,rezAskDelete,rezConfirmDelete,
   rezFormField,rezFormTags,rezSetIngredient,rezAddIngredient,rezDelIngredient,
