@@ -1603,7 +1603,12 @@ body.res-return-active .rterm-back-pill{display:flex}
 .rateprob-ccy-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
 .rateprob-approx-tag{font-size:10px;font-weight:800;color:var(--amber);opacity:.85}
 .rateprob-approx-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;border:1px solid rgba(var(--amber-rgb),.4);background:rgba(var(--amber-rgb),.12);color:var(--amber);font-size:10px;font-weight:700;margin-left:8px;cursor:help}
-.ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5}
+/* white-space:normal ist Pflicht: die Indikator-Tabelle setzt fuer ihre
+   Zellen nowrap (Werte sollen nicht umbrechen), das vererbt sich bis
+   hierher - der Hinweissatz stand dadurch in EINER Zeile und wurde am
+   Kartenrand abgeschnitten statt umzubrechen (Nutzer-Screenshot
+   2026-09-02; gemessen: 787px Text in 439px Zelle). */
+.ind-hist-empty{color:var(--t3);font-size:12px;padding:10px 2px;line-height:1.5;white-space:normal}
 .cot-hist-svg{display:block;width:100%;height:auto}
 .cot-hit{cursor:pointer}
 .cot-tip{position:absolute;top:2px;z-index:5;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;font-family:var(--ff-num);font-size:11px;box-shadow:0 4px 14px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
@@ -3895,11 +3900,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-464 - Kartennamen nur noch im Bearbeitungsmodus umbenennbar (Nutzer-Wunsch 2026-09-02): das rub-inp-Namensfeld jeder Karte (Inflation, Interest Rates, ...) war bisher IMMER editierbar, ein versehentliches Antippen/Tippen beim Scrollen konnte den Namen unbemerkt aendern - jetzt nur noch aktiv, wenn body.ind-edit-mode gesetzt ist (5s-Long-Press, dieselbe Schaltflaeche wie fuer die uebrigen Karten-Bearbeitungs-Knoepfe). Ausserdem serverseitiger Fix in update-ff-calendar.yml: der Trading-Economics-Fallback fuer PMI & Co. (S&P/HCOB/Jibun liefern bei TradingView nie ein Actual) aktualisierte bisher nur den aktuellen Wert, aber NIE historyFull - der Verlaufschart blieb dadurch dauerhaft leer, obwohl der Wert seit Monaten stimmte."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-465 - Verlaufschart endlich fuer die Indikatoren, deren Reihe in einem ANDEREN Feed liegt (Nutzer-Bugreport 2026-09-02, "Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-464</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-465</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -13064,14 +13064,147 @@ function findIndById(id){
   for(const r of(c.rubrics||[]))for(const i of(r.indicators||[]))if(i.id===id)return i;
   return null;
 }
-function indHistChart(ind){
-  const all=Array.isArray(ind.chartHist)?ind.chartHist:[];
+// ══ WOHER DIE PUNKTE DES VERLAUFSCHARTS KOMMEN ══════════════════════════
+// Nutzer-Bugreport 2026-09-02 (zweite Runde, woertlich "Der fix hat nichts
+// gebracht"): `ind.chartHist` wird AUSSCHLIESSLICH aus dem Kalender-Feed
+// gefuellt (ind_data.json -> historyFull, siehe adoptChartHist). Jeder
+// Indikator, dessen Wert aus einem ANDEREN Feed stammt, hatte deshalb NIE
+// einen Chart - obwohl seine vollstaendige Reihe im jeweiligen Feed
+// laengst vorliegt und die Karte oben daraus sogar den aktuellen Wert
+// zieht. Genau das meinte der Nutzer mit "die Daten sind da, aber ein
+// Fehler schreibt sie nicht rein".
+// Am echten Stand gemessen (Playwright, 481 Indikatoren mit Wert): 173 ohne
+// Chart, davon
+//   48  Anleiherenditen (2Y/10Y)        -> bond_data.json:  [base].series
+//   24  2Y/10Y-Spreads                  -> exakt aus beiden Anleihe-Reihen
+//   42  COT (long%/short%/WoW)          -> cot_data.json:   symbols[].history
+//    5  VIX / Fear&Greed / AAII         -> sentiment_data.json: series/history
+//   38  Kalender-Indikatoren mit noch zu kurzer historyFull (PMI & Co.)
+//                                       -> ind.valHist/valDates (bis 4 Punkte)
+// Diese Reihen werden hier zur ANZEIGEZEIT abgeleitet und bewusst NICHT in
+// ind.chartHist persistiert: sie kommen bei jedem Laden ohnehin frisch aus
+// dem Feed, wuerden im snap()-Schnappschuss (Undo-Stapel UND Cloud-Sync)
+// aber zehntausende Punkte zusaetzlich mitschleppen.
+// Was hier NICHT ableitbar ist, bleibt ehrlich leer: die restlichen ~30
+// kuratierten Recherchewerte (JOLTS, Avg Hourly Earnings, ...) sind
+// Einzelstaende ohne Reihe - fuer die gilt weiter die "Not enough
+// history"-Meldung, statt eine Linie aus einem einzigen Punkt zu erfinden
+// (Projekt-Grundsatz "nie schaetzen/raten").
+function symIdOfInd(ind){
+  const cur=getSym();
+  if(cur&&(cur.rubrics||[]).some(r=>(r.indicators||[]).indexOf(ind)>=0))return cur.id;
+  for(const s of(syms||[]))for(const r of(s.rubrics||[]))if((r.indicators||[]).indexOf(ind)>=0)return s.id;
+  return null;
+}
+function bondSeriesPts(ccy,base){
+  const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy];
+  const ser=bd&&bd[base]&&bd[base].series;
+  if(!Array.isArray(ser))return[];
+  const out=[];
+  ser.forEach(e=>{const d=String((e&&e[0])||'').slice(0,10),v=Number(e&&e[1]);if(d&&isFinite(v))out.push([d,v,null]);});
+  return out;
+}
+// 2Y/10Y-Spread: KEINE eigene Feed-Reihe, aber exakt dieselbe Rechnung wie
+// die Karte selbst (10Y minus 2Y) - nur an Tagen, an denen BEIDE Reihen
+// einen Wert fuehren, sonst waere die Differenz aus zwei Stichtagen.
+function bondSpreadPts(ccy){
+  const two=new Map(bondSeriesPts(ccy,'2Y Bond Yield').map(p=>[p[0],p[1]]));
+  const out=[];
+  bondSeriesPts(ccy,'10Y Bond Yield').forEach(p=>{
+    const t=two.get(p[0]);
+    if(t!=null)out.push([p[0],Math.round((p[1]-t)*1000)/1000,null]);
+  });
+  return out;
+}
+// COT: dieselben Kennzahlen je Woche, die auch die Karte zeigt - berechnet
+// mit cotHistRowMetrics(), also derselben Funktion wie die Verlaufstabelle
+// im COT-Tab (keine zweite Rechnung daneben, die auseinanderlaufen kann).
+function cotHistPts(symId,base){
+  const s=COT_DATA&&COT_DATA.symbols&&COT_DATA.symbols[symId];
+  const h=s&&Array.isArray(s.history)?s.history:null;
+  if(!h||!h.length)return[];
+  const out=[];
+  h.forEach((cur,i)=>{
+    const m=cotHistRowMetrics(cur,i>0?h[i-1]:null);
+    if(!m)return;
+    const v=base==='Net Bullish Positioning'?m.longPct
+           :base==='Net Bearish Positioning'?m.shortPct
+           :base==='WoW Change in Net Position (%)'?m.dNetPct:null;
+    const d=String(cur.date||'').slice(0,10);
+    if(d&&v!=null&&isFinite(v))out.push([d,Math.round(v*10)/10,null]);
+  });
+  return out;
+}
+function sentHistPts(sentKey){
+  const d=SENTIMENT_DATA&&SENTIMENT_DATA[sentKey];
+  if(!d)return[];
+  const out=[];
+  if(sentKey==='aaii'){
+    // history-Zeile: [Datum, Bull, Neutral, Bear] - die Karte zeigt den
+    // Bull-Bear-Spread, also dieselbe Differenz wie sentEval().
+    (Array.isArray(d.history)?d.history:[]).forEach(e=>{
+      const dt=String((e&&e[0])||'').slice(0,10),v=Number(e&&e[1])-Number(e&&e[3]);
+      if(dt&&isFinite(v))out.push([dt,Math.round(v*10)/10,null]);
+    });
+    return out;
+  }
+  (Array.isArray(d.series)?d.series:[]).forEach(e=>{
+    const dt=String((e&&e[0])||'').slice(0,10),v=Number(e&&e[1]);
+    if(dt&&isFinite(v))out.push([dt,v,null]);
+  });
+  return out;
+}
+// Letzte Rueckfallebene fuer Kalender-Indikatoren, deren historyFull im Feed
+// noch zu kurz ist (PMI & Co.): valHist/valDates fuehrt dieselben Releases
+// bereits als [Datum, Actual] mit - bis zu 4 Punkte, mehr als genug fuer
+// einen Chart und ohne jede Schaetzung.
+function valHistPts(ind){
+  const v=Array.isArray(ind.valHist)?ind.valHist:[];
+  const dts=Array.isArray(ind.valDates)?ind.valDates:[];
+  if(v.length<2||dts.length!==v.length)return[];
+  const out=[];
+  v.forEach((x,i)=>{
+    const n=Number(x),d=String(dts[i]||'').slice(0,10);
+    if(d&&isFinite(n))out.push([d,n,null]);
+  });
+  return out;
+}
+function indChartSeries(ind,symId){
+  const own=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  if(own.length>=2)return{pts:own,unit:null};
+  const r=ind.research||{};
+  const id=symId||symIdOfInd(ind);
+  const ccy=id?macroCcyFor(id):null;
+  const base=stripPeriodSuffix(ind.name).base;
+  let pts=[],unit=null;
+  if(ccy&&BOND_INDS.includes(base)){pts=bondSeriesPts(ccy,base);unit='%';}
+  else if(ccy&&base==='2Y/10Y Spread'){pts=bondSpreadPts(ccy);unit='%';}
+  else if(r.cot&&id){pts=cotHistPts(id,base);unit='%';}
+  else if(r.sent&&r.sentKey){pts=sentHistPts(r.sentKey);unit=r.sentKey==='aaii'?'%':'';}
+  if(pts.length<2){pts=valHistPts(ind);unit=null;}
+  return pts.length>=2?{pts,unit}:{pts:own,unit:null};
+}
+function indHistChart(ind,symId){
+  const _cs=indChartSeries(ind,symId);
+  const all=_cs.pts;
   const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange');
   const legend=`<div class="ind-hist-legend"><span>■ Actual</span><span>— Forecast</span></div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
   const toolbar=`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
   if(all.length<2){
-    return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).</div></div>`;
+    // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
+    // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
+    // (a) Der Indikator haengt an einem Feed und sammelt Punkte an - dann
+    //     stimmt "baut sich auf".
+    // (b) Er traegt einen kuratierten EINZELWERT ohne jede Reihe (JOLTS,
+    //     Avg Hourly Earnings, ...). Da baut sich nichts auf, solange die
+    //     Quelle keine Reihe liefert - das gehoert dann auch so dagestanden,
+    //     statt eine Historie zu versprechen, die nie kommt.
+    const accumulates=!!(ind.research&&(ind.research.feed||ind.research.bond||ind.research.cot||ind.research.sent));
+    const msg=accumulates
+      ?'Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).'
+      :'No history series for this indicator — its source only publishes the current reading, so there is nothing to chart yet. The value above stays up to date.';
+    return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">${msg}</div></div>`;
   }
   let use;
   if(indHistRange==='MAX'){
@@ -13087,22 +13220,57 @@ function indHistChart(ind){
   const n=use.length;
   const W=720,H=230,padL=10,padR=10,padT=24,padB=28;
   const vals=[];use.forEach(p=>{vals.push(p[1]);if(p[2]!=null)vals.push(p[2]);});
-  let vMin=Math.min(0,...vals),vMax=Math.max(0,...vals);
+  // Zwei Darstellungsformen, weil zwei voellig verschiedene Datenarten:
+  // • RELEASE-Reihen (Kalender-Indikatoren: CPI-Ueberraschung, GDP, PMI ...)
+  //   bleiben Balken ab der Nulllinie - unveraendert, dort ist die Null die
+  //   inhaltlich richtige Bezugslinie und die Punkte sind einzeln lesbar.
+  // • LEVEL-Reihen (Anleiherendite 3,6 %, COT-Long-Anteil 71 %, VIX 15) sind
+  //   Tages-/Wochenreihen um ein hohes Niveau. Als Balken ab 0 sind 81 Tage
+  //   ein nahezu gleich hoher blauer Block - die eigentliche Bewegung
+  //   (3,59 % -> 3,69 %) verschwindet komplett. Solche Reihen bekommen
+  //   deshalb eine Linie mit min/max-Skala (Nutzer-Bugreport 2026-09-02).
+  const lineMode=_cs.unit!=null&&n>24;
+  let vMin,vMax;
+  if(lineMode){
+    vMin=Math.min(...vals);vMax=Math.max(...vals);
+    const pad=(vMax-vMin)*0.12||Math.abs(vMax||1)*0.02||1;
+    vMin-=pad;vMax+=pad;
+  }else{
+    vMin=Math.min(0,...vals);vMax=Math.max(0,...vals);
+  }
   if(vMin===vMax){vMin-=1;vMax+=1;}
   const span=vMax-vMin;
   const yOf=v=>padT+(1-(v-vMin)/span)*(H-padT-padB);
-  const y0=yOf(0);
+  // Bezugslinie: bei Level-Reihen der erste Punkt des Fensters (dagegen
+  // liest man "seitdem gestiegen/gefallen" ab), sonst wie bisher die Null.
+  const y0=lineMode?yOf(use[0][1]):yOf(0);
   const bw=Math.max(1.5,(W-padL-padR)/n*0.56);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
-  const showLbl=bw>=22;
-  const unit=(ind.research&&ind.research.unit)||'';
+  const showLbl=!lineMode&&bw>=22;
+  // Einheit: bei einer abgeleiteten Reihe (Anleihen/COT/Sentiment) gibt
+  // indChartSeries() sie mit, sonst wie bisher aus der Recherche.
+  const unit=_cs.unit!=null?_cs.unit:((ind.research&&ind.research.unit)||'');
   const fmtV=v=>v==null?'':(Math.round(v*100)/100)+unit;
   let bars='';
-  use.forEach((p,i)=>{
-    const x=xOf(i),y=yOf(p[1]),top=Math.min(y,y0),h=Math.abs(y-y0);
-    bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)"/>`;
-    if(showLbl)bars+=`<text x="${x.toFixed(1)}" y="${(top-4).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0)">${escH(fmtV(p[1]))}</text>`;
-  });
+  if(lineMode){
+    // Flaeche + Linie. Die Flaeche laeuft bis zum unteren Rand des Fensters
+    // (nicht bis zur Null) - sonst waere sie bei einer 3,6-%-Rendite wieder
+    // ein Block. Die Bezugslinie y0 (erster Punkt) bleibt sichtbar.
+    let d='',area='';
+    use.forEach((p,i)=>{
+      const x=xOf(i).toFixed(1),y=yOf(p[1]).toFixed(1);
+      d+=(i?' L':'M')+x+' '+y;
+    });
+    area=d+` L${xOf(n-1).toFixed(1)} ${(H-padB).toFixed(1)} L${xOf(0).toFixed(1)} ${(H-padB).toFixed(1)} Z`;
+    bars=`<path d="${area}" fill="var(--blue)" opacity=".10"/>`
+        +`<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }else{
+    use.forEach((p,i)=>{
+      const x=xOf(i),y=yOf(p[1]),top=Math.min(y,y0),h=Math.abs(y-y0);
+      bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)"/>`;
+      if(showLbl)bars+=`<text x="${x.toFixed(1)}" y="${(top-4).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0)">${escH(fmtV(p[1]))}</text>`;
+    });
+  }
   let fcPath='',started=false,fcDots='';
   use.forEach((p,i)=>{
     if(p[2]==null){started=false;return;}
@@ -13113,12 +13281,31 @@ function indHistChart(ind){
   });
   // Datumsbeschriftung ausduennen, wenn zu viele Punkte fuer lesbare Labels.
   const lblEvery=Math.max(1,Math.ceil(n/10));
+  // Bei einem Fenster unter ~13 Monaten Tag+Monat statt Monat+Jahr: eine
+  // Tages-/Wochenreihe zeigte sonst "Mar 26, Mar 26, Apr 26 ..." - dieselbe
+  // Beschriftung mehrfach, ohne dass man die Punkte auseinanderhalten kann
+  // (gesehen an der Anleihe- und der COT-Reihe, Nutzer-Bugreport 2026-09-02).
+  let spanDays=9999;
+  try{spanDays=Math.abs(new Date(use[n-1][0])-new Date(use[0][0]))/86400000;}catch(e){}
+  const dayLbl=spanDays<=400;
+  const fmtLbl=d=>{
+    try{const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en',dayLbl?{day:'numeric',month:'short'}:{month:'short',year:'2-digit'});}
+    catch(e){return d;}
+  };
   let xlab='';
   use.forEach((p,i)=>{
-    if(i%lblEvery!==0&&i!==n-1)return;
-    let lbl;try{const dt=new Date(p[0]+'T00:00:00');lbl=dt.toLocaleDateString('en',{month:'short',year:'2-digit'});}catch(e){lbl=p[0];}
-    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(lbl)}</text>`;
+    // Der letzte Punkt bekommt immer ein Label - aber nur, wenn er weit
+    // genug vom vorherigen steht, sonst ueberlappen beide (rechter Rand).
+    const isLast=i===n-1;
+    if(i%lblEvery!==0&&!isLast)return;
+    if(isLast&&i%lblEvery!==0&&(i%lblEvery)<lblEvery*0.6)return;
+    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
   });
+  // Legende erst jetzt endgueltig: eine Reihe ohne Forecast (Anleihen, COT,
+  // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
+  const hasFc=use.some(p=>p[2]!=null);
+  const legend2=`<div class="ind-hist-legend"><span>■ Actual</span>${hasFc?'<span>— Forecast</span>':''}</div>`;
+  const toolbar2=`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
@@ -13130,7 +13317,7 @@ function indHistChart(ind){
     let lbl;try{lbl=fmtDayHdr(p[0]);}catch(e){lbl=p[0];}
     return{fx:xOf(i)/W,fy:yOf(p[1])/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
   });
-  return`<div class="ind-hist-wrap">${toolbar}${chartHoverWrap(svg,hpts)}</div>`;
+  return`<div class="ind-hist-wrap">${toolbar2}${chartHoverWrap(svg,hpts)}</div>`;
 }
 // ── Insights-Tab "Data" (Nutzer-Wunsch 2026-07-14): Asset waehlen, dann
 // einen Indikator (gruppiert nach dessen Karte - Inflation, Interest Rates,
@@ -13159,7 +13346,7 @@ function renderDataTab(){
     if(dataIndBase){
       const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
       const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
-      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind)}</div></div>`;
+      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind,sym.id)}</div></div>`;
     }
   }
   // Asset-Filter jetzt oben rechts in einem Karten-Titel, wie bei den
@@ -16987,6 +17174,7 @@ Object.assign(window,{
   cotWireChartHover,cotSigned,cotPct,COT_SOURCE_URL,cotWarningActive,applyCotDataFeed,pickCotFilter,sentEval,
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
+  symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   setDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
   setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,

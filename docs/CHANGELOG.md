@@ -9344,3 +9344,79 @@ Bearbeitungsmodus aendert den Namen nicht, mit aktiviertem Modus
 (`toggleIndEditMode()`) funktioniert es wie vorher.
 
 **Geprueft:** `node check/all.js` komplett gruen (13 Waechter).
+
+## 2026-09-02 (2) — Verlaufschart: 119 Indikatoren hatten eine Reihe, die nie gezeichnet wurde (VERSION-CHECK-465)
+
+**Bugreport, woertlich:** *„Der fix hat nichts gebracht lös das Problem"* —
+mit Screenshot der NZD-Inflationskarte, in dem unter **Core CPI** und
+**PPI q/q** weiterhin „Not enough history yet" stand.
+
+**Warum der erste Fix (Eintrag direkt oberhalb) nicht reichte:** er hat den
+Workflow repariert (der TE-Fallback haengt seinen Punkt jetzt an
+`historyFull` an) — das wirkt aber erst ab dem naechsten Release und nur
+fuer Kalender-Indikatoren. Der Screenshot zeigte etwas anderes: Indikatoren,
+deren Reihe ueberhaupt nicht aus dem Kalender-Feed kommt.
+
+**Reproduktion (Playwright, echter Stand, 481 Indikatoren mit Wert):**
+173 ohne Chart, aufgeschluesselt nach der Quelle des angezeigten Werts:
+
+| Quelle | ohne Chart | Reihe vorhanden? |
+|---|---|---|
+| Anleiherenditen 2Y/10Y | 48 | **ja** — `bond_data.json` → `[base].series` (taeglich) |
+| 2Y/10Y-Spread | 24 | **ja** — exakt aus beiden Anleihe-Reihen (10Y − 2Y) |
+| COT (long%/short%/WoW) | 42 | **ja** — `cot_data.json` → `symbols[].history` (woechentlich) |
+| VIX / Fear&Greed / AAII | 5 | **ja** — `sentiment_data.json` → `series`/`history` |
+| Kalender mit kurzer historyFull (PMI & Co.) | 38 | teils — waechst ab dem naechsten Release |
+| kuratierte Einzelwerte (JOLTS, Avg Hourly Earnings, …) | 16 | **nein** — die Quelle liefert nur den aktuellen Stand |
+
+**Root Cause:** `ind.chartHist` wird ausschliesslich von `adoptChartHist()`
+aus `ind_data.json` (`historyFull`) gefuellt. Jeder Indikator, dessen Wert
+aus einem ANDEREN Feed stammt, hatte deshalb strukturell nie einen Chart —
+obwohl die Karte darueber ihren aktuellen Wert aus genau dem Feed zieht, der
+die komplette Reihe mitliefert. Exakt das meinte der Nutzer mit „die Daten
+sind da, aber ein Fehler schreibt sie nicht rein".
+
+**Fix 1 — `indChartSeries(ind,symId)` (neu, `js/main.js`):** liefert die
+Chartpunkte und faellt der Reihe nach zurueck auf
+`ind.chartHist` → Anleihe-`series` → Spread aus beiden Anleihe-Reihen →
+`cotHistRowMetrics()` ueber `cot_data.json`-History (dieselbe Funktion wie
+die COT-Verlaufstabelle, keine zweite Rechnung daneben) → Sentiment-
+`series`/`history` → `valHist`/`valDates`. Die abgeleiteten Reihen werden
+**bewusst nicht** in `ind.chartHist` persistiert: sie kommen bei jedem Laden
+ohnehin frisch aus dem Feed, wuerden im `snap()`-Schnappschuss (Undo-Stapel
+UND Cloud-Sync) aber zehntausende Punkte mitschleppen. Ergebnis gemessen:
+**173 → 54** ohne Chart (bond 48, curated/Spread 24, cot 42, sent 5 gefixt).
+
+**Fix 2 — Darstellung nach Datenart:** Release-Reihen (CPI-Ueberraschung,
+GDP, PMI) bleiben unveraendert Balken ab der Nulllinie. LEVEL-Reihen
+(Rendite 3,6 %, COT-Long-Anteil 71 %, VIX 15) bekommen eine Linie mit
+min/max-Skala und dem ersten Punkt des Fensters als Bezugslinie — als Balken
+ab 0 waren 81 Handelstage ein nahezu gleich hoher blauer Block, in dem die
+eigentliche Bewegung (3,59 % → 3,69 %) unsichtbar blieb (per Screenshot
+verifiziert, deshalb ueberhaupt aufgefallen).
+
+**Fix 3 — Datumsachse:** unter ~13 Monaten Fensterbreite Tag+Monat statt
+Monat+Jahr (eine Wochenreihe zeigte „Mar 26, Mar 26, Apr 26 …"), und das
+Label des letzten Punkts entfaellt, wenn es mit dem vorherigen kollidiert
+(rechter Rand zeigte „Aug 26Aug 26" uebereinander).
+
+**Fix 4 — ehrlicher Leertext:** ein kuratierter Einzelwert ohne Reihe bekam
+denselben Satz „builds up automatically as new releases come in" wie ein
+Feed-Indikator — ein Versprechen, das dort nie eingeloest wird. Jetzt sagt
+er, dass die Quelle nur den aktuellen Stand veroeffentlicht. Es wird
+weiterhin nichts erfunden: fuer die 16 Faelle ohne Reihe bleibt der Chart
+leer (Grundsatz „nie schaetzen/raten", CLAUDE.md Regel 4).
+
+**Fix 5 — abgeschnittener Hinweissatz (aus demselben Screenshot):** der Satz
+stand in EINER Zeile und wurde am Kartenrand abgeschnitten. Ursache: die
+Indikator-Tabelle setzt `white-space:nowrap` fuer ihre Zellen (Werte sollen
+nicht umbrechen), das vererbt sich bis in die Detailzeile. Gemessen 787px
+Text in 439px Zelle, Karte 804px Inhalt in 472px Rahmen. `.ind-hist-empty`
+bekommt jetzt `white-space:normal` — danach bei 820/1024/1180px Viewport
+`scrollWidth === clientWidth`, kein Kartenueberlauf mehr.
+
+**Geprueft:** `node --check`; Playwright-Messung vorher/nachher (173 → 54,
+Aufschluesselung je Quelle oben); Screenshots von Anleihe- und COT-Chart
+(Linie mit lesbarer Bewegung), Regressions-Screenshot der USD-CPI-Reihe
+(unveraendert Balken + rote Forecast-Linie); Ueberlaufmessung an drei
+Viewports. `node check/all.js` komplett gruen.
