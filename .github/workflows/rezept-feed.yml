@@ -27,6 +27,11 @@ on:
         description: 'Wie viele Vorschlaege der Vorrat hoechstens haelt'
         required: false
         default: '90'
+      pruefen:
+        description: 'Nur Kandidaten pruefen (tools/rezept-kandidaten.json), nichts sammeln'
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: write
@@ -48,7 +53,16 @@ jobs:
         with:
           node-version: '22'
 
+      # ⚠ Pruef-Lauf: testet die Kandidaten in tools/rezept-kandidaten.json und
+      # schreibt NICHTS. Existiert, weil sich Feed-Adressen und Kanal-IDs aus
+      # der Entwicklungsumgebung nicht pruefen lassen (Egress-Proxy) - geraten
+      # wird in diesem Projekt nicht, also probiert der Runner sie aus.
+      - name: Kandidaten pruefen
+        if: ${{ github.event.inputs.pruefen == 'true' }}
+        run: node tools/rezept-feed.mjs --pruefe
+
       - name: Vorschlaege einsammeln
+        if: ${{ github.event.inputs.pruefen != 'true' }}
         env:
           # Freiwillig: ohne diesen Secret wird Spoonacular still
           # uebersprungen, die uebrigen Quellen laufen weiter.
@@ -56,6 +70,7 @@ jobs:
         run: node tools/rezept-feed.mjs --max "${{ github.event.inputs.max || '90' }}"
 
       - name: Ergebnis kurz zeigen
+        if: ${{ github.event.inputs.pruefen != 'true' }}
         run: |
           node -e '
             const fs=require("fs");
@@ -74,6 +89,7 @@ jobs:
           '
 
       - name: Commit und Push, wenn sich etwas geaendert hat
+        if: ${{ github.event.inputs.pruefen != 'true' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

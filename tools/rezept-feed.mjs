@@ -137,17 +137,33 @@ async function quelleJsonLd(cfg) {
   return raus;
 }
 
+// ⚠ EIN HANDLE IST KEINE KANAL-ID. Der Atom-Feed braucht die UC...-ID; in
+// der Adresse eines Kanals steht heute meist nur "@name". Die ID steht aber
+// im Quelltext der Kanalseite ("channelId":"UC..."), also wird sie EINMAL
+// aufgeloest. Klappt das nicht, wird der Kanal uebersprungen - eine
+// geratene ID waere ein Feed, der nichts liefert.
+async function kanalId(k) {
+  if (k.id) return k.id;
+  if (!k.handle) return '';
+  const h = String(k.handle).replace(/^@?/, '@');
+  const html = await hole('https://www.youtube.com/' + encodeURIComponent(h).replace('%40', '@') + '/videos');
+  const m = html && (/"channelId":"(UC[\w-]{20,})"/.exec(html) || /channel\/(UC[\w-]{20,})/.exec(html));
+  return m ? m[1] : '';
+}
+
 // ── Quelle D: YouTube-Kanaele ueber ihren oeffentlichen Feed ─────────────
 // ⚠ Kein Schluessel noetig: jeder Kanal hat einen Atom-Feed. Aus Titel und
 // Beschreibung entsteht ein Entwurf ueber DENSELBEN Parser wie beim
 // Reel-Import (js/rezept/import.js) - zwei Parser waeren zwei Verhalten.
 async function quelleYoutube(cfg) {
-  const kanaele = (cfg.kanaele || []).filter(k => k && k.id);
+  const kanaele = (cfg.kanaele || []).filter(k => k && (k.id || k.handle));
   if (!kanaele.length) { log('YouTube: keine Kanaele eingetragen (tools/rezept-quellen.json)'); return []; }
   const pro = Math.max(1, Math.min(5, cfg.proKanal || 2));
   const raus = [];
   for (const k of kanaele) {
-    const xml = await hole('https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(k.id));
+    const id = await kanalId(k);
+    if (!id) { log(`YouTube ${k.name}: Kanal-ID nicht aufloesbar - uebersprungen`); continue; }
+    const xml = await hole('https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(id));
     if (!xml) continue;
     const eintraege = [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map(m => m[0]).slice(0, pro);
     log(`YouTube ${k.name}: ${eintraege.length} Videos`);
@@ -176,12 +192,86 @@ async function quelleYoutube(cfg) {
   return raus;
 }
 
+// ── Kandidaten pruefen ───────────────────────────────────────────────────
+// ⚠ WARUM DAS EIN EIGENER MODUS IST: Feed-Adressen und Kanal-IDs lassen sich
+// aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde
+// Domains). Geraten wird hier nicht - der Runner probiert jeden Kandidaten
+// aus und sagt, was wirklich Rezepte liefert. Was besteht, wandert nach
+// tools/rezept-quellen.json.
+async function pruefeKandidaten() {
+  let k = {};
+  try { k = JSON.parse(fs.readFileSync(path.join(HIER, 'rezept-kandidaten.json'), 'utf8')); }
+  catch (e) { console.error('[pruefe] tools/rezept-kandidaten.json fehlt oder ist kaputt:', e.message); process.exit(1); }
+
+  const gutBlogs = [], gutTube = [];
+  console.log('\n═══ BLOGS (schema.org/Recipe) ═══');
+  for (const b of (k.blogs || [])) {
+    const xml = await hole(b.feed, { ms: 15000 });
+    if (!xml) { console.log(`✗ ${b.name.padEnd(24)} Feed nicht erreichbar`); continue; }
+    const links = feedLinks(xml, 2);
+    if (!links.length) { console.log(`✗ ${b.name.padEnd(24)} Feed ohne Beitragslinks`); continue; }
+    let treffer = null, geprueft = 0;
+    for (const u of links) {
+      const html = await hole(u, { ms: 15000 });
+      if (!html) continue;
+      geprueft++;
+      let r = null;
+      for (const blk of jsonLdBloecke(html)) { r = findeRezept(blk, 0); if (r) break; }
+      if (!r) continue;
+      const e = baue({
+        src: 'blog', srcName: b.name, title: r.name, image: bildAus(r.image), url: u,
+        min: isoMinuten(r.totalTime) || isoMinuten(r.cookTime) || null,
+        ingredients: [].concat(r.recipeIngredient || []),
+        steps: anweisungenAus(r.recipeInstructions),
+      });
+      if (e) { treffer = e; break; }
+    }
+    if (treffer) {
+      gutBlogs.push({ name: b.name, feed: b.feed });
+      console.log(`✓ ${b.name.padEnd(24)} "${treffer.title.slice(0, 40)}" - ${treffer.ingredients.length} Zutaten, ${treffer.steps.length} Schritte, Bild ${treffer.image ? 'ja' : 'nein'}, Themen ${JSON.stringify(treffer.themes)}`);
+    } else {
+      console.log(`✗ ${b.name.padEnd(24)} ${geprueft} Beitraege geprueft, kein brauchbares Rezept-Markup`);
+    }
+  }
+
+  console.log('\n═══ YOUTUBE-KANAELE ═══');
+  for (const c of (k.youtube || [])) {
+    const id = await kanalId(c);
+    if (!id) { console.log(`✗ ${c.name.padEnd(24)} Kanal-ID nicht aufloesbar (${c.handle || c.id || '?'})`); continue; }
+    const xml = await hole('https://www.youtube.com/feeds/videos.xml?channel_id=' + id, { ms: 15000 });
+    if (!xml) { console.log(`✗ ${c.name.padEnd(24)} Feed nicht erreichbar (${id})`); continue; }
+    const eintraege = [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map(m => m[0]).slice(0, 3);
+    let bester = null;
+    for (const e of eintraege) {
+      const titel = saeubere((/<title>([\s\S]*?)<\/title>/i.exec(e) || [])[1] || '');
+      const beschr = saeubere((/<media:description>([\s\S]*?)<\/media:description>/i.exec(e) || [])[1] || '');
+      const ent = parseCaption(titel + '\n' + beschr);
+      const punkte = ent.ingredients.length + ent.steps.length;
+      if (!bester || punkte > bester.punkte) bester = { punkte, titel, z: ent.ingredients.length, s: ent.steps.length };
+    }
+    // ⚠ Viele Kochkanaele schreiben das Rezept NICHT in die Beschreibung.
+    // Genau das soll diese Pruefung zeigen, statt spaeter leere Karten.
+    if (bester && (bester.z >= 2 || bester.s >= 2)) {
+      gutTube.push({ name: c.name, id });
+      console.log(`✓ ${c.name.padEnd(24)} ${id} - bestes Video: ${bester.z} Zutaten, ${bester.s} Schritte ("${bester.titel.slice(0, 34)}")`);
+    } else {
+      console.log(`✗ ${c.name.padEnd(24)} ${id} - Beschreibungen enthalten kein Rezept (${bester ? bester.z + '/' + bester.s : '0/0'})`);
+    }
+  }
+
+  console.log('\n═══ ZUM UEBERNEHMEN IN tools/rezept-quellen.json ═══');
+  console.log('"seiten": ' + JSON.stringify(gutBlogs, null, 2));
+  console.log('"kanaele": ' + JSON.stringify(gutTube, null, 2));
+  console.log(`\n[pruefe] ${gutBlogs.length} von ${(k.blogs || []).length} Blogs, ${gutTube.length} von ${(k.youtube || []).length} Kanaelen brauchbar.`);
+}
+
 // ── Lauf ─────────────────────────────────────────────────────────────────
 // ⚠ Nur ausfuehren, wenn die Datei DIREKT aufgerufen wird. Der Waechter
 // importiert sie, um die Zerlege-Funktionen mit festen Beispielen zu
 // pruefen - ohne diese Bedingung wuerde jeder Import einen kompletten
 // Netz-Lauf ausloesen.
 export async function lauf() {
+  if (args.includes('--pruefe')) { await pruefeKandidaten(); return; }
   const cfgPfad = path.join(HIER, 'rezept-quellen.json');
   let cfg = {};
   try { cfg = JSON.parse(fs.readFileSync(cfgPfad, 'utf8')); }

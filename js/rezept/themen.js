@@ -92,8 +92,15 @@ const WOERTER = {
 
 // Diese Zutaten machen ein Gericht NICHT vegetarisch, obwohl sie in keiner
 // der Fleisch-/Fischlisten oben stehen (versteckte tierische Bestandteile).
+// ⚠ Hier stehen WUERZMITTEL, nicht Hauptbestandteile. Im ersten scharfen
+// Lauf (2026-09-03) bekam ein Panang-Curry mit Fischsauce und Garnelenpaste
+// das Thema "Fish" - wer danach filtert, erwartet aber ein Fischgericht und
+// nicht ein Huehnercurry mit einem Teeloeffel Paste. Diese Begriffe werden
+// deshalb vor der Themensuche aus dem Text genommen; fuer "No meat" zaehlen
+// sie weiter.
 const NICHT_VEGGIE = ['gelatine', 'gelatin', 'worcester', 'worcestershire', 'fischsauce',
-  'fish sauce', 'austernsauce', 'oyster sauce', 'schmalz', 'lard', 'anchovies', 'brühwürfel',
+  'fish sauce', 'austernsauce', 'oyster sauce', 'shrimp paste', 'garnelenpaste',
+  'anchovy paste', 'sardellenpaste', 'schmalz', 'lard', 'anchovies', 'brühwürfel',
   'bruehwuerfel', 'hühnerbrühe', 'huehnerbruehe', 'chicken stock', 'chicken broth',
   'beef stock', 'rinderbrühe', 'rinderbruehe', 'bacon fat'];
 

@@ -33,10 +33,21 @@ export function saeubere(s) {
 // Schritte aus einem Fliesstext: erst an Zeilenumbruechen, sonst an Saetzen.
 // ⚠ Kein Absatz laenger als ~200 Zeichen bleibt stehen - im Kochmodus ist
 // eine Textwand unbrauchbar (dieselbe Regel wie im Caption-Parser).
+// ⚠ MUELL AUS ECHTEN QUELLEN. Im ersten scharfen Lauf (2026-09-03) kamen
+// von TheMealDB Rezepte, die von BBC Good Food stammen - deren Anleitung
+// enthaelt Zwischenzeilen wie "step 1" und haengt am Ende Abschnitte wie
+// "Notes" oder "Storing:" an. Beides stand als eigener Kochschritt in der
+// App: "Schritt 1 von 9: step 1". Solche Zeilen fliegen raus, und ab einer
+// Nachbemerkungs-Ueberschrift endet die Anleitung.
+const NUR_SCHRITTNUMMER = /^(?:step|schritt)\s*\d+\s*[:.]?$/i;
+const NACHBEMERKUNG = /^(?:notes?|notizen|hinweise?|storing|storage|aufbewahrung|tips?|tipps?|nutrition|naehrwerte|nährwerte|variations?|variationen)\s*[:.]?$/i;
 export function zuSchritten(text) {
   const roh = saeubere(text);
   if (!roh) return [];
   let teile = roh.split(/\r?\n+/).map(x => x.replace(/^\s*(?:\d{1,2}[.)]|[-–—•*])\s*/, '').trim()).filter(Boolean);
+  const bis = teile.findIndex(x => NACHBEMERKUNG.test(x));
+  if (bis > 0) teile = teile.slice(0, bis);
+  teile = teile.filter(x => !NUR_SCHRITTNUMMER.test(x));
   if (teile.length <= 1) {
     teile = roh.split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ0-9])/).map(x => x.trim()).filter(Boolean);
   }

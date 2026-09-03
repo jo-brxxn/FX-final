@@ -1,0 +1,32 @@
+{
+  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht.",
+
+  "blogs": [
+    { "name": "Kochkarussell", "feed": "https://www.kochkarussell.com/feed" },
+    { "name": "Emmi kocht einfach", "feed": "https://www.emmikochteinfach.de/feed" },
+    { "name": "Eat this!", "feed": "https://www.eat-this.org/feed" },
+    { "name": "Zucker&Jagdwurst", "feed": "https://www.zuckerjagdwurst.com/de/feed" },
+    { "name": "Backen macht gluecklich", "feed": "https://www.backenmachtgluecklich.de/feed" },
+    { "name": "Springlane", "feed": "https://www.springlane.de/magazin/feed/" },
+    { "name": "Malte's Kitchen", "feed": "https://www.malteskitchen.de/feed/" },
+    { "name": "herzelieb", "feed": "https://herzelieb.de/feed/" },
+    { "name": "Budget Bytes", "feed": "https://www.budgetbytes.com/feed/" },
+    { "name": "RecipeTin Eats", "feed": "https://www.recipetineats.com/feed/" },
+    { "name": "Love and Lemons", "feed": "https://www.loveandlemons.com/feed/" },
+    { "name": "Minimalist Baker", "feed": "https://minimalistbaker.com/feed/" },
+    { "name": "Smitten Kitchen", "feed": "https://smittenkitchen.com/feed/" },
+    { "name": "Half Baked Harvest", "feed": "https://www.halfbakedharvest.com/feed/" },
+    { "name": "Pinch of Yum", "feed": "https://pinchofyum.com/feed" }
+  ],
+
+  "youtube": [
+    { "name": "Sallys Welt", "handle": "@SallysWelt" },
+    { "name": "Thomas kocht", "handle": "@thomaskocht" },
+    { "name": "Joshua Weissman", "handle": "@JoshuaWeissman" },
+    { "name": "Adam Ragusea", "handle": "@aragusea" },
+    { "name": "Ethan Chlebowski", "handle": "@EthanChlebowski" },
+    { "name": "Pro Home Cooks", "handle": "@ProHomeCooks" },
+    { "name": "Babish Culinary Universe", "handle": "@babishculinaryuniverse" },
+    { "name": "Kitchen Stories", "handle": "@kitchenstories" }
+  ]
+}
