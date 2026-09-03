@@ -9636,3 +9636,31 @@ Fischsauce erzeugt hatte, nur zwanzig Zeilen weiter unten. Das Entfernen
 steckt jetzt in `ohneWuerzmittel()` und wird von **beiden** Stellen benutzt;
 zwei Kopien derselben Regel waren die Ursache. Der Wächter prüft den Fall
 ausdrücklich („chicken stock macht kein Huhn" darf auch kein Protein geben).
+
+### 2026-09-03: Vier Einordnungsfehler aus dem scharfen Lauf (REZEPT-CHECK-16)
+
+Der Lauf mit den neuen Quellen brachte 76 Vorschläge, alle mit Bild, Zutaten
+und Schritten. Eine Stichprobe über den kompletten Vorrat (auslösende Zutat
+per Ablation ermittelt, nicht geraten) fand vier Wortlisten-Fehler — alle
+vom selben Typ: **eine Zutat, die nur beim Kochen gebraucht wird, ist kein
+Themennachweis.**
+
+| Wort | Traf | Beispiel |
+|---|---|---|
+| `braten` (Fleisch) | „Öl zum Braten" | *Pierogi ruskie* und *Zucchini Puffer* standen unter **Meat** |
+| `broth`/`brühe`/`bouillon` (Suppe) | Brühe als Zutat | *Chipotle Pork Carnitas* und ein Nudelgericht wurden **Soup** |
+| `chili` (Suppe) | Chilipulver, Chiliflocken | *Carbonara* und *Zucchini Puffer* wurden **Soup** |
+| `topf` (Suppe) | „1 Topf Basilikum" | im deutschen Supermarkt auf jedem zweiten Zettel |
+
+Ersetzt durch das, was wirklich ein Gericht benennt: `schweinebraten`,
+`sauerbraten`, `pot roast`, `chili con carne`. „Eintopf" wird weiter über die
+Stammliste gefunden, `brühe` ist auch dort raus (traf „Gemüsebrühe" mitten im
+Wort).
+
+**Und eine Lücke in der Gegenrichtung:** Schwein fehlte in der
+Eiweißträger-Liste — *Pork Katsu* bekam „High protein" nur zufällig über das
+Ei in der Panade. `pork`, `schwein`, `kotelett`, `schnitzel` sind jetzt drin;
+Prosciutto, Speck und Salami bewusst **nicht**, die liegen als Garnitur oben
+drauf und tragen kein Gericht.
+
+Alle zehn Fälle stehen als Wächter-Fixtures in Stufe N.

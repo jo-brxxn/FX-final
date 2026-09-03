@@ -66,7 +66,13 @@ const WOERTER = {
   meat: ['beef', 'rind', 'rinder', 'rindfleisch', 'steak', 'hack', 'hackfleisch', 'mince',
     'ground beef', 'pork', 'schwein', 'schweine', 'schweinefleisch', 'lamm', 'lamb', 'kalb', 'veal',
     'speck', 'bacon', 'schinken', 'ham', 'wurst', 'sausage', 'salami', 'chorizo', 'gulasch',
-    'goulash', 'braten', 'roast beef', 'meatball', 'frikadelle',
+    // ⚠ "braten" ALLEIN stand hier bis 2026-09-03 und hat "Öl zum Braten"
+    // getroffen - zwei vegetarische Gerichte (Pierogi ruskie, Zucchini
+    // Puffer) standen dadurch unter Fleisch. Es ist im Deutschen genauso
+    // haeufig ein Verb wie ein Gericht; die Gerichte stehen deshalb
+    // ausgeschrieben da, die Fleischart faengt ohnehin "schwein"/"rind".
+    'goulash', 'schweinebraten', 'rinderbraten', 'sauerbraten', 'sonntagsbraten',
+    'roast beef', 'pot roast', 'meatball', 'frikadelle',
     'prosciutto', 'pancetta', 'kassler', 'leber', 'liver', 'fleisch'],
   fish: ['fish', 'fisch', 'lachs', 'salmon', 'thunfisch', 'tuna', 'kabeljau', 'cod', 'dorsch',
     'forelle', 'trout', 'zander', 'seelachs', 'pollock', 'hering', 'herring', 'sardine',
@@ -92,8 +98,16 @@ const WOERTER = {
   rice: ['rice', 'reis', 'risotto', 'paella', 'jasminreis', 'basmati', 'sushi', 'bowl',
     'poke', 'quinoa', 'couscous', 'bulgur', 'pilaw', 'pilaf', 'jambalaya', 'biryani',
     'fried rice', 'gebratener reis'],
-  soup: ['soup', 'suppe', 'eintopf', 'stew', 'broth', 'brühe', 'bruehe', 'bouillon', 'ramen',
-    'chowder', 'bisque', 'minestrone', 'gulaschsuppe', 'chili', 'curry soup', 'topf'],
+  // ⚠ BRUEHE IST EINE ZUTAT, KEIN GERICHT. "1/2 cup beef broth" und "500 ml
+  // Gemuesebruehe" standen bis 2026-09-03 in dieser Liste und machten aus
+  // Pulled Pork und einem Nudelgericht eine Suppe - derselbe Denkfehler wie
+  // bei der Fischsauce, nur eine Zeile tiefer. Ebenso raus: "chili" (traf
+  // Chilipulver und Chiliflocken) und "topf" (im deutschen Supermarkt
+  // steht "1 Topf Basilikum" auf jedem zweiten Zettel). "Eintopf" wird
+  // ueber die Stammliste weiter gefunden.
+  soup: ['soup', 'suppe', 'eintopf', 'stew', 'ramen',
+    'chowder', 'bisque', 'minestrone', 'gulaschsuppe', 'chili con carne',
+    'chilli con carne', 'curry soup'],
   salad: ['salad', 'salat', 'coleslaw', 'krautsalat', 'caesar', 'bowl salad', 'rohkost',
     'tabouleh', 'caprese'],
   potato: ['potato', 'potatoes', 'kartoffel', 'kartoffeln', 'süßkartoffel', 'suesskartoffel',
@@ -119,6 +133,12 @@ const WOERTER = {
 // "Haehnchenbrust" werden ueber die Stammliste mitgefunden.
 const PROTEIN = ['chicken', 'hähnchen', 'haehnchen', 'hühnchen', 'huehnchen', 'pute', 'turkey',
   'beef', 'rind', 'rinderfilet', 'steak', 'hackfleisch', 'mince', 'lamm', 'lamb',
+  // ⚠ Schwein fehlte hier bis 2026-09-03: "Pork Katsu" und "Schweinebraten"
+  // bekamen "High protein" nur zufaellig ueber das Ei in der Panade. Ein
+  // Kotelett ist ein Eiweisstraeger wie jedes andere Stueck Fleisch.
+  // Prosciutto, Speck und Salami stehen bewusst NICHT hier - die liegen als
+  // Garnitur oben drauf und tragen kein Gericht.
+  'pork', 'schwein', 'schweinefleisch', 'schweinebraten', 'kotelett', 'schnitzel',
   'lachs', 'salmon', 'thunfisch', 'tuna', 'kabeljau', 'cod', 'garnelen', 'shrimp', 'prawn',
   'tofu', 'tempeh', 'seitan', 'sojaschnetzel', 'soja granulat', 'edamame',
   'quark', 'magerquark', 'skyr', 'hüttenkäse', 'huettenkaese', 'cottage cheese', 'harzer',
@@ -155,11 +175,13 @@ const STAMM = ['suppe', 'eintopf', 'salat', 'kuchen', 'nudel', 'kartoffel', 'fle
   'wurst', 'hähnchen', 'haehnchen', 'hühnchen', 'huehnchen', 'lachs', 'garnele', 'muschel',
   'brötchen', 'broetchen', 'auflauf', 'pfannkuchen', 'plätzchen', 'plaetzchen', 'spätzle',
   'spaetzle', 'risotto', 'lasagne', 'spaghetti', 'schokolade', 'frühstück', 'fruehstueck',
-  'brühe', 'bruehe', 'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel',
+  // ⚠ "brühe" stand hier und traf "Gemuesebruehe" mitten im Wort - siehe
+  // die Begruendung an WOERTER.soup.
+  'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel',
   'quark', 'linsen', 'kichererbsen', 'bohnen', 'joghurt', 'protein', 'tofu', 'skyr'];
-// ⚠ "braten" fehlt hier absichtlich: als Wortbestandteil traefe es
-// "gebratene Zwiebeln" und "Bratensosse" - als ganzes Wort ("Braten") bleibt
-// es in der Fleischliste.
+// ⚠ "braten" fehlt hier absichtlich - und seit 2026-09-03 auch in der
+// Fleischliste: weder als Wortbestandteil ("gebratene Zwiebeln") noch als
+// ganzes Wort ("Öl zum Braten") sagt es etwas ueber Fleisch aus.
 
 // ── Suche ────────────────────────────────────────────────────────────────
 function normText(s) {

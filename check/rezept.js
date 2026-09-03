@@ -1634,6 +1634,29 @@ function pruefeKontrast() {
       ['500 g Hackfleisch', 'Spaghetti']), ['meat', 'protein', 'pasta']);
     // ⚠ "Eis" darf nicht ueber die Mehrzahlregel als "Ei" gelten.
     t('Eis ist kein Ei', T.themenOf('Eis am Stiel', ['Eis', 'Sahne']).includes('protein'), false);
+    // ⚠ Vier Faelle aus dem scharfen Lauf vom 2026-09-03: eine Zutat, die
+    // nur beim KOCHEN gebraucht wird, ist kein Themennachweis.
+    t('Oel zum Braten ist kein Fleisch', T.themenOf('Zucchini Puffer',
+      ['2 Zucchini', '1 Ei', 'Olivenöl zum Braten']).includes('meat'), false);
+    t('Schweinebraten bleibt Fleisch', T.themenOf('Schweinebraten',
+      ['1 kg Schweinebraten', 'Bier']), ['meat', 'protein']);
+    t('Bruehe ist keine Suppe (en)', T.themenOf('Pulled Pork',
+      ['2 kg pork shoulder', '1/2 cup beef broth']).includes('soup'), false);
+    t('Bruehe ist keine Suppe (de)', T.themenOf('Risotto',
+      ['200 g Reis', '500 ml Gemüsebrühe']).includes('soup'), false);
+    t('Eintopf bleibt Suppe', T.themenOf('Grüne Bohnen Eintopf',
+      ['Bohnen', '500 ml Gemüsebrühe']).includes('soup'), true);
+    t('Chiliflocken sind keine Suppe', T.themenOf('Pasta',
+      ['Spaghetti', 'Calabrian chili flakes']).includes('soup'), false);
+    t('Chili con Carne bleibt Suppe', T.themenOf('Chili con Carne',
+      ['Hackfleisch', 'Kidneybohnen']).includes('soup'), true);
+    t('ein Topf Basilikum ist keine Suppe', T.themenOf('Tomatensalat',
+      ['Tomaten', '1 Topf Basilikum']).includes('soup'), false);
+    // ⚠ Schwein traegt ein Gericht, Prosciutto liegt oben drauf.
+    t('Schwein zaehlt als Protein', T.themenOf('Pork Katsu',
+      ['4 pork loin chops', 'panko']).includes('protein'), true);
+    t('Prosciutto traegt kein Gericht', T.themenOf('Carbonara',
+      ['3 ounces prosciutto', '1 pound tagliatelle']), ['meat', 'pasta']);
     return out;
   });
   themen.filter(x => !x.ok).forEach(x =>
