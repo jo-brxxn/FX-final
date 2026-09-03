@@ -2723,7 +2723,7 @@ export function rezOpenSettings(){
       // erkanntem Regel-Fehler klappt der Abschnitt von selbst auf.
       +`<details class="set-adv"${S.state.rlsBlocked?' open':''}><summary>Database setup (SQL)</summary>`
         +(S.state.rlsBlocked
-          ?`<div class="set-row-s sql-warn" style="margin-bottom:8px">Supabase is blocking new rows for this key. Run this once in Supabase → SQL editor, then press Test.</div>`
+          ?`<div class="set-row-s sql-warn" style="margin-bottom:8px"><b>Supabase is blocking new rows for this key.</b> Not a full database, not a bad key — the table is missing an INSERT policy. FX Analyst Pro keeps working because its row already exists and it only updates that row; Perfect Rezept has to create its own rows. Run this once in Supabase → SQL editor, then press Test.</div>`
           :`<div class="set-row-s" style="margin-bottom:8px">Creates table <b>fx_sync</b> and the row-level security policies both apps need. Running it again is harmless.</div>`)
         +`<pre class="sql-box" id="rezSqlBox">${escH(S.SETUP_SQL)}</pre>`
         +`<div class="set-row-s" style="margin-bottom:10px">Anyone holding this publishable key can read and write these rows — that is how both apps work, the key sits in the browser. Keep the Sync ID hard to guess and never paste the secret key.</div>`

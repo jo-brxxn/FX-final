@@ -9262,3 +9262,60 @@ still ein `ReferenceError`).
 **Offen und nur vom Nutzer selbst zu erledigen:** Das SQL muss einmal im
 Supabase-Projekt laufen. Kein Code kann eine fehlende Policy ersetzen — die
 Rechte liegen serverseitig.
+
+---
+
+## 2026-09-03 — Perfect Rezept: Sync-Diagnose Stufe für Stufe, härteres Setup-SQL (REZEPT-CHECK-11)
+
+Rückfrage des Nutzers zum vorigen Eintrag, wörtlich: *„Geht nicht guck Ma was
+da ist. Aber es liegt nicht daran das supabase vlt voll ist oder? Und bei fx
+Analyst pro geht es ja also was ist da überhaupt anders warum geht das nicht
+mach einfach alles gleich"* — mit Screenshot des Warnhinweises.
+
+### Die drei Antworten, jetzt auch in der App
+
+**Voll ist die Datenbank nicht.** Eine volle Supabase-Instanz meldet
+`53100 disk full` bzw. schaltet das Projekt read-only (`25006`,
+*cannot execute INSERT in a read-only transaction*). Hier steht `42501`,
+*new row violates row-level security policy* — eine Berechtigungsregel, kein
+Speicherproblem. (Bei 3 Rezepten wären es ohnehin Kilobyte von 500 MB.)
+
+**Was anders ist als beim FX Analyst Pro:** nichts an URL, Schlüssel,
+Tabelle oder Kopfzeilen — nur die Operation. FX **aktualisiert** seine längst
+vorhandene Zeile `<syncId>`; sein Upsert landet also im `UPDATE`-Zweig, für
+den eine UPDATE-Policy genügt. Perfect Rezept muss seine Zeilen
+`<syncId>:rez:*` erst **anlegen**, und für `INSERT` fehlt die Policy.
+
+**„Mach einfach alles gleich" geht nicht** — und der Grund ist nicht
+Bequemlichkeit: Alles in die FX-Zeile zu schreiben hieße, dass `cloudPush()`
+des FX Analyst Pro die Rezepte beim nächsten Autosave überschreibt (es
+ersetzt `data` komplett) und dass jedes Titelbild bei jedem
+Kalender-Refresh erneut hochgeht. Eine INSERT-Policy ist der einzige Weg;
+DDL/Policies kann nur der Projektbesitzer im Supabase-Dashboard setzen, kein
+Client mit publishable Key.
+
+### Änderungen
+
+- **`testConnection()` meldet jede Stufe einzeln:**
+  `Read ✓ · Update existing row ✓ · Create new row ✗ — …`. Die Update-Stufe
+  schreibt die `id` der FX-Zeile auf sich selbst (ändert nichts) und beweist
+  damit, dass Schlüssel, URL und Tabelle in Ordnung sind. Scheitert danach nur
+  *Create new row*, ist die Diagnose eindeutig — und die Meldung nennt genau
+  diesen Unterschied zum FX Analyst Pro.
+- **Setup-SQL gehärtet:** zusätzlich `grant select, insert, update, delete …
+  to anon, authenticated`, ein `DO`-Block, der **jede** vorhandene Policy auf
+  `fx_sync` entfernt (eine einzige übrig gebliebene, erst recht eine
+  restriktive, blockiert weiter das Anlegen — das benannte Löschen der
+  vorigen Fassung hätte sie stehen lassen), danach eine `for all`-Policy.
+- Der Warnhinweis im Fenster sagt jetzt in einem Satz, dass es weder an einer
+  vollen Datenbank noch am Schlüssel liegt, und warum FX weiterläuft.
+- `check/rezept.js` prüft das SQL auf `for all`/`for insert` **mit**
+  `with check` und auf `enable row level security`; neuer Schnellmodus
+  `--static` (Kontrast, Sync-Diagnose, Service Worker) für Mutationstests in
+  Sekunden statt Minuten.
+
+Wieder gegen den nachgebauten Endpunkt reproduziert (PATCH erlaubt, POST
+antwortet 401 + `42501` — exakt die gemeldete Lage): Ausgabe
+`Read ✓ · Update existing row ✓ · Create new row ✗ — … FX Analyst Pro keeps
+working because its row already exists …`, und mit erlaubtem INSERT
+`Read ✓ · Update existing row ✓ · Create new row ✓ · Delete ✓`.

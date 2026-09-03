@@ -194,27 +194,34 @@ function cloudHeaders(cfg){return{'apikey':cfg.key,'Content-Type':'application/j
 // die Zeilen lesen und schreiben; das ist die Architektur dieser Apps (der
 // Schluessel steht im Browser), nicht eine Nachlaessigkeit dieses SQL.
 export const SETUP_SQL=`-- Cloud sync for FX Analyst Pro + Perfect Rezept.
--- Run once in Supabase → SQL editor, then press Test again.
+-- Run this once in Supabase -> SQL editor, then press Test again.
+-- Running it twice is harmless.
+
 create table if not exists public.fx_sync (
   id          text primary key,
   data        jsonb,
   updated_at  timestamptz default now()
 );
+
 alter table public.fx_sync enable row level security;
+grant select, insert, update, delete on public.fx_sync to anon, authenticated;
 
-drop policy if exists "fx_sync anon select" on public.fx_sync;
-drop policy if exists "fx_sync anon insert" on public.fx_sync;
-drop policy if exists "fx_sync anon update" on public.fx_sync;
-drop policy if exists "fx_sync anon delete" on public.fx_sync;
+-- Drop EVERY existing policy on this table, whatever it is named. A single
+-- leftover policy (especially a restrictive one) keeps blocking new rows,
+-- which is exactly the state this fixes.
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies
+           where schemaname = 'public' and tablename = 'fx_sync'
+  loop
+    execute format('drop policy %I on public.fx_sync', p.policyname);
+  end loop;
+end $$;
 
-create policy "fx_sync anon select" on public.fx_sync
-  for select to anon, authenticated using (true);
-create policy "fx_sync anon insert" on public.fx_sync
-  for insert to anon, authenticated with check (true);
-create policy "fx_sync anon update" on public.fx_sync
-  for update to anon, authenticated using (true) with check (true);
-create policy "fx_sync anon delete" on public.fx_sync
-  for delete to anon, authenticated using (true);`;
+create policy "fx_sync full access" on public.fx_sync
+  for all to anon, authenticated
+  using (true) with check (true);`;
 
 const RLS_HINT='Supabase refused to add the row: row-level security on table '
   +'"fx_sync" has no policy that lets this key INSERT. Open Settings → Cloud sync '
@@ -277,48 +284,81 @@ export function saveCloudCfg(url,key,syncId){
 // verboten. Der Test legt deshalb eine Probezeile an und raeumt sie weg.
 export async function testConnection(){
   const cfg=getCloudCfg();
-  if(!cfg)return{ok:false,read:false,write:false,msg:'No credentials saved yet.'};
+  if(!cfg)return{ok:false,read:false,update:false,insert:false,msg:'No credentials saved yet.'};
   const fehler=e=>(e&&e.name==='TimeoutError')
     ?'No answer within 12 s — check the project URL or your connection.'
     :(e&&e.message||String(e));
-  // 1) Lesen
+  const r={ok:false,read:false,update:false,insert:false,rls:false,msg:''};
+  const teile=[];
+  const fertig=(grund)=>{
+    r.msg=teile.join(' · ')+(grund?' — '+grund:'');
+    state.lastError=r.ok?'':r.msg;
+    return r;
+  };
+  // 1) LESEN
   try{
     const res=await fetch(cfg.url+'/rest/v1/fx_sync?select=id&limit=1',
       {headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
     if(!res.ok){
       const e=await httpFehler(res);
-      state.rlsBlocked=!!e.rls||!!e.setup;
-      state.lastError=e.message;
-      return{ok:false,read:false,write:false,rls:state.rlsBlocked,msg:e.message};
+      state.rlsBlocked=!!e.rls||!!e.setup;r.rls=state.rlsBlocked;
+      teile.push('Read ✗');
+      return fertig(e.message);
     }
     await res.json();
+    r.read=true;teile.push('Read ✓');
   }catch(e){
-    state.lastError=fehler(e);
-    return{ok:false,read:false,write:false,msg:state.lastError};
+    teile.push('Read ✗');
+    return fertig(fehler(e));
   }
-  // 2) Schreiben - eine echte NEUE Zeile, sonst testet der Upsert nur den
-  //    UPDATE-Zweig und uebersieht genau den Fall, der hier kaputt war.
+  // 2) BESTEHENDE ZEILE AENDERN - genau das, was der FX Analyst Pro tut.
+  //    ⚠ Diese Stufe beantwortet die Frage "warum geht FX und Rezept nicht":
+  //    sie schreibt die id der FX-Zeile auf sich selbst (aendert also nichts)
+  //    und zeigt damit, ob UPDATE erlaubt ist. Der FX Analyst Pro kommt mit
+  //    genau diesem Recht aus, weil SEINE Zeile existiert; die Rezept-App
+  //    braucht zusaetzlich INSERT fuer ihre eigenen Zeilen.
+  try{
+    const res=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(cfg.syncId),{
+      method:'PATCH',
+      headers:{...cloudHeaders(cfg),'Prefer':'return=representation'},
+      body:JSON.stringify({id:cfg.syncId}),
+      signal:AbortSignal.timeout(12000)
+    });
+    if(res.ok){
+      const rows=await res.json().catch(()=>[]);
+      // Keine Zeile zurueck heisst: es gibt noch keinen FX-Stand in der Cloud.
+      // Das ist kein Fehler, sagt ueber UPDATE aber auch nichts aus.
+      if(rows&&rows.length){r.update=true;teile.push('Update existing row ✓');}
+      else teile.push('Update existing row — no FX row yet');
+    }else{
+      const e=await httpFehler(res);
+      teile.push('Update existing row ✗ ('+e.message.split('.')[0]+')');
+    }
+  }catch(e){teile.push('Update existing row ✗');}
+  // 3) NEUE ZEILE ANLEGEN - der Fall, an dem der Rezept-Sync haengt.
   const probe=rowId(cfg,'selftest:'+Math.random().toString(36).slice(2,8));
   try{
     await putRow(cfg,probe,{selftest:nowIso()},nowIso());
+    r.insert=true;teile.push('Create new row ✓');
   }catch(e){
-    state.rlsBlocked=!!e.rls||!!e.setup;
-    state.lastError='Reading works, writing does not. '+(e&&e.message||String(e));
-    return{ok:false,read:true,write:false,rls:state.rlsBlocked,msg:state.lastError};
+    state.rlsBlocked=!!e.rls||!!e.setup;r.rls=state.rlsBlocked;
+    teile.push('Create new row ✗');
+    return fertig((e&&e.message||String(e))
+      +(r.update?' FX Analyst Pro keeps working because its row already exists — it only updates. Perfect Rezept has to create rows, so it needs an INSERT policy.':''));
   }
   state.rlsBlocked=false;
-  state.lastError='';
-  // 3) Aufraeumen. Scheitert nur das Loeschen, funktioniert der Sync
+  // 4) Aufraeumen. Scheitert nur das Loeschen, funktioniert der Sync
   //    trotzdem - dann bleibt eine winzige Probezeile liegen, und das ist
   //    eine Randnotiz, kein Fehlschlag.
   let rest='';
   try{
     const del=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(probe),
       {method:'DELETE',headers:cloudHeaders(cfg),signal:AbortSignal.timeout(12000)});
-    if(!del.ok)rest=' (the test row could not be deleted — add the delete policy from Database setup)';
-  }catch(e){rest=' (the test row could not be deleted)';}
-  return{ok:true,read:true,write:true,
-    msg:'Connection works — table fx_sync can be read and written.'+rest};
+    if(del.ok)teile.push('Delete ✓');
+    else rest='the test row could not be deleted, add the delete policy from Database setup';
+  }catch(e){rest='the test row could not be deleted';}
+  r.ok=true;
+  return fertig(rest||'cloud sync is fully working');
 }
 
 // ⚠ Der Zeitstempel entscheidet bei JEDER Kollision, welche Fassung gewinnt.
