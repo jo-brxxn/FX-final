@@ -284,7 +284,16 @@ async function bildDazu(e) {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 20000);
-    const res = await fetch(e.image, { signal: ctrl.signal, headers: { 'User-Agent': UA }, redirect: 'follow' });
+    // ⚠ Referer mitschicken. Im ersten scharfen Lauf blieben 13 von 87
+    // Bildern Fernadressen, geballt bei zwei Cloudflare-Seiten - das Muster
+    // einer Hotlink-Sperre: das Bild wird nur ausgeliefert, wenn die Anfrage
+    // von der eigenen Seite zu kommen scheint. Ob es hilft, sagt die Zahl im
+    // naechsten Lauf, nicht diese Vermutung.
+    let ref = '';
+    try { ref = new URL(e.url || e.image).origin + '/'; } catch (err) {}
+    const res = await fetch(e.image, { signal: ctrl.signal, redirect: 'follow',
+      headers: { 'User-Agent': UA, 'Accept': 'image/avif,image/webp,image/jpeg,image/png,*/*;q=0.8',
+        ...(ref ? { Referer: ref } : {}) } });
     clearTimeout(t);
     if (res.ok) roh = Buffer.from(await res.arrayBuffer());
   } catch (err) { /* faellt unten auf die Fernadresse zurueck */ }

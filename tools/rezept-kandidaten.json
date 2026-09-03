@@ -1,195 +1,81 @@
 {
-  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Runde 3b (2026-09-03, nach dem ersten Lauf nachgebessert): ein Blog-Kandidat gibt jetzt nur noch seine SEITE an - die Feed-Adresse liest der Lauf aus dem Seitenkopf (<link rel=alternate>), weil drei von vier geratenen \"/feed/\"-Adressen falsch waren. Zwischen zwei YouTube-Suchen liegt eine Pause, weil YouTube ab der zehnten Abfrage drosselte und 22 Koeche unerkannt durchfielen. Runde 3 (2026-09-03): 32 vom Nutzer genannte Koeche. Ein YouTube-Eintrag braucht nur noch {\"name\": \"...\"} - der Lauf sucht den Kanal ueber den Namen (Suchfilter „Kanaele“) und weist im Bericht aus, WEN er gefunden hat. In Runde 2 waren vier von acht geratenen Handles schlicht 404, ohne dass jemand wusste, ob es den Kanal gibt.",
+  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Ein Eintrag gibt nur seine SEITE an; die Feed-Adresse liest der Lauf aus dem Seitenkopf (<link rel=alternate>). Runde 4 (2026-09-03): Kochplattformen und Verlagsseiten - Nutzer-Entscheidung, nachdem Runde 3 mit 32 namentlich genannten Koechen 0 verwertbare Quellen ergab (kein TV- oder Sternekoch schreibt eine Zutatenliste in die Videobeschreibung, und ihre Seiten sind Restaurant- statt Rezeptauftritte). Dort stehen dieselben Rezepte, nur unter dem Namen der Plattform. Die YouTube-Liste ist bewusst leer: Runde 3 hat sie erschoepfend geprueft.",
   "blogs": [
     {
-      "name": "Sizzle Brothers",
-      "seite": "https://sizzlebrothers.de/",
-      "richtung": "Koch-Wunsch Runde 3: Grillen, grosser Kanal"
+      "name": "essen & trinken",
+      "seite": "https://www.essen-und-trinken.de/",
+      "richtung": "Runde 4 (Kochplattformen): Verlagsseite, viele Rezepte bekannter Koeche"
     },
     {
-      "name": "Steffen Henssler",
-      "seite": "https://www.hensslers-schnelle-nummer.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+      "name": "Chefkoch",
+      "seite": "https://www.chefkoch.de/",
+      "richtung": "Runde 4 (Kochplattformen): groesste deutsche Rezeptsammlung"
     },
     {
-      "name": "Jamie Oliver",
-      "seite": "https://www.jamieoliver.com/",
-      "richtung": "Koch-Wunsch Runde 3: großer Kanal + Rezeptseite"
+      "name": "EatSmarter",
+      "seite": "https://eatsmarter.de/",
+      "richtung": "Runde 4 (Kochplattformen): gesund, mit Naehrwerten"
     },
     {
-      "name": "Johann Lafer",
-      "seite": "https://www.johannlafer.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch + Rezeptseite"
+      "name": "Kitchen Stories",
+      "seite": "https://www.kitchenstories.com/de",
+      "richtung": "Runde 4 (Kochplattformen): trendig, gut bebildert"
     },
     {
-      "name": "Frank Rosin",
-      "seite": "https://www.frankrosin.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+      "name": "lecker.de",
+      "seite": "https://www.lecker.de/",
+      "richtung": "Runde 4 (Kochplattformen): Verlagsseite"
     },
     {
-      "name": "Nelson Müller",
-      "seite": "https://www.nelson-mueller.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+      "name": "Brigitte Rezepte",
+      "seite": "https://www.brigitte.de/rezepte/",
+      "richtung": "Runde 4 (Kochplattformen): Verlagsseite"
     },
     {
-      "name": "Alexander Herrmann",
-      "seite": "https://www.alexanderherrmann.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+      "name": "Koch-Mit",
+      "seite": "https://www.koch-mit.de/",
+      "richtung": "Runde 4 (Kochplattformen): deutsch, Alltagskueche"
     },
     {
-      "name": "Cornelia Poletto",
-      "seite": "https://www.cornelia-poletto.de/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Köchin"
+      "name": "Springlane",
+      "seite": "https://www.springlane.de/magazin/",
+      "richtung": "Runde 4 (Kochplattformen): 2. Versuch ueber den Seitenkopf"
     },
     {
-      "name": "Tim Raue",
-      "seite": "https://tim-raue.com/",
-      "richtung": "Koch-Wunsch Runde 3: 2 Sterne, große Reichweite"
+      "name": "Zucker&Jagdwurst",
+      "seite": "https://www.zuckerjagdwurst.com/de",
+      "richtung": "Runde 4 (Kochplattformen): 2. Versuch ueber den Seitenkopf, pflanzlich"
     },
     {
-      "name": "Tim Mälzer",
-      "seite": "https://www.bullerei.com/",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+      "name": "Emmi kocht einfach",
+      "seite": "https://emmikochteinfach.de/",
+      "richtung": "Runde 4 (Kochplattformen): deutsch, Alltagskueche"
     },
     {
-      "name": "Lucki Maurer",
-      "seite": "https://www.luckimaurer.de/",
-      "richtung": "Koch-Wunsch Runde 3: Fleisch/Grill"
+      "name": "Einfach Backen",
+      "seite": "https://www.einfachbacken.de/",
+      "richtung": "Runde 4 (Kochplattformen): Verlagsseite, Backen"
     },
     {
-      "name": "The Duc Ngo",
-      "seite": "https://www.theducngo.de/",
-      "richtung": "Koch-Wunsch Runde 3: Berliner Koch, viele Formate"
+      "name": "Gaumenfreundin",
+      "seite": "https://www.gaumenfreundin.de/",
+      "richtung": "Runde 4 (Kochplattformen): deutsch, Familienkueche"
+    },
+    {
+      "name": "Serious Eats",
+      "seite": "https://www.seriouseats.com/",
+      "richtung": "Runde 4 (Kochplattformen): fundiert, englisch"
+    },
+    {
+      "name": "Bon Appetit",
+      "seite": "https://www.bonappetit.com/",
+      "richtung": "Runde 4 (Kochplattformen): trendig, englisch"
+    },
+    {
+      "name": "NYT Cooking (Probe)",
+      "seite": "https://cooking.nytimes.com/",
+      "richtung": "Runde 4 (Kochplattformen): vermutlich Bezahlschranke - Pruefung sagt es"
     }
   ],
-  "youtube": [
-    {
-      "name": "Sizzle Brothers",
-      "richtung": "Koch-Wunsch Runde 3: Grillen, grosser Kanal"
-    },
-    {
-      "name": "Bernd Zehner",
-      "richtung": "Koch-Wunsch Runde 3: vom Nutzer genannt"
-    },
-    {
-      "name": "Adrian Saatci",
-      "richtung": "Koch-Wunsch Runde 3: vom Nutzer als „Adria saatci“ genannt - Schreibweise unsicher"
-    },
-    {
-      "name": "Steffen Henssler",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Tim Mälzer",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Jamie Oliver",
-      "richtung": "Koch-Wunsch Runde 3: großer Kanal + Rezeptseite"
-    },
-    {
-      "name": "Frank Rosin",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Nelson Müller",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Johann Lafer",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch + Rezeptseite"
-    },
-    {
-      "name": "Alexander Herrmann",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Christian Rach",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Cornelia Poletto",
-      "richtung": "Koch-Wunsch Runde 3: TV-Köchin"
-    },
-    {
-      "name": "Ralf Zacherl",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Mario Kotaska",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Kolja Kleeberg",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Alexander Kumptner",
-      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
-    },
-    {
-      "name": "Lucki Maurer",
-      "richtung": "Koch-Wunsch Runde 3: Fleisch/Grill"
-    },
-    {
-      "name": "Max Strohe",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Thomas Martin",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Daniel Gottschlich",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Anthony Sarpong",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Kevin Fehling",
-      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
-    },
-    {
-      "name": "Nils Henkel",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Juan Amador",
-      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
-    },
-    {
-      "name": "Tristan Brandt",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Heiko Nieder",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Thomas Bühner",
-      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
-    },
-    {
-      "name": "Tim Raue",
-      "richtung": "Koch-Wunsch Runde 3: 2 Sterne, große Reichweite"
-    },
-    {
-      "name": "Jan Hartwig",
-      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
-    },
-    {
-      "name": "Christoph Rüffer",
-      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
-    },
-    {
-      "name": "Rosina Ostler",
-      "richtung": "Koch-Wunsch Runde 3: Sterneöchin"
-    },
-    {
-      "name": "The Duc Ngo",
-      "richtung": "Koch-Wunsch Runde 3: Berliner Koch, viele Formate"
-    }
-  ]
+  "youtube": []
 }

@@ -9719,3 +9719,12 @@ von `faireconomy.media`: der Kalender-Abruf probiert die Adresse direkt und
 über drei Proxys, jeder Weg in `try/catch` — die Meldung schreibt der Browser
 trotzdem, und kein JavaScript kann das unterdrücken. Ausgenommen ist jetzt
 genau diese Quelle, nicht CORS allgemein.
+
+**Nachtrag zur Köche-Prüfung (zweite Runde, mit korrigierter Methode):**
+0 von 32 Kanälen, 0 von 12 Seiten. Diesmal wurden **alle** 32 Kanäle
+aufgelöst — die Pause zwischen den Suchen hat gewirkt — und alle haben 0
+Zutaten in der Beschreibung. Der Befund ist damit belastbar und nicht mehr
+methodenbedingt. Die Namenssuche griff mehrfach daneben („Tim Raue" →
+`Berliner Fernsehturm`, „Mario Kotaska" → ein Blutspende-Podcast, „Heiko
+Nieder" → `TISCH FREI`); dass das auffiel, ist der ausgewiesene Kanalname —
+ohne ihn wären fremde Kanäle unter Kochnamen in den Vorrat gewandert.

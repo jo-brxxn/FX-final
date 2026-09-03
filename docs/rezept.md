@@ -675,6 +675,35 @@ Kanal-Adressen steht heute `@name`. Der Lauf löst das einmal über den
 Quelltext der Kanalseite auf — eine geratene ID wäre ein Feed, der nichts
 liefert.
 
+### Warum TV- und Sterneköche keine Quelle sind
+
+Nutzer-Wunsch 2026-09-03: 32 namentlich genannte Köche (Sizzle Brothers,
+Steffen Henssler, Tim Mälzer, Jamie Oliver, Frank Rosin, Nelson Müller,
+Johann Lafer, Alexander Herrmann, Christian Rach, Cornelia Poletto, Tim Raue,
+Kevin Fehling, Jan Hartwig, Nils Henkel, Juan Amador u. a.). Auf dem Runner
+geprüft, in zwei Runden: **0 von 32 Kanälen, 0 von 12 Seiten.**
+
+Alle 32 Kanäle wurden gefunden — es scheitert **nicht** am Auffinden, sondern
+am Inhalt: **kein einziger schreibt eine Zutatenliste in die Videobeschreibung**
+(durchweg 0 Zutaten). Das ist kein Zufall, sondern das Geschäftsmodell: TV- und
+Sterneköche verkaufen Bücher, Sendungen und Restaurantplätze — ein vollständiges
+Rezept in der Beschreibung wäre das Gegenteil davon. Ein Eintrag hätte nur
+Karten mit prominentem Namen und leerer Einkaufsliste erzeugt.
+
+Ihre Webseiten helfen auch nicht: die meisten sind Restaurant- oder
+Buch-Auftritte ohne Blog (kein Feed im Seitenkopf), und wo es einen gibt
+(`tim-raue.com`, `bullerei.com`), stehen darin Neuigkeiten statt Rezepte.
+
+⚠ **Die Namenssuche hat dabei mehrfach danebengegriffen** — „Tim Raue" fand
+`Berliner Fernsehturm`, „Mario Kotaska" einen Blutspende-Podcast, „Heiko
+Nieder" `TISCH FREI`. Genau deshalb weist der Bericht den gefundenen
+Kanalnamen aus; ohne diese Zeile wären fremde Kanäle unter dem Namen eines
+Kochs im Vorrat gelandet.
+
+Wo die Rezepte dieser Köche tatsächlich maschinenlesbar stehen, ist auf
+**Kochplattformen und Sender-/Verlagsseiten** — dort aber unter dem Namen der
+Plattform, nicht dem des Kochs.
+
 ### In der App: Dreierreihe mit Nachlade-Knopf
 
 Die Vorschläge stehen **oben in der Inspiration** (Nutzer-Entscheidung), die
