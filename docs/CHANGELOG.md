@@ -9198,7 +9198,288 @@ zurückgebaut → „sw.js liefert JS/CSS aus dem Cache aus".
 
 ---
 
-## 2026-09-03 — Perfect Rezept: tägliche Essensvorschläge aus vier Quellen (REZEPT-CHECK-10)
+## 2026-09-02 (8) — Perfect Rezept: Cloud-Sync scheiterte an einer fehlenden Datenbank-Regel (REZEPT-CHECK-10)
+
+Nutzer-Meldung, wörtlich: *„bei der perfect recipe app geht der cloud sync
+nicht das ist das problem: API key rejected (401). Open Settings → Cloud sync
+and paste a fresh key from Supabase → Project Settings → API —
+`{"code":"42501","details":null,"hint":null,"message":"new row violates
+row-level security policy for table \"fx_sync\""}`"*
+
+### Die Meldung war falsch, der Schlüssel war in Ordnung
+
+Der Rumpf sagt es klar: **Postgres 42501**, Row-Level-Security. Mit dem
+Schlüssel war nie etwas. Zwei Dinge kamen zusammen:
+
+1. **PostgREST antwortet auf eine RLS-Verletzung mit 401, wenn kein JWT
+   mitkam** — mit 403 nur bei einer authentifizierten Anfrage. Beide Apps
+   schicken bewusst nur `apikey` (siehe Eintrag 2026-09-02 (2)), sind also
+   anonym: der Statuscode zeigt hier zwangsläufig auf das falsche Problem.
+   `httpFehler()` schaute nur auf den Status → „API key rejected (401)".
+2. **Der FX Analyst Pro fällt nicht auf**, obwohl er dieselbe Tabelle
+   benutzt: Seine Zeile `<syncId>` existiert längst, sein Upsert landet
+   also im `UPDATE`-Zweig. Die Rezept-App muss dagegen **neue** Zeilen
+   (`<syncId>:rez:index`, `<syncId>:rez:r:<id>`) **anlegen** — und genau
+   `INSERT` erlaubt die Policy-Lage des Projekts nicht. Deshalb „bei FX
+   geht es, bei Rezept nicht", mit demselben Schlüssel.
+
+Gegen einen nachgebauten Endpunkt reproduziert (Playwright, echtes
+`rezept.html`, Fake-Supabase mit exakt dem gemeldeten Rumpf), nicht geraten:
+
+| Fall | vorher | jetzt |
+|---|---|---|
+| `POST` → 401 + `42501` | „API key rejected (401)…" | „Reading works, writing does not. Supabase refused to add the row: row-level security … has no policy that lets this key INSERT. Open Settings → Cloud sync → Database setup …" |
+| Verbindungstest bei gesperrtem `INSERT` | „Connection works" (nur `select` geprüft) | Fehlschlag mit derselben Meldung, SQL-Abschnitt klappt auf |
+| Rezept-Upload bei gesperrtem `INSERT` | Status „Synced", Rezept fehlte auf Gerät 2 | „1 recipe could not be uploaded: …" |
+
+### Was geändert wurde (`js/rezept/store.js`, `js/rezept/app.js`, `rezept.html`)
+
+- `httpFehler()` liest **zuerst** `code`/`message` aus dem Rumpf (`42501` →
+  RLS-Meldung, `42P01`/404 → Tabelle fehlt) und erst dann den Status. Die
+  Fehler tragen `e.rls`/`e.setup`, `state.rlsBlocked` merkt sich den Fall.
+- `testConnection()` legt jetzt eine echte Probezeile an (`…:rez:selftest:<zufall>`)
+  und löscht sie wieder — ein reiner Lesetest hätte diesen Bug erneut
+  übersehen. Das Ergebnis nennt Lesen und Schreiben getrennt.
+- **Neu: *Settings → Cloud sync → Database setup (SQL)*** mit `SETUP_SQL`
+  (Tabelle + vier `anon`-Policies, idempotent) und *Copy SQL*
+  (`navigator.clipboard`, Fallback: Text markieren + `execCommand`). Der
+  Abschnitt öffnet sich selbst, sobald ein Regel-Fehler erkannt wurde.
+  Daneben steht offen, was das bedeutet: Wer den publishable Key hat, kann
+  diese Zeilen lesen und schreiben — der Schlüssel steht im Browser, das ist
+  die Architektur beider Apps, kein Versehen dieses SQL.
+- `pushRecipe()` scheitert nicht mehr still: Fehler landet in
+  `state.lastError`, das Rezept bleibt in `_dirtyRecipes`, `flushSync()`
+  meldet „N recipes could not be uploaded" statt „Synced".
+
+### Prüfung
+
+`check/rezept.js` (`pruefeSyncDiagnose`) verlangt seither statisch: der
+Fehlercode wird **vor** dem Status ausgewertet, `testConnection()` schreibt
+tatsächlich (`putRow`), `SETUP_SQL` mit `for insert` existiert, und
+`rezCopySql` hängt in der `window`-Brücke (sonst wirft der Knopf beim Klick
+still ein `ReferenceError`).
+
+**Offen und nur vom Nutzer selbst zu erledigen:** Das SQL muss einmal im
+Supabase-Projekt laufen. Kein Code kann eine fehlende Policy ersetzen — die
+Rechte liegen serverseitig.
+## 2026-09-02 — Verlaufschart bei vielen Indikatoren dauerhaft leer (TE-Fallback ergaenzte nie historyFull) + Kartennamen nur im Bearbeitungsmodus (VERSION-CHECK-464)
+
+**Bugreport:** *"Bei vielen Indikatoren gibt es wenn ich sie ausklappe nicht
+das Säulendiagramm mit den Daten. Aber die Indikatoren haben Werte und das
+schon seit Monaten also die Daten sind da aber es gibt ein Fehler der sie
+nicht dareinschreibt."*
+
+**Reproduktion:** Playwright-Skript iteriert nach dem Laden ueber ALLE
+Indikatoren aller Assets und zaehlt, wie viele einen aktuellen Wert
+(`ind.research.actual`) aber `ind.chartHist.length<2` (= "Not enough
+history yet" statt Balken) haben: **173 von 481** (36%). Ein Teil davon
+(Bond-Yields, COT-Kennzahlen) ist strukturell erwartbar (eigene Feeds ohne
+`historyFull`-Konzept), der Rest - allen voran PMI-Reihen (Manufacturing/
+Services) ueber mehrere Waehrungen sowie einzelne CPI/PPI/NFP/JOLTS-
+Kennzahlen - hatte laut `ind_data.json` einen ganz frischen `actual`-Wert,
+aber `historyFull` entweder komplett leer oder bei genau 1 Punkt haengen
+geblieben, IDENTISCH ueber mehrere Waehrungen hinweg (starkes Indiz gegen
+"baut sich noch langsam auf", stattdessen fuer "wird nie erweitert").
+
+**Root Cause** (`.github/workflows/update-ff-calendar.yml`, Schritt "Fetch
+TradingView wide window for indicator values", Block "PMI aus den
+Trading-Economics-Laenderseiten nachtragen", ~Zeile 1752): TradingView
+liefert fuer S&P-Global-/HCOB-/Jibun-Bank-PMI (EUR/GBP/JPY/AUD/CAD/CHF,
+dokumentiert unter "PMI-FEED" oben in dieser Datei) **nie** ein Actual -
+seit 2026-08-09 uebernimmt darum ein dedizierter Trading-Economics-
+Laenderseiten-Scraper (`te_pages.json`) den aktuellen Wert direkt in
+`ind_data.json`. Dieser Merge-Block aktualisierte dabei zwar `actual`/
+`forecast`/`previous`/`date` bei jedem neuen Release korrekt, liess
+`historyFull` aber unangetastet (`historyFull:(sameSeries&&cur&&
+cur.historyFull)||undefined` - reine UEBERNAHME, kein Anhaengen). Der
+normale Akkumulations-Pfad weiter oben im selben Skript (der `historyFull`
+sonst ueber `v._newHistFull` aus dem TradingView-Kalender fortschreibt)
+sieht diese Reihen nie, weil TradingView fuer sie ja gar kein Actual im
+Kalender fuehrt - beide Pfade zusammen ergaben: der aktuelle Wert wurde
+brav aktuell gehalten, die Verlaufs-Historie wuchs aber seit Einfuehrung
+des TE-Fallbacks (2026-08-09, "schon seit Monaten") kein einziges Mal.
+
+**Fix:** derselbe Merge-Block haengt den frisch gescrapten Punkt
+(`[e.date,e.actual,e.forecast]`) jetzt selbst an `historyFull` an (nach
+Datum entdoppelt via `byDate`-Objekt wie im Haupt-Akkumulationspfad,
+3-Jahres-Fenster, chronologisch sortiert). Die bestehende "Historie NICHT
+erben bei Reihenwechsel"-Regel (`sameSeries=!e.label`, z.B. AUD Retail
+Sales -> Household Spending) bleibt erhalten, startet aber jetzt bewusst
+NEU mit dem einen aktuellen Punkt statt fuer immer leer zu bleiben.
+
+**Geprueft:** `python3 -c "import yaml..."` + `bash -n` des extrahierten
+Run-Blocks + `node --check` des extrahierten `node -e`-Skripts - alle
+gruen. Zusaetzlich eigenstaendiger Node-Test (`mergeStep()`, dieselbe
+Logik wie im Workflow, mit synthetischen `te_pages.json`-Eintraegen ueber
+3 simulierte Laeufe): `historyFull` waechst jetzt 1 -> 2 -> 3 Punkte statt
+bei 1 haengen zu bleiben; der Reihenwechsel-Fall startet korrekt frisch
+mit dem neuen Punkt statt leer zu bleiben. Der eigentliche Live-Lauf
+gegen tradingeconomics.com laesst sich in dieser Umgebung nicht nachstellen
+(kein Zugriff auf den GitHub-Actions-Runner) - die Wirkung zeigt sich beim
+naechsten planmaessigen Workflow-Lauf, danach sollten die betroffenen PMI-
+u.a. Indikatoren beim naechsten Release einen zusaetzlichen Chart-Punkt
+bekommen und ab dem zweiten TE-gestuetzten Release (>=2 Punkte) den Balken-
+Chart statt der "Not enough history yet"-Meldung zeigen.
+
+**Zweiter Wunsch in derselben Nachricht:** *"ich will das ich nicht mehr
+Indikatoren umbenennen kann gleiches gilt für alle anderen Namen usw das
+soll nur im Bearbeitungsmodus gehen."* Durchsucht: der einzige immer-aktiv
+per Texteingabe umbenennbare Namens-Eintrag in der App ist `.rub-inp` (der
+Kartenname, z.B. "Inflation"/"Interest Rates" - einzelne Indikatoren selbst
+haben gar kein eigenes Namensfeld, nur Verschieben/Loeschen/Info, bereits
+laenger hinter `.ind-edit-ctrls`/`indEditMode` versteckt). Alle anderen
+Rename-Wege in der App (Stack umbenennen im Sidebar-Menue, Widget
+umbenennen im Dashboard) laufen schon ueber einen expliziten Button+Prompt/
+Modal-Dialog, nicht ueber ein staendig fokussierbares Textfeld - dort ist
+ein versehentliches Umbenennen strukturell nicht moeglich. `.nc-inp`/
+`.pcc-name` sind tote CSS-Klassen ohne zugehoeriges HTML (Rest einer
+entfernten Funktion) - nicht angefasst, ausserhalb des gemeldeten Problems.
+
+**Fix:** `body:not(.ind-edit-mode) .rub-inp{pointer-events:none;cursor:
+default}` in `index.html` - reines CSS, dieselbe Ein/Aus-Schaltung wie
+`.ind-edit-ctrls` (kein Re-Render beim Umschalten noetig, der Name bleibt
+jederzeit sichtbar, nur nicht mehr fokussierbar/tippbar ausserhalb des
+5s-Long-Press-Bearbeitungsmodus). Playwright bestaetigt: Tippen ohne
+Bearbeitungsmodus aendert den Namen nicht, mit aktiviertem Modus
+(`toggleIndEditMode()`) funktioniert es wie vorher.
+
+**Geprueft:** `node check/all.js` komplett gruen (13 Waechter).
+
+---
+
+## 2026-09-03 — Perfect Rezept: Sync-Diagnose Stufe für Stufe, härteres Setup-SQL (REZEPT-CHECK-11)
+
+Rückfrage des Nutzers zum vorigen Eintrag, wörtlich: *„Geht nicht guck Ma was
+da ist. Aber es liegt nicht daran das supabase vlt voll ist oder? Und bei fx
+Analyst pro geht es ja also was ist da überhaupt anders warum geht das nicht
+mach einfach alles gleich"* — mit Screenshot des Warnhinweises.
+
+### Die drei Antworten, jetzt auch in der App
+
+**Voll ist die Datenbank nicht.** Eine volle Supabase-Instanz meldet
+`53100 disk full` bzw. schaltet das Projekt read-only (`25006`,
+*cannot execute INSERT in a read-only transaction*). Hier steht `42501`,
+*new row violates row-level security policy* — eine Berechtigungsregel, kein
+Speicherproblem. (Bei 3 Rezepten wären es ohnehin Kilobyte von 500 MB.)
+
+**Was anders ist als beim FX Analyst Pro:** nichts an URL, Schlüssel,
+Tabelle oder Kopfzeilen — nur die Operation. FX **aktualisiert** seine längst
+vorhandene Zeile `<syncId>`; sein Upsert landet also im `UPDATE`-Zweig, für
+den eine UPDATE-Policy genügt. Perfect Rezept muss seine Zeilen
+`<syncId>:rez:*` erst **anlegen**, und für `INSERT` fehlt die Policy.
+
+**„Mach einfach alles gleich" geht nicht** — und der Grund ist nicht
+Bequemlichkeit: Alles in die FX-Zeile zu schreiben hieße, dass `cloudPush()`
+des FX Analyst Pro die Rezepte beim nächsten Autosave überschreibt (es
+ersetzt `data` komplett) und dass jedes Titelbild bei jedem
+Kalender-Refresh erneut hochgeht. Eine INSERT-Policy ist der einzige Weg;
+DDL/Policies kann nur der Projektbesitzer im Supabase-Dashboard setzen, kein
+Client mit publishable Key.
+
+### Änderungen
+
+- **`testConnection()` meldet jede Stufe einzeln:**
+  `Read ✓ · Update existing row ✓ · Create new row ✗ — …`. Die Update-Stufe
+  schreibt die `id` der FX-Zeile auf sich selbst (ändert nichts) und beweist
+  damit, dass Schlüssel, URL und Tabelle in Ordnung sind. Scheitert danach nur
+  *Create new row*, ist die Diagnose eindeutig — und die Meldung nennt genau
+  diesen Unterschied zum FX Analyst Pro.
+- **Setup-SQL gehärtet:** zusätzlich `grant select, insert, update, delete …
+  to anon, authenticated`, ein `DO`-Block, der **jede** vorhandene Policy auf
+  `fx_sync` entfernt (eine einzige übrig gebliebene, erst recht eine
+  restriktive, blockiert weiter das Anlegen — das benannte Löschen der
+  vorigen Fassung hätte sie stehen lassen), danach eine `for all`-Policy.
+- Der Warnhinweis im Fenster sagt jetzt in einem Satz, dass es weder an einer
+  vollen Datenbank noch am Schlüssel liegt, und warum FX weiterläuft.
+- `check/rezept.js` prüft das SQL auf `for all`/`for insert` **mit**
+  `with check` und auf `enable row level security`; neuer Schnellmodus
+  `--static` (Kontrast, Sync-Diagnose, Service Worker) für Mutationstests in
+  Sekunden statt Minuten.
+
+Wieder gegen den nachgebauten Endpunkt reproduziert (PATCH erlaubt, POST
+antwortet 401 + `42501` — exakt die gemeldete Lage): Ausgabe
+`Read ✓ · Update existing row ✓ · Create new row ✗ — … FX Analyst Pro keeps
+working because its row already exists …`, und mit erlaubtem INSERT
+`Read ✓ · Update existing row ✓ · Create new row ✓ · Delete ✓`.
+## 2026-09-02 (2) — Verlaufschart: 119 Indikatoren hatten eine Reihe, die nie gezeichnet wurde (VERSION-CHECK-465)
+
+**Bugreport, woertlich:** *„Der fix hat nichts gebracht lös das Problem"* —
+mit Screenshot der NZD-Inflationskarte, in dem unter **Core CPI** und
+**PPI q/q** weiterhin „Not enough history yet" stand.
+
+**Warum der erste Fix (Eintrag direkt oberhalb) nicht reichte:** er hat den
+Workflow repariert (der TE-Fallback haengt seinen Punkt jetzt an
+`historyFull` an) — das wirkt aber erst ab dem naechsten Release und nur
+fuer Kalender-Indikatoren. Der Screenshot zeigte etwas anderes: Indikatoren,
+deren Reihe ueberhaupt nicht aus dem Kalender-Feed kommt.
+
+**Reproduktion (Playwright, echter Stand, 481 Indikatoren mit Wert):**
+173 ohne Chart, aufgeschluesselt nach der Quelle des angezeigten Werts:
+
+| Quelle | ohne Chart | Reihe vorhanden? |
+|---|---|---|
+| Anleiherenditen 2Y/10Y | 48 | **ja** — `bond_data.json` → `[base].series` (taeglich) |
+| 2Y/10Y-Spread | 24 | **ja** — exakt aus beiden Anleihe-Reihen (10Y − 2Y) |
+| COT (long%/short%/WoW) | 42 | **ja** — `cot_data.json` → `symbols[].history` (woechentlich) |
+| VIX / Fear&Greed / AAII | 5 | **ja** — `sentiment_data.json` → `series`/`history` |
+| Kalender mit kurzer historyFull (PMI & Co.) | 38 | teils — waechst ab dem naechsten Release |
+| kuratierte Einzelwerte (JOLTS, Avg Hourly Earnings, …) | 16 | **nein** — die Quelle liefert nur den aktuellen Stand |
+
+**Root Cause:** `ind.chartHist` wird ausschliesslich von `adoptChartHist()`
+aus `ind_data.json` (`historyFull`) gefuellt. Jeder Indikator, dessen Wert
+aus einem ANDEREN Feed stammt, hatte deshalb strukturell nie einen Chart —
+obwohl die Karte darueber ihren aktuellen Wert aus genau dem Feed zieht, der
+die komplette Reihe mitliefert. Exakt das meinte der Nutzer mit „die Daten
+sind da, aber ein Fehler schreibt sie nicht rein".
+
+**Fix 1 — `indChartSeries(ind,symId)` (neu, `js/main.js`):** liefert die
+Chartpunkte und faellt der Reihe nach zurueck auf
+`ind.chartHist` → Anleihe-`series` → Spread aus beiden Anleihe-Reihen →
+`cotHistRowMetrics()` ueber `cot_data.json`-History (dieselbe Funktion wie
+die COT-Verlaufstabelle, keine zweite Rechnung daneben) → Sentiment-
+`series`/`history` → `valHist`/`valDates`. Die abgeleiteten Reihen werden
+**bewusst nicht** in `ind.chartHist` persistiert: sie kommen bei jedem Laden
+ohnehin frisch aus dem Feed, wuerden im `snap()`-Schnappschuss (Undo-Stapel
+UND Cloud-Sync) aber zehntausende Punkte mitschleppen. Ergebnis gemessen:
+**173 → 54** ohne Chart (bond 48, curated/Spread 24, cot 42, sent 5 gefixt).
+
+**Fix 2 — Darstellung nach Datenart:** Release-Reihen (CPI-Ueberraschung,
+GDP, PMI) bleiben unveraendert Balken ab der Nulllinie. LEVEL-Reihen
+(Rendite 3,6 %, COT-Long-Anteil 71 %, VIX 15) bekommen eine Linie mit
+min/max-Skala und dem ersten Punkt des Fensters als Bezugslinie — als Balken
+ab 0 waren 81 Handelstage ein nahezu gleich hoher blauer Block, in dem die
+eigentliche Bewegung (3,59 % → 3,69 %) unsichtbar blieb (per Screenshot
+verifiziert, deshalb ueberhaupt aufgefallen).
+
+**Fix 3 — Datumsachse:** unter ~13 Monaten Fensterbreite Tag+Monat statt
+Monat+Jahr (eine Wochenreihe zeigte „Mar 26, Mar 26, Apr 26 …"), und das
+Label des letzten Punkts entfaellt, wenn es mit dem vorherigen kollidiert
+(rechter Rand zeigte „Aug 26Aug 26" uebereinander).
+
+**Fix 4 — ehrlicher Leertext:** ein kuratierter Einzelwert ohne Reihe bekam
+denselben Satz „builds up automatically as new releases come in" wie ein
+Feed-Indikator — ein Versprechen, das dort nie eingeloest wird. Jetzt sagt
+er, dass die Quelle nur den aktuellen Stand veroeffentlicht. Es wird
+weiterhin nichts erfunden: fuer die 16 Faelle ohne Reihe bleibt der Chart
+leer (Grundsatz „nie schaetzen/raten", CLAUDE.md Regel 4).
+
+**Fix 5 — abgeschnittener Hinweissatz (aus demselben Screenshot):** der Satz
+stand in EINER Zeile und wurde am Kartenrand abgeschnitten. Ursache: die
+Indikator-Tabelle setzt `white-space:nowrap` fuer ihre Zellen (Werte sollen
+nicht umbrechen), das vererbt sich bis in die Detailzeile. Gemessen 787px
+Text in 439px Zelle, Karte 804px Inhalt in 472px Rahmen. `.ind-hist-empty`
+bekommt jetzt `white-space:normal` — danach bei 820/1024/1180px Viewport
+`scrollWidth === clientWidth`, kein Kartenueberlauf mehr.
+
+**Geprueft:** `node --check`; Playwright-Messung vorher/nachher (173 → 54,
+Aufschluesselung je Quelle oben); Screenshots von Anleihe- und COT-Chart
+(Linie mit lesbarer Bewegung), Regressions-Screenshot der USD-CPI-Reihe
+(unveraendert Balken + rote Forecast-Linie); Ueberlaufmessung an drei
+Viewports. `node check/all.js` komplett gruen.
+
+---
+
+## 2026-09-03 — Perfect Rezept: tägliche Essensvorschläge aus vier Quellen (REZEPT-CHECK-12)
 
 Nutzer: *„irgendeine Quelle die jeden Tag neue essenvorschläge mit direkt
 erstellbaren Rezepten liefert muss es geben … stopp nicht bei einer gib mir

@@ -80,6 +80,50 @@ function pruefeSyncKopfzeilen() {
     if (norm(m[1]) !== norm(mf[1]))
       fail('SYNC', `Die Kopfzeilen weichen vom FX Analyst Pro ab: Rezept [${norm(m[1])}] vs FX [${norm(mf[1])}]. Beide reden mit derselben Gegenstelle.`);
   }
+  pruefeSyncDiagnose(s);
+}
+
+// ── Statisch: die Sync-Diagnose muss den Rumpf lesen, nicht nur den Status ─
+// Nutzer-Bugreport 2026-09-02 (zweiter Anlauf): die App meldete "API key
+// rejected (401)" und schickte den Nutzer einen neuen Schluessel holen -
+// im Rumpf stand aber Postgres 42501, "new row violates row-level security
+// policy". PostgREST antwortet auf eine RLS-Verletzung naemlich nur DANN
+// mit 403, wenn ein JWT mitkam; bei einer anonymen Anfrage (nur `apikey`,
+// genau so sprechen beide Apps) mit 401. Wer hier nur den Statuscode
+// auswertet, diagnostiziert zuverlaessig das falsche Problem.
+// Zweitens: ein Verbindungstest, der nur liest, uebersieht genau diesen
+// Fall - die Rezept-App muss NEUE Zeilen anlegen, der FX Analyst Pro
+// aktualisiert bloss seine bestehende.
+function pruefeSyncDiagnose(s) {
+  const h = s.match(/async function httpFehler\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+  if (!h) { fail('SYNC', 'httpFehler() in js/rezept/store.js nicht gefunden'); return; }
+  // Bewusst auf `42501` und nicht auf "row-level security" gepruft: der Text
+  // steht auch in der 403-Meldung, eine Mutation koennte sich damit an der
+  // Reihenfolge-Pruefung vorbeimogeln.
+  if (!/42501/.test(h[1]))
+    fail('SYNC', 'httpFehler() wertet den Fehlercode im Rumpf nicht aus — eine RLS-Verletzung kommt als 401 an und wuerde als Schluesselfehler gemeldet.');
+  const statusZuerst = h[1].indexOf('res.status===401');
+  const codeZuerst = h[1].indexOf('42501');
+  if (statusZuerst >= 0 && codeZuerst >= 0 && codeZuerst > statusZuerst)
+    fail('SYNC', 'httpFehler() prueft den Status VOR dem Fehlercode — 401 gewinnt dann gegen 42501 und die Meldung ist wieder falsch.');
+  const t = s.match(/export async function testConnection\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+  if (!t) { fail('SYNC', 'testConnection() nicht gefunden'); return; }
+  if (!/putRow\(/.test(t[1]))
+    fail('SYNC', 'testConnection() schreibt nichts — ein reiner Lesetest meldet "Connection works", waehrend jeder Upload an der RLS-Regel scheitert.');
+  // Das SQL muss dem Schluessel das ANLEGEN erlauben - `for all` oder
+  // `for insert`, in beiden Faellen mit `with check`. Ohne das loest es
+  // genau den Fehler nicht, wegen dem es existiert.
+  const sql = (s.match(/export const SETUP_SQL=`([\s\S]*?)`;/) || [])[1] || '';
+  if (!sql) fail('SYNC', 'SETUP_SQL fehlt — dann steht dem Nutzer im Fehlerfall nichts zum Kopieren bereit.');
+  else if (!/for\s+(all|insert)/i.test(sql) || !/with check/i.test(sql))
+    fail('SYNC', 'SETUP_SQL erteilt kein INSERT-Recht (`for all`/`for insert` mit `with check`) — genau das fehlt beim gemeldeten Fehler.');
+  else if (!/enable row level security/i.test(sql))
+    fail('SYNC', 'SETUP_SQL schaltet RLS nicht ein.');
+  const app = fs.readFileSync('js/rezept/app.js', 'utf8');
+  if (!/SETUP_SQL/.test(app) || !/rezCopySql/.test(app))
+    fail('SYNC', 'Die Einstellungen zeigen das Setup-SQL nicht an (SETUP_SQL/rezCopySql fehlen in app.js).');
+  if (!/rezCopySql[,}]/.test(app.slice(app.indexOf('Object.assign(window'))))
+    fail('SYNC', 'rezCopySql fehlt in der window-Bruecke — der Knopf wuerde beim Klick still ein ReferenceError werfen.');
 }
 
 // ── Statisch: der Service Worker darf den Programmcode nicht cachen ─────
@@ -201,6 +245,15 @@ function pruefeKontrast() {
   pruefeSyncKopfzeilen();
   pruefeServiceWorker();
   pruefeFeedAufbau();
+  // --static: nur die Stufen ohne Browser (Kontrast, Sync-Diagnose, Service
+  // Worker, Aufbau des Vorschlags-Laufs). Damit laesst sich eine Regel in
+  // Sekunden gegen eine Mutation pruefen, statt den kompletten Browser-Lauf
+  // abzuwarten.
+  if (process.argv.includes('--static')) {
+    if (F.length) { console.error('[rezept:static] FEHLER:\n' + F.map(f => '  - ' + f).join('\n')); process.exit(1); }
+    console.log(`[rezept:static] ok (${themeAnzahl} Themes, Sync-Kopfzeilen/-Diagnose, Service Worker, Vorschlags-Lauf)`);
+    process.exit(0);
+  }
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rezcheck-'));
   const foto = path.join(tmp, 'dish.png');
   fs.writeFileSync(foto, testPng());

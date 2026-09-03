@@ -364,3 +364,36 @@ Manufacturing PMI"**, und `final ` stand nicht in der Praefix-Liste - EUR
 war die EINZIGE Waehrung mit null Treffern. Bei kuenftigen Aenderungen an
 diesem Muster IMMER gegen die echten FF-Titel testen, nicht nur gegen den
 theoretischen Reihennamen.
+
+## ⚠️ Verlaufschart: die Reihe kommt aus DEMSELBEN Feed wie der Wert
+
+Merksatz aus dem Bugreport 2026-09-02 (Details: `docs/CHANGELOG.md`):
+**`ind.chartHist` ist NUR der Kalender-Pfad** — es wird ausschliesslich von
+`adoptChartHist()` aus `ind_data.json` (`historyFull`) gefuellt. Ein
+Indikator, dessen angezeigter Wert aus einem ANDEREN Feed stammt, bekommt
+darueber nie einen Chart, egal wie lange man wartet.
+
+Wer einen Indikator an eine neue Quelle haengt, muss deshalb BEIDES
+anbinden — den aktuellen Wert und die Reihe. Fuer die Reihe ist
+`indChartSeries(ind,symId)` (`js/main.js`) die eine Stelle; sie faellt der
+Reihe nach zurueck auf:
+
+| Quelle | Feld | Indikatoren |
+|---|---|---|
+| `ind.chartHist` | `historyFull` aus `ind_data.json` | Kalender-Indikatoren |
+| `bond_data.json` | `[ccy][base].series` | 2Y/10Y Bond Yield |
+| dieselben zwei Reihen | 10Y − 2Y je Tag | 2Y/10Y Spread |
+| `cot_data.json` | `symbols[ccy].history` via `cotHistRowMetrics()` | COT long%/short%/WoW |
+| `sentiment_data.json` | `series` bzw. `history` (AAII) | VIX, Fear&Greed, AAII |
+| `ind.valHist`/`valDates` | lokal mitgeschriebene Releases | Kalender-Indikatoren mit noch kurzer `historyFull` |
+
+Zwei Punkte, die dabei bewusst so sind:
+1. **Abgeleitete Reihen werden NICHT in `ind.chartHist` persistiert.** Sie
+   kommen bei jedem Laden frisch aus dem Feed; im `snap()`-Schnappschuss
+   (Undo-Stapel UND Cloud-Sync) waeren es zehntausende Punkte extra.
+2. **Ohne Reihe wird keine erfunden.** Kuratierte Einzelwerte
+   (`IND_RESEARCH_DATA`) haben nur einen Stand — dort bleibt der Chart leer,
+   mit einem Hinweistext, der genau das sagt (kein „baut sich auf", das dort
+   nie eintritt). Undatierte Punkte aus `valHist` (Erstkontakt-Seeding, siehe
+   `trackIndValues()`) zaehlen ebenfalls nicht: ohne echtes Release-Datum
+   gibt es keinen Punkt auf der Zeitachse.

@@ -499,6 +499,12 @@ body{
 .set-adv summary::-webkit-details-marker{display:none}
 .set-adv summary::before{content:'▸';font-size:11px;transition:transform .15s}
 .set-adv[open] summary::before{transform:rotate(90deg)}
+/* Das SQL fuer die Datenbank-Regeln (Einstellungen -> Cloud sync). Monospace
+   und scrollbar, weil man es unveraendert nach Supabase kopiert. */
+.sql-box{margin:8px 0;padding:10px;border:1px solid var(--bd);border-radius:var(--rss);background:var(--bg4);
+  color:var(--t2);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:var(--fs-xs);
+  line-height:1.5;white-space:pre;overflow:auto;max-height:190px;-webkit-overflow-scrolling:touch}
+.sql-warn{border-left:3px solid var(--accent);padding-left:9px}
 .trash-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)}
 .trash-row:last-child{border-bottom:none}
 .trash-thumb{width:44px;height:44px;border-radius:var(--rss);object-fit:cover;flex-shrink:0;background:var(--bg4);border:1px solid var(--bd)}
@@ -1045,11 +1051,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-10 - Neu: taegliche Essensvorschlaege in der Inspiration. Ein Lauf pro Tag sammelt aus vier Quellen - TheMealDB, Spoonacular (nur mit hinterlegtem Schluessel), eigenen Rezeptseiten ueber deren schema.org-Markup und YouTube-Kanaelen - und legt sie als Vorrat ab. Die App zeigt immer drei nebeneinander; "Show 3 more" blaettert weiter, merkt sich das Gesehene geraeteuebergreifend und holt live bei TheMealDB nach, wenn der Vorrat leer ist. Sortierbar nach Quelle UND nach Art: mit Fleisch, ohne Fleisch, Fisch, Nudeln, Reis, Suppe, Salat, Kartoffel, Teig, Suesses, Fruehstueck - erkannt aus Titel und Zutaten, deutsch wie englisch. Ein Vorschlag wird mit einem Klick zum fertig ausgefuellten Rezept oder zur gespeicherten Idee.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-12 - Neu: taegliche Essensvorschlaege in der Inspiration. Ein Lauf pro Tag sammelt aus vier Quellen - TheMealDB, Spoonacular (nur mit hinterlegtem Schluessel), eigenen Rezeptseiten ueber deren schema.org-Markup und YouTube-Kanaelen - und legt sie als Vorrat ab. Die App zeigt immer drei nebeneinander; "Show 3 more" blaettert weiter, merkt sich das Gesehene geraeteuebergreifend und holt live bei TheMealDB nach, wenn der Vorrat leer ist. Sortierbar nach Quelle UND nach Art: mit Fleisch, ohne Fleisch, Fisch, Nudeln, Reis, Suppe, Salat, Kartoffel, Teig, Suesses, Fruehstueck - erkannt aus Titel und Zutaten, deutsch wie englisch. Ein Vorschlag wird mit einem Klick zum fertig ausgefuellten Rezept oder zur gespeicherten Idee. (REZEPT-CHECK-11 aus einer parallelen Sitzung steckt mit drin: der Verbindungstest meldet jede Stufe einzeln - Lesen, Aktualisieren, Neuanlegen - und das Setup-SQL ist strenger.)">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-10</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-12</span>
     </span>
   </div>
   <div class="hdr-r">

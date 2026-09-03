@@ -2972,6 +2972,20 @@ export function rezOpenSettings(){
         +`<div class="set-row-s" style="margin-bottom:10px">Supabase → Project Settings → API. Use the publishable/anon key, never the secret one.</div>`
         +`<button class="btn btn-primary" onclick="rezSaveCloud()">Save credentials</button>`
       +`</details>`
+      // ⚠ Der haeufigste Sync-Fehler ist KEIN Schluesselproblem, sondern eine
+      // fehlende Datenbank-Regel: Supabase laesst diesen Schluessel keine
+      // NEUE Zeile anlegen (Postgres 42501). Der FX Analyst Pro merkt davon
+      // nichts, weil seine Zeile schon existiert - die Rezept-App muss
+      // welche anlegen. Deshalb steht das SQL hier zum Kopieren, und bei
+      // erkanntem Regel-Fehler klappt der Abschnitt von selbst auf.
+      +`<details class="set-adv"${S.state.rlsBlocked?' open':''}><summary>Database setup (SQL)</summary>`
+        +(S.state.rlsBlocked
+          ?`<div class="set-row-s sql-warn" style="margin-bottom:8px"><b>Supabase is blocking new rows for this key.</b> Not a full database, not a bad key — the table is missing an INSERT policy. FX Analyst Pro keeps working because its row already exists and it only updates that row; Perfect Rezept has to create its own rows. Run this once in Supabase → SQL editor, then press Test.</div>`
+          :`<div class="set-row-s" style="margin-bottom:8px">Creates table <b>fx_sync</b> and the row-level security policies both apps need. Running it again is harmless.</div>`)
+        +`<pre class="sql-box" id="rezSqlBox">${escH(S.SETUP_SQL)}</pre>`
+        +`<div class="set-row-s" style="margin-bottom:10px">Anyone holding this publishable key can read and write these rows — that is how both apps work, the key sits in the browser. Keep the Sync ID hard to guess and never paste the secret key.</div>`
+        +`<button class="btn" onclick="rezCopySql()">Copy SQL</button>`
+      +`</details>`
     +`</div>`
     +`<div class="set-sec"><div class="set-sec-h">Trash (${trash.length})</div>`
       +(trash.length?trash.map(t=>
@@ -3009,8 +3023,36 @@ export async function rezSyncNow(){
 export async function rezTestCloud(){
   const el=$('rezSyncStatus');if(el)el.textContent='Testing…';
   const r=await S.testConnection();
+  // Bei einem Regel-Fehler das Fenster neu zeichnen, damit "Database setup"
+  // offen steht - sonst liest der Nutzer einen Verweis auf einen Abschnitt,
+  // den er selbst suchen muss.
+  if(!r.ok&&S.state.rlsBlocked)rezOpenSettings();
   const el2=$('rezSyncStatus');if(el2)el2.textContent=(r.ok?'✓ ':'✗ ')+r.msg;
-  toast(r.ok?'Connection works':'Connection failed');
+  toast(r.ok?'Connection works':(r.rls?'Database rules block writing':'Connection failed'));
+}
+// ⚠ Ohne Fallback waere dieser Knopf auf genau den Geraeten tot, auf denen
+// er gebraucht wird: navigator.clipboard fehlt in unsicherem Kontext und
+// wirft in aelteren iOS-Safaris. Dann wird der Text markiert, damit der
+// Nutzer ihn wenigstens von Hand kopieren kann.
+export async function rezCopySql(){
+  const box=$('rezSqlBox');
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(S.SETUP_SQL);
+      toast('SQL copied — paste it into Supabase → SQL editor');
+      return;
+    }
+    throw new Error('no clipboard');
+  }catch(e){
+    try{
+      const sel=window.getSelection(),rng=document.createRange();
+      rng.selectNodeContents(box);sel.removeAllRanges();sel.addRange(rng);
+      const ok=document.execCommand&&document.execCommand('copy');
+      toast(ok?'SQL copied — paste it into Supabase → SQL editor':'Could not copy — the SQL is selected, copy it manually');
+    }catch(e2){
+      toast('Could not copy — select the SQL above and copy it manually');
+    }
+  }
 }
 export async function rezSaveCloud(){
   try{
@@ -3103,7 +3145,7 @@ S.onChange(what=>{
 Object.assign(window,{
   rezShowPage,rezOpenDetail,rezOpenForm,rezCloseModal,rezRequestClose,rezSaveForm,rezOpenSettings,
   rezKeepEditing,rezDiscardClose,rezSaveClose,
-  rezSetTheme,rezToggleAnim,animAn,rezSyncNow,rezTestCloud,rezSaveCloud,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
+  rezSetTheme,rezToggleAnim,animAn,rezSyncNow,rezTestCloud,rezSaveCloud,rezCopySql,rezRestore,rezDeleteForever,rezSwitchApp,rezToggleFav,
   rezSetQuery,rezSetMaxMin,rezSetTag,rezSetTagIdx,rezToggleFavFilter,rezClearFilters,rezFocusSearch,
   rezAddFromOverview,rezOpenRowMenu,rezCloseRowMenu,rezAskDelete,rezConfirmDelete,
   rezFormField,rezFormTags,rezSetIngredient,rezAddIngredient,rezDelIngredient,

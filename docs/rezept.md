@@ -412,6 +412,50 @@ diese Falle nicht zurückkommt.
    nachsieht. Zugangsdaten und ein Verbindungstest stehen in den
    Einstellungen **beider** Apps — eine Reparatur darf keinen App-Wechsel
    verlangen.
+12b. **⚠ Der Statuscode allein lügt — erst den Fehlercode im Rumpf lesen.**
+   PostgREST beantwortet eine verletzte Row-Level-Security-Regel nur dann
+   mit **403**, wenn ein JWT mitkam; bei einer anonymen Anfrage (nur
+   `apikey` — genau so sprechen beide Apps) mit **401**. Der Bugreport vom
+   2026-09-02 lautete deshalb wörtlich „API key rejected (401)… `{"code":
+   "42501", … "new row violates row-level security policy for table
+   \"fx_sync\""}`" — der Schlüssel war die ganze Zeit in Ordnung, die App
+   schickte den Nutzer trotzdem einen neuen holen. `httpFehler()` wertet
+   seither **zuerst** `code`/`message` aus dem Rumpf aus (`42501` → RLS,
+   `42P01`/404 → Tabelle fehlt) und erst danach den Status;
+   `check/rezept.js` prüft die Reihenfolge statisch.
+12c. **Der Verbindungstest meldet JEDE Stufe einzeln** — *Read* / *Update
+   existing row* / *Create new row* / *Delete*. Genau diese Aufschlüsselung
+   beantwortet die Rückfrage des Nutzers (*„bei FX Analyst Pro geht es ja,
+   was ist da überhaupt anders"*): Die Update-Stufe schreibt die `id` der
+   FX-Zeile auf sich selbst (ändert also nichts) und beweist, dass Schlüssel,
+   URL und Tabelle in Ordnung sind; scheitert nur *Create new row*, fehlt
+   ausschließlich das INSERT-Recht. Der FX Analyst Pro kommt ohne aus, weil
+   seine Zeile existiert — die Rezept-App nicht.
+   **⚠ Nicht wegprogrammierbar:** Rezeptdaten stattdessen in die vorhandene
+   FX-Zeile zu schreiben scheitert doppelt — `cloudPush()` des FX Analyst Pro
+   ersetzt `data` bei jedem Push komplett (die Rezepte wären beim nächsten
+   FX-Autosave weg), und die Bilder lägen wieder im FX-Blob, den jeder
+   Kalender-Refresh neu hochlädt. Eine INSERT-Policy ist der einzige Weg.
+   Vorgeschichte dazu: Ein reiner `select`-Test meldete „Connection works",
+   während jeder Upload scheiterte — ein Lesetest beweist nichts über das
+   Schreiben. `testConnection()` legt deshalb eine echte Probezeile an
+   (`…:rez:selftest:<zufall>`) und räumt sie wieder weg.
+12d. **Die Datenbank-Regeln stehen als SQL in der App**, unter *Settings →
+   Cloud sync → Database setup* (`SETUP_SQL` in `js/rezept/store.js`, Knopf
+   *Copy SQL*). Der Abschnitt klappt bei erkanntem Regel-Fehler von selbst
+   auf (`state.rlsBlocked`). Das SQL legt `fx_sync` an, erteilt `anon` die Tabellenrechte, **entfernt
+   per `DO`-Block JEDE vorhandene Policy** (eine einzige übrig gebliebene —
+   erst recht eine restriktive — blockiert weiter das Anlegen) und setzt eine
+   `for all`-Policy — mehrfaches Ausführen ist harmlos. Wer den
+   publishable Key hat, kann diese Zeilen lesen und schreiben; das ist die
+   Architektur beider Apps (der Schlüssel steht im Browser) und steht als
+   Hinweis direkt neben dem SQL.
+12e. **Kein stiller Upload-Fehlschlag.** `pushRecipe()` gab im Fehlerfall
+   nur `false` zurück — das Verzeichnis ging danach hoch, oben stand
+   „Synced", und auf dem zweiten Gerät fehlte das Rezept. Der Fehler landet
+   jetzt in `state.lastError`, das Rezept bleibt in `_dirtyRecipes` (nächster
+   Versuch) und `flushSync()` meldet „N recipes could not be uploaded: …"
+   statt „Synced".
 13. **Ungespeicherte Eingaben werden nie kommentarlos verworfen.** Klick
    daneben, Escape und *Cancel* laufen alle über `rezRequestClose()`; bei
    Änderungen erscheint das zentrierte Fenster mit *Discard & close* (rot),

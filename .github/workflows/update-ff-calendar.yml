@@ -1750,9 +1750,30 @@ jobs:
                 // Prognosefehler waeren damit schlicht falsch. Lieber keine
                 // Historie als eine vermischte; sie baut sich neu auf.
                 const sameSeries=!e.label;
+                // Bugfix (Nutzer-Bugreport 2026-09-02, "viele Indikatoren haben
+                // Werte, aber der Verlaufschart bleibt leer"): dieser Zweig
+                // aktualisierte bisher NUR actual/forecast/previous/date,
+                // historyFull wurde nur uebernommen, nie ERWEITERT - fuer Reihen,
+                // die AUSSCHLIESSLICH ueber diesen TE-Fallback einen Actual
+                // bekommen (S&P/HCOB/Jibun-PMI etc., siehe docs/data-sources.md),
+                // wuchs historyFull dadurch NIE, obwohl der aktuelle Wert bei
+                // jedem neuen Release brav aktualisiert wurde - der Chart zeigte
+                // seit Monaten dauerhaft "Not enough history yet", obwohl echte,
+                // sich aendernde Werte da waren. Jetzt wird der frisch gescrapte
+                // Punkt genau wie beim Kalender-Pfad oben (v._newHistFull) an
+                // historyFull angehaengt (nach Datum entdoppelt, chronologisch
+                // sortiert, 3-Jahres-Fenster wie dort) - bei einem Reihenwechsel
+                // (!sameSeries) startet sie bewusst NEU mit nur diesem einen
+                // Punkt statt fuer immer leer zu bleiben.
+                const carriedHist=(sameSeries&&cur&&Array.isArray(cur.historyFull))?cur.historyFull:[];
+                const histByDate={};
+                carriedHist.forEach(h=>{if(h&&h[0])histByDate[h[0]]=h;});
+                histByDate[e.date]=[e.date,e.actual,e.forecast||null];
+                const histCutoff=Date.now()-1095*86400000;
+                const mergedHist=Object.values(histByDate).filter(h=>new Date(h[0]).getTime()>=histCutoff).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
                 out[e.country][ind]={actual:e.actual,forecast:e.forecast||((cur&&cur.date===e.date)?cur.forecast:null)||null,
                   previous:e.previous,date:e.date,event:(e.label||ind)+" (Trading Economics)",source:"tepage",
-                  history:(sameSeries&&cur&&cur.history)||undefined,historyFull:(sameSeries&&cur&&cur.historyFull)||undefined};
+                  history:(sameSeries&&cur&&cur.history)||undefined,historyFull:mergedHist};
                 if(!sameSeries&&cur&&cur.historyFull)console.log("[te->ind_data] "+e.country+" "+ind+": Historie der alten Reihe verworfen ("+cur.historyFull.length+" Punkte) - neue Reihe ist "+e.label);
                 tepN++;
                 console.log("[te->ind_data] "+e.country+" "+ind+" = "+e.actual+" ("+e.date+", "+(e.label||ind)+")");
