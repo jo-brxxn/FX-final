@@ -37,7 +37,7 @@ import { parseCaption } from '../js/rezept/import.js';
 import { themenOf } from '../js/rezept/themen.js';
 import { saeubere, zuSchritten, isoMinuten, zahl, idAus, normTitel, baue,
   feedLinks, jsonLdBloecke, findeRezept, bildAus, anweisungenAus,
-  mealDbToItem } from '../js/rezept/feed.js';
+  mealDbToItem, putzeSchritte } from '../js/rezept/feed.js';
 
 const HIER = path.dirname(fileURLToPath(import.meta.url));
 const WURZEL = path.resolve(HIER, '..');
@@ -310,6 +310,15 @@ export async function lauf() {
   // behoben ist. Kostet nichts: kein Netz, reine Rechnung.
   altItems.forEach(e => {
     if (!e || !e.title) return;
+    // ⚠ Auch die SCHRITTE nachputzen: der erste scharfe Lauf hat "step 1"
+    // und "Notes" als eigene Kochschritte in den Vorrat geschrieben. Die
+    // Reparatur am Zerleger allein haette die schon gespeicherten Eintraege
+    // nie erreicht.
+    const sauber = putzeSchritte(e.steps || []);
+    if (sauber.length !== (e.steps || []).length) {
+      log(`  Schritte geputzt: ${e.title.slice(0, 40)} ${(e.steps || []).length} -> ${sauber.length}`);
+      e.steps = sauber;
+    }
     const neu = themenOf(e.title, e.ingredients || [], e.tags || []);
     if (JSON.stringify(neu) !== JSON.stringify(e.themes || [])) {
       log(`  neu einsortiert: ${e.title.slice(0, 40)} ${JSON.stringify(e.themes)} -> ${JSON.stringify(neu)}`);
@@ -335,7 +344,7 @@ export async function lauf() {
   // ⚠ Der Vergleich enthaelt die Themen: sonst gilt ein Lauf, der nur neu
   // einsortiert hat, als "nichts Neues" und die Korrektur wird nie
   // geschrieben.
-  const kennung = l => l.map(i => i.id + ':' + (i.themes || []).join('+')).join(',');
+  const kennung = l => l.map(i => i.id + ':' + (i.themes || []).join('+') + ':' + (i.steps || []).length).join(',');
   const neuIds = kennung(items);
   const altIds = kennung(altItems);
   if (neuIds === altIds && altItems.length) {

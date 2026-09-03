@@ -1640,6 +1640,13 @@ function pruefeKontrast() {
     t('TheMealDB: Mengen an die Zutat', m && m.ingredients, ['1 kg Beef', '500 g Pastry']);
     t('TheMealDB: Themen', m && m.themes, ['meat']);
     t('TheMealDB: leere Antwort', F.mealDbToItem(null), null);
+    // ⚠ Bestehende Eintraege nachputzen: der Vorrat enthielt nach dem ersten
+    // scharfen Lauf "step 1" und "Notes" als eigene Kochschritte. Eine
+    // Reparatur nur am Zerleger haette die schon gespeicherten Eintraege nie
+    // erreicht - deshalb putzt jeder Lauf den ganzen Vorrat nach.
+    t('Schritte nachputzen', F.putzeSchritte(['step 1', 'Heat the oil.', 'step 2', 'Add pork.', 'Notes', 'Storing: 3 days.']),
+      ['Heat the oil.', 'Add pork.']);
+    t('echte Schritte bleiben', F.putzeSchritte(['Alles vermengen.', 'Backen.']), ['Alles vermengen.', 'Backen.']);
     return out;
   });
   zerlegt.filter(x => !x.ok).forEach(x =>

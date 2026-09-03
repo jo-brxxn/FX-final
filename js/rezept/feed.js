@@ -41,6 +41,16 @@ export function saeubere(s) {
 // Nachbemerkungs-Ueberschrift endet die Anleitung.
 const NUR_SCHRITTNUMMER = /^(?:step|schritt)\s*\d+\s*[:.]?$/i;
 const NACHBEMERKUNG = /^(?:notes?|notizen|hinweise?|storing|storage|aufbewahrung|tips?|tipps?|nutrition|naehrwerte|nährwerte|variations?|variationen)\s*[:.]?$/i;
+// ⚠ Dieselben Filter auf eine BESTEHENDE Schrittliste anwenden. Gebraucht
+// fuer den Vorrat: verbessert sich das Zerlegen, muessen auch die schon
+// gespeicherten Eintraege mitwandern - sonst steht "step 1" dort fuer
+// immer, obwohl die Ursache behoben ist (dieselbe Regel wie bei den Themen).
+export function putzeSchritte(schritte) {
+  let liste = (schritte || []).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
+  const bis = liste.findIndex(x => NACHBEMERKUNG.test(x));
+  if (bis > 0) liste = liste.slice(0, bis);
+  return liste.filter(x => !NUR_SCHRITTNUMMER.test(x));
+}
 export function zuSchritten(text) {
   const roh = saeubere(text);
   if (!roh) return [];
