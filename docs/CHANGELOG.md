@@ -9728,3 +9728,14 @@ methodenbedingt. Die Namenssuche griff mehrfach daneben („Tim Raue" →
 `Berliner Fernsehturm`, „Mario Kotaska" → ein Blutspende-Podcast, „Heiko
 Nieder" → `TISCH FREI`); dass das auffiel, ist der ausgewiesene Kanalname —
 ohne ihn wären fremde Kanäle unter Kochnamen in den Vorrat gewandert.
+
+**Runde 4 (Kochplattformen, Nutzer-Entscheidung nach dem Köche-Befund):**
+4 von 15 bestanden — essen & trinken, Kitchen Stories, Bon Appétit, NYT
+Cooking, alle mit vollständigen Zutaten, Schritten und Bild. Chefkoch (403)
+und Serious Eats (402) sperren den Abruf; EatSmarter und Brigitte liefern
+zwar einen Feed, darin stehen aber Themenseiten statt Rezepte. Vier deutsche
+WordPress-Seiten fielen mit „kein Feed gefunden" durch, was bei WordPress
+unwahrscheinlich ist — deshalb probiert der Lauf jetzt **nach** dem
+Seitenkopf noch die dokumentierten Standardpfade (`/feed/`, `?feed=rss2`,
+`/rss/`, `/index.xml`). Das ist kein Raten: ob dabei ein Feed herauskommt,
+prüft dieselbe Zeile wie beim Seitenkopf.

@@ -702,7 +702,11 @@ Kochs im Vorrat gelandet.
 
 Wo die Rezepte dieser Köche tatsächlich maschinenlesbar stehen, ist auf
 **Kochplattformen und Sender-/Verlagsseiten** — dort aber unter dem Namen der
-Plattform, nicht dem des Kochs.
+Plattform, nicht dem des Kochs. Runde 4 hat davon 15 geprüft, **4 haben
+bestanden** und sind eingetragen: essen & trinken (15 Zutaten / 15 Schritte im
+Test), Kitchen Stories (15/16), Bon Appétit (5/12), NYT Cooking (16/25) — alle
+mit Bild. Chefkoch (403) und Serious Eats (402) sperren den Abruf; EatSmarter
+und Brigitte haben einen Feed, darin stehen aber Themenseiten statt Rezepte.
 
 ### In der App: Dreierreihe mit Nachlade-Knopf
 

@@ -15,6 +15,30 @@
     "proSeite": 4,
     "seiten": [
       {
+        "name": "NYT Cooking",
+        "feed": "https://cooking.nytimes.com/next/api/v1/rss/recipes",
+        "richtung": "Runde 4 geprueft: 16/25 - der Feed liefert die Rezepte vollstaendig aus",
+        "pro": 3
+      },
+      {
+        "name": "Bon Appetit",
+        "feed": "https://www.bonappetit.com/feed/rss",
+        "richtung": "trendig, Runde 4 geprueft: 5/12",
+        "pro": 3
+      },
+      {
+        "name": "Kitchen Stories",
+        "feed": "https://www.kitchenstories.com/feed",
+        "richtung": "trendig, Runde 4 geprueft: 15/16",
+        "pro": 4
+      },
+      {
+        "name": "essen & trinken",
+        "feed": "https://www.essen-und-trinken.de/feed/rss/",
+        "richtung": "Verlagsseite, Runde 4 geprueft: 15 Zutaten/15 Schritte",
+        "pro": 4
+      },
+      {
         "name": "The Big Man's World",
         "feed": "https://thebigmansworld.com/feed/",
         "richtung": "high protein",
@@ -60,7 +84,7 @@
       }
     ],
     "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen. Optional \"pro\": N an einer Seite - dann holt der Lauf von DIESER Seite N Beitraege statt proSeite (1-6).",
-    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2 (Nutzer-Auswahl: gesund, trendig, proteinreich): The Big Man's World und Skinnytaste kamen dazu. Nicht bestanden: Eating Bird Food und Fit Foodie Finds (Feed ohne Beitragslinks), Downshiftology, Pick Up Limes und bevegt (kein schema.org-Rezept). Eat this! und Elavegan haben bestanden, wurden vom Nutzer aber nicht ausgewaehlt - sie stehen weiter in den Kandidaten."
+    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2 (Nutzer-Auswahl: gesund, trendig, proteinreich): The Big Man's World und Skinnytaste kamen dazu. Nicht bestanden: Eating Bird Food und Fit Foodie Finds (Feed ohne Beitragslinks), Downshiftology, Pick Up Limes und bevegt (kein schema.org-Rezept). Eat this! und Elavegan haben bestanden, wurden vom Nutzer aber nicht ausgewaehlt - sie stehen weiter in den Kandidaten. Runde 4 (Kochplattformen, nachdem 32 namentlich genannte Koeche 0 verwertbare Quellen ergaben): 4 von 15 bestanden - essen & trinken, Kitchen Stories, Bon Appetit, NYT Cooking, alle mit vollstaendigen Zutaten und Bild. Nicht bestanden: Chefkoch (403) und Serious Eats (402) sperren den Abruf; EatSmarter und Brigitte haben zwar einen Feed, darin stehen aber Themenseiten statt Rezepte; lecker.de, Koch-Mit, Springlane, Zucker&Jagdwurst, Emmi kocht einfach, Einfach Backen und Gaumenfreundin gaben keinen Feed her."
   },
   "youtube": {
     "an": true,

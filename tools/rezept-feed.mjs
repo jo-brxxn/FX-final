@@ -345,6 +345,17 @@ async function feedAdresse(k) {
     const xml = await hole(u, { ms: 15000 });
     if (xml && /<(rss|feed|channel)\b/i.test(xml)) return { url: u, xml, gefunden: true };
   }
+  // ⚠ Erst wenn der Seitenkopf NICHTS hergibt, die Standardpfade probieren.
+  // Vier deutsche WordPress-Seiten fielen in Runde 4 mit "kein Feed gefunden"
+  // durch - bei WordPress unwahrscheinlich; die ausgelieferte Startseite
+  // enthielt den alternate-Link schlicht nicht (Bot-Zwischenseite oder erst
+  // per JavaScript gesetzt). Das ist kein Raten: probiert wird nur der
+  // dokumentierte Standardpfad, und ob dabei ein Feed herauskommt, prueft
+  // dieselbe Zeile wie oben.
+  for (const u of [basis + 'feed/', basis + '?feed=rss2', basis + 'rss/', basis + 'index.xml']) {
+    const xml = await hole(u, { ms: 15000 });
+    if (xml && /<(rss|feed|channel)\b/i.test(xml)) return { url: u, xml, gefunden: true };
+  }
   return null;
 }
 
