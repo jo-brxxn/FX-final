@@ -9664,3 +9664,58 @@ Prosciutto, Speck und Salami bewusst **nicht**, die liegen als Garnitur oben
 drauf und tragen kein Gericht.
 
 Alle zehn Fälle stehen als Wächter-Fixtures in Stufe N.
+
+### 2026-09-03: Bilder ins Repo, Nachlade-Knopf, geprüfte Köche (REZEPT-CHECK-17)
+
+Nutzer: *„Genau die Bilder die man bei den suggestions sieht sollen genau so
+dann auch bei den Rezepten und Ideen und generell zu sehen sein"* — und eine
+Liste von 32 Köchen als Quellwunsch.
+
+**Zwei Bild-Fehler, erst gemessen, dann repariert.** Ein Vorschlag zeigte in
+der Karte ein Foto; im Rezept stand danach eine *gemalte* Karte und in der
+gemerkten Idee gar nichts. Ursache: ein Fremdbild lässt sich im Browser nur
+einbetten, wenn der fremde Server CORS erlaubt — Foodblogs tun das nicht.
+Gemessen mit einem lokalen Bildserver, einmal mit und einmal ohne
+CORS-Kopfzeile, und der Titelbild-Farbe als Beweis (Magenta = echtes Foto):
+
+| Bildserver | in der Karte | im Rezept (vorher) | in der Idee (vorher) |
+|---|---|---|---|
+| mit CORS | Foto | echtes Bild | **leer** |
+| ohne CORS | Foto | **erzeugte Karte** | **leer** |
+
+Gelöst wurde es dort, wo die Grenze nicht gilt: der tägliche Lauf holt jedes
+Bild auf dem Runner, rechnet es auf ≤ 900 px / ≤ 90 KB herunter und legt es
+als `rezept_bilder/<id>.jpg` neben den Vorrat. Same-origin, also klappt das
+Einbetten immer — dasselbe Foto überall, und offline. `imageSrc` behält die
+Herkunft, `raeumeBilder()` löscht, was zu keinem Eintrag mehr gehört.
+Bleibt doch eine Fernadresse übrig, wird **sie** übernommen; erfunden wird
+nur noch, wenn es gar keine Bildadresse gibt.
+
+**Der Nachlade-Knopf sah auf einem Gerät mit Netz tot aus.** Der Wächter auf
+dem Runner meldete „Button ohne Wirkung: rezFeedMore()", lokal war alles
+grün — der Unterschied war das Netz. `renderInspo()` stand hinter
+`await markFeedSeen()`, und das wartet auf IndexedDB und stößt den
+Cloud-Abgleich an. Nachgewiesen mit künstlich gebremster IndexedDB (alter
+Code: 400 ms nach dem Klick unverändert; neuer Code: bereits umgeblättert),
+und genau so als Wächter hinterlegt — die Bremse gehört zum Test, sonst wäre
+der Fall ohne Netz nicht auslösbar.
+
+**32 Köche geprüft, Ergebnis ernüchternd.** Von den aufgelösten Kanälen
+schreibt **keiner** eine Zutatenliste in die Videobeschreibung — Tim Mälzer,
+Jamie Oliver, Frank Rosin, Nelson Müller, Johann Lafer, Alexander Herrmann,
+Sizzle Brothers: je 0/0. Dieselbe Struktur wie bei den Fitness-Kanälen in
+Runde 2: TV- und Sterneköche verkaufen Bücher und Restaurantplätze, keine
+Rezepttexte. Drei eigene Fehler kamen dabei ans Licht und wurden behoben:
+YouTube drosselte die Namenssuche ab der zehnten Abfrage (22 Köche fielen
+unerkannt durch → Pause zwischen den Suchen), drei von vier geratenen
+`/feed/`-Adressen waren falsch (→ Feed-Adresse aus dem Seitenkopf lesen), und
+ein Restaurant-Vlog bestand die Prüfung mit 0 Zutaten / 2 Schritten, weil
+jeder Beschreibungsabsatz als Kochschritt zählte (→ Zutaten sind Pflicht).
+
+**Nebenbefund: `main` war seit zwei Commits rot**, ohne dass es jemandem
+aufgefallen wäre — lokal grün gemessen, gepusht, den CI-Lauf nicht
+nachgesehen. Neben dem Knopf-Fehler steckte dort eine CORS-Konsolenmeldung
+von `faireconomy.media`: der Kalender-Abruf probiert die Adresse direkt und
+über drei Proxys, jeder Weg in `try/catch` — die Meldung schreibt der Browser
+trotzdem, und kein JavaScript kann das unterdrücken. Ausgenommen ist jetzt
+genau diese Quelle, nicht CORS allgemein.

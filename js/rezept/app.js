@@ -1532,10 +1532,22 @@ export function rezFeedTheme(id){feedThema=(feedThema===id)?'':id;renderInspo();
 export async function rezFeedMore(){
   const liste=feedListe();
   const weg=liste.slice(0,FEED_PRO_ZUG).map(i=>i.id);
-  if(weg.length)await S.markFeedSeen(weg);
-  const rest=feedListe();
-  if(!rest.length)await feedNachladen();
+  // ⚠ ZUERST ZEICHNEN, DANN AUFS SPEICHERN WARTEN. markFeedSeen() setzt den
+  // Zustand synchron, wartet danach aber auf IndexedDB und stoesst den
+  // Cloud-Abgleich an - auf einem Geraet MIT Netz dauert das. Bis 2026-09-03
+  // stand renderInspo() dahinter: der Waechter auf dem Runner meldete
+  // "Button ohne Wirkung: rezFeedMore()", und fuer den Nutzer sah der Knopf
+  // genau so aus - er klickt, und die naechsten drei Karten kommen erst,
+  // wenn das Netz geantwortet hat.
+  // ⚠ Das Promise MUSS abgefangen werden: nicht abgewartet und nicht
+  // gefangen waere es eine stille Rejection - fuer den Nutzer sieht das
+  // wieder aus wie "die App macht nichts".
+  const gespeichert=weg.length
+    ? S.markFeedSeen(weg).catch(e=>{toast('Could not remember these: '+((e&&e.message)||'unknown error'));})
+    : null;
   renderInspo();
+  if(gespeichert)await gespeichert;
+  if(!feedListe().length){await feedNachladen();renderInspo();}
 }
 export async function rezFeedReset(){
   await S.clearFeedSeen();
@@ -1578,9 +1590,19 @@ export async function rezFeedToRecipe(id){
   // properties of null" ausgestiegen - fuer den Nutzer: der Knopf tut
   // nichts. Derselbe Fehlertyp wie beim Titelbild-Fenster.
   rezCloseModal();
+  // ⚠ DAS BILD DES VORSCHLAGS IST DAS BILD DES REZEPTS. Gemessen war es
+  // das nicht: erlaubte der Bildserver kein CORS (bei Foodblogs der
+  // Normalfall), scheiterte ladeFernbild() und hier entstand ein ERFUNDENES
+  // Titelbild - der Nutzer sah in der Vorschlagskarte ein Foto und im
+  // Rezept eine gemalte Karte. Seit der taegliche Lauf die Bilder neben den
+  // Vorrat legt (rezept_bilder/, gleiche Adresse wie die App), klappt das
+  // Einbetten. Bleibt doch eine Fernadresse uebrig, wird sie DIREKT
+  // uebernommen - dasselbe Bild, nur eben von der fremden Seite geladen.
+  // Erfunden wird erst, wenn es gar keine Bildadresse gibt.
   let cover='',thumb='';
   const geholt=i.image?await ladeFernbild(i.image).catch(()=>null):null;
   if(geholt){cover=geholt.cover;thumb=geholt.thumb;}
+  else if(i.image){cover=i.image;thumb=i.image;}
   else{
     const cs=getComputedStyle(document.documentElement);
     cover=CK.makeCoverCard(i.title,i.creator||i.srcName||'',i.srcName||'Suggestion',
@@ -1618,7 +1640,9 @@ export async function rezFeedToInspo(id){
     platform:(l&&l.platform)||'link',
     label:(l&&l.label)||i.srcName||'Link',
     embedUrl:(l&&l.embedUrl)||'',
-    thumb:'',
+    // ⚠ Stand hier bis 2026-09-03 leer - jede gemerkte Idee war bildlos,
+    // obwohl die Vorschlagskarte daneben ein Foto zeigte.
+    thumb:i.image||'',
     creator:i.creator||i.srcName||'',
     min:i.min||0,
     tags:(i.tags||[]).slice(0,4),

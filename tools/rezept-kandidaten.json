@@ -1,25 +1,65 @@
 {
-  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Runde 3 (2026-09-03): 32 vom Nutzer genannte Koeche. Ein YouTube-Eintrag braucht nur noch {\"name\": \"...\"} - der Lauf sucht den Kanal ueber den Namen (Suchfilter „Kanaele“) und weist im Bericht aus, WEN er gefunden hat. In Runde 2 waren vier von acht geratenen Handles schlicht 404, ohne dass jemand wusste, ob es den Kanal gibt.",
+  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Runde 3b (2026-09-03, nach dem ersten Lauf nachgebessert): ein Blog-Kandidat gibt jetzt nur noch seine SEITE an - die Feed-Adresse liest der Lauf aus dem Seitenkopf (<link rel=alternate>), weil drei von vier geratenen \"/feed/\"-Adressen falsch waren. Zwischen zwei YouTube-Suchen liegt eine Pause, weil YouTube ab der zehnten Abfrage drosselte und 22 Koeche unerkannt durchfielen. Runde 3 (2026-09-03): 32 vom Nutzer genannte Koeche. Ein YouTube-Eintrag braucht nur noch {\"name\": \"...\"} - der Lauf sucht den Kanal ueber den Namen (Suchfilter „Kanaele“) und weist im Bericht aus, WEN er gefunden hat. In Runde 2 waren vier von acht geratenen Handles schlicht 404, ohne dass jemand wusste, ob es den Kanal gibt.",
   "blogs": [
     {
       "name": "Sizzle Brothers",
-      "feed": "https://sizzlebrothers.de/feed/",
+      "seite": "https://sizzlebrothers.de/",
       "richtung": "Koch-Wunsch Runde 3: Grillen, grosser Kanal"
     },
     {
       "name": "Steffen Henssler",
-      "feed": "https://www.hensslers-schnelle-nummer.de/feed/",
+      "seite": "https://www.hensslers-schnelle-nummer.de/",
       "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
       "name": "Jamie Oliver",
-      "feed": "https://www.jamieoliver.com/feed/",
+      "seite": "https://www.jamieoliver.com/",
       "richtung": "Koch-Wunsch Runde 3: großer Kanal + Rezeptseite"
     },
     {
       "name": "Johann Lafer",
-      "feed": "https://www.johannlafer.de/feed/",
+      "seite": "https://www.johannlafer.de/",
       "richtung": "Koch-Wunsch Runde 3: TV-Koch + Rezeptseite"
+    },
+    {
+      "name": "Frank Rosin",
+      "seite": "https://www.frankrosin.de/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+    },
+    {
+      "name": "Nelson Müller",
+      "seite": "https://www.nelson-mueller.de/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+    },
+    {
+      "name": "Alexander Herrmann",
+      "seite": "https://www.alexanderherrmann.de/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+    },
+    {
+      "name": "Cornelia Poletto",
+      "seite": "https://www.cornelia-poletto.de/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Köchin"
+    },
+    {
+      "name": "Tim Raue",
+      "seite": "https://tim-raue.com/",
+      "richtung": "Koch-Wunsch Runde 3: 2 Sterne, große Reichweite"
+    },
+    {
+      "name": "Tim Mälzer",
+      "seite": "https://www.bullerei.com/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+    },
+    {
+      "name": "Lucki Maurer",
+      "seite": "https://www.luckimaurer.de/",
+      "richtung": "Koch-Wunsch Runde 3: Fleisch/Grill"
+    },
+    {
+      "name": "The Duc Ngo",
+      "seite": "https://www.theducngo.de/",
+      "richtung": "Koch-Wunsch Runde 3: Berliner Koch, viele Formate"
     }
   ],
   "youtube": [

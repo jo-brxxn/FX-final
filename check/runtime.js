@@ -14,7 +14,17 @@ const { chromium } = require(PW);
     errors.push({ kind, msg });
   };
   page.on('pageerror', e => rec('PAGEERROR', e.message));
-  page.on('console', m => { if (m.type() === 'error') { const t = m.text(); if (!/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) rec('CONSOLE', t); } });
+  page.on('console', m => { if (m.type() === 'error') { const t = m.text(); // ⚠ faireconomy.media erlaubt keine Abfrage aus dem Browser. Der Code
+      // rechnet damit: fetchFFPeriod() probiert die Adresse direkt UND ueber
+      // drei CORS-Proxys, jeder Weg in try/catch (js/main.js). Die
+      // CORS-Meldung schreibt der BROWSER trotzdem in die Konsole, und kein
+      // JavaScript kann das unterdruecken. Auf dem Runner (mit echtem Netz)
+      // hat sie den Lauf rot gemacht, lokal (ohne Netz) trat sie nie auf -
+      // ein roter Lauf fuer ein Verhalten, das so gebaut ist. Deshalb genau
+      // DIESE Quelle ausgenommen, nicht CORS allgemein: eine CORS-Meldung
+      // von woanders ist weiter ein Fehler.
+      const erwartet = /blocked by CORS policy/.test(t) && /faireconomy\.media/.test(t);
+      if (!erwartet && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) rec('CONSOLE', t); } });
 
   await page.goto(URL, { waitUntil: 'networkidle' });
   await page.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });

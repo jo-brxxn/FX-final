@@ -190,6 +190,17 @@ function pruefeFeedAufbau() {
       });
     }
   } catch (e) { fail('FEED', 'tools/rezept-quellen.json ist kein gueltiges JSON: ' + e.message); }
+  // ⚠ Die Bilder muessen NEBEN dem Vorrat liegen. Ein Bild von einer fremden
+  // Adresse laesst sich im Browser nicht einbetten, wenn der fremde Server
+  // kein CORS erlaubt - gemessen wurde daraus ein ERFUNDENES Titelbild statt
+  // des Fotos aus der Vorschlagskarte. Faellt dieser Schritt aus dem
+  // Werkzeug, ist der Fehler sofort zurueck, ohne dass es auffaellt.
+  if (!/rezept_bilder/.test(werkzeug))
+    fail('FEED', 'Das Werkzeug legt die Bilder nicht neben den Vorrat - Rezepte bekaemen wieder ein erfundenes Titelbild');
+  if (!/function raeumeBilder\s*\(/.test(werkzeug))
+    fail('FEED', 'Es raeumt keiner die Bilder auf - der Ordner waechst mit jedem Lauf, obwohl der Vorrat gedeckelt ist');
+  if (!/rezept_bilder/.test(wf))
+    fail('FEED', 'Der Workflow committet die Bilder nicht - der Vorrat zeigte auf Dateien, die es im Repo nicht gibt');
   // Der Vorrat selbst muss immer gueltiges JSON mit items-Liste sein.
   try {
     const f = JSON.parse(fs.readFileSync('rezept_feed.json', 'utf8'));
@@ -1756,8 +1767,24 @@ function pruefeKontrast() {
     url: 'https://beispiel.invalid/' + i, image: 'https://bild.invalid/' + i + '.jpg', video: '', creator: '',
     min: 20 + i * 5, servings: 2, ingredients: r[3], steps: r[4], themes: r[2], tags: [], added: new Date().toISOString() }));
 
+  // Testbild in eindeutiger Groesse (7x7): daran laesst sich ein echtes
+  // Titelbild von einem ERZEUGTEN (800x600) unterscheiden.
+  const TESTBILD = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAcAAAAHCAIAAABLMMCEAAAAEUlEQVR4nGP4z/AfEzEMAlEAXtNhn+6Am4IAAAAASUVORK5CYII=', 'base64');
+  // ⚠ Ein Eintrag GANZ OHNE Bildadresse. Nur fuer den darf ein erzeugtes
+  // Titelbild entstehen - fuer alle anderen gilt: das Bild des Vorschlags
+  // IST das Bild des Rezepts (siehe unten).
+  FIX.items.push({ id: 'fxleer', src: 'x', srcName: 'Chef TV', title: 'Gericht ohne Bild',
+    url: 'https://beispiel.invalid/leer', image: '', video: '', creator: '',
+    min: 15, servings: 2, ingredients: ['1 kg Reis', '2 Eier'], steps: ['Kochen.', 'Servieren.'],
+    themes: ['veggie'], tags: [], added: new Date().toISOString() });
+  FIX.count = FIX.items.length;
+
   await p.route(/rezept_feed\.json/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FIX) }));
-  await p.route(/bild\.invalid/, r => r.abort());
+  // ⚠ ERREICHBAR, ABER OHNE CORS-Kopfzeile - der Normalfall bei Foodblogs.
+  // Genau hier hat die App bis 2026-09-03 ein ERFUNDENES Titelbild gebaut,
+  // obwohl in der Vorschlagskarte ein Foto stand. Ohne diese Antwort (frueher
+  // ein hartes abort()) faellt der Fall gar nicht auf.
+  await p.route(/bild\.invalid/, r => r.fulfill({ status: 200, contentType: 'image/png', body: TESTBILD }));
   // Sauberer Ausgangszustand: nichts gilt als gesehen.
   await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
   await p.reload({ waitUntil: 'domcontentloaded' });
@@ -1776,7 +1803,8 @@ function pruefeKontrast() {
   });
   if (!nebeneinander) fail('N', 'Die drei Vorschlaege stehen nicht nebeneinander');
   const zaehler1 = await p.evaluate(() => (document.querySelector('.fd-count') || {}).textContent || '');
-  if (!/3 of 8/.test(zaehler1)) fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of 8"`);
+  if (!new RegExp('3 of ' + FIX.items.length).test(zaehler1))
+    fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of ${FIX.items.length}"`);
 
   // "Show 3 more" muss DREI ANDERE zeigen
   await p.click('#fdMore');
@@ -1786,11 +1814,42 @@ function pruefeKontrast() {
   if (zweiteDrei.some(t => ersteDrei.includes(t)))
     fail('N', `"Show 3 more" zeigt dieselben Gerichte noch einmal: ${JSON.stringify(zweiteDrei)}`);
   // ...und das Weitergeblaetterte muss gemerkt sein (geraeteuebergreifend).
+  // ⚠ DER KNOPF MUSS SOFORT WIRKEN, AUCH WENN DAS SPEICHERN HAENGT.
+  // Auf dem Runner (mit Netz) meldete Stufe B "Button ohne Wirkung:
+  // rezFeedMore()", lokal (ohne Netz) war alles gruen: markFeedSeen() setzt
+  // den Zustand zwar sofort, wartet danach aber auf IndexedDB und stoesst
+  // den Cloud-Abgleich an - und renderInspo() stand dahinter. Hier wird
+  // IndexedDB kuenstlich gebremst, damit der Fall auch ohne Netz auftritt.
+  const schnell = await p.evaluate(async () => {
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...a) {
+      const req = put.apply(this, a);
+      const d = Object.getOwnPropertyDescriptor(IDBRequest.prototype, 'onsuccess');
+      let h = null;
+      Object.defineProperty(req, 'onsuccess', {
+        get: () => h,
+        set: fn => { h = fn; d.set.call(req, e => setTimeout(() => fn && fn(e), 2500)); },
+      });
+      return req;
+    };
+    const titel = () => [...document.querySelectorAll('.fd-card .fd-title')].map(e => e.textContent).join('|');
+    const vor = titel();
+    window.rezFeedMore();
+    await new Promise(r => setTimeout(r, 400));
+    const nach = titel();
+    IDBObjectStore.prototype.put = put;
+    return { vor, nach };
+  });
+  if (schnell.vor === schnell.nach)
+    fail('N', `"Show 3 more" wirkt erst, wenn das Speichern fertig ist - auf einem Geraet mit Netz sieht der Knopf tot aus (${schnell.vor.slice(0, 50)})`);
+  await p.waitForTimeout(3000);
+
   const gemerkt = await p.evaluate(async () => {
     const S2 = await import('./js/rezept/store.js');
     return ((S2.state.index.feed || {}).seen || []).length;
   });
-  if (gemerkt !== 3) fail('N', `Nach dem Weiterblaettern sind ${gemerkt} statt 3 Vorschlaege als gesehen gemerkt`);
+  // 6, nicht 3: einmal der Klick oben, einmal der Aufruf im Brems-Test.
+  if (gemerkt !== 6) fail('N', `Nach zweimal Weiterblaettern sind ${gemerkt} statt 6 Vorschlaege als gesehen gemerkt`);
 
   // Filter nach Art
   await p.click('.fd-tags .tag-chip:has-text("No meat")');
@@ -1824,15 +1883,26 @@ function pruefeKontrast() {
     zutaten: document.querySelectorAll('#rfIng .rf-line').length,
     schritte: ((document.querySelector('#rfBlocks textarea') || {}).value || '').split('\n').filter(Boolean).length,
     bild: !!document.querySelector('.rf-drop img'),
+    bildSrc: (document.querySelector('.rf-drop img') || {}).src || '',
+    bildBreite: (document.querySelector('.rf-drop img') || {}).naturalWidth || 0,
   }));
   if (!uebernommen.formular) fail('N', '"Add as recipe" oeffnet kein Formular');
   if (!uebernommen.titel) fail('N', '"Add as recipe" uebernimmt den Titel nicht');
   if (uebernommen.zutaten < 2) fail('N', `"Add as recipe" uebernimmt ${uebernommen.zutaten} statt 2 Zutaten`);
   if (uebernommen.schritte < 2) fail('N', `"Add as recipe" uebernimmt ${uebernommen.schritte} statt 2 Schritte`);
-  // ⚠ Das Bild liegt auf einem fremden Server (hier bewusst blockiert). Ohne
-  // Titelbild verweigert das Speichern - es MUSS also ein erzeugtes
-  // entstehen, sonst haengt der Nutzer fest.
-  if (!uebernommen.bild) fail('N', 'Ohne erreichbares Bild entsteht kein erzeugtes Titelbild - das Rezept liesse sich nicht speichern');
+  // ⚠ Es MUSS ein Titelbild geben - ohne verweigert das Speichern.
+  if (!uebernommen.bild) fail('N', 'Ohne Titelbild liesse sich das Rezept nicht speichern');
+  // ⚠ UND es muss DAS BILD DES VORSCHLAGS sein, nicht ein erfundenes.
+  // Zwei Ergebnisse sind richtig: das Bild EINGEBETTET (klappt, wenn die
+  // Gegenstelle es erlaubt - dann ist das Rezept offline-fest), oder die
+  // ADRESSE des Vorschlags (wenn nicht). Falsch ist nur die gemalte Karte,
+  // der alte Fehler: Foto in der Vorschlagskarte, Zeichnung im Rezept.
+  // Unterschieden wird an der Groesse: das Testbild ist 7x7, ein erzeugtes
+  // Titelbild ist 800x600.
+  const bildOk = /bild\.invalid/.test(uebernommen.bildSrc || '')
+    || (/^data:/.test(uebernommen.bildSrc || '') && uebernommen.bildBreite > 0 && uebernommen.bildBreite < 100);
+  if (!bildOk)
+    fail('N', `"Add as recipe" baut ein erfundenes Titelbild statt des Bildes aus dem Vorschlag (${uebernommen.bildBreite}px breit)`);
   await p.evaluate(() => window.rezCloseModal());
   await p.waitForTimeout(400);
 
@@ -1844,6 +1914,14 @@ function pruefeKontrast() {
   await p.waitForTimeout(1200);
   const ideenNachher = await p.evaluate(async () => (await import('./js/rezept/store.js')).state.index.inspo.length);
   if (ideenNachher !== ideenVorher + 1) fail('N', '"Save idea" legt keine Idee an');
+  // ⚠ Bis 2026-09-03 stand hier thumb:'' - jede gemerkte Idee war bildlos,
+  // obwohl die Vorschlagskarte daneben ein Foto zeigte.
+  const ideeBild = await p.evaluate(async () => {
+    const S2 = await import('./js/rezept/store.js');
+    const l = S2.state.index.inspo;
+    return l.map(x => x.thumb || '').filter(t => /bild\.invalid/.test(t)).length;
+  });
+  if (!ideeBild) fail('N', '"Save idea" uebernimmt das Bild des Vorschlags nicht - die Idee bleibt bildlos');
 
   // Detailfenster eines Vorschlags
   await p.click('.fd-card');

@@ -61,6 +61,18 @@ jobs:
         if: ${{ github.event.inputs.pruefen == 'true' }}
         run: node tools/rezept-feed.mjs --pruefe
 
+      # ⚠ Zum Kleinrechnen der Bilder. Nicht darauf verlassen, dass das
+      # Runner-Abbild ImageMagick mitbringt: fehlt es, wandern nur die
+      # ohnehin kleinen Bilder mit, und der Rest bliebe eine Fernadresse -
+      # genau der Zustand, den die Bilder im Repo beheben sollen.
+      - name: ImageMagick bereitstellen
+        if: ${{ github.event.inputs.pruefen != 'true' }}
+        run: |
+          if ! command -v magick >/dev/null && ! command -v convert >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick
+          fi
+          (command -v magick || command -v convert) && (magick -version || convert -version) | head -1
+
       - name: Vorschlaege einsammeln
         if: ${{ github.event.inputs.pruefen != 'true' }}
         env:
@@ -93,9 +105,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add rezept_feed.json
+          # ⚠ Die Bilder gehoeren dazu - der Vorrat verweist auf sie. Ohne
+          # "-A" bliebe eine geloeschte Datei im Index stehen und der Eintrag
+          # zeigte auf ein Bild, das es nicht mehr gibt.
+          git add -A rezept_feed.json rezept_bilder
           if ! git diff --staged --quiet; then
-            git commit -m "Rezept-Vorschlaege aktualisiert"
+            git commit -m "Rezept-Vorschlaege und Bilder aktualisiert"
             # Gleiche Absicherung wie beim Kalender-Lauf: bei einer Kollision
             # mit einem zeitgleichen Push wird rebased und erneut versucht,
             # statt eine Fehlermail zu erzeugen. Bei einem Konflikt gewinnt

@@ -29,6 +29,7 @@
 // Umgebung: SPOONACULAR_KEY (freiwillig)
 
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseCaption } from '../js/rezept/import.js';
@@ -47,6 +48,18 @@ const args = process.argv.slice(2);
 const argOf = (n, f) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : f; };
 const AUS = path.resolve(WURZEL, argOf('--out', 'rezept_feed.json'));
 const MAX = Math.max(9, Number(argOf('--max', '90')) || 90);
+// ⚠ WARUM DIE BILDER IM REPO LIEGEN: ein Bild von einer fremden Adresse
+// laesst sich im Browser NICHT lokal speichern, wenn der fremde Server kein
+// CORS erlaubt - und das tun Foodblogs meist nicht. Gemessen: aus einem
+// Vorschlag wurde beim "Add as recipe" ein ERFUNDENES Titelbild statt des
+// Fotos, das man in der Vorschlagskarte gesehen hatte. Der Runner hat diese
+// Grenze nicht. Er holt das Bild also einmal, rechnet es klein und legt es
+// neben den Vorrat - von da an ist es fuer die App eigenes Gebiet:
+// dasselbe Foto ueberall, und offline.
+const BILDER = path.resolve(WURZEL, 'rezept_bilder');
+// Zielgroesse je Bild. 90 KB x 90 Eintraege = ~8 MB Deckel fuers Repo.
+const BILD_BYTES = 90 * 1024;
+const BILD_KANTE = 900;
 
 const log = (...a) => console.log('[feed]', ...a);
 
@@ -146,6 +159,8 @@ async function quelleJsonLd(cfg) {
 // im Quelltext der Kanalseite ("channelId":"UC..."), also wird sie EINMAL
 // aufgeloest. Klappt das nicht, wird der Kanal uebersprungen - eine
 // geratene ID waere ein Feed, der nichts liefert.
+let letzteSuche = 0;
+const SUCH_PAUSE = 4000;
 async function kanalId(k) {
   if (k.id) return k.id;
   const zieh = html => {
@@ -166,6 +181,14 @@ async function kanalId(k) {
   // Uebernehmen auffaellt, wenn die Suche danebengegriffen hat.
   const suche = k.suche || k.name;
   if (!suche) return '';
+  // ⚠ YouTube drosselt die Suche. Gemessen im ersten Lauf: die ersten zehn
+  // Namen wurden aufgeloest, ab dem elften kam nur noch "fetch failed" -
+  // 22 Koeche galten dadurch als nicht auffindbar, obwohl es sie gibt.
+  // Deshalb eine Pause zwischen den Suchen; sie kostet den Pruef-Lauf ein
+  // paar Minuten und ist der Unterschied zwischen einem Befund und Rauschen.
+  const seit = Date.now() - letzteSuche;
+  if (seit < SUCH_PAUSE) await new Promise(r => setTimeout(r, SUCH_PAUSE - seit));
+  letzteSuche = Date.now();
   const html = await hole('https://www.youtube.com/results?search_query='
     + encodeURIComponent(suche) + '&sp=EgIQAg%3D%3D');
   return zieh(html);
@@ -219,6 +242,103 @@ async function quelleYoutube(cfg) {
 // Domains). Geraten wird hier nicht - der Runner probiert jeden Kandidaten
 // aus und sagt, was wirklich Rezepte liefert. Was besteht, wandert nach
 // tools/rezept-quellen.json.
+// ── Bilder neben den Vorrat legen ────────────────────────────────────────
+// Klein gerechnet wird mit ImageMagick. ⚠ Ist es nicht da, wird NICHT
+// geraten und auch nichts Riesiges ins Repo gelegt: dann wandert das Bild
+// nur mit, wenn es ohnehin klein genug ist - sonst behaelt der Eintrag seine
+// Fernadresse und die App zeigt eben das Bild von der fremden Seite.
+let magickCmd = null;
+function magick() {
+  if (magickCmd !== null) return magickCmd;
+  for (const c of ['magick', 'convert']) {
+    const r = spawnSync(c, ['-version'], { encoding: 'utf8' });
+    if (!r.error && r.status === 0) { magickCmd = c; return magickCmd; }
+  }
+  log('⚠ ImageMagick fehlt - Bilder wandern nur mit, wenn sie schon klein genug sind');
+  magickCmd = '';
+  return magickCmd;
+}
+function rechneKlein(roh) {
+  const c = magick();
+  if (!c) return roh.length <= BILD_BYTES ? roh : null;
+  for (const q of [82, 70, 58, 45]) {
+    const r = spawnSync(c, ['-', '-auto-orient', '-resize', BILD_KANTE + 'x' + BILD_KANTE + '>',
+      '-strip', '-quality', String(q), 'jpg:-'], { input: roh, maxBuffer: 64 * 1024 * 1024 });
+    if (r.status === 0 && r.stdout && r.stdout.length && r.stdout.length <= BILD_BYTES) return r.stdout;
+  }
+  return null;
+}
+async function bildDazu(e) {
+  if (!e || !e.image) return;
+  // Schon lokal (aus einem frueheren Lauf uebernommen)? Dann nichts tun -
+  // ausser die Datei ist weg, dann zurueck zur Quelladresse.
+  if (!/^https?:/i.test(e.image)) {
+    if (fs.existsSync(path.join(BILDER, path.basename(e.image)))) return;
+    e.image = e.imageSrc || '';
+    if (!e.image) return;
+  }
+  const name = e.id + '.jpg';
+  const ziel = path.join(BILDER, name);
+  if (fs.existsSync(ziel)) { e.imageSrc = e.imageSrc || e.image; e.image = 'rezept_bilder/' + name; return; }
+  let roh = null;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch(e.image, { signal: ctrl.signal, headers: { 'User-Agent': UA }, redirect: 'follow' });
+    clearTimeout(t);
+    if (res.ok) roh = Buffer.from(await res.arrayBuffer());
+  } catch (err) { /* faellt unten auf die Fernadresse zurueck */ }
+  if (!roh || !roh.length) { log('  ✗ Bild nicht erreichbar:', String(e.image).slice(0, 70)); return; }
+  const klein = rechneKlein(roh);
+  if (!klein) { log('  ✗ Bild zu gross und nicht kleinzurechnen:', String(e.image).slice(0, 70)); return; }
+  fs.mkdirSync(BILDER, { recursive: true });
+  fs.writeFileSync(ziel, klein);
+  e.imageSrc = e.image;                            // Herkunft bleibt nachvollziehbar
+  e.image = 'rezept_bilder/' + name;
+}
+// Was zu keinem Eintrag mehr gehoert, fliegt raus - sonst waechst der Ordner
+// mit jedem Lauf, obwohl der Vorrat bei MAX gedeckelt ist.
+function raeumeBilder(items) {
+  if (!fs.existsSync(BILDER)) return 0;
+  const behalten = new Set(items.map(i => path.basename(String(i.image || ''))).filter(n => /\.jpg$/.test(n)));
+  let weg = 0;
+  for (const f of fs.readdirSync(BILDER)) {
+    if (!/\.jpg$/.test(f) || behalten.has(f)) continue;
+    fs.unlinkSync(path.join(BILDER, f)); weg++;
+  }
+  return weg;
+}
+
+// ⚠ EINE FEED-ADRESSE RATEN IST RATEN. In Runde 3 waren drei von vier
+// geratenen "/feed/"-Adressen falsch (404 oder nichts) - der Koch galt als
+// durchgefallen, obwohl seine Seite einen Feed hat, nur woanders. Jede Seite
+// nennt ihn selbst im Kopf: <link rel="alternate" type="application/rss+xml">.
+// Also wird er von dort gelesen, wenn der Kandidat nur eine Adresse angibt.
+async function feedAdresse(k) {
+  if (k.feed) {
+    const probe = await hole(k.feed, { ms: 15000 });
+    if (probe && /<(rss|feed|channel)\b/i.test(probe)) return { url: k.feed, xml: probe };
+  }
+  const start = k.seite || k.feed;
+  if (!start) return null;
+  const basis = new URL(start).origin + '/';
+  const html = await hole(basis, { ms: 15000 });
+  if (!html) return null;
+  const kandidaten = [];
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) {
+    const tag = m[0];
+    if (!/rel=["']?alternate/i.test(tag)) continue;
+    if (!/type=["']?application\/(rss|atom)\+xml/i.test(tag)) continue;
+    const h = /href=["']([^"']+)["']/i.exec(tag);
+    if (h) kandidaten.push(new URL(h[1], basis).href);
+  }
+  for (const u of kandidaten) {
+    const xml = await hole(u, { ms: 15000 });
+    if (xml && /<(rss|feed|channel)\b/i.test(xml)) return { url: u, xml, gefunden: true };
+  }
+  return null;
+}
+
 async function pruefeKandidaten() {
   let k = {};
   try { k = JSON.parse(fs.readFileSync(path.join(HIER, 'rezept-kandidaten.json'), 'utf8')); }
@@ -227,8 +347,11 @@ async function pruefeKandidaten() {
   const gutBlogs = [], gutTube = [];
   console.log('\n═══ BLOGS (schema.org/Recipe) ═══');
   for (const b of (k.blogs || [])) {
-    const xml = await hole(b.feed, { ms: 15000 });
-    if (!xml) { console.log(`✗ ${b.name.padEnd(24)} Feed nicht erreichbar`); continue; }
+    const gef = await feedAdresse(b);
+    if (!gef) { console.log(`✗ ${b.name.padEnd(24)} kein Feed gefunden (weder ${b.feed || b.seite} noch im Seitenkopf)`); continue; }
+    const xml = gef.xml;
+    if (gef.gefunden) console.log(`  … ${b.name.padEnd(22)} Feed aus dem Seitenkopf: ${gef.url}`);
+    b.feed = gef.url;
     const links = feedLinks(xml, 2);
     if (!links.length) { console.log(`✗ ${b.name.padEnd(24)} Feed ohne Beitragslinks`); continue; }
     let treffer = null, geprueft = 0;
@@ -279,7 +402,12 @@ async function pruefeKandidaten() {
     }
     // ⚠ Viele Kochkanaele schreiben das Rezept NICHT in die Beschreibung.
     // Genau das soll diese Pruefung zeigen, statt spaeter leere Karten.
-    if (bester && (bester.z >= 2 || bester.s >= 2)) {
+    // ⚠ ZUTATEN SIND PFLICHT, Schritte allein reichen nicht. Mit der alten
+    // Oder-Schwelle bestand ein Restaurant-Vlog ("Asia Neueroeffnungen in
+    // Wiesbaden", 0 Zutaten / 2 Schritte) die Pruefung - jeder Absatz der
+    // Beschreibung zaehlte als Kochschritt. Ein Rezept ohne Zutatenliste
+    // ist in dieser App auch kein Rezept: die Einkaufsliste bliebe leer.
+    if (bester && bester.z >= 3) {
       gutTube.push({ name: echterName || c.name, id });
       console.log(`✓ ${c.name.padEnd(24)} ${id} - bestes Video: ${bester.z} Zutaten, ${bester.s} Schritte ("${bester.titel.slice(0, 34)}")${geraten ? ' [ueber Namenssuche]' : ''}${wer}`);
     } else {
@@ -365,13 +493,25 @@ export async function lauf() {
   }
   const items = zusammen.slice(0, MAX);
 
+  // ⚠ ERST die Bilder holen, DANN vergleichen. Andersherum haette ein Lauf,
+  // der "nur" Bilder lokal gemacht hat, als "nichts Neues" gegolten und
+  // waere nie geschrieben worden - derselbe Fehler wie beim Neueinsortieren
+  // der Themen weiter oben.
+  let lokal = 0, fern = 0;
+  for (const e of items) {
+    await bildDazu(e);
+    if (e.image && !/^https?:/i.test(e.image)) lokal++; else if (e.image) fern++;
+  }
+  const weg = raeumeBilder(items);
+  log(`Bilder: ${lokal} lokal, ${fern} nur als Adresse, ${weg} verwaiste geloescht`);
+
   // ⚠ Nichts schreiben, wenn nichts hinzukam UND der Bestand steht: sonst
   // erzeugt der taegliche Lauf jeden Tag einen Commit, der nur den
   // Zeitstempel aendert.
   // ⚠ Der Vergleich enthaelt die Themen: sonst gilt ein Lauf, der nur neu
   // einsortiert hat, als "nichts Neues" und die Korrektur wird nie
   // geschrieben.
-  const kennung = l => l.map(i => i.id + ':' + (i.themes || []).join('+') + ':' + (i.steps || []).length).join(',');
+  const kennung = l => l.map(i => i.id + ':' + (i.themes || []).join('+') + ':' + (i.steps || []).length + ':' + (i.image || '')).join(',');
   const neuIds = kennung(items);
   const altIds = kennung(altItems);
   if (neuIds === altIds && altItems.length) {

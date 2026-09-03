@@ -538,6 +538,33 @@ eigenen `try/catch` und meldet, was sie geliefert hat. Ein Feed, der heute
 bei komplett gesperrtem Netz endet der Lauf mit `0 Vorschläge` und Code 0,
 **ohne** die vorhandene Datei zu überschreiben.
 
+### Die Bilder liegen im Repo, nicht auf der fremden Seite
+
+⚠ **Ein Fremdbild lässt sich im Browser nicht einbetten, wenn der fremde
+Server kein CORS erlaubt** — und Foodblogs erlauben es meist nicht. Gemessen
+(2026-09-03): beim „Add as recipe" scheiterte `ladeFernbild()`, und das
+Rezept bekam ein **erzeugtes** Titelbild — der Nutzer sah in der
+Vorschlagskarte ein Foto und im Rezept eine gemalte Karte. „Save idea"
+speicherte gar kein Bild (`thumb:''`).
+
+Der Runner hat diese Grenze nicht. Der tägliche Lauf holt deshalb jedes Bild,
+rechnet es mit ImageMagick auf ≤ 900 px / ≤ 90 KB herunter und legt es als
+`rezept_bilder/<id>.jpg` neben den Vorrat; der Eintrag zeigt danach dorthin,
+die Originaladresse bleibt in `imageSrc` stehen. Für die App ist das eigenes
+Gebiet: **dasselbe Foto in Vorschlag, Rezept, Idee, Woche und Kochmodus** —
+und offline, weil der Service Worker Bilder cache-zuerst ausliefert.
+
+Reihenfolge im Lauf: **erst die Bilder holen, dann der „nichts Neues"-Vergleich**
+— sonst gälte ein Lauf, der nur Bilder lokal gemacht hat, als nichts Neues und
+würde nie geschrieben. Verwaiste Dateien räumt `raeumeBilder()` weg, sonst
+wüchse der Ordner, obwohl der Vorrat bei `--max` gedeckelt ist.
+
+Fällt der Schritt aus (ImageMagick fehlt, Bild nicht erreichbar), wird **nicht
+geraten**: der Eintrag behält seine Fernadresse, und die App übernimmt beim
+„Add as recipe" genau diese Adresse. Ein erzeugtes Titelbild entsteht nur noch,
+wenn es **gar keine** Bildadresse gibt — sonst wäre man wieder bei Foto in der
+Karte, Zeichnung im Rezept.
+
 ⚠ **Halbe Einträge werden verworfen, nicht aufgefüllt** (`baue()`): ohne Bild
 oder ohne Zutaten *und* Schritte entsteht kein Vorschlag. Eine Karte ohne
 Zutaten sieht aus wie ein Rezept, ist aber keins.
@@ -623,6 +650,26 @@ sowie Joshua Weissman, Adam Ragusea und Kitchen Stories — die schreiben
 **kein Rezept in die Videobeschreibung**, ein Eintrag hätte nur leere Karten
 erzeugt.
 
+⚠ **Ein Handle raten ist auch raten.** Seit Runde 3 braucht ein
+YouTube-Kandidat nur noch `{"name": "…"}` — der Lauf sucht den Kanal über die
+YouTube-Kanalsuche und **weist im Bericht aus, wen er gefunden hat**
+(„Adrian Saatci" → tatsächlich `Arda Saatçi`, „Frank Rosin" →
+`Rosins Restaurants`). Ohne diese Ausgabe übernähme man einen fremden Kanal,
+weil der gesuchte gar keinen hat. Zwischen zwei Suchen liegt eine Pause von
+4 s: YouTube drosselte im ersten Lauf ab der zehnten Abfrage, 22 Köche fielen
+dadurch als „nicht auffindbar" durch, obwohl es sie gibt.
+
+⚠ **Eine Feed-Adresse raten ist auch raten.** Drei von vier geratenen
+`/feed/`-Adressen waren falsch (404). Ein Blog-Kandidat gibt deshalb nur noch
+seine `seite` an; die Feed-Adresse liest der Lauf aus dem Seitenkopf
+(`<link rel="alternate" type="application/rss+xml">`).
+
+⚠ **Zutaten sind Pflicht, Schritte allein reichen nicht.** Mit der alten
+Oder-Schwelle bestand ein Restaurant-Vlog („Asia Neueröffnungen in Wiesbaden",
+0 Zutaten / 2 Schritte) die Prüfung — jeder Absatz der Beschreibung zählte als
+Kochschritt. Ein Rezept ohne Zutatenliste ist in dieser App keins: die
+Einkaufsliste bliebe leer.
+
 ⚠ **Ein Handle ist keine Kanal-ID.** Der Atom-Feed braucht `UC…`; in
 Kanal-Adressen steht heute `@name`. Der Lauf löst das einmal über den
 Quelltext der Kanalseite auf — eine geratene ID wäre ein Feed, der nichts
@@ -634,6 +681,16 @@ Die Vorschläge stehen **oben in der Inspiration** (Nutzer-Entscheidung), die
 eigenen Ideen darunter. Immer **drei nebeneinander**; „Show 3 more" blättert
 weiter und merkt die gezeigten als gesehen — **geräteübergreifend**, sonst
 zeigt das Tablet dieselben drei, die man am Telefon längst weg hat.
+
+⚠ **Der Knopf zeichnet ZUERST und wartet DANN aufs Speichern.**
+`markFeedSeen()` setzt den Zustand zwar sofort, wartet danach aber auf
+IndexedDB und stößt den Cloud-Abgleich an. Solange `renderInspo()` dahinter
+stand, tat der Knopf auf einem Gerät **mit** Netz sekundenlang nichts — der
+Wächter auf dem Runner meldete genau das („Button ohne Wirkung:
+rezFeedMore()"), lokal ohne Netz war alles grün. Nachgewiesen mit künstlich
+gebremster IndexedDB: alter Code 400 ms nach dem Klick unverändert, neuer
+Code bereits umgeblättert. Das Speicher-Promise wird abgefangen, nicht
+verworfen — eine stille Rejection sähe wieder aus wie „die App macht nichts".
 
 ⚠ **Der Knopf kann den Workflow nicht auslösen.** Dafür bräuchte der Browser
 einen GitHub-Token mit Schreibrecht, der dann im Quelltext dieser Seite
