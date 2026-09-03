@@ -426,7 +426,22 @@ function pruefeKontrast() {
         const vorher = fingerAbdruck();
         b.click();
         await new Promise(r => setTimeout(r, 400));
-        if (fingerAbdruck() === vorher) out.push(oc.slice(0, 60));
+        if (fingerAbdruck() === vorher) {
+          // ⚠ MIT ZUSTAND MELDEN, nicht nur mit dem Namen. "Button ohne
+          // Wirkung: rezFeedMore()" trat nur auf dem Runner auf und liess
+          // sich lokal nicht nachstellen; eine Vermutung als Ursache
+          // einzusetzen hat schon einmal nicht getroffen. Der Fingerabdruck
+          // weiss, was er gesehen hat - also soll er es sagen.
+          let zustand = '';
+          if (/rezFeedMore/.test(oc)) {
+            const karten = document.querySelectorAll('.fd-card').length;
+            const knopf = (document.getElementById('fdMore') || {}).textContent || '(kein Knopf)';
+            const zaehler = (document.querySelector('.fd-count') || {}).textContent || '';
+            const hinweis = (document.querySelector('.fd-note') || {}).textContent || '';
+            zustand = ` [Karten ${karten}, Knopf "${knopf.trim()}", Zaehler "${zaehler.trim()}", Hinweis "${hinweis.slice(0, 60)}"]`;
+          }
+          out.push(oc.slice(0, 60) + zustand);
+        }
         if (window.rezCloseModal) window.rezCloseModal();
         await new Promise(r => setTimeout(r, 120));
       }
