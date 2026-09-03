@@ -6025,21 +6025,6 @@
      "51.7"
     ]
    ]
-  },
-  "Manufacturing PMI": {
-   "actual": "52.70",
-   "forecast": null,
-   "previous": "51.90",
-   "date": "2026-09-01",
-   "event": "Manufacturing PMI (Trading Economics)",
-   "source": "tepage",
-   "historyFull": [
-    [
-     "2026-09-01",
-     "52.70",
-     null
-    ]
-   ]
   }
  },
  "AUD": {
@@ -7265,12 +7250,12 @@
    ]
   },
   "Services PMI": {
-   "actual": "53.20",
-   "forecast": null,
-   "previous": "53.60",
-   "date": "2026-09-03",
-   "event": "Services PMI (Trading Economics)",
-   "source": "tepage",
+   "actual": "53.2",
+   "forecast": "52.9",
+   "previous": "53.6",
+   "date": "2026-09-02",
+   "event": "S&P Global Services PMI Final",
+   "period": null,
    "history": [
     [
      "2026-09-02",
@@ -7293,7 +7278,9 @@
      "53.20",
      null
     ]
-   ]
+   ],
+   "source": "tv",
+   "revisedFrom": "53.20"
   },
   "Core CPI": {
    "actual": "3.6%",
@@ -7307,21 +7294,6 @@
      "2026-08-26",
      "3.6%",
      "3.5%"
-    ]
-   ]
-  },
-  "Retail Sales": {
-   "actual": "7.0%",
-   "forecast": null,
-   "previous": "6.1%",
-   "date": "2026-08-27",
-   "event": "Household Spending (Trading Economics)",
-   "source": "tepage",
-   "historyFull": [
-    [
-     "2026-08-27",
-     "7.0%",
-     null
     ]
    ]
   },
