@@ -444,6 +444,103 @@ Stellen, die ein Rezept brauchen (Today's Meal, Wochenplan). Beim Anlegen
 einer weiteren solchen Stelle zuerst prüfen, ob er passt, statt eine zweite,
 leicht andere Liste zu bauen (Regel aus `docs/design-system.md`).
 
+## Tägliche Essensvorschläge
+
+Nutzer-Wunsch 2026-09-03: *„irgendeine Quelle die jeden Tag neue
+essenvorschläge mit direkt erstellbaren Rezepten liefert … ich will alle …
+gut sortiert … nicht nur nach Quellen sondern auch nach mit Fleisch ohne
+Fleisch und Fisch und Nudeln und Suppe."*
+
+### Der Weg der Daten
+
+```
+.github/workflows/rezept-feed.yml   (täglich 4:25 UTC + Handstart)
+        └─ tools/rezept-feed.mjs    holt aus 4 Quellen
+              └─ js/rezept/feed.js  zerlegt und baut den Vorschlag
+                    └─ rezept_feed.json  (im Repo, committet)
+                          └─ die App liest es von der EIGENEN Adresse
+```
+
+⚠ **Warum ein Server-Lauf und nicht der Browser** — drei Gründe, jeder allein
+ausreichend: ein API-Schlüssel im Browser steht im Quelltext einer öffentlich
+erreichbaren Seite; fremde Server erlauben der Seite die Abfrage meist nicht
+(CORS — dieselbe Wand wie beim Instagram-Import); und ein Lauf pro Tag
+verbraucht **eine** Abfrage statt einer pro Gerät und Seitenaufruf.
+
+### Die vier Quellen
+
+| Quelle | Was sie liefert | Grenze |
+|---|---|---|
+| **TheMealDB** | vollständige Rezepte mit Bild, Mengen, Anleitung, oft YouTube-Link | ~300 Gerichte im Bestand, englisch; einzige Quelle, die auch **im Browser** abgefragt werden darf |
+| **Spoonacular** | großer Katalog, Zutaten und Schritte strukturiert | Schlüssel als GitHub-Secret `SPOONACULAR_KEY`; **ohne Secret wird still übersprungen**, der Lauf läuft weiter |
+| **Eigene Seiten (schema.org/Recipe)** | alles: Titel, Bild, Zutaten, Schritte, Dauer, Portionen | rechtlich für den **eigenen** Gebrauch mit Quellenangabe; Seiten ohne JSON-LD-Markup werden übersprungen |
+| **YouTube-Kanäle** | neue Videos mit echtem Vorschaubild; Beschreibung läuft durch **denselben** Caption-Parser wie der Reel-Import | nur Kanäle — Instagram hat keinen öffentlichen Feed |
+
+Seiten und Kanäle stehen in **`tools/rezept-quellen.json`** und sind von Hand
+erweiterbar (`{"name": …, "feed": …}` bzw. `{"name": …, "id": "UC…"}`).
+
+⚠ **Eine kaputte Quelle darf den Lauf nicht kippen.** Jede läuft in ihrem
+eigenen `try/catch` und meldet, was sie geliefert hat. Ein Feed, der heute
+500 zurückgibt, kostet ein paar Vorschläge — nicht den Vorrat. Nachgewiesen:
+bei komplett gesperrtem Netz endet der Lauf mit `0 Vorschläge` und Code 0,
+**ohne** die vorhandene Datei zu überschreiben.
+
+⚠ **Halbe Einträge werden verworfen, nicht aufgefüllt** (`baue()`): ohne Bild
+oder ohne Zutaten *und* Schritte entsteht kein Vorschlag. Eine Karte ohne
+Zutaten sieht aus wie ein Rezept, ist aber keins.
+
+### Sortierung: nach Quelle UND nach Art
+
+`js/rezept/themen.js` ordnet jedes Gericht 12 Themen zu (Meat, Chicken, Fish,
+No meat, Pasta, Rice & Bowls, Soup, Salad, Potato, Bread & Dough, Sweet,
+Breakfast), aus Titel und Zutaten, **deutsch und englisch**.
+
+⚠ **Diese Datei läuft an zwei Stellen** — im Tageslauf und in der App. Zwei
+Fassungen wären die sichere Art, dass ein Vorschlag anders einsortiert ist
+als der Filter, der ihn finden soll.
+
+Drei Regeln, die dabei zählen:
+- **Deutsche Zusammensetzungen**: „Tomatensuppe" ist *ein* Wort — für eine
+  Liste von Stämmen (≥ 5 Zeichen) wird deshalb auch **innerhalb** von Wörtern
+  gesucht. Kürzere Stämme nicht: „reis" steckt in „Preiselbeere".
+- **Versteckte tierische Zutaten** (Fischsauce, Worcestersauce, Hühnerbrühe,
+  Gelatine …) werden **vor** der Themensuche aus dem Text genommen. Sonst
+  wäre jedes Pad Thai ein „Fisch"-Gericht — wer nach Fisch filtert, bekäme
+  Gerichte ohne ein Stück Fisch darin. Für **No meat** zählt der Fund
+  trotzdem.
+- **Nichts raten**: ohne Merkmal bekommt ein Gericht **kein** Thema. Ein
+  falsches „No meat" wäre schlimmer als keins — danach sucht jemand, der kein
+  Fleisch essen will.
+
+### In der App: Dreierreihe mit Nachlade-Knopf
+
+Die Vorschläge stehen **oben in der Inspiration** (Nutzer-Entscheidung), die
+eigenen Ideen darunter. Immer **drei nebeneinander**; „Show 3 more" blättert
+weiter und merkt die gezeigten als gesehen — **geräteübergreifend**, sonst
+zeigt das Tablet dieselben drei, die man am Telefon längst weg hat.
+
+⚠ **Der Knopf kann den Workflow nicht auslösen.** Dafür bräuchte der Browser
+einen GitHub-Token mit Schreibrecht, der dann im Quelltext dieser Seite
+stände. Ist der Vorrat leer, holt der Knopf deshalb **live bei TheMealDB**
+nach — die einzige der vier Quellen, die eine Browser-Abfrage erlaubt.
+Klappt auch das nicht, sagt die Oberfläche warum.
+
+⚠ **Merge-Regel für „gesehen"**: Vereinigung beider Geräte — **außer** nach
+einem Zurücksetzen („show them all again"). Eine reine Vereinigung würde die
+geleerte Liste beim nächsten Abgleich sofort vom anderen Gerät zurückholen,
+das Zurücksetzen wäre wirkungslos. Deshalb trägt der Bereich ein
+`cleared`-Datum, und eine Seite zählt nur mit, wenn ihr Stand **jünger** ist.
+
+⚠ **`rezept_feed.json` gehört in den Netz-zuerst-Zweig des Service Workers**
+(seit `fxpro-v11`) — aus dem Cache stünden dort die Vorschläge von vorgestern.
+
+### Beim Prüfen: Service Worker abschalten
+
+⚠ `check/rezept.js` startet den Browser mit `serviceWorkers: 'block'`. Ohne
+das beantwortet der Service Worker die Anfragen selbst und `page.route()`
+greift nicht — im Probelauf kamen die Testdaten nie an, stattdessen die echte
+(leere) Datei.
+
 ## Reel-Import: was geht und was NICHT
 
 **Der Text eines Instagram-Reels lässt sich aus dem Browser heraus nicht

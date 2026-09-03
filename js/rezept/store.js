@@ -64,7 +64,11 @@ export const TRASH_DAYS=30;
 // Alles liegt in EINER Cloud-Zeile (<syncId>:rez:index) - die Vollbilder der
 // Rezepte liegen weiterhin je Rezept in einer eigenen Zeile.
 export const LEER_INDEX=()=>({v:2,recipes:[],inspo:[],trash:[],plan:{},
-  shopping:{items:[]},cooked:[],settings:{theme:'linear'},settingsUp:''});
+  shopping:{items:[]},cooked:[],settings:{theme:'linear'},settingsUp:'',
+  // Welche taeglichen Vorschlaege schon durchgeblaettert wurden. Gehoert
+  // gesynct: sonst zeigt das Tablet dieselben drei Gerichte, die man am
+  // Telefon laengst gesehen hat.
+  feed:{seen:[],up:'',cleared:''}});
 export const state={
   index:LEER_INDEX(),
   full:new Map(),
@@ -285,6 +289,26 @@ export function mergeIndex(base,over){
   // Koch-Verlauf: reines Anhaengen, Kollisionen gibt es praktisch nicht.
   out.cooked=[...mergeById(base&&base.cooked,over&&over.cooked,'up').values()]
     .sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  // Gesehene Vorschlaege: VEREINIGUNG beider Seiten. ⚠ Bewusst kein
+  // Last-Write-Wins - waer es das, bekaeme man am zweiten Geraet die
+  // Vorschlaege noch einmal, die man am ersten schon weggeblaettert hat.
+  // Die Liste ist gedeckelt, damit sie nicht unbegrenzt waechst.
+  // ⚠ MIT AUSNAHME EINES ZURUECKSETZENS: "show them all again" leert die
+  // Liste. Eine reine Vereinigung wuerde sie beim naechsten Abgleich sofort
+  // vom anderen Geraet zurueckholen - das Zuruecksetzen waere wirkungslos.
+  // Deshalb zaehlt eine Seite nur mit, wenn ihr Stand JUENGER ist als das
+  // letzte Zuruecksetzen auf einer der beiden Seiten.
+  const fb=(base&&base.feed)||{},fo=(over&&over.feed)||{};
+  const cleared=[(fb.cleared||''),(fo.cleared||'')].sort().pop()||'';
+  const gesehen=new Set();
+  [fb,fo].forEach(f=>{
+    if(cleared&&((f.up||'')<cleared))return;
+    (f.seen||[]).forEach(x=>gesehen.add(x));
+  });
+  out.feed={seen:[...gesehen].slice(-400),
+    up:[(fb.up||''),(fo.up||'')].sort().pop()||'',
+    cleared};
+
   // Einstellungen (Theme): reines Last-Write-Wins ueber settingsUp.
   const bUp=(base&&base.settingsUp)||'',oUp=(over&&over.settingsUp)||'';
   if(oUp>=bUp&&over&&over.settings){out.settings=over.settings;out.settingsUp=oUp;}
@@ -386,6 +410,8 @@ export function normalizeIndex(idx){
   if(!out.plan||typeof out.plan!=='object'||Array.isArray(out.plan))out.plan={};
   if(!out.shopping||!Array.isArray(out.shopping.items))out.shopping={items:[]};
   if(!out.settings)out.settings={theme:'linear'};
+  if(!out.feed||!Array.isArray(out.feed.seen))out.feed={seen:[],up:'',cleared:''};
+  if(typeof out.feed.cleared!=='string')out.feed.cleared='';
   return out;
 }
 
@@ -625,6 +651,34 @@ export async function trashInspo(id){
   if(!it)return;
   state.index.inspo=state.index.inspo.filter(x=>x.id!==id);
   state.index.trash.push({id,title:it.title,thumb:it.thumb||'',kind:'inspo',delAt:nowIso()});
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+
+// ── Taegliche Vorschlaege: was schon durchgeblaettert wurde ──────────────
+// ⚠ Kein eigener Cloud-Bereich: die Liste haengt im Verzeichnis und faehrt
+// damit auf demselben Weg mit, den auch Rezepte und Einkaufsliste nehmen.
+// ⚠ Zuruecksetzen setzt einen Zeitstempel MIT: sonst wuerde der naechste
+// Abgleich die geleerte Liste mit der Vereinigungsregel sofort wieder
+// auffuellen - das Zuruecksetzen waere von aussen wirkungslos.
+export async function clearFeedSeen(){
+  const jetzt=nowIso();
+  state.index.feed={seen:[],up:jetzt,cleared:jetzt};
+  _indexDirty=true;
+  await saveLocalIndex();
+  emit('index');
+  scheduleSync();
+}
+export async function markFeedSeen(ids){
+  const f=state.index.feed||(state.index.feed={seen:[],up:'',cleared:''});
+  const vorher=f.seen.length;
+  const menge=new Set(f.seen);
+  (ids||[]).forEach(x=>{if(x)menge.add(x);});
+  if(menge.size===vorher)return;
+  f.seen=[...menge].slice(-400);
+  f.up=nowIso();
   _indexDirty=true;
   await saveLocalIndex();
   emit('index');

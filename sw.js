@@ -71,7 +71,9 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data)\.json$/.test(url.pathname);
+  // ⚠ rezept_feed.json gehoert dazu: der taegliche Lauf schreibt die Datei
+  // neu, und aus dem Cache saehe man die Vorschlaege von vorgestern.
+  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data|rezept_feed)\.json$/.test(url.pathname);
   // ⚠ Der Programmcode BEIDER Apps gehoert zum Netz-zuerst-Zweig. Kaeme er
   // aus dem Cache, liefe nach einem Push weiter die alte Fassung - siehe
   // die Notiz zu v11 oben. Bilder, Icons und das Manifest bleiben

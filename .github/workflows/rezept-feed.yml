@@ -1,0 +1,109 @@
+name: Rezept-Vorschlaege
+
+# Fuellt den Vorrat an Essensvorschlaegen fuer die Rezept-App (Perfect
+# Rezept, siehe docs/rezept.md). Das Ergebnis liegt als rezept_feed.json im
+# Repo - die App liest es von ihrer EIGENEN Adresse.
+#
+# ⚠ Warum ueberhaupt hier und nicht im Browser: API-Schluessel gehoeren nicht
+# in eine oeffentlich erreichbare Seite, fremde Server erlauben der Seite die
+# Abfrage meist nicht (CORS), und ein Lauf pro Tag verbraucht 1 Abfrage statt
+# einer pro Geraet. Ausfuehrlich im Kopf von tools/rezept-feed.mjs.
+#
+# ⚠ Die App kann diesen Lauf NICHT selbst ausloesen - dafuer braeuchte der
+# Browser einen GitHub-Token mit Schreibrecht, der dann im Quelltext der
+# Seite staende. Der Knopf "Show 3 more" blaettert deshalb durch den Vorrat
+# und holt, wenn der leer ist, live bei TheMealDB nach (die einzige der vier
+# Quellen, die eine Browser-Abfrage erlaubt).
+
+on:
+  schedule:
+    # Einmal taeglich, frueh am Morgen europaeischer Zeit. Bewusst nicht
+    # oefter: mehr Vorschlaege sieht man ohnehin nicht durch, und jeder Lauf
+    # kostet Kontingent bei Spoonacular.
+    - cron: '25 4 * * *'
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Wie viele Vorschlaege der Vorrat hoechstens haelt'
+        required: false
+        default: '90'
+
+permissions:
+  contents: write
+
+# Zwei gleichzeitige Laeufe wuerden dieselbe Datei schreiben und sich beim
+# Push gegenseitig abschiessen.
+concurrency:
+  group: rezept-feed
+  cancel-in-progress: false
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Vorschlaege einsammeln
+        env:
+          # Freiwillig: ohne diesen Secret wird Spoonacular still
+          # uebersprungen, die uebrigen Quellen laufen weiter.
+          SPOONACULAR_KEY: ${{ secrets.SPOONACULAR_KEY }}
+        run: node tools/rezept-feed.mjs --max "${{ github.event.inputs.max || '90' }}"
+
+      - name: Ergebnis kurz zeigen
+        run: |
+          node -e '
+            const fs=require("fs");
+            let d={};
+            try{d=JSON.parse(fs.readFileSync("rezept_feed.json","utf8"));}catch(e){console.log("(noch keine Datei)");process.exit(0);}
+            const items=d.items||[];
+            const proQuelle={};
+            items.forEach(i=>{proQuelle[i.srcName]=(proQuelle[i.srcName]||0)+1;});
+            const proThema={};
+            items.forEach(i=>(i.themes||[]).forEach(t=>{proThema[t]=(proThema[t]||0)+1;}));
+            console.log("Vorrat:",items.length);
+            console.log("Quellen:",JSON.stringify(proQuelle));
+            console.log("Themen :",JSON.stringify(proThema));
+            const ohne=items.filter(i=>!(i.themes||[]).length).length;
+            console.log("ohne Thema:",ohne);
+          '
+
+      - name: Commit und Push, wenn sich etwas geaendert hat
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rezept_feed.json
+          if ! git diff --staged --quiet; then
+            git commit -m "Rezept-Vorschlaege aktualisiert"
+            # Gleiche Absicherung wie beim Kalender-Lauf: bei einer Kollision
+            # mit einem zeitgleichen Push wird rebased und erneut versucht,
+            # statt eine Fehlermail zu erzeugen. Bei einem Konflikt gewinnt
+            # die Fassung DIESES Laufs - die Datei ist reine Ausgabe eines
+            # frisch gelaufenen Abrufs.
+            # ⚠ Im Rebase sind die Seiten vertauscht: "--theirs" ist der
+            # eigene, gerade aufgesetzte Commit.
+            for i in 1 2 3 4 5; do
+              if git push; then break; fi
+              echo "[debug] Push abgelehnt (Versuch $i/5) - rebase und neuer Versuch"
+              if ! git pull --rebase origin main; then
+                konflikte=$(git diff --name-only --diff-filter=U)
+                if [ -n "$konflikte" ]; then
+                  for f in $konflikte; do
+                    git checkout --theirs -- "$f" || true
+                    git add "$f"
+                  done
+                  GIT_EDITOR=true git rebase --continue || git rebase --abort || true
+                else
+                  git rebase --abort || true
+                fi
+              fi
+              sleep 3
+            done
+          else
+            echo "Nichts Neues im Vorrat."
+          fi

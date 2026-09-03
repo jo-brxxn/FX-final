@@ -12,6 +12,8 @@
 // Muster wie js/main.js, siehe docs/module-split.md).
 import * as S from './store.js';
 import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText,previewUrl,frameUrls} from './import.js';
+import {THEMEN,THEMA_BY_ID} from './themen.js';
+import {mealDbToItem} from './feed.js';
 import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
 import * as CK from './cook.js';
 
@@ -1399,6 +1401,252 @@ function rezeptBild(doc){
   });
 }
 
+
+// ══ TAEGLICHE ESSENSVORSCHLAEGE ══════════════════════════════════════════
+// Nutzer-Wunsch 2026-09-03: "irgendeine Quelle die jeden Tag neue
+// essenvorschlaege mit direkt erstellbaren Rezepten liefert ... in einer
+// Reihe immer 3 Gerichte ... wenn ich alle gesehen habe, auf ein Button
+// druecken und 3 neue laden ... nicht nur nach Quellen sondern auch nach
+// mit Fleisch ohne Fleisch und Fisch und Nudeln und Suppe".
+//
+// ⚠ WOHER DIE VORSCHLAEGE KOMMEN: aus rezept_feed.json IM REPO, gefuellt
+// vom taeglichen Lauf (.github/workflows/rezept-feed.yml) aus vier Quellen.
+// Die App liest die Datei von ihrer EIGENEN Adresse - kein Schluessel, kein
+// CORS, offline aus dem Cache.
+//
+// ⚠ WARUM DER KNOPF KEINEN WORKFLOW AUSLOEST: dafuer braeuchte der Browser
+// einen GitHub-Token mit Schreibrecht, der dann im Quelltext dieser Seite
+// staende. Stattdessen blaettert der Knopf durch den Vorrat; ist der leer,
+// holt er live bei TheMealDB nach - die einzige der vier Quellen, die eine
+// Abfrage direkt aus dem Browser erlaubt.
+const FEED_PRO_ZUG=3;
+let feed={items:[],updated:'',geladen:false,fehler:''};
+let feedQuelle='',feedThema='';
+export async function ladeFeed(){
+  if(feed.geladen)return feed;
+  feed.geladen=true;
+  try{
+    // Tagesgenauer Anhang: der Service Worker liefert Skripte netz-zuerst,
+    // eine JSON-Datei aber aus dem Cache - ohne das saehe man den neuen
+    // Vorrat erst beim uebernaechsten Oeffnen (derselbe Fehler wie beim
+    // Programmcode, siehe sw.js v11).
+    const tag=new Date().toISOString().slice(0,10);
+    const res=await fetch('rezept_feed.json?t='+tag,{cache:'no-cache'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    feed.items=Array.isArray(d.items)?d.items:[];
+    feed.updated=d.updated||'';
+  }catch(e){
+    // Kein stilles Scheitern: die Oberflaeche sagt, dass es die Vorschlaege
+    // gerade nicht gibt - und die gespeicherten Ideen bleiben sichtbar.
+    feed.fehler=(e&&e.message)||'unknown error';
+    feed.items=[];
+  }
+  return feed;
+}
+function feedGesehen(){return new Set(((S.state.index.feed||{}).seen)||[]);}
+function feedQuellen(){
+  const z=new Map();
+  feed.items.forEach(i=>{if(i.srcName)z.set(i.srcName,(z.get(i.srcName)||0)+1);});
+  return [...z.entries()].sort((a,b)=>b[1]-a[1]);
+}
+function feedThemen(){
+  const z=new Map();
+  feed.items.forEach(i=>(i.themes||[]).forEach(t=>z.set(t,(z.get(t)||0)+1)));
+  return THEMEN.filter(t=>z.has(t.id)).map(t=>[t,z.get(t.id)]);
+}
+// Die Liste, die gerade dran ist: Filter an, Gesehenes raus, Neuestes zuerst.
+function feedListe(){
+  const gesehen=feedGesehen();
+  return feed.items.filter(i=>
+    !gesehen.has(i.id)
+    &&(!feedQuelle||i.srcName===feedQuelle)
+    &&(!feedThema||(i.themes||[]).includes(feedThema)));
+}
+function feedKarte(i){
+  const themen=(i.themes||[]).slice(0,3).map(id=>(THEMA_BY_ID[id]||{}).label).filter(Boolean);
+  return`<div class="fd-card" onclick="rezOpenFeed('${i.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')rezOpenFeed('${i.id}')">`
+    +`<div class="fd-img"><img src="${escH(i.image)}" alt="" loading="lazy" onerror="this.closest('.fd-card').classList.add('no-img')">`
+      +`<span class="fd-src">${escH(i.srcName||'')}</span>`
+      +(i.min?`<span class="rez-card-dur fd-dur">${icn('clock',11)}${fmtDur(i.min)}</span>`:'')
+    +`</div>`
+    +`<div class="fd-body">`
+      +`<div class="fd-title">${escH(i.title)}</div>`
+      +(themen.length?`<div class="fd-themes">`+themen.map(t=>`<span class="fd-th">${escH(t)}</span>`).join('')+`</div>`:'')
+      +`<div class="fd-meta">${i.ingredients.length} ingredient${i.ingredients.length===1?'':'s'} · ${i.steps.length} step${i.steps.length===1?'':'s'}</div>`
+      +`<div class="fd-btns">`
+        +`<button class="btn btn-primary" onclick="event.stopPropagation();rezFeedToRecipe('${i.id}')">${icn('plus',13)} Add as recipe</button>`
+        +`<button class="btn" onclick="event.stopPropagation();rezFeedToInspo('${i.id}')">${icn('inspo',13)} Save idea</button>`
+      +`</div>`
+    +`</div></div>`;
+}
+export function feedAbschnitt(){
+  if(feed.fehler){
+    return`<div class="fd-wrap"><div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span></div>`
+      +`<div class="fd-note">Could not load the daily suggestions (${escH(feed.fehler)}). Your saved ideas below are unaffected.</div></div>`;
+  }
+  if(!feed.items.length){
+    return`<div class="fd-wrap"><div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span></div>`
+      +`<div class="fd-note">No suggestions yet — the daily run fills this list. You can start it by hand from the repository (workflow “Rezept-Vorschlaege”).</div></div>`;
+  }
+  const liste=feedListe();
+  const zeige=liste.slice(0,FEED_PRO_ZUG);
+  const quellen=feedQuellen(),themen=feedThemen();
+  const alter=feed.updated?new Date(feed.updated):null;
+  const wann=alter&&!isNaN(alter)?alter.toLocaleDateString(undefined,{day:'numeric',month:'short'}):'';
+  return`<div class="fd-wrap">`
+    +`<div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span>`
+      +`<span class="fd-hd-s">${liste.length} waiting${wann?' · updated '+escH(wann):''}</span></div>`
+    +`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Source</span>`
+      +`<button class="tag-chip${feedQuelle?'':' on'}" onclick="rezFeedSource('')">All</button>`
+      +quellen.map(([n,c])=>`<button class="tag-chip${feedQuelle===n?' on':''}" onclick="rezFeedSource('${escH(n).replace(/'/g,'')}')">${escH(n)} <span class="chip-n">${c}</span></button>`).join('')
+    +`</div>`
+    +(themen.length?`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Kind</span>`
+      +`<button class="tag-chip${feedThema?'':' on'}" onclick="rezFeedTheme('')">All</button>`
+      +themen.map(([t,c])=>`<button class="tag-chip${feedThema===t.id?' on':''}" onclick="rezFeedTheme('${t.id}')">${t.icon} ${escH(t.label)} <span class="chip-n">${c}</span></button>`).join('')
+    +`</div>`:'')
+    +(zeige.length
+      ?`<div class="fd-row stagger">`+zeige.map(feedKarte).join('')+`</div>`
+       +`<div class="fd-more"><button class="btn" id="fdMore" onclick="rezFeedMore()">${icn('arrowR',14)} Show 3 more</button>`
+        +`<span class="fd-count">${Math.min(FEED_PRO_ZUG,liste.length)} of ${liste.length}</span></div>`
+      :`<div class="fd-note">You have been through everything${feedQuelle||feedThema?' in this filter':''}. `
+       +`<button class="fd-lnk" onclick="rezFeedMore()">Load new ones</button> or `
+       +`<button class="fd-lnk" onclick="rezFeedReset()">show them all again</button>.</div>`)
+  +`</div>`;
+}
+export function rezFeedSource(n){feedQuelle=(feedQuelle===n)?'':n;renderInspo();}
+export function rezFeedTheme(id){feedThema=(feedThema===id)?'':id;renderInspo();}
+// Weiterblaettern: die gezeigten drei gelten als gesehen - geraeteuebergreifend,
+// damit das Tablet nicht dieselben drei noch einmal zeigt.
+export async function rezFeedMore(){
+  const liste=feedListe();
+  const weg=liste.slice(0,FEED_PRO_ZUG).map(i=>i.id);
+  if(weg.length)await S.markFeedSeen(weg);
+  const rest=feedListe();
+  if(!rest.length)await feedNachladen();
+  renderInspo();
+}
+export async function rezFeedReset(){
+  await S.clearFeedSeen();
+  renderInspo();
+  toast('Showing all suggestions again');
+}
+// ⚠ LIVE NACHLADEN geht NUR bei TheMealDB: deren Server erlaubt die Abfrage
+// aus dem Browser (CORS). Spoonacular braucht einen Schluessel, Blogs und
+// YouTube antworten dem Browser nicht - deshalb steht dort der Tageslauf.
+// Kein stilles Scheitern: klappt es nicht, sagt die Oberflaeche warum.
+async function feedNachladen(){
+  const btn=$('fdMore');
+  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  let neu=0;
+  try{
+    for(let i=0;i<FEED_PRO_ZUG;i++){
+      const res=await fetch('https://www.themealdb.com/api/json/v1/1/random.php',{cache:'no-store'});
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      const d=await res.json();
+      const e=mealDbToItem(d&&d.meals&&d.meals[0]);
+      if(e&&!feed.items.some(x=>x.id===e.id)){feed.items.unshift(e);neu++;}
+    }
+    toast(neu?`Loaded ${neu} new suggestion${neu===1?'':'s'}`:'No new dishes came back — try again');
+  }catch(e){
+    toast('Could not load new suggestions: '+((e&&e.message)||'no connection'));
+  }
+  if(btn)btn.disabled=false;
+}
+// Aus einem Vorschlag ein Rezept machen. ⚠ Das Bild liegt auf einem fremden
+// Server. Ein Rezept braucht sein Bild aber LOKAL (Offline-Betrieb, Sync).
+// Erlaubt die Gegenstelle das Auslesen nicht, entsteht ein erzeugtes
+// Titelbild - dieselbe Regel wie beim Reel-Import, kein leeres Rezept.
+export async function rezFeedToRecipe(id){
+  const i=feed.items.find(x=>x.id===id);
+  if(!i)return;
+  // ⚠ ZUERST das offene Fenster schliessen, DANN das Formular aufbauen.
+  // Andersherum war es ein Fehler (im Probelauf gefunden): rezCloseModal()
+  // raeumt den Formularzustand ab (form=null), das direkt danach gebaute
+  // Formular stand also auf null und renderForm() ist mit "Cannot read
+  // properties of null" ausgestiegen - fuer den Nutzer: der Knopf tut
+  // nichts. Derselbe Fehlertyp wie beim Titelbild-Fenster.
+  rezCloseModal();
+  let cover='',thumb='';
+  const geholt=i.image?await ladeFernbild(i.image).catch(()=>null):null;
+  if(geholt){cover=geholt.cover;thumb=geholt.thumb;}
+  else{
+    const cs=getComputedStyle(document.documentElement);
+    cover=CK.makeCoverCard(i.title,i.creator||i.srcName||'',i.srcName||'Suggestion',
+      {a:cs.getPropertyValue('--chrome-bg').trim()||'#3B2A21',
+       b:cs.getPropertyValue('--accent').trim()||'#8A5626',
+       ff:cs.getPropertyValue('--ff-title').trim()||'sans-serif'});
+    thumb=cover;
+  }
+  form={
+    id:S.uid(),
+    title:i.title,
+    min:i.min||30,
+    tags:(i.tags||[]).slice(0,4),
+    fav:false,servings:i.servings||2,notes:'',
+    cover,thumb,
+    ingredients:(i.ingredients||[]).slice(),
+    blocks:[{t:'text',v:(i.steps||[]).join('\n')}],
+    created:'',up:'',source:i.video||i.url||'',
+  };
+  formBase=JSON.stringify(form);
+  await S.markFeedSeen([i.id]);
+  rezShowPage('recipes');
+  renderForm();
+  toast(`From ${i.srcName}: ${i.ingredients.length} ingredients, ${i.steps.length} steps`);
+}
+// Nur merken, nicht gleich zum Rezept machen.
+export async function rezFeedToInspo(id){
+  const i=feed.items.find(x=>x.id===id);
+  if(!i)return;
+  const l=i.video?detectLink(i.video):(i.url?detectLink(i.url):null);
+  await S.saveInspo({
+    id:S.uid(),
+    title:i.title,
+    url:i.video||i.url||'',
+    platform:(l&&l.platform)||'link',
+    label:(l&&l.label)||i.srcName||'Link',
+    embedUrl:(l&&l.embedUrl)||'',
+    thumb:'',
+    creator:i.creator||i.srcName||'',
+    min:i.min||0,
+    tags:(i.tags||[]).slice(0,4),
+    caption:[i.title,'',
+      i.ingredients.length?'Ingredients:':'',...i.ingredients,'',
+      i.steps.length?'Preparation:':'',...i.steps].filter(x=>x!==undefined).join('\n'),
+    created:'',up:'',
+  });
+  await S.markFeedSeen([i.id]);
+  rezCloseModal();
+  renderInspo();renderNav();
+  toast('Saved to your ideas');
+}
+// Detailfenster eines Vorschlags: erst ansehen, dann entscheiden.
+export function rezOpenFeed(id){
+  const i=feed.items.find(x=>x.id===id);
+  if(!i)return;
+  const themen=(i.themes||[]).map(t=>(THEMA_BY_ID[t]||{}).label).filter(Boolean);
+  openModal(
+     (i.image?`<div class="rd-hero"><img src="${escH(i.image)}" alt=""></div>`:'')
+    +`<div class="rd-title">${escH(i.title)}</div>`
+    +`<div class="rd-meta">`
+      +`<span class="rd-chip">${escH(i.srcName||'')}</span>`
+      +(i.creator?`<span class="rd-chip">${escH(i.creator)}</span>`:'')
+      +(i.min?`<span class="rd-chip">${icn('clock',12)}${fmtDur(i.min)}</span>`:'')
+      +themen.map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('')
+    +`</div>`
+    +(i.ingredients.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients</div>`
+      +`<ul class="rd-ing">`+i.ingredients.map(z=>`<li>${escH(z)}</li>`).join('')+`</ul></div>`:'')
+    +(i.steps.length?`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
+      +`<div class="rd-block">`+i.steps.map((s,n)=>`<p><b>${n+1}.</b> ${escH(s)}</p>`).join('')+`</div></div>`:'')
+    +`<div class="m-btns" style="flex-wrap:wrap">`
+      +(i.url?`<a class="btn" style="margin-right:auto" href="${escH(i.url)}" target="_blank" rel="noopener">Open source</a>`:'')
+      +`<button class="btn" onclick="rezFeedToInspo('${i.id}')">${icn('inspo',13)} Save idea</button>`
+      +`<button class="btn btn-primary" onclick="rezFeedToRecipe('${i.id}')">${icn('plus',13)} Add as recipe</button>`
+    +`</div>`
+  ,'modal-wide');
+}
+
 // ══ INSPIRATION ══════════════════════════════════════════════════════════
 // Ideen-Sammlung: eingebettete Reels/Videos, Links, Fotos, Notizen. Der
 // Unterschied zu "Recipes" ist die Absicht - hier liegt, was man MAL kochen
@@ -1436,6 +1684,10 @@ function inspoListe(){
 }
 export function renderInspo(){
   const el=$('pgInspo');if(!el)return;
+  // Beim ersten Zeichnen die Vorschlaege holen und danach neu zeichnen.
+  // ⚠ Nicht await: die eigenen Ideen sollen sofort dastehen, auch wenn die
+  // Datei fehlt oder langsam kommt.
+  if(!feed.geladen)ladeFeed().then(()=>{if($('pgInspo'))renderInspo();});
   const alle=S.state.index.inspo;
   const liste=inspoListe();
   const kuenstler=inspoCreators(),themen=inspoTags();
@@ -1443,6 +1695,11 @@ export function renderInspo(){
   const sortLbl={new:'Newest first',creator:'By creator',title:'By title',dur:'By duration'}[inspoSort];
   el.innerHTML=
      `<div class="ptitle">Inspiration</div>`
+    // ⚠ Die taeglichen Vorschlaege stehen OBEN, die eigenen Ideen darunter:
+    // der Nutzer wollte beides in einer Kategorie (2026-09-03), aber was
+    // taeglich neu ist, gehoert nach vorn - was man selbst gesammelt hat,
+    // findet man auch weiter unten.
+    +feedAbschnitt()
     +`<div class="psub">${alle.length?`${liste.length} of ${alle.length} shown`
         +(kuenstler.length?` · ${kuenstler.length} creator${kuenstler.length===1?'':'s'}`:'')
       :'Save reels, links and ideas you want to cook one day'}</div>`
@@ -2863,6 +3120,8 @@ Object.assign(window,{
   rezOpenMatch,rezMatchQuery,rezMatchTick,rezMatchToShopping,rezShareRecipe,
   // Rezept-Auswahl
   rezPickQuery,rezPickChoose,
+  // Taegliche Vorschlaege
+  rezFeedSource,rezFeedTheme,rezFeedMore,rezFeedReset,rezFeedToRecipe,rezFeedToInspo,rezOpenFeed,
   // Inspiration
   renderInspo,rezInspoQuery,rezInspoClear,rezInspoCreator,rezInspoTag,rezInspoSort,rezOpenBulk,rezRunBulk,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
   rezInspoPaste,rezPickInspoImage,rezSaveInspo,rezOpenInspo,rezTrashInspo,rezInspoToRecipe,

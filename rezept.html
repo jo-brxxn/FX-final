@@ -819,6 +819,41 @@ body.timers-on .pc{padding-bottom:96px}
 @media (hover:hover){.rd-play:hover{background:rgba(20,12,7,.78)}}
 .rd-play svg{width:18px;height:18px}
 
+/* ══ TAEGLICHE VORSCHLAEGE ══════════════════════════════════════════
+   Stehen oben in der Inspiration. Bewusst ANDERS als die gespeicherten
+   Ideen darunter: dort quadratische Bildkacheln, hier eine Karte mit Text
+   und zwei Knoepfen - man soll auf den ersten Blick sehen, was einem
+   gehoert und was heute vorgeschlagen wird. */
+.fd-wrap{margin:0 0 26px;padding:16px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg1)}
+.fd-hd{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.fd-hd-t{font-family:var(--ff-title);font-size:var(--fs-lg);font-weight:800;color:var(--t0);letter-spacing:var(--ls-title)}
+.fd-hd-s{font-size:var(--fs-sm);color:var(--t3)}
+.fd-tags{margin-bottom:8px}
+.fd-note{font-size:var(--fs-sm);color:var(--t2);line-height:var(--lh-normal);padding:6px 0}
+.fd-lnk{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+/* Immer DREI nebeneinander (Nutzer-Wunsch), darunter gestapelt - drei
+   Karten auf einem Telefonbildschirm waeren Briefmarken. */
+.fd-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+@media (max-width:900px){.fd-row{grid-template-columns:1fr}}
+.fd-card{display:flex;flex-direction:column;border-radius:var(--r);border:1px solid var(--bd2);background:var(--bg2);
+  overflow:hidden;cursor:pointer;transition:transform var(--t-fast) var(--e-out),border-color var(--t-fast),box-shadow var(--t-fast)}
+@media (hover:hover){.fd-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow-pop)}}
+.fd-img{position:relative;aspect-ratio:16/10;background:var(--bg4);overflow:hidden}
+.fd-img img{width:100%;height:100%;object-fit:cover;display:block}
+.fd-card.no-img .fd-img img{display:none}
+.fd-src{position:absolute;left:8px;top:8px;padding:3px 8px;border-radius:999px;font-size:var(--fs-xs);font-weight:700;
+  background:rgba(20,12,7,.62);color:#fff;backdrop-filter:blur(3px)}
+.fd-dur{position:absolute;right:8px;bottom:8px}
+.fd-body{padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+.fd-title{font-family:var(--ff-title);font-size:var(--fs-base);font-weight:700;color:var(--t0);line-height:var(--lh-snug)}
+.fd-themes{display:flex;flex-wrap:wrap;gap:5px}
+.fd-th{padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--t1);font-size:var(--fs-xs);font-weight:700}
+.fd-meta{font-size:var(--fs-xs);color:var(--t3);font-variant-numeric:tabular-nums}
+.fd-btns{margin-top:auto;display:flex;gap:6px;flex-wrap:wrap}
+.fd-btns .btn{flex:1;justify-content:center;font-size:var(--fs-xs);padding:8px 10px}
+.fd-more{display:flex;align-items:center;gap:12px;margin-top:14px}
+.fd-count{font-size:var(--fs-xs);color:var(--t3);font-variant-numeric:tabular-nums}
+
 /* ══ TITELBILD AUS DEM VIDEO ════════════════════════════════════════
    Zwei Spalten: links laeuft das Reel, rechts liegen die Quellen fuer das
    Titelbild. Genau so, damit man das Video an der richtigen Stelle anhalten,
@@ -1010,11 +1045,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-9 - Zwei Fehler aus dem zweiten Bugreport: die Zubereitung landete weiter in der Zutatenliste, wenn sie in kurzen Zeilen geschrieben ist (auch "enjoy" wurde als Zutat gefuehrt) - jetzt entscheidet zusaetzlich, ob eine Zeile wie ein Satz aussieht oder mit einem Kochverb beginnt, waehrend Zutaten ohne Menge wie "Fresh basil to serve" Zutaten bleiben. Und der eigentliche Grund, warum Reparaturen "wie davor" aussahen: der Service Worker lieferte den Programmcode aus dem Cache aus, neue Fassungen wirkten erst beim uebernaechsten Oeffnen - Skripte kommen jetzt zuerst aus dem Netz. Ausserdem: Kochmodus in drei Spalten (links Zutaten, Mitte Bild ODER Video im Format des Bildes, rechts die Zubereitung, oben mittig die Timer) und ein neues Titelbild-Fenster, das bei YouTube echte Standbilder anbietet und bei Instagram/TikTok das Reel neben dem Bildschirmfoto-Auswahl laufen laesst, samt Zuschnitt.">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-10 - Neu: taegliche Essensvorschlaege in der Inspiration. Ein Lauf pro Tag sammelt aus vier Quellen - TheMealDB, Spoonacular (nur mit hinterlegtem Schluessel), eigenen Rezeptseiten ueber deren schema.org-Markup und YouTube-Kanaelen - und legt sie als Vorrat ab. Die App zeigt immer drei nebeneinander; "Show 3 more" blaettert weiter, merkt sich das Gesehene geraeteuebergreifend und holt live bei TheMealDB nach, wenn der Vorrat leer ist. Sortierbar nach Quelle UND nach Art: mit Fleisch, ohne Fleisch, Fisch, Nudeln, Reis, Suppe, Salat, Kartoffel, Teig, Suesses, Fruehstueck - erkannt aus Titel und Zutaten, deutsch wie englisch. Ein Vorschlag wird mit einem Klick zum fertig ausgefuellten Rezept oder zur gespeicherten Idee.">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-9</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-10</span>
     </span>
   </div>
   <div class="hdr-r">

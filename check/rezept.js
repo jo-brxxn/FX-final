@@ -100,6 +100,49 @@ function pruefeServiceWorker() {
   if (!v) fail('SW', 'CACHE_VERSION in sw.js nicht gefunden');
 }
 
+// ── Statisch: der taegliche Vorschlags-Lauf ──────────────────────────────
+// ⚠ Die Zerlege-Logik darf NICHT zweimal existieren. Sie steht in
+// js/rezept/feed.js und wird von beiden Seiten benutzt: vom Werkzeug auf dem
+// Runner und von der App beim Nachladen. Eine zweite Kopie im Werkzeug waere
+// die sichere Art, dass ein nachgeladenes Gericht anders aussieht als eins
+// aus dem Vorrat.
+function pruefeFeedAufbau() {
+  const werkzeug = fs.readFileSync('tools/rezept-feed.mjs', 'utf8');
+  if (!/from '\.\.\/js\/rezept\/feed\.js'/.test(werkzeug))
+    fail('FEED', 'tools/rezept-feed.mjs benutzt nicht js/rezept/feed.js - die Zerlege-Logik liegt doppelt vor');
+  if (/function\s+mealDbToItem\s*\(/.test(werkzeug))
+    fail('FEED', 'mealDbToItem steht ein zweites Mal im Werkzeug');
+  // Ein Schluessel darf nur aus der Umgebung kommen, nie im Code stehen.
+  if (/apiKey=(?!\$\{|'\s*\+|\$\{encodeURIComponent)[A-Za-z0-9]{8}/.test(werkzeug))
+    fail('FEED', 'Im Werkzeug steht ein fest eingetragener API-Schluessel');
+  if (!/process\.env\.SPOONACULAR_KEY/.test(werkzeug))
+    fail('FEED', 'Der Spoonacular-Schluessel wird nicht aus der Umgebung gelesen');
+  // Der Workflow muss existieren und darf den Schluessel nur als Secret reichen.
+  let wf = '';
+  try { wf = fs.readFileSync('.github/workflows/rezept-feed.yml', 'utf8'); }
+  catch (e) { fail('FEED', 'Der taegliche Workflow .github/workflows/rezept-feed.yml fehlt'); return; }
+  if (!/secrets\.SPOONACULAR_KEY/.test(wf)) fail('FEED', 'Der Workflow reicht SPOONACULAR_KEY nicht als Secret durch');
+  if (!/schedule:/.test(wf) || !/cron:/.test(wf)) fail('FEED', 'Der Workflow hat keinen Zeitplan');
+  if (!/workflow_dispatch/.test(wf)) fail('FEED', 'Der Workflow laesst sich nicht von Hand starten');
+  // Die Quellen-Datei muss lesbar sein - sie ist zum Bearbeiten von Hand da.
+  try {
+    const q = JSON.parse(fs.readFileSync('tools/rezept-quellen.json', 'utf8'));
+    ['themealdb', 'spoonacular', 'jsonld', 'youtube'].forEach(k => {
+      if (!q[k]) fail('FEED', `In tools/rezept-quellen.json fehlt der Abschnitt "${k}"`);
+    });
+  } catch (e) { fail('FEED', 'tools/rezept-quellen.json ist kein gueltiges JSON: ' + e.message); }
+  // Der Vorrat selbst muss immer gueltiges JSON mit items-Liste sein.
+  try {
+    const f = JSON.parse(fs.readFileSync('rezept_feed.json', 'utf8'));
+    if (!Array.isArray(f.items)) fail('FEED', 'rezept_feed.json hat keine items-Liste');
+  } catch (e) { fail('FEED', 'rezept_feed.json ist kein gueltiges JSON: ' + e.message); }
+  // Der Service Worker muss die Datei netz-zuerst ausliefern, sonst sieht
+  // man die Vorschlaege von vorgestern.
+  const sw = fs.readFileSync('sw.js', 'utf8');
+  if (!/rezept_feed/.test(sw))
+    fail('FEED', 'sw.js liefert rezept_feed.json aus dem Cache - dann stehen dort die Vorschlaege von vorgestern');
+}
+
 // ── E) Kontrast: rein statisch, braucht keinen Browser ───────────────────
 function pruefeKontrast() {
   const s = fs.readFileSync('rezept.html', 'utf8');
@@ -157,12 +200,17 @@ function pruefeKontrast() {
   const themeAnzahl = pruefeKontrast();
   pruefeSyncKopfzeilen();
   pruefeServiceWorker();
+  pruefeFeedAufbau();
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rezcheck-'));
   const foto = path.join(tmp, 'dish.png');
   fs.writeFileSync(foto, testPng());
 
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  // ⚠ serviceWorkers: 'block' - ohne das beantwortet der Service Worker die
+  // Anfragen selbst, und page.route() greift nicht (im Probelauf zur
+  // Vorschlags-Stufe genau so passiert: die Testdaten kamen nie an, die
+  // echte, leere Datei schon).
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
   const p = await ctx.newPage();
   const jsFehler = [];
   p.on('pageerror', e => jsFehler.push(e.message));
@@ -1465,6 +1513,257 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezCloseModal());
   await p.waitForTimeout(400);
 
+
+  // ── N) Taegliche Essensvorschlaege ───────────────────────────────────
+  // Nutzer-Wunsch 2026-09-03: taeglich neue Vorschlaege, sortiert nach
+  // Quelle UND nach Art (mit Fleisch / ohne / Fisch / Nudeln / Suppe), in
+  // einer Dreierreihe mit Nachlade-Knopf.
+
+  // N1: Themen-Erkennung - rein rechnerisch, beide Sprachen
+  const themen = await p.evaluate(async () => {
+    const T = await import('./js/rezept/themen.js');
+    const out = [];
+    const t = (name, ist, soll) => out.push({ name, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
+    t('Lachs + Nudeln', T.themenOf('Baked Salmon Feta Pasta', ['2 salmon fillets', '250 g pasta']), ['fish', 'pasta']);
+    t('Hackfleisch', T.themenOf('Spaghetti Bolognese', ['500 g Hackfleisch', '400 g Spaghetti']), ['meat', 'pasta']);
+    t('deutsche Zusammensetzung', T.themenOf('Tomatensuppe', ['Tomaten', 'Zwiebel']), ['veggie', 'soup']);
+    t('Huhn', T.themenOf('Chicken Noodle Soup', ['chicken breast', 'noodles']), ['chicken', 'pasta', 'soup']);
+    // ⚠ Fischsauce macht ein Gericht NICHT zum Fischgericht - wer nach Fisch
+    // filtert, bekaeme sonst Gerichte ohne ein Stueck Fisch darin.
+    // ⚠ Diese beiden Faelle muessen die ENTFERNUNG der versteckten Zutaten
+    // pruefen, nicht nur ihre Wirkung auf "No meat". Erste Fassung nahm das
+    // deutsche "Fischsauce" - ein Wort, das ohnehin auf kein Themenwort
+    // passt; die Pruefung waere gruen geblieben, als die Entfernung
+    // versuchsweise ausgebaut wurde. Mit "fish sauce" und "chicken stock"
+    // (beide enthalten ein Themenwort als ganzes Wort) beisst sie wirklich.
+    t('fish sauce macht kein Fischgericht', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']), ['pasta']);
+    t('chicken stock macht kein Huhn', T.themenOf('Risotto', ['200 g Reis', '500 ml chicken stock', 'Parmesan']), ['rice']);
+    t('...beides aber unvegetarisch', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']).includes('veggie'), false);
+    t('ohne Zutaten kein Thema', T.themenOf('Irgendwas', []), []);
+    t('Labels', T.themenLabels(['meat', 'veggie']), ['Meat', 'No meat']);
+    return out;
+  });
+  themen.filter(x => !x.ok).forEach(x =>
+    fail('N', `Themen "${x.name}": ${JSON.stringify(x.ist)} statt ${JSON.stringify(x.soll)}`));
+
+  // N2: Zerlegen der Quellen - dieselbe Datei, die auch das Werkzeug nutzt
+  const zerlegt = await p.evaluate(async () => {
+    const F = await import('./js/rezept/feed.js');
+    const out = [];
+    const t = (name, ist, soll) => out.push({ name, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
+    const html = '<html><head><script type="application/ld+json">' + JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [{ '@type': 'WebSite', name: 'Blog' }, {
+        '@type': 'Recipe', name: 'Ofengemuese mit Feta',
+        image: { '@type': 'ImageObject', url: 'https://x.de/b.jpg' },
+        author: { '@type': 'Person', name: 'Lena' }, totalTime: 'PT45M', recipeYield: ['4 Portionen'],
+        recipeIngredient: ['500 g Kartoffeln', '200 g Feta'],
+        recipeInstructions: [{ '@type': 'HowToStep', text: 'Ofen vorheizen.' },
+          { '@type': 'HowToSection', itemListElement: [{ '@type': 'HowToStep', text: '45 Minuten backen.' }] }],
+      }],
+    }) + '<' + '/script></head><body></body></html>';
+    let r = null;
+    for (const b of F.jsonLdBloecke(html)) { r = F.findeRezept(b, 0); if (r) break; }
+    t('JSON-LD im @graph gefunden', !!r, true);
+    t('Bild aus dem Objekt', F.bildAus(r && r.image), 'https://x.de/b.jpg');
+    t('Schritte inkl. Abschnitt', F.anweisungenAus(r && r.recipeInstructions), ['Ofen vorheizen.', '45 Minuten backen.']);
+    t('Dauer PT45M', F.isoMinuten('PT45M'), 45);
+    t('Dauer PT1H30M', F.isoMinuten('PT1H30M'), 90);
+    t('Dauer Unsinn', F.isoMinuten('morgen'), null);
+    t('RSS-Links', F.feedLinks('<rss><item><link>https://x.de/a</link></item><item><link>https://x.de/b</link></item></rss>', 5), ['https://x.de/a', 'https://x.de/b']);
+    t('Atom-Links', F.feedLinks('<feed><entry><link href="https://y.de/1"/></entry></feed>', 5), ['https://y.de/1']);
+    // ⚠ Halbe Eintraege gehoeren VERWORFEN, nicht mit Platzhaltern gefuellt:
+    // eine Karte ohne Zutaten sieht aus wie ein Rezept, ist aber keins.
+    // ⚠ Der Titel muss hier LANG GENUG sein. Erste Fassung nahm 'A' - damit
+    // hat die Pruefung in Wahrheit nur die Titel-Mindestlaenge getestet und
+    // waere gruen geblieben, als die Bild-Pflicht versuchsweise entfernt
+    // wurde. Genau dafuer gibt es den Mutationstest.
+    t('ohne Bild verworfen', F.baue({ src: 'x', title: 'Testgericht ohne Bild', ingredients: ['1 a', '2 b'], steps: ['x', 'y'] }), null);
+    t('ohne Inhalt verworfen', F.baue({ src: 'x', title: 'Testgericht ohne Inhalt', image: 'u', ingredients: ['1 a'], steps: [] }), null);
+    t('vollstaendig wird gebaut', !!F.baue({ src: 'x', title: 'Testgericht komplett', image: 'u', ingredients: ['1 a', '2 b'], steps: ['x', 'y'] }), true);
+    const m = F.mealDbToItem({ strMeal: 'Beef Wellington', strMealThumb: 'https://i/1.jpg', idMeal: '1',
+      strCategory: 'Beef', strArea: 'British', strInstructions: 'Sear the beef. Bake for 40 minutes.',
+      strIngredient1: 'Beef', strMeasure1: '1 kg', strIngredient2: 'Pastry', strMeasure2: '500 g' });
+    t('TheMealDB: Mengen an die Zutat', m && m.ingredients, ['1 kg Beef', '500 g Pastry']);
+    t('TheMealDB: Themen', m && m.themes, ['meat']);
+    t('TheMealDB: leere Antwort', F.mealDbToItem(null), null);
+    return out;
+  });
+  zerlegt.filter(x => !x.ok).forEach(x =>
+    fail('N', `Zerlegen "${x.name}": ${JSON.stringify(x.ist)} statt ${JSON.stringify(x.soll)}`));
+
+  // N3: Zusammenfuehren der gesehenen Vorschlaege ueber zwei Geraete
+  const feedMerge = await p.evaluate(async () => {
+    const S2 = await import('./js/rezept/store.js');
+    const A = S2.normalizeIndex({ feed: { seen: ['a', 'b'], up: '2026-09-03T10:00:00Z', cleared: '' } });
+    const B = S2.normalizeIndex({ feed: { seen: ['c'], up: '2026-09-03T09:00:00Z', cleared: '' } });
+    const R = S2.normalizeIndex({ feed: { seen: [], up: '2026-09-03T11:00:00Z', cleared: '2026-09-03T11:00:00Z' } });
+    const N2 = S2.normalizeIndex({ feed: { seen: ['z'], up: '2026-09-03T12:00:00Z', cleared: '' } });
+    return {
+      vereinigt: S2.mergeIndex(A, B).feed.seen.sort(),
+      nachReset: S2.mergeIndex(A, R).feed.seen,
+      nachResetUmgedreht: S2.mergeIndex(R, A).feed.seen,
+      danachNeu: S2.mergeIndex(R, N2).feed.seen,
+    };
+  });
+  if (JSON.stringify(feedMerge.vereinigt) !== JSON.stringify(['a', 'b', 'c']))
+    fail('N', `Gesehene Vorschlaege werden nicht vereinigt: ${JSON.stringify(feedMerge.vereinigt)}`);
+  // ⚠ "Show them all again" muss ueberleben: eine reine Vereinigung wuerde
+  // die geleerte Liste vom anderen Geraet sofort zurueckholen.
+  if (feedMerge.nachReset.length || feedMerge.nachResetUmgedreht.length)
+    fail('N', `Ein Zuruecksetzen wird vom Abgleich wieder aufgefuellt: ${JSON.stringify(feedMerge.nachReset)}/${JSON.stringify(feedMerge.nachResetUmgedreht)}`);
+  if (JSON.stringify(feedMerge.danachNeu) !== JSON.stringify(['z']))
+    fail('N', `Nach dem Zuruecksetzen gesehene Vorschlaege gehen verloren: ${JSON.stringify(feedMerge.danachNeu)}`);
+
+  // N4: die Oberflaeche mit Testdaten - Dreierreihe, Nachladen, Filter
+  const FIX = { updated: new Date().toISOString(), count: 7, sources: ['TheMealDB', 'Kitchen Blog', 'Chef TV'], items: [] };
+  [['Chicken Handi', 'TheMealDB', ['chicken'], ['1 kg Chicken', '2 Tomatoes'], ['Fry.', 'Simmer.']],
+   ['Tomatensuppe', 'Kitchen Blog', ['veggie', 'soup'], ['1 kg Tomaten', '1 Zwiebel'], ['Kochen.', 'Puerieren.']],
+   ['Spaghetti Bolognese', 'Chef TV', ['meat', 'pasta'], ['500 g Hack', '400 g Spaghetti'], ['Anbraten.', 'Kochen.']],
+   ['Lachs mit Spinat', 'TheMealDB', ['fish'], ['2 Lachsfilets', '200 g Spinat'], ['Backen.', 'Servieren.']],
+   ['Kartoffelsalat', 'Kitchen Blog', ['veggie', 'salad', 'potato'], ['1 kg Kartoffeln', '1 Zwiebel'], ['Kochen.', 'Mischen.']],
+   ['Pancakes', 'Chef TV', ['veggie', 'sweet', 'breakfast'], ['200 g Mehl', '2 Eier'], ['Ruehren.', 'Backen.']],
+   ['Rindergulasch', 'TheMealDB', ['meat', 'soup'], ['1 kg Rind', '2 Zwiebeln'], ['Anbraten.', 'Schmoren.']],
+  ].forEach((r, i) => FIX.items.push({ id: 'fx' + i, src: 'x', srcName: r[1], title: r[0],
+    url: 'https://beispiel.invalid/' + i, image: 'https://bild.invalid/' + i + '.jpg', video: '', creator: '',
+    min: 20 + i * 5, servings: 2, ingredients: r[3], steps: r[4], themes: r[2], tags: [], added: new Date().toISOString() }));
+
+  await p.route(/rezept_feed\.json/, r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FIX) }));
+  await p.route(/bild\.invalid/, r => r.abort());
+  // Sauberer Ausgangszustand: nichts gilt als gesehen.
+  await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
+  await p.reload({ waitUntil: 'domcontentloaded' });
+  await p.waitForTimeout(1200);
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(1200);
+
+  const reihe = () => p.evaluate(() => [...document.querySelectorAll('.fd-card .fd-title')].map(e => e.textContent));
+  const ersteDrei = await reihe();
+  if (ersteDrei.length !== 3) fail('N', `Die Vorschlagsreihe zeigt ${ersteDrei.length} statt 3 Gerichte`);
+  // Drei nebeneinander, nicht untereinander (Nutzer-Wunsch "in einer Reihe").
+  const nebeneinander = await p.evaluate(() => {
+    const k = [...document.querySelectorAll('.fd-card')].slice(0, 3).map(e => e.getBoundingClientRect());
+    if (k.length < 3) return false;
+    return Math.abs(k[0].top - k[1].top) < 4 && Math.abs(k[1].top - k[2].top) < 4 && k[0].left < k[1].left && k[1].left < k[2].left;
+  });
+  if (!nebeneinander) fail('N', 'Die drei Vorschlaege stehen nicht nebeneinander');
+  const zaehler1 = await p.evaluate(() => (document.querySelector('.fd-count') || {}).textContent || '');
+  if (!/3 of 7/.test(zaehler1)) fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of 7"`);
+
+  // "Show 3 more" muss DREI ANDERE zeigen
+  await p.click('#fdMore');
+  await p.waitForTimeout(800);
+  const zweiteDrei = await reihe();
+  if (zweiteDrei.length !== 3) fail('N', `Nach "Show 3 more" stehen ${zweiteDrei.length} statt 3 Gerichte da`);
+  if (zweiteDrei.some(t => ersteDrei.includes(t)))
+    fail('N', `"Show 3 more" zeigt dieselben Gerichte noch einmal: ${JSON.stringify(zweiteDrei)}`);
+  // ...und das Weitergeblaetterte muss gemerkt sein (geraeteuebergreifend).
+  const gemerkt = await p.evaluate(async () => {
+    const S2 = await import('./js/rezept/store.js');
+    return ((S2.state.index.feed || {}).seen || []).length;
+  });
+  if (gemerkt !== 3) fail('N', `Nach dem Weiterblaettern sind ${gemerkt} statt 3 Vorschlaege als gesehen gemerkt`);
+
+  // Filter nach Art
+  await p.click('.fd-tags .tag-chip:has-text("No meat")');
+  await p.waitForTimeout(600);
+  const veggie = await reihe();
+  if (!veggie.length) fail('N', 'Der Filter "No meat" zeigt gar nichts mehr');
+  if (veggie.some(t => /Bolognese|Gulasch|Handi|Lachs/.test(t)))
+    fail('N', `Der Filter "No meat" laesst Fleisch/Fisch durch: ${JSON.stringify(veggie)}`);
+  // Filter nach Quelle zusaetzlich
+  await p.click('.fd-tags .tag-chip:has-text("Kitchen Blog")');
+  await p.waitForTimeout(600);
+  const gefiltert = await p.evaluate(() => [...document.querySelectorAll('.fd-card')].map(c => ({
+    titel: (c.querySelector('.fd-title') || {}).textContent || '',
+    quelle: (c.querySelector('.fd-src') || {}).textContent || '',
+  })));
+  if (gefiltert.some(x => x.quelle !== 'Kitchen Blog'))
+    fail('N', `Der Quellen-Filter greift nicht: ${JSON.stringify(gefiltert)}`);
+  await p.evaluate(() => { window.rezFeedSource(''); window.rezFeedTheme(''); });
+  await p.waitForTimeout(500);
+
+  // "Add as recipe" muss ein FERTIG AUSGEFUELLTES Formular ergeben.
+  // ⚠ Regressionstest: die erste Fassung schloss das Fenster NACH dem Bauen
+  // des Formulars - rezCloseModal() raeumt den Formularzustand ab, und
+  // renderForm() stieg mit "Cannot read properties of null" aus. Fuer den
+  // Nutzer sah das aus wie ein Knopf, der nichts tut.
+  await p.click('.fd-card .btn-primary');
+  await p.waitForTimeout(1600);
+  const uebernommen = await p.evaluate(() => ({
+    formular: !!document.getElementById('rfTitle'),
+    titel: (document.getElementById('rfTitle') || {}).value || '',
+    zutaten: document.querySelectorAll('#rfIng .rf-line').length,
+    schritte: ((document.querySelector('#rfBlocks textarea') || {}).value || '').split('\n').filter(Boolean).length,
+    bild: !!document.querySelector('.rf-drop img'),
+  }));
+  if (!uebernommen.formular) fail('N', '"Add as recipe" oeffnet kein Formular');
+  if (!uebernommen.titel) fail('N', '"Add as recipe" uebernimmt den Titel nicht');
+  if (uebernommen.zutaten < 2) fail('N', `"Add as recipe" uebernimmt ${uebernommen.zutaten} statt 2 Zutaten`);
+  if (uebernommen.schritte < 2) fail('N', `"Add as recipe" uebernimmt ${uebernommen.schritte} statt 2 Schritte`);
+  // ⚠ Das Bild liegt auf einem fremden Server (hier bewusst blockiert). Ohne
+  // Titelbild verweigert das Speichern - es MUSS also ein erzeugtes
+  // entstehen, sonst haengt der Nutzer fest.
+  if (!uebernommen.bild) fail('N', 'Ohne erreichbares Bild entsteht kein erzeugtes Titelbild - das Rezept liesse sich nicht speichern');
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
+  // "Save idea" legt eine Inspiration an
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(700);
+  const ideenVorher = await p.evaluate(async () => (await import('./js/rezept/store.js')).state.index.inspo.length);
+  await p.click('.fd-card .fd-btns .btn:not(.btn-primary)');
+  await p.waitForTimeout(1200);
+  const ideenNachher = await p.evaluate(async () => (await import('./js/rezept/store.js')).state.index.inspo.length);
+  if (ideenNachher !== ideenVorher + 1) fail('N', '"Save idea" legt keine Idee an');
+
+  // Detailfenster eines Vorschlags
+  await p.click('.fd-card');
+  await p.waitForTimeout(900);
+  const detail = await p.evaluate(() => ({
+    offen: !!document.querySelector('.rd-title'),
+    zutaten: document.querySelectorAll('.rd-ing li').length,
+    schritte: document.querySelectorAll('.rd-block p').length,
+  }));
+  if (!detail.offen) fail('N', 'Ein Vorschlag laesst sich nicht oeffnen');
+  if (detail.zutaten < 2 || detail.schritte < 2) fail('N', 'Im Vorschlags-Fenster fehlen Zutaten oder Schritte');
+  await p.evaluate(() => window.rezCloseModal());
+  await p.waitForTimeout(400);
+
+  // Jeder Handler im Vorschlags-Bereich muss auf eine echte Funktion zeigen
+  const totN = await p.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('.fd-wrap [onclick],.fd-wrap [onkeydown],.fd-wrap [onerror]').forEach(el => {
+      ['onclick', 'onkeydown', 'onerror'].forEach(a => {
+        const v = el.getAttribute(a);
+        if (!v) return;
+        for (const m of v.matchAll(/(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g)) {
+          const n = m[2];
+          if (['if', 'for', 'while', 'return', 'typeof', 'closest', 'add'].includes(n)) continue;
+          if (typeof window[n] !== 'function') out.push(a + ' -> ' + n);
+        }
+      });
+    });
+    return [...new Set(out)];
+  });
+  totN.forEach(x => fail('N', 'Handler im Vorschlags-Bereich zeigt auf keine Funktion: ' + x));
+
+  // N5: fehlt die Datei, darf die Kategorie NICHT kaputtgehen
+  await p.unroute(/rezept_feed\.json/);
+  await p.route(/rezept_feed\.json/, r => r.fulfill({ status: 404, body: 'weg' }));
+  await p.reload({ waitUntil: 'domcontentloaded' });
+  await p.waitForTimeout(1200);
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(1000);
+  const ohneDatei = await p.evaluate(() => ({
+    hinweis: !!document.querySelector('.fd-note'),
+    ideenDa: !!document.querySelector('#pgInspo .rez-grid'),
+    text: (document.querySelector('.fd-note') || {}).textContent || '',
+  }));
+  if (!ohneDatei.hinweis) fail('N', 'Ohne Vorschlags-Datei fehlt jeder Hinweis - der Bereich ist einfach leer');
+  if (!ohneDatei.ideenDa) fail('N', 'Ohne Vorschlags-Datei verschwinden auch die eigenen Ideen');
+  await p.unroute(/rezept_feed\.json/);
+
   if (jsFehler.length) [...new Set(jsFehler)].slice(0, 8).forEach(e => fail('JS', e.slice(0, 200)));
 
   await browser.close();
@@ -1475,7 +1774,7 @@ function pruefeKontrast() {
     F.forEach(x => console.error('  ' + x));
     process.exit(1);
   }
-  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus/Bilder/Titelbild)`);
+  console.log(`[rezept] ok (${themeAnzahl} Themes, Handler/Buttons/Ablauf/Nachfrage/Kontrast/Kategorien/Merge/Bewegung/Kochmodus/Bilder/Titelbild/Vorschlaege)`);
 })().catch(e => {
   // ⚠ Bei einem Absturz AUCH die bis dahin gesammelten Befunde ausgeben.
   // Ohne das sieht man nur "Timeout" und raet, was vorher schon schieflief -

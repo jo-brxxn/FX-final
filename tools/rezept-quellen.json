@@ -1,0 +1,29 @@
+{
+  "_hinweis": "Quellen fuer die taeglichen Essensvorschlaege der Rezept-App (Perfect Rezept). Diese Datei ist zum Bearbeiten von Hand gedacht - siehe docs/rezept.md, Abschnitt 'Taegliche Vorschlaege'. Der Lauf ueberspringt jede Quelle, die nicht antwortet, statt abzubrechen.",
+
+  "themealdb": {
+    "an": true,
+    "anzahl": 6,
+    "_hinweis": "Frei und ohne Schluessel. Liefert vollstaendige Rezepte mit Bild, Mengen und Anleitung."
+  },
+
+  "spoonacular": {
+    "an": true,
+    "anzahl": 4,
+    "_hinweis": "Laeuft nur, wenn das GitHub-Secret SPOONACULAR_KEY gesetzt ist - sonst wird die Quelle still uebersprungen. Kostenloses Kontingent: 50 Punkte pro Tag."
+  },
+
+  "jsonld": {
+    "an": true,
+    "proSeite": 3,
+    "seiten": [],
+    "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen."
+  },
+
+  "youtube": {
+    "an": true,
+    "proKanal": 2,
+    "kanaele": [],
+    "_hinweis": "Kochkanaele. Jeder Eintrag: {\"name\": \"Anzeigename\", \"id\": \"UC...\"} - die Kanal-ID steht in der Kanal-URL oder im Quelltext der Kanalseite (channelId). Aus Titel und Videobeschreibung entsteht ein Rezeptentwurf ueber denselben Parser, den auch der Reel-Import benutzt."
+  }
+}

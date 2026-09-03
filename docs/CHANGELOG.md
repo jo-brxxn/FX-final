@@ -9195,3 +9195,77 @@ unterscheiden von „nicht behoben". Seit `fxpro-v11` laufen `.js`/`.mjs`/`.css`
 über den Netz-zuerst-Zweig (Cache nur offline), der Seiten-Rückfall gilt nur
 noch für Navigationen. Statisch geprüft, Mutation nachgewiesen: Zweig
 zurückgebaut → „sw.js liefert JS/CSS aus dem Cache aus".
+
+---
+
+## 2026-09-03 — Perfect Rezept: tägliche Essensvorschläge aus vier Quellen (REZEPT-CHECK-10)
+
+Nutzer: *„irgendeine Quelle die jeden Tag neue essenvorschläge mit direkt
+erstellbaren Rezepten liefert muss es geben … stopp nicht bei einer gib mir
+mehrere"* — und nach der Auswahl: alle vier, in der Inspiration, sortiert nach
+Quelle **und** nach Art, Dreierreihe mit Nachlade-Knopf.
+
+### Zuerst die Frage, die die Architektur entschieden hat
+
+*„Kann ich so einen Workflow auslösen?"* — technisch ja, praktisch nein: die
+App müsste dafür einen GitHub-Token mit Schreibrecht im Browser halten, also
+im Quelltext einer öffentlich erreichbaren Seite. Stattdessen: **Vorrat im
+Repo** (der Tageslauf legt bis zu 90 Vorschläge auf Halde, die App blättert
+in Dreierschritten durch) **plus Live-Nachladen bei TheMealDB**, wenn der
+Vorrat leer ist — die einzige der vier Quellen, die eine Browser-Abfrage
+erlaubt. Beides zusammen fühlt sich an wie „Knopf drückt, neue Gerichte da",
+ohne Sicherheitsloch und ohne 60 Sekunden Wartezeit.
+
+### Die vier Quellen und ihre ehrlichen Grenzen
+
+- **TheMealDB** — frei, ohne Schlüssel, vollständige Rezepte. Bestand nur
+  ~300 Gerichte, deshalb ist Entdoppeln Pflicht.
+- **Spoonacular** — großer Katalog, Schlüssel als GitHub-Secret. **Ohne
+  Secret wird still übersprungen**, statt den Lauf scheitern zu lassen.
+- **Eigene Seiten über `schema.org/Recipe`** — praktisch jede moderne
+  Rezeptseite trägt das Markup (Google verlangt es für die Rezept-Kacheln),
+  deshalb genügt hier der Link tatsächlich, anders als bei Instagram.
+- **YouTube-Kanäle über ihren öffentlichen Atom-Feed** — kein Schlüssel
+  nötig; die Videobeschreibung läuft durch **denselben** Caption-Parser wie
+  der Reel-Import.
+
+Seiten und Kanäle stehen in `tools/rezept-quellen.json` und sind von Hand
+erweiterbar. Nachgewiesen: bei komplett gesperrtem Netz endet der Lauf mit
+„0 Vorschläge" und Code 0, **ohne** den vorhandenen Vorrat zu überschreiben.
+
+### Sortierung nach Art — drei Regeln, die dabei zählen
+
+`js/rezept/themen.js` (läuft im Tageslauf **und** in der App — zwei Fassungen
+wären die sichere Art, dass ein Vorschlag anders einsortiert ist als der
+Filter, der ihn finden soll):
+
+- **Deutsche Zusammensetzungen**: „Tomatensuppe" ist ein Wort. Für Stämme ab
+  5 Zeichen wird auch innerhalb von Wörtern gesucht — kürzere nicht, „reis"
+  steckt in „Preiselbeere".
+- **Versteckte tierische Zutaten** werden vor der Themensuche aus dem Text
+  genommen: sonst wäre jedes Pad Thai mit Fischsauce ein „Fisch"-Gericht.
+  Für „No meat" zählt der Fund trotzdem.
+- **Nichts raten**: kein Merkmal → kein Thema. Ein falsches „No meat" wäre
+  schlimmer als keins.
+
+### Zwei Fehler, im eigenen Probelauf gefunden
+
+- **„Add as recipe" tat nichts.** `rezCloseModal()` lief *nach* dem Aufbau des
+  Formulars und räumte dessen Zustand ab (`form=null`) — `renderForm()` stieg
+  mit „Cannot read properties of null" aus. Derselbe Fehlertyp wie beim
+  Titelbild-Fenster; jetzt schließt das Fenster zuerst. Als Regressionstest in
+  Stufe N.
+- **Die Testdaten kamen im Wächter nie an.** Der Service Worker beantwortete
+  die Anfragen selbst, `page.route()` griff nicht — der Lauf las die echte,
+  leere Datei. Der Wächter startet den Browser jetzt mit
+  `serviceWorkers: 'block'`. Aus demselben Grund gehört `rezept_feed.json` in
+  den Netz-zuerst-Zweig von `sw.js`, sonst stünden dort die Vorschläge von
+  vorgestern.
+
+### Merge-Regel für „schon gesehen"
+
+Vereinigung beider Geräte — **außer** nach einem Zurücksetzen. Eine reine
+Vereinigung würde die geleerte Liste beim nächsten Abgleich sofort vom anderen
+Gerät zurückholen, „show them all again" wäre wirkungslos. Deshalb trägt der
+Bereich ein `cleared`-Datum, und eine Seite zählt nur mit, wenn ihr Stand
+jünger ist als das letzte Zurücksetzen.
