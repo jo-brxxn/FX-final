@@ -114,7 +114,10 @@ async function quelleJsonLd(cfg) {
   for (const s of seiten) {
     const xml = await hole(s.feed);
     if (!xml) continue;
-    const links = feedLinks(xml, proSeite);
+    // "pro" an EINER Seite schlaegt den gemeinsamen Wert - so bekommen neu
+    // ausgewaehlte Quellen mehr Gewicht im Vorrat, ohne dass jede alte
+    // Seite mitwaechst (Nutzer-Wunsch 2026-09-03: neue Quellen staerker).
+    const links = feedLinks(xml, Math.max(1, Math.min(6, s.pro || proSeite)));
     log(`JSON-LD ${s.name}: ${links.length} neue Beitraege`);
     for (const u of links) {
       const html = await hole(u);
@@ -166,7 +169,8 @@ async function quelleYoutube(cfg) {
     if (!id) { log(`YouTube ${k.name}: Kanal-ID nicht aufloesbar - uebersprungen`); continue; }
     const xml = await hole('https://www.youtube.com/feeds/videos.xml?channel_id=' + encodeURIComponent(id));
     if (!xml) continue;
-    const eintraege = [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map(m => m[0]).slice(0, pro);
+    // "pro" an EINEM Kanal schlaegt den gemeinsamen Wert - siehe JSON-LD.
+    const eintraege = [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map(m => m[0]).slice(0, Math.max(1, Math.min(5, k.pro || pro)));
     log(`YouTube ${k.name}: ${eintraege.length} Videos`);
     for (const e of eintraege) {
       const titel = saeubere((/<title>([\s\S]*?)<\/title>/i.exec(e) || [])[1] || '');

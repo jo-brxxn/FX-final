@@ -174,6 +174,21 @@ function pruefeFeedAufbau() {
     ['themealdb', 'spoonacular', 'jsonld', 'youtube'].forEach(k => {
       if (!q[k]) fail('FEED', `In tools/rezept-quellen.json fehlt der Abschnitt "${k}"`);
     });
+    // ⚠ Ein "pro" an einer einzelnen Quelle muss auch wirken. Steht es in der
+    // Datei, aber liest das Werkzeug nur proSeite/proKanal, dann ist die
+    // staerkere Gewichtung neuer Quellen still wirkungslos - die Datei sieht
+    // richtig aus, der Vorrat aendert sich nicht.
+    const eigenesGewicht = []
+      .concat((q.jsonld && q.jsonld.seiten) || [], (q.youtube && q.youtube.kanaele) || [])
+      .filter(x => x && x.pro != null);
+    if (eigenesGewicht.length) {
+      if (!/\bs\.pro\b/.test(werkzeug) || !/\bk\.pro\b/.test(werkzeug))
+        fail('FEED', `${eigenesGewicht.length} Quelle(n) haben ein eigenes "pro", aber das Werkzeug wertet es nicht aus`);
+      eigenesGewicht.forEach(x => {
+        if (!Number.isInteger(x.pro) || x.pro < 1)
+          fail('FEED', `"pro" bei "${x.name}" ist keine ganze Zahl ab 1`);
+      });
+    }
   } catch (e) { fail('FEED', 'tools/rezept-quellen.json ist kein gueltiges JSON: ' + e.message); }
   // Der Vorrat selbst muss immer gueltiges JSON mit items-Liste sein.
   try {
@@ -1577,10 +1592,10 @@ function pruefeKontrast() {
     const T = await import('./js/rezept/themen.js');
     const out = [];
     const t = (name, ist, soll) => out.push({ name, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
-    t('Lachs + Nudeln', T.themenOf('Baked Salmon Feta Pasta', ['2 salmon fillets', '250 g pasta']), ['fish', 'pasta']);
-    t('Hackfleisch', T.themenOf('Spaghetti Bolognese', ['500 g Hackfleisch', '400 g Spaghetti']), ['meat', 'pasta']);
+    t('Lachs + Nudeln', T.themenOf('Baked Salmon Feta Pasta', ['2 salmon fillets', '250 g pasta']), ['fish', 'protein', 'pasta']);
+    t('Hackfleisch', T.themenOf('Spaghetti Bolognese', ['500 g Hackfleisch', '400 g Spaghetti']), ['meat', 'protein', 'pasta']);
     t('deutsche Zusammensetzung', T.themenOf('Tomatensuppe', ['Tomaten', 'Zwiebel']), ['veggie', 'soup']);
-    t('Huhn', T.themenOf('Chicken Noodle Soup', ['chicken breast', 'noodles']), ['chicken', 'pasta', 'soup']);
+    t('Huhn', T.themenOf('Chicken Noodle Soup', ['chicken breast', 'noodles']), ['chicken', 'protein', 'pasta', 'soup']);
     // ⚠ Fischsauce macht ein Gericht NICHT zum Fischgericht - wer nach Fisch
     // filtert, bekaeme sonst Gerichte ohne ein Stueck Fisch darin.
     // ⚠ Diese beiden Faelle muessen die ENTFERNUNG der versteckten Zutaten
@@ -1589,11 +1604,36 @@ function pruefeKontrast() {
     // passt; die Pruefung waere gruen geblieben, als die Entfernung
     // versuchsweise ausgebaut wurde. Mit "fish sauce" und "chicken stock"
     // (beide enthalten ein Themenwort als ganzes Wort) beisst sie wirklich.
-    t('fish sauce macht kein Fischgericht', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']), ['pasta']);
+    // ⚠ Der Tofu im Pad Thai IST ein Eiweisstraeger - "protein" gehoert hier
+    // hin; entscheidend ist, dass "fish" NICHT auftaucht.
+    t('fish sauce macht kein Fischgericht', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']), ['protein', 'pasta']);
+    // ⚠ Und "chicken stock" darf weder Huhn NOCH Protein ausloesen: Bruehe
+    // ist Wuerze. Erste Fassung des Protein-Themas las die Zutaten roh und
+    // machte aus diesem Risotto ein Proteingericht.
     t('chicken stock macht kein Huhn', T.themenOf('Risotto', ['200 g Reis', '500 ml chicken stock', 'Parmesan']), ['rice']);
     t('...beides aber unvegetarisch', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']).includes('veggie'), false);
     t('ohne Zutaten kein Thema', T.themenOf('Irgendwas', []), []);
     t('Labels', T.themenLabels(['meat', 'veggie']), ['Meat', 'No meat']);
+    // ⚠ Nutzer-Wunsch 2026-09-03: proteinreich. Nur ZUTATEN zaehlen - ein
+    // Titel "Protein Bowl" ohne Eiweisstraeger darin waere gelogen.
+    t('proteinreich an der Zutat', T.themenOf('Bowl', ['400 g Hähnchenbrust', '200 g Reis']).includes('protein'), true);
+    t('Quark/Pulver zaehlen', T.themenOf('Dessert', ['500 g Magerquark', '1 EL Proteinpulver']).includes('protein'), true);
+    t('Linsen zaehlen', T.themenOf('Suppe', ['250 g Linsen', 'Karotten']).includes('protein'), true);
+    t('Titel allein reicht nicht', T.themenOf('High Protein Bowl', ['Salat', 'Gurke', 'Dressing']).includes('protein'), false);
+    // ⚠ Zwei Eier im Kuchen machen daraus kein Proteingericht.
+    t('Eier im Kuchen zaehlen nicht', T.themenOf('Schokokuchen', ['Mehl', '2 Eier', 'Zucker', 'Schokolade']).includes('protein'), false);
+    t('Eier im Shakshuka zaehlen', T.themenOf('Shakshuka', ['4 Eier', 'Tomaten']).includes('protein'), true);
+    // ⚠ Sagt das Rezept selbst "vegan", zaehlen Produktnamen nicht mehr:
+    // "vegane Salami" und "Räuchertofu" sind kein Fleisch (Pruef-Lauf
+    // 2026-09-03: "Veganes Pizza-Sandwich" stand unter Meat).
+    t('vegan schlaegt Produktnamen', T.themenOf('Veganes Pizza-Sandwich mit Tofu-Ricotta',
+      ['200 g Räuchertofu', 'vegane Salami', 'Pizzateig']), ['veggie', 'protein', 'bread']);
+    t('vegan bleibt ohne Fleisch nicht themenlos', T.themenOf('Vegan Chicken Nuggets',
+      ['Sojaschnetzel', 'Panade']), ['veggie', 'protein']);
+    t('echtes Fleisch bleibt Fleisch', T.themenOf('Spaghetti Bolognese',
+      ['500 g Hackfleisch', 'Spaghetti']), ['meat', 'protein', 'pasta']);
+    // ⚠ "Eis" darf nicht ueber die Mehrzahlregel als "Ei" gelten.
+    t('Eis ist kein Ei', T.themenOf('Eis am Stiel', ['Eis', 'Sahne']).includes('protein'), false);
     return out;
   });
   themen.filter(x => !x.ok).forEach(x =>
@@ -1638,7 +1678,7 @@ function pruefeKontrast() {
       strCategory: 'Beef', strArea: 'British', strInstructions: 'Sear the beef. Bake for 40 minutes.',
       strIngredient1: 'Beef', strMeasure1: '1 kg', strIngredient2: 'Pastry', strMeasure2: '500 g' });
     t('TheMealDB: Mengen an die Zutat', m && m.ingredients, ['1 kg Beef', '500 g Pastry']);
-    t('TheMealDB: Themen', m && m.themes, ['meat']);
+    t('TheMealDB: Themen', m && m.themes, ['meat', 'protein']);
     t('TheMealDB: leere Antwort', F.mealDbToItem(null), null);
     // ⚠ Bestehende Eintraege nachputzen: der Vorrat enthielt nach dem ersten
     // scharfen Lauf "step 1" und "Notes" als eigene Kochschritte. Eine

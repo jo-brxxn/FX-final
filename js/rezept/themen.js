@@ -32,6 +32,13 @@ export const THEMEN = [
   { id: 'chicken',    label: 'Chicken',     icon: '🍗' },
   { id: 'fish',       label: 'Fish',        icon: '🐟' },
   { id: 'veggie',     label: 'No meat',     icon: '🥗' },
+  // ⚠ "High protein" steht hier, "Healthy" NICHT. Proteinreich laesst sich
+  // an den Zutaten festmachen (Haehnchenbrust, Quark, Tofu, Linsen ...);
+  // "gesund" hat in diesen Daten keine Grundlage - Naehrwerte liefert nur
+  // Spoonacular, TheMealDB und Blogs nicht. Ein Healthy-Chip waere ein
+  // erfundenes Etikett. Nutzer-Wunsch 2026-09-03 entsprechend beantwortet:
+  // gesund kommt ueber die AUSWAHL DER QUELLEN, nicht ueber ein Label.
+  { id: 'protein',    label: 'High protein', icon: '💪' },
   { id: 'pasta',      label: 'Pasta',       icon: '🍝' },
   { id: 'rice',       label: 'Rice & Bowls', icon: '🍚' },
   { id: 'soup',       label: 'Soup',        icon: '🍲' },
@@ -106,6 +113,22 @@ const WOERTER = {
     'arme ritter', 'bagel', 'smoothie bowl', 'shakshuka'],
 };
 
+// ⚠ PROTEINREICH: nur EIWEISSTRAEGER, die ein Gericht wirklich tragen.
+// Speck als Garnitur oder ein Ei im Kuchen zaehlen nicht - siehe die Regel
+// weiter unten. Zusammengesetzte Woerter wie "Magerquark" oder
+// "Haehnchenbrust" werden ueber die Stammliste mitgefunden.
+const PROTEIN = ['chicken', 'hähnchen', 'haehnchen', 'hühnchen', 'huehnchen', 'pute', 'turkey',
+  'beef', 'rind', 'rinderfilet', 'steak', 'hackfleisch', 'mince', 'lamm', 'lamb',
+  'lachs', 'salmon', 'thunfisch', 'tuna', 'kabeljau', 'cod', 'garnelen', 'shrimp', 'prawn',
+  'tofu', 'tempeh', 'seitan', 'sojaschnetzel', 'soja granulat', 'edamame',
+  'quark', 'magerquark', 'skyr', 'hüttenkäse', 'huettenkaese', 'cottage cheese', 'harzer',
+  'griechischer joghurt', 'greek yogurt', 'greek yoghurt', 'proteinpulver', 'protein powder',
+  'eiweisspulver', 'eiweißpulver', 'whey', 'casein', 'proteinriegel',
+  'linsen', 'lentils', 'kichererbsen', 'chickpeas', 'bohnen', 'beans', 'erbsenprotein',
+  'lupinen', 'lupine', 'seelachs', 'putenbrust', 'hähnchenbrust', 'haehnchenbrust'];
+// Eier zaehlen mit - aber nicht in einem Kuchen (siehe themenOf).
+const EIER = ['ei', 'eier', 'egg', 'eggs', 'eiklar', 'egg white', 'egg whites', 'eiweiss'];
+
 // Diese Zutaten machen ein Gericht NICHT vegetarisch, obwohl sie in keiner
 // der Fleisch-/Fischlisten oben stehen (versteckte tierische Bestandteile).
 // ⚠ Hier stehen WUERZMITTEL, nicht Hauptbestandteile. Im ersten scharfen
@@ -132,7 +155,8 @@ const STAMM = ['suppe', 'eintopf', 'salat', 'kuchen', 'nudel', 'kartoffel', 'fle
   'wurst', 'hähnchen', 'haehnchen', 'hühnchen', 'huehnchen', 'lachs', 'garnele', 'muschel',
   'brötchen', 'broetchen', 'auflauf', 'pfannkuchen', 'plätzchen', 'plaetzchen', 'spätzle',
   'spaetzle', 'risotto', 'lasagne', 'spaghetti', 'schokolade', 'frühstück', 'fruehstueck',
-  'brühe', 'bruehe', 'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel'];
+  'brühe', 'bruehe', 'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel',
+  'quark', 'linsen', 'kichererbsen', 'bohnen', 'joghurt', 'protein', 'tofu', 'skyr'];
 // ⚠ "braten" fehlt hier absichtlich: als Wortbestandteil traefe es
 // "gebratene Zwiebeln" und "Bratensosse" - als ganzes Wort ("Braten") bleibt
 // es in der Fleischliste.
@@ -150,10 +174,33 @@ function enthaelt(text, woerter) {
     const n = normText(w).trim();
     if (!n) continue;
     if (text.includes(' ' + n + ' ')) return w;
+    // Englische Mehrzahl: "pancakes" zu "pancake". ⚠ Erst ab 4 Zeichen,
+    // sonst wuerde "ei" + s auf "Eis" passen - und Eis ist kein Ei.
+    if (n.length >= 4 && text.includes(' ' + n + 's ')) return w;
     // Nur fuer die Staemme oben zusaetzlich innerhalb eines Wortes suchen.
-    if (n.length >= 5 && STAMM.includes(n) && text.includes(n)) return w;
+    // ⚠ Die Laenge deckelt nur Zufallstreffer ab; STAMM ist eine kuratierte
+    // Liste, deshalb reichen hier 4 Zeichen ("tofu" in "Raeuchertofu").
+    if (n.length >= 4 && STAMM.includes(n) && text.includes(n)) return w;
   }
   return '';
+}
+
+/**
+ * Nimmt die Wuerzmittel aus NICHT_VEGGIE aus einem normierten Text.
+ * ⚠ Wird ZWEIMAL gebraucht: einmal fuer den Gesamttext (Themensuche) und
+ * einmal fuer die Zutaten allein (Proteinsuche). Ohne den zweiten Aufruf
+ * machte "500 ml chicken stock" im Risotto daraus ein Proteingericht -
+ * derselbe Fehler wie bei "Fisch", nur an einer anderen Stelle.
+ * @returns {{text: string, gefunden: boolean}}
+ */
+function ohneWuerzmittel(t) {
+  let text = t, gefunden = false;
+  NICHT_VEGGIE.forEach(w => {
+    const n = normText(w).trim();
+    if (!n) return;
+    if (text.includes(n)) { gefunden = true; text = text.split(n).join(' '); }
+  });
+  return { text, gefunden };
 }
 
 /**
@@ -172,34 +219,58 @@ export function themenOf(titel, zutaten, tags) {
   // ein "Fisch"-Gericht - und wer nach Fisch filtert, bekaeme Gerichte ohne
   // ein Stueck Fisch darin. Gemerkt wird der Fund trotzdem: fuer "No meat"
   // zaehlt er.
-  let text = roh, versteckt = false;
-  NICHT_VEGGIE.forEach(w => {
-    const n = normText(w).trim();
-    if (!n) return;
-    if (text.includes(n)) { versteckt = true; text = text.split(n).join(' '); }
-  });
+  const gesaeubert = ohneWuerzmittel(roh);
+  const text = gesaeubert.text, versteckt = gesaeubert.gefunden;
   const raus = [];
 
   const hatChicken = !!enthaelt(text, WOERTER.chicken);
   const hatMeat = !!enthaelt(text, WOERTER.meat);
   const hatFish = !!enthaelt(text, WOERTER.fish);
 
-  if (hatMeat) raus.push('meat');
-  if (hatChicken) raus.push('chicken');
-  if (hatFish) raus.push('fish');
+  // ⚠ SAGT DAS REZEPT SELBST "vegan"/"vegetarisch", gibt es KEIN Fleisch und
+  // keinen Fisch - egal was in der Zutatenliste steht. Grund (Pruef-Lauf
+  // 2026-09-03): "Veganes Pizza-Sandwich mit Tofu-Ricotta" landete unter
+  // Meat, weil pflanzliche Produkte nach ihrem Vorbild heissen ("vegane
+  // Salami", "Räuchertofu", "Sojaschnetzel"). Die Selbstauskunft des
+  // Rezepts wiegt schwerer als ein Produktname.
+  // ⚠ Ohne abschliessende Wortgrenze: im Deutschen steht da "veganes",
+  // "vegane", "vegetarische" - ein \b nach "vegan" trifft davon nichts.
+  const sagtVegan = /\b(vegan|vegetarisch|vegetarian|veggie)/.test(roh);
+  if (hatMeat && !sagtVegan) raus.push('meat');
+  if (hatChicken && !sagtVegan) raus.push('chicken');
+  if (hatFish && !sagtVegan) raus.push('fish');
 
   // ⚠ "No meat" wird NUR vergeben, wenn nichts Tierisches gefunden wurde -
   // und zusaetzlich nur, wenn ueberhaupt Zutaten vorliegen. Ein Gericht ohne
   // Zutatenliste koennte alles sein; dann lieber kein Thema als ein
   // falsches, auf das sich jemand verlaesst.
-  const explizitVeggie = /\b(vegetarian|vegetarisch|vegan|veggie)\b/.test(roh);
+  const explizitVeggie = sagtVegan;
   if ((zutaten && zutaten.length) || explizitVeggie) {
-    if (!hatMeat && !hatChicken && !hatFish && !versteckt) raus.push('veggie');
+    // ⚠ Sagt das Rezept "vegan"/"vegetarisch", zaehlen die Produktnamen auch
+    // hier nicht: "Vegan Chicken Nuggets" ist ein fleischloses Gericht und
+    // gehoert unter "No meat", nicht ins Nichts.
+    const tierisch = (hatMeat || hatChicken || hatFish) && !sagtVegan;
+    if (!tierisch && !versteckt) raus.push('veggie');
   }
 
   ['pasta', 'rice', 'soup', 'salad', 'potato', 'bread', 'sweet', 'breakfast'].forEach(id => {
     if (enthaelt(text, WOERTER[id])) raus.push(id);
   });
+
+  // ⚠ PROTEINREICH nur, wenn ein Eiweisstraeger IN DEN ZUTATEN steht - der
+  // Titel allein reicht nicht ("Protein Bowl" ohne Protein gibt es).
+  // Eier zaehlen mit, ABER nicht als einziger Nachweis in etwas Suessem:
+  // zwei Eier im Kuchen machen daraus kein Proteingericht. Ein Protein-
+  // Dessert mit Quark oder Pulver dagegen schon - deshalb die Trennung.
+  // ⚠ Auch hier ZUERST die Wuerzmittel heraus: "500 ml chicken stock" ist
+  // Bruehe, kein Eiweisstraeger - genauso wenig wie sie ein Huehnergericht
+  // macht (Pruef-Lauf 2026-09-03: Risotto stand unter "High protein").
+  const zutText = ohneWuerzmittel(normText((zutaten || []).join(' '))).text;
+  if (zutText.trim()) {
+    const traeger = !!enthaelt(zutText, PROTEIN);
+    const nurEier = !traeger && !!enthaelt(zutText, EIER);
+    if (traeger || (nurEier && !raus.includes('sweet'))) raus.push('protein');
+  }
 
   // Reihenfolge wie in THEMEN, damit die Chips ueberall gleich stehen.
   return THEMEN.map(t => t.id).filter(id => raus.includes(id));

@@ -9588,3 +9588,51 @@ Zwei strukturelle Konsequenzen:
   der Entwicklungsumgebung nicht testen (Egress-Proxy), also tut es der
   Runner: `--pruefe` testet jeden Kandidaten und meldet, was wirklich ein
   Rezept liefert. 8 von 15 Blogs, 3 von 8 YouTube-Kanälen haben bestanden.
+
+### 2026-09-03: High-Protein-Filter und geprüfte Wunschquellen (REZEPT-CHECK-15)
+
+Nutzer: *„Ich will gesundes Essen und trendiges und high Protein und schlag
+mir yt Kanäle vor ich sag welche."*
+
+**Was messbar ist und was nicht.** Proteinreich lässt sich an den Zutaten
+festmachen → eigener Filter „High protein". „Gesund" **nicht**: Nährwerte
+liefert von den freien Quellen nur Spoonacular. Ein Healthy-Chip wäre ein
+erfundenes Etikett, also kommt „gesund" über die Auswahl der Quellen. Das
+wurde dem Nutzer so gesagt, statt ein hübsches Label zu bauen.
+
+**16 Kanäle und 11 Blogs als Kandidaten geprüft** (auf dem Runner, nicht
+geraten): nur **5 Kanäle** schreiben überhaupt ein Rezept in die
+Videobeschreibung. Durchgefallen sind ausgerechnet die naheliegenden
+Fitness-Kanäle — The Protein Chef, Fit Green Mind, Will Tennyson, Fitness
+Oskar, dazu Downshiftology, Rainbow Plant Life und Nick DiGiovanni (je 0
+Zutaten / 0 Schritte). Vier Handles gibt es so gar nicht (404). Der Nutzer
+hat aus den bestandenen **Felicitas Then** (13 Zutaten / 12 Schritte im Test)
+und **FitMenCook** gewählt, dazu die Blogs **The Big Man's World** (high
+protein) und **Skinnytaste**. TheMealDB von 10 auf 5 Gerichte pro Lauf
+gesenkt, Blogs von 3 auf 4 Beiträge — die eigenen Quellen sollen den Vorrat
+prägen, die Zufallsdatenbank nur ergänzen.
+
+**Noch ein Einordnungsfehler aus echten Daten:** „Veganes Pizza-Sandwich mit
+Tofu-Ricotta" stand unter **Meat** — pflanzliche Produkte heißen nun mal
+„vegane Salami" und „Räuchertofu". Seither schlägt die Selbstauskunft des
+Rezepts den Produktnamen: steht „vegan"/„vegetarisch" drin, gibt es nie
+Meat/Chicken/Fish. ⚠ Dabei fiel auf, dass `\bvegan\b` die deutschen
+Beugungen („veganes", „vegane") gar nicht trifft — die Regex prüft jetzt ohne
+abschließende Wortgrenze.
+
+**Gewicht pro Quelle statt einer Zahl für alle** (Nutzer-Auswahl: *„Neue
+Quellen stärker gewichten"*). `proSeite`/`proKanal` global anzuheben hätte
+auch jede alte Quelle mitgezogen — dann wäre der Vorrat nur größer, nicht
+anders. Stattdessen schlägt ein `"pro": N` an einer einzelnen Seite bzw.
+einem einzelnen Kanal den gemeinsamen Wert: The Big Man's World und
+Skinnytaste `6`, Felicitas Then und FitMenCook `4`, alle übrigen bleiben bei
+4 bzw. 2.
+
+**Der Brühe-Fehler noch einmal, an neuer Stelle.** Die Protein-Erkennung las
+die Zutaten **roh**, während die Themensuche die Würzmittel vorher heraus
+nimmt — dadurch machte `500 ml chicken stock` aus einem Risotto ein
+Proteingericht. Exakt derselbe Denkfehler, der vorher schon „Fisch" aus
+Fischsauce erzeugt hatte, nur zwanzig Zeilen weiter unten. Das Entfernen
+steckt jetzt in `ohneWuerzmittel()` und wird von **beiden** Stellen benutzt;
+zwei Kopien derselben Regel waren die Ursache. Der Wächter prüft den Fall
+ausdrücklich („chicken stock macht kein Huhn" darf auch kein Protein geben).

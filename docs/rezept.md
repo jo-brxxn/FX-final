@@ -523,6 +523,15 @@ verbraucht **eine** Abfrage statt einer pro Gerät und Seitenaufruf.
 Seiten und Kanäle stehen in **`tools/rezept-quellen.json`** und sind von Hand
 erweiterbar (`{"name": …, "feed": …}` bzw. `{"name": …, "id": "UC…"}`).
 
+⚠ **Gewicht pro Quelle statt einer Zahl für alle.** `proSeite`/`proKanal`
+gelten für alle; ein zusätzliches `"pro": N` an **einer** Seite bzw. **einem**
+Kanal schlägt den gemeinsamen Wert. So bekommen neu ausgewählte Quellen mehr
+Anteil am Vorrat, ohne dass jede alte Quelle mitwächst (Nutzer-Wunsch
+2026-09-03: *„neue Quellen stärker gewichten"*). Aktuell: The Big Man's World
+und Skinnytaste `6`, Felicitas Then und FitMenCook `4`; TheMealDB im Gegenzug
+von 10 auf 5 gesenkt — die eigenen Quellen sollen den Vorrat prägen, TheMealDB
+ihn nur ergänzen.
+
 ⚠ **Eine kaputte Quelle darf den Lauf nicht kippen.** Jede läuft in ihrem
 eigenen `try/catch` und meldet, was sie geliefert hat. Ein Feed, der heute
 500 zurückgibt, kostet ein paar Vorschläge — nicht den Vorrat. Nachgewiesen:
@@ -535,9 +544,24 @@ Zutaten sieht aus wie ein Rezept, ist aber keins.
 
 ### Sortierung: nach Quelle UND nach Art
 
-`js/rezept/themen.js` ordnet jedes Gericht 12 Themen zu (Meat, Chicken, Fish,
-No meat, Pasta, Rice & Bowls, Soup, Salad, Potato, Bread & Dough, Sweet,
-Breakfast), aus Titel und Zutaten, **deutsch und englisch**.
+`js/rezept/themen.js` ordnet jedes Gericht 13 Themen zu (Meat, Chicken, Fish,
+No meat, **High protein**, Pasta, Rice & Bowls, Soup, Salad, Potato, Bread &
+Dough, Sweet, Breakfast), aus Titel und Zutaten, **deutsch und englisch**.
+
+⚠ **„High protein" gibt es, „Healthy" nicht** (Nutzer-Wunsch 2026-09-03:
+*„Ich will gesundes Essen und trendiges und high Protein"*). Proteinreich
+ist an den **Zutaten** messbar — Hähnchenbrust, Quark, Skyr, Tofu, Linsen,
+Proteinpulver. Für „gesund" gibt es in diesen Daten keine Grundlage:
+Nährwerte liefert nur Spoonacular, TheMealDB und die Blogs nicht. Ein
+Healthy-Chip wäre ein **erfundenes Etikett** — gesund kommt deshalb über die
+**Auswahl der Quellen**, nicht über ein Label.
+
+Zwei Feinheiten beim Protein-Thema:
+- **Nur Zutaten zählen.** Ein Titel „High Protein Bowl" ohne Eiweißträger
+  darin bekommt das Thema nicht.
+- **Zwei Eier im Kuchen machen daraus kein Proteingericht**: Eier zählen
+  mit, aber nicht als einziger Nachweis in etwas Süßem. Ein Protein-Dessert
+  mit Quark oder Pulver dagegen schon.
 
 ⚠ **Diese Datei läuft an zwei Stellen** — im Tageslauf und in der App. Zwei
 Fassungen wären die sichere Art, dass ein Vorschlag anders einsortiert ist
@@ -555,6 +579,10 @@ Drei Regeln, die dabei zählen:
 - **Nichts raten**: ohne Merkmal bekommt ein Gericht **kein** Thema. Ein
   falsches „No meat" wäre schlimmer als keins — danach sucht jemand, der kein
   Fleisch essen will.
+- **Die Selbstauskunft des Rezepts schlägt den Produktnamen**: steht „vegan"
+  oder „vegetarisch" im Rezept, gibt es **nie** Meat/Chicken/Fish. Pflanzliche
+  Produkte heißen nun mal „vegane Salami", „Räuchertofu", „Sojaschnetzel" —
+  im Prüf-Lauf landete ein *veganes* Pizza-Sandwich deshalb unter Meat.
 
 ### Was der erste scharfe Lauf gezeigt hat (2026-09-03)
 

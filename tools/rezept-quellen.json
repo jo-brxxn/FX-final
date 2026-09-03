@@ -2,8 +2,8 @@
   "_hinweis": "Quellen fuer die taeglichen Essensvorschlaege der Rezept-App (Perfect Rezept). Diese Datei ist zum Bearbeiten von Hand gedacht - siehe docs/rezept.md, Abschnitt 'Taegliche Vorschlaege'. Der Lauf ueberspringt jede Quelle, die nicht antwortet, statt abzubrechen.",
   "themealdb": {
     "an": true,
-    "anzahl": 10,
-    "_hinweis": "Frei und ohne Schluessel. Liefert vollstaendige Rezepte mit Bild, Mengen und Anleitung."
+    "anzahl": 5,
+    "_hinweis": "Frei und ohne Schluessel. Liefert vollstaendige Rezepte mit Bild, Mengen und Anleitung. Bewusst von 10 auf 5 gesenkt (Nutzer-Wunsch 2026-09-03): die ausgewaehlten Blogs und Kanaele sollen den Vorrat praegen, TheMealDB nur ergaenzen - und das Live-Nachladen im Knopf braucht die Quelle weiterhin."
   },
   "spoonacular": {
     "an": true,
@@ -12,8 +12,20 @@
   },
   "jsonld": {
     "an": true,
-    "proSeite": 3,
+    "proSeite": 4,
     "seiten": [
+      {
+        "name": "The Big Man's World",
+        "feed": "https://thebigmansworld.com/feed/",
+        "richtung": "high protein",
+        "pro": 6
+      },
+      {
+        "name": "Skinnytaste",
+        "feed": "https://www.skinnytaste.com/feed/",
+        "richtung": "gesund",
+        "pro": 6
+      },
       {
         "name": "Kochkarussell",
         "feed": "https://www.kochkarussell.com/feed"
@@ -47,13 +59,25 @@
         "feed": "https://pinchofyum.com/feed"
       }
     ],
-    "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen.",
-    "_geprueft": "2026-09-03 auf dem GitHub-Runner: 8 von 15 Kandidaten liefern ein vollstaendiges Rezept mit Bild, Zutaten und Schritten. Die uebrigen (u.a. Eat this!, Zucker&Jagdwurst, Springlane, herzelieb, Love and Lemons, Smitten Kitchen) haben entweder keinen erreichbaren Feed oder kein brauchbares schema.org-Markup - sie stehen weiter in tools/rezept-kandidaten.json und koennen erneut geprueft werden."
+    "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen. Optional \"pro\": N an einer Seite - dann holt der Lauf von DIESER Seite N Beitraege statt proSeite (1-6).",
+    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2 (Nutzer-Auswahl: gesund, trendig, proteinreich): The Big Man's World und Skinnytaste kamen dazu. Nicht bestanden: Eating Bird Food und Fit Foodie Finds (Feed ohne Beitragslinks), Downshiftology, Pick Up Limes und bevegt (kein schema.org-Rezept). Eat this! und Elavegan haben bestanden, wurden vom Nutzer aber nicht ausgewaehlt - sie stehen weiter in den Kandidaten."
   },
   "youtube": {
     "an": true,
     "proKanal": 2,
     "kanaele": [
+      {
+        "name": "Felicitas Then",
+        "id": "UC3LdGhl7Poqqxk7k6GM-sSw",
+        "richtung": "deutsch, trendig",
+        "pro": 4
+      },
+      {
+        "name": "FitMenCook",
+        "id": "UCtaNepQqDZc0a-dfRlt7UZg",
+        "richtung": "high protein",
+        "pro": 4
+      },
       {
         "name": "Sallys Welt",
         "id": "UCPNqPbXJHMvrH3NwRKKR5IQ"
@@ -67,7 +91,7 @@
         "id": "UCDq5v10l4wkV5-ZBIJJFbzQ"
       }
     ],
-    "_hinweis": "Kochkanaele. Jeder Eintrag: {\"name\": \"Anzeigename\", \"id\": \"UC...\"} - die Kanal-ID steht in der Kanal-URL oder im Quelltext der Kanalseite (channelId). Aus Titel und Videobeschreibung entsteht ein Rezeptentwurf ueber denselben Parser, den auch der Reel-Import benutzt.",
-    "_geprueft": "2026-09-03 auf dem GitHub-Runner: 3 von 8 Kanaelen schreiben genug Rezepttext in die Videobeschreibung. Joshua Weissman, Adam Ragusea und Kitchen Stories tun das NICHT (0 Zutaten, 0 Schritte) - ein Eintrag dort erzeugte nur leere Karten."
+    "_hinweis": "Kochkanaele. Jeder Eintrag: {\"name\": \"Anzeigename\", \"id\": \"UC...\"} - die Kanal-ID steht in der Kanal-URL oder im Quelltext der Kanalseite (channelId). Aus Titel und Videobeschreibung entsteht ein Rezeptentwurf ueber denselben Parser, den auch der Reel-Import benutzt. Optional \"pro\": N an einem Kanal - dann holt der Lauf von DIESEM Kanal N Videos statt proKanal (1-5).",
+    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2: von 16 Kandidaten schreiben nur 5 ueberhaupt ein Rezept in die Videobeschreibung; der Nutzer hat davon Felicitas Then (13 Zutaten/12 Schritte im Test) und FitMenCook (9/16) ausgewaehlt. Ohne Rezept in der Beschreibung und deshalb NICHT eingetragen: The Protein Chef, Fit Green Mind, Will Tennyson, Downshiftology, Rainbow Plant Life, Nick DiGiovanni, Fitness Oskar. Handle nicht aufloesbar: Jose Ramirez, Clean & Delicious, Scheck Eats, Kochen mit Diana."
   }
 }
