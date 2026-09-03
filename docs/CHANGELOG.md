@@ -9262,6 +9262,88 @@ still ein `ReferenceError`).
 **Offen und nur vom Nutzer selbst zu erledigen:** Das SQL muss einmal im
 Supabase-Projekt laufen. Kein Code kann eine fehlende Policy ersetzen — die
 Rechte liegen serverseitig.
+## 2026-09-02 — Verlaufschart bei vielen Indikatoren dauerhaft leer (TE-Fallback ergaenzte nie historyFull) + Kartennamen nur im Bearbeitungsmodus (VERSION-CHECK-464)
+
+**Bugreport:** *"Bei vielen Indikatoren gibt es wenn ich sie ausklappe nicht
+das Säulendiagramm mit den Daten. Aber die Indikatoren haben Werte und das
+schon seit Monaten also die Daten sind da aber es gibt ein Fehler der sie
+nicht dareinschreibt."*
+
+**Reproduktion:** Playwright-Skript iteriert nach dem Laden ueber ALLE
+Indikatoren aller Assets und zaehlt, wie viele einen aktuellen Wert
+(`ind.research.actual`) aber `ind.chartHist.length<2` (= "Not enough
+history yet" statt Balken) haben: **173 von 481** (36%). Ein Teil davon
+(Bond-Yields, COT-Kennzahlen) ist strukturell erwartbar (eigene Feeds ohne
+`historyFull`-Konzept), der Rest - allen voran PMI-Reihen (Manufacturing/
+Services) ueber mehrere Waehrungen sowie einzelne CPI/PPI/NFP/JOLTS-
+Kennzahlen - hatte laut `ind_data.json` einen ganz frischen `actual`-Wert,
+aber `historyFull` entweder komplett leer oder bei genau 1 Punkt haengen
+geblieben, IDENTISCH ueber mehrere Waehrungen hinweg (starkes Indiz gegen
+"baut sich noch langsam auf", stattdessen fuer "wird nie erweitert").
+
+**Root Cause** (`.github/workflows/update-ff-calendar.yml`, Schritt "Fetch
+TradingView wide window for indicator values", Block "PMI aus den
+Trading-Economics-Laenderseiten nachtragen", ~Zeile 1752): TradingView
+liefert fuer S&P-Global-/HCOB-/Jibun-Bank-PMI (EUR/GBP/JPY/AUD/CAD/CHF,
+dokumentiert unter "PMI-FEED" oben in dieser Datei) **nie** ein Actual -
+seit 2026-08-09 uebernimmt darum ein dedizierter Trading-Economics-
+Laenderseiten-Scraper (`te_pages.json`) den aktuellen Wert direkt in
+`ind_data.json`. Dieser Merge-Block aktualisierte dabei zwar `actual`/
+`forecast`/`previous`/`date` bei jedem neuen Release korrekt, liess
+`historyFull` aber unangetastet (`historyFull:(sameSeries&&cur&&
+cur.historyFull)||undefined` - reine UEBERNAHME, kein Anhaengen). Der
+normale Akkumulations-Pfad weiter oben im selben Skript (der `historyFull`
+sonst ueber `v._newHistFull` aus dem TradingView-Kalender fortschreibt)
+sieht diese Reihen nie, weil TradingView fuer sie ja gar kein Actual im
+Kalender fuehrt - beide Pfade zusammen ergaben: der aktuelle Wert wurde
+brav aktuell gehalten, die Verlaufs-Historie wuchs aber seit Einfuehrung
+des TE-Fallbacks (2026-08-09, "schon seit Monaten") kein einziges Mal.
+
+**Fix:** derselbe Merge-Block haengt den frisch gescrapten Punkt
+(`[e.date,e.actual,e.forecast]`) jetzt selbst an `historyFull` an (nach
+Datum entdoppelt via `byDate`-Objekt wie im Haupt-Akkumulationspfad,
+3-Jahres-Fenster, chronologisch sortiert). Die bestehende "Historie NICHT
+erben bei Reihenwechsel"-Regel (`sameSeries=!e.label`, z.B. AUD Retail
+Sales -> Household Spending) bleibt erhalten, startet aber jetzt bewusst
+NEU mit dem einen aktuellen Punkt statt fuer immer leer zu bleiben.
+
+**Geprueft:** `python3 -c "import yaml..."` + `bash -n` des extrahierten
+Run-Blocks + `node --check` des extrahierten `node -e`-Skripts - alle
+gruen. Zusaetzlich eigenstaendiger Node-Test (`mergeStep()`, dieselbe
+Logik wie im Workflow, mit synthetischen `te_pages.json`-Eintraegen ueber
+3 simulierte Laeufe): `historyFull` waechst jetzt 1 -> 2 -> 3 Punkte statt
+bei 1 haengen zu bleiben; der Reihenwechsel-Fall startet korrekt frisch
+mit dem neuen Punkt statt leer zu bleiben. Der eigentliche Live-Lauf
+gegen tradingeconomics.com laesst sich in dieser Umgebung nicht nachstellen
+(kein Zugriff auf den GitHub-Actions-Runner) - die Wirkung zeigt sich beim
+naechsten planmaessigen Workflow-Lauf, danach sollten die betroffenen PMI-
+u.a. Indikatoren beim naechsten Release einen zusaetzlichen Chart-Punkt
+bekommen und ab dem zweiten TE-gestuetzten Release (>=2 Punkte) den Balken-
+Chart statt der "Not enough history yet"-Meldung zeigen.
+
+**Zweiter Wunsch in derselben Nachricht:** *"ich will das ich nicht mehr
+Indikatoren umbenennen kann gleiches gilt für alle anderen Namen usw das
+soll nur im Bearbeitungsmodus gehen."* Durchsucht: der einzige immer-aktiv
+per Texteingabe umbenennbare Namens-Eintrag in der App ist `.rub-inp` (der
+Kartenname, z.B. "Inflation"/"Interest Rates" - einzelne Indikatoren selbst
+haben gar kein eigenes Namensfeld, nur Verschieben/Loeschen/Info, bereits
+laenger hinter `.ind-edit-ctrls`/`indEditMode` versteckt). Alle anderen
+Rename-Wege in der App (Stack umbenennen im Sidebar-Menue, Widget
+umbenennen im Dashboard) laufen schon ueber einen expliziten Button+Prompt/
+Modal-Dialog, nicht ueber ein staendig fokussierbares Textfeld - dort ist
+ein versehentliches Umbenennen strukturell nicht moeglich. `.nc-inp`/
+`.pcc-name` sind tote CSS-Klassen ohne zugehoeriges HTML (Rest einer
+entfernten Funktion) - nicht angefasst, ausserhalb des gemeldeten Problems.
+
+**Fix:** `body:not(.ind-edit-mode) .rub-inp{pointer-events:none;cursor:
+default}` in `index.html` - reines CSS, dieselbe Ein/Aus-Schaltung wie
+`.ind-edit-ctrls` (kein Re-Render beim Umschalten noetig, der Name bleibt
+jederzeit sichtbar, nur nicht mehr fokussierbar/tippbar ausserhalb des
+5s-Long-Press-Bearbeitungsmodus). Playwright bestaetigt: Tippen ohne
+Bearbeitungsmodus aendert den Namen nicht, mit aktiviertem Modus
+(`toggleIndEditMode()`) funktioniert es wie vorher.
+
+**Geprueft:** `node check/all.js` komplett gruen (13 Waechter).
 
 ---
 
