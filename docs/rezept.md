@@ -556,6 +556,50 @@ Drei Regeln, die dabei zählen:
   falsches „No meat" wäre schlimmer als keins — danach sucht jemand, der kein
   Fleisch essen will.
 
+### Was der erste scharfe Lauf gezeigt hat (2026-09-03)
+
+Der Vorrat war beim Nutzer leer, weil der Tageslauf noch nie gelaufen war und
+zwei Quellen ohne Einträge dastanden. Von Hand gestartet, kamen sofort echte
+Rezepte — und mit ihnen vier Mängel, die nur echte Daten zeigen:
+
+| Befund | Ursache | Lösung |
+|---|---|---|
+| „Schritt 1 von 9: **step 1**" im Kochmodus | BBC-Good-Food-Anleitungen (über TheMealDB) enthalten Zwischenzeilen `step 1` und hängen `Notes`/`Storing:` an | solche Zeilen fliegen raus, ab einer Nachbemerkungs-Überschrift endet die Anleitung |
+| Panang-**Hühner**curry unter **Fish** | Fischsauce und Garnelenpaste in der Zutatenliste | Würzmittel machen unvegetarisch, aber nicht zum Fischgericht |
+| „Easy **Eggplant** Bolognese" unter **Meat** | „Bolognese" stand in der Fleischliste | der Name einer Sauce sagt nichts über ihren Inhalt — Fleisch nur noch an den Zutaten |
+| „Kedgeree" (Schellfisch) unter **No meat** | `haddock` fehlte in der Fischliste | Artenliste deutlich erweitert; **das ist die gefährliche Richtung** — lieber eine Art zu viel als ein Fischgericht unter „ohne Fleisch" |
+
+⚠ **Themen sind ein Rechenergebnis, kein Datenbestand.** Verbessert sich die
+Erkennung, sortiert der nächste Lauf **alle** vorhandenen Einträge neu ein
+(kostet kein Netz). Ohne das stünde „Panang chicken curry" für immer unter
+„Fish", obwohl die Ursache längst behoben ist — und der Vergleich „nichts
+Neues" enthält deshalb auch die Themen, sonst würde die Korrektur nie
+geschrieben.
+
+### Quellen prüfen statt raten
+
+⚠ **Feed-Adressen und Kanal-IDs lassen sich aus der Entwicklungsumgebung
+nicht prüfen** — der Egress-Proxy blockt fremde Domains. Geraten wird hier
+nicht. Deshalb gibt es einen Prüf-Modus, der auf dem Runner läuft:
+
+```
+node tools/rezept-feed.mjs --pruefe          # oder Workflow mit pruefen=true
+```
+
+Er testet jeden Kandidaten aus `tools/rezept-kandidaten.json` einzeln und
+meldet, ob wirklich ein Rezept mit Bild, Zutaten und Schritten herauskommt;
+am Ende steht ein fertiger JSON-Block zum Übernehmen. Ergebnis des ersten
+Laufs: **8 von 15 Blogs**, **3 von 8 YouTube-Kanälen**. Nicht bestanden haben
+u. a. Eat this!, Zucker&Jagdwurst, Springlane, herzelieb (Feed oder Markup)
+sowie Joshua Weissman, Adam Ragusea und Kitchen Stories — die schreiben
+**kein Rezept in die Videobeschreibung**, ein Eintrag hätte nur leere Karten
+erzeugt.
+
+⚠ **Ein Handle ist keine Kanal-ID.** Der Atom-Feed braucht `UC…`; in
+Kanal-Adressen steht heute `@name`. Der Lauf löst das einmal über den
+Quelltext der Kanalseite auf — eine geratene ID wäre ein Feed, der nichts
+liefert.
+
 ### In der App: Dreierreihe mit Nachlade-Knopf
 
 Die Vorschläge stehen **oben in der Inspiration** (Nutzer-Entscheidung), die

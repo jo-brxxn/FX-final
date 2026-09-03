@@ -34,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { parseCaption } from '../js/rezept/import.js';
 // ⚠ Zerlegen und Aufbauen stehen in js/rezept/feed.js - dieselbe Datei
 // benutzt die App beim Nachladen. Siehe Kopf dort.
+import { themenOf } from '../js/rezept/themen.js';
 import { saeubere, zuSchritten, isoMinuten, zahl, idAus, normTitel, baue,
   feedLinks, jsonLdBloecke, findeRezept, bildAus, anweisungenAus,
   mealDbToItem } from '../js/rezept/feed.js';
@@ -302,6 +303,20 @@ export async function lauf() {
   try { alt = JSON.parse(fs.readFileSync(AUS, 'utf8')); } catch (e) { /* erster Lauf */ }
   const altItems = Array.isArray(alt.items) ? alt.items : [];
 
+  // ⚠ BESTEHENDE EINTRAEGE NEU EINSORTIEREN. Die Themen stehen im Vorrat,
+  // sind aber ein RECHENERGEBNIS - verbessert sich die Erkennung, muessen
+  // die alten Eintraege mitwandern. Sonst blieb "Panang chicken curry" fuer
+  // immer unter "Fish" stehen, obwohl die Ursache (Fischsauce) laengst
+  // behoben ist. Kostet nichts: kein Netz, reine Rechnung.
+  altItems.forEach(e => {
+    if (!e || !e.title) return;
+    const neu = themenOf(e.title, e.ingredients || [], e.tags || []);
+    if (JSON.stringify(neu) !== JSON.stringify(e.themes || [])) {
+      log(`  neu einsortiert: ${e.title.slice(0, 40)} ${JSON.stringify(e.themes)} -> ${JSON.stringify(neu)}`);
+      e.themes = neu;
+    }
+  });
+
   const gesehen = new Set();
   const zusammen = [];
   for (const e of teile.concat(altItems)) {
@@ -317,8 +332,12 @@ export async function lauf() {
   // ⚠ Nichts schreiben, wenn nichts hinzukam UND der Bestand steht: sonst
   // erzeugt der taegliche Lauf jeden Tag einen Commit, der nur den
   // Zeitstempel aendert.
-  const neuIds = items.map(i => i.id).join(',');
-  const altIds = altItems.map(i => i.id).join(',');
+  // ⚠ Der Vergleich enthaelt die Themen: sonst gilt ein Lauf, der nur neu
+  // einsortiert hat, als "nichts Neues" und die Korrektur wird nie
+  // geschrieben.
+  const kennung = l => l.map(i => i.id + ':' + (i.themes || []).join('+')).join(',');
+  const neuIds = kennung(items);
+  const altIds = kennung(altItems);
   if (neuIds === altIds && altItems.length) {
     log('nichts Neues -', bericht.join(' | '));
     process.exit(0);

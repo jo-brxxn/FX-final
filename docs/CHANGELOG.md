@@ -9550,3 +9550,41 @@ Vereinigung würde die geleerte Liste beim nächsten Abgleich sofort vom anderen
 Gerät zurückholen, „show them all again" wäre wirkungslos. Deshalb trägt der
 Bereich ein `cleared`-Datum, und eine Seite zählt nur mit, wenn ihr Stand
 jünger ist als das letzte Zurücksetzen.
+
+### Nachtrag 2026-09-03: der erste scharfe Lauf (Nutzer: „hier ist gar nix")
+
+Screenshot des Nutzers: „Daily suggestions — No suggestions yet". Richtig, und
+mein Fehler: die Leitung stand, aber **der Tageslauf war nie gelaufen**
+(Zeitplan 4:25 UTC, nach dem Push nicht von Hand gestartet), und zwei der vier
+Quellen hatten gar keine Einträge. Von Hand gestartet → 6 Rezepte; nach dem
+Eintragen geprüfter Quellen → **40 Vorschläge aus 11 Quellen**, jeder mit Bild
+und mindestens einem Thema.
+
+Vier Mängel, die erst echte Daten gezeigt haben — alle behoben und je als
+Testfall hinterlegt:
+
+1. **„step 1" als eigener Kochschritt.** BBC-Good-Food-Anleitungen (über
+   TheMealDB) enthalten Zwischenzeilen und hängen „Notes"/„Storing:" an.
+2. **Panang-Hühnercurry unter „Fish"** wegen Fischsauce und Garnelenpaste.
+   Würzmittel machen ein Gericht unvegetarisch, aber nicht zum Fischgericht.
+   Dasselbe gilt seither für Sardellen („Mushroom Ragu Pasta" mit 3 TL
+   Sardellenfilet).
+3. **„Easy Eggplant Bolognese" unter „Meat".** Der Name einer Sauce sagt
+   nichts über ihren Inhalt; Fleisch wird nur noch an den Zutaten erkannt.
+   Ebenso trifft „braten" nicht mehr als Wortbestandteil („gebratene
+   Zwiebeln").
+4. **„Kedgeree" (Schellfisch) unter „No meat"** — `haddock` fehlte in der
+   Fischliste. Das ist die gefährliche Richtung: lieber eine Art zu viel in
+   der Liste als ein Fischgericht unter „ohne Fleisch". Artenliste deutlich
+   erweitert.
+
+Zwei strukturelle Konsequenzen:
+
+- **Themen sind ein Rechenergebnis.** Jeder Lauf sortiert den gesamten Vorrat
+  neu ein, sonst behalten alte Einträge für immer eine Einordnung, deren
+  Ursache längst behoben ist. Der „nichts Neues"-Vergleich enthält deshalb
+  auch die Themen.
+- **Quellen werden geprüft, nicht geraten.** Feed-Adressen lassen sich aus
+  der Entwicklungsumgebung nicht testen (Egress-Proxy), also tut es der
+  Runner: `--pruefe` testet jeden Kandidaten und meldet, was wirklich ein
+  Rezept liefert. 8 von 15 Blogs, 3 von 8 YouTube-Kanälen haben bestanden.

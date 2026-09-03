@@ -1498,8 +1498,14 @@ export function feedAbschnitt(){
     +`<div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span>`
       +`<span class="fd-hd-s">${liste.length} waiting${wann?' · updated '+escH(wann):''}</span></div>`
     +`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Source</span>`
-      +`<button class="tag-chip${feedQuelle?'':' on'}" onclick="rezFeedSource('')">All</button>`
-      +quellen.map(([n,c])=>`<button class="tag-chip${feedQuelle===n?' on':''}" onclick="rezFeedSource('${escH(n).replace(/'/g,'')}')">${escH(n)} <span class="chip-n">${c}</span></button>`).join('')
+      +`<button class="tag-chip${feedQuelle?'':' on'}" onclick="rezFeedSource(-1)">All</button>`
+      // ⚠ Der Quellenname wird als INDEX uebergeben, nicht als Text. Beim
+      // ersten scharfen Lauf kam "Malte's Kitchen" herein: escH() macht aus
+      // dem Apostroph &#39;, der Browser macht daraus beim Auswerten wieder
+      // ein ' - und der Handler stand als rezFeedSource('Malte's Kitchen')
+      // da, also kaputtes JavaScript. Der Waechter hat es als "missing )
+      // after argument list" gemeldet. Ein Index kann das nicht.
+      +quellen.map(([n,c],i)=>`<button class="tag-chip${feedQuelle===n?' on':''}" onclick="rezFeedSource(${i})">${escH(n)} <span class="chip-n">${c}</span></button>`).join('')
     +`</div>`
     +(themen.length?`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Kind</span>`
       +`<button class="tag-chip${feedThema?'':' on'}" onclick="rezFeedTheme('')">All</button>`
@@ -1514,7 +1520,12 @@ export function feedAbschnitt(){
        +`<button class="fd-lnk" onclick="rezFeedReset()">show them all again</button>.</div>`)
   +`</div>`;
 }
-export function rezFeedSource(n){feedQuelle=(feedQuelle===n)?'':n;renderInspo();}
+export function rezFeedSource(i){
+  const liste=feedQuellen();
+  const n=(i>=0&&liste[i])?liste[i][0]:'';
+  feedQuelle=(feedQuelle===n)?'':n;
+  renderInspo();
+}
 export function rezFeedTheme(id){feedThema=(feedThema===id)?'':id;renderInspo();}
 // Weiterblaettern: die gezeigten drei gelten als gesehen - geraeteuebergreifend,
 // damit das Tablet nicht dieselben drei noch einmal zeigt.

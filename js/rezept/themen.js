@@ -65,8 +65,19 @@ const WOERTER = {
     'forelle', 'trout', 'zander', 'seelachs', 'pollock', 'hering', 'herring', 'sardine',
     'makrele', 'mackerel', 'wolfsbarsch', 'sea bass', 'garnele', 'garnelen', 'shrimp', 'prawn',
     'scampi', 'muschel', 'muscheln', 'mussel', 'clam', 'tintenfisch', 'calamari', 'squid',
-    'octopus', 'krabbe', 'crab', 'hummer', 'lobster', 'jakobsmuschel', 'scallop', 'anchovy',
-    'sardelle', 'anchovies', 'meeresfrüchte', 'meeresfruechte', 'seafood'],
+    'octopus', 'krabbe', 'crab', 'hummer', 'lobster', 'jakobsmuschel', 'scallop',
+    'meeresfrüchte', 'meeresfruechte', 'seafood',
+    // ⚠ Diese Liste wurde nach dem ersten scharfen Lauf erweitert: fehlte
+    // eine Art, bekam das Gericht faelschlich "No meat" - die gefaehrliche
+    // Richtung. "Kedgeree" (Schellfisch) und "Spaghetti alle Vongole" waren
+    // genau das. Lieber eine Art zu viel in der Liste als ein Fischgericht
+    // unter "ohne Fleisch".
+    'haddock', 'schellfisch', 'scholle', 'plaice', 'seezunge', 'sole', 'barsch',
+    'perch', 'karpfen', 'carp', 'wels', 'catfish', 'dorade', 'seabream', 'sea bream',
+    'snapper', 'tilapia', 'pangasius', 'heilbutt', 'halibut', 'seeteufel', 'monkfish',
+    'schwertfisch', 'swordfish', 'rotbarsch', 'redfish', 'aal', 'eel', 'sepia',
+    'auster', 'oyster', 'vongole', 'venusmuschel', 'langustine', 'langoustine',
+    'king prawn', 'krebs', 'crayfish', 'surimi', 'kaviar', 'caviar', 'rogen', 'roe'],
   pasta: ['pasta', 'nudel', 'nudeln', 'spaghetti', 'penne', 'fusilli', 'rigatoni', 'tagliatelle',
     'linguine', 'farfalle', 'lasagne', 'lasagna', 'ravioli', 'tortellini', 'gnocchi', 'orzo',
     'macaroni', 'makkaroni', 'cannelloni', 'noodle', 'noodles', 'ramen', 'udon', 'soba',
@@ -102,10 +113,13 @@ const WOERTER = {
 // das Thema "Fish" - wer danach filtert, erwartet aber ein Fischgericht und
 // nicht ein Huehnercurry mit einem Teeloeffel Paste. Diese Begriffe werden
 // deshalb vor der Themensuche aus dem Text genommen; fuer "No meat" zaehlen
-// sie weiter.
+// sie weiter. Dazu gehoeren auch Sardellen: der Pruef-Lauf hat "Mushroom
+// Ragu Pasta" (3 TL Sardellenfilet in der Sauce) als Fischgericht
+// einsortiert - wer nach Fisch sucht, meint keine Wuerzpaste.
 const NICHT_VEGGIE = ['gelatine', 'gelatin', 'worcester', 'worcestershire', 'fischsauce',
   'fish sauce', 'austernsauce', 'oyster sauce', 'shrimp paste', 'garnelenpaste',
-  'anchovy paste', 'sardellenpaste', 'schmalz', 'lard', 'anchovies', 'brühwürfel',
+  'anchovy', 'anchovies', 'anchovy paste', 'anchovy fillet', 'anchovy fillets',
+  'sardelle', 'sardellen', 'sardellenpaste', 'sardellenfilet', 'schmalz', 'lard', 'brühwürfel',
   'bruehwuerfel', 'hühnerbrühe', 'huehnerbruehe', 'chicken stock', 'chicken broth',
   'beef stock', 'rinderbrühe', 'rinderbruehe', 'bacon fat'];
 

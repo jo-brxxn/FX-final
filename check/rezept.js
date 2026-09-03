@@ -1669,7 +1669,7 @@ function pruefeKontrast() {
     fail('N', `Nach dem Zuruecksetzen gesehene Vorschlaege gehen verloren: ${JSON.stringify(feedMerge.danachNeu)}`);
 
   // N4: die Oberflaeche mit Testdaten - Dreierreihe, Nachladen, Filter
-  const FIX = { updated: new Date().toISOString(), count: 7, sources: ['TheMealDB', 'Kitchen Blog', 'Chef TV'], items: [] };
+  const FIX = { updated: new Date().toISOString(), count: 8, sources: ['TheMealDB', 'Kitchen Blog', 'Chef TV'], items: [] };
   [['Chicken Handi', 'TheMealDB', ['chicken'], ['1 kg Chicken', '2 Tomatoes'], ['Fry.', 'Simmer.']],
    ['Tomatensuppe', 'Kitchen Blog', ['veggie', 'soup'], ['1 kg Tomaten', '1 Zwiebel'], ['Kochen.', 'Puerieren.']],
    ['Spaghetti Bolognese', 'Chef TV', ['meat', 'pasta'], ['500 g Hack', '400 g Spaghetti'], ['Anbraten.', 'Kochen.']],
@@ -1677,6 +1677,11 @@ function pruefeKontrast() {
    ['Kartoffelsalat', 'Kitchen Blog', ['veggie', 'salad', 'potato'], ['1 kg Kartoffeln', '1 Zwiebel'], ['Kochen.', 'Mischen.']],
    ['Pancakes', 'Chef TV', ['veggie', 'sweet', 'breakfast'], ['200 g Mehl', '2 Eier'], ['Ruehren.', 'Backen.']],
    ['Rindergulasch', 'TheMealDB', ['meat', 'soup'], ['1 kg Rind', '2 Zwiebeln'], ['Anbraten.', 'Schmoren.']],
+   // ⚠ Quellenname MIT APOSTROPH. Genau daran ist der erste scharfe Lauf
+   // gescheitert: "Malte's Kitchen" landete ueber escH() als &#39; im
+   // onclick-Text, der Browser machte daraus wieder ein ' und der Handler
+   // war kaputtes JavaScript ("missing ) after argument list").
+   ['Apfelkuchen', "Malte's Kitchen", ['veggie', 'sweet'], ['500 g Aepfel', '200 g Mehl'], ['Ruehren.', 'Backen.']],
   ].forEach((r, i) => FIX.items.push({ id: 'fx' + i, src: 'x', srcName: r[1], title: r[0],
     url: 'https://beispiel.invalid/' + i, image: 'https://bild.invalid/' + i + '.jpg', video: '', creator: '',
     min: 20 + i * 5, servings: 2, ingredients: r[3], steps: r[4], themes: r[2], tags: [], added: new Date().toISOString() }));
@@ -1701,7 +1706,7 @@ function pruefeKontrast() {
   });
   if (!nebeneinander) fail('N', 'Die drei Vorschlaege stehen nicht nebeneinander');
   const zaehler1 = await p.evaluate(() => (document.querySelector('.fd-count') || {}).textContent || '');
-  if (!/3 of 7/.test(zaehler1)) fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of 7"`);
+  if (!/3 of 8/.test(zaehler1)) fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of 8"`);
 
   // "Show 3 more" muss DREI ANDERE zeigen
   await p.click('#fdMore');
@@ -1733,7 +1738,7 @@ function pruefeKontrast() {
   })));
   if (gefiltert.some(x => x.quelle !== 'Kitchen Blog'))
     fail('N', `Der Quellen-Filter greift nicht: ${JSON.stringify(gefiltert)}`);
-  await p.evaluate(() => { window.rezFeedSource(''); window.rezFeedTheme(''); });
+  await p.evaluate(() => { window.rezFeedSource(-1); window.rezFeedTheme(''); });
   await p.waitForTimeout(500);
 
   // "Add as recipe" muss ein FERTIG AUSGEFUELLTES Formular ergeben.
