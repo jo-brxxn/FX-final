@@ -110,8 +110,15 @@ function pruefeSyncDiagnose(s) {
   if (!t) { fail('SYNC', 'testConnection() nicht gefunden'); return; }
   if (!/putRow\(/.test(t[1]))
     fail('SYNC', 'testConnection() schreibt nichts — ein reiner Lesetest meldet "Connection works", waehrend jeder Upload an der RLS-Regel scheitert.');
-  if (!/export const SETUP_SQL/.test(s) || !/for insert/i.test(s))
-    fail('SYNC', 'SETUP_SQL mit der INSERT-Policy fehlt — dann steht dem Nutzer im Fehlerfall nichts zum Kopieren bereit.');
+  // Das SQL muss dem Schluessel das ANLEGEN erlauben - `for all` oder
+  // `for insert`, in beiden Faellen mit `with check`. Ohne das loest es
+  // genau den Fehler nicht, wegen dem es existiert.
+  const sql = (s.match(/export const SETUP_SQL=`([\s\S]*?)`;/) || [])[1] || '';
+  if (!sql) fail('SYNC', 'SETUP_SQL fehlt — dann steht dem Nutzer im Fehlerfall nichts zum Kopieren bereit.');
+  else if (!/for\s+(all|insert)/i.test(sql) || !/with check/i.test(sql))
+    fail('SYNC', 'SETUP_SQL erteilt kein INSERT-Recht (`for all`/`for insert` mit `with check`) — genau das fehlt beim gemeldeten Fehler.');
+  else if (!/enable row level security/i.test(sql))
+    fail('SYNC', 'SETUP_SQL schaltet RLS nicht ein.');
   const app = fs.readFileSync('js/rezept/app.js', 'utf8');
   if (!/SETUP_SQL/.test(app) || !/rezCopySql/.test(app))
     fail('SYNC', 'Die Einstellungen zeigen das Setup-SQL nicht an (SETUP_SQL/rezCopySql fehlen in app.js).');
