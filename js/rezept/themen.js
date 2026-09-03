@@ -46,6 +46,11 @@ export const THEMA_BY_ID = Object.fromEntries(THEMEN.map(t => [t.id, t]));
 // ── Wortlisten ───────────────────────────────────────────────────────────
 // ⚠ Jedes Wort steht als GANZES Wort im Text (Wortgrenzen), sonst faengt
 // "ei" in "Zwiebel" und jedes Gericht waere ploetzlich ein Fruehstueck.
+// ⚠ "Bolognese" und "Ragù" stehen BEWUSST NICHT in der Fleischliste. Der
+// Pruef-Lauf vom 2026-09-03 hat "Easy Eggplant Bolognese" (rein pflanzlich,
+// 16 Zutaten, kein Gramm Fleisch) als Fleischgericht einsortiert - der Name
+// einer Sauce sagt nichts ueber ihren Inhalt. Fleisch wird an den ZUTATEN
+// erkannt (Hackfleisch, mince, ...), nicht am Gerichtnamen.
 // Mehrwortbegriffe ("ground beef") sind erlaubt und werden als Folge
 // gesucht.
 const WOERTER = {
@@ -54,7 +59,7 @@ const WOERTER = {
   meat: ['beef', 'rind', 'rinder', 'rindfleisch', 'steak', 'hack', 'hackfleisch', 'mince',
     'ground beef', 'pork', 'schwein', 'schweine', 'schweinefleisch', 'lamm', 'lamb', 'kalb', 'veal',
     'speck', 'bacon', 'schinken', 'ham', 'wurst', 'sausage', 'salami', 'chorizo', 'gulasch',
-    'goulash', 'braten', 'roast beef', 'meatball', 'frikadelle', 'bolognese', 'ragù', 'ragu',
+    'goulash', 'braten', 'roast beef', 'meatball', 'frikadelle',
     'prosciutto', 'pancetta', 'kassler', 'leber', 'liver', 'fleisch'],
   fish: ['fish', 'fisch', 'lachs', 'salmon', 'thunfisch', 'tuna', 'kabeljau', 'cod', 'dorsch',
     'forelle', 'trout', 'zander', 'seelachs', 'pollock', 'hering', 'herring', 'sardine',
@@ -113,7 +118,10 @@ const STAMM = ['suppe', 'eintopf', 'salat', 'kuchen', 'nudel', 'kartoffel', 'fle
   'wurst', 'hähnchen', 'haehnchen', 'hühnchen', 'huehnchen', 'lachs', 'garnele', 'muschel',
   'brötchen', 'broetchen', 'auflauf', 'pfannkuchen', 'plätzchen', 'plaetzchen', 'spätzle',
   'spaetzle', 'risotto', 'lasagne', 'spaghetti', 'schokolade', 'frühstück', 'fruehstueck',
-  'brühe', 'bruehe', 'braten', 'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel'];
+  'brühe', 'bruehe', 'schnitzel', 'gulasch', 'burger', 'strudel', 'waffel'];
+// ⚠ "braten" fehlt hier absichtlich: als Wortbestandteil traefe es
+// "gebratene Zwiebeln" und "Bratensosse" - als ganzes Wort ("Braten") bleibt
+// es in der Fleischliste.
 
 // ── Suche ────────────────────────────────────────────────────────────────
 function normText(s) {
