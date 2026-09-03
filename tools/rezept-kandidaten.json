@@ -1,142 +1,155 @@
 {
-  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Runde 2 (2026-09-03): Kandidaten in Richtung gesund, trendig und proteinreich - Nutzer-Wunsch.",
+  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Runde 3 (2026-09-03): 32 vom Nutzer genannte Koeche. Ein YouTube-Eintrag braucht nur noch {\"name\": \"...\"} - der Lauf sucht den Kanal ueber den Namen (Suchfilter „Kanaele“) und weist im Bericht aus, WEN er gefunden hat. In Runde 2 waren vier von acht geratenen Handles schlicht 404, ohne dass jemand wusste, ob es den Kanal gibt.",
   "blogs": [
     {
-      "name": "The Big Man's World",
-      "feed": "https://thebigmansworld.com/feed/",
-      "richtung": "high protein"
+      "name": "Sizzle Brothers",
+      "feed": "https://sizzlebrothers.de/feed/",
+      "richtung": "Koch-Wunsch Runde 3: Grillen, grosser Kanal"
     },
     {
-      "name": "Eating Bird Food",
-      "feed": "https://www.eatingbirdfood.com/feed/",
-      "richtung": "high protein, gesund"
+      "name": "Steffen Henssler",
+      "feed": "https://www.hensslers-schnelle-nummer.de/feed/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Fit Foodie Finds",
-      "feed": "https://fitfoodiefinds.com/feed/",
-      "richtung": "high protein"
+      "name": "Jamie Oliver",
+      "feed": "https://www.jamieoliver.com/feed/",
+      "richtung": "Koch-Wunsch Runde 3: großer Kanal + Rezeptseite"
     },
     {
-      "name": "Skinnytaste",
-      "feed": "https://www.skinnytaste.com/feed/",
-      "richtung": "gesund"
-    },
-    {
-      "name": "Downshiftology",
-      "feed": "https://downshiftology.com/feed/",
-      "richtung": "gesund"
-    },
-    {
-      "name": "Pick Up Limes",
-      "feed": "https://www.pickuplimes.com/feed",
-      "richtung": "gesund, pflanzlich"
-    },
-    {
-      "name": "Elavegan",
-      "feed": "https://elavegan.com/feed/",
-      "richtung": "gesund, pflanzlich"
-    },
-    {
-      "name": "bevegt",
-      "feed": "https://www.bevegt.de/feed/",
-      "richtung": "gesund, deutsch, Sport"
-    },
-    {
-      "name": "Eat this!",
-      "feed": "https://www.eat-this.org/feed/",
-      "richtung": "gesund, deutsch (2. Versuch mit Schraegstrich)"
-    },
-    {
-      "name": "Minimalist Baker",
-      "feed": "https://minimalistbaker.com/feed/",
-      "richtung": "bestaetigt"
-    },
-    {
-      "name": "Budget Bytes",
-      "feed": "https://www.budgetbytes.com/feed/",
-      "richtung": "bestaetigt"
+      "name": "Johann Lafer",
+      "feed": "https://www.johannlafer.de/feed/",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch + Rezeptseite"
     }
   ],
   "youtube": [
     {
-      "name": "The Protein Chef",
-      "handle": "@TheProteinChef",
-      "richtung": "high protein"
+      "name": "Sizzle Brothers",
+      "richtung": "Koch-Wunsch Runde 3: Grillen, grosser Kanal"
     },
     {
-      "name": "FitMenCook",
-      "handle": "@fitmencook",
-      "richtung": "high protein"
+      "name": "Bernd Zehner",
+      "richtung": "Koch-Wunsch Runde 3: vom Nutzer genannt"
     },
     {
-      "name": "Fit Green Mind",
-      "handle": "@FitGreenMind",
-      "richtung": "high protein, vegan"
+      "name": "Adrian Saatci",
+      "richtung": "Koch-Wunsch Runde 3: vom Nutzer als „Adria saatci“ genannt - Schreibweise unsicher"
     },
     {
-      "name": "Will Tennyson",
-      "handle": "@WillTennyson",
-      "richtung": "high protein, trendig"
+      "name": "Steffen Henssler",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Jose Ramirez",
-      "handle": "@joseramirezfit",
-      "richtung": "high protein"
+      "name": "Tim Mälzer",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Downshiftology",
-      "handle": "@Downshiftology",
-      "richtung": "gesund"
+      "name": "Jamie Oliver",
+      "richtung": "Koch-Wunsch Runde 3: großer Kanal + Rezeptseite"
     },
     {
-      "name": "Pick Up Limes",
-      "handle": "@PickUpLimes",
-      "richtung": "gesund, pflanzlich"
+      "name": "Frank Rosin",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Rainbow Plant Life",
-      "handle": "@RainbowPlantLife",
-      "richtung": "gesund, pflanzlich"
+      "name": "Nelson Müller",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Clean & Delicious",
-      "handle": "@CleanDelicious",
-      "richtung": "gesund"
+      "name": "Johann Lafer",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch + Rezeptseite"
     },
     {
-      "name": "Scheck Eats",
-      "handle": "@JeremyScheck",
-      "richtung": "trendig"
+      "name": "Alexander Herrmann",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Nick DiGiovanni",
-      "handle": "@NickDiGiovanni",
-      "richtung": "trendig"
+      "name": "Christian Rach",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Not Another Cooking Show",
-      "handle": "@NOTANOTHERCOOKINGSHOW",
-      "richtung": "trendig"
+      "name": "Cornelia Poletto",
+      "richtung": "Koch-Wunsch Runde 3: TV-Köchin"
     },
     {
-      "name": "My Name Is Andong",
-      "handle": "@MyNameIsAndong",
-      "richtung": "trendig, deutsch"
+      "name": "Ralf Zacherl",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Fitness Oskar",
-      "handle": "@FitnessOskar",
-      "richtung": "high protein, deutsch"
+      "name": "Mario Kotaska",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Kochen mit Diana",
-      "handle": "@KochenmitDiana",
-      "richtung": "deutsch"
+      "name": "Kolja Kleeberg",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
     },
     {
-      "name": "Felicitas Then",
-      "handle": "@FelicitasThen",
-      "richtung": "deutsch, trendig"
+      "name": "Alexander Kumptner",
+      "richtung": "Koch-Wunsch Runde 3: TV-Koch"
+    },
+    {
+      "name": "Lucki Maurer",
+      "richtung": "Koch-Wunsch Runde 3: Fleisch/Grill"
+    },
+    {
+      "name": "Max Strohe",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Thomas Martin",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Daniel Gottschlich",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Anthony Sarpong",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Kevin Fehling",
+      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
+    },
+    {
+      "name": "Nils Henkel",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Juan Amador",
+      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
+    },
+    {
+      "name": "Tristan Brandt",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Heiko Nieder",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Thomas Bühner",
+      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
+    },
+    {
+      "name": "Tim Raue",
+      "richtung": "Koch-Wunsch Runde 3: 2 Sterne, große Reichweite"
+    },
+    {
+      "name": "Jan Hartwig",
+      "richtung": "Koch-Wunsch Runde 3: 3 Sterne"
+    },
+    {
+      "name": "Christoph Rüffer",
+      "richtung": "Koch-Wunsch Runde 3: Sternekoch"
+    },
+    {
+      "name": "Rosina Ostler",
+      "richtung": "Koch-Wunsch Runde 3: Sterneöchin"
+    },
+    {
+      "name": "The Duc Ngo",
+      "richtung": "Koch-Wunsch Runde 3: Berliner Koch, viele Formate"
     }
   ]
 }

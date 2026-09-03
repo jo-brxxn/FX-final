@@ -148,11 +148,27 @@ async function quelleJsonLd(cfg) {
 // geratene ID waere ein Feed, der nichts liefert.
 async function kanalId(k) {
   if (k.id) return k.id;
-  if (!k.handle) return '';
-  const h = String(k.handle).replace(/^@?/, '@');
-  const html = await hole('https://www.youtube.com/' + encodeURIComponent(h).replace('%40', '@') + '/videos');
-  const m = html && (/"channelId":"(UC[\w-]{20,})"/.exec(html) || /channel\/(UC[\w-]{20,})/.exec(html));
-  return m ? m[1] : '';
+  const zieh = html => {
+    const m = html && (/"channelId":"(UC[\w-]{20,})"/.exec(html) || /channel\/(UC[\w-]{20,})/.exec(html));
+    return m ? m[1] : '';
+  };
+  if (k.handle) {
+    const h = String(k.handle).replace(/^@?/, '@');
+    const id = zieh(await hole('https://www.youtube.com/' + encodeURIComponent(h).replace('%40', '@') + '/videos'));
+    if (id) return id;
+  }
+  // ⚠ HANDLE RATEN IST AUCH RATEN. In Runde 2 waren vier von acht geratenen
+  // Handles schlicht 404 - der Kandidat fiel damit durch, ohne dass jemand
+  // wusste, ob es den Kanal gibt. Deshalb sucht der Lauf den Kanal notfalls
+  // ueber seinen NAMEN (sp=EgIQAg: Suchfilter "Kanaele") und nimmt den
+  // ersten Treffer. Ein Kandidat braucht dann nur noch {"name": "..."}.
+  // Der gefundene Kanal wird im Ergebnis mit Namen ausgewiesen, damit beim
+  // Uebernehmen auffaellt, wenn die Suche danebengegriffen hat.
+  const suche = k.suche || k.name;
+  if (!suche) return '';
+  const html = await hole('https://www.youtube.com/results?search_query='
+    + encodeURIComponent(suche) + '&sp=EgIQAg%3D%3D');
+  return zieh(html);
 }
 
 // ── Quelle D: YouTube-Kanaele ueber ihren oeffentlichen Feed ─────────────
@@ -246,6 +262,13 @@ async function pruefeKandidaten() {
     const xml = await hole('https://www.youtube.com/feeds/videos.xml?channel_id=' + id, { ms: 15000 });
     if (!xml) { console.log(`✗ ${c.name.padEnd(24)} Feed nicht erreichbar (${id})`); continue; }
     const eintraege = [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map(m => m[0]).slice(0, 3);
+    // ⚠ Wurde der Kanal ueber die NAMENSSUCHE gefunden, muss der Bericht
+    // sagen, WEN sie gefunden hat - sonst uebernimmt man einen fremden Kanal,
+    // weil der gesuchte gar keinen hat. Der Titel steht im Kopf des Feeds.
+    const echterName = saeubere((/<title>([\s\S]*?)<\/title>/i.exec(xml) || [])[1] || '');
+    const geraten = !c.id && !c.handle;
+    const wer = echterName && echterName.toLowerCase() !== String(c.name).toLowerCase()
+      ? `  [Kanal heisst: "${echterName}"]` : '';
     let bester = null;
     for (const e of eintraege) {
       const titel = saeubere((/<title>([\s\S]*?)<\/title>/i.exec(e) || [])[1] || '');
@@ -257,10 +280,10 @@ async function pruefeKandidaten() {
     // ⚠ Viele Kochkanaele schreiben das Rezept NICHT in die Beschreibung.
     // Genau das soll diese Pruefung zeigen, statt spaeter leere Karten.
     if (bester && (bester.z >= 2 || bester.s >= 2)) {
-      gutTube.push({ name: c.name, id });
-      console.log(`✓ ${c.name.padEnd(24)} ${id} - bestes Video: ${bester.z} Zutaten, ${bester.s} Schritte ("${bester.titel.slice(0, 34)}")`);
+      gutTube.push({ name: echterName || c.name, id });
+      console.log(`✓ ${c.name.padEnd(24)} ${id} - bestes Video: ${bester.z} Zutaten, ${bester.s} Schritte ("${bester.titel.slice(0, 34)}")${geraten ? ' [ueber Namenssuche]' : ''}${wer}`);
     } else {
-      console.log(`✗ ${c.name.padEnd(24)} ${id} - Beschreibungen enthalten kein Rezept (${bester ? bester.z + '/' + bester.s : '0/0'})`);
+      console.log(`✗ ${c.name.padEnd(24)} ${id} - Beschreibungen enthalten kein Rezept (${bester ? bester.z + '/' + bester.s : '0/0'})${geraten ? ' [ueber Namenssuche]' : ''}${wer}`);
     }
   }
 
