@@ -1,20 +1,2561 @@
 {
- "updated": "2026-09-03T15:26:25.038Z",
- "count": 50,
+ "updated": "2026-09-03T16:05:57.133Z",
+ "count": 76,
  "sources": [
   "Backen macht gluecklich",
   "Budget Bytes",
   "Ethan Chlebowski",
+  "Felicitas Then",
+  "FitMenCook",
   "Half Baked Harvest",
   "Kochkarussell",
   "Malte's Kitchen",
   "Minimalist Baker",
   "Pinch of Yum",
   "RecipeTin Eats",
+  "Skinnytaste",
+  "The Big Man's World",
   "TheMealDB",
   "Thomas kocht"
  ],
  "items": [
+  {
+   "id": "fvctphj",
+   "src": "themealdb",
+   "srcName": "TheMealDB",
+   "title": "Kenyan Beef Curry",
+   "url": "https://tasteoftheplace.com/kenyan-beef-curry/",
+   "image": "https://www.themealdb.com/images/media/meals/lqampv1762325397.jpg",
+   "video": "https://www.youtube.com/watch?v=NxrOueTLiqA",
+   "creator": "",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "4 cups Water",
+    "2 Lbs Sirloin Steak tips",
+    "4 Garlic Clove",
+    "2 teaspoons Ground Ginger",
+    "2 tblsp Oil",
+    "2 medium Red Onions",
+    "4 Tomato",
+    "2 tblsp Paprika",
+    "1/2 teaspoon Black Pepper",
+    "2 teaspoons Curry Powder",
+    "4 tablespoons Tomato Puree",
+    "Dash Salt",
+    "1 Chilli",
+    "Leaves Cilantro"
+   ],
+   "steps": [
+    "Bring the 4 cups of water to a boil in a Dutch oven or soup pot.",
+    "Add the beef, garlic, and ginger, and stir well.",
+    "Bring to a gentle simmer, cover, and cook, stirring occasionally, for 20 minutes.",
+    "If you get any foamy scum on the top, not to worry, simply spoon it away or stir it back in.",
+    "Remove from the heat, and drain, but reserve the excess water for later.",
+    "Return the pot or Dutch oven to medium heat with the 2 tablespoons of cooking oil. Once the oil is shimmering, add the onions and cook, stirring occasionally, until softened, 5 to 7 minutes.",
+    "Add the tomatoes to the onions, and continue cooking, stirring occasionally, until the tomatoes are falling apart, 3 to 5 minutes.",
+    "Add the drained beef to the tomato and onion mixture, and stir well. Continue cooking over medium heat for 5 minutes, stirring occasionally.",
+    "Add the paprika, pepper, curry powder, tomato paste, and salt to taste, and stir well.",
+    "Add back the excess water that was used for cooking the beef, along with enough extra water to cover.",
+    "Bring to a boil, reduce heat, and simmer, uncovered, stirring occasionally, for about 1 hour, or until the meat is tender and the sauce is thickened.",
+    "Add additional water if your beef curry begins to dry and stick, or if would like your curry to have more of a soupy consistency.",
+    "When the beef curry is ready, remove from the heat, give it a taste, and adjust the seasonings as desired. Garnish with fresh chilis and cilantro."
+   ],
+   "themes": [
+    "meat",
+    "protein"
+   ],
+   "tags": [
+    "Beef",
+    "Kenyan"
+   ],
+   "added": "2026-09-03T16:05:32.923Z"
+  },
+  {
+   "id": "fj8frsy",
+   "src": "themealdb",
+   "srcName": "TheMealDB",
+   "title": "Slagroomtaart",
+   "url": "https://www.inlaurasbakery.com/slagroomtaart-dutch-cream-cake/",
+   "image": "https://www.themealdb.com/images/media/meals/wxfmk41777628643.jpg",
+   "video": "https://www.youtube.com/watch?v=w6d3N2E_Vdo",
+   "creator": "",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "175g Eggs",
+    "100g Sugar",
+    "10g vanilla sugar",
+    "75g Flour",
+    "25g Cornstarch",
+    "6 tablespoons Jam",
+    "100g Nougatine",
+    "750 ml Whipping Cream",
+    "6 tablespoons Sugar",
+    "5 Fruit Mix"
+   ],
+   "steps": [
+    "Beat the eggs, sugar and vanilla sugar until light and fluffy. I beat this in a stand mixer on medium-high speed for about 10 minutes.",
+    "Sift the flour and cornstarch and add to the mixture. Fold this gently into the mixture; you don’t want all the air you whipped in to disappear.",
+    "Pour the batter into a greased baking pan.",
+    "Bake the cake base at 180°C/350°F (conventional oven) for 30 minutes.",
+    "The cake is done when you press lightly on the top and it springs back.",
+    "Allow the cake to cool in the pan for a few minutes before removing it to a cake rack.",
+    "Meanwhile, prepare the nougatine and jam according to the recipe if you haven’t already.",
+    "Let the cake cool completely before you cut it. If, like me, you used a 20 cm/8 inch spring form pan, cut the cake into three layers."
+   ],
+   "themes": [
+    "veggie",
+    "sweet"
+   ],
+   "tags": [
+    "Dessert"
+   ],
+   "added": "2026-09-03T16:05:33.096Z"
+  },
+  {
+   "id": "fjjkt1c",
+   "src": "themealdb",
+   "srcName": "TheMealDB",
+   "title": "Polish doughnuts (Pączki)",
+   "url": "https://www.bbcgoodfood.com/recipes/polish-doughnuts",
+   "image": "https://www.themealdb.com/images/media/meals/x6jqog1764359857.jpg",
+   "video": "https://www.youtube.com/watch?v=17jL5nZrgPw",
+   "creator": "",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "10g Yeast",
+    "1 tsp Caster Sugar",
+    "1 tablespoon Flour",
+    "125ml Milk",
+    "7 Egg Yolks",
+    "15g Sugar",
+    "10g Caster Sugar",
+    "1 tsp Vanilla Extract",
+    "500g Flour",
+    "200ml Double Cream",
+    "15g Butter",
+    "125ml Jam",
+    "10g Ground Almonds",
+    "For frying Oil",
+    "75g Icing Sugar",
+    "Juice of 1/2 Lemon",
+    "Dash Almond Essence",
+    "50g Almonds"
+   ],
+   "steps": [
+    "To make the leaven, mix the yeast with the sugar and flour, and stir in the warm milk. Set aside in a warm place for 30 minutes.",
+    "For the dough, put egg yolks into a heatproof bowl and add the sugar and vanilla sugar. Set the bowl over a pan of simmering water and whisk until smooth and thick.",
+    "Sift the flour into the bowl of a stand mixer, add the beaten yolks and the warm cream, mix thoroughly, then add a pinch of salt and the leaven.",
+    "Bring together to make a dough and knead for 10 minutes (or 15-20 if doing this by hand).",
+    "When the dough stops sticking to your hands, pour in the cooled melted butter and knead for a few more minutes. Cover with a cloth and leave in a warm place to rise for at least 1 hr-1 hr 30 mins.",
+    "Mix the jam with the ground almonds and spoon into a piping bag or jam syringe. Divide the dough into 16 pieces and shape them into doughnuts. Cover and leave to rise for 30 mins.",
+    "Fill a deep pan or a deep fat fryer one third full of oil or melted lard and heat it until it is 180C – if you don’t have a thermometer, drop in a small chunk of bread.",
+    "The oil is ready when it browns in about 30 secs.",
+    "Add the doughnuts and fry, turning them once for about 1-2 mins on each side (a thin lighter ring should form in the middle).",
+    "After removing, drain the doughnuts of excess fat on some kitchen paper."
+   ],
+   "themes": [
+    "veggie",
+    "sweet"
+   ],
+   "tags": [
+    "Dessert",
+    "Polish"
+   ],
+   "added": "2026-09-03T16:05:33.267Z"
+  },
+  {
+   "id": "fonnw77",
+   "src": "themealdb",
+   "srcName": "TheMealDB",
+   "title": "Aubergine & hummus grills",
+   "url": "https://www.bbcgoodfood.com/recipes/aubergine-hummus-grills",
+   "image": "https://www.themealdb.com/images/media/meals/zub3s91764110535.jpg",
+   "video": "https://www.youtube.com/watch?v=P5LD03XptB8",
+   "creator": "",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "2 Aubergine",
+    "2 tablespoons Vegetable Oil",
+    "3 sliced thinly Bread",
+    "300g Hummus",
+    "100g Walnuts",
+    "40g Parsley",
+    "200g Cherry Tomatoes",
+    "Juice of 1/2 Lemon",
+    "Splash Extra Virgin Olive Oil"
+   ],
+   "steps": [
+    "Lay the aubergine out in one layer on a large baking sheet.",
+    "Brush sparingly with vegetable oil, then season generously.",
+    "Grill for 15 mins, turning twice and brushing with oil until the slices are softened and cooked through.",
+    "Meanwhile, whizz the bread into crumbs.",
+    "Add 2 tsp oil and whizz briefly again, to coat.",
+    "Spread a couple of tsps of hummus on top of each slice of aubergine.",
+    "Tip the breadcrumbs onto a large plate, then press the hummus side of the aubergines into the crumbs to coat.",
+    "Grill again, crumb-side up, for about 3 mins until golden.",
+    "Toss the walnuts, parsley and cherry tomatoes in a bowl, season, then add the lemon juice and olive oil and toss again. Serve the grills with the salad, a dollop more hummus and some pitta bread."
+   ],
+   "themes": [
+    "veggie",
+    "bread"
+   ],
+   "tags": [
+    "Vegetarian",
+    "Turkish"
+   ],
+   "added": "2026-09-03T16:05:33.435Z"
+  },
+  {
+   "id": "fs64p4c",
+   "src": "themealdb",
+   "srcName": "TheMealDB",
+   "title": "Turkish rice (vermicelli rice)",
+   "url": "https://www.bbcgoodfood.com/recipes/turkish-rice-vermicelli-rice",
+   "image": "https://www.themealdb.com/images/media/meals/xw1ruy1763786501.jpg",
+   "video": "https://www.youtube.com/watch?v=gY6PZzjO53M",
+   "creator": "",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "300g Rice",
+    "3 tablespoons Vegetable Oil",
+    "70g Vermicelli Pasta",
+    "30g Unsalted Butter",
+    "600ml Chicken Stock"
+   ],
+   "steps": [
+    "Pour the rice into a very large bowl under cold running water and carefully drain the water out of the bowl through a sieve.",
+    "Repeat a few times until the water in the bowl is clear, then fill the bowl up with cold water and leave rice to soak for 10 mins while you cook the vermicelli.",
+    "Put the oil into a medium pan over medium heat.",
+    "Add the vermicelli and stir continuously until the strands turn a rich golden brown, 2-3 mins.",
+    "Remove from the heat, stir through the butter until it melts and allow the vermicelli to cool for 1-2 mins.",
+    "Drain the rice thoroughly through a sieve.",
+    "Add the rice to the pan and stir well.",
+    "Pour the hot stock into the pan, sprinkle in ½ tsp salt, stir well then return the pan to the hob over a high heat.",
+    "Bring to the boil, then reduce the heat to the lowest it will go, put the lid on the pan and simmer for 7-9 mins.",
+    "Remove the pan from the heat, cover with a couple of sheets of kitchen paper or a light tea towel and the pan lid, and let the rice sit in the pan for 10 mins.",
+    "Fluff up with a fork before serving."
+   ],
+   "themes": [
+    "pasta",
+    "rice"
+   ],
+   "tags": [
+    "Miscellaneous",
+    "Turkish"
+   ],
+   "added": "2026-09-03T16:05:33.605Z"
+  },
+  {
+   "id": "fqg2ka1",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Air Fryer Tempeh",
+   "url": "https://thebigmansworld.com/air-fryer-tempeh/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2026/08/air-fryer-tempeh-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "14 ounces tempeh",
+    "3 tablespoons soy sauce",
+    "2 tablespoons maple syrup",
+    "1 tablespoon rice vinegar",
+    "1 tablespoon sesame oil",
+    "2 cloves garlic (minced)",
+    "1 teaspoon ginger (grated)",
+    "1/2 teaspoon smoked paprika"
+   ],
+   "steps": [
+    "Slice the tempeh into 1/2 inch strips.",
+    "Steam them in the microwave for 3 minutes or in a steamer basket over hot water for 8 minutes.",
+    "Whisk together the soy sauce, maple syrup, rice vinegar, sesame oil, garlic, ginger, and smoked paprika in a bowl.",
+    "Preheat the air fryer to 380°F.",
+    "Pat dry the still-warm tempeh and add it to the marinade.",
+    "Toss to coat and let sit for 1-2 minutes.",
+    "Lift the tempeh from the marinade (reserve the excess) and arrange the strips in a single layer in the air fryer basket.",
+    "Air fry for 8 minutes, flip, brush with the excess marinade, and cook for another 4 minutes, or until caramelized and charred.",
+    "Remove from the air fryer basket and serve immediately."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "rice"
+   ],
+   "tags": [
+    "Main Course",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:33.852Z"
+  },
+  {
+   "id": "fb9mv2l",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Oven Baked Chicken Breast",
+   "url": "https://thebigmansworld.com/baked-chicken-breast/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2024/11/baked-chicken-breast-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "4 chicken breasts (6-8 ounces each)",
+    "1 tablespoon olive oil",
+    "1 teaspoon smoked paprika",
+    "1 teaspoon brown sugar",
+    "1/2 teaspoon garlic powder",
+    "1/2 teaspoon onion powder",
+    "1 teaspoon salt",
+    "1/2 teaspoon pepper"
+   ],
+   "steps": [
+    "Preheat the oven to 200C/400F.",
+    "Grease a non-stick skillet and set aside.",
+    "Gently pound the chicken breast fillets to around an inch in thickness.",
+    "Rub olive oil over them.",
+    "In a small bowl, mix together the smoked paprika, brown sugar, garlic powder, onion powder, salt, and pepper.",
+    "Rub the spices over both sides of the chicken breasts.",
+    "Place the chicken in the skillet and bake for 8-9 minutes on each side.",
+    "Remove the chicken from the oven once they reach an internal temperature of 160F.",
+    "Let the chicken breasts rest for 5 minutes before serving."
+   ],
+   "themes": [
+    "chicken",
+    "protein"
+   ],
+   "tags": [
+    "Main Course",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:33.894Z"
+  },
+  {
+   "id": "f18jxjia",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Air Fryer Chicken Shawarma",
+   "url": "https://thebigmansworld.com/air-fryer-chicken-shawarma/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2026/08/air-fryer-chicken-shawarma-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "1 1/2 pounds boneless skinless chicken thighs (700g)",
+    "3 tablespoons olive oil",
+    "3 cloves garlic (minced)",
+    "1 teaspoon cumin",
+    "1 teaspoon smoked paprika",
+    "1 teaspoon ground coriander",
+    "1/2 teaspoon turmeric",
+    "1/2 teaspoon cinnamon",
+    "1/2 teaspoon allspice",
+    "1/4 teaspoon pepper",
+    "1 teaspoon salt",
+    "1 lemon (juiced)",
+    "1/4 cup Greek yogurt",
+    "2 tablespoons mayonnaise",
+    "2 cloves garlic (minced)",
+    "1 tablespoon lemon juice",
+    "1/8 teaspoon salt"
+   ],
+   "steps": [
+    "In a large bowl, whisk together the olive oil, garlic, cumin, smoked paprika, coriander, turmeric, cinnamon, allspice, pepper, salt, and lemon juice.",
+    "Add the chicken thighs and massage the marinade in thoroughly.",
+    "Cover and refrigerate for 10 minutes or up to 4 hours.",
+    "While the chicken is marinating, make the garlic yogurt sauce by mixing together the yogurt, mayonnaise, garlic, lemon juice, and salt.",
+    "Remove the chicken from the fridge.",
+    "Place a single layer of the marinated chicken thighs into the air fryer basket and air fry at 400°F for 15 minutes, flipping halfway through.",
+    "Remove the chicken once it reaches 165°F.",
+    "Rest the chicken for 5 minutes before slicing into strips.",
+    "Assemble in warm pita with cucumber, tomato, red onion, and parsley.",
+    "Drizzle with garlic yogurt sauce and serve immediately."
+   ],
+   "themes": [
+    "chicken",
+    "protein"
+   ],
+   "tags": [
+    "Main Course",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:33.947Z"
+  },
+  {
+   "id": "f2pnwwr",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Pork Katsu",
+   "url": "https://thebigmansworld.com/pork-katsu-recipe/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2023/01/pork-katsu-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 15,
+   "servings": 4,
+   "ingredients": [
+    "4 small pork loin chops (4 to 6 ounces each)",
+    "1/2 teaspoon salt",
+    "1/4 teaspoon pepper",
+    "2 tablespoons all purpose flour",
+    "1 large egg (beaten)",
+    "1 cup panko breadcrumbs",
+    "1 cup oil (* See notes)",
+    "1/2 cup katsu sauce"
+   ],
+   "steps": [
+    "Score the pork by making a few cuts in the fat around the edges.",
+    "Season the pork with salt and pepper.",
+    "Add the flour, eggs, and panko to three separate bowls.",
+    "Dip the pork in the flour, shaking off any excess.",
+    "Next, dip it in the egg, followed by the panko.",
+    "Repeat the process until all the pork is breaded.",
+    "Let the pork sit for about 10 minutes so the breading sticks.",
+    "Add oil to a non-stick pan or skillet.",
+    "Once hot (aim for 340-350°F), add the pork and deep-fry for 2-3 minutes, flipping halfway through.",
+    "Once the pork is golden brown, remove it from the pan and place it on a wire rack so the excess fat can drain while it stays crispy.",
+    "Recheck the oil temperature and repeat the process until all the pork is fried.",
+    "Slice the pork katsu and drizzle with katsu sauce."
+   ],
+   "themes": [
+    "meat",
+    "protein"
+   ],
+   "tags": [
+    "Main Course",
+    "Japanese"
+   ],
+   "added": "2026-09-03T16:05:34.008Z"
+  },
+  {
+   "id": "f1p3pz8",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Chipotle Pork Carnitas",
+   "url": "https://thebigmansworld.com/carnitas-recipe/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2026/07/chipotle-carnitas-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 361,
+   "servings": 8,
+   "ingredients": [
+    "4 pounds pork shoulder (boneless)",
+    "1 ounce taco seasoning (28g)",
+    "2 tablespoons olive oil",
+    "1 large onion (sliced)",
+    "6 cloves garlic (minced)",
+    "1/2 cup salsa",
+    "1/2 cup beef broth",
+    "6 large bay leaves"
+   ],
+   "steps": [
+    "Preheat the oven to 140C/275F.",
+    "Rub the taco seasoning all over the pork, ensuring all the exterior is coated.",
+    "Add the oil to a large skillet or deep pot and place over medium heat.",
+    "Once hot, add the pork and cook on all sides until brown.",
+    "Transfer the seared pork to a large baking dish.",
+    "Top with the onion, garlic, salsa, and bay leaves, and drizzle the broth.",
+    "Cover the baking dish with tin foil and cook for 6 hours.",
+    "Remove from the oven, discard the bay leaves, and let it sit for 5 minutes before shredding.",
+    "For extra crispy bits, add the shredded pork back to the oven and broil for 3-4 minutes."
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "soup"
+   ],
+   "tags": [
+    "Main Course",
+    "Mexican"
+   ],
+   "added": "2026-09-03T16:05:34.056Z"
+  },
+  {
+   "id": "fwpyldq",
+   "src": "blog",
+   "srcName": "The Big Man's World",
+   "title": "Air Fryer Teriyaki Chicken",
+   "url": "https://thebigmansworld.com/air-fryer-teriyaki-chicken/",
+   "image": "https://thebigmansworld.com/wp-content/uploads/2026/07/air-fryer-teriyaki-chicken-recipe.jpg",
+   "video": "",
+   "creator": "The Big Man's World",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "4 boneless skin-on chicken thighs",
+    "2 tablespoons soy sauce",
+    "1 1/2 tablespoons mirin",
+    "1 tablespoon sake (or sherry or chicken broth with a drop of vinegar)",
+    "1 tablespoon honey",
+    "1 1/2 tablespoons brown sugar",
+    "2 cloves garlic (minced)",
+    "1/2 tablespoon ginger (grated)",
+    "1 teaspoon cornstarch",
+    "1 teaspoon sesame oil"
+   ],
+   "steps": [
+    "In a small saucepan, combine the soy sauce, mirin, sake, honey, brown sugar, garlic, and ginger.",
+    "Whisk in the cornstarch until dissolved.",
+    "Place over medium heat and bring to a gentle simmer, stirring constantly, for 4 minutes.",
+    "Remove from the heat and stir in the sesame oil.",
+    "Let it cool slightly.",
+    "Place the chicken thighs in a deep bowl and pour half the marinade over them, and mix until each thigh is fully coated.",
+    "Let it sit for 10 minutes or up to 2 hours.",
+    "Do not marinate for longer than that.",
+    "Remove the chicken from the marinade and shake off any excess.",
+    "Place skin-side up in a single layer in the air fryer basket.",
+    "Air fry at 350°F for 10 minutes.",
+    "Flip the chicken and cook for 2 minutes.",
+    "Flip back the chicken to skin-side up.",
+    "Brush with the remaining marinade and air fry for another 2-3 minutes, or until the internal temperature reaches 175-185°F.",
+    "Remove the chicken from the air fryer basket and let it rest for 5 minutes before serving."
+   ],
+   "themes": [
+    "chicken",
+    "protein"
+   ],
+   "tags": [
+    "Main Course",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:34.105Z"
+  },
+  {
+   "id": "f14zb2nb",
+   "src": "blog",
+   "srcName": "Skinnytaste",
+   "title": "Chicken Smash Tacos with Jalapeño Sauce",
+   "url": "https://www.skinnytaste.com/chicken-smash-tacos/?adt_ei=*|EMAIL|*",
+   "image": "https://www.skinnytaste.com/wp-content/uploads/2026/08/Chicken-Smash-Tacos-with-Jalapeno-Sauce-16.jpg",
+   "video": "",
+   "creator": "Skinnytaste",
+   "min": 35,
+   "servings": 4,
+   "ingredients": [
+    "3 cups red cabbage (shredded)",
+    "2 limes (juice from both, separated)",
+    "1 teaspoon kosher salt",
+    "1 lb ground 93% chicken",
+    "2 teaspoons taco seasoning",
+    "12 6-inch corn tortillas",
+    "6 ounces hass avocado (sliced (1 large) )",
+    "⅓ cup light sour cream",
+    "½ jalapeño (seeds removed)",
+    "3 tablespoons light mayo",
+    "¼ cup fresh cilantro (roughly chopped)",
+    "1 tablespoon lime juice (or more to taste)",
+    "¼ teaspoon kosher salt"
+   ],
+   "steps": [
+    "Blend sauce ingredients with immersion blender or small blender, adding 1 teaspoon water at a time, if needed until smooth and easy to drizzle.",
+    "In a large bowl combine cabbage with lime juice and 1 teaspoon salt.",
+    "Set aside.",
+    "In a medium bowl combine ground chicken with taco seasoning.",
+    "Divide meat into 12 rough balls, about 1.4 ounces each, then spread each evenly over the corn tortillas, making sure to spread it thinly and cover the whole surface of the tortilla.",
+    "Heat a large griddle or skillet over medium-low heat.",
+    "Spray with oil when hot.",
+    "In batches as needed, place meat side down onto the prepared skillet and cook 2 to 3 minutes, spraying the top of the tortillas with oil.",
+    "Flip and cook for 1 to 2 more minutes until the tortillas are browned.",
+    "Top each taco with about 2 tablespoons of cabbage, avocado and drizzle with sauce."
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "bread"
+   ],
+   "tags": [
+    "Dinner",
+    "main dish",
+    "mexican inspired"
+   ],
+   "added": "2026-09-03T16:05:35.030Z"
+  },
+  {
+   "id": "f1ar8id0",
+   "src": "blog",
+   "srcName": "Skinnytaste",
+   "title": "Crock Pot Chicken Cacciatore",
+   "url": "https://www.skinnytaste.com/crock-pot-chicken-cacciatore/?adt_ei=*|EMAIL|*",
+   "image": "https://www.skinnytaste.com/wp-content/uploads/2012/06/Slow-Cooked-Chicken-Cacciatore.jpg",
+   "video": "",
+   "creator": "Skinnytaste",
+   "min": 250,
+   "servings": 8,
+   "ingredients": [
+    "8 bone-in chicken thighs (skin removed)",
+    "28 oz can crushed tomatoes (Tuttorosso my favorite!)",
+    "1/2 red bell pepper (sliced into strips)",
+    "1/2 green bell pepper (sliced into strips)",
+    "1/2 large onion (sliced)",
+    "1 teaspoon dried oregano",
+    "1 bay leaf",
+    "kosher salt ( and fresh pepper to taste)",
+    "1/4 cup fresh herbs ( such as basil or parsley for topping)"
+   ],
+   "steps": [
+    "Season chicken with salt and black pepper and place in the slow cooker.",
+    "Pour tomatoes over the chicken, top with onions and peppers, add oregano, bay leaf, salt and pepper, give it a quick stir and cover.",
+    "Set crock pot to LOW 6 to 8 hours or HIGH 3 to 4 hours.",
+    "When the timer beeps, remove lid and keep the crock pot on HIGH one hour to help it thicken.",
+    "Heat a large skillet over medium-high, lightly spray with oil and brown chicken on both sides a few minutes, season with salt and pepper.",
+    "Add to the slow cooker.",
+    "To the skillet, spray with a little more oil and add onions and peppers.",
+    "Sauté until juices release and the vegetables become golden, a few minutes.Add to the slow cooker.",
+    "Pour tomatoes over the chicken and vegetables, add oregano, bay leaf, salt and pepper, give it a quick stir and cover.",
+    "Set crock pot to LOW 8 hours or HIGH 4 hours.",
+    "Remove bay leaf, adjust salt and pepper and enjoy!",
+    "* Pasta not included in nutritional info."
+   ],
+   "themes": [
+    "chicken",
+    "protein"
+   ],
+   "tags": [
+    "Dinner",
+    "Italian"
+   ],
+   "added": "2026-09-03T16:05:36.248Z"
+  },
+  {
+   "id": "f9z6to2",
+   "src": "blog",
+   "srcName": "Skinnytaste",
+   "title": "Passion Fruit Chia Pudding",
+   "url": "https://www.skinnytaste.com/passion-fruit-chia-pudding/?adt_ei=*|EMAIL|*",
+   "image": "https://www.skinnytaste.com/wp-content/uploads/2026/08/Passion-Fruit-Chia-Pudding-15.jpg",
+   "video": "",
+   "creator": "Skinnytaste",
+   "min": 250,
+   "servings": 4,
+   "ingredients": [
+    "16 ounces silken tofu (drained)",
+    "½ cup vanilla yogurt (I used Oikos Pro=)",
+    "2 cups passion fruit pulp (I used Pitaya Foods Passion Fruit - Seedless Cubes)",
+    "3 tablespoons sweetened condensed milk",
+    "1 teaspoon vanilla extract",
+    "2 tablespoons chia seeds",
+    "1 cup raspberries"
+   ],
+   "steps": [
+    "Blend the tofu, yogurt, passion fruit, sweetener, and vanilla in a blender until completely smooth.",
+    "Add the chia seeds and mix well.",
+    "Refrigerate at least 4 hours, but overnight is best to allow the chia seeds to thicken the mixture.",
+    "Transfer to 5 serving dishes and top with raspberries before serving."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "sweet"
+   ],
+   "tags": [
+    "Dessert",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:37.103Z"
+  },
+  {
+   "id": "f186h9hm",
+   "src": "blog",
+   "srcName": "Skinnytaste",
+   "title": "Air Fryer Fried Chicken",
+   "url": "https://www.skinnytaste.com/air-fryer-fried-chicken/?adt_ei=*|EMAIL|*",
+   "image": "https://www.skinnytaste.com/wp-content/uploads/2026/08/Air-Fryer-Fried-Chicken-10.jpg",
+   "video": "",
+   "creator": "Skinnytaste",
+   "min": 32,
+   "servings": 4,
+   "ingredients": [
+    "8 bone-in drumsticks (skin removed)",
+    "2 ½ cups bran flakes (4 ½ ounces* (or gluten-free crushed corn flakes))",
+    "1 tablespoon kosher salt (less if you are using regular salt, divided)",
+    "½ teaspoon garlic powder",
+    "½ teaspoon paprika",
+    "1 teaspoon dried parsley (optional)",
+    "3 tablespoons light mayonnaise (Hellman's )",
+    "olive oil spray"
+   ],
+   "steps": [
+    "Season chicken with 1 teaspoon kosher salt.",
+    "Crush the cereal in a food processor or chopper until fine.",
+    "In a mixing bowl combine the crushed cereal with the remaining salt, paprika, garlic powder and dried parsley, if using.",
+    "Place in a shallow dish or ziplock bag.",
+    "Using a cooking brush, brush mayo onto the chicken then coat the chicken with crushed cereal mixture.",
+    "Place in the air fryer basket and spray the tops of the chicken with oil.",
+    "Air fry 370°F 22 to 24 minutes, turning the chicken halfway and spraying the top again, until the crumbs are golden and the chicken is cooked through."
+   ],
+   "themes": [
+    "chicken"
+   ],
+   "tags": [
+    "Dinner",
+    "main dish",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:37.640Z"
+  },
+  {
+   "id": "fq12umb",
+   "src": "blog",
+   "srcName": "Kochkarussell",
+   "title": "Gnocchi mit Gemüse aus dem Backofen (schnell & einfach)",
+   "url": "https://kochkarussell.com/gnocchi-mit-gemuese-backofen/",
+   "image": "https://kochkarussell.com/wp-content/uploads/2026/08/gnocchi-mit-gemuese-aus-dem-backofen.webp",
+   "video": "",
+   "creator": "Kochkarussell",
+   "min": 45,
+   "servings": 4,
+   "ingredients": [
+    "2 Paprika (rot und gelb)",
+    "1 große Zucchini (ca. 300 g)",
+    "200 g Champignons",
+    "1 rote Zwiebel",
+    "3 EL Olivenöl",
+    "3 EL Balsamicoessig",
+    "2-3 Knoblauchzehen (geschält)",
+    "1 EL italienische Kräuter (getrocknet)",
+    "500 g Gnocchi (aus dem Kühlregal)",
+    "125 g Mini-Mozzarella",
+    "Salz und Pfeffer"
+   ],
+   "steps": [
+    "Ofen auf 200 Grad Umluft vorheizen und Backblech mit Backpapier belegen.",
+    "Paprika, Zucchini und Pilze putzen und in mundgerechte Stücke schneiden.",
+    "Zwiebel schälen und in feine Scheiben schneiden.",
+    "Öl, Balsamicoessig, Knoblauch, italienische Kräuter, Salz und Pfeffer mixen.",
+    "Gemüse, Gnocchi und Kräuter-Knoblauchöl vermischen, dann auf dem Backblech verteilen und ca.",
+    "30 Minuten backen.",
+    "Zum Schluss Mozzarella darauf verteilen und genießen."
+   ],
+   "themes": [
+    "veggie",
+    "pasta",
+    "potato"
+   ],
+   "tags": [
+    "Hauptgericht",
+    "Italienisch"
+   ],
+   "added": "2026-09-03T16:05:43.565Z"
+  },
+  {
+   "id": "f19av7ak",
+   "src": "blog",
+   "srcName": "Kochkarussell",
+   "title": "Spaghetti Napoli in 20 Minuten (DER einfache Feierabend-Klassiker)",
+   "url": "https://kochkarussell.com/spaghetti-napoli/",
+   "image": "https://kochkarussell.com/wp-content/uploads/2026/08/spaghetti-napoli-nudeln-mit-tomatensosse.webp",
+   "video": "",
+   "creator": "Kochkarussell",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "500 g Spaghetti",
+    "1 Zwiebel",
+    "1 Knoblauchzehe",
+    "1 EL Olivenöl",
+    "1 EL Tomatenmark",
+    "1 TL Zucker",
+    "1 Flasche passierte Tomaten (700 g)",
+    "2 TL italienische Kräuter",
+    "Salz und Pfeffer"
+   ],
+   "steps": [
+    "Nudeln nach Packungsanweisung al dente garen.",
+    "In der Zwischenzeit Zwiebel und Knoblauch schälen und fein hacken.",
+    "Öl in einer großen Pfanne erhitzen.",
+    "Zwiebel und Knoblauch 3 Minuten glasig dünsten.",
+    "Tomatenmark und Zucker hinzufügen und unter Rühren 1 Minute braten.",
+    "Mit passierten Tomaten und Kräutern ablöschen und 10 Minuten einköcheln lassen.",
+    "Nudeln abgießen, dabei 125 ml Nudelwasser auffangen.",
+    "Nudelwasser zur Sauce geben, kurz köcheln lassen und mit Salz und Pfeffer abschmecken.",
+    "Tomatensauce zu Spaghetti servieren und genießen."
+   ],
+   "themes": [
+    "veggie",
+    "pasta"
+   ],
+   "tags": [
+    "Hauptgericht",
+    "Italienisch"
+   ],
+   "added": "2026-09-03T16:05:44.763Z"
+  },
+  {
+   "id": "fn4sj7c",
+   "src": "blog",
+   "srcName": "Kochkarussell",
+   "title": "Grüne Bohnen Eintopf",
+   "url": "https://kochkarussell.com/gruene-bohnen-eintopf/",
+   "image": "https://kochkarussell.com/wp-content/uploads/2025/07/Gruene-Bohnen-Eintopf-Rezept.webp",
+   "video": "",
+   "creator": "Kochkarussell",
+   "min": 50,
+   "servings": 4,
+   "ingredients": [
+    "750 g Kartoffeln (festkochend)",
+    "500 g grüne Bohnen (alternativ TK-Bohnen)",
+    "1 große Zwiebel",
+    "2 Knoblauchzehen",
+    "3 EL Olivenöl",
+    "1 EL Tomatenmark",
+    "2 TL Oregano",
+    "¼ TL Zimt",
+    "1 Dose gehackte Tomaten (400 g)",
+    "500 ml Gemüsebrühe",
+    "2 EL Dill (gehackt)",
+    "Salz und Pfeffer"
+   ],
+   "steps": [
+    "Kartoffeln schälen und mundgerecht (ca.",
+    "3 cm) würfeln.",
+    "Bohnen putzen und in mundgerechte Stücke schneiden.",
+    "Zwiebel und Knoblauch getrennt voneinander schälen und fein hacken.",
+    "Olivenöl in einem großen Topf erhitzen und Zwiebel 5 Minuten bei mittlerer Hitze glasig dünsten.",
+    "Knoblauch 1 Minuten mitdünsten.",
+    "Kartoffeln und Tomatenmark hinzufügen, mit Oregano, Zimt, Salz und Pfeffer würzen und kurz anbraten.",
+    "Alles mit gehackten Tomaten und Brühe ablöschen und 15 Minuten zugedeckt köcheln.",
+    "Bohnen hinzufügen und weitere 15 Minuten köcheln.",
+    "Mit Dill, Salz und Pfeffer abschmecken und genießen."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "soup",
+    "potato"
+   ],
+   "tags": [
+    "Hauptgericht",
+    "Griechisch"
+   ],
+   "added": "2026-09-03T16:05:45.935Z"
+  },
+  {
+   "id": "f1mzg9ig",
+   "src": "blog",
+   "srcName": "Kochkarussell",
+   "title": "Zucchini-Quiche mit Feta (einfach & vegetarisch)",
+   "url": "https://kochkarussell.com/zucchini-quiche-mit-feta/",
+   "image": "https://kochkarussell.com/wp-content/uploads/2026/08/zucchini-quiche-mit-feta-vegetarisch.webp",
+   "video": "",
+   "creator": "Kochkarussell",
+   "min": 55,
+   "servings": 4,
+   "ingredients": [
+    "1 Paket Quicheteig",
+    "500 g Zucchini",
+    "1 Zwiebel",
+    "1 Knoblauchzehe",
+    "2 EL Olivenöl",
+    "2 EL Thymian",
+    "3 Eier (Größe L)",
+    "200 g Schmand",
+    "200 g Feta",
+    "2 EL Pinienkerne (optional)",
+    "Salz und Pfeffer"
+   ],
+   "steps": [
+    "Ofen auf 200 Grad Ober-Unterhitze vorheizen und Quicheform bereitstellen.",
+    "Quicheteig in die Form legen.",
+    "Zucchini raspeln, anschließend in ein Küchentuch geben und gut ausdrücken.",
+    "Zwiebel und Knoblauch schälen und fein würfeln.",
+    "Öl in einer Pfanne erhitzen und Zucchini, Zwiebel und Knoblauch ca.",
+    "5 Minuten braten.",
+    "Mit Thymian und Salz abschmecken.",
+    "Währenddessen Eier und Schmand in einer kleinen Schüssel verquirlen und mit Salz und Pfeffer würzen.",
+    "Zucchini und zerkrümelten Feta auf dem Teig verteilen.",
+    "Mit der Eiermasse übergießen und mit Pinienkernen toppen.",
+    "Quiche ca.",
+    "35 Minuten backen.",
+    "Kurz abkühlen lassen und genießen."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "bread"
+   ],
+   "tags": [
+    "Hauptgericht",
+    "Deutsch"
+   ],
+   "added": "2026-09-03T16:05:46.927Z"
+  },
+  {
+   "id": "f9e63nj",
+   "src": "blog",
+   "srcName": "Backen macht gluecklich",
+   "title": "Zwetschgen-Muffins",
+   "url": "https://www.backenmachtgluecklich.de/rezepte/zwetschgenmuffins-mit-streuseln.html",
+   "image": "https://www.backenmachtgluecklich.de/media/2026/09/Zwetschgenmuffins-scaled.jpg",
+   "video": "",
+   "creator": "Backen macht gluecklich",
+   "min": 45,
+   "servings": 12,
+   "ingredients": [
+    "160 Gramm Weizenmehl",
+    "40 Gramm gemahlene Mandeln",
+    "1 1/2 Teelöffel Backpulver (gestrichen)",
+    "1/2 Teelöffel Natron",
+    "1 Prise Salz",
+    "1/2 Teelöffel abgeriebene Zitronenschale (optional)",
+    "2 mittelgroße Eier",
+    "95 Gramm Zucker",
+    "70 Gramm Rapsöl",
+    "145 Gramm Naturjoghurt (ca. 3,5% Fett)",
+    "220 Gramm Zwetschgen (mit Kern gewogen)",
+    "70 Gramm Weizenmehl",
+    "30 Gramm Zucker",
+    "1/2 Teelöffel Zimt",
+    "40 Gramm Butter (kalt)"
+   ],
+   "steps": [
+    "Als erstes die Streusel vorbereiten.",
+    "Dafür Mehl, Zucker und Zimt mischen.",
+    "Die kalte Butter in kleinen Stückchen bzw.",
+    "Flöckchen dazugeben.",
+    "Alles erst kurz mit den Knethaken, dann mit den Fingern zu Streuseln verkneten.",
+    "Die Streusel bis zur Verwendung kalt stellen.",
+    "Den Backofen auf 175 Grad Ober- und Unterhitze vorheizen.",
+    "Die Zwetschgen waschen, halbieren und entsteinen.",
+    "Ganz grob zwei Drittel davon in kleine Stückchen schneiden, den Rest vierteln.",
+    "Mehl, Mandeln, Backpulver, Natron, Salz und Zitronenschale in einer Schüssel mischen.",
+    "In einer zweiten Schüssel Eier und Zucker miteinander verquirlen.",
+    "Öl und Joghurt dazugeben und alles gut verrühren, bis die Masse homogen ist.",
+    "Die trockenen Zutaten zu den flüssigen geben und alles möglichst kurz, aber kräftig miteinander verrühren.",
+    "Der Teig ist eher fest.",
+    "Die Zwetschgenstückchen mit einem Teigschaber unterheben.",
+    "Den Teig in etwa 12 Muffinförmchen aus Papier oder Silikon füllen und diese am besten zusätzlich auf ein Muffinblech stellen.",
+    "Die Förmchen nur zu etwa zwei Dritteln mit Teig füllen.",
+    "Die Zwetschgenviertel sowie danach die Streusel darüber verteilen und leicht in den Teig drücken.",
+    "Die Muffins je nach Größe ca.",
+    "19-22 Minuten backen, bis sie goldgelb sind."
+   ],
+   "themes": [
+    "veggie",
+    "sweet"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:48.057Z"
+  },
+  {
+   "id": "fbfzqog",
+   "src": "blog",
+   "srcName": "Backen macht gluecklich",
+   "title": "Pizzateig",
+   "url": "https://www.backenmachtgluecklich.de/rezepte/pizzateig.html",
+   "image": "https://www.backenmachtgluecklich.de/media/2026/08/Pizza-Rezept-wie-vom-Italiener-scaled.jpg",
+   "video": "",
+   "creator": "Backen macht gluecklich",
+   "min": 47,
+   "servings": 4,
+   "ingredients": [
+    "200 Gramm Weizenmehl (Type 00 oder 550)",
+    "200 Gramm kaltes Wasser",
+    "1/2 Gramm frische Hefe",
+    "300 Gramm Weizenmehl (Type 00 oder 550)",
+    "110 Milliliter kaltes Wasser",
+    "2 Gramm frische Hefe",
+    "13 Gramm Salz",
+    "15 Gramm Olivenöl",
+    "Hartweizengrieß (zum Formen)",
+    "Pizzabelag nach Belieben (Tomatensoße, Mozzarella etc)"
+   ],
+   "steps": [
+    "Am Vorabend das kalte Wasser in ein großes Gefäß, z.B. eine Tupperbox oder ein großes Einmachglas, mit mind.",
+    "1 Liter Volumen geben und die frische Hefe darin auflösen.",
+    "Das Mehl mit einem Löffel kräftig einrühren, bis eine glatte, zähflüssige Masse ohne Mehlklümpchen entstanden ist.",
+    "Mit Deckel bei Zimmertemperatur etwa 18 Stunden stehen lassen; 15-20h sind in Ordnung.",
+    "Der Vorteig sollte sich danach stark vergrößert haben und voller Blasen sein.",
+    "Am Nachmittag für den Hauptteig das kalte Wasser in die Rührschüssel der Küchenmaschine geben und die frische Hefe darin auflösen.",
+    "Den gesamten Vorteig zugeben und gut mit einem Löffel einrühren.",
+    "Dann Mehl, Salz und Olivenöl dazugeben.",
+    "Den Teig etwa 5 Minuten auf mittlerer und weitere 10 Minuten auf hoher Stufe kneten, bis er glatt und geschmeidig ist.",
+    "Die Küchenmaschine kann dabei etwas wackeln.",
+    "Der Teig sollte eher fest sein, aber auf keinen Fall trocken.",
+    "Den Teig möglichst ohne Mehl auf die Arbeitsfläche oder Backmatte geben und ein paarmal dehnen und falten.",
+    "Danach zu einer straffen Kugel rollen und 5 Minuten ruhen lassen.",
+    "Den Teig mit einer Teigkarte oder einem großen scharfen Messer in 4 gleich große Stücke teilen.",
+    "Jedes Stück ähnlich wie ein Brötchen rundwirken.",
+    "Dafür mehrfach die Ränder von allen Seiten zur Mitte hin einschlagen und andrücken und das Stück umdrehen, sodass die Naht unten liegt.",
+    "Die Kugel mit der hohlen Hand über die Arbeitsfläche ziehen, bis die Oberfläche glatt und straff ist.",
+    "Die Teigkugeln mit Abstand zueinander in eine Gärbox oder eine sehr große Form legen und abgedeckt gehen lassen, bis sie sich deutlich vergrößert haben und luftig sind.",
+    "Je nach Zimmertemperatur dauert das 3 bis 6 Stunden.",
+    "Den Backofen mitsamt Pizzastein oder Pizzastahl auf 250-300 Grad Ober- und Unterhitze vorheizen; je höher, desto besser.",
+    "Bei uns dauert das etwa 15 Minuten, ein dicker Pizzastein braucht länger.",
+    "Reichlich Hartweizengrieß auf die Arbeitsfläche geben.",
+    "Die erste Teigkugel vorsichtig aus der Box lösen, in den Grieß legen und einmal wenden.",
+    "Den Teig mit den Fingerspitzen von der Mitte nach außen Richtung Rand drücken, die äußeren ca.",
+    "2 cm dabei dick lassen.",
+    "Teig besser nicht ausrollen!",
+    "Den Fladen dann sanft in die Breite ziehen, bis er die richtige Größe für euch hat.",
+    "Die Pizza als erstes mit Tomatensoße bestreichen, dabei einen Rand lassen.",
+    "Mit geriebenem Käse bzw.",
+    "Mozzarella bestreuen und erst danach mit den restlichen Zutaten belegen.",
+    "Auf eine mit Grieß bestäubte Pizzaschaufel legen und zügig auf den heißen Stein oder Stahl schieben.",
+    "Pizza etwa 4-7 Minuten backen, bis der Rand Blasen wirft und auch der Belag eine schöne Farbe hat.",
+    "Während der Backzeit die nächste Pizza belegen und im Anhscluss backen."
+   ],
+   "themes": [
+    "veggie"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:48.291Z"
+  },
+  {
+   "id": "f15yyv2y",
+   "src": "blog",
+   "srcName": "Backen macht gluecklich",
+   "title": "Triple Chocolate Cookies",
+   "url": "https://www.backenmachtgluecklich.de/rezepte/triple-chocolate-cookies.html",
+   "image": "https://www.backenmachtgluecklich.de/media/2026/08/Triple-Chocolate-Cookie-Rezept-scaled.jpg",
+   "video": "",
+   "creator": "Backen macht gluecklich",
+   "min": 32,
+   "servings": 20,
+   "ingredients": [
+    "265 Gramm Weizenmehl",
+    "35 Gramm Backkakao",
+    "1 1/4 Teelöffel Natron",
+    "1/2 Teelöffel Salz (gestrichen)",
+    "175 Gramm Butter (weich)",
+    "120 Gramm brauner Zucker",
+    "60 Gramm Zucker",
+    "1 mittelgroßes Ei (zimmerwarm)",
+    "1 mittelgroßes Eigelb (zimmerwarm)",
+    "1 Teelöffel Vanillepaste",
+    "200 Gramm Schokolade (3 Sorten, siehe Tipps)"
+   ],
+   "steps": [
+    "Die weiche Butter mit den beiden Zuckersorten 2-3 Minuten cremig schlagen.",
+    "Ei, Eigelb und Vanillepaste unterrühren.",
+    "Mehl, Kakao, Natron und Salz mischen.",
+    "Diese Mehlmischung nur kurz unter die Butter-Masse rühren, bis gerade so ein homogener Teig entstanden ist.",
+    "Etwa 1-2 Esslöffel der Chocolate Chunks für die Deko beiseite nehmen.",
+    "Den Rest mit einem Teigschaber oder Löffel gleichmäßig auf dem Teig verteilen und möglichst kurz unterheben.",
+    "Den Teig in etwa 20 Portionen je ca.",
+    "40-50 g teilen und zu Kugeln formen.",
+    "Auf ein kleines, mit Backpapier belegtes Brett oder Blech setzen, das in euren Kühlschrank passt.",
+    "Die Kugeln mit der Hand flach drücken.",
+    "Die Cookies auf dem Brett mindestens 1 Stunde kalt stellen.",
+    "Danach aus dem Kühlschrank holen und den Ofen auf 175 Grad Ober- und Unterhitze vorheizen.",
+    "Die Cookie-Kugeln mit genügend Abstand zueinander auf einem mit Backpapier belegten Blech etwa 11-12 Minuten backen.",
+    "Die Ränder sollten fest sein, die Mitte muss noch weich wirken.",
+    "Direkt nach dem Backen die übrigen Chocolate Chunks ganz vorsichtig in die heißen Cookies drücken, sodass sie leicht schmelzen."
+   ],
+   "themes": [
+    "veggie",
+    "sweet"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:48.507Z"
+  },
+  {
+   "id": "f5wv5p",
+   "src": "blog",
+   "srcName": "Backen macht gluecklich",
+   "title": "Zwiebelkuchen",
+   "url": "https://www.backenmachtgluecklich.de/rezepte/einfacher-klassischer-zwiebelkuchen.html",
+   "image": "https://www.backenmachtgluecklich.de/media/2020/08/Einfacher-Zwiebelkuchen-mit-Schmand-scaled.jpg",
+   "video": "",
+   "creator": "Backen macht gluecklich",
+   "min": 65,
+   "servings": 1,
+   "ingredients": [
+    "250 Gramm Weizenmehl",
+    "140 Gramm Butter (kalt und in Stückchen)",
+    "1 mittelgroßes Ei (kalt)",
+    "1 Esslöffel kaltes Wasser",
+    "1/2 Teelöffel Salz",
+    "50 Gramm Butter",
+    "700 Gramm Zwiebeln (ungeputzt gewogen)",
+    "150 Gramm Speck (oder Schinkenwürfel)",
+    "3 mittelgroße Eier",
+    "300 Gramm Schmand (oder Creme fraiche)",
+    "1/2 Teelöffel Salz und Pfeffer (Menge nach Belieben)",
+    "2 Prisen Muskatnuss",
+    "1 Esslöffel Kümmel (optional, Menge nach Belieben)"
+   ],
+   "steps": [
+    "Für den Teig das Mehl in eine Schüssel geben, die kalte Butter in kleinen Stückchen mit dem Ei, dem Eiswasser und dem Salz zügig unterkneten.",
+    "Teig zu einer Kugel formen und in Frischhaltefolie verpackt ca.",
+    "30 Minuten kühlstellen.",
+    "Währenddessen die Zwiebeln fein hobeln oder hacken, aber nicht komplett klein häckseln.",
+    "Die Butter in einer Pfanne erhitzen.",
+    "Zwiebeln bei mittlerer Hitze ca.",
+    "5 Minuten glasig dünsten.",
+    "Dann den Speck zugeben und weitere 5 Minuten braten.",
+    "Zwiebelmix zum Abkühlen beiseite stellen.",
+    "Den Teig aus dem Kühlschrank holen.",
+    "Ofen auf 180 Grad Ober- und Unterhitze vorheizen.",
+    "Teig auf die Größe einer 28-30 cm großen Quiche-, Tarte- oder Springform ausrollen (plus Rand); in die Form legen und einen Rand hochziehen.",
+    "Die Eier mit dem Schmand verquirlen.",
+    "Den leicht abgekühlten Zwiebelmix unter die Eiercreme heben.",
+    "Mit Muskat, Salz, Pfeffer und ggf.",
+    "Kümmel würzen.",
+    "Die Masse auf den Teig geben, glattstreichen und den Zwiebelkuchen ca.",
+    "40 Minuten backen.",
+    "Eventuell nach 30 Minuten abdecken, damit er nicht zu dunkel wird."
+   ],
+   "themes": [
+    "meat",
+    "sweet"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:48.739Z"
+  },
+  {
+   "id": "fu9s9hs",
+   "src": "blog",
+   "srcName": "Malte's Kitchen",
+   "title": "Linsensalat mit Feta, Gurke und Tomaten",
+   "url": "https://www.malteskitchen.de/linsensalat-feta/",
+   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/08/linsensalat-1.webp",
+   "video": "",
+   "creator": "Malte's Kitchen",
+   "min": 40,
+   "servings": 6,
+   "ingredients": [
+    "250 g Berglinsen",
+    "2 Lorbeerblätter",
+    "5 Pfefferkörner",
+    "1 Salatgurke",
+    "1 Rote Paprika",
+    "1 Rote Zwiebel",
+    "2 Frühlingszwiebeln",
+    "12 Kirschtomaten",
+    "2 EL Petersilie (fein gehackt)",
+    "1 EL Minze (fein gehackt)",
+    "200 g Feta",
+    "6 EL Olivenöl",
+    "2 EL Zitronensaft und Abrieb der Zitronenschale",
+    "1 EL Apfelessig",
+    "1 TL Senf",
+    "1 TL Honig",
+    "1 TL Salz (gestrichen voll)",
+    "Pfeffer",
+    "1/4 TL Kreuzkümmel (fein gemahlen)"
+   ],
+   "steps": [
+    "Die Linsen in einem Sieb unter fließendem Wasser abwaschen.",
+    "In einen Topf geben und mit 750 ml Wasser, Lorbeerblättern und Pfeffer zum Kochen bringen.",
+    "Kein Salz zufügen!",
+    "Für 16-18 Minuten kochen lassen (Auf die Packungsangabe achten!).",
+    "Die Linsen abgießen, in einem Sieb abtropfen und auskühlen lassen.",
+    "In eine Salatschüssel geben und leicht salzen.",
+    "Die Salatgurke und die Paprika entkernen und in kleine Stücke schneiden.",
+    "Die Zwiebel und die Frühlingszwiebeln in Ringe schneiden.",
+    "Die Cocktailtomaten halbieren.",
+    "Alle Zutaten mit den Linsen und dem Dressing mischen.",
+    "Vor dem Servieren den Feta darüber geben.",
+    "Alle Zutaten in einer Schüssel oder in einem Schraubglas mischen/schütteln, sodass eine homogene Masse entsteht."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "salad"
+   ],
+   "tags": [
+    "Salat",
+    "Deutschland"
+   ],
+   "added": "2026-09-03T16:05:51.180Z"
+  },
+  {
+   "id": "f16jt70r",
+   "src": "blog",
+   "srcName": "Malte's Kitchen",
+   "title": "Knusprige Dinkelbrötchen mit Hafer: mit Übernachtgare",
+   "url": "https://www.malteskitchen.de/dinkelbroetchen-hafer/",
+   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/08/dinkelbroetchen-hafer-5.webp",
+   "video": "",
+   "creator": "Malte's Kitchen",
+   "min": 750,
+   "servings": 8,
+   "ingredients": [
+    "300 g Dinkelmehl Typ 630",
+    "200 g Dinkelmehl Type 1050",
+    "125 g Zarte Haferflocken (+ mehr für Deko)",
+    "350 g Wasser (Zimmertemperatur)",
+    "6 g Frische Hefe",
+    "15 g Zucker",
+    "15 g Salz",
+    "200 g Magerquark"
+   ],
+   "steps": [
+    "Beide Dinkelmehlsorten in einer Schüssel mit den Haferflocken mischen.",
+    "300 g Wasser zugeben und mit einer Gabel grob verrühren.",
+    "Es bleiben Mehlnester stehen, dass ist nicht schlimm!Den Vorteig 30 Minuten abgedeckt ruhen lassen, damit nichts austrocknet.",
+    "Die Hefe und den Zucker in den restlichen 50 g Wasser unter Rühren auflösen.",
+    "Die Hefe zum Vorteig geben.",
+    "Salz und Quark zufügen und mit dem Knethaken in der Küchenmaschine 8 Minuten kneten.Einmal den Rand mit einem Silikonspatel reinigen und die Reste zum Teig geben.",
+    "Den fertig gekneteten Teig in der Schüssel lassen und diese abdecken (oder in einen passenden Behälter mit Deckel geben) und über Nacht (10-12 Stunden) im Kühlschrank gehen lassen.",
+    "Das Teigvolumen wird sich verdoppeln oder gar verdreifachen!",
+    "Am nächsten Tag ein Backblech mit Backpapier auslegen.",
+    "2 EL Haferflocken auf einen flachen Teller geben.Die Arbeitsfläche leicht mehlen und den Teig mit einer Teigkarte aus der Schüssel darauf schaben.",
+    "Den Teig in acht gleich große Teile teilen (bei mir ca.",
+    "150 g je Brötchen).Jedes Teigstück dehnen und falten und anschließend zu einem runden Brötchen schleifen.",
+    "Das Teigstück mit Wasser leicht befeuchten und in die Haferflocken auf dem Teller drücken.",
+    "Auf das Backpapier setzen und genügend Abstand lassen.",
+    "Liegen die Brötchen zu eng beieinander, werden sie nicht so knusprig.",
+    "Das Backblech auf unterste (!) Schiene in den kalten (!) Backofen schieben und eine Temperatur von 230 Grad Ober-/Unterhitze einstellen.",
+    "Die Dinkelbrötchen für 26 Minuten backen, bis sie eine schöne Farbe haben."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "bread"
+   ],
+   "tags": [
+    "Brot",
+    "Deutschland"
+   ],
+   "added": "2026-09-03T16:05:51.523Z"
+  },
+  {
+   "id": "f1ii1zb1",
+   "src": "blog",
+   "srcName": "Malte's Kitchen",
+   "title": "Pierogi ruskie | Omas Piroggen mit Kartoffelfüllung",
+   "url": "https://www.malteskitchen.de/piroggen-kartoffelfuellung-pierogi-ruskie/",
+   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/07/piroggen-pierogi-ruskie-1.webp",
+   "video": "",
+   "creator": "Malte's Kitchen",
+   "min": 135,
+   "servings": 8,
+   "ingredients": [
+    "600 g Weizenmehl Typ 405 (+ mehr zum Ausrollen)",
+    "4 EL Neutrales Öl (35 g)",
+    "330 g Wasser, lauwarm",
+    "1 TL Salz",
+    "500 g Kartoffeln, mehlig kochend",
+    "500 g Twarog (alternativ Schichtkäse)",
+    "150 g Zwiebel (bereits geschält)",
+    "Salz",
+    "Pfeffer",
+    "Muskat",
+    "Öl zum Braten",
+    "600 g Zwiebeln",
+    "100 g Butter",
+    "Öl zum Braten",
+    "Salz"
+   ],
+   "steps": [
+    "Mehl und Salz in eine große Schüssel geben.",
+    "Gut durchmischen und eine Mulde formen.",
+    "Die restlichen Zutaten, also Öl und Wasser, in die Mulde gießen.",
+    "Zuerst mit einer Gabel grob alles miteinander verrühren, dann mit den Händen zu einem glatten Teig kneten.",
+    "Den Teig in Frischhaltefolie wickeln und für ca.",
+    "30 Minuten im Kühlschrank ruhen lassen.",
+    "Den Teig nicht am Vortag zubereiten, siehe Tipp unten.",
+    "Zum Füllen der Pierogi ein Viertel des Teigs abschneiden und auf einer bemehlten Fläche dünn ausrollen (ca.",
+    "1-2 mm).",
+    "Kreise ausstechen (meine haben einen Ø von 7 cm) und diese mit einem kleinen Teelöffel Kartoffelmasse füllen (bei mir 6-8 g).Die Kreise mithilfe eines Teigtaschenformers umklappen und verschließen.",
+    "Die gefüllten Pierogi auf ein ordentlich gemehltes Backblech legen und mit dem restlichen Teig ebenso verfahren.",
+    "Teigreste können zusammengeknetet werden.",
+    "Die Kartoffeln mit Schale in Salzwasser gar kochen und pellen.",
+    "Noch heiß durch eine Kartoffelpresse drücken, alternativ mit einem Kartoffelstamper stampfen.",
+    "Während die Kartoffeln kochen, die Zwiebel in feine Würfel schneiden und in einer Pfanne mit etwas Öl glasig braten, bis sie eine schöne goldbraune Farbe bekommen haben.",
+    "Die zerdrückten Kartoffeln mit der Zwiebel und dem Twarog in eine Schüssel geben.",
+    "Gut mit Salz, Pfeffer und Muskat würzen und mit den Händen verkneten.",
+    "Die Masse abschmecken und eventuell nachwürzen.",
+    "Die Zwiebeln in Streifen schneiden und in eine heiße Pfanne mit Öl geben.",
+    "Salzen und langsam goldbraun schmoren.",
+    "Die gefüllten Pierogi in kochendes Salzwasser geben und ca.",
+    "3 Minuten kochen (je nach Dicke des Teiges, am besten eine probieren).",
+    "Wenn sie nach oben steigen, noch eine Minute kochen, dann sind sie fertig.",
+    "Zeitgleich eine Pfanne aufsetzen und ein gutes Stück Butter und einen Schuss Öl erhitzen, bis es leicht nussig riecht.",
+    "Aufpassen, dass die Butter nicht sofort schwarz wird!Die fertig gekochten Pierogi aus dem Salzwasser heben, kurz abtropfen lassen und in die heiße Buttermischung geben.",
+    "Kurz durchschwenken und auf Teller geben.",
+    "Etwas von den geschmorten Zwiebeln über die Pierogi geben und sofort servieren."
+   ],
+   "themes": [
+    "meat",
+    "potato"
+   ],
+   "tags": [
+    "Hauptgericht",
+    "Polen"
+   ],
+   "added": "2026-09-03T16:05:52.704Z"
+  },
+  {
+   "id": "f1bfagqs",
+   "src": "blog",
+   "srcName": "Malte's Kitchen",
+   "title": "Porridge mit Schokolade, Nüssen und Beeren",
+   "url": "https://www.malteskitchen.de/porridge-schokolade/",
+   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/07/porridge-schoko-5.webp",
+   "video": "",
+   "creator": "Malte's Kitchen",
+   "min": 7,
+   "servings": 1,
+   "ingredients": [
+    "50 g Haferflocken",
+    "200 ml Milch",
+    "5 g Backkakao",
+    "20 g Schoko Chunks",
+    "1 Prise Salz",
+    "1 Apfel",
+    "100 g Beeren (Erdbeeeren, Himbeeeren etc.)",
+    "20 g Nüsse",
+    "1 TL Honig (Honig, Zucker, Agavendicksaft)",
+    "1 TL Nussmus"
+   ],
+   "steps": [
+    "Die Haferflocken mit dem Kakao in einen kleinen Topf geben und 150 ml der Milch angießen, salzen.",
+    "Nun bei kleiner Hitze langsam erhitzen und zwischendurch verrühren.",
+    "Während die Haferflocken quellen, das Obst waschen und klein schneiden.",
+    "Den Apfel fein reiben.",
+    "Schluckweise mehr Milch zum Porridge geben, bis es eine schöne, geschmeidige Konsistenz hat, einmal kurz aufkochen.",
+    "Den geriebenen Apfel unterheben.",
+    "Zum Schlüssel leicht süßen, wenn du magst.",
+    "Das Porridge auf einen Teller geben und mit Nüssen und Früchten belegen, zum Schluss das Nussmus darüber sprenkeln."
+   ],
+   "themes": [
+    "veggie",
+    "sweet",
+    "breakfast"
+   ],
+   "tags": [
+    "Frühstück",
+    "Amerikanisch"
+   ],
+   "added": "2026-09-03T16:05:52.895Z"
+  },
+  {
+   "id": "f1sykxeg",
+   "src": "blog",
+   "srcName": "Budget Bytes",
+   "title": "Roasted Sweet Potatoes",
+   "url": "https://www.budgetbytes.com/roasted-sweet-potatoes/",
+   "image": "https://www.budgetbytes.com/wp-content/uploads/2026/08/3-Roasted-Sweet-Potatoes-Overhead-Wide-With-Spatula.jpg",
+   "video": "",
+   "creator": "Budget Bytes",
+   "min": 40,
+   "servings": 4,
+   "ingredients": [
+    "2 lbs sweet potatoes ($2.24)",
+    "2 Tbsp olive oil ($0.38*)",
+    "½ tsp salt ($0.01)"
+   ],
+   "steps": [
+    "Gather ingredients and preheat oven to 450℉ with your metal sheet pan preheating in the middle position of the oven.**",
+    "Wash sweet potatoes well and thoroughly dry them.",
+    "Dice into large cubes, about ½ inch to 1-inch on each side.",
+    "Toss potatoes in a large mixing bowl with olive oil and salt.",
+    "Carefully remove preheated sheet pan from the oven and pour the sweet potatoes onto it, giving each potato cube room so they don’t steam instead of roast.",
+    "Bake for 15 minutes.",
+    "Flip sweet potatoes after 15 minutes and roast for 10 additional minutes.",
+    "Remove from oven and enjoy."
+   ],
+   "themes": [
+    "veggie",
+    "potato"
+   ],
+   "tags": [
+    "Side Dish",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:53.217Z"
+  },
+  {
+   "id": "fzj1hd5",
+   "src": "blog",
+   "srcName": "Budget Bytes",
+   "title": "Taco Casserole",
+   "url": "https://www.budgetbytes.com/taco-casserole/",
+   "image": "https://www.budgetbytes.com/wp-content/uploads/2026/08/Taco-Casserole-Front-Plated.jpg",
+   "video": "",
+   "creator": "Budget Bytes",
+   "min": 45,
+   "servings": 8,
+   "ingredients": [
+    "nonstick cooking spray ($0.01)",
+    "1 lb. ground beef ($5.94*)",
+    "½ onion (small dice, (135g, 1 cup) $0.47)",
+    "1 green bell pepper (medium dice, (125g, 1 cup) $0.78)",
+    "1 Tbsp chili powder ($0.08)",
+    "1 tsp ground cumin ($0.04)",
+    "1 tsp paprika ($0.04)",
+    "½ tsp dried oregano ($0.02)",
+    "¼ tsp cayenne ($0.04)",
+    "¼ tsp salt ($0.01)",
+    "¼ tsp black pepper (freshly cracked, $0.04)",
+    "16 oz. jarred mild thick and chunky salsa ($1.92**)",
+    "15 oz. can black beans (drained and rinsed, $0.92)",
+    "2 cups cheddar cheese (grated, (200g) $1.72***)",
+    "6 large flour tortillas (burrito size, $1.59)"
+   ],
+   "steps": [
+    "Gather and prepare all ingredients.",
+    "Preheat oven to 350°F and grease a 9x13 oven-safe baking dish.",
+    "Heat a medium skillet over medium heat.",
+    "Once hot, add the ground beef, onions, and green peppers, and sauté for 5 minutes until the meat is browned and the vegetables are tender.",
+    "Using paper towels, carefully soak up the excess grease and discard.",
+    "Add the chili powder, cumin, paprika, dried oregano, cayenne, salt, and pepper.",
+    "Cook for 1 minute.",
+    "Add the salsa and drained black beans and continue cooking for 4 minutes.",
+    "To assemble the taco bake, lay two tortillas overlapping each other on the bottom of the baking dish.",
+    "Top with ⅓ of the meat filling and ⅓ of the cheese.",
+    "Repeat the layers three times.",
+    "Bake for 20 minutes in the oven until it is melty.",
+    "Remove them from the oven, slice, and garnish with any toppings you like!"
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "soup",
+    "bread"
+   ],
+   "tags": [
+    "Main Course",
+    "American",
+    "Mexican",
+    "texmex"
+   ],
+   "added": "2026-09-03T16:05:53.269Z"
+  },
+  {
+   "id": "f1tewywc",
+   "src": "blog",
+   "srcName": "Budget Bytes",
+   "title": "Chicken Broccoli Casserole",
+   "url": "https://www.budgetbytes.com/chicken-broccoli-casserole/",
+   "image": "https://www.budgetbytes.com/wp-content/uploads/2026/08/One-Pot-Chicken-and-Broccoli-Casserole-Overhead-Macro.jpg",
+   "video": "",
+   "creator": "Budget Bytes",
+   "min": 30,
+   "servings": 4,
+   "ingredients": [
+    "1 lb. chicken breast tenderloins ($5.12*)",
+    "1½ tsp salt (divided, $0.01)",
+    "½ tsp black pepper (freshly cracked, $0.02)",
+    "1 tsp garlic powder ($0.05)",
+    "1 tsp onion powder ($0.05)",
+    "1 tsp smoked paprika ($0.08)",
+    "2 Tbsp salted butter ($0.34)",
+    "1 Tbsp olive oil ($0.17)",
+    "1½ cups orzo (uncooked, $0.54)",
+    "2½ cups chicken broth ($0.30**)",
+    "1 cup whole milk (room temperature, $0.24)",
+    "3 cups frozen broccoli florets (roughly chopped, $0.86***)",
+    "4 oz. cheddar cheese (shredded, (1 cup) $0.97****)"
+   ],
+   "steps": [
+    "Gather ingredients.",
+    "Roughly chop the broccoli florets.",
+    "Cut the chicken breast tenderloins into bite-size pieces. (You can totally use chicken thighs or whole breasts for this recipe.",
+    "I just saw these tenderloins at the grocery store and the price was right!).",
+    "Transfer the chicken to a medium mixing bowl with 1 tsp salt, black pepper, garlic powder, onion powder, and smoked paprika.",
+    "Toss until evenly coated.",
+    "Melt butter and olive oil in a large broiler pan or an oven-safe sauté pan over medium heat.",
+    "Add seasoned chicken.",
+    "Cook until the chicken is cooked through, about 6 minutes per side, 12-15 minutes total.",
+    "Next, add the orzo to the pan and toss it with the chicken to lightly toast it, about 2 minutes.",
+    "Deglaze the pan with the chicken broth.",
+    "Stir everything together and turn the heat down to medium-low.",
+    "Shred cheddar cheese and set aside.",
+    "Set oven to broil on high.",
+    "Add room temperature whole milk to the skillet and stir to combine.",
+    "Add chopped broccoli florets.",
+    "Simmer everything for about 8 minutes or until the orzo is done to your liking, and most of the liquid has been absorbed.",
+    "Stir in half of the cheddar cheese.",
+    "Add the rest of the cheddar cheese on top and sprinkle with the remaining salt and any extra pepper you might like.",
+    "Transfer to oven and broil for 3-5 minutes until the cheese has melted, or just put the lid on your pan and melt the cheese on the stovetop."
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "pasta"
+   ],
+   "tags": [
+    "Main Course",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:53.367Z"
+  },
+  {
+   "id": "fgbnrbb",
+   "src": "blog",
+   "srcName": "RecipeTin Eats",
+   "title": "Dirty Martini",
+   "url": "https://www.recipetineats.com/dirty-martini/",
+   "image": "https://www.recipetineats.com/tachyon/2026/09/Dirty-martini-8.jpg",
+   "video": "",
+   "creator": "RecipeTin Eats",
+   "min": null,
+   "servings": 1,
+   "ingredients": [
+    "75 ml (2 1/2 oz) dry gin",
+    "15 ml (1/2 oz) dry vermouth ((Noilly Prat Original and Dolin Dry are classic choices) (Note 2))",
+    "15 - 30 ml (1/2 - 1 oz) brine from green olive jar ((literally just the brining liquid from your favourite green olives!))",
+    "3 green olives ((classic green ones stuffed with red capsicum))",
+    "2 cups ice ((Note 3 if you don't have))",
+    "Instead of olive brine, use one of these",
+    "Classic martini - just leave out the olive brine!"
+   ],
+   "steps": [
+    "Stir gin, vermouth and brine in an ice filled mixing jug for 30 sec.",
+    "Strain into chilled glass, garnish with olives.",
+    "Chill martini glass in the fridge or freezer until very cold (~150 - 200ml / 5 - 7oz glass size is ideal size - Note 4)",
+    "Thread the olives onto a skewer.",
+    "Stir - Fill a mixing glass about 500ml/2 cups in size (measuring jug or similar) with ice, nearly to the top.",
+    "Pour in the gin, vermouth and brine.",
+    "Use a bar spoon or table knife to stir briskly for 30 seconds, stirring around the outside in circles.",
+    "Garnish - Strain straight away into the glass (don't leave, it will dilute).",
+    "Add the olive skewer.",
+    "Enjoy!"
+   ],
+   "themes": [
+    "veggie"
+   ],
+   "tags": [
+    "Cocktail",
+    "Western"
+   ],
+   "added": "2026-09-03T16:05:54.266Z"
+  },
+  {
+   "id": "fue3wgp",
+   "src": "blog",
+   "srcName": "RecipeTin Eats",
+   "title": "One-Pan Portuguese Chicken and Potatoes",
+   "url": "https://www.recipetineats.com/one-pan-portuguese-chicken-and-potato-bake/",
+   "image": "https://www.recipetineats.com/tachyon/2026/08/Portuguese-chicken-and-potatoes-2.jpg",
+   "video": "",
+   "creator": "RecipeTin Eats",
+   "min": 80,
+   "servings": 5,
+   "ingredients": [
+    "5 chicken thighs (, bone-in, skin-on - about 1.2kg/2.4lb total weight (Note 1))",
+    "3 1/2 tsp paprika (, sweet/regular or smoked)",
+    "1 1/2 tsp garlic powder",
+    "1 1/2 tsp dried oregano",
+    "1/2 tsp coriander",
+    "1/4 tsp cayenne pepper (, optional (for faint spiciness))",
+    "1 tbsp brown sugar ((tightly packed))",
+    "3/4 tsp cooking salt / kosher salt ((halve for table salt, +50% for flakes))",
+    "1 1/2 tbsp extra virgin olive oil",
+    "1 1/2 tbsp lemon juice (, or white or red wine vinegar or apple cider vinegar)",
+    "700g / 1.4lb medium waxy potatoes (\"washed potatoes\", red potatoes, US: Yukon)",
+    "1 large red onion (, cut into wedges)",
+    "1 large red capsicum / bell pepper (, deseeded, cut into large 3.5cm / 1.5\" squares)",
+    "6 garlic cloves (, crushed using a garlic press)",
+    "2 tsp dried oregano",
+    "1 tsp cooking salt / kosher salt ((halve for table salt, +50% for flakes))",
+    "1/4 tsp black pepper",
+    "2 1/2 tbsp extra virgin olive oil",
+    "3 tbsp lemon juice"
+   ],
+   "steps": [
+    "Toss Potato Vegetable Bake ingredients in a roasting pan.",
+    "Bake 25 minutes at 200°C/390°F (180°C).",
+    "Coat chicken in seasoning, place on potatoes.",
+    "Bake 40 min.",
+    "Serve!",
+    "Preheat oven to 200°C/390°F (180°C fan-forced).",
+    "Vegetable bake head start- Put all the Potato Vegetable Bake ingredients in a large pan.",
+    "Toss well to coat, separating the potato slices.",
+    "Bake for 25 minutes while you prepare the chicken.",
+    "Portuguese Chicken - Mix the Portuguese Seasoning ingredients in a bowl.",
+    "Add the chicken and turn to coat.",
+    "Bake 2 - Place the chicken on top of the potatoes, tucking the excess skin under to form bundles.",
+    "Bake for 40 minutes or until the chicken is golden and cooked through.",
+    "Serve the chicken and vegetables with the tasty lemony garlic broth.",
+    "Bread for mopping is encouraged!"
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "potato"
+   ],
+   "tags": [
+    "Mains",
+    "One Pan",
+    "Portuguese inspired"
+   ],
+   "added": "2026-09-03T16:05:54.286Z"
+  },
+  {
+   "id": "fggw931",
+   "src": "blog",
+   "srcName": "RecipeTin Eats",
+   "title": "Mushroom Ragu Pasta",
+   "url": "https://www.recipetineats.com/mushroom-ragu-pasta-recipe/",
+   "image": "https://www.recipetineats.com/tachyon/2026/08/Mushroom-Ragu_0.jpg",
+   "video": "",
+   "creator": "RecipeTin Eats",
+   "min": 25,
+   "servings": 4,
+   "ingredients": [
+    "20g / 0.7oz dried porcini mushrooms (, about 3/4 cup (Note 1))",
+    "1 cup red wine (, I use pinto noir (Note 2))",
+    "1kg / 2lbs white button mushrooms",
+    "2 tbsp olive oil",
+    "60g / 2oz unsalted butter (, divided)",
+    "1 brown or yellow onion (, finely diced)",
+    "3 garlic cloves (, finely minced)",
+    "3 tsp finely minced anchovy fillets (, or anchovy paste (Note 4))",
+    "1/4 cup tomato paste",
+    "1 1/2 tsp cooking salt / kosher salt ((half for table salt, 50% extra for flakes))",
+    "1 tsp dried thyme (or 2 sprigs fresh thyme)",
+    "2 fresh bay leaves (, dried ok)",
+    "3 tbsp plain flour (all-purpose)",
+    "1 cup chicken stock (, salt reduced - or vegetable stock for vegetarian (Note 5))",
+    "1/2 tsp black pepper",
+    "1/2 cup parmesan cheese (, finely grated (Note 6))",
+    "400g / 14oz malfadine pasta (curly fettuccini , pictured)",
+    "1 tbsp cooking salt / kosher salt (, for the pasta water)",
+    "Extra parmesan (, for serving)"
+   ],
+   "steps": [
+    "Soak porcini in wine 30 min, strain and chop, reserve wine.",
+    "Sauté onion, garlic and anchovy in oil and butter.",
+    "Cook tomato paste, then cook mushrooms, porcini, salt, thyme and bay leaves 8 min.",
+    "Add wine, reduce 6 min.",
+    "Stir in flour, then chicken stock, simmer to thicken.",
+    "Finish with pepper, parmesan and remaining butter.",
+    "Soak the dried porcini in red wine for 30 minutes to rehydrate.",
+    "Strain, then squeeze the excess wine out of the mushrooms.",
+    "Reserve the wine.",
+    "Chop the porcini finely (about 3mm/1/8\").",
+    "Sauté - Heat the olive oil and melt 2 tablespoons of the butter in a large heavy-based pot over medium-high heat (~26cm/10.5\"+).",
+    "Add the onion, garlic and anchovy.",
+    "Cook for 2 minutes, stirring regularly with a wooden spoon, until the onion softens.",
+    "Caramelise tomato paste - Add the tomato paste and cook for 2 minutes, stirring regularly.",
+    "Cook mushrooms - Add the sliced mushrooms first and cook for 2 minutes, so they reduce in volume a bit.",
+    "Add the chopped mushrooms, porcini, salt, thyme and bay leaves.",
+    "Stir and cook for 8 to 10 minutes, stirring from time to time, until the liquid released by the mushrooms is mostly gone.",
+    "Reduce wine - Pour in the reserved red wine and simmer for 6 minutes, stirring well at first to scrape up the fond at the bottom of the pot, then regularly towards the end.",
+    "A path drawn with the spoon along the base should briefly hold.",
+    "Thicken sauce - Add the flour, stir well and cook for 30 seconds.",
+    "Add the chicken stock, bring to a simmer and cook for 2 minutes, stirring regularly, until it thickens to a rich, gravy-like consistency.",
+    "Finish with the pepper, parmesan and remaining butter, stirring until everything is combined and the butter has melted through for a beautifully glossy finish.",
+    "Put the lid on to keep warm while you cook the pasta.",
+    "Cook pasta - Bring a large pot of water to the boil over high heat.",
+    "Add 1 tablespoon of salt and add the pasta.",
+    "Cook per the packet direction minus 1 minute.",
+    "Reserve pasta water - Just before draining the pasta, scoop out one cup of pasta cooking water and set aside.",
+    "Drain the pasta.",
+    "Toss - Add the cooked pasta and 1/4 cup of the pasta cooking water (the starch in the water helps the sauce stick to the pasta).",
+    "Toss well on medium heat for 1 minute or until the pasta is all coated with the ragu and serve with a sprinkle of parmesan.",
+    "Bon appétit!"
+   ],
+   "themes": [
+    "pasta"
+   ],
+   "tags": [
+    "Mains",
+    "Pasta",
+    "Italian",
+    "Western"
+   ],
+   "added": "2026-09-03T16:05:54.444Z"
+  },
+  {
+   "id": "f19y9lxk",
+   "src": "blog",
+   "srcName": "RecipeTin Eats",
+   "title": "Mediterranean Cucumber Salad",
+   "url": "https://www.recipetineats.com/mediterranean-cucumber-salad/",
+   "image": "https://www.recipetineats.com/tachyon/2026/08/Favourite-Cucumber-Salad-7.jpg",
+   "video": "",
+   "creator": "RecipeTin Eats",
+   "min": 15,
+   "servings": 4,
+   "ingredients": [
+    "500g / 1 lb Lebanese cucumbers (, ~3 medium, sliced in 3-4mm / 1/8\" thick (US: Persian cucumbers, mini cucumbers in the UK) - Note 1)",
+    "1/4 red onion (, finely sliced)",
+    "1/4 cup roughly chopped fresh dill ((Note 2 if you don't have))",
+    "1/4 cup roughly chopped fresh mint ((Note 2 if you don't have))",
+    "1/3 cup (50g) crumbled Greek feta ((Note 3))",
+    "1 tbsp fresh lemon juice ((substitute white or red wine vinegar, or apple cider vinegar))",
+    "3 tbsp extra virgin olive oil",
+    "1 small garlic clove (, crushed using garlic press or finely grated using microplane)",
+    "1/4 heaped tsp cooking salt / kosher salt",
+    "1/8 tsp black pepper"
+   ],
+   "steps": [
+    "Dressing - Shake the ingredients in a jar until well combined (or whisk in a bowl).",
+    "Set aside to let the flavours meld while you chop.",
+    "Toss - Put the cucumbers, herbs, onion and most of the feta in a bowl (reserve a bit for topping).",
+    "Add dressing and toss.",
+    "Serve - Pour into a serving bowl.",
+    "Top with remaining feta and serve straight away, though it keeps well for an hour, and I still enjoy it the next day (it becomes semi-pickled)."
+   ],
+   "themes": [
+    "veggie",
+    "salad"
+   ],
+   "tags": [
+    "Side Salad",
+    "Mediterranean",
+    "Western"
+   ],
+   "added": "2026-09-03T16:05:54.600Z"
+  },
+  {
+   "id": "f1xkkkty",
+   "src": "blog",
+   "srcName": "Minimalist Baker",
+   "title": "Easy Eggplant Bolognese (1 Pot!)",
+   "url": "https://minimalistbaker.com/eggplant-bolognese/",
+   "image": "https://minimalistbaker.com/wp-content/uploads/2026/02/Easy-Vegetarian-Eggplant-Bolognese-SQUARE.jpg",
+   "video": "",
+   "creator": "Minimalist Baker",
+   "min": 45,
+   "servings": 4,
+   "ingredients": [
+    "1/4 cup olive oil",
+    "1 cup finely chopped yellow onion",
+    "1/2 cup finely diced carrots",
+    "4 cups diced eggplant ((1/4 inch cubes // 1 medium eggplant yields ~4 cups or 345 g))",
+    "4 cloves garlic",
+    "1/2 tsp red pepper flakes",
+    "2 Tbsp tomato paste",
+    "1/2 cup dry red or white wine",
+    "1 (28-oz) can crushed tomatoes ((optionally with basil))",
+    "1 cup dairy-free milk",
+    "1-2 tsp dried Italian seasoning ((or dried basil + oregano))",
+    "1/2 tsp sea salt ((plus more to taste))",
+    "1-2 tsp maple syrup",
+    "Freshly chopped basil",
+    "Vegan parmesan cheese ((dairy would also work))",
+    "Pasta ((we like pappardelle or rigatoni // gluten-free as needed))"
+   ],
+   "steps": [
+    "Heat a large pot over medium heat.",
+    "Once warm, add olive oil and onion.",
+    "Sauté the onion until translucent, about 5 minutes, then add the finely diced carrots.",
+    "Continue sautéing until the onion begins to take on some color and the carrots start to soften.",
+    "Add the eggplant and cook for about 10 minutes, stirring occasionally, until softened.",
+    "If the mixture looks dry, cover the pan with a lid, reduce the heat to low, and let the eggplant steam slightly.",
+    "Stir in the garlic and red pepper flakes and sauté for 1-2 minutes, until fragrant.",
+    "Add the tomato paste and cook, stirring frequently, to remove raw tomato flavor.",
+    "By now, you should see some bits of veggie sticking to the bottom of the pan — this is flavor!",
+    "Just keep it from burning by stirring and watching the heat.",
+    "Optionally, deglaze the pan with your liquid of choice — we prefer red wine, but white wine, broth, or even water will work.",
+    "Stir continuously to loosen all the browned bits from the bottom of the pan.",
+    "Once the liquid has evaporated and the pan looks dry, add the crushed tomatoes, dairy-free milk, Italian seasoning, sea salt, and maple syrup and stir to combine.",
+    "Reduce the heat to medium-low and cover completely.",
+    "Let the sauce simmer for at least 20–30 minutes, stirring occasionally.",
+    "If you have the time, this sauce only gets better with a longer cook — we love letting it go for up to an hour on low.",
+    "Just be sure to stir occasionally to prevent sticking or burning.",
+    "Taste and adjust as needed, adding more salt for overall flavor, maple syrup to balance the acidity of the tomatoes, or a splash of dairy-free milk for added richness.",
+    "Serve over hearty noodles like pappardelle or rigatoni (though classic spaghetti works well, too).",
+    "Garnish with fresh basil and (vegan) parmesan cheese, if desired.",
+    "Leftover sauce and pasta will keep in separate airtight containers in the refrigerator for up to 3-4 days, or you can freeze the sauce for 1 month (or even longer).",
+    "Reheat sauce on the stovetop over low-medium heat until warmed through."
+   ],
+   "themes": [
+    "veggie",
+    "pasta"
+   ],
+   "tags": [
+    "Entrée",
+    "Gluten-Free (optional)",
+    "Italian-Inspired",
+    "Vegan"
+   ],
+   "added": "2026-09-03T16:05:54.756Z"
+  },
+  {
+   "id": "f6svgc7",
+   "src": "blog",
+   "srcName": "Minimalist Baker",
+   "title": "Easy Jalapeño Corn Fritters (Vegan)",
+   "url": "https://minimalistbaker.com/easy-vegan-corn-fritters/",
+   "image": "https://minimalistbaker.com/wp-content/uploads/2025/10/Easy-Jalapeno-Corn-Fritters-Vegan-Gluten-Free-SQUARE.jpg",
+   "video": "",
+   "creator": "Minimalist Baker",
+   "min": 30,
+   "servings": 8,
+   "ingredients": [
+    "2 Tbsp flaxseed meal",
+    "1/2 cup dairy-free milk",
+    "1 Tbsp nutritional yeast",
+    "1 tsp baking powder",
+    "1/2 tsp sea salt",
+    "1/4 tsp garlic powder",
+    "1/2 cup MB 1:1 Gluten-Free Flour Blend ((or store-bought* // if not gluten-free, you can use all-purpose flour))",
+    "1 ½ cups corn kernels ((cut off the cob, or thawed from frozen and lightly dried // 2 small ears corn yield ~1 ½ cups or 235 g))",
+    "1-2 Tbsp finely chopped jalapeño ((depending on preferred spiciness))",
+    "Avocado oil ((for cooking // or sub other neutral oil))",
+    "Go-To Guacamole",
+    "Creamy Cashew Jalapeño Sauce",
+    "Easy Vegan Ranch Dressing"
+   ],
+   "steps": [
+    "Prepare a baking sheet by placing a layer of paper towels on it and flipping a cooling rack upside down on top of them.",
+    "This will catch any extra oil from frying and keep your fritters crispy.",
+    "In a large mixing bowl, stir together the flaxseed meal and dairy-free milk.",
+    "Let this sit for 5 minutes.",
+    "After 5 minutes, add the nutritional yeast, baking powder, sea salt, and garlic powder to the flax mixture.",
+    "Whisk everything to combine, then add the flour and whisk once more — it should be a thick batter.",
+    "Finally, fold in the corn and chopped jalapeño.",
+    "If the mixture is too runny, add extra flour.",
+    "If it’s too thick, add a little more dairy-free milk.",
+    "Coat a large skillet (we used a 10-inch cast iron) with a thin layer of oil (~1 Tbsp) over medium-high heat.",
+    "When the oil is hot (test it by dropping in a small dollop of batter — it should sizzle), begin cooking your fritters.",
+    "Drop in 3 Tbsp portions of batter (we used this cookie scoop heaped with batter) and press with the back of your cookie scoop or spoon.",
+    "Work in batches, adding only as many fritters as will fit comfortably in the pan.",
+    "Cook for 2-3 minutes per side, until golden brown.",
+    "Remove from the skillet, placing the fritters on your prepared baking sheet.",
+    "Repeat with remaining batter, adding more oil to your skillet as needed.",
+    "Enjoy with guacamole, cashew jalapeño sauce, or vegan ranch.",
+    "Best served immediately but can be kept in an airtight container in the refrigerator for up to 2 days.",
+    "To reheat, place the fritters in a lightly oiled skillet or 350-degree Fahrenheit (176 C) oven until warmed through."
+   ],
+   "themes": [
+    "veggie"
+   ],
+   "tags": [
+    "Appetizer",
+    "Side",
+    "Dairy-Free",
+    "Gluten-Free (optional)"
+   ],
+   "added": "2026-09-03T16:05:54.810Z"
+  },
+  {
+   "id": "f1kc735m",
+   "src": "blog",
+   "srcName": "Minimalist Baker",
+   "title": "Vegan Nutella Ice Cream",
+   "url": "https://minimalistbaker.com/nutella-ice-cream/",
+   "image": "https://minimalistbaker.com/wp-content/uploads/2024/03/Vegan-Chocolate-Hazelnut-Gelato-SQUARE.jpg",
+   "video": "",
+   "creator": "Minimalist Baker",
+   "min": 180,
+   "servings": 9,
+   "ingredients": [
+    "1 cup raw hazelnuts",
+    "1 cup semi-sweet chocolate chips or chunks",
+    "2 (14-oz.) cans light coconut milk",
+    "1/4 cup cane sugar ((ensure organic if vegan))",
+    "1 tsp vanilla extract",
+    "1/8 tsp sea salt"
+   ],
+   "steps": [
+    "The day before use, place your ice cream churning bowl in the freezer to ensure a proper chill.",
+    "Preheat your oven to 350 degrees F (176 C) and add the hazelnuts to a bare baking sheet in a single layer.",
+    "If raw, roast for a total of 10-12 minutes.",
+    "If already roasted, roast for 8-10 minutes just to warm the natural oils and loosen the skins.",
+    "This will make them easier to blend into butter.",
+    "Remove from the oven and let cool slightly.",
+    "Then transfer to a large kitchen towel and use your hands to roll the nuts around to remove most of the skins.",
+    "You want to get as much as possible off because doing so yields a creamier result.",
+    "But it doesn’t have to be perfect!",
+    "Transfer the hazelnuts (skins removed and disposed of) to your high-speed blender and blend starting on low and working your way up to high, breaking down the hazelnuts as much as possible.",
+    "They should wind up looking like small crumbs.",
+    "Next, melt your chocolate.",
+    "Melt chocolate in a small saucepan over low heat, stirring constantly, until about half of the chocolate chips are melted (~1 minute).",
+    "Remove the pan from the heat and stir until the chocolate is completely melted.",
+    "You could also do this in the microwave, melting the chocolate in 30-second increments.",
+    "Pour the melted chocolate into the blender.",
+    "Begin blending on low, working your way up to high until the hazelnut butter is completely smooth and combined.",
+    "The smoother the better!",
+    "This should take about 3 minutes.",
+    "Once completely smooth, remove 3 Tbsp of your freshly made \"Nutella\" and set aside for later!",
+    "To your blender with the remaining \"Nutella,\" add the light coconut milk, cane sugar, vanilla extract, and sea salt and blend on high until smooth, creamy, and completely combined.",
+    "Transfer the mixture to an airtight container and refrigerate for at least 1 hour.",
+    "Add the slightly chilled mixture to your ice cream maker and churn according to the manufacturer's instructions — ours took 30 minutes.",
+    "It should look like a thick soft serve (see photo).",
+    "Pour the reserved Nutella on top of the ice cream and gently fold it in to create a swirl, being careful to avoid fully mixing it in.",
+    "You can enjoy your ice cream now if you prefer a softer, less frozen ice cream (similar in texture to gelato)!",
+    "Or transfer the ice cream to a large freezer-safe container and smooth it with a spoon.",
+    "Top with parchment paper and freeze for at least 1 hour or until firm.",
+    "Set out for 10-15 minutes before serving to soften slightly.",
+    "Store in the freezer well covered for up to 1 month."
+   ],
+   "themes": [
+    "veggie",
+    "sweet"
+   ],
+   "tags": [
+    "Dessert",
+    "Dairy-Free",
+    "Gluten-Free",
+    "Vegan"
+   ],
+   "added": "2026-09-03T16:05:54.862Z"
+  },
+  {
+   "id": "f1k1po4b",
+   "src": "blog",
+   "srcName": "Minimalist Baker",
+   "title": "Easy Fattoush Salad (1 Bowl!)",
+   "url": "https://minimalistbaker.com/easy-fattoush-salad-1-bowl/",
+   "image": "https://minimalistbaker.com/wp-content/uploads/2023/04/Easy-Fattoush-Salad-SQUARE-1.jpg",
+   "video": "",
+   "creator": "Minimalist Baker",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "3 cups chopped romaine lettuce ((or other crunchy, neutral-flavored greens // 1/2 head lettuce yields ~3 cups or 130 g))",
+    "2 cups chopped fresh, crunchy veggies of choice",
+    "1 Tbsp lemon juice",
+    "1 Tbsp pomegranate molasses ((or balsamic vinegar, though not traditional))",
+    "3/4 tsp ground sumac",
+    "1 healthy pinch each sea salt and black pepper ((plus more to taste))",
+    "1/2 tsp maple syrup",
+    "Extra virgin olive oil ((optional // ensure high quality and avoid adding too much))",
+    "1/3 cup loosely packed fresh mint leaves, removed from stems and left whole ((~1 small bunch mint))",
+    "1 ½ cups pita chips, slightly crushed",
+    "1/4 cup pomegranate arils",
+    "1 (15 oz.) can chickpeas, drained and rinsed ((optional // include if serving as an entrée))"
+   ],
+   "steps": [
+    "PITA CHIPS: See notes for instructions on making homemade pita chips.",
+    "We like using store-bought pita chips for ease!",
+    "SALAD: To a large mixing bowl or serving platter, add lettuce, chopped veggies, lemon juice, pomegranate molasses, sumac, salt, and pepper.",
+    "Toss to coat veggies with dressing.",
+    "Taste and adjust as needed, adding maple syrup for sweetness (we used a sweetened pomegranate molasses, so we didn’t find it necessary), more lemon juice for brightness, more pomegranate molasses for a rich, tart flavor, or a drizzle of olive oil for richness (ensure high-quality olive oil and avoid adding too much — we found standard grocery store olive oil added too much bitterness).",
+    "FOR SERVING: When ready to serve, garnish with fresh mint leaves, pita chips, pomegranate arils, and chickpeas (optional).",
+    "Serve right away to keep the pita chips from getting soggy.",
+    "Best when fresh.",
+    "Leftovers will keep stored separately for up to 2-3 days.",
+    "Not freezer friendly."
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "rice",
+    "salad",
+    "bread"
+   ],
+   "tags": [
+    "Entrée",
+    "Salad",
+    "Side",
+    "Gluten-Free (optional)"
+   ],
+   "added": "2026-09-03T16:05:55.833Z"
+  },
+  {
+   "id": "f19vvk8z",
+   "src": "blog",
+   "srcName": "Half Baked Harvest",
+   "title": "Easy Korean Bulgogi BBQ Beef Bowls",
+   "url": "https://www.halfbakedharvest.com/korean-bulgogi-bbq-beef-bowls/?adt_ei=*|EMAIL|*",
+   "image": "https://www.halfbakedharvest.com/wp-content/uploads/2026/09/Easy-Korean-Bulgogi-BBQ-Beef-Bowls-1-scaled.jpg",
+   "video": "",
+   "creator": "Half Baked Harvest",
+   "min": 35,
+   "servings": 6,
+   "ingredients": [
+    "2 pounds ground beef",
+    "4 cloves garlic (chopped)",
+    "2/3 cup tamari or soy sauce",
+    "2-3 tablespoons gochujang",
+    "2 tablespoons pickled ginger, chopped",
+    "2 tablespoons pickled ginger juice",
+    "3 teaspoons maple syrup",
+    "2 cups shredded purple cabbage",
+    "1/2 cup chopped green onions",
+    "2 tablespoons tahini",
+    "2 tablespoons white miso paste",
+    "2 tablespoons toasted sesame oil",
+    "1 tablespoon fresh ginger, (grated)",
+    "2 tablespoons rice vinegar",
+    "2 tablespoons lemon or lime juice, (or a mix of both)",
+    "4 Persian cucumbers, chopped",
+    "1 cup spicy kimchi",
+    "2 tablespoons kimchi brine",
+    "3 cups cooked white or brown rice",
+    "2 cups shredded carrots",
+    "1 avocado, sliced",
+    "4 fried, poached, or soft-boiled eggs",
+    "Thai basil and sliced green onions",
+    "toasted black and white sesame seeds",
+    "spicy yum yum sauce, (for serving)"
+   ],
+   "steps": [
+    "In a small bowl, mix 1/3 cup tamari, 1 tablespoon gochujang, and 1 teaspoon maple syrup.",
+    "Stir in the sesame seeds.2.",
+    "Cook the beef in a large skillet over medium heat until browned, about 5 minutes.",
+    "Add the garlic and cook for 1 minute.3.",
+    "Add the remaining 1/3 cup tamari, 1-2 tablespoons gochujang, the pickled ginger, ginger juice, and 1/3 cup water.",
+    "Cook for 2-3 minutes, until the sauce coats the beef.",
+    "Stir in the remaining 2 teaspoons maple syrup.4.",
+    "To make the slaw: Toss the cabbage and green onions in a bowl.",
+    "Blend the tahini, miso, sesame oil, ginger, vinegar, citrus juice, and 1/4 cup hot water until smooth.",
+    "Toss the dressing with the cabbage.5.",
+    "To make the cucumber salad: Toss the cucumbers with the kimchi and kimchi brine.",
+    "Divide the rice between bowls.",
+    "Add the beef, slaw, cucumber salad, carrots, avocado, and eggs.",
+    "Top with basil, green onions, sesame seeds, the reserved bulgogi sauce, and spicy yum yum sauce."
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "rice"
+   ],
+   "tags": [
+    "Main Course",
+    "American",
+    "korean"
+   ],
+   "added": "2026-09-03T16:05:56.021Z"
+  },
+  {
+   "id": "f5sq6lq",
+   "src": "blog",
+   "srcName": "Half Baked Harvest",
+   "title": "Garlic Herb Roasted Cherry Tomato Carbonara",
+   "url": "https://www.halfbakedharvest.com/garlic-herb-roasted-cherry-tomato-carbonara/?adt_ei=*|EMAIL|*",
+   "image": "https://www.halfbakedharvest.com/wp-content/uploads/2026/08/Garlic-Herb-Roasted-Cherry-Tomato-Carbonara-1-scaled.jpg",
+   "video": "",
+   "creator": "Half Baked Harvest",
+   "min": 40,
+   "servings": 6,
+   "ingredients": [
+    "2 cups heirloom cherry tomatoes",
+    "1/4 cup olive oil",
+    "1/2 cup fresh mixed herbs ((oregano/thyme/rosemary))",
+    "6 cloves garlic, chopped",
+    "sea salt and pepper",
+    "3 ounces thinly sliced prosciutto",
+    "4 egg yolks, (beaten)",
+    "1 whole egg, (beaten)",
+    "1 cup grated Parmesan cheese",
+    "2 tablespoons salted butter, cubed",
+    "1 pound favorite long-cut pasta ((tagliatelle))",
+    "8 ounces burrata cheese, at room temperature",
+    "Calabrian chili flakes or jarred chilies in oil",
+    "basil leaves"
+   ],
+   "steps": [
+    "Preheat the oven to 425°F.",
+    "In a baking dish, toss the tomatoes with the olive oil, 2 tablespoons of herbs, garlic, salt, and pepper.",
+    "Arrange the prosciutto around the tomatoes.",
+    "Roast for 10–15 minutes, until the tomatoes burst and the prosciutto is crisp.2.",
+    "Meanwhile, whisk the egg yolks, whole egg, and Parmesan together in a large serving bowl.",
+    "Add the butter.3.",
+    "Cook the pasta until al dente.",
+    "Just before draining, reserve 1 cup of the pasta cooking water, then drain.4.",
+    "Immediately add the hot pasta to the egg mixture, tossing quickly to combine.",
+    "Add the hot pasta water a little at a time, tossing continuously, until the sauce is creamy and glossy.",
+    "Add the roasted tomatoes and all their juices.",
+    "Crumble in the crispy prosciutto and gently toss.",
+    "Season with freshly cracked black pepper.5.",
+    "Divide the pasta among plates.",
+    "Top with torn burrata, basil, and Calabrian chilies.",
+    "Serve immediately and start twirling!"
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "pasta",
+    "soup"
+   ],
+   "tags": [
+    "Main Course",
+    "American",
+    "Italian"
+   ],
+   "added": "2026-09-03T16:05:56.246Z"
+  },
+  {
+   "id": "f1fn4i0w",
+   "src": "blog",
+   "srcName": "Pinch of Yum",
+   "title": "Peanut Chicken with Ginger Slaw",
+   "url": "https://pinchofyum.com/peanut-chicken-with-ginger-slaw",
+   "image": "https://pinchofyum.com/tachyon/Peanut-Chicken-with-Ginger-Slaw-Square.jpg?fit=225%2C225",
+   "video": "",
+   "creator": "Lindsay Ostrom",
+   "min": 35,
+   "servings": 4,
+   "ingredients": [
+    "1 lb boneless skinless chicken breasts, thinly sliced",
+    "¼ cup Trader Joe’s Peanut Satay Sauce (more for serving)",
+    "1 clove garlic, grated (or 1/2 teaspoon garlic powder)",
+    "1/2 teaspoon salt",
+    "1 tablespoon avocado oil",
+    "3 tablespoons rice vinegar",
+    "2 tablespoons sugar",
+    "1 tablespoon ginger paste (or grated fresh ginger)",
+    "½ teaspoon salt (more to taste)",
+    "4-5 cups shredded purple cabbage, very thinly sliced on a mandoline (about half of a head of cabbage)",
+    "1 shallot, very thinly sliced on a mandoline (optional, but I like it in there!)",
+    "2 cups jasmine rice",
+    "1 14-ounce can coconut milk",
+    "1 ½ cups water",
+    "1 teaspoon salt"
+   ],
+   "steps": [
+    "Mix the chicken with peanut sauce, garlic, and salt.",
+    "Let it rest for 15-30 minutes while you prep the other ingredients.",
+    "Rinse the rice under cold running water.",
+    "Add to a saucepan with water, coconut milk, and salt; bring to a low simmer.",
+    "Cover with a lid, and cook for 15 minutes.",
+    "Remove lid; fluff rice with a fork.",
+    "Stir the vinegar, sugar, ginger, and salt together in a large bowl.",
+    "Add shredded cabbage and shallots; massage with your hands for a few minutes to tenderize the cabbage.",
+    "Heat the avocado oil in a large nonstick skillet over medium high heat.",
+    "Add the chicken and stir fry, moving around in the pan to prevent burning, for a few minutes until fully cooked.",
+    "Place the coconut rice in a bowl, top with peanut chicken, and pile that slaw on top.",
+    "Spoon extra peanut sauce over the chicken.",
+    "Add cilantro, crispy shallots, and/or chili crisp to finish it off!"
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "rice"
+   ],
+   "tags": [
+    "Dinner",
+    "Thai-Inspired"
+   ],
+   "added": "2026-09-03T16:05:56.355Z"
+  },
+  {
+   "id": "f7j651v",
+   "src": "blog",
+   "srcName": "Pinch of Yum",
+   "title": "Teriyaki Chicken with Ginger Peaches and Sesame Drench",
+   "url": "https://pinchofyum.com/teriyaki-chicken-with-ginger-peaches",
+   "image": "https://pinchofyum.com/tachyon/Teriyaki-Chicken-with-Ginger-Peaches.jpg?fit=154%2C225",
+   "video": "",
+   "creator": "Lindsay Ostrom",
+   "min": 135,
+   "servings": 4,
+   "ingredients": [
+    "1/2 cup teriyaki sauce (I use Soy Vay)",
+    "1 large clove garlic, grated (or 1/2 teaspoon garlic powder)",
+    "1 lb. chicken breasts",
+    "2 teaspoons avocado oil",
+    "4 peaches or nectarines, diced",
+    "1/4 cup chopped scallions, or cilantro, or both",
+    "1 teaspoon freshly grated ginger",
+    "1-2 tablespoons fresh lime juice (from 1-2 limes)",
+    "1/2 teaspoon salt",
+    "1 tablespoon sugar",
+    "1 tablespoon reduced sodium soy sauce",
+    "1 tablespoon toasted sesame oil",
+    "1 1/2 tablespoons brown sugar",
+    "1 teaspoon chili crisp",
+    "1-2 tablespoons water (as needed, to thin it out)",
+    "1 cup of white rice",
+    "Green beans (optional)"
+   ],
+   "steps": [
+    "Slice the chicken breast into thinner pieces, or pound them out to be thinner.",
+    "Marinate the chicken in the sauce and garlic for 2-12 hours. (Optional &#8211; more time = better flavor, but it will work even with a shorter 15-30 minute marinate time!)",
+    "Start cooking your rice according to package directions.",
+    "Whisk the sesame drench ingredients together and set aside.",
+    "When you&#8217;re close to being ready to eat, toss peaches, scallions, ginger, salt, and sugar together.",
+    "Usually the peaches will release some juices and it will become slightly saucy, but you can add a bit of honey to help it along if it seems too dry.",
+    "Heat the avocado oil in a large skillet over medium heat.",
+    "Let any excess marinade drip off the chicken, then add to the pan and sauté for 3-4 minutes per side, until the chicken reaches an internal temperature of 165 degrees.",
+    "Serve the chicken over rice, with a scoop of the peaches, and a drench of the sesame sauce!",
+    "Add green beans if you&#8217;d like!",
+    "So super fresh!"
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "rice",
+    "soup"
+   ],
+   "tags": [
+    "Dinner",
+    "American"
+   ],
+   "added": "2026-09-03T16:05:56.367Z"
+  },
+  {
+   "id": "f6a04zq",
+   "src": "blog",
+   "srcName": "Pinch of Yum",
+   "title": "Crispy Parmesan Chicken with Creamy Lemon Pasta",
+   "url": "https://pinchofyum.com/crispy-parmesan-chicken-with-creamy-lemon-pasta",
+   "image": "https://pinchofyum.com/tachyon/Crispy-Chicken-with-Lemon-Pasta-5-Square.jpg?fit=225%2C225",
+   "video": "",
+   "creator": "Lindsay Ostrom",
+   "min": 40,
+   "servings": 4,
+   "ingredients": [
+    "1 1/2 pounds boneless skinless chicken breasts",
+    "3/4 cup grated Parmesan cheese",
+    "1 1/2 cup panko bread crumbs",
+    "1 teaspoon Italian seasoning",
+    "1 teaspoon paprika",
+    "1/2 teaspoon garlic powder",
+    "1 teaspoon kosher salt",
+    "1/3 cup mayo",
+    "avocado oil spray",
+    "8 ounces pasta (I love mafalda for this, about half the box)",
+    "2 tablespoons butter",
+    "1 clove garlic, minced",
+    "1/2 tablespoon flour",
+    "1/2 cup water",
+    "1/2 teaspoon Better Than Bouillon chicken base",
+    "1 cup heavy cream",
+    "zest of half of a lemon",
+    "1 tablespoon lemon juice (half a lemon)",
+    "a handful of fresh basil leaves, cut into fine ribbons",
+    "an easy green salad for serving"
+   ],
+   "steps": [
+    "Preheat the oven to 425 degrees and line a baking sheet with parchment.",
+    "Cut each chicken breast into thin, flat pieces (not bite-sized but something that looks like a thin chicken breast).",
+    "For example: if a one-pound package gives me two chicken breasts, I’m often cutting it into 3-4 thin pieces per breast.",
+    "Thin chicken is essential!",
+    "And delicious!",
+    "Pat the chicken breasts dry if they have a lot of moisture on them.",
+    "Mix the parmesan, panko, Italian seasoning, paprika, garlic powder, and salt in a bowl.",
+    "Place mayo in a bowl.",
+    "Brush each chicken piece to coat with a thin layer of mayo.",
+    "Spoon the panko mixture evenly over each piece of chicken.",
+    "Press firmly to adhere the crumbs to the chicken, getting it as well-coated as you can.",
+    "Carefully flip chicken pieces over and repeat on the other side.",
+    "Finally, spray the top side with avocado oil spray until coated. (You will have some crumbles remaining on the baking sheet &#8211; that&#8217;s fine.)",
+    "Bake for 13-15 minutes, or until the chicken looks golden.",
+    "Turn on the broiler; broil for 1-2 minutes.",
+    "Grab each piece along the sides with tongs, flip, and broil the back side so it gets very golden and crispy all around and reaches an internal temp of 165.",
+    "Melt butter over medium low heat.",
+    "Add garlic; sauté for 2-3 minutes.",
+    "Add flour; sauté for another 2-3 minutes.",
+    "It will bubble and get a bit foamy.",
+    "Add cream, water, and Better than Bouillon.",
+    "Simmer for about 10 minutes until the sauce has thickened and clings to the back of a spoon.",
+    "Remove the sauce from heat to cool slightly.",
+    "Stir in the lemon zest and lemon juice.",
+    "Cook pasta according to package directions.",
+    "When draining, reserve a bit of pasta water.",
+    "Add the pasta to the sauce and toss to combine.",
+    "Add reserved pasta water as needed.",
+    "Slice your crispy chicken into strips.",
+    "Scoop the hot, saucy pasta into shallow bowls, place the chicken slices on top, and finish with the basil ribbons.",
+    "Sometimes I like to grab the extra crumbles from the sheet pan and sprinkle them on top, and serve with a lemon wedge.",
+    "OOOOH BABY!"
+   ],
+   "themes": [
+    "chicken",
+    "protein",
+    "pasta",
+    "soup",
+    "salad",
+    "bread"
+   ],
+   "tags": [
+    "Dinner",
+    "Italian"
+   ],
+   "added": "2026-09-03T16:05:56.378Z"
+  },
+  {
+   "id": "f10li9q1",
+   "src": "blog",
+   "srcName": "Pinch of Yum",
+   "title": "Smashed Olives with Burrata",
+   "url": "https://pinchofyum.com/smashed-olives-with-burrata",
+   "image": "https://pinchofyum.com/tachyon/Smashed-Olives-with-Burrata-1-Square.jpg?fit=225%2C225",
+   "video": "",
+   "creator": "Lindsay Ostrom",
+   "min": 20,
+   "servings": 4,
+   "ingredients": [
+    "10-ounce jar pitted Castelvetrano olives, drained",
+    "3 tablespoons olive oil",
+    "2 tablespoons lemon juice (1 very juicy lemon)",
+    "zest of half a lemon",
+    "1 teaspoon fresh oregano leaves, torn or chopped",
+    "lots of freshly ground black pepper",
+    "salt to taste / if needed",
+    "2-3 balls of burrata cheese",
+    "1 loaf Ciabatta bread (about 14 ounces)",
+    "More olive oil"
+   ],
+   "steps": [
+    "Place olives on a cutting board.",
+    "Smash olives with the flat bottom of a glass until they&#8217;re chunky and craggly.",
+    "Place olives in a bowl; toss with olive oil, lemon juice, lemon zest, oregano leaves, and pepper. (Add salt if you want it!)",
+    "Refrigerate until cold and the flavors have had time to come together &#8211; ideally 12-24 hours.",
+    "It will taste very good right away, but it&#8217;ll taste even better after a rest.",
+    "When you take it out of the fridge, the oil will be solidified; let it rest for a bit at room temperature so it becomes juicy again. (Or add a bit of fresh olive oil to loosen it up.)",
+    "Cut your bread into pieces and drizzle with olive oil.",
+    "I air fry mine at 375 for 4 minutes or until golden.",
+    "You can also broil for a few minutes, or toast in a pan or on a grill.",
+    "Cut a ball of burrata in half, then pull it open so the creamy center is semi-exposed and facing up.",
+    "Place the burrata chunks on the bread, and spoon the olives and some of their juices over the top.",
+    "Top with some more fresh oregano leaves and freshly cracked black pepper.",
+    "OH MY.",
+    "Cold, creamy, buttery, SO GOOD."
+   ],
+   "themes": [
+    "veggie",
+    "bread"
+   ],
+   "tags": [
+    "Appetizer",
+    "Mediterranean"
+   ],
+   "added": "2026-09-03T16:05:56.391Z"
+  },
+  {
+   "id": "f1vlpzq3",
+   "src": "youtube",
+   "srcName": "Felicitas Then",
+   "title": "Zucchini Puffer | mit Feta | Felicitas Then",
+   "url": "https://www.youtube.com/watch?v=2ntQQSa8qtQ",
+   "image": "https://img.youtube.com/vi/2ntQQSa8qtQ/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=2ntQQSa8qtQ",
+   "creator": "Felicitas Then",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "⁠ ⁠2 größere Zucchini",
+    "⁠ ⁠Salz",
+    "⁠ ⁠1 Schalotte",
+    "⁠ ⁠1 Knoblauchzehe, optional",
+    "⁠ ⁠Abrieb von 1 Zitrone",
+    "⁠ ⁠Frischer Dill oder Minze",
+    "⁠ ⁠1 Ei",
+    "⁠ ⁠3 bis 4 EL Mehl",
+    "⁠ ⁠Frisch gemahlener Pfeffer",
+    "⁠ ⁠Etwas Chili",
+    "⁠ ⁠Feta, nach Geschmack",
+    "⁠ ⁠Olivenöl zum Braten",
+    "⁠ ⁠Tzatziki zum Servieren"
+   ],
+   "steps": [
+    "⁠ ⁠Die Zucchini waschen, die Enden abschneiden und grob raspeln.",
+    "Anschließend salzen und einige Minuten ziehen lassen.",
+    "Das Salz entzieht der Zucchini Wasser und sorgt später für besonders knusprige Puffer.",
+    "⁠ ⁠Die geraspelte Zucchini auf ein sauberes Geschirrtuch geben und sehr gründlich ausdrücken. Je trockener die Zucchini ist, desto knuspriger werden die Puffer.",
+    "⁠ ⁠Schalotte fein hacken oder ebenfalls raspeln. Nach Wunsch etwas Knoblauch und Zitronenabrieb dazugeben.",
+    "⁠ ⁠Dill oder Minze fein hacken und unter die Zucchini mischen. Minze gibt den Puffern eine besonders frische, griechische Note.",
+    "⁠ ⁠Ei, Mehl, Pfeffer und etwas Chili hinzufügen. Zusätzliches Salz ist meist nicht nötig, da die Zucchini bereits gesalzen wurde.",
+    "⁠ ⁠Feta zerbröseln und unter die Masse heben. Alternativ funktioniert auch Parmesan.",
+    "⁠ ⁠Olivenöl in einer Pfanne erhitzen.",
+    "Mit einem Löffel kleine Portionen der Masse hineingeben und flach drücken.",
+    "Die Puffer bei mittlerer bis etwas höherer Hitze braten und erst wenden, wenn die Unterseite schön gebräunt und stabil ist.",
+    "⁠ ⁠Von beiden Seiten goldbraun und knusprig braten und direkt servieren."
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "soup"
+   ],
+   "tags": [
+    "13"
+   ],
+   "added": "2026-09-03T16:05:56.620Z"
+  },
+  {
+   "id": "fu5ywco",
+   "src": "youtube",
+   "srcName": "FitMenCook",
+   "title": "What Can You Do With Leftover Rice? Turn It Into Gluten Free Cheese Crac",
+   "url": "https://www.youtube.com/watch?v=1XxSSEKja-U",
+   "image": "https://img.youtube.com/vi/1XxSSEKja-U/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=1XxSSEKja-U",
+   "creator": "FitMenCook",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "2 cups cooked chilled rice |",
+    "1.5 cups reduced fat cheddar |",
+    "¼ cup parmesan |",
+    "¼ cup gruyere optional | 1 whole egg |",
+    "1 tsp garlic powder |",
+    "1 tsp onion powder | Pinch of salt and pepper |",
+    "2 tbsp olive oil |",
+    "1 tbsp butter |",
+    "4 tbsp arrowroot"
+   ],
+   "steps": [
+    "Mix all ingredients until fully combined.",
+    "Spread thin on a lined baking sheet.",
+    "Score into cracker shapes before baking.",
+    "Bake at 375F until golden and crispy.",
+    "Let cool completely before breaking apart for maximum crunch.",
+    "🔗 Full recipe → fitmencook.com/recipes/gluten-free-cheese-crackers/",
+    "🌶️ Seasoning → spices.shop | landseasoning.shop",
+    "►DOWNLOAD MY FOOD APP ON IPHONE OR ANDROID",
+    "Fit Men Cook Android app:",
+    "Fit Men Cook iOS app:",
+    "For more Low Carb Meals subscribe:",
+    "► FOLLOW me on social:",
+    "INSTAGRAM:",
+    "FACEBOOK:",
+    "X:",
+    "BLOG:"
+   ],
+   "themes": [
+    "veggie",
+    "protein",
+    "rice"
+   ],
+   "tags": [
+    "Glutenfree",
+    "Cheesecrackers",
+    "Leftoverrice",
+    "Mealprep",
+    "Homemadecrackers",
+    "Ricerecipe"
+   ],
+   "added": "2026-09-03T16:05:56.899Z"
+  },
+  {
+   "id": "f6ca6g",
+   "src": "youtube",
+   "srcName": "FitMenCook",
+   "title": "Is Salmon Good With Berries? Sweet Spicy Berry Salmon Nuggets for Meal P",
+   "url": "https://www.youtube.com/watch?v=VuDKDxE-FhY",
+   "image": "https://img.youtube.com/vi/VuDKDxE-FhY/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=VuDKDxE-FhY",
+   "creator": "FitMenCook",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "5 lbs salmon cubed |",
+    "2 tbsp sriracha |",
+    "½ tsp sea salt |",
+    "¼ tsp black pepper |",
+    "1 tbsp olive oil",
+    "1 tbsp oil |",
+    "½ cup finely chopped onion |",
+    "1 cup blackberries |",
+    "1 cup blueberries | Juice of 1 orange |",
+    "2 tbsp coconut sugar |",
+    "1 tsp sriracha | Juice of ½ lemon | Salt to taste |",
+    "1 tsp red wine vinegar"
+   ],
+   "steps": [
+    "Season and sear salmon cubes until golden on all sides.",
+    "Sauté onion until soft, add berries, citrus, coconut sugar, sriracha, and vinegar.",
+    "Simmer until thickened into a glossy sauce.",
+    "Serve over basmati rice with lime wedges."
+   ],
+   "themes": [
+    "fish",
+    "protein"
+   ],
+   "tags": [
+    "Salmon",
+    "Mealprep",
+    "Salmonrecipe",
+    "Highprotein",
+    "Berrysauce",
+    "Salmonbowl"
+   ],
+   "added": "2026-09-03T16:05:56.901Z"
+  },
+  {
+   "id": "fm6r4yh",
+   "src": "youtube",
+   "srcName": "Thomas kocht",
+   "title": "Pesto selber machen",
+   "url": "https://www.youtube.com/watch?v=m1wGVond_Os",
+   "image": "https://img.youtube.com/vi/m1wGVond_Os/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=m1wGVond_Os",
+   "creator": "Thomas kocht",
+   "min": null,
+   "servings": null,
+   "ingredients": [
+    "100 g Basilikum (abgelesen)",
+    "40 g Pinienkerne",
+    "1 kleine Knoblauchzehe",
+    "60 g Parmesan",
+    "ca. 100 ml Olivenöl",
+    "1 Prise Salz"
+   ],
+   "steps": [
+    "Wichtig: das Wasser und die Eiswürfel werden wieder ausgegossen und kommen nicht in die Pesto. Das ist nur zum Kühlen des Gefäßes.",
+    "Traditionell werden die Pinienkerne für Pesto Genovese nicht geröstet. Wer sie trotzdem rösten möchte: unbedingt vollständig abkühlen lassen, bevor sie ins Pesto kommen.",
+    "💚 Für eine schöne grüne Farbe das Pesto möglichst schnell und kühl verarbeiten – langes Mixen und Wärme lassen es schneller dunkel werden.",
+    "Pesto im Kühlschrank lagern und die Oberfläche immer mit einer dünnen Schicht Olivenöl bedecken, damit möglichst wenig Sauerstoff herankommt.",
+    "Licht lässt die schöne grüne Farbe ebenfalls schneller verschwinden – deshalb dunkel lagern oder das Glas z.",
+    "B. mit Alufolie umwickeln.",
+    "Am besten innerhalb von 3-5 Tagen verbrauchen. Für längere Lagerung lässt sich Pesto sehr gut einfrieren."
+   ],
+   "themes": [
+    "veggie"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:57.087Z"
+  },
+  {
+   "id": "fihyqyl",
+   "src": "youtube",
+   "srcName": "Thomas kocht",
+   "title": "Sushi selber machen - Reis perfekt kochen",
+   "url": "https://www.youtube.com/watch?v=pOqa7MZHmLk",
+   "image": "https://img.youtube.com/vi/pOqa7MZHmLk/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=pOqa7MZHmLk",
+   "creator": "Thomas kocht",
+   "min": 180,
+   "servings": null,
+   "ingredients": [
+    "100 ml Reisessig",
+    "80 g Zucker",
+    "20 g Salz"
+   ],
+   "steps": [
+    "Alles vorsichtig erwärmen, bis sich Zucker und Salz gelöst haben – kochen muss die Mischung nicht. Anschließend nach Geschmack unter den noch warmen Sushi-Reis arbeiten.",
+    "Beim Fisch gilt: Wenn ihr ihn roh für Sushi oder Sashimi verwenden möchtet, fragt beim Händler gezielt nach Fisch, der für den Rohverzehr geeignet ist.",
+    "Und falls die ersten Rollen noch nicht perfekt aussehen: Das ist völlig normal. Sushi rollen ist vor allem Übungssache – mit jeder Rolle wird es einfacher.",
+    "Viel Spaß beim Nachmachen!",
+    "Mein Name ist Thomas und ich bin gelernter Koch seit jetzt schon 20 Jahren.",
+    "Neben dem Kochen ist das Backen eine weitere Leidenschaft von mir.",
+    "In meinen Youtube Videos möchte ich mein Wissen und meine Freude an gutem Essen mit euch teilen und auch immer ein paar professionelle Tipps und Tricks verraten.",
+    "Jede Woche gibt es 1-2 neue Videos.",
+    "Mit (*) Sternchen gekennzeichnete Links sind Affiliate-Links.",
+    "Kommt über einen dieser Links ein Kauf zustande, bekomme ich eine kleine Provision und du unterstützt damit meine Arbeit.",
+    "Für dich entstehen dabei keinerlei Extrakosten.",
+    "Danke für deine Unterstützung!"
+   ],
+   "themes": [
+    "veggie",
+    "rice"
+   ],
+   "tags": [
+    "Sushi",
+    "Maki",
+    "Californiaroll"
+   ],
+   "added": "2026-09-03T16:05:57.088Z"
+  },
+  {
+   "id": "fe51qad",
+   "src": "youtube",
+   "srcName": "Ethan Chlebowski",
+   "title": "This 10 minute Lamb Pita never fails me.",
+   "url": "https://www.youtube.com/watch?v=PSdlb0niXaY",
+   "image": "https://img.youtube.com/vi/PSdlb0niXaY/hqdefault.jpg",
+   "video": "https://www.youtube.com/watch?v=PSdlb0niXaY",
+   "creator": "Ethan Chlebowski",
+   "min": 10,
+   "servings": null,
+   "ingredients": [
+    "Ground lamb or meat of choice",
+    "Salt",
+    "Spice of choice (Cumin, aleppo pepper, etc.)",
+    "Pita",
+    "Hummus",
+    "Feta cheese",
+    "Pickles or vegetables of choice"
+   ],
+   "steps": [
+    "That’s really it. Mix and match the spices and toppings however you want. The particular version I made came in at 646 calories and 44 g of protein.",
+    "The exact recipe with measurements is available in the Cook Well app: 🤝"
+   ],
+   "themes": [
+    "meat",
+    "protein",
+    "bread"
+   ],
+   "tags": [],
+   "added": "2026-09-03T16:05:57.095Z"
+  },
   {
    "id": "fejt8b2",
    "src": "themealdb",
@@ -89,7 +2630,8 @@
    ],
    "themes": [
     "veggie",
-    "sweet"
+    "sweet",
+    "breakfast"
    ],
    "tags": [
     "Dessert",
@@ -128,7 +2670,8 @@
     "Combine the yogurt and mint in a small bowl. Toss the salad leaves and tomatoes together, then serve the latkes with the mint yogurt and salad."
    ],
    "themes": [
-    "veggie"
+    "veggie",
+    "protein"
    ],
    "tags": [
     "Vegetarian",
@@ -172,7 +2715,8 @@
     "Garnish with crushed peppercorn and chive"
    ],
    "themes": [
-    "fish"
+    "fish",
+    "protein"
    ],
    "tags": [
     "Seafood"
@@ -214,6 +2758,7 @@
    ],
    "themes": [
     "fish",
+    "protein",
     "pasta",
     "rice",
     "salad"
@@ -265,6 +2810,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "soup",
     "potato"
    ],
@@ -306,6 +2852,7 @@
    ],
    "themes": [
     "veggie",
+    "protein",
     "soup"
    ],
    "tags": [
@@ -382,7 +2929,8 @@
    ],
    "themes": [
     "meat",
-    "chicken"
+    "chicken",
+    "protein"
    ],
    "tags": [
     "Chicken",
@@ -427,6 +2975,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "potato"
    ],
    "tags": [
@@ -471,1294 +3020,6 @@
    "added": "2026-09-03T15:26:12.242Z"
   },
   {
-   "id": "fq12umb",
-   "src": "blog",
-   "srcName": "Kochkarussell",
-   "title": "Gnocchi mit Gemüse aus dem Backofen (schnell & einfach)",
-   "url": "https://kochkarussell.com/gnocchi-mit-gemuese-backofen/",
-   "image": "https://kochkarussell.com/wp-content/uploads/2026/08/gnocchi-mit-gemuese-aus-dem-backofen.webp",
-   "video": "",
-   "creator": "Kochkarussell",
-   "min": 45,
-   "servings": 4,
-   "ingredients": [
-    "2 Paprika (rot und gelb)",
-    "1 große Zucchini (ca. 300 g)",
-    "200 g Champignons",
-    "1 rote Zwiebel",
-    "3 EL Olivenöl",
-    "3 EL Balsamicoessig",
-    "2-3 Knoblauchzehen (geschält)",
-    "1 EL italienische Kräuter (getrocknet)",
-    "500 g Gnocchi (aus dem Kühlregal)",
-    "125 g Mini-Mozzarella",
-    "Salz und Pfeffer"
-   ],
-   "steps": [
-    "Ofen auf 200 Grad Umluft vorheizen und Backblech mit Backpapier belegen.",
-    "Paprika, Zucchini und Pilze putzen und in mundgerechte Stücke schneiden.",
-    "Zwiebel schälen und in feine Scheiben schneiden.",
-    "Öl, Balsamicoessig, Knoblauch, italienische Kräuter, Salz und Pfeffer mixen.",
-    "Gemüse, Gnocchi und Kräuter-Knoblauchöl vermischen, dann auf dem Backblech verteilen und ca.",
-    "30 Minuten backen.",
-    "Zum Schluss Mozzarella darauf verteilen und genießen."
-   ],
-   "themes": [
-    "veggie",
-    "pasta",
-    "potato"
-   ],
-   "tags": [
-    "Hauptgericht",
-    "Italienisch"
-   ],
-   "added": "2026-09-03T15:26:16.744Z"
-  },
-  {
-   "id": "f19av7ak",
-   "src": "blog",
-   "srcName": "Kochkarussell",
-   "title": "Spaghetti Napoli in 20 Minuten (DER einfache Feierabend-Klassiker)",
-   "url": "https://kochkarussell.com/spaghetti-napoli/",
-   "image": "https://kochkarussell.com/wp-content/uploads/2026/08/spaghetti-napoli-nudeln-mit-tomatensosse.webp",
-   "video": "",
-   "creator": "Kochkarussell",
-   "min": 20,
-   "servings": 4,
-   "ingredients": [
-    "500 g Spaghetti",
-    "1 Zwiebel",
-    "1 Knoblauchzehe",
-    "1 EL Olivenöl",
-    "1 EL Tomatenmark",
-    "1 TL Zucker",
-    "1 Flasche passierte Tomaten (700 g)",
-    "2 TL italienische Kräuter",
-    "Salz und Pfeffer"
-   ],
-   "steps": [
-    "Nudeln nach Packungsanweisung al dente garen.",
-    "In der Zwischenzeit Zwiebel und Knoblauch schälen und fein hacken.",
-    "Öl in einer großen Pfanne erhitzen.",
-    "Zwiebel und Knoblauch 3 Minuten glasig dünsten.",
-    "Tomatenmark und Zucker hinzufügen und unter Rühren 1 Minute braten.",
-    "Mit passierten Tomaten und Kräutern ablöschen und 10 Minuten einköcheln lassen.",
-    "Nudeln abgießen, dabei 125 ml Nudelwasser auffangen.",
-    "Nudelwasser zur Sauce geben, kurz köcheln lassen und mit Salz und Pfeffer abschmecken.",
-    "Tomatensauce zu Spaghetti servieren und genießen."
-   ],
-   "themes": [
-    "veggie",
-    "pasta"
-   ],
-   "tags": [
-    "Hauptgericht",
-    "Italienisch"
-   ],
-   "added": "2026-09-03T15:26:17.617Z"
-  },
-  {
-   "id": "fn4sj7c",
-   "src": "blog",
-   "srcName": "Kochkarussell",
-   "title": "Grüne Bohnen Eintopf",
-   "url": "https://kochkarussell.com/gruene-bohnen-eintopf/",
-   "image": "https://kochkarussell.com/wp-content/uploads/2025/07/Gruene-Bohnen-Eintopf-Rezept.webp",
-   "video": "",
-   "creator": "Kochkarussell",
-   "min": 50,
-   "servings": 4,
-   "ingredients": [
-    "750 g Kartoffeln (festkochend)",
-    "500 g grüne Bohnen (alternativ TK-Bohnen)",
-    "1 große Zwiebel",
-    "2 Knoblauchzehen",
-    "3 EL Olivenöl",
-    "1 EL Tomatenmark",
-    "2 TL Oregano",
-    "¼ TL Zimt",
-    "1 Dose gehackte Tomaten (400 g)",
-    "500 ml Gemüsebrühe",
-    "2 EL Dill (gehackt)",
-    "Salz und Pfeffer"
-   ],
-   "steps": [
-    "Kartoffeln schälen und mundgerecht (ca.",
-    "3 cm) würfeln.",
-    "Bohnen putzen und in mundgerechte Stücke schneiden.",
-    "Zwiebel und Knoblauch getrennt voneinander schälen und fein hacken.",
-    "Olivenöl in einem großen Topf erhitzen und Zwiebel 5 Minuten bei mittlerer Hitze glasig dünsten.",
-    "Knoblauch 1 Minuten mitdünsten.",
-    "Kartoffeln und Tomatenmark hinzufügen, mit Oregano, Zimt, Salz und Pfeffer würzen und kurz anbraten.",
-    "Alles mit gehackten Tomaten und Brühe ablöschen und 15 Minuten zugedeckt köcheln.",
-    "Bohnen hinzufügen und weitere 15 Minuten köcheln.",
-    "Mit Dill, Salz und Pfeffer abschmecken und genießen."
-   ],
-   "themes": [
-    "veggie",
-    "soup",
-    "potato"
-   ],
-   "tags": [
-    "Hauptgericht",
-    "Griechisch"
-   ],
-   "added": "2026-09-03T15:26:18.365Z"
-  },
-  {
-   "id": "f9e63nj",
-   "src": "blog",
-   "srcName": "Backen macht gluecklich",
-   "title": "Zwetschgen-Muffins",
-   "url": "https://www.backenmachtgluecklich.de/rezepte/zwetschgenmuffins-mit-streuseln.html",
-   "image": "https://www.backenmachtgluecklich.de/media/2026/09/Zwetschgenmuffins-scaled.jpg",
-   "video": "",
-   "creator": "Backen macht gluecklich",
-   "min": 45,
-   "servings": 12,
-   "ingredients": [
-    "160 Gramm Weizenmehl",
-    "40 Gramm gemahlene Mandeln",
-    "1 1/2 Teelöffel Backpulver (gestrichen)",
-    "1/2 Teelöffel Natron",
-    "1 Prise Salz",
-    "1/2 Teelöffel abgeriebene Zitronenschale (optional)",
-    "2 mittelgroße Eier",
-    "95 Gramm Zucker",
-    "70 Gramm Rapsöl",
-    "145 Gramm Naturjoghurt (ca. 3,5% Fett)",
-    "220 Gramm Zwetschgen (mit Kern gewogen)",
-    "70 Gramm Weizenmehl",
-    "30 Gramm Zucker",
-    "1/2 Teelöffel Zimt",
-    "40 Gramm Butter (kalt)"
-   ],
-   "steps": [
-    "Als erstes die Streusel vorbereiten.",
-    "Dafür Mehl, Zucker und Zimt mischen.",
-    "Die kalte Butter in kleinen Stückchen bzw.",
-    "Flöckchen dazugeben.",
-    "Alles erst kurz mit den Knethaken, dann mit den Fingern zu Streuseln verkneten.",
-    "Die Streusel bis zur Verwendung kalt stellen.",
-    "Den Backofen auf 175 Grad Ober- und Unterhitze vorheizen.",
-    "Die Zwetschgen waschen, halbieren und entsteinen.",
-    "Ganz grob zwei Drittel davon in kleine Stückchen schneiden, den Rest vierteln.",
-    "Mehl, Mandeln, Backpulver, Natron, Salz und Zitronenschale in einer Schüssel mischen.",
-    "In einer zweiten Schüssel Eier und Zucker miteinander verquirlen.",
-    "Öl und Joghurt dazugeben und alles gut verrühren, bis die Masse homogen ist.",
-    "Die trockenen Zutaten zu den flüssigen geben und alles möglichst kurz, aber kräftig miteinander verrühren.",
-    "Der Teig ist eher fest.",
-    "Die Zwetschgenstückchen mit einem Teigschaber unterheben.",
-    "Den Teig in etwa 12 Muffinförmchen aus Papier oder Silikon füllen und diese am besten zusätzlich auf ein Muffinblech stellen.",
-    "Die Förmchen nur zu etwa zwei Dritteln mit Teig füllen.",
-    "Die Zwetschgenviertel sowie danach die Streusel darüber verteilen und leicht in den Teig drücken.",
-    "Die Muffins je nach Größe ca.",
-    "19-22 Minuten backen, bis sie goldgelb sind."
-   ],
-   "themes": [
-    "veggie"
-   ],
-   "tags": [],
-   "added": "2026-09-03T15:26:18.778Z"
-  },
-  {
-   "id": "fbfzqog",
-   "src": "blog",
-   "srcName": "Backen macht gluecklich",
-   "title": "Pizzateig",
-   "url": "https://www.backenmachtgluecklich.de/rezepte/pizzateig.html",
-   "image": "https://www.backenmachtgluecklich.de/media/2026/08/Pizza-Rezept-wie-vom-Italiener-scaled.jpg",
-   "video": "",
-   "creator": "Backen macht gluecklich",
-   "min": 47,
-   "servings": 4,
-   "ingredients": [
-    "200 Gramm Weizenmehl (Type 00 oder 550)",
-    "200 Gramm kaltes Wasser",
-    "1/2 Gramm frische Hefe",
-    "300 Gramm Weizenmehl (Type 00 oder 550)",
-    "110 Milliliter kaltes Wasser",
-    "2 Gramm frische Hefe",
-    "13 Gramm Salz",
-    "15 Gramm Olivenöl",
-    "Hartweizengrieß (zum Formen)",
-    "Pizzabelag nach Belieben (Tomatensoße, Mozzarella etc)"
-   ],
-   "steps": [
-    "Am Vorabend das kalte Wasser in ein großes Gefäß, z.B. eine Tupperbox oder ein großes Einmachglas, mit mind.",
-    "1 Liter Volumen geben und die frische Hefe darin auflösen.",
-    "Das Mehl mit einem Löffel kräftig einrühren, bis eine glatte, zähflüssige Masse ohne Mehlklümpchen entstanden ist.",
-    "Mit Deckel bei Zimmertemperatur etwa 18 Stunden stehen lassen; 15-20h sind in Ordnung.",
-    "Der Vorteig sollte sich danach stark vergrößert haben und voller Blasen sein.",
-    "Am Nachmittag für den Hauptteig das kalte Wasser in die Rührschüssel der Küchenmaschine geben und die frische Hefe darin auflösen.",
-    "Den gesamten Vorteig zugeben und gut mit einem Löffel einrühren.",
-    "Dann Mehl, Salz und Olivenöl dazugeben.",
-    "Den Teig etwa 5 Minuten auf mittlerer und weitere 10 Minuten auf hoher Stufe kneten, bis er glatt und geschmeidig ist.",
-    "Die Küchenmaschine kann dabei etwas wackeln.",
-    "Der Teig sollte eher fest sein, aber auf keinen Fall trocken.",
-    "Den Teig möglichst ohne Mehl auf die Arbeitsfläche oder Backmatte geben und ein paarmal dehnen und falten.",
-    "Danach zu einer straffen Kugel rollen und 5 Minuten ruhen lassen.",
-    "Den Teig mit einer Teigkarte oder einem großen scharfen Messer in 4 gleich große Stücke teilen.",
-    "Jedes Stück ähnlich wie ein Brötchen rundwirken.",
-    "Dafür mehrfach die Ränder von allen Seiten zur Mitte hin einschlagen und andrücken und das Stück umdrehen, sodass die Naht unten liegt.",
-    "Die Kugel mit der hohlen Hand über die Arbeitsfläche ziehen, bis die Oberfläche glatt und straff ist.",
-    "Die Teigkugeln mit Abstand zueinander in eine Gärbox oder eine sehr große Form legen und abgedeckt gehen lassen, bis sie sich deutlich vergrößert haben und luftig sind.",
-    "Je nach Zimmertemperatur dauert das 3 bis 6 Stunden.",
-    "Den Backofen mitsamt Pizzastein oder Pizzastahl auf 250-300 Grad Ober- und Unterhitze vorheizen; je höher, desto besser.",
-    "Bei uns dauert das etwa 15 Minuten, ein dicker Pizzastein braucht länger.",
-    "Reichlich Hartweizengrieß auf die Arbeitsfläche geben.",
-    "Die erste Teigkugel vorsichtig aus der Box lösen, in den Grieß legen und einmal wenden.",
-    "Den Teig mit den Fingerspitzen von der Mitte nach außen Richtung Rand drücken, die äußeren ca.",
-    "2 cm dabei dick lassen.",
-    "Teig besser nicht ausrollen!",
-    "Den Fladen dann sanft in die Breite ziehen, bis er die richtige Größe für euch hat.",
-    "Die Pizza als erstes mit Tomatensoße bestreichen, dabei einen Rand lassen.",
-    "Mit geriebenem Käse bzw.",
-    "Mozzarella bestreuen und erst danach mit den restlichen Zutaten belegen.",
-    "Auf eine mit Grieß bestäubte Pizzaschaufel legen und zügig auf den heißen Stein oder Stahl schieben.",
-    "Pizza etwa 4-7 Minuten backen, bis der Rand Blasen wirft und auch der Belag eine schöne Farbe hat.",
-    "Während der Backzeit die nächste Pizza belegen und im Anhscluss backen."
-   ],
-   "themes": [
-    "veggie"
-   ],
-   "tags": [],
-   "added": "2026-09-03T15:26:18.960Z"
-  },
-  {
-   "id": "f15yyv2y",
-   "src": "blog",
-   "srcName": "Backen macht gluecklich",
-   "title": "Triple Chocolate Cookies",
-   "url": "https://www.backenmachtgluecklich.de/rezepte/triple-chocolate-cookies.html",
-   "image": "https://www.backenmachtgluecklich.de/media/2026/08/Triple-Chocolate-Cookie-Rezept-scaled.jpg",
-   "video": "",
-   "creator": "Backen macht gluecklich",
-   "min": 32,
-   "servings": 20,
-   "ingredients": [
-    "265 Gramm Weizenmehl",
-    "35 Gramm Backkakao",
-    "1 1/4 Teelöffel Natron",
-    "1/2 Teelöffel Salz (gestrichen)",
-    "175 Gramm Butter (weich)",
-    "120 Gramm brauner Zucker",
-    "60 Gramm Zucker",
-    "1 mittelgroßes Ei (zimmerwarm)",
-    "1 mittelgroßes Eigelb (zimmerwarm)",
-    "1 Teelöffel Vanillepaste",
-    "200 Gramm Schokolade (3 Sorten, siehe Tipps)"
-   ],
-   "steps": [
-    "Die weiche Butter mit den beiden Zuckersorten 2-3 Minuten cremig schlagen.",
-    "Ei, Eigelb und Vanillepaste unterrühren.",
-    "Mehl, Kakao, Natron und Salz mischen.",
-    "Diese Mehlmischung nur kurz unter die Butter-Masse rühren, bis gerade so ein homogener Teig entstanden ist.",
-    "Etwa 1-2 Esslöffel der Chocolate Chunks für die Deko beiseite nehmen.",
-    "Den Rest mit einem Teigschaber oder Löffel gleichmäßig auf dem Teig verteilen und möglichst kurz unterheben.",
-    "Den Teig in etwa 20 Portionen je ca.",
-    "40-50 g teilen und zu Kugeln formen.",
-    "Auf ein kleines, mit Backpapier belegtes Brett oder Blech setzen, das in euren Kühlschrank passt.",
-    "Die Kugeln mit der Hand flach drücken.",
-    "Die Cookies auf dem Brett mindestens 1 Stunde kalt stellen.",
-    "Danach aus dem Kühlschrank holen und den Ofen auf 175 Grad Ober- und Unterhitze vorheizen.",
-    "Die Cookie-Kugeln mit genügend Abstand zueinander auf einem mit Backpapier belegten Blech etwa 11-12 Minuten backen.",
-    "Die Ränder sollten fest sein, die Mitte muss noch weich wirken.",
-    "Direkt nach dem Backen die übrigen Chocolate Chunks ganz vorsichtig in die heißen Cookies drücken, sodass sie leicht schmelzen."
-   ],
-   "themes": [
-    "veggie",
-    "sweet"
-   ],
-   "tags": [],
-   "added": "2026-09-03T15:26:19.128Z"
-  },
-  {
-   "id": "fu9s9hs",
-   "src": "blog",
-   "srcName": "Malte's Kitchen",
-   "title": "Linsensalat mit Feta, Gurke und Tomaten",
-   "url": "https://www.malteskitchen.de/linsensalat-feta/",
-   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/08/linsensalat-1.webp",
-   "video": "",
-   "creator": "Malte's Kitchen",
-   "min": 40,
-   "servings": 6,
-   "ingredients": [
-    "250 g Berglinsen",
-    "2 Lorbeerblätter",
-    "5 Pfefferkörner",
-    "1 Salatgurke",
-    "1 Rote Paprika",
-    "1 Rote Zwiebel",
-    "2 Frühlingszwiebeln",
-    "12 Kirschtomaten",
-    "2 EL Petersilie (fein gehackt)",
-    "1 EL Minze (fein gehackt)",
-    "200 g Feta",
-    "6 EL Olivenöl",
-    "2 EL Zitronensaft und Abrieb der Zitronenschale",
-    "1 EL Apfelessig",
-    "1 TL Senf",
-    "1 TL Honig",
-    "1 TL Salz (gestrichen voll)",
-    "Pfeffer",
-    "1/4 TL Kreuzkümmel (fein gemahlen)"
-   ],
-   "steps": [
-    "Die Linsen in einem Sieb unter fließendem Wasser abwaschen.",
-    "In einen Topf geben und mit 750 ml Wasser, Lorbeerblättern und Pfeffer zum Kochen bringen.",
-    "Kein Salz zufügen!",
-    "Für 16-18 Minuten kochen lassen (Auf die Packungsangabe achten!).",
-    "Die Linsen abgießen, in einem Sieb abtropfen und auskühlen lassen.",
-    "In eine Salatschüssel geben und leicht salzen.",
-    "Die Salatgurke und die Paprika entkernen und in kleine Stücke schneiden.",
-    "Die Zwiebel und die Frühlingszwiebeln in Ringe schneiden.",
-    "Die Cocktailtomaten halbieren.",
-    "Alle Zutaten mit den Linsen und dem Dressing mischen.",
-    "Vor dem Servieren den Feta darüber geben.",
-    "Alle Zutaten in einer Schüssel oder in einem Schraubglas mischen/schütteln, sodass eine homogene Masse entsteht."
-   ],
-   "themes": [
-    "veggie",
-    "salad"
-   ],
-   "tags": [
-    "Salat",
-    "Deutschland"
-   ],
-   "added": "2026-09-03T15:26:21.047Z"
-  },
-  {
-   "id": "f16jt70r",
-   "src": "blog",
-   "srcName": "Malte's Kitchen",
-   "title": "Knusprige Dinkelbrötchen mit Hafer: mit Übernachtgare",
-   "url": "https://www.malteskitchen.de/dinkelbroetchen-hafer/",
-   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/08/dinkelbroetchen-hafer-5.webp",
-   "video": "",
-   "creator": "Malte's Kitchen",
-   "min": 750,
-   "servings": 8,
-   "ingredients": [
-    "300 g Dinkelmehl Typ 630",
-    "200 g Dinkelmehl Type 1050",
-    "125 g Zarte Haferflocken (+ mehr für Deko)",
-    "350 g Wasser (Zimmertemperatur)",
-    "6 g Frische Hefe",
-    "15 g Zucker",
-    "15 g Salz",
-    "200 g Magerquark"
-   ],
-   "steps": [
-    "Beide Dinkelmehlsorten in einer Schüssel mit den Haferflocken mischen.",
-    "300 g Wasser zugeben und mit einer Gabel grob verrühren.",
-    "Es bleiben Mehlnester stehen, dass ist nicht schlimm!Den Vorteig 30 Minuten abgedeckt ruhen lassen, damit nichts austrocknet.",
-    "Die Hefe und den Zucker in den restlichen 50 g Wasser unter Rühren auflösen.",
-    "Die Hefe zum Vorteig geben.",
-    "Salz und Quark zufügen und mit dem Knethaken in der Küchenmaschine 8 Minuten kneten.Einmal den Rand mit einem Silikonspatel reinigen und die Reste zum Teig geben.",
-    "Den fertig gekneteten Teig in der Schüssel lassen und diese abdecken (oder in einen passenden Behälter mit Deckel geben) und über Nacht (10-12 Stunden) im Kühlschrank gehen lassen.",
-    "Das Teigvolumen wird sich verdoppeln oder gar verdreifachen!",
-    "Am nächsten Tag ein Backblech mit Backpapier auslegen.",
-    "2 EL Haferflocken auf einen flachen Teller geben.Die Arbeitsfläche leicht mehlen und den Teig mit einer Teigkarte aus der Schüssel darauf schaben.",
-    "Den Teig in acht gleich große Teile teilen (bei mir ca.",
-    "150 g je Brötchen).Jedes Teigstück dehnen und falten und anschließend zu einem runden Brötchen schleifen.",
-    "Das Teigstück mit Wasser leicht befeuchten und in die Haferflocken auf dem Teller drücken.",
-    "Auf das Backpapier setzen und genügend Abstand lassen.",
-    "Liegen die Brötchen zu eng beieinander, werden sie nicht so knusprig.",
-    "Das Backblech auf unterste (!) Schiene in den kalten (!) Backofen schieben und eine Temperatur von 230 Grad Ober-/Unterhitze einstellen.",
-    "Die Dinkelbrötchen für 26 Minuten backen, bis sie eine schöne Farbe haben."
-   ],
-   "themes": [
-    "veggie",
-    "bread"
-   ],
-   "tags": [
-    "Brot",
-    "Deutschland"
-   ],
-   "added": "2026-09-03T15:26:22.128Z"
-  },
-  {
-   "id": "f1ii1zb1",
-   "src": "blog",
-   "srcName": "Malte's Kitchen",
-   "title": "Pierogi ruskie | Omas Piroggen mit Kartoffelfüllung",
-   "url": "https://www.malteskitchen.de/piroggen-kartoffelfuellung-pierogi-ruskie/",
-   "image": "https://www.malteskitchen.de/wp-content/uploads/2026/07/piroggen-pierogi-ruskie-1.webp",
-   "video": "",
-   "creator": "Malte's Kitchen",
-   "min": 135,
-   "servings": 8,
-   "ingredients": [
-    "600 g Weizenmehl Typ 405 (+ mehr zum Ausrollen)",
-    "4 EL Neutrales Öl (35 g)",
-    "330 g Wasser, lauwarm",
-    "1 TL Salz",
-    "500 g Kartoffeln, mehlig kochend",
-    "500 g Twarog (alternativ Schichtkäse)",
-    "150 g Zwiebel (bereits geschält)",
-    "Salz",
-    "Pfeffer",
-    "Muskat",
-    "Öl zum Braten",
-    "600 g Zwiebeln",
-    "100 g Butter",
-    "Öl zum Braten",
-    "Salz"
-   ],
-   "steps": [
-    "Mehl und Salz in eine große Schüssel geben.",
-    "Gut durchmischen und eine Mulde formen.",
-    "Die restlichen Zutaten, also Öl und Wasser, in die Mulde gießen.",
-    "Zuerst mit einer Gabel grob alles miteinander verrühren, dann mit den Händen zu einem glatten Teig kneten.",
-    "Den Teig in Frischhaltefolie wickeln und für ca.",
-    "30 Minuten im Kühlschrank ruhen lassen.",
-    "Den Teig nicht am Vortag zubereiten, siehe Tipp unten.",
-    "Zum Füllen der Pierogi ein Viertel des Teigs abschneiden und auf einer bemehlten Fläche dünn ausrollen (ca.",
-    "1-2 mm).",
-    "Kreise ausstechen (meine haben einen Ø von 7 cm) und diese mit einem kleinen Teelöffel Kartoffelmasse füllen (bei mir 6-8 g).Die Kreise mithilfe eines Teigtaschenformers umklappen und verschließen.",
-    "Die gefüllten Pierogi auf ein ordentlich gemehltes Backblech legen und mit dem restlichen Teig ebenso verfahren.",
-    "Teigreste können zusammengeknetet werden.",
-    "Die Kartoffeln mit Schale in Salzwasser gar kochen und pellen.",
-    "Noch heiß durch eine Kartoffelpresse drücken, alternativ mit einem Kartoffelstamper stampfen.",
-    "Während die Kartoffeln kochen, die Zwiebel in feine Würfel schneiden und in einer Pfanne mit etwas Öl glasig braten, bis sie eine schöne goldbraune Farbe bekommen haben.",
-    "Die zerdrückten Kartoffeln mit der Zwiebel und dem Twarog in eine Schüssel geben.",
-    "Gut mit Salz, Pfeffer und Muskat würzen und mit den Händen verkneten.",
-    "Die Masse abschmecken und eventuell nachwürzen.",
-    "Die Zwiebeln in Streifen schneiden und in eine heiße Pfanne mit Öl geben.",
-    "Salzen und langsam goldbraun schmoren.",
-    "Die gefüllten Pierogi in kochendes Salzwasser geben und ca.",
-    "3 Minuten kochen (je nach Dicke des Teiges, am besten eine probieren).",
-    "Wenn sie nach oben steigen, noch eine Minute kochen, dann sind sie fertig.",
-    "Zeitgleich eine Pfanne aufsetzen und ein gutes Stück Butter und einen Schuss Öl erhitzen, bis es leicht nussig riecht.",
-    "Aufpassen, dass die Butter nicht sofort schwarz wird!Die fertig gekochten Pierogi aus dem Salzwasser heben, kurz abtropfen lassen und in die heiße Buttermischung geben.",
-    "Kurz durchschwenken und auf Teller geben.",
-    "Etwas von den geschmorten Zwiebeln über die Pierogi geben und sofort servieren."
-   ],
-   "themes": [
-    "meat",
-    "potato"
-   ],
-   "tags": [
-    "Hauptgericht",
-    "Polen"
-   ],
-   "added": "2026-09-03T15:26:22.274Z"
-  },
-  {
-   "id": "f1sykxeg",
-   "src": "blog",
-   "srcName": "Budget Bytes",
-   "title": "Roasted Sweet Potatoes",
-   "url": "https://www.budgetbytes.com/roasted-sweet-potatoes/",
-   "image": "https://www.budgetbytes.com/wp-content/uploads/2026/08/3-Roasted-Sweet-Potatoes-Overhead-Wide-With-Spatula.jpg",
-   "video": "",
-   "creator": "Budget Bytes",
-   "min": 40,
-   "servings": 4,
-   "ingredients": [
-    "2 lbs sweet potatoes ($2.24)",
-    "2 Tbsp olive oil ($0.38*)",
-    "½ tsp salt ($0.01)"
-   ],
-   "steps": [
-    "Gather ingredients and preheat oven to 450℉ with your metal sheet pan preheating in the middle position of the oven.**",
-    "Wash sweet potatoes well and thoroughly dry them.",
-    "Dice into large cubes, about ½ inch to 1-inch on each side.",
-    "Toss potatoes in a large mixing bowl with olive oil and salt.",
-    "Carefully remove preheated sheet pan from the oven and pour the sweet potatoes onto it, giving each potato cube room so they don’t steam instead of roast.",
-    "Bake for 15 minutes.",
-    "Flip sweet potatoes after 15 minutes and roast for 10 additional minutes.",
-    "Remove from oven and enjoy."
-   ],
-   "themes": [
-    "veggie",
-    "potato"
-   ],
-   "tags": [
-    "Side Dish",
-    "American"
-   ],
-   "added": "2026-09-03T15:26:22.601Z"
-  },
-  {
-   "id": "fzj1hd5",
-   "src": "blog",
-   "srcName": "Budget Bytes",
-   "title": "Taco Casserole",
-   "url": "https://www.budgetbytes.com/taco-casserole/",
-   "image": "https://www.budgetbytes.com/wp-content/uploads/2026/08/Taco-Casserole-Front-Plated.jpg",
-   "video": "",
-   "creator": "Budget Bytes",
-   "min": 45,
-   "servings": 8,
-   "ingredients": [
-    "nonstick cooking spray ($0.01)",
-    "1 lb. ground beef ($5.94*)",
-    "½ onion (small dice, (135g, 1 cup) $0.47)",
-    "1 green bell pepper (medium dice, (125g, 1 cup) $0.78)",
-    "1 Tbsp chili powder ($0.08)",
-    "1 tsp ground cumin ($0.04)",
-    "1 tsp paprika ($0.04)",
-    "½ tsp dried oregano ($0.02)",
-    "¼ tsp cayenne ($0.04)",
-    "¼ tsp salt ($0.01)",
-    "¼ tsp black pepper (freshly cracked, $0.04)",
-    "16 oz. jarred mild thick and chunky salsa ($1.92**)",
-    "15 oz. can black beans (drained and rinsed, $0.92)",
-    "2 cups cheddar cheese (grated, (200g) $1.72***)",
-    "6 large flour tortillas (burrito size, $1.59)"
-   ],
-   "steps": [
-    "Gather and prepare all ingredients.",
-    "Preheat oven to 350°F and grease a 9x13 oven-safe baking dish.",
-    "Heat a medium skillet over medium heat.",
-    "Once hot, add the ground beef, onions, and green peppers, and sauté for 5 minutes until the meat is browned and the vegetables are tender.",
-    "Using paper towels, carefully soak up the excess grease and discard.",
-    "Add the chili powder, cumin, paprika, dried oregano, cayenne, salt, and pepper.",
-    "Cook for 1 minute.",
-    "Add the salsa and drained black beans and continue cooking for 4 minutes.",
-    "To assemble the taco bake, lay two tortillas overlapping each other on the bottom of the baking dish.",
-    "Top with ⅓ of the meat filling and ⅓ of the cheese.",
-    "Repeat the layers three times.",
-    "Bake for 20 minutes in the oven until it is melty.",
-    "Remove them from the oven, slice, and garnish with any toppings you like!"
-   ],
-   "themes": [
-    "meat",
-    "soup"
-   ],
-   "tags": [
-    "Main Course",
-    "American",
-    "Mexican",
-    "texmex"
-   ],
-   "added": "2026-09-03T15:26:22.668Z"
-  },
-  {
-   "id": "fgbnrbb",
-   "src": "blog",
-   "srcName": "RecipeTin Eats",
-   "title": "Dirty Martini",
-   "url": "https://www.recipetineats.com/dirty-martini/",
-   "image": "https://www.recipetineats.com/tachyon/2026/09/Dirty-martini-8.jpg",
-   "video": "",
-   "creator": "RecipeTin Eats",
-   "min": null,
-   "servings": 1,
-   "ingredients": [
-    "75 ml (2 1/2 oz) dry gin",
-    "15 ml (1/2 oz) dry vermouth ((Noilly Prat Original and Dolin Dry are classic choices) (Note 2))",
-    "15 - 30 ml (1/2 - 1 oz) brine from green olive jar ((literally just the brining liquid from your favourite green olives!))",
-    "3 green olives ((classic green ones stuffed with red capsicum))",
-    "2 cups ice ((Note 3 if you don't have))",
-    "Instead of olive brine, use one of these",
-    "Classic martini - just leave out the olive brine!"
-   ],
-   "steps": [
-    "Stir gin, vermouth and brine in an ice filled mixing jug for 30 sec.",
-    "Strain into chilled glass, garnish with olives.",
-    "Chill martini glass in the fridge or freezer until very cold (~150 - 200ml / 5 - 7oz glass size is ideal size - Note 4)",
-    "Thread the olives onto a skewer.",
-    "Stir - Fill a mixing glass about 500ml/2 cups in size (measuring jug or similar) with ice, nearly to the top.",
-    "Pour in the gin, vermouth and brine.",
-    "Use a bar spoon or table knife to stir briskly for 30 seconds, stirring around the outside in circles.",
-    "Garnish - Strain straight away into the glass (don't leave, it will dilute).",
-    "Add the olive skewer.",
-    "Enjoy!"
-   ],
-   "themes": [
-    "veggie"
-   ],
-   "tags": [
-    "Cocktail",
-    "Western"
-   ],
-   "added": "2026-09-03T15:26:23.449Z"
-  },
-  {
-   "id": "fue3wgp",
-   "src": "blog",
-   "srcName": "RecipeTin Eats",
-   "title": "One-Pan Portuguese Chicken and Potatoes",
-   "url": "https://www.recipetineats.com/one-pan-portuguese-chicken-and-potato-bake/",
-   "image": "https://www.recipetineats.com/tachyon/2026/08/Portuguese-chicken-and-potatoes-2.jpg",
-   "video": "",
-   "creator": "RecipeTin Eats",
-   "min": 80,
-   "servings": 5,
-   "ingredients": [
-    "5 chicken thighs (, bone-in, skin-on - about 1.2kg/2.4lb total weight (Note 1))",
-    "3 1/2 tsp paprika (, sweet/regular or smoked)",
-    "1 1/2 tsp garlic powder",
-    "1 1/2 tsp dried oregano",
-    "1/2 tsp coriander",
-    "1/4 tsp cayenne pepper (, optional (for faint spiciness))",
-    "1 tbsp brown sugar ((tightly packed))",
-    "3/4 tsp cooking salt / kosher salt ((halve for table salt, +50% for flakes))",
-    "1 1/2 tbsp extra virgin olive oil",
-    "1 1/2 tbsp lemon juice (, or white or red wine vinegar or apple cider vinegar)",
-    "700g / 1.4lb medium waxy potatoes (\"washed potatoes\", red potatoes, US: Yukon)",
-    "1 large red onion (, cut into wedges)",
-    "1 large red capsicum / bell pepper (, deseeded, cut into large 3.5cm / 1.5\" squares)",
-    "6 garlic cloves (, crushed using a garlic press)",
-    "2 tsp dried oregano",
-    "1 tsp cooking salt / kosher salt ((halve for table salt, +50% for flakes))",
-    "1/4 tsp black pepper",
-    "2 1/2 tbsp extra virgin olive oil",
-    "3 tbsp lemon juice"
-   ],
-   "steps": [
-    "Toss Potato Vegetable Bake ingredients in a roasting pan.",
-    "Bake 25 minutes at 200°C/390°F (180°C).",
-    "Coat chicken in seasoning, place on potatoes.",
-    "Bake 40 min.",
-    "Serve!",
-    "Preheat oven to 200°C/390°F (180°C fan-forced).",
-    "Vegetable bake head start- Put all the Potato Vegetable Bake ingredients in a large pan.",
-    "Toss well to coat, separating the potato slices.",
-    "Bake for 25 minutes while you prepare the chicken.",
-    "Portuguese Chicken - Mix the Portuguese Seasoning ingredients in a bowl.",
-    "Add the chicken and turn to coat.",
-    "Bake 2 - Place the chicken on top of the potatoes, tucking the excess skin under to form bundles.",
-    "Bake for 40 minutes or until the chicken is golden and cooked through.",
-    "Serve the chicken and vegetables with the tasty lemony garlic broth.",
-    "Bread for mopping is encouraged!"
-   ],
-   "themes": [
-    "chicken",
-    "potato"
-   ],
-   "tags": [
-    "Mains",
-    "One Pan",
-    "Portuguese inspired"
-   ],
-   "added": "2026-09-03T15:26:23.467Z"
-  },
-  {
-   "id": "fggw931",
-   "src": "blog",
-   "srcName": "RecipeTin Eats",
-   "title": "Mushroom Ragu Pasta",
-   "url": "https://www.recipetineats.com/mushroom-ragu-pasta-recipe/",
-   "image": "https://www.recipetineats.com/tachyon/2026/08/Mushroom-Ragu_0.jpg",
-   "video": "",
-   "creator": "RecipeTin Eats",
-   "min": 25,
-   "servings": 4,
-   "ingredients": [
-    "20g / 0.7oz dried porcini mushrooms (, about 3/4 cup (Note 1))",
-    "1 cup red wine (, I use pinto noir (Note 2))",
-    "1kg / 2lbs white button mushrooms",
-    "2 tbsp olive oil",
-    "60g / 2oz unsalted butter (, divided)",
-    "1 brown or yellow onion (, finely diced)",
-    "3 garlic cloves (, finely minced)",
-    "3 tsp finely minced anchovy fillets (, or anchovy paste (Note 4))",
-    "1/4 cup tomato paste",
-    "1 1/2 tsp cooking salt / kosher salt ((half for table salt, 50% extra for flakes))",
-    "1 tsp dried thyme (or 2 sprigs fresh thyme)",
-    "2 fresh bay leaves (, dried ok)",
-    "3 tbsp plain flour (all-purpose)",
-    "1 cup chicken stock (, salt reduced - or vegetable stock for vegetarian (Note 5))",
-    "1/2 tsp black pepper",
-    "1/2 cup parmesan cheese (, finely grated (Note 6))",
-    "400g / 14oz malfadine pasta (curly fettuccini , pictured)",
-    "1 tbsp cooking salt / kosher salt (, for the pasta water)",
-    "Extra parmesan (, for serving)"
-   ],
-   "steps": [
-    "Soak porcini in wine 30 min, strain and chop, reserve wine.",
-    "Sauté onion, garlic and anchovy in oil and butter.",
-    "Cook tomato paste, then cook mushrooms, porcini, salt, thyme and bay leaves 8 min.",
-    "Add wine, reduce 6 min.",
-    "Stir in flour, then chicken stock, simmer to thicken.",
-    "Finish with pepper, parmesan and remaining butter.",
-    "Soak the dried porcini in red wine for 30 minutes to rehydrate.",
-    "Strain, then squeeze the excess wine out of the mushrooms.",
-    "Reserve the wine.",
-    "Chop the porcini finely (about 3mm/1/8\").",
-    "Sauté - Heat the olive oil and melt 2 tablespoons of the butter in a large heavy-based pot over medium-high heat (~26cm/10.5\"+).",
-    "Add the onion, garlic and anchovy.",
-    "Cook for 2 minutes, stirring regularly with a wooden spoon, until the onion softens.",
-    "Caramelise tomato paste - Add the tomato paste and cook for 2 minutes, stirring regularly.",
-    "Cook mushrooms - Add the sliced mushrooms first and cook for 2 minutes, so they reduce in volume a bit.",
-    "Add the chopped mushrooms, porcini, salt, thyme and bay leaves.",
-    "Stir and cook for 8 to 10 minutes, stirring from time to time, until the liquid released by the mushrooms is mostly gone.",
-    "Reduce wine - Pour in the reserved red wine and simmer for 6 minutes, stirring well at first to scrape up the fond at the bottom of the pot, then regularly towards the end.",
-    "A path drawn with the spoon along the base should briefly hold.",
-    "Thicken sauce - Add the flour, stir well and cook for 30 seconds.",
-    "Add the chicken stock, bring to a simmer and cook for 2 minutes, stirring regularly, until it thickens to a rich, gravy-like consistency.",
-    "Finish with the pepper, parmesan and remaining butter, stirring until everything is combined and the butter has melted through for a beautifully glossy finish.",
-    "Put the lid on to keep warm while you cook the pasta.",
-    "Cook pasta - Bring a large pot of water to the boil over high heat.",
-    "Add 1 tablespoon of salt and add the pasta.",
-    "Cook per the packet direction minus 1 minute.",
-    "Reserve pasta water - Just before draining the pasta, scoop out one cup of pasta cooking water and set aside.",
-    "Drain the pasta.",
-    "Toss - Add the cooked pasta and 1/4 cup of the pasta cooking water (the starch in the water helps the sauce stick to the pasta).",
-    "Toss well on medium heat for 1 minute or until the pasta is all coated with the ragu and serve with a sprinkle of parmesan.",
-    "Bon appétit!"
-   ],
-   "themes": [
-    "pasta"
-   ],
-   "tags": [
-    "Mains",
-    "Pasta",
-    "Italian",
-    "Western"
-   ],
-   "added": "2026-09-03T15:26:23.493Z"
-  },
-  {
-   "id": "f1xkkkty",
-   "src": "blog",
-   "srcName": "Minimalist Baker",
-   "title": "Easy Eggplant Bolognese (1 Pot!)",
-   "url": "https://minimalistbaker.com/eggplant-bolognese/",
-   "image": "https://minimalistbaker.com/wp-content/uploads/2026/02/Easy-Vegetarian-Eggplant-Bolognese-SQUARE.jpg",
-   "video": "",
-   "creator": "Minimalist Baker",
-   "min": 45,
-   "servings": 4,
-   "ingredients": [
-    "1/4 cup olive oil",
-    "1 cup finely chopped yellow onion",
-    "1/2 cup finely diced carrots",
-    "4 cups diced eggplant ((1/4 inch cubes // 1 medium eggplant yields ~4 cups or 345 g))",
-    "4 cloves garlic",
-    "1/2 tsp red pepper flakes",
-    "2 Tbsp tomato paste",
-    "1/2 cup dry red or white wine",
-    "1 (28-oz) can crushed tomatoes ((optionally with basil))",
-    "1 cup dairy-free milk",
-    "1-2 tsp dried Italian seasoning ((or dried basil + oregano))",
-    "1/2 tsp sea salt ((plus more to taste))",
-    "1-2 tsp maple syrup",
-    "Freshly chopped basil",
-    "Vegan parmesan cheese ((dairy would also work))",
-    "Pasta ((we like pappardelle or rigatoni // gluten-free as needed))"
-   ],
-   "steps": [
-    "Heat a large pot over medium heat.",
-    "Once warm, add olive oil and onion.",
-    "Sauté the onion until translucent, about 5 minutes, then add the finely diced carrots.",
-    "Continue sautéing until the onion begins to take on some color and the carrots start to soften.",
-    "Add the eggplant and cook for about 10 minutes, stirring occasionally, until softened.",
-    "If the mixture looks dry, cover the pan with a lid, reduce the heat to low, and let the eggplant steam slightly.",
-    "Stir in the garlic and red pepper flakes and sauté for 1-2 minutes, until fragrant.",
-    "Add the tomato paste and cook, stirring frequently, to remove raw tomato flavor.",
-    "By now, you should see some bits of veggie sticking to the bottom of the pan — this is flavor!",
-    "Just keep it from burning by stirring and watching the heat.",
-    "Optionally, deglaze the pan with your liquid of choice — we prefer red wine, but white wine, broth, or even water will work.",
-    "Stir continuously to loosen all the browned bits from the bottom of the pan.",
-    "Once the liquid has evaporated and the pan looks dry, add the crushed tomatoes, dairy-free milk, Italian seasoning, sea salt, and maple syrup and stir to combine.",
-    "Reduce the heat to medium-low and cover completely.",
-    "Let the sauce simmer for at least 20–30 minutes, stirring occasionally.",
-    "If you have the time, this sauce only gets better with a longer cook — we love letting it go for up to an hour on low.",
-    "Just be sure to stir occasionally to prevent sticking or burning.",
-    "Taste and adjust as needed, adding more salt for overall flavor, maple syrup to balance the acidity of the tomatoes, or a splash of dairy-free milk for added richness.",
-    "Serve over hearty noodles like pappardelle or rigatoni (though classic spaghetti works well, too).",
-    "Garnish with fresh basil and (vegan) parmesan cheese, if desired.",
-    "Leftover sauce and pasta will keep in separate airtight containers in the refrigerator for up to 3-4 days, or you can freeze the sauce for 1 month (or even longer).",
-    "Reheat sauce on the stovetop over low-medium heat until warmed through."
-   ],
-   "themes": [
-    "veggie",
-    "pasta"
-   ],
-   "tags": [
-    "Entrée",
-    "Gluten-Free (optional)",
-    "Italian-Inspired",
-    "Vegan"
-   ],
-   "added": "2026-09-03T15:26:23.787Z"
-  },
-  {
-   "id": "f6svgc7",
-   "src": "blog",
-   "srcName": "Minimalist Baker",
-   "title": "Easy Jalapeño Corn Fritters (Vegan)",
-   "url": "https://minimalistbaker.com/easy-vegan-corn-fritters/",
-   "image": "https://minimalistbaker.com/wp-content/uploads/2025/10/Easy-Jalapeno-Corn-Fritters-Vegan-Gluten-Free-SQUARE.jpg",
-   "video": "",
-   "creator": "Minimalist Baker",
-   "min": 30,
-   "servings": 8,
-   "ingredients": [
-    "2 Tbsp flaxseed meal",
-    "1/2 cup dairy-free milk",
-    "1 Tbsp nutritional yeast",
-    "1 tsp baking powder",
-    "1/2 tsp sea salt",
-    "1/4 tsp garlic powder",
-    "1/2 cup MB 1:1 Gluten-Free Flour Blend ((or store-bought* // if not gluten-free, you can use all-purpose flour))",
-    "1 ½ cups corn kernels ((cut off the cob, or thawed from frozen and lightly dried // 2 small ears corn yield ~1 ½ cups or 235 g))",
-    "1-2 Tbsp finely chopped jalapeño ((depending on preferred spiciness))",
-    "Avocado oil ((for cooking // or sub other neutral oil))",
-    "Go-To Guacamole",
-    "Creamy Cashew Jalapeño Sauce",
-    "Easy Vegan Ranch Dressing"
-   ],
-   "steps": [
-    "Prepare a baking sheet by placing a layer of paper towels on it and flipping a cooling rack upside down on top of them.",
-    "This will catch any extra oil from frying and keep your fritters crispy.",
-    "In a large mixing bowl, stir together the flaxseed meal and dairy-free milk.",
-    "Let this sit for 5 minutes.",
-    "After 5 minutes, add the nutritional yeast, baking powder, sea salt, and garlic powder to the flax mixture.",
-    "Whisk everything to combine, then add the flour and whisk once more — it should be a thick batter.",
-    "Finally, fold in the corn and chopped jalapeño.",
-    "If the mixture is too runny, add extra flour.",
-    "If it’s too thick, add a little more dairy-free milk.",
-    "Coat a large skillet (we used a 10-inch cast iron) with a thin layer of oil (~1 Tbsp) over medium-high heat.",
-    "When the oil is hot (test it by dropping in a small dollop of batter — it should sizzle), begin cooking your fritters.",
-    "Drop in 3 Tbsp portions of batter (we used this cookie scoop heaped with batter) and press with the back of your cookie scoop or spoon.",
-    "Work in batches, adding only as many fritters as will fit comfortably in the pan.",
-    "Cook for 2-3 minutes per side, until golden brown.",
-    "Remove from the skillet, placing the fritters on your prepared baking sheet.",
-    "Repeat with remaining batter, adding more oil to your skillet as needed.",
-    "Enjoy with guacamole, cashew jalapeño sauce, or vegan ranch.",
-    "Best served immediately but can be kept in an airtight container in the refrigerator for up to 2 days.",
-    "To reheat, place the fritters in a lightly oiled skillet or 350-degree Fahrenheit (176 C) oven until warmed through."
-   ],
-   "themes": [
-    "veggie"
-   ],
-   "tags": [
-    "Appetizer",
-    "Side",
-    "Dairy-Free",
-    "Gluten-Free (optional)"
-   ],
-   "added": "2026-09-03T15:26:24.023Z"
-  },
-  {
-   "id": "f1kc735m",
-   "src": "blog",
-   "srcName": "Minimalist Baker",
-   "title": "Vegan Nutella Ice Cream",
-   "url": "https://minimalistbaker.com/nutella-ice-cream/",
-   "image": "https://minimalistbaker.com/wp-content/uploads/2024/03/Vegan-Chocolate-Hazelnut-Gelato-SQUARE.jpg",
-   "video": "",
-   "creator": "Minimalist Baker",
-   "min": 180,
-   "servings": 9,
-   "ingredients": [
-    "1 cup raw hazelnuts",
-    "1 cup semi-sweet chocolate chips or chunks",
-    "2 (14-oz.) cans light coconut milk",
-    "1/4 cup cane sugar ((ensure organic if vegan))",
-    "1 tsp vanilla extract",
-    "1/8 tsp sea salt"
-   ],
-   "steps": [
-    "The day before use, place your ice cream churning bowl in the freezer to ensure a proper chill.",
-    "Preheat your oven to 350 degrees F (176 C) and add the hazelnuts to a bare baking sheet in a single layer.",
-    "If raw, roast for a total of 10-12 minutes.",
-    "If already roasted, roast for 8-10 minutes just to warm the natural oils and loosen the skins.",
-    "This will make them easier to blend into butter.",
-    "Remove from the oven and let cool slightly.",
-    "Then transfer to a large kitchen towel and use your hands to roll the nuts around to remove most of the skins.",
-    "You want to get as much as possible off because doing so yields a creamier result.",
-    "But it doesn’t have to be perfect!",
-    "Transfer the hazelnuts (skins removed and disposed of) to your high-speed blender and blend starting on low and working your way up to high, breaking down the hazelnuts as much as possible.",
-    "They should wind up looking like small crumbs.",
-    "Next, melt your chocolate.",
-    "Melt chocolate in a small saucepan over low heat, stirring constantly, until about half of the chocolate chips are melted (~1 minute).",
-    "Remove the pan from the heat and stir until the chocolate is completely melted.",
-    "You could also do this in the microwave, melting the chocolate in 30-second increments.",
-    "Pour the melted chocolate into the blender.",
-    "Begin blending on low, working your way up to high until the hazelnut butter is completely smooth and combined.",
-    "The smoother the better!",
-    "This should take about 3 minutes.",
-    "Once completely smooth, remove 3 Tbsp of your freshly made \"Nutella\" and set aside for later!",
-    "To your blender with the remaining \"Nutella,\" add the light coconut milk, cane sugar, vanilla extract, and sea salt and blend on high until smooth, creamy, and completely combined.",
-    "Transfer the mixture to an airtight container and refrigerate for at least 1 hour.",
-    "Add the slightly chilled mixture to your ice cream maker and churn according to the manufacturer's instructions — ours took 30 minutes.",
-    "It should look like a thick soft serve (see photo).",
-    "Pour the reserved Nutella on top of the ice cream and gently fold it in to create a swirl, being careful to avoid fully mixing it in.",
-    "You can enjoy your ice cream now if you prefer a softer, less frozen ice cream (similar in texture to gelato)!",
-    "Or transfer the ice cream to a large freezer-safe container and smooth it with a spoon.",
-    "Top with parchment paper and freeze for at least 1 hour or until firm.",
-    "Set out for 10-15 minutes before serving to soften slightly.",
-    "Store in the freezer well covered for up to 1 month."
-   ],
-   "themes": [
-    "veggie",
-    "sweet"
-   ],
-   "tags": [
-    "Dessert",
-    "Dairy-Free",
-    "Gluten-Free",
-    "Vegan"
-   ],
-   "added": "2026-09-03T15:26:24.087Z"
-  },
-  {
-   "id": "f19vvk8z",
-   "src": "blog",
-   "srcName": "Half Baked Harvest",
-   "title": "Easy Korean Bulgogi BBQ Beef Bowls",
-   "url": "https://www.halfbakedharvest.com/korean-bulgogi-bbq-beef-bowls/?adt_ei=*|EMAIL|*",
-   "image": "https://www.halfbakedharvest.com/wp-content/uploads/2026/09/Easy-Korean-Bulgogi-BBQ-Beef-Bowls-1-scaled.jpg",
-   "video": "",
-   "creator": "Half Baked Harvest",
-   "min": 35,
-   "servings": 6,
-   "ingredients": [
-    "2 pounds ground beef",
-    "4 cloves garlic (chopped)",
-    "2/3 cup tamari or soy sauce",
-    "2-3 tablespoons gochujang",
-    "2 tablespoons pickled ginger, chopped",
-    "2 tablespoons pickled ginger juice",
-    "3 teaspoons maple syrup",
-    "2 cups shredded purple cabbage",
-    "1/2 cup chopped green onions",
-    "2 tablespoons tahini",
-    "2 tablespoons white miso paste",
-    "2 tablespoons toasted sesame oil",
-    "1 tablespoon fresh ginger, (grated)",
-    "2 tablespoons rice vinegar",
-    "2 tablespoons lemon or lime juice, (or a mix of both)",
-    "4 Persian cucumbers, chopped",
-    "1 cup spicy kimchi",
-    "2 tablespoons kimchi brine",
-    "3 cups cooked white or brown rice",
-    "2 cups shredded carrots",
-    "1 avocado, sliced",
-    "4 fried, poached, or soft-boiled eggs",
-    "Thai basil and sliced green onions",
-    "toasted black and white sesame seeds",
-    "spicy yum yum sauce, (for serving)"
-   ],
-   "steps": [
-    "In a small bowl, mix 1/3 cup tamari, 1 tablespoon gochujang, and 1 teaspoon maple syrup.",
-    "Stir in the sesame seeds.2.",
-    "Cook the beef in a large skillet over medium heat until browned, about 5 minutes.",
-    "Add the garlic and cook for 1 minute.3.",
-    "Add the remaining 1/3 cup tamari, 1-2 tablespoons gochujang, the pickled ginger, ginger juice, and 1/3 cup water.",
-    "Cook for 2-3 minutes, until the sauce coats the beef.",
-    "Stir in the remaining 2 teaspoons maple syrup.4.",
-    "To make the slaw: Toss the cabbage and green onions in a bowl.",
-    "Blend the tahini, miso, sesame oil, ginger, vinegar, citrus juice, and 1/4 cup hot water until smooth.",
-    "Toss the dressing with the cabbage.5.",
-    "To make the cucumber salad: Toss the cucumbers with the kimchi and kimchi brine.",
-    "Divide the rice between bowls.",
-    "Add the beef, slaw, cucumber salad, carrots, avocado, and eggs.",
-    "Top with basil, green onions, sesame seeds, the reserved bulgogi sauce, and spicy yum yum sauce."
-   ],
-   "themes": [
-    "meat",
-    "rice"
-   ],
-   "tags": [
-    "Main Course",
-    "American",
-    "korean"
-   ],
-   "added": "2026-09-03T15:26:24.285Z"
-  },
-  {
-   "id": "f1fn4i0w",
-   "src": "blog",
-   "srcName": "Pinch of Yum",
-   "title": "Peanut Chicken with Ginger Slaw",
-   "url": "https://pinchofyum.com/peanut-chicken-with-ginger-slaw",
-   "image": "https://pinchofyum.com/tachyon/Peanut-Chicken-with-Ginger-Slaw-Square.jpg?fit=225%2C225",
-   "video": "",
-   "creator": "Lindsay Ostrom",
-   "min": 35,
-   "servings": 4,
-   "ingredients": [
-    "1 lb boneless skinless chicken breasts, thinly sliced",
-    "¼ cup Trader Joe’s Peanut Satay Sauce (more for serving)",
-    "1 clove garlic, grated (or 1/2 teaspoon garlic powder)",
-    "1/2 teaspoon salt",
-    "1 tablespoon avocado oil",
-    "3 tablespoons rice vinegar",
-    "2 tablespoons sugar",
-    "1 tablespoon ginger paste (or grated fresh ginger)",
-    "½ teaspoon salt (more to taste)",
-    "4-5 cups shredded purple cabbage, very thinly sliced on a mandoline (about half of a head of cabbage)",
-    "1 shallot, very thinly sliced on a mandoline (optional, but I like it in there!)",
-    "2 cups jasmine rice",
-    "1 14-ounce can coconut milk",
-    "1 ½ cups water",
-    "1 teaspoon salt"
-   ],
-   "steps": [
-    "Mix the chicken with peanut sauce, garlic, and salt.",
-    "Let it rest for 15-30 minutes while you prep the other ingredients.",
-    "Rinse the rice under cold running water.",
-    "Add to a saucepan with water, coconut milk, and salt; bring to a low simmer.",
-    "Cover with a lid, and cook for 15 minutes.",
-    "Remove lid; fluff rice with a fork.",
-    "Stir the vinegar, sugar, ginger, and salt together in a large bowl.",
-    "Add shredded cabbage and shallots; massage with your hands for a few minutes to tenderize the cabbage.",
-    "Heat the avocado oil in a large nonstick skillet over medium high heat.",
-    "Add the chicken and stir fry, moving around in the pan to prevent burning, for a few minutes until fully cooked.",
-    "Place the coconut rice in a bowl, top with peanut chicken, and pile that slaw on top.",
-    "Spoon extra peanut sauce over the chicken.",
-    "Add cilantro, crispy shallots, and/or chili crisp to finish it off!"
-   ],
-   "themes": [
-    "chicken",
-    "rice"
-   ],
-   "tags": [
-    "Dinner",
-    "Thai-Inspired"
-   ],
-   "added": "2026-09-03T15:26:24.576Z"
-  },
-  {
-   "id": "f7j651v",
-   "src": "blog",
-   "srcName": "Pinch of Yum",
-   "title": "Teriyaki Chicken with Ginger Peaches and Sesame Drench",
-   "url": "https://pinchofyum.com/teriyaki-chicken-with-ginger-peaches",
-   "image": "https://pinchofyum.com/tachyon/Teriyaki-Chicken-with-Ginger-Peaches.jpg?fit=154%2C225",
-   "video": "",
-   "creator": "Lindsay Ostrom",
-   "min": 135,
-   "servings": 4,
-   "ingredients": [
-    "1/2 cup teriyaki sauce (I use Soy Vay)",
-    "1 large clove garlic, grated (or 1/2 teaspoon garlic powder)",
-    "1 lb. chicken breasts",
-    "2 teaspoons avocado oil",
-    "4 peaches or nectarines, diced",
-    "1/4 cup chopped scallions, or cilantro, or both",
-    "1 teaspoon freshly grated ginger",
-    "1-2 tablespoons fresh lime juice (from 1-2 limes)",
-    "1/2 teaspoon salt",
-    "1 tablespoon sugar",
-    "1 tablespoon reduced sodium soy sauce",
-    "1 tablespoon toasted sesame oil",
-    "1 1/2 tablespoons brown sugar",
-    "1 teaspoon chili crisp",
-    "1-2 tablespoons water (as needed, to thin it out)",
-    "1 cup of white rice",
-    "Green beans (optional)"
-   ],
-   "steps": [
-    "Slice the chicken breast into thinner pieces, or pound them out to be thinner.",
-    "Marinate the chicken in the sauce and garlic for 2-12 hours. (Optional &#8211; more time = better flavor, but it will work even with a shorter 15-30 minute marinate time!)",
-    "Start cooking your rice according to package directions.",
-    "Whisk the sesame drench ingredients together and set aside.",
-    "When you&#8217;re close to being ready to eat, toss peaches, scallions, ginger, salt, and sugar together.",
-    "Usually the peaches will release some juices and it will become slightly saucy, but you can add a bit of honey to help it along if it seems too dry.",
-    "Heat the avocado oil in a large skillet over medium heat.",
-    "Let any excess marinade drip off the chicken, then add to the pan and sauté for 3-4 minutes per side, until the chicken reaches an internal temperature of 165 degrees.",
-    "Serve the chicken over rice, with a scoop of the peaches, and a drench of the sesame sauce!",
-    "Add green beans if you&#8217;d like!",
-    "So super fresh!"
-   ],
-   "themes": [
-    "chicken",
-    "rice",
-    "soup"
-   ],
-   "tags": [
-    "Dinner",
-    "American"
-   ],
-   "added": "2026-09-03T15:26:24.589Z"
-  },
-  {
-   "id": "f6a04zq",
-   "src": "blog",
-   "srcName": "Pinch of Yum",
-   "title": "Crispy Parmesan Chicken with Creamy Lemon Pasta",
-   "url": "https://pinchofyum.com/crispy-parmesan-chicken-with-creamy-lemon-pasta",
-   "image": "https://pinchofyum.com/tachyon/Crispy-Chicken-with-Lemon-Pasta-5-Square.jpg?fit=225%2C225",
-   "video": "",
-   "creator": "Lindsay Ostrom",
-   "min": 40,
-   "servings": 4,
-   "ingredients": [
-    "1 1/2 pounds boneless skinless chicken breasts",
-    "3/4 cup grated Parmesan cheese",
-    "1 1/2 cup panko bread crumbs",
-    "1 teaspoon Italian seasoning",
-    "1 teaspoon paprika",
-    "1/2 teaspoon garlic powder",
-    "1 teaspoon kosher salt",
-    "1/3 cup mayo",
-    "avocado oil spray",
-    "8 ounces pasta (I love mafalda for this, about half the box)",
-    "2 tablespoons butter",
-    "1 clove garlic, minced",
-    "1/2 tablespoon flour",
-    "1/2 cup water",
-    "1/2 teaspoon Better Than Bouillon chicken base",
-    "1 cup heavy cream",
-    "zest of half of a lemon",
-    "1 tablespoon lemon juice (half a lemon)",
-    "a handful of fresh basil leaves, cut into fine ribbons",
-    "an easy green salad for serving"
-   ],
-   "steps": [
-    "Preheat the oven to 425 degrees and line a baking sheet with parchment.",
-    "Cut each chicken breast into thin, flat pieces (not bite-sized but something that looks like a thin chicken breast).",
-    "For example: if a one-pound package gives me two chicken breasts, I’m often cutting it into 3-4 thin pieces per breast.",
-    "Thin chicken is essential!",
-    "And delicious!",
-    "Pat the chicken breasts dry if they have a lot of moisture on them.",
-    "Mix the parmesan, panko, Italian seasoning, paprika, garlic powder, and salt in a bowl.",
-    "Place mayo in a bowl.",
-    "Brush each chicken piece to coat with a thin layer of mayo.",
-    "Spoon the panko mixture evenly over each piece of chicken.",
-    "Press firmly to adhere the crumbs to the chicken, getting it as well-coated as you can.",
-    "Carefully flip chicken pieces over and repeat on the other side.",
-    "Finally, spray the top side with avocado oil spray until coated. (You will have some crumbles remaining on the baking sheet &#8211; that&#8217;s fine.)",
-    "Bake for 13-15 minutes, or until the chicken looks golden.",
-    "Turn on the broiler; broil for 1-2 minutes.",
-    "Grab each piece along the sides with tongs, flip, and broil the back side so it gets very golden and crispy all around and reaches an internal temp of 165.",
-    "Melt butter over medium low heat.",
-    "Add garlic; sauté for 2-3 minutes.",
-    "Add flour; sauté for another 2-3 minutes.",
-    "It will bubble and get a bit foamy.",
-    "Add cream, water, and Better than Bouillon.",
-    "Simmer for about 10 minutes until the sauce has thickened and clings to the back of a spoon.",
-    "Remove the sauce from heat to cool slightly.",
-    "Stir in the lemon zest and lemon juice.",
-    "Cook pasta according to package directions.",
-    "When draining, reserve a bit of pasta water.",
-    "Add the pasta to the sauce and toss to combine.",
-    "Add reserved pasta water as needed.",
-    "Slice your crispy chicken into strips.",
-    "Scoop the hot, saucy pasta into shallow bowls, place the chicken slices on top, and finish with the basil ribbons.",
-    "Sometimes I like to grab the extra crumbles from the sheet pan and sprinkle them on top, and serve with a lemon wedge.",
-    "OOOOH BABY!"
-   ],
-   "themes": [
-    "chicken",
-    "pasta",
-    "soup",
-    "salad",
-    "bread"
-   ],
-   "tags": [
-    "Dinner",
-    "Italian"
-   ],
-   "added": "2026-09-03T15:26:24.607Z"
-  },
-  {
-   "id": "fm6r4yh",
-   "src": "youtube",
-   "srcName": "Thomas kocht",
-   "title": "Pesto selber machen",
-   "url": "https://www.youtube.com/watch?v=m1wGVond_Os",
-   "image": "https://img.youtube.com/vi/m1wGVond_Os/hqdefault.jpg",
-   "video": "https://www.youtube.com/watch?v=m1wGVond_Os",
-   "creator": "Thomas kocht",
-   "min": null,
-   "servings": null,
-   "ingredients": [
-    "100 g Basilikum (abgelesen)",
-    "40 g Pinienkerne",
-    "1 kleine Knoblauchzehe",
-    "60 g Parmesan",
-    "ca. 100 ml Olivenöl",
-    "1 Prise Salz"
-   ],
-   "steps": [
-    "Wichtig: das Wasser und die Eiswürfel werden wieder ausgegossen und kommen nicht in die Pesto. Das ist nur zum Kühlen des Gefäßes.",
-    "Traditionell werden die Pinienkerne für Pesto Genovese nicht geröstet. Wer sie trotzdem rösten möchte: unbedingt vollständig abkühlen lassen, bevor sie ins Pesto kommen.",
-    "💚 Für eine schöne grüne Farbe das Pesto möglichst schnell und kühl verarbeiten – langes Mixen und Wärme lassen es schneller dunkel werden.",
-    "Pesto im Kühlschrank lagern und die Oberfläche immer mit einer dünnen Schicht Olivenöl bedecken, damit möglichst wenig Sauerstoff herankommt.",
-    "Licht lässt die schöne grüne Farbe ebenfalls schneller verschwinden – deshalb dunkel lagern oder das Glas z.",
-    "B. mit Alufolie umwickeln.",
-    "Am besten innerhalb von 3-5 Tagen verbrauchen. Für längere Lagerung lässt sich Pesto sehr gut einfrieren."
-   ],
-   "themes": [
-    "veggie"
-   ],
-   "tags": [],
-   "added": "2026-09-03T15:26:24.997Z"
-  },
-  {
-   "id": "fihyqyl",
-   "src": "youtube",
-   "srcName": "Thomas kocht",
-   "title": "Sushi selber machen - Reis perfekt kochen",
-   "url": "https://www.youtube.com/watch?v=pOqa7MZHmLk",
-   "image": "https://img.youtube.com/vi/pOqa7MZHmLk/hqdefault.jpg",
-   "video": "https://www.youtube.com/watch?v=pOqa7MZHmLk",
-   "creator": "Thomas kocht",
-   "min": 180,
-   "servings": null,
-   "ingredients": [
-    "100 ml Reisessig",
-    "80 g Zucker",
-    "20 g Salz"
-   ],
-   "steps": [
-    "Alles vorsichtig erwärmen, bis sich Zucker und Salz gelöst haben – kochen muss die Mischung nicht. Anschließend nach Geschmack unter den noch warmen Sushi-Reis arbeiten.",
-    "Beim Fisch gilt: Wenn ihr ihn roh für Sushi oder Sashimi verwenden möchtet, fragt beim Händler gezielt nach Fisch, der für den Rohverzehr geeignet ist.",
-    "Und falls die ersten Rollen noch nicht perfekt aussehen: Das ist völlig normal. Sushi rollen ist vor allem Übungssache – mit jeder Rolle wird es einfacher.",
-    "Viel Spaß beim Nachmachen!",
-    "Mein Name ist Thomas und ich bin gelernter Koch seit jetzt schon 20 Jahren.",
-    "Neben dem Kochen ist das Backen eine weitere Leidenschaft von mir.",
-    "In meinen Youtube Videos möchte ich mein Wissen und meine Freude an gutem Essen mit euch teilen und auch immer ein paar professionelle Tipps und Tricks verraten.",
-    "Jede Woche gibt es 1-2 neue Videos.",
-    "Mit (*) Sternchen gekennzeichnete Links sind Affiliate-Links.",
-    "Kommt über einen dieser Links ein Kauf zustande, bekomme ich eine kleine Provision und du unterstützt damit meine Arbeit.",
-    "Für dich entstehen dabei keinerlei Extrakosten.",
-    "Danke für deine Unterstützung!"
-   ],
-   "themes": [
-    "veggie",
-    "rice"
-   ],
-   "tags": [
-    "Sushi",
-    "Maki",
-    "Californiaroll"
-   ],
-   "added": "2026-09-03T15:26:25.000Z"
-  },
-  {
-   "id": "fe51qad",
-   "src": "youtube",
-   "srcName": "Ethan Chlebowski",
-   "title": "This 10 minute Lamb Pita never fails me.",
-   "url": "https://www.youtube.com/watch?v=PSdlb0niXaY",
-   "image": "https://img.youtube.com/vi/PSdlb0niXaY/hqdefault.jpg",
-   "video": "https://www.youtube.com/watch?v=PSdlb0niXaY",
-   "creator": "Ethan Chlebowski",
-   "min": 10,
-   "servings": null,
-   "ingredients": [
-    "Ground lamb or meat of choice",
-    "Salt",
-    "Spice of choice (Cumin, aleppo pepper, etc.)",
-    "Pita",
-    "Hummus",
-    "Feta cheese",
-    "Pickles or vegetables of choice"
-   ],
-   "steps": [
-    "That’s really it. Mix and match the spices and toppings however you want. The particular version I made came in at 646 calories and 44 g of protein.",
-    "The exact recipe with measurements is available in the Cook Well app: 🤝"
-   ],
-   "themes": [
-    "meat",
-    "bread"
-   ],
-   "tags": [],
-   "added": "2026-09-03T15:26:25.027Z"
-  },
-  {
    "id": "f143n2ce",
    "src": "themealdb",
    "srcName": "TheMealDB",
@@ -1790,7 +3051,8 @@
     "Stir in the basil leaves and serve at once."
    ],
    "themes": [
-    "chicken"
+    "chicken",
+    "protein"
    ],
    "tags": [
     "Chicken",
@@ -1835,6 +3097,7 @@
    ],
    "themes": [
     "chicken",
+    "protein",
     "potato"
    ],
    "tags": [
@@ -1903,6 +3166,7 @@
    ],
    "themes": [
     "fish",
+    "protein",
     "soup",
     "potato",
     "bread"
@@ -1945,6 +3209,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "potato"
    ],
    "tags": [
@@ -1987,6 +3252,7 @@
    ],
    "themes": [
     "veggie",
+    "protein",
     "rice"
    ],
    "tags": [
@@ -2038,6 +3304,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "potato",
     "breakfast"
    ],
@@ -2088,6 +3355,7 @@
    ],
    "themes": [
     "fish",
+    "protein",
     "rice"
    ],
    "tags": [
@@ -2133,6 +3401,7 @@
    ],
    "themes": [
     "chicken",
+    "protein",
     "soup"
    ],
    "tags": [
@@ -2174,6 +3443,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "potato"
    ],
    "tags": [
@@ -2255,6 +3525,7 @@
    ],
    "themes": [
     "meat",
+    "protein",
     "bread"
    ],
    "tags": [
@@ -2291,9 +3562,7 @@
     "Using a teaspoon, sprinkle dollops of dulce de leche over the base. Sprinkle with the chopped chocolate and cover with the second half of the pastry.",
     "This is a bit trickier, but if you don’t get it right, don’t worry, it’ll be fine once it’s baked! Brush the pastry with the beaten egg.",
     "Bake in the oven for about 30 minutes or until golden brown. It will be wobbly. That's because butter cake only firms up when it cools.",
-    "Cut into small pieces when it has cooled completely!",
-    "Notes",
-    "Storing: Store in an airtight container outside of the fridge for about 2-3 days or in the fridge for 5 days. Freeze for up to three months."
+    "Cut into small pieces when it has cooled completely!"
    ],
    "themes": [
     "veggie",
@@ -2358,7 +3627,8 @@
     "Run a knife around the edge of the pie, remove from the tin and serve with chutneys, salads or pickles."
    ],
    "themes": [
-    "meat"
+    "meat",
+    "protein"
    ],
    "tags": [
     "Lamb",
@@ -2392,11 +3662,8 @@
     "Steamed Jasmine Rice"
    ],
    "steps": [
-    "step 1",
     "Heat the oil in a large saucepan or flameproof casserole. Add the spring onions and coriander stalks and cook for 1 min. Add the pork slices and cook for 5 mins until starting to brown.",
-    "step 2",
     "Stir in the curry paste and peanut butter. After 30 secs, add the sugar, soy and coconut milk, plus ½ can of water. Mix well, put a lid on and leave to simmer for 15 mins, stirring occasionally.",
-    "step 3",
     "Remove the lid, add the baby corn and increase the heat.",
     "Bubble for 3 mins until the corn is cooked and the sauce has thickened a little.",
     "Stir in the lime juice and check the seasoning.",
@@ -2448,19 +3715,15 @@
     "2 tblsp Peanuts"
    ],
    "steps": [
-    "step 1",
     "First, make the curry paste.",
     "Use a pestle and mortar to pound together the dried and fresh chillies, shrimp paste, garlic, galangal, lemongrass, lime zest, white pepper, coriander, cumin, nutmeg and peanuts, plus 1 tsp salt.",
     "You should have a rough paste.",
     "Alternatively, add all the ingredients to a food processor along with 2-3 tbsp of coconut milk and pulse until you have a paste.",
     "Store in a lidded jar in the fridge.",
     "Will keep for up to two weeks.",
-    "step 2",
     "Add 2-3 tbsp of the thick part of the coconut milk into a saucepan over a medium-high heat.",
     "When the coconut milk starts bubbling, add 1-2 tbsp of the curry paste and stir well for about 1 min, until fragrant.",
-    "step 3",
     "Stir in the chicken and let it cook for about 3-4 mins until beginning to brown all over. Follow with the French beans and stir well.",
-    "step 4",
     "Season with the fish sauce and sugar, then add the rest of coconut milk.",
     "Mix well, add half the makrut lime leaves and simmer for 3-5 mins until the chicken is cooked through.",
     "Taste and add more sugar or fish sauce if necessary – it should be salty and nutty, and the sweetness should come through.",
@@ -2469,6 +3732,7 @@
    ],
    "themes": [
     "chicken",
+    "protein",
     "rice"
    ],
    "tags": [
@@ -2521,6 +3785,7 @@
    ],
    "themes": [
     "chicken",
+    "protein",
     "potato"
    ],
    "tags": [
