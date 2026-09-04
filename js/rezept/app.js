@@ -1420,6 +1420,14 @@ function rezeptBild(doc){
 // holt er live bei TheMealDB nach - die einzige der vier Quellen, die eine
 // Abfrage direkt aus dem Browser erlaubt.
 const FEED_PRO_ZUG=3;
+// ⚠ Der Ladezustand gehoert an den ABSCHNITT, nicht an einen einzelnen Knopf.
+// Bis 2026-09-04 setzte feedNachladen() seine Anzeige auf $('fdMore') - den
+// gibt es aber NUR, solange noch Vorschlaege uebrig sind. Klickte man das
+// "Load new ones" im Erschoepft-Hinweis, war $('fdMore') null und es gab
+// gar keine Rueckmeldung: auf einem Geraet MIT Netz passierte sekundenlang
+// sichtbar nichts. Ohne Netz fiel es nie auf, weil der Fehler-Toast sofort
+// kam - genau deshalb war der Waechter lokal gruen und auf dem Runner rot.
+let feedLaedt=false;
 let feed={items:[],updated:'',geladen:false,fehler:''};
 let feedQuelle='',feedThema='';
 export async function ladeFeed(){
@@ -1513,8 +1521,11 @@ export function feedAbschnitt(){
     +`</div>`:'')
     +(zeige.length
       ?`<div class="fd-row stagger">`+zeige.map(feedKarte).join('')+`</div>`
-       +`<div class="fd-more"><button class="btn" id="fdMore" onclick="rezFeedMore()">${icn('arrowR',14)} Show 3 more</button>`
+       +`<div class="fd-more"><button class="btn" id="fdMore" onclick="rezFeedMore()"${feedLaedt?' disabled':''}>`
+        +(feedLaedt?'Loading…':`${icn('arrowR',14)} Show 3 more`)+`</button>`
         +`<span class="fd-count">${Math.min(FEED_PRO_ZUG,liste.length)} of ${liste.length}</span></div>`
+      :feedLaedt
+      ?`<div class="fd-note">Loading new suggestions…</div>`
       :`<div class="fd-note">You have been through everything${feedQuelle||feedThema?' in this filter':''}. `
        +`<button class="fd-lnk" onclick="rezFeedMore()">Load new ones</button> or `
        +`<button class="fd-lnk" onclick="rezFeedReset()">show them all again</button>.</div>`)
@@ -1559,8 +1570,11 @@ export async function rezFeedReset(){
 // YouTube antworten dem Browser nicht - deshalb steht dort der Tageslauf.
 // Kein stilles Scheitern: klappt es nicht, sagt die Oberflaeche warum.
 async function feedNachladen(){
-  const btn=$('fdMore');
-  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  // ⚠ SOFORT sichtbar machen, dass etwas passiert - und zwar am Abschnitt,
+  // damit es auch dann greift, wenn es den Knopf "Show 3 more" gar nicht
+  // gibt (Erschoepft-Hinweis mit "Load new ones").
+  feedLaedt=true;
+  renderInspo();
   let neu=0;
   try{
     for(let i=0;i<FEED_PRO_ZUG;i++){
@@ -1574,7 +1588,7 @@ async function feedNachladen(){
   }catch(e){
     toast('Could not load new suggestions: '+((e&&e.message)||'no connection'));
   }
-  if(btn)btn.disabled=false;
+  feedLaedt=false;
 }
 // Aus einem Vorschlag ein Rezept machen. ⚠ Das Bild liegt auf einem fremden
 // Server. Ein Rezept braucht sein Bild aber LOKAL (Offline-Betrieb, Sync).

@@ -715,6 +715,17 @@ eigenen Ideen darunter. Immer **drei nebeneinander**; „Show 3 more" blättert
 weiter und merkt die gezeigten als gesehen — **geräteübergreifend**, sonst
 zeigt das Tablet dieselben drei, die man am Telefon längst weg hat.
 
+⚠ **Der Ladezustand gehört an den Abschnitt, nicht an einen Knopf.** Sind
+alle Vorschläge gesehen, verschwindet „Show 3 more" und der Hinweis „You have
+been through everything" mit „Load new ones" tritt an seine Stelle. Bis
+2026-09-04 setzte `feedNachladen()` seine Anzeige aber auf `$('fdMore')` —
+in diesem Zustand `null`. Ergebnis: Klick auf „Load new ones", und mit
+langsamem Netz passierte sekundenlang **sichtbar nichts**. Ohne Netz fiel es
+nie auf, weil der Fehler-Toast sofort kam — genau deshalb war der Wächter
+lokal grün und auf dem Runner rot. Nachgewiesen mit künstlich verlangsamtem
+TheMealDB gegen beide Codestände: alter Code 400 ms nach dem Klick
+unverändert, neuer zeigt „Loading new suggestions…".
+
 ⚠ **Der Knopf zeichnet ZUERST und wartet DANN aufs Speichern.**
 `markFeedSeen()` setzt den Zustand zwar sofort, wartet danach aber auf
 IndexedDB und stößt den Cloud-Abgleich an. Solange `renderInspo()` dahinter

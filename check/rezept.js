@@ -1969,6 +1969,46 @@ function pruefeKontrast() {
   });
   totN.forEach(x => fail('N', 'Handler im Vorschlags-Bereich zeigt auf keine Funktion: ' + x));
 
+  // N4b: DER ERSCHOEPFT-HINWEIS. "Load new ones" muss sofort sichtbar
+  // reagieren, auch wenn das Nachladen dauert.
+  // ⚠ Genau hier war der Waechter auf dem Runner rot und lokal gruen: das
+  // Nachladen setzte seine Anzeige auf #fdMore - den es in diesem Zustand
+  // gar nicht gibt. Ohne Netz kam sofort ein Fehler-Toast und verdeckte das;
+  // mit Netz passierte sekundenlang sichtbar nichts. Deshalb antwortet
+  // TheMealDB hier LANGSAM, statt zu scheitern.
+  await p.route(/themealdb\.com/, async r => {
+    await new Promise(res => setTimeout(res, 1500));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ meals: [{
+      idMeal: 'lang1', strMeal: 'Frisch geladen', strMealThumb: 'https://bild.invalid/neu.jpg',
+      strInstructions: 'Kochen. Servieren.', strIngredient1: 'Reis', strMeasure1: '200 g',
+      strIngredient2: 'Ei', strMeasure2: '2' }] }) });
+  });
+  await p.evaluate(async () => {
+    const S2 = await import('./js/rezept/store.js');
+    const d = await (await fetch('rezept_feed.json')).json();
+    await S2.markFeedSeen((d.items || []).map(i => i.id));
+  });
+  await p.evaluate(() => window.rezShowPage('recipes'));
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(900);
+  const erschoepft = await p.evaluate(() => !!document.querySelector('.fd-note .fd-lnk'));
+  if (!erschoepft) {
+    fail('N', 'Sind alle Vorschlaege gesehen, fehlt der Hinweis mit "Load new ones"');
+  } else {
+    const vorLaden = await p.evaluate(() => document.getElementById('rezPageArea').innerHTML);
+    await p.click('.fd-note .fd-lnk');
+    await p.waitForTimeout(400);
+    const nachLaden = await p.evaluate(vor => ({
+      gleich: document.getElementById('rezPageArea').innerHTML === vor,
+      text: ((document.querySelector('.fd-note') || {}).textContent || '').slice(0, 50),
+    }), vorLaden);
+    if (nachLaden.gleich)
+      fail('N', `"Load new ones" gibt keine sofortige Rueckmeldung - mit Netz sieht der Knopf tot aus (${nachLaden.text})`);
+    await p.waitForTimeout(5000);
+  }
+  await p.unroute(/themealdb\.com/);
+  await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
+
   // N5: fehlt die Datei, darf die Kategorie NICHT kaputtgehen
   await p.unroute(/rezept_feed\.json/);
   await p.route(/rezept_feed\.json/, r => r.fulfill({ status: 404, body: 'weg' }));

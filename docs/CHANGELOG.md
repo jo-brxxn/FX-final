@@ -9739,3 +9739,34 @@ unwahrscheinlich ist — deshalb probiert der Lauf jetzt **nach** dem
 Seitenkopf noch die dokumentierten Standardpfade (`/feed/`, `?feed=rss2`,
 `/rss/`, `/index.xml`). Das ist kein Raten: ob dabei ein Feed herauskommt,
 prüft dieselbe Zeile wie beim Seitenkopf.
+
+### 2026-09-04: „Load new ones" gab keine Rückmeldung (REZEPT-CHECK-18)
+
+Der Wächter meldete auf dem Runner hartnäckig „Button ohne Wirkung:
+rezFeedMore()", während derselbe Vorrat lokal grün war. **Zwei
+Erklärungsversuche gingen daneben** — der erste (renderInspo hinter
+`await markFeedSeen`) war eine echte Verbesserung, aber nicht die Ursache;
+der zweite („alles gesehen, also kein Knopf") ließ sich widerlegen, weil es
+den Knopf dann gar nicht gibt.
+
+Erst als Stufe B im Fehlerfall den **Zustand mitmeldete**, war es eindeutig:
+
+```
+[Karten 0, Knopf "(kein Knopf)", Zähler "",
+ Hinweis "You have been through everything in this filter. Load new on…"]
+```
+
+Der geklickte Knopf war nie `#fdMore`, sondern das **„Load new ones" im
+Erschöpft-Hinweis**. Und `feedNachladen()` setzte seine Ladeanzeige auf
+`$('fdMore')` — in diesem Zustand `null`. Mit Netz passierte nach dem Klick
+sekundenlang sichtbar nichts; ohne Netz verdeckte der sofortige Fehler-Toast
+den Fehler. Der Ladezustand hängt jetzt am Abschnitt (`feedLaedt`), nicht an
+einem einzelnen Knopf. Gegen beide Codestände gemessen, mit künstlich
+verlangsamtem TheMealDB: alter Code 400 ms nach dem Klick unverändert, neuer
+zeigt „Loading new suggestions…". Als Wächter-Stufe N4b hinterlegt — inklusive
+der Verlangsamung, denn ein sofort scheiterndes Nachladen löst den Fall nicht
+aus.
+
+**Lehre für die Fehlersuche:** ein Wächter, der nur den Namen des toten
+Knopfes nennt, kostet zwei Rateversuche. Einer, der den gesehenen Zustand
+mitliefert, löst den Fall beim ersten Lauf.
