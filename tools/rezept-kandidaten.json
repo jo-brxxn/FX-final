@@ -1,80 +1,105 @@
 {
-  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` (oder der Workflow mit pruefen=true) testet jeden Eintrag auf dem Runner und sagt, ob er wirklich Rezepte liefert - was bestanden hat, wird nach tools/rezept-quellen.json uebernommen. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen. Grund fuer die Trennung: Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (der Egress-Proxy blockt fremde Domains), geraten wird in diesem Projekt nicht. Ein Eintrag gibt nur seine SEITE an; die Feed-Adresse liest der Lauf aus dem Seitenkopf (<link rel=alternate>). Runde 4 (2026-09-03): Kochplattformen und Verlagsseiten - Nutzer-Entscheidung, nachdem Runde 3 mit 32 namentlich genannten Koechen 0 verwertbare Quellen ergab (kein TV- oder Sternekoch schreibt eine Zutatenliste in die Videobeschreibung, und ihre Seiten sind Restaurant- statt Rezeptauftritte). Dort stehen dieselben Rezepte, nur unter dem Namen der Plattform. Die YouTube-Liste ist bewusst leer: Runde 3 hat sie erschoepfend geprueft.",
+  "_hinweis": "KANDIDATEN, nicht aktive Quellen. `node tools/rezept-feed.mjs --pruefe` testet jeden Eintrag auf dem Runner. ⚠ Diese Liste wird NICHT vom taeglichen Lauf gelesen - Feed-Adressen lassen sich aus der Entwicklungsumgebung nicht pruefen (Egress-Proxy), geraten wird nicht. Ein Eintrag gibt nur seine SEITE an; die Feed-Adresse liest der Lauf aus dem Seitenkopf, sonst aus den Standardpfaden. Runde 5 (2026-09-04): Nutzer-Befund \"bei Inspiration kommt nur auslaendisches Essen\" - nachgemessen stimmt das: 78% der Quellen waren englischsprachig, groesste Einzelquelle die internationale Zufallsdatenbank TheMealDB. Gesucht wird jetzt deutsch, italienisch und die Urlaubskueche, die Deutsche mitbringen (griechisch, spanisch, tuerkisch, Balkan).",
   "blogs": [
     {
-      "name": "essen & trinken",
-      "seite": "https://www.essen-und-trinken.de/",
-      "richtung": "Runde 4 (Kochplattformen): Verlagsseite, viele Rezepte bekannter Koeche"
-    },
-    {
-      "name": "Chefkoch",
-      "seite": "https://www.chefkoch.de/",
-      "richtung": "Runde 4 (Kochplattformen): groesste deutsche Rezeptsammlung"
-    },
-    {
-      "name": "EatSmarter",
-      "seite": "https://eatsmarter.de/",
-      "richtung": "Runde 4 (Kochplattformen): gesund, mit Naehrwerten"
-    },
-    {
-      "name": "Kitchen Stories",
-      "seite": "https://www.kitchenstories.com/de",
-      "richtung": "Runde 4 (Kochplattformen): trendig, gut bebildert"
-    },
-    {
-      "name": "lecker.de",
-      "seite": "https://www.lecker.de/",
-      "richtung": "Runde 4 (Kochplattformen): Verlagsseite"
-    },
-    {
-      "name": "Brigitte Rezepte",
-      "seite": "https://www.brigitte.de/rezepte/",
-      "richtung": "Runde 4 (Kochplattformen): Verlagsseite"
-    },
-    {
-      "name": "Koch-Mit",
-      "seite": "https://www.koch-mit.de/",
-      "richtung": "Runde 4 (Kochplattformen): deutsch, Alltagskueche"
-    },
-    {
-      "name": "Springlane",
-      "seite": "https://www.springlane.de/magazin/",
-      "richtung": "Runde 4 (Kochplattformen): 2. Versuch ueber den Seitenkopf"
-    },
-    {
-      "name": "Zucker&Jagdwurst",
-      "seite": "https://www.zuckerjagdwurst.com/de",
-      "richtung": "Runde 4 (Kochplattformen): 2. Versuch ueber den Seitenkopf, pflanzlich"
+      "name": "Einfach Malene",
+      "seite": "https://www.einfachmalene.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, Alltag"
     },
     {
       "name": "Emmi kocht einfach",
       "seite": "https://emmikochteinfach.de/",
-      "richtung": "Runde 4 (Kochplattformen): deutsch, Alltagskueche"
-    },
-    {
-      "name": "Einfach Backen",
-      "seite": "https://www.einfachbacken.de/",
-      "richtung": "Runde 4 (Kochplattformen): Verlagsseite, Backen"
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, Hausmannskost"
     },
     {
       "name": "Gaumenfreundin",
       "seite": "https://www.gaumenfreundin.de/",
-      "richtung": "Runde 4 (Kochplattformen): deutsch, Familienkueche"
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, Familienkueche"
     },
     {
-      "name": "Serious Eats",
-      "seite": "https://www.seriouseats.com/",
-      "richtung": "Runde 4 (Kochplattformen): fundiert, englisch"
+      "name": "Lecker & Co",
+      "seite": "https://www.leckerundco.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch"
     },
     {
-      "name": "Bon Appetit",
-      "seite": "https://www.bonappetit.com/",
-      "richtung": "Runde 4 (Kochplattformen): trendig, englisch"
+      "name": "Kuechengoetter",
+      "seite": "https://www.kuechengoetter.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, Verlagsseite"
     },
     {
-      "name": "NYT Cooking (Probe)",
-      "seite": "https://cooking.nytimes.com/",
-      "richtung": "Runde 4 (Kochplattformen): vermutlich Bezahlschranke - Pruefung sagt es"
+      "name": "Eat this!",
+      "seite": "https://www.eat-this.org/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, pflanzlich (bestand Runde 2)"
+    },
+    {
+      "name": "Elavegan",
+      "seite": "https://elavegan.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch/englisch (bestand Runde 2)"
+    },
+    {
+      "name": "Herzelieb",
+      "seite": "https://herzelieb.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, norddeutsch"
+    },
+    {
+      "name": "Zimtliebe",
+      "seite": "https://www.zimtliebe.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch, Alltag"
+    },
+    {
+      "name": "Kochen aus Liebe",
+      "seite": "https://www.kochenausliebe.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): deutsch"
+    },
+    {
+      "name": "Giallo Zafferano",
+      "seite": "https://www.giallozafferano.it/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): italienisch, groesste IT-Seite"
+    },
+    {
+      "name": "Ricette della Nonna",
+      "seite": "https://www.ricettedellanonna.net/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): italienisch"
+    },
+    {
+      "name": "Fatto in Casa da Benedetta",
+      "seite": "https://www.fattoincasadabenedetta.it/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): italienisch, Alltag"
+    },
+    {
+      "name": "Gennaro Contaldo",
+      "seite": "https://www.gennarocontaldo.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): italienisch, englisch"
+    },
+    {
+      "name": "Pasta Grammar",
+      "seite": "https://www.pastagrammar.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): italienisch, englisch"
+    },
+    {
+      "name": "Griechische Rezepte (Elenis)",
+      "seite": "https://www.elenis-kochblog.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): griechisch"
+    },
+    {
+      "name": "My Greek Dish",
+      "seite": "https://www.mygreekdish.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): griechisch"
+    },
+    {
+      "name": "Spanish Sabores",
+      "seite": "https://spanishsabores.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): spanisch"
+    },
+    {
+      "name": "Türkische Küche (Nazire)",
+      "seite": "https://www.tuerkischekueche.de/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): tuerkisch"
+    },
+    {
+      "name": "Kroatien Kulinarisch",
+      "seite": "https://www.chasing-the-donkey.com/",
+      "richtung": "Runde 5 (deutsch/italienisch/Urlaub): kroatisch/Balkan"
     }
   ],
   "youtube": []
