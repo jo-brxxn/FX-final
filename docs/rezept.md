@@ -715,6 +715,14 @@ eigenen Ideen darunter. Immer **drei nebeneinander**; „Show 3 more" blättert
 weiter und merkt die gezeigten als gesehen — **geräteübergreifend**, sonst
 zeigt das Tablet dieselben drei, die man am Telefon längst weg hat.
 
+⚠ **`compute-pressure` wird dem Player bewusst NICHT erlaubt.** Die iframes
+geben `autoplay; encrypted-media; picture-in-picture` — mehr nicht. YouTube
+fragt zusätzlich `compute-pressure` an (die Berechtigung verrät die
+CPU-Auslastung des Geräts); Chromium protokolliert die Verweigerung als
+Konsolenfehler, die Wiedergabe läuft trotzdem. Der Wächter nimmt **genau
+diese** Meldung aus, nicht Policy-Verletzungen allgemein. Sie zu erlauben,
+damit die Meldung verschwindet, wäre die falsche Richtung.
+
 ⚠ **Der Ladezustand gehört an den Abschnitt, nicht an einen Knopf.** Sind
 alle Vorschläge gesehen, verschwindet „Show 3 more" und der Hinweis „You have
 been through everything" mit „Load new ones" tritt an seine Stelle. Bis

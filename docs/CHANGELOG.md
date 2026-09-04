@@ -9770,3 +9770,13 @@ aus.
 **Lehre für die Fehlersuche:** ein Wächter, der nur den Namen des toten
 Knopfes nennt, kostet zwei Rateversuche. Einer, der den gesehenen Zustand
 mitliefert, löst den Fall beim ersten Lauf.
+
+**Nachtrag (2026-09-04):** Nach der Reparatur blieb auf dem Runner eine
+letzte Meldung stehen — `Permissions policy violation: compute-pressure`.
+Sie stammt vom eingebetteten YouTube-Player: der fragt diese Berechtigung an
+(sie verrät die CPU-Auslastung des Geräts), unsere iframes geben nur
+`autoplay; encrypted-media; picture-in-picture`. Chromium protokolliert die
+Verweigerung, die Wiedergabe läuft. Sie zu erlauben, nur damit der Lauf grün
+wird, wäre die falsche Richtung — der Wächter nimmt deshalb genau diese
+Berechtigung aus, keine Policy-Verletzungen allgemein. Auch das trat nur mit
+Netz auf, weil das iframe sonst gar nicht lädt.

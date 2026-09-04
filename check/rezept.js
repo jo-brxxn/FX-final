@@ -295,7 +295,18 @@ function pruefeKontrast() {
   p.on('pageerror', e => jsFehler.push(e.message));
   p.on('console', m => {
     const t = m.text();
-    if (m.type() === 'error' && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) jsFehler.push(t);
+    // ⚠ compute-pressure ist KEIN Fehler, sondern die Folge einer bewussten
+    // Entscheidung: der eingebettete YouTube-Player fragt diese Berechtigung
+    // an (sie verraet die CPU-Auslastung des Geraets), unsere iframes geben
+    // nur autoplay, encrypted-media und picture-in-picture. Chromium
+    // protokolliert die Verweigerung - kein JavaScript kann das unterdruecken,
+    // und die Wiedergabe laeuft. Sie zu erlauben, nur damit die Meldung
+    // verschwindet, waere die falsche Richtung. Tritt nur MIT Netz auf, weil
+    // das iframe sonst gar nicht laedt - der Grund, warum dieser Lauf lokal
+    // gruen und auf dem Runner rot war. Eng begrenzt auf genau diese
+    // Berechtigung: jede andere Policy-Verletzung bleibt ein Fehler.
+    const erlaubt = /Permissions policy violation: compute-pressure/.test(t);
+    if (m.type() === 'error' && !erlaubt && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) jsFehler.push(t);
   });
   await p.goto(URL, { waitUntil: 'load' });
   await p.waitForFunction(() => document.querySelectorAll('#rezNav .np').length > 0, { timeout: 15000 })
