@@ -26,7 +26,7 @@ on:
       max:
         description: 'Wie viele Vorschlaege der Vorrat hoechstens haelt'
         required: false
-        default: '90'
+        default: '270'
       pruefen:
         description: 'Nur Kandidaten pruefen (tools/rezept-kandidaten.json), nichts sammeln'
         type: boolean
@@ -45,7 +45,12 @@ concurrency:
 jobs:
   feed:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # 30 statt 15 Minuten: der Lauf fordert seit 2026-09-04 rund 200 statt 60
+    # Beitraege an (mehr Quellen, hoeheres "pro"), und jedes neue Bild wird
+    # zusaetzlich geholt und kleingerechnet. Gemessen dauerte der alte Lauf
+    # 42 s - Platz ist reichlich, aber ein Abbruch mitten im Einsammeln
+    # schriebe gar nichts.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -79,7 +84,7 @@ jobs:
           # Freiwillig: ohne diesen Secret wird Spoonacular still
           # uebersprungen, die uebrigen Quellen laufen weiter.
           SPOONACULAR_KEY: ${{ secrets.SPOONACULAR_KEY }}
-        run: node tools/rezept-feed.mjs --max "${{ github.event.inputs.max || '90' }}"
+        run: node tools/rezept-feed.mjs --max "${{ github.event.inputs.max || '270' }}"
 
       - name: Ergebnis kurz zeigen
         if: ${{ github.event.inputs.pruefen != 'true' }}
@@ -98,6 +103,16 @@ jobs:
             console.log("Themen :",JSON.stringify(proThema));
             const ohne=items.filter(i=>!(i.themes||[]).length).length;
             console.log("ohne Thema:",ohne);
+            // ⚠ Diese drei Zeilen stehen wegen eines konkreten Nutzer-Befunds
+            // (2026-09-04): "wenn ich Nudeln filtere habe ich wenig
+            // Vorschlaege und kein einziges Mal z.B. mit Garnelen oder
+            // Schinken-Sahne-Sauce". Ob sich das geaendert hat, soll man im
+            // Lauf ablesen koennen statt es hinterher von Hand zu zaehlen.
+            const text=i=>[i.title,(i.ingredients||[]).join(" ")].join(" ").toLowerCase();
+            const zaehl=(re)=>items.filter(i=>re.test(text(i))).length;
+            console.log("Pasta-Gerichte:",items.filter(i=>(i.themes||[]).includes("pasta")).length,
+                        "| Garnelen/Shrimp:",zaehl(/garnele|shrimp|gambe|scampi/),
+                        "| Schinken/Sahne:",zaehl(/schinken|prosciutto|pancetta|speck/));
           '
 
       - name: Commit und Push, wenn sich etwas geaendert hat
