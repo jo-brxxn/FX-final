@@ -9792,3 +9792,52 @@ weiterhin gemeldet. ⚠ Beim Probelauf fiel außerdem auf, dass `new URL(...)` i
 Handler den ganzen Lauf abstürzen ließ: in `check/rezept.js` ist `URL` eine
 eigene Konstante und verdeckt den Konstruktor. Ohne die Probe wäre das als
 CI-Absturz aufgeschlagen.
+
+### 2026-09-04: Zehn Design-Vorlagen für den FX Analyst Pro (VERSION-CHECK-466)
+
+Nutzer: *„mach das gleiche mit der fx Analyst pro App aber bitte Speicher das
+aktuelle Design auch noch. Das einzig wichtige ist das da in der App Farben
+die Bedeutung haben bestehen bleiben oder nur leicht verändert werden."*
+Gewählt: hell **und** dunkel gemischt, Bedeutungsfarben pro Vorlage leicht
+angepasst.
+
+**Erst tokenisiert, dann gefärbt.** 75 Zeilen in `index.html` färbten Fläche,
+Text oder Rand mit einem festen Wert — Kopfzeilen-Ränder (`#1d2127`),
+Bedienelemente im Chrome (`#35456B`, `#2C3A5E`), COT-Balken in Bias-Farben,
+Globus-HUD in Cyan. Ein Vorlagenwechsel über Tokens hätte davon **nichts**
+erfasst: dunkle Ränder wären in einer hellen Kopfzeile stehen geblieben.
+Neue Tokens: `--chrome-bd`, `--chrome-line`, `--chrome-quick`, `--on-accent`,
+`--hud*`.
+
+⚠ **Screenshots taugten als Beweis nicht.** Der Plan war, mit Vorher/Nachher-
+Bildern zu belegen, dass die Tokenisierung nichts verändert. Zwei Läufe
+**desselben** Codes lieferten aber schon 17 verschiedene Bilder — die App
+zeigt Live-Daten und Uhrzeiten. Statt daraus „17 Unterschiede, also kaputt"
+zu schließen, wurde das Verfahren gewechselt: eine **Farb-Signatur** über
+`getComputedStyle` (Klasse → color/background/border) misst genau das
+Geänderte und ignoriert den Inhalt. Ergebnis: 1628 Einträge, alle identisch
+bis auf einen Aktiv-Zustand eines Unter-Tabs.
+
+**Zehn Vorlagen**, erzeugt von `tools/fx-themes.mjs` (kein Build-Schritt —
+die App bleibt eine Datei; der Generator sorgt dafür, dass die `-rgb`-
+Varianten zur Farbe passen). Das bisherige Design bleibt Standard und trägt
+bewusst **kein** `[data-fx-theme]`, damit ein unbekannter Wert dort landet
+statt bei „keine Farbvariablen".
+
+⚠ **Der Wächter erklärte zuerst den Bestand für kaputt.** `check/theme.js`
+prüfte die Unterscheidbarkeit von bullish/bearish über den WCAG-
+Helligkeitskontrast und meldete für das seit Monaten bewährte Design 1,02:1.
+Blau und Rot können gleich hell und trotzdem sofort unterscheidbar sein — der
+Unterschied ist der **Farbton**. Merksatz: eine Prüfung, die den
+funktionierenden Bestand für kaputt erklärt, ist meistens selbst der Fehler.
+Jetzt: Farbton-Abstand ≥ 90°, Neutralton ≤ 28 % Sättigung.
+
+**Zwei echte Mängel im Bestand** fand derselbe Wächter beim ersten
+korrekten Lauf — `--t2` 4,28:1 und `--accent` 2,83:1 gegen `--bg5`, beide
+unter AA, obwohl `docs/design-system.md` „alle ≥ 4,6:1" behauptete. Minimal
+nachgedunkelt auf 4,60 bzw. 3,05; Farbton unverändert.
+
+⚠ **Mutationstest deckte eine wirkungslose Prüfung auf:** eine Vorlage ohne
+`--chrome-quick` blieb grün, weil das Token still von `:root` erbt und
+`getComputedStyle` brav einen Wert liefert. Pflicht-Tokens werden seither
+**statisch im CSS-Text** geprüft.

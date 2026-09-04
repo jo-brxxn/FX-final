@@ -37,6 +37,10 @@ const PRUEFUNGEN = [
   // ⚠ Gehoert zur ZWEITEN App dieses Repos (Perfect Rezept, siehe
   // docs/rezept.md). Prueft dort Handler, Buttons, den kompletten Ablauf,
   // die Nachfrage bei ungespeicherten Eingaben und den Kontrast jeder Palette.
+  // Design-Vorlagen des FX Analyst Pro: rechnet je Vorlage Kontrast und
+  // Bedeutung nach. ⚠ Bedeutung wird ueber den FARBTON geprueft, nicht ueber
+  // Helligkeit - Blau und Rot koennen gleich hell und trotzdem eindeutig sein.
+  { n: 'theme',     d: 'Design-Vorlagen: Kontrast, Bedeutungsfarben, Tokens',   f: 'check/theme.js',     args: [],           browser: true },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 

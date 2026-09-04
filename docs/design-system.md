@@ -122,6 +122,69 @@ gerade dran gearbeitet wird):
   `.dw` zuerst diese Entscheidung nachschlagen, bevor sie neu aufgerollt
   wird — dieselbe Vorsicht wie beim "Glow"-Punkt oben.
 
+## Design-Vorlagen (Nutzer-Wunsch 2026-09-04)
+
+Zehn Vorlagen, umschaltbar in den Einstellungen unter **Appearance**: fünf
+helle (**Terminal Pro** = das bisherige Design, Linear Light, Stripe Slate,
+Swiss Editorial, Notion Warm) und fünf dunkle (Carbon Dark, Midnight
+Terminal, Graphite Dark, Nordic Dark, Solarized Dark).
+
+⚠ **Das bisherige Design ist der Standard und trägt KEIN
+`[data-fx-theme]`-Regelwerk** — es steht weiter in `:root`. Ein Gerät mit
+einem unbekannten oder gelöschten Wert landet dadurch automatisch dort,
+statt ohne eine einzige Farbvariable dazustehen. Wird eine Vorlage entfernt,
+muss die Früh-Weiche im `<head>` den alten Wert migrieren; dort steht
+dieselbe Liste wie in `FX_THEMES`.
+
+⚠ **Farben mit Bedeutung bleiben Bedeutung.** `--green` ist in **jeder**
+Vorlage ein Blau (bullish), `--red` ein Rot (bearish), `--amber`/`--star` ein
+entsättigtes Grau (neutral). Angepasst werden nur Helligkeit und Sättigung —
+auf dunklem Grund wäre `#C50F1A` kaum lesbar. `check/theme.js` rechnet das
+nach: **Farbton-Abstand ≥ 90°** zwischen bullish und bearish, Sättigung des
+Neutraltons ≤ 28 %.
+
+⚠ **Bedeutung wird NICHT über den Helligkeitskontrast geprüft.** Blau und Rot
+können gleich hell und trotzdem sofort unterscheidbar sein. Der erste Wurf
+des Wächters rechnete mit WCAG und erklärte damit das seit Monaten bewährte
+Design für kaputt (bullish/bearish 1,02:1) — ein Fehler der Prüfung, nicht
+der Farben.
+
+⚠ **Pflicht-Tokens werden STATISCH geprüft**, nicht über `getComputedStyle`.
+Ein Regelwerk, das ein Token nicht setzt, erbt es still von `:root`; der
+Browser liefert brav einen Wert und die Prüfung sähe nichts. Im
+Mutationstest genau so aufgefallen.
+
+Erzeugt werden die Regelwerke von **`tools/fx-themes.mjs`** (`--pruefe` zeigt
+die Kontrastwerte). Das ist **kein Build-Schritt** — die App bleibt eine
+Datei ohne Werkzeugkette; das Skript ist Nachvollziehbarkeit. Grund für den
+Generator: die `-rgb`-Varianten müssen zur Farbe passen, und eine von Hand
+abgetippte falsche rgb-Zeile färbt woanders falsch, ohne dass ein
+Kontrast-Wächter etwas merkt.
+
+### Chrome- und HUD-Tokens (2026-09-04)
+Kopfzeile und Sidebar hatten ihre Farben als Literale verstreut
+(`#35456B`, `#2C3A5E`, `#1d2127`) — in einer Vorlage mit hellem Chrome wären
+das dunkle Ränder auf hellem Grund. Jetzt: `--chrome-bd` (Trennlinie),
+`--chrome-line` (Rand der Bedienelemente), `--chrome-quick`
+(Schnellzugriffe), `--on-accent` (Text **auf** einer Akzentfläche — nicht
+„weiß", sondern „was darauf lesbar ist"; die dunklen Vorlagen haben helle
+Akzente und brauchen dort dunklen Text). Globus und Scan-Anzeige liegen immer
+auf dunklem Grund und tragen `--hud` / `--hud-warm` / `--hud-bg0` /
+`--hud-bg1`.
+
+### ⚠ Zwei Kontrastmängel im Bestand (2026-09-04 gefunden)
+Der neue Wächter fand sie nicht in einer neuen Vorlage, sondern im
+**bisherigen Design** — die Angabe weiter unten („alle Textfarben ≥ 4,6:1")
+stimmte nicht mehr:
+
+| Token | auf `--bg5` | vorher | jetzt |
+|---|---|---|---|
+| `--t2` | `#DDE1EC` | `#5A6885` 4,28:1 | `#56637F` **4,60:1** |
+| `--accent` | `#DDE1EC` | `#2E8FB0` 2,83:1 | `#2C89A9` **3,05:1** |
+
+Farbton und Charakter bleiben, nur die Helligkeit ist eine Spur
+zurückgenommen.
+
 ## Design-System (Nutzer-Vorgabe 2026-08-23) — verbindlich
 
 Hell, nach einer vom Nutzer geschickten Vorlage. **Farben, Abstände und Radien
@@ -153,6 +216,9 @@ Bullish `#25619D` · Bearish `#B33633` · Neutral `#55617A` ·
 Live `#D93A34` · Success `#137036` · Akzent `--accent` `#2E8FB0`.
 
 ### Kontrast wird nachgerechnet, nicht geschätzt
+Läuft seit 2026-09-04 als `check/theme.js` über **alle** Vorlagen — vorher
+war es ein einmaliges Skript, und genau deshalb konnten zwei Werte
+unbemerkt unter AA rutschen (siehe oben).
 **Gegen die dunkelste helle Fläche (`--bg5`) prüfen, nicht nur gegen Weiß.**
 Beim Umstieg fielen sonst Blau (4,27:1), Rot (3,89:1), Neutral (4,38:1) und
 Success (4,20:1) durch — auf Weiß hatten alle vier bestanden. Aktuell liegen

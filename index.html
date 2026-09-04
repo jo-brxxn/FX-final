@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+/* ⚠ FRUEH-WEICHE: das Theme MUSS gesetzt sein, bevor die erste Regel greift.
+   Steht das weiter unten, blitzt beim Laden kurz das Standard-Design auf und
+   springt dann um - besonders haesslich beim Wechsel hell -> dunkel.
+   ⚠ Ein UNBEKANNTER Wert wird hier NICHT gesetzt: dann gilt :root, also das
+   vertraute Design. Wird eine Vorlage entfernt, muss dieser Wert migriert
+   werden - sonst steht das Geraet vor einem Regelwerk, das es nicht gibt. */
+(function(){try{
+  var OK={linear:1,stripe:1,swiss:1,notion:1,carbon:1,midnight:1,graphite:1,nord:1,solar:1};
+  var t=localStorage.getItem('fxpro_theme');
+  if(t&&OK[t])document.documentElement.setAttribute('data-fx-theme',t);
+  else if(t)localStorage.removeItem('fxpro_theme');
+}catch(e){}})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FX Analyst Pro</title>
@@ -144,7 +158,15 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   --chrome-bg:#212C49;
   --bg0:#E9EAF6;--bg1:#F2F3F9;--bg2:#FFFFFF;--bg3:#F2F3F9;--bg4:#EAECF4;--bg5:#DDE1EC;--bg6:#CBD1E0;
   --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
-  --t0:#141B2E;--t1:#33405C;--t2:#5A6885;--t3:#57637B;
+  /* ⚠ --t2 und --accent sind am 2026-09-04 MINIMAL nachgedunkelt worden.
+     Der neue Waechter check/theme.js rechnet jede Textstufe gegen jede
+     Flaeche - und fand das im BESTAND, nicht in einer neuen Vorlage:
+       --t2     #5A6885 auf --bg5  4.28:1  (AA verlangt 4.5)  -> #56637F 4.60
+       --accent #2E8FB0 auf --bg5  2.83:1  (Zahlenfarbe)      -> #2C89A9 3.05
+     docs/design-system.md behauptete "alle Textfarben >= 4,6:1 gegen jede
+     Flaeche" - das stimmte nicht mehr. Farbton und Charakter bleiben, nur
+     die Helligkeit ist eine Spur zurueckgenommen. */
+  --t0:#141B2E;--t1:#33405C;--t2:#56637F;--t3:#57637B;
   --green:#0B5FCC;--red:#C50F1A;--amber:#55617A;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
   --green-rgb:11,95,204;--red-rgb:197,15,26;--amber-rgb:85,97,122;
   --star-rgb:85,97,122;--blue-rgb:11,95,204;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
@@ -152,7 +174,25 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
      aktiver Tab, Fokusring, ausgewaehlter Filter. NIE fuer einen Datenwert -
      sonst konkurriert es mit Blau=bullish und die Score-Farbe wird mehrdeutig. */
-  --accent:#2E8FB0;--accent-rgb:46,143,176;
+  --accent:#2C89A9;--accent-rgb:44,137,169;
+  /* ⚠ CHROME-TOKENS (2026-09-04, fuer die Design-Vorlagen). Kopfzeile und
+     Nav-Sidebar hatten ihre Farben als LITERALE verstreut (#35456B, #2C3A5E,
+     #1d2127) - in einer Vorlage mit heller Kopfzeile waeren das dunkle
+     Raender auf hellem Grund gewesen. Sie gehoeren zur Chrome-Flaeche und
+     wechseln deshalb MIT ihr.
+     --on-accent ist die Textfarbe AUF einer Akzentflaeche (aktiver Chip,
+     Profilkreis): nicht "weiss", sondern "was auf dieser Farbe lesbar ist" -
+     eine Vorlage mit hellem Akzent braucht dort dunklen Text. */
+  --chrome-bd:#1d2127;      /* Trennlinie Kopfzeile/Sidebar zum Inhalt */
+  --chrome-line:#35456B;    /* Rand der Bedienelemente im Chrome */
+  --chrome-quick:#2C3A5E;   /* Schnellzugriffe, eine Spur heller */
+  --on-accent:#FFFFFF;      /* Text auf Akzent-/Bias-Flaeche */
+  /* ⚠ HUD-TOKENS: der Globus und die Scan-Anzeige stammen aus dem frueheren
+     dunklen Design und trugen Cyan (#5fd0ff) bzw. Warm-Orange (#ff8a3d) als
+     Literale. Beides liegt IMMER auf dunklem Grund (Globus-Flaeche), bleibt
+     also auch in hellen Vorlagen dunkel - aber der Farbton soll zur Vorlage
+     passen koennen. */
+  --hud:#5fd0ff;--hud-warm:#ff8a3d;--hud-bg0:#1a2530;--hud-bg1:#0b1017;
   /* Akzentfarbe je Makro-Kategorie: gibt der Seite Farbe, ohne Blau/Rot zu
      stoeren (nur als schmale Kante/Punkt, nie als Zahlenfarbe). Hues liegen
      absichtlich weg von Blau und Rot. */
@@ -226,7 +266,7 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
    sorgt dafuer, dass sowohl das SVG-Icon (stroke="currentColor") als auch
    spaeter eingesetzte Initialen (.ini, direkt darunter) auf dem Blau lesbar
    bleiben. */
-.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
+.profile-circle{width:34px;height:34px;border-radius:50%;background:var(--blue);color:var(--on-accent);border:1px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 1px 5px rgba(0,0,0,.28);transition:transform .15s ease,box-shadow .15s ease}@media (hover:hover){.profile-btn:hover .profile-circle{transform:scale(1.07);box-shadow:0 2px 9px rgba(0,0,0,.38)}}
 .profile-btn:active .profile-circle{transform:scale(.95)}
 .profile-name{display:none}
 /* Initialen im Profil-Kreis (statt generischem Personen-Icon), sobald ein
@@ -310,13 +350,204 @@ svg.ic{vertical-align:-2px;flex:none}
    MERKSATZ: bei einem gescopten Farb-Override IMMER pruefen, ob das Ziel
    weiter unten nochmal dieselbe Eigenschaft setzt. */
 .hdr{background:var(--chrome-bg)}
+/* Vorlagen-Auswahl in den Einstellungen. Jede Kachel zeigt die vier Farben,
+   die man beim Umschalten wirklich sieht: Kopfzeile, Seite, Karte, Akzent -
+   ein Name allein sagt nicht, wie es aussieht. */
+.set-row-col{flex-direction:column;align-items:stretch;gap:10px}
+.fxth-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.fxth{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);cursor:pointer;text-align:left;font-family:inherit;transition:border-color .14s ease}
+.fxth.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+@media(hover:hover){.fxth:hover{border-color:var(--bd2)}}
+.fxth-sw{display:flex;height:22px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd)}
+.fxth-sw i{flex:1;display:block}
+.fxth-n{font-size:var(--fs-sm);font-weight:700;color:var(--t0)}
+.fxth-d{font-size:var(--fs-2xs);color:var(--t2)}
+/* ══ DESIGN-VORLAGEN (Nutzer-Wunsch 2026-09-04) ══════════════════════════
+   ⚠ DAS AKTUELLE DESIGN IST DER STANDARD und steht weiter oben in :root -
+   es traegt KEIN [data-fx-theme]-Regelwerk. Damit landet ein Geraet mit
+   einem unbekannten oder geloeschten Theme-Wert automatisch im vertrauten
+   Design statt ohne eine einzige Farbvariable dazustehen (genau dieser
+   Fehler ist in der Rezept-App einmal passiert, siehe docs/rezept.md).
+   ⚠ FARBEN MIT BEDEUTUNG bleiben Bedeutung: --green ist in JEDER Vorlage
+   ein Blau (bullish), --red ein Rot (bearish), --amber/--star ein neutrales
+   Grau. Angepasst wird nur Helligkeit/Saettigung an die jeweilige Flaeche -
+   auf dunklem Grund waere das helle #C50F1A sonst kaum lesbar. Geprueft von
+   check/theme.js: je Vorlage Kontrast JEDER Textstufe gegen JEDE Flaeche und
+   ein Mindestabstand zwischen bullish/bearish/neutral.
+   ⚠ Die -rgb-Varianten werden NICHT von Hand gepflegt, sondern zusammen mit
+   der Farbe erzeugt - eine falsch abgetippte rgb-Zeile faerbt still falsch
+   und faellt keinem Kontrast-Waechter auf. */
+/* Linear Light */
+:root[data-fx-theme="linear"]{
+  --chrome-bg:#1C1D21;--chrome-bd:#101114;--chrome-line:#33353C;--chrome-quick:#2A2C33;
+  --bg0:#F4F5F8;--bg1:#FAFAFB;--bg2:#FFFFFF;--bg3:#F7F8FA;--bg4:#EFF1F5;--bg5:#E4E7EE;--bg6:#D3D8E2;
+  --bd:rgba(28,29,33,.12);--bd2:rgba(28,29,33,.22);
+  --t0:#16171A;--t1:#2C2F36;--t2:#4C515B;--t3:#4A4F59;--t3-rgb:74,79,89;
+  --green:#2C51C7;--red:#B02B26;--amber:#535966;--star:#535966;--blue:#2C51C7;--purple:#6B4CC4;--success:#0F6B3C;--live:#C4302B;
+  --green-rgb:44,81,199;--red-rgb:176,43,38;--amber-rgb:83,89,102;--star-rgb:83,89,102;--blue-rgb:44,81,199;--purple-rgb:107,76,196;--success-rgb:15,107,60;
+  --accent:#4B55B8;--accent-rgb:75,85,184;
+  --a-infl:#93670F;--a-rate:#5F45AB;--a-lab:#136B60;--a-grow:#9C5117;--a-cot:#1A6E89;--a-risk:#933C66;
+  --on-accent:#FFFFFF;
+  --green-lt:#2C51C7;--red-dk:#B02B26;
+}
+[data-fx-theme="linear"] .hdr,[data-fx-theme="linear"] #navSidebar{
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --bg2:#2A2C33;--bg3:#33353C;--bg4:#33353C;--bg5:#33353C;
+  --bd:#33353C;--bd2:#33353C;
+}
+/* Stripe Slate */
+:root[data-fx-theme="stripe"]{
+  --chrome-bg:#0A2540;--chrome-bd:#04162A;--chrome-line:#264260;--chrome-quick:#153454;
+  --bg0:#F0F4F9;--bg1:#F6F9FC;--bg2:#FFFFFF;--bg3:#F4F7FB;--bg4:#EAF0F7;--bg5:#DDE6F1;--bg6:#C9D5E5;
+  --bd:rgba(10,37,64,.13);--bd2:rgba(10,37,64,.24);
+  --t0:#0A2540;--t1:#243851;--t2:#495D75;--t3:#465A73;--t3-rgb:70,90,115;
+  --green:#0B57B8;--red:#B0322A;--amber:#4E5F74;--star:#4E5F74;--blue:#0B57B8;--purple:#6A4BDD;--success:#0C6B41;--live:#C93326;
+  --green-rgb:11,87,184;--red-rgb:176,50,42;--amber-rgb:78,95,116;--star-rgb:78,95,116;--blue-rgb:11,87,184;--purple-rgb:106,75,221;--success-rgb:12,107,65;
+  --accent:#4F46D6;--accent-rgb:79,70,214;
+  --a-infl:#96660F;--a-rate:#5E42AC;--a-lab:#0F6E5F;--a-grow:#A2551A;--a-cot:#186D87;--a-risk:#8F3B63;
+  --on-accent:#FFFFFF;
+  --green-lt:#0B57B8;--red-dk:#B0322A;
+}
+[data-fx-theme="stripe"] .hdr,[data-fx-theme="stripe"] #navSidebar{
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --bg2:#153454;--bg3:#264260;--bg4:#264260;--bg5:#264260;
+  --bd:#264260;--bd2:#264260;
+}
+/* Swiss Editorial */
+:root[data-fx-theme="swiss"]{
+  --chrome-bg:#111111;--chrome-bd:#000000;--chrome-line:#333333;--chrome-quick:#242424;
+  --bg0:#FFFFFF;--bg1:#FAFAFA;--bg2:#FFFFFF;--bg3:#F7F7F7;--bg4:#F0F0F0;--bg5:#E4E4E4;--bg6:#D0D0D0;
+  --bd:rgba(0,0,0,.14);--bd2:rgba(0,0,0,.26);
+  --t0:#000000;--t1:#242424;--t2:#4E4E4E;--t3:#4A4A4A;--t3-rgb:74,74,74;
+  --green:#0B4BA8;--red:#A81F17;--amber:#4A4A4A;--star:#4A4A4A;--blue:#0B4BA8;--purple:#4E3F8C;--success:#0F5C33;--live:#B32B26;
+  --green-rgb:11,75,168;--red-rgb:168,31,23;--amber-rgb:74,74,74;--star-rgb:74,74,74;--blue-rgb:11,75,168;--purple-rgb:78,63,140;--success-rgb:15,92,51;
+  --accent:#1F1F1F;--accent-rgb:31,31,31;
+  --a-infl:#7C540F;--a-rate:#4F3A8C;--a-lab:#105C50;--a-grow:#8A4714;--a-cot:#155C74;--a-risk:#7C3255;
+  --on-accent:#FFFFFF;
+  --green-lt:#0B4BA8;--red-dk:#A81F17;
+}
+[data-fx-theme="swiss"] .hdr,[data-fx-theme="swiss"] #navSidebar{
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --bg2:#242424;--bg3:#333333;--bg4:#333333;--bg5:#333333;
+  --bd:#333333;--bd2:#333333;
+}
+/* Notion Warm */
+:root[data-fx-theme="notion"]{
+  --chrome-bg:#37352F;--chrome-bd:#211F1B;--chrome-line:#4E4B43;--chrome-quick:#45423A;
+  --bg0:#F7F7F5;--bg1:#FBFBFA;--bg2:#FFFFFF;--bg3:#F6F5F3;--bg4:#EFEEEA;--bg5:#E5E3DE;--bg6:#D5D2CB;
+  --bd:rgba(55,53,47,.14);--bd2:rgba(55,53,47,.25);
+  --t0:#191817;--t1:#302E28;--t2:#54504A;--t3:#524E48;--t3-rgb:82,78,72;
+  --green:#1461B0;--red:#A93125;--amber:#55514A;--star:#55514A;--blue:#1461B0;--purple:#6B44AD;--success:#0F6039;--live:#BE3826;
+  --green-rgb:20,97,176;--red-rgb:169,49,37;--amber-rgb:85,81,74;--star-rgb:85,81,74;--blue-rgb:20,97,176;--purple-rgb:107,68,173;--success-rgb:15,96,57;
+  --accent:#1B6FC4;--accent-rgb:27,111,196;
+  --a-infl:#8F6113;--a-rate:#5B41A0;--a-lab:#136759;--a-grow:#964E17;--a-cot:#166583;--a-risk:#8A3A5D;
+  --on-accent:#FFFFFF;
+  --green-lt:#1461B0;--red-dk:#A93125;
+}
+[data-fx-theme="notion"] .hdr,[data-fx-theme="notion"] #navSidebar{
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --bg2:#45423A;--bg3:#4E4B43;--bg4:#4E4B43;--bg5:#4E4B43;
+  --bd:#4E4B43;--bd2:#4E4B43;
+}
+/* Carbon Dark */
+:root[data-fx-theme="carbon"]{
+  --chrome-bg:#000000;--chrome-bd:#2A2A2A;--chrome-line:#393939;--chrome-quick:#1F1F1F;
+  --bg0:#161616;--bg1:#1C1C1C;--bg2:#262626;--bg3:#212121;--bg4:#2C2C2C;--bg5:#333333;--bg6:#474747;
+  --bd:rgba(255,255,255,.16);--bd2:rgba(255,255,255,.30);
+  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#B4BAC1;--t3:#AEB4BB;--t3-rgb:174,180,187;
+  --green:#78A9FF;--red:#FF8389;--amber:#A8B0B8;--star:#A8B0B8;--blue:#78A9FF;--purple:#BE95FF;--success:#5CD17E;--live:#FF9DA2;
+  --green-rgb:120,169,255;--red-rgb:255,131,137;--amber-rgb:168,176,184;--star-rgb:168,176,184;--blue-rgb:120,169,255;--purple-rgb:190,149,255;--success-rgb:92,209,126;
+  --accent:#78C7FF;--accent-rgb:120,199,255;
+  --a-infl:#E3B23C;--a-rate:#B48CFF;--a-lab:#5FE3E1;--a-grow:#FF9E52;--a-cot:#5CC2F0;--a-risk:#FF9CC8;
+  --on-accent:#0A1520;
+  --green-lt:#78A9FF;--red-dk:#FF8389;
+}
+[data-fx-theme="carbon"] .hdr,[data-fx-theme="carbon"] #navSidebar{
+  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#B4BAC1;--t3:#AEB4BB;
+  --bg2:#212121;--bg3:#2C2C2C;--bg4:#333333;--bg5:#474747;
+  --bd:#393939;--bd2:#393939;
+}
+/* Midnight Terminal */
+:root[data-fx-theme="midnight"]{
+  --chrome-bg:#060B16;--chrome-bd:#1B2740;--chrome-line:#2A3A5C;--chrome-quick:#122036;
+  --bg0:#0A101C;--bg1:#111A2B;--bg2:#16223A;--bg3:#131D31;--bg4:#1B2740;--bg5:#22304C;--bg6:#2C3D5E;
+  --bd:rgba(150,180,225,.18);--bd2:rgba(150,180,225,.32);
+  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#A9B8D0;--t3:#A3B2CB;--t3-rgb:163,178,203;
+  --green:#7DBBFF;--red:#FF8C87;--amber:#A2B0C6;--star:#A2B0C6;--blue:#7DBBFF;--purple:#BCA2FF;--success:#5ACF92;--live:#FF9A93;
+  --green-rgb:125,187,255;--red-rgb:255,140,135;--amber-rgb:162,176,198;--star-rgb:162,176,198;--blue-rgb:125,187,255;--purple-rgb:188,162,255;--success-rgb:90,207,146;
+  --accent:#6FCBE8;--accent-rgb:111,203,232;
+  --a-infl:#EBBA55;--a-rate:#B49CFF;--a-lab:#4FD3BF;--a-grow:#F59B5C;--a-cot:#5FC0E0;--a-risk:#EE85B4;
+  --on-accent:#04121B;
+  --green-lt:#7DBBFF;--red-dk:#FF8C87;
+}
+[data-fx-theme="midnight"] .hdr,[data-fx-theme="midnight"] #navSidebar{
+  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#A9B8D0;--t3:#A3B2CB;
+  --bg2:#131D31;--bg3:#1B2740;--bg4:#22304C;--bg5:#2C3D5E;
+  --bd:#2A3A5C;--bd2:#2A3A5C;
+}
+/* Graphite Dark */
+:root[data-fx-theme="graphite"]{
+  --chrome-bg:#0F1113;--chrome-bd:#2A2D33;--chrome-line:#3A3E46;--chrome-quick:#1A1D21;
+  --bg0:#17181B;--bg1:#1D1F23;--bg2:#232529;--bg3:#1F2126;--bg4:#282B31;--bg5:#31353C;--bg6:#41454E;
+  --bd:rgba(255,255,255,.15);--bd2:rgba(255,255,255,.28);
+  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#ADB3BC;--t3:#A7ADB6;--t3-rgb:167,173,182;
+  --green:#82B8F5;--red:#F58A86;--amber:#A6ADB8;--star:#A6ADB8;--blue:#82B8F5;--purple:#BBA4E8;--success:#63C68C;--live:#FA9691;
+  --green-rgb:130,184,245;--red-rgb:245,138,134;--amber-rgb:166,173,184;--star-rgb:166,173,184;--blue-rgb:130,184,245;--purple-rgb:187,164,232;--success-rgb:99,198,140;
+  --accent:#A8CBDC;--accent-rgb:168,203,220;
+  --a-infl:#DFB25A;--a-rate:#AF9AE0;--a-lab:#57C0AE;--a-grow:#E5975A;--a-cot:#78B8D2;--a-risk:#DA8FB0;
+  --on-accent:#101A20;
+  --green-lt:#82B8F5;--red-dk:#F58A86;
+}
+[data-fx-theme="graphite"] .hdr,[data-fx-theme="graphite"] #navSidebar{
+  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#ADB3BC;--t3:#A7ADB6;
+  --bg2:#1F2126;--bg3:#282B31;--bg4:#31353C;--bg5:#41454E;
+  --bd:#3A3E46;--bd2:#3A3E46;
+}
+/* Nordic Dark */
+:root[data-fx-theme="nord"]{
+  --chrome-bg:#242933;--chrome-bd:#3B4252;--chrome-line:#4C566A;--chrome-quick:#2B323E;
+  --bg0:#2E3440;--bg1:#333B48;--bg2:#3B4252;--bg3:#374050;--bg4:#3E4756;--bg5:#454F60;--bg6:#4F5A6E;
+  --bd:rgba(216,222,233,.20);--bd2:rgba(216,222,233,.34);
+  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#C3CCDA;--t3:#BDC7D6;--t3-rgb:189,199,214;
+  --green:#9EC1DE;--red:#EE9AA0;--amber:#B4BFCE;--star:#B4BFCE;--blue:#9EC1DE;--purple:#D2AECB;--success:#8FD4A8;--live:#F2A8AC;
+  --green-rgb:158,193,222;--red-rgb:238,154,160;--amber-rgb:180,191,206;--star-rgb:180,191,206;--blue-rgb:158,193,222;--purple-rgb:210,174,203;--success-rgb:143,212,168;
+  --accent:#A6D3E0;--accent-rgb:166,211,224;
+  --a-infl:#E6C87F;--a-rate:#C7ACDD;--a-lab:#83D8C6;--a-grow:#E7A67F;--a-cot:#A3CCE0;--a-risk:#DFAAC6;
+  --on-accent:#14202A;
+  --green-lt:#9EC1DE;--red-dk:#EE9AA0;
+}
+[data-fx-theme="nord"] .hdr,[data-fx-theme="nord"] #navSidebar{
+  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#C3CCDA;--t3:#BDC7D6;
+  --bg2:#374050;--bg3:#3E4756;--bg4:#454F60;--bg5:#4F5A6E;
+  --bd:#4C566A;--bd2:#4C566A;
+}
+/* Solarized Dark */
+:root[data-fx-theme="solar"]{
+  --chrome-bg:#001F27;--chrome-bd:#073642;--chrome-line:#0F4A57;--chrome-quick:#01303B;
+  --bg0:#002B36;--bg1:#03313D;--bg2:#073642;--bg3:#053742;--bg4:#0A3E4A;--bg5:#0F4753;--bg6:#175665;
+  --bd:rgba(147,161,161,.24);--bd2:rgba(147,161,161,.40);
+  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#B3BDBA;--t3:#ADB7B4;--t3-rgb:173,183,180;
+  --green:#7CBCEC;--red:#F58C86;--amber:#A6B2B0;--star:#A6B2B0;--blue:#7CBCEC;--purple:#CBA6E4;--success:#78CE8A;--live:#FA968E;
+  --green-rgb:124,188,236;--red-rgb:245,140,134;--amber-rgb:166,178,176;--star-rgb:166,178,176;--blue-rgb:124,188,236;--purple-rgb:203,166,228;--success-rgb:120,206,138;
+  --accent:#6FC7D4;--accent-rgb:111,199,212;
+  --a-infl:#E0BC4A;--a-rate:#B79BE6;--a-lab:#55CBB8;--a-grow:#EA9F52;--a-cot:#5FC0D8;--a-risk:#E297B7;
+  --on-accent:#02222A;
+  --green-lt:#7CBCEC;--red-dk:#F58C86;
+}
+[data-fx-theme="solar"] .hdr,[data-fx-theme="solar"] #navSidebar{
+  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#B3BDBA;--t3:#ADB7B4;
+  --bg2:#053742;--bg3:#0A3E4A;--bg4:#0F4753;--bg5:#175665;
+  --bd:#0F4A57;--bd2:#0F4A57;
+}
+
+/* ══ ENDE DESIGN-VORLAGEN ══════════════════════════════════════════════ */
 .hdr,#navSidebar{
   --t0:#f4f5f7;--t1:#d9dce1;--t2:#a2a9b3;--t3:#7a818b;
   --bg2:#363c45;--bg3:#3e444e;--bg4:#454c56;--bg5:#4e5661;
   --bd:#3a4049;--bd2:#474e59;
 }
-#navSidebar{border-right-color:#1d2127}
-.hdr{border-bottom-color:#1d2127}
+#navSidebar{border-right-color:var(--chrome-bd)}
+.hdr{border-bottom-color:var(--chrome-bd)}
 /* ── APP-SHELL: Kopfzeile oben durchgehend, darunter Sidebar+Content ── */
 .app-shell{flex:1;display:flex;min-height:0}
 #pageArea{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -855,7 +1086,7 @@ body.compact-view .rub-summary{display:block}
 .rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
-.rub-card.imp .rub-hdr{background:#e9edf1}
+.rub-card.imp .rub-hdr{background:var(--bg4)}
 /* Skill-Kritik 2026-08-02 (Foto-Referenz): keine dunklere Kopfleisten-Flaeche
    mehr, Header sitzt auf derselben Flaeche wie der Kartenkoerper (nur die
    duenne Trennlinie bleibt). Alt: background:var(--bg4); */
@@ -1045,7 +1276,7 @@ body.compact-view .rub-summary{display:block}
 .res-note-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
 .res-tag{font-size:10.5px;color:var(--blue);background:rgba(var(--blue-rgb),.08);border:1px solid rgba(var(--blue-rgb),.22);border-radius:999px;padding:2px 8px;cursor:pointer;font-family:var(--ff-num);transition:all .12s}
 @media (hover:hover){.res-tag:hover{border-color:var(--blue);background:rgba(var(--blue-rgb),.16)}}
-.res-tag.on{border-color:var(--blue);color:#fff;background:var(--blue)}
+.res-tag.on{border-color:var(--blue);color:var(--on-accent);background:var(--blue)}
 .res-note-ex{font-size:12px;line-height:1.5;color:var(--t3);margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 /* Themen-Pille (z.B. "Macro"/"Central Banks") - rechts oben in der Zeile,
    Referenz-Mockup zeigt sie als dezente graue Pille statt Fliesstext. */
@@ -1254,7 +1485,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 @media(max-width:900px){.rterm-shell{flex-direction:column}.rterm-side{flex-direction:row}.rterm-tree{width:100%}.rterm-side-collapsed{width:100%;flex-direction:row;flex-wrap:wrap}.rterm-lower{flex-direction:column}.rterm-timeline{flex:1 1 auto;max-width:none;max-height:280px}}
 /* Rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04): schwebt unten links auf
    JEDER Seite, sobald ein Research-Terminal-Shortcut benutzt wurde. */
-.rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:var(--on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
 body.res-return-active .rterm-back-pill{display:flex}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
 /* ── Sektions-Navigation der Assets-Seite ──
@@ -1299,10 +1530,10 @@ body.res-return-active .rterm-back-pill{display:flex}
    Notes-Karte, damit rechts daneben keine Leerflaeche entsteht. */
 .aqr{display:grid;grid-template-columns:1fr 300px;gap:var(--gap-block);align-items:stretch;margin-bottom:var(--gap-block)}
 .aqr-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.aql{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;min-height:42px;border:1px solid #35456B;background:#2C3A5E;color:#C3D0E6;border-radius:var(--rs);font:700 12px/1.2 var(--ff-text);cursor:pointer;min-width:0}
+.aql{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;min-height:42px;border:1px solid var(--chrome-line);background:var(--chrome-quick);color:#C3D0E6;border-radius:var(--rs);font:700 12px/1.2 var(--ff-text);cursor:pointer;min-width:0}
 .aql span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .aql svg{flex:none}
-@media(hover:hover){.aql:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
+@media(hover:hover){.aql:hover{background:var(--chrome-line);color:var(--on-accent);border-color:var(--accent)}}
 /* Watchlist-Zeile: dieselben .aql-Buttons wie assetQuickRowHtml, aber ohne
    die 4-Spalten-Zwangsbreite (variable Anzahl je Asset/Paar - siehe
    watchQuickLinksHtml) und ohne die 300px-Notizen-Spalte daneben, deshalb
@@ -1323,8 +1554,8 @@ body.res-return-active .rterm-back-pill{display:flex}
 .aqn-t{font:700 12px/1 var(--ff-text);color:var(--t1)}
 .aqn-cnt{font:700 10.5px/1 var(--ff-num);color:var(--t3);margin-left:2px}
 .aqn-open{margin-left:auto;border:1px solid var(--bd2);background:none;color:var(--t2);border-radius:var(--rss);font:700 10.5px/1 var(--ff-text);padding:5px 9px;cursor:pointer}
-.aqn-open.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
-@media(hover:hover){.aqn-open:hover{color:var(--accent);border-color:var(--accent)}.aqn-open.on:hover{color:#FFFFFF}}
+.aqn-open.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+@media(hover:hover){.aqn-open:hover{color:var(--accent);border-color:var(--accent)}.aqn-open.on:hover{color:var(--on-accent)}}
 .aqn-list{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
 .aqn-n{display:flex;flex-direction:column;gap:2px;align-items:flex-start;text-align:left;padding:7px 11px;border:none;border-bottom:1px solid var(--bd);background:none;cursor:pointer;width:100%}
 .aqn-n:last-child{border-bottom:none}
@@ -1350,8 +1581,8 @@ body.res-return-active .rterm-back-pill{display:flex}
 @media(hover:hover){.anf-add:hover{color:var(--accent);border-color:var(--accent)}}
 .anf-main{min-width:0}
 @media(max-width:820px){.anf{grid-template-columns:1fr}}
-.asec-link{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid #35456B;background:#2C3A5E;color:#B4C2DC;border-radius:var(--rss);cursor:pointer}
-@media(hover:hover){.asec-link:hover{background:#35456B;color:#FFFFFF;border-color:var(--accent)}}
+.asec-link{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid var(--chrome-line);background:var(--chrome-quick);color:#B4C2DC;border-radius:var(--rss);cursor:pointer}
+@media(hover:hover){.asec-link:hover{background:var(--chrome-line);color:var(--on-accent);border-color:var(--accent)}}
 .ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:var(--gap-block)}
 .ranl-title{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:10px}
 .ranl-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
@@ -1566,11 +1797,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
 .cot-bar-sym{width:80px;flex-shrink:0;font-size:14px;font-weight:700;color:var(--t1);white-space:nowrap;display:flex;align-items:center}
-.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:#0B5FCC;font-family:var(--ff-num)}
-.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:#C50F1A;font-family:var(--ff-num)}
+.cot-bar-long-lbl{width:44px;flex-shrink:0;text-align:right;font-size:13px;font-weight:800;color:var(--green);font-family:var(--ff-num)}
+.cot-bar-short-lbl{width:44px;flex-shrink:0;text-align:left;font-size:13px;font-weight:800;color:var(--red);font-family:var(--ff-num)}
 .cot-bar{flex:1;display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--bg4)}
-.cot-bar-long{background:linear-gradient(90deg,#2E7BE0,#0B5FCC);min-width:0;transition:width .3s}
-.cot-bar-short{background:linear-gradient(90deg,#A50D16,#C50F1A);min-width:0;transition:width .3s}
+.cot-bar-long{background:linear-gradient(90deg,var(--green-lt,#2E7BE0),var(--green));min-width:0;transition:width .3s}
+.cot-bar-short{background:linear-gradient(90deg,var(--red-dk,#A50D16),var(--red));min-width:0;transition:width .3s}
 @media (hover:hover){.cot-bar-row:hover .cot-bar-sym{color:var(--blue)}}
 .cot-scroll{overflow-x:auto;padding:6px 4px 10px}
 .cot-hist-wrap{padding:10px 8px;position:relative;touch-action:pan-y}
@@ -1631,11 +1862,11 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-tbl th.cot-rowh{color:var(--t0);font-weight:700;font-size:14px}
 .cot-tbl tbody tr{cursor:pointer}
 @media (hover:hover){.cot-tbl tbody tr:hover td,.cot-tbl tbody tr:hover th.cot-rowh{background:var(--bg4)}}
-.cot-tbl td.cot-c-long{color:#0B5FCC;font-weight:700}
+.cot-tbl td.cot-c-long{color:var(--green);font-weight:700}
 .cot-tbl th.cot-c-hl,.cot-tbl td.cot-c-hl{background:rgba(var(--amber-rgb),.13);box-shadow:inset 0 0 0 1px rgba(var(--amber-rgb),.4)}
 .cot-tbl td.cot-c-hl{font-weight:700;font-size:14px}
 @media (hover:hover){.cot-tbl tbody tr:hover td.cot-c-hl{background:rgba(var(--amber-rgb),.22)}}
-.cot-tbl td.cot-c-short{color:#C50F1A;font-weight:700}
+.cot-tbl td.cot-c-short{color:var(--red);font-weight:700}
 /* COT control bar (countdown + refresh) */
 .cot-ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cot-cd-box{display:flex;flex-direction:column;gap:1px}
@@ -1645,7 +1876,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cot-ctrl-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cot-note{font-size:12px;color:var(--t3);font-family:var(--ff-num)}
 .cot-refresh{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,var(--bg4),var(--bg3));color:var(--t1);border:1px solid var(--bd);border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,color .15s}
-@media (hover:hover){.cot-refresh:hover{border-color:#0B5FCC;color:var(--t0)}}
+@media (hover:hover){.cot-refresh:hover{border-color:var(--green);color:var(--t0)}}
 .cot-refresh:disabled{opacity:.6;cursor:default}
 .cot-refresh-ic{display:inline-block;font-size:15px;line-height:1}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
@@ -1675,7 +1906,7 @@ body.res-return-active .rterm-back-pill{display:flex}
 @keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
 .cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.18);animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
-.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:#0B5FCC}
+.cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:var(--green)}
 .cot-notify-sub{font-size:10px;opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
 .cot-notify-x{margin-left:auto;flex-shrink:0;background:var(--bg4);border:none;color:var(--t2);width:19px;height:19px;border-radius:50%;cursor:pointer;font-size:12px;line-height:1;opacity:.85}
 .cot-notify-x:hover{opacity:1;background:var(--bg5);color:var(--t0)}
@@ -1963,7 +2194,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    "wiederkehrende UI-Bausteine muessen einheitlich sein"). */
 .perf-winbar{display:flex;gap:4px;margin-bottom:8px}
 .perf-win{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:var(--fs-xs);font-weight:700;padding:4px 0;cursor:pointer;font-family:var(--ff-num)}
-.perf-win.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.perf-win.on{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
 .perf-list{display:flex;flex-direction:column}
 .perf-row{display:flex;align-items:center;gap:8px;padding:5px 2px;cursor:default;min-height:26px}
 .perf-row[onclick]{cursor:pointer}
@@ -1986,7 +2217,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Notiz-Richtung, Event-Bezug und Trefferquote (2026-08-07) */
 .note-dirpick{display:flex;gap:4px}
 .note-dirbtn{flex:1;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);color:var(--t2);font-size:11px;font-weight:700;padding:6px 4px;cursor:pointer}
-.note-dirbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.note-dirbtn.on{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
 #resNBiasBull.on{background:var(--green);border-color:var(--green)}
 #resNBiasBear.on{background:var(--red);border-color:var(--red)}
 #resNBiasNeu.on{background:var(--amber);border-color:var(--amber)}
@@ -2065,22 +2296,22 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-main-row{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
 .globe-main-row .globe-host{flex:1;min-width:0;width:auto}
 .globe-throttle{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:5px;user-select:none;touch-action:none}
-.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:var(--ff-num)}
+.gt-label{font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:var(--hud);font-family:var(--ff-num)}
 /* Track im "Cockpit-Metall"-Look: dunkler Schlitz mit leichtem Glanzrand,
    Kerben als Skala (5 Stufen). Handle ist ein breiterer Griff-Riegel, der
    ueber den Track hinausragt (klassische Throttle-Optik statt eines duennen
    Slider-Punkts). */
-.gt-track{position:relative;width:20px;height:132px;border-radius:5px;background:linear-gradient(180deg,#1a2530,#0b1017 60%,#1a2530);border:1px solid rgba(126,196,255,.28);box-shadow:inset 0 0 6px rgba(0,0,0,.6);cursor:pointer}
+.gt-track{position:relative;width:20px;height:132px;border-radius:5px;background:linear-gradient(180deg,var(--hud-bg0),var(--hud-bg1) 60%,var(--hud-bg0));border:1px solid rgba(126,196,255,.28);box-shadow:inset 0 0 6px rgba(0,0,0,.6);cursor:pointer}
 .gt-notches{position:absolute;inset:6px 0;display:flex;flex-direction:column-reverse;justify-content:space-between;pointer-events:none}
 .gt-notches span{height:1px;background:rgba(126,196,255,.22);margin:0 4px}
-.gt-fill{position:absolute;left:3px;right:3px;bottom:3px;height:0%;border-radius:3px;background:linear-gradient(180deg,#ff8a3d,#5fd0ff 85%);opacity:.55;transition:height .08s linear}
+.gt-fill{position:absolute;left:3px;right:3px;bottom:3px;height:0%;border-radius:3px;background:linear-gradient(180deg,var(--hud-warm),var(--hud) 85%);opacity:.55;transition:height .08s linear}
 .gt-handle{position:absolute;left:-5px;right:-5px;bottom:0%;height:16px;border-radius:4px;background:linear-gradient(180deg,#3c4a58,#151c24);border:1px solid rgba(223,244,255,.55);box-shadow:0 1px 3px rgba(0,0,0,.5);transform:translateY(50%);transition:bottom .08s linear}
 .gt-handle::after{content:'';position:absolute;left:5px;right:5px;top:50%;height:2px;background:rgba(223,244,255,.6);transform:translateY(-50%)}
 .gt-track.gt-dragging .gt-fill,.gt-track.gt-dragging .gt-handle{transition:none}
 .gt-pct{font-size:10.5px;font-weight:700;color:var(--t1);font-family:var(--ff-num);min-width:30px;text-align:center}
 .globe-btn-row{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-.scan-btn{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:#5fd0ff}
-@media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:#5fd0ff}}
+.scan-btn{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:1px;padding:6px 14px;display:flex;align-items:center;gap:6px;border-color:rgba(95,208,255,.4);color:var(--hud)}
+@media (hover:hover){.scan-btn:hover:not(:disabled){background:rgba(95,208,255,.12);border-color:var(--hud)}}
 .scan-btn:disabled{opacity:.7;cursor:default}
 /* Boost-Button (Nutzer-Wunsch 2026-07-28): eigener Warm-Ton (Feuer) statt
    des kuehlen Scan-Blaus, damit die beiden Aktionen auf einen Blick
@@ -2090,11 +2321,11 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 /* Datenpartikel (Radar-Scan-Animation, Nutzer-Wunsch 2026-07-27): fliegen
    vom Globus zu jeder Karte - position:fixed + reine transform-Animation
    (WAAPI, siehe startScanBroadcast()), kein Layout-Reflow pro Frame. */
-.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#0B5FCC;box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
+.scan-particle{position:fixed;left:0;top:0;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--green);box-shadow:0 0 4px 1px #1d4ed8,0 0 16px 5px rgba(79,155,255,.7),0 0 34px 12px rgba(79,155,255,.32);pointer-events:none;z-index:99999;will-change:transform}
 /* Zweiter, kleinerer/schwaecherer Partikel kurz hinter dem Kopf (siehe
    scanFlyParticle()) - erzeugt den Eindruck eines Schweifs statt eines
    einzelnen isolierten Punkts, ohne echten Motion-Blur zu rendern. */
-.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#2E7BE0;box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
+.scan-particle-trail{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:var(--green-lt,#2E7BE0);box-shadow:0 0 10px 3px rgba(79,155,255,.5),0 0 22px 8px rgba(79,155,255,.2);opacity:.7}
 /* Der 0→16px AUSSEN wachsende Ring war bei eng stehenden Karten unsichtbar,
    weil er in den Bereich der Nachbarkarte hineinwuchs und von deren (spaeter
    gezeichnetem) Hintergrund verdeckt wurde (Nutzer-Bugreport 2026-07-27).
@@ -2208,7 +2439,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    Ueberwachungsmodus-Objekte"): "TRACKING" oben mittig zwischen den Eck-
    Klammern, "SIGNAL" unten mittig - beides reine Modus-/Status-Label wie
    "GLOBAL MARKET SURVEILLANCE" selbst, keine erfundenen Messwerte. */
-.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:#5fd0ff;font-family:var(--ff-num);text-transform:uppercase}
+.globe-hud-badge{position:absolute;left:50%;transform:translateX(-50%);z-index:2;pointer-events:none;display:flex;align-items:center;gap:4px;font-size:8.5px;font-weight:700;letter-spacing:1.5px;color:var(--hud);font-family:var(--ff-num);text-transform:uppercase}
 .globe-hud-badge.top{top:9px}
 .globe-hud-badge.bottom{bottom:9px}
 /* Waehrend eines Boosts (Nutzer-Bugreport 2026-08-04 "die Flamme wird
@@ -2221,13 +2452,13 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    HUD-Overlay, damit die wachsende Flamme immer OBEN liegt statt dahinter
    zu verschwinden. */
 .globe-host.boosting svg{position:relative;z-index:3}
-.globe-hud-badge b{display:inline-block;width:4px;height:4px;border-radius:50%;background:#5fd0ff;box-shadow:0 0 5px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
+.globe-hud-badge b{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--hud);box-shadow:0 0 5px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
 .globe-hud-badge.bottom b{animation-delay:.7s}
 @media(prefers-reduced-motion:reduce){.globe-hud-badge b{animation:none}}
 /* Blinkender "MONITORING"-Punkt - gleiche Konvention wie der bestehende
    .live-dot im Header (pulse-badge-artig), eigene Klasse statt Wiederver-
    wendung, da .live-dot fix auf Rot gesetzt ist und hier Blau passender ist. */
-.hud-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#5fd0ff;box-shadow:0 0 6px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
+.hud-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--hud);box-shadow:0 0 6px 1px rgba(95,208,255,.7);animation:pulse-badge 1.4s ease-in-out infinite}
 @media(prefers-reduced-motion:reduce){.hud-live-dot{animation:none}}
 /* Readout-Leiste + Intel-Feed unter dem Globus-Panel - dichtes Terminal-
    Layout (Monospace, klein), damit die Karte trotz neuer Infos nicht viel
@@ -2241,7 +2472,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    optisch an den Globus angebunden statt beliebig breit. Bei dieser Breite
    passen 3 Readout-Felder pro Zeile (minmax(120px,1fr)) statt darunter
    einzeln gestapelt zu werden - deutlich kompakter (iPad-Bildschirmhoehe). */
-.globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:#5fd0ff;font-family:var(--ff-num)}
+.globe-hud-title{width:100%;max-width:440px;margin-top:12px;padding-top:10px;border-top:1px solid var(--bd);font-size:10.5px;font-weight:700;letter-spacing:1.4px;color:var(--hud);font-family:var(--ff-num)}
 /* repeat(4,1fr) statt auto-fit/minmax (Nutzer-Wunsch 2026-07-28 "unter dem
    Globus maximal eine Zeile mit Daten"): auto-fit+minmax(120px,...) brach
    bei der jetzt vierten Spalte (Fuel) innerhalb der 440px-Kartenbreite in
@@ -2253,7 +2484,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .globe-hud-intel{width:100%;max-width:440px;margin-top:8px;font-family:var(--ff-num);font-size:10.5px;line-height:1.9;color:var(--t3)}
 .ghi-row{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
 @media (hover:hover){.ghi-row:hover{color:var(--t1)}}
-.ghi-t{color:#5fd0ff;opacity:.8}
+.ghi-t{color:var(--hud);opacity:.8}
 /* Market Watch ist KEINE Karte, sondern eine schmale Ticker-Leiste
    (Nutzer-Wunsch 2026-07-25: "Market Watch geht schmaler, da brauch man
    keine ganze Karte mit Ueberschriften und so") - kein Rahmen, kein
@@ -2399,7 +2630,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .cal-row.cal-past{opacity:.42}@media (hover:hover){.cal-row.cal-past:hover{opacity:.75}}
 /* Dünne rote "Jetzt"-Linie mit linksbündiger Uhrzeit. */
 .cal-now-line{display:flex;align-items:center;gap:6px;padding:3px 9px}
-.cal-now-time{font-size:9.5px;font-weight:800;color:#fff;background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:var(--ff-num);line-height:1.5;letter-spacing:.3px}
+.cal-now-time{font-size:9.5px;font-weight:800;color:var(--on-accent);background:var(--red);padding:1px 5px;border-radius:3px;flex-shrink:0;font-family:var(--ff-num);line-height:1.5;letter-spacing:.3px}
 .cal-now-rule{flex:1;height:2px;background:var(--red);border-radius:1px;box-shadow:0 0 4px rgba(var(--red-rgb),.6)}
 /* Scrollbarer Kalender-Container (Dashboard-Widget "Upcoming Events"). */
 .cal-scroll{position:relative;max-height:620px;overflow-y:auto}
@@ -2506,7 +2737,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hist-strip{display:flex;gap:4px;padding:9px 8px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-x:auto}
 .hist-day{flex:1 0 0;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:default}
 .hist-wd{font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.3px}
-.hist-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3,#1c2533);border:1px solid var(--bd2)}
+.hist-dot{width:11px;height:11px;border-radius:50%;background:var(--bg3);border:1px solid var(--bd2)}
 .hist-day.hist-has .hist-dot{background:var(--hc);border-color:var(--hc)}
 .hist-day.hist-today .hist-wd{color:var(--t1)}
 .hist-day.hist-today .hist-dot{box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--bd2)}
@@ -2693,8 +2924,8 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .aaii-gloss dd{margin:1px 0 0;color:var(--t2)}
 .histp-range{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
 .histp-rbtn{border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);font:700 11.5px/1 var(--ff-text);padding:7px 13px;cursor:pointer}
-.histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:#FFFFFF}
-@media(hover:hover){.histp-rbtn:hover{border-color:var(--accent);color:var(--accent)}.histp-rbtn.on:hover{color:#FFFFFF}}
+.histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+@media(hover:hover){.histp-rbtn:hover{border-color:var(--accent);color:var(--accent)}.histp-rbtn.on:hover{color:var(--on-accent)}}
 .histp-weekempty{font:400 11.5px/1.4 var(--ff-text);color:var(--t3);padding:4px 2px 8px}
 /* Zeitstrahl-Ansicht (Nutzer-Wunsch 2026-08-31): der Tages-Zeitstrahl einer
    aufgeklappten Woche sitzt sichtbar EINE Ebene tiefer (linker Akzentstrich
@@ -2792,9 +3023,9 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .uc-btn{width:100%;padding:11px 14px;border-radius:var(--rs);font-size:13px;font-weight:700;
   cursor:pointer;border:1px solid transparent;font-family:var(--ff-text);transition:filter .14s,background .14s}
 @media (hover:hover){.uc-btn:hover{filter:brightness(1.08)}}
-.uc-discard{background:var(--red);border-color:var(--red);color:#fff}
+.uc-discard{background:var(--red);border-color:var(--red);color:var(--on-accent)}
 .uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
-.uc-keep{background:var(--blue);border-color:var(--blue);color:#fff}
+.uc-keep{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
 .ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
 .modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:15px;font-weight:700;color:var(--t0);margin-bottom:12px}
@@ -3900,11 +4131,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-465 - Verlaufschart endlich fuer die Indikatoren, deren Reihe in einem ANDEREN Feed liegt (Nutzer-Bugreport 2026-09-02, "Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-466 - Zehn Design-Vorlagen zur Auswahl (Einstellungen &gt; Appearance): fuenf helle - Terminal Pro (das bisherige Design, bleibt Standard), Linear Light, Stripe Slate, Swiss Editorial, Notion Warm - und fuenf dunkle: Carbon Dark, Midnight Terminal, Graphite Dark, Nordic Dark, Solarized Dark. Die Wahl gilt auf allen Geraeten. Farben mit Bedeutung bleiben Bedeutung: bullish ist in JEDER Vorlage blau, bearish rot, neutral grau - angepasst wird nur die Helligkeit an die Flaeche, damit sie auch auf dunklem Grund lesbar sind. Nachgerechnet von einem neuen Waechter, der jede Textfarbe gegen jede Flaeche und den Farbton-Abstand zwischen bullish und bearish prueft. Dabei fielen zwei Kontrastmaengel im bisherigen Design auf, die seit Wochen bestanden: Sekundaertext und Akzentfarbe lagen auf der dunkelsten hellen Flaeche unter dem Lesbarkeitsminimum - beide sind minimal nachgedunkelt."Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-465</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-466</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4437,6 +4668,11 @@ function introLogin(){
     <div class="set-row">
       <span class="set-row-txt">All at once</span>
       <label class="tgl"><input type="checkbox" id="allAnimToggleBtn" onchange="toggleAllAnim()"><span class="tgl-track"></span></label>
+    </div>
+    <div class="set-sec">Appearance</div>
+    <div class="set-row set-row-col">
+      <span class="set-row-txt">Theme<span class="set-row-sub">colours that carry meaning stay blue for bullish, red for bearish</span></span>
+      <div class="fxth-grid" id="fxThemeGrid"></div>
     </div>
     <div class="set-sec">Layout</div>
     <div class="set-row">

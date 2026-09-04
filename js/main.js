@@ -4509,14 +4509,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4753,7 +4753,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -4875,6 +4875,10 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.denseMode!==undefined){denseMode=!!cd.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}
+      // ⚠ !==undefined, nicht truthy: das aktuelle Design ist der LEERE
+      // String. Mit einem truthy-Check kaeme "zurueck auf Terminal Pro" nie
+      // auf dem anderen Geraet an - derselbe Fall wie bei designHue/null.
+      if(!prefPending&&cd.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(cd.fxTheme)?cd.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
       if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
@@ -16503,6 +16507,55 @@ function applyDataAnim(){document.body.classList.toggle('no-data-anim',!dataAnim
 // wirkt nur auf Indikator-Zeilen; das hier ist der klassische Terminal-Griff
 // "komfortabel / dicht" ueber alle Karten. Liegt wie pinEnabled ausserhalb
 // von snap()/Undo und ist deshalb an allen vier Ecken angebunden.
+// ══ DESIGN-VORLAGEN (Nutzer-Wunsch 2026-09-04) ══════════════════════════
+// ⚠ Das AKTUELLE Design ist der Standard und steht in :root - es hat bewusst
+// KEINEN Eintrag hier und KEIN [data-fx-theme]-Regelwerk. Ein Geraet mit
+// unbekanntem Wert landet dadurch im vertrauten Design, statt ohne eine
+// einzige Farbvariable dazustehen.
+// ⚠ Wird eine Vorlage ENTFERNT, muss die Frueh-Weiche im <head> von
+// index.html den alten Wert migrieren - dort steht dieselbe Liste.
+const FX_THEMES=[
+  {id:'',         name:'Terminal Pro',   desc:'The current design',           sw:['#212C49','#E9EAF6','#FFFFFF','#2E8FB0']},
+  {id:'linear',   name:'Linear Light',   desc:'Cool near-white, indigo',      sw:['#1C1D21','#F4F5F8','#FFFFFF','#5E6AD2']},
+  {id:'stripe',   name:'Stripe Slate',   desc:'Pale blue-grey, violet',       sw:['#0A2540','#F0F4F9','#FFFFFF','#635BFF']},
+  {id:'swiss',    name:'Swiss Editorial',desc:'White, hairlines, no colour',  sw:['#111111','#FFFFFF','#FFFFFF','#1F1F1F']},
+  {id:'notion',   name:'Notion Warm',    desc:'Warm off-white, very quiet',   sw:['#37352F','#F7F7F5','#FFFFFF','#2383E2']},
+  {id:'carbon',   name:'Carbon Dark',    desc:'Black chrome, high contrast',  sw:['#000000','#161616','#262626','#33B1FF']},
+  {id:'midnight', name:'Midnight Term.', desc:'Deep navy trading desk',       sw:['#060B16','#0A101C','#16223A','#4FB6DC']},
+  {id:'graphite', name:'Graphite Dark',  desc:'Neutral grey, no colour cast', sw:['#0F1113','#17181B','#232529','#7FB3C8']},
+  {id:'nord',     name:'Nordic Dark',    desc:'Cool blue-grey, soft',         sw:['#242933','#2E3440','#3B4252','#88C0D0']},
+  {id:'solar',    name:'Solarized Dark', desc:'Warm teal, easy on the eyes',  sw:['#001F27','#002B36','#073642','#3EA5B5']},
+];
+const FX_THEME_IDS=FX_THEMES.map(t=>t.id).filter(Boolean);
+let fxTheme=(()=>{try{const t=localStorage.getItem('fxpro_theme');return (t&&FX_THEME_IDS.includes(t))?t:'';}catch(e){return '';}})();
+function applyFxTheme(){
+  if(fxTheme)document.documentElement.setAttribute('data-fx-theme',fxTheme);
+  else document.documentElement.removeAttribute('data-fx-theme');
+  // ⚠ Drei Literale, eine Farbe (siehe docs/design-system.md): das
+  // theme-color-Meta muss der Kopfzeilenfarbe folgen, sonst zeigt die
+  // Handy-Statusleiste die Farbe der vorherigen Vorlage.
+  try{
+    const m=document.querySelector('meta[name="theme-color"]');
+    if(m)m.setAttribute('content',getComputedStyle(document.documentElement).getPropertyValue('--chrome-bg').trim()||'#212C49');
+  }catch(e){}
+}
+function renderFxThemeGrid(){
+  const g=document.getElementById('fxThemeGrid');if(!g)return;
+  g.innerHTML=FX_THEMES.map((t,i)=>
+    `<button class="fxth${(t.id||'')===fxTheme?' on':''}" onclick="setFxTheme(${i})" type="button">`
+    +`<span class="fxth-sw">`+t.sw.map(c=>`<i style="background:${c}"></i>`).join('')+`</span>`
+    +`<span class="fxth-n">${t.name}</span><span class="fxth-d">${t.desc}</span></button>`).join('');
+}
+function setFxTheme(i){
+  const t=FX_THEMES[i];if(!t)return;
+  fxTheme=t.id||'';
+  try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}
+  // Damit die Wahl auf dem anderen Geraet ankommt - sonst waere sie reiner
+  // localStorage, genau der in docs/state-sync.md beschriebene Fehler.
+  try{localStorage.setItem('fxpro_updated',new Date().toISOString());}catch(e){}
+  applyFxTheme();renderFxThemeGrid();
+  try{cloudAutoSync();}catch(e){}
+}
 let denseMode=localStorage.getItem('fxpro_dense')==='1';
 function applyDenseMode(){document.body.classList.toggle('dense-mode',denseMode);}
 function updDenseToggleBtn(){const b=document.getElementById('denseToggleBtn');if(b)b.checked=!!denseMode;}
@@ -16711,7 +16764,7 @@ document.addEventListener('visibilitychange',()=>{
 loadState();
 applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
-applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();
+applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();applyFxTheme();renderFxThemeGrid();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
@@ -17058,6 +17111,10 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
+  // ⚠ setFxTheme wird aus einem onclick im Einstellungs-Raster gerufen -
+  // ohne diese Zeile wirft der Klick still ein ReferenceError und die
+  // Vorlagen-Auswahl waere fuer den Nutzer einfach kaputt (CLAUDE.md Regel 6).
+  setFxTheme,renderFxThemeGrid,applyFxTheme,FX_THEMES,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
