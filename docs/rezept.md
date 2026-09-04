@@ -715,6 +715,17 @@ eigenen Ideen darunter. Immer **drei nebeneinander**; „Show 3 more" blättert
 weiter und merkt die gezeigten als gesehen — **geräteübergreifend**, sonst
 zeigt das Tablet dieselben drei, die man am Telefon längst weg hat.
 
+⚠ **Fremder Code ist nicht unser Code.** Die App bettet Reels und Videos ein;
+deren Skripte melden ihre eigenen Fehler in dieselbe Konsole (`ErrorUtils
+caught an error … fburl.com/debugjs` ist Facebooks Fehler-Wrapper aus dem
+Instagram-Embed). Darauf hat diese App null Einfluss. Statt für jede solche
+Meldung ein Textmuster einzutragen — was den Wächter Stück für Stück stumpf
+machen würde — entscheidet die **Herkunft**: stammt ein Konsolenfehler aus
+einem Skript, das nicht von unserer Adresse kommt, zählt er nicht. Ohne URL
+bleibt es streng, und echte Ausnahmen der Seite selbst (`pageerror`) sind
+davon ohnehin nicht berührt. Gegengeprüft: ein `console.error` im eigenen
+Code wird weiterhin gemeldet.
+
 ⚠ **`compute-pressure` wird dem Player bewusst NICHT erlaubt.** Die iframes
 geben `autoplay; encrypted-media; picture-in-picture` — mehr nicht. YouTube
 fragt zusätzlich `compute-pressure` an (die Berechtigung verrät die

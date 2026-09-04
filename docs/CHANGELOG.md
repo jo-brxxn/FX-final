@@ -9780,3 +9780,15 @@ Verweigerung, die Wiedergabe läuft. Sie zu erlauben, nur damit der Lauf grün
 wird, wäre die falsche Richtung — der Wächter nimmt deshalb genau diese
 Berechtigung aus, keine Policy-Verletzungen allgemein. Auch das trat nur mit
 Netz auf, weil das iframe sonst gar nicht lädt.
+
+**Und noch ein Nachtrag:** danach blieb `ErrorUtils caught an error … Got
+unexpected null or undefined` stehen — Facebooks Fehler-Wrapper aus dem
+eingebetteten Instagram-Reel, kein Treffer im eigenen Code. Statt eine dritte
+Textausnahme einzutragen (drei Muster hintereinander machen einen Wächter
+stumpf) entscheidet jetzt die **Herkunft**: ein Konsolenfehler aus einem
+Skript, das nicht von unserer Adresse kommt, ist keiner unserer Fehler.
+Gegengeprüft mit einem eingebauten `console.error` im eigenen Code — der wird
+weiterhin gemeldet. ⚠ Beim Probelauf fiel außerdem auf, dass `new URL(...)` im
+Handler den ganzen Lauf abstürzen ließ: in `check/rezept.js` ist `URL` eine
+eigene Konstante und verdeckt den Konstruktor. Ohne die Probe wäre das als
+CI-Absturz aufgeschlagen.

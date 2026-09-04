@@ -306,7 +306,25 @@ function pruefeKontrast() {
     // gruen und auf dem Runner rot war. Eng begrenzt auf genau diese
     // Berechtigung: jede andere Policy-Verletzung bleibt ein Fehler.
     const erlaubt = /Permissions policy violation: compute-pressure/.test(t);
-    if (m.type() === 'error' && !erlaubt && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) jsFehler.push(t);
+    // ⚠ FREMDER CODE IST NICHT UNSER CODE. Die App bettet Reels und Videos
+    // ein; deren Skripte melden ihre eigenen Fehler in dieselbe Konsole
+    // ("ErrorUtils caught an error ... fburl.com/debugjs" ist Facebooks
+    // Fehler-Wrapper aus dem Instagram-Embed). Darauf hat diese App null
+    // Einfluss, und ein roter Lauf dafuer sagt nichts ueber sie aus. Statt
+    // fuer jede solche Meldung ein Textmuster einzutragen - das den Waechter
+    // Stueck fuer Stueck stumpf machen wuerde - entscheidet die HERKUNFT:
+    // stammt der Fehler aus einem Skript, das nicht von unserer Adresse
+    // kommt, zaehlt er nicht. Ohne URL bleibt es streng, und
+    // p.on('pageerror') - echte Ausnahmen der Seite selbst - ist davon
+    // ohnehin nicht beruehrt.
+    const quelle = (m.location() || {}).url || '';
+    // ⚠ Kein new URL(...) hier: in dieser Datei ist URL eine eigene
+    // Konstante (die Adresse der Testseite) und verdeckt den Konstruktor -
+    // der Handler stuerzte damit den ganzen Lauf ab. Beim Probelauf
+    // aufgefallen, nicht in der CI.
+    const eigen = (/^https?:\/\/[^/]+/.exec(BASE) || [''])[0];
+    const fremd = quelle && eigen && !quelle.startsWith(eigen);
+    if (m.type() === 'error' && !erlaubt && !fremd && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) jsFehler.push(t);
   });
   await p.goto(URL, { waitUntil: 'load' });
   await p.waitForFunction(() => document.querySelectorAll('#rezNav .np').length > 0, { timeout: 15000 })
