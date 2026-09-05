@@ -323,3 +323,20 @@ Gegenprobe beim Testen: Badge in JEDE Zeile setzen und bei 390/430/520/820px
 messen (`scrollWidth` vs `clientWidth` von Tabelle UND Karte, hoechste
 Zeilenhoehe) — ein einzelner Screenshot in Standardbreite zeigt den Fehler
 nicht, weil dort genug Platz ist.
+
+## Chart-Cursor (`chartHoverWrap`/`attachChartHovers`) — ein Muster für alle Diagramme
+
+Regel seit 2026-09-05 (Nutzer-Wunsch): **Solange der Zeiger im Diagramm ist,
+ist IMMER der nächstgelegene Datenpunkt ausgewählt** — kein Ausblenden am
+linken/rechten Rand (`fx` wird auf 0…1 geklemmt), und `mouseenter` zeigt ihn
+schon beim Betreten. Die graue Führungslinie läuft **vom gewählten Punkt
+senkrecht bis zum Boden** des Diagramms, nicht über die volle Höhe: `top` und
+`height` werden im JS gesetzt (`bot = Höhe − 22`, die 22 px sind die
+Datumsbeschriftung), sie gewinnen gegen das `bottom` in `.chv-line`.
+
+Jedes neue Diagramm nutzt `chartHoverWrap(svg, pts)` + `attachChartHovers(el)`
+statt eigener Hover-Logik. Stehen **mehrere Diagramme nebeneinander, die
+denselben Zeitraum zeigen** (Insights > Data, bis zu 4 Panels), bekommen sie
+über den vierten Parameter dieselbe Gruppe (`chartHoverWrap(svg,pts,null,'data')`
+→ `data-chv-group`): alle zeigen dann denselben Zeitpunkt. Vier Charts mit vier
+unabhängigen Cursorn kann man nicht vergleichen — genau dafür stehen sie da.

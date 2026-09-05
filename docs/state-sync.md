@@ -33,7 +33,7 @@ Nach diesem Muster angebundene Felder: `greenDismissed`, `tabStacks`,
 Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch "zurück auf
 Auto" = null ankommt), `setupCcyFilter`/`setupFxOnly`
 (Set-ups-Waehrungsfilter/FX-Quick-Filter), `calHighOnly`/`calCcyFilter`
-(Kalender-Filter), `cmpCols` (Compare-Tab-Spaltenauswahl), `telegramEnabled`,
+(Kalender-Filter), `telegramEnabled`,
 `newsSeenTs`, `denseMode`, `assetAnimEnabled` (und die drei weiteren
 Animations-Schalter aus demselben Vier-Schalter-Satz), `dashboards`/
 `activeDashId` (siehe `docs/navigation.md`, Mehrfach-Dashboards — laufen

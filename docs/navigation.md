@@ -953,7 +953,7 @@ GOLDs eigener Bias für denselben Indikator bearish war.
 `actualColorRaw(ev)` ist die unveränderte Rohrichtung.
 
 ⚠ **Nur ANZEIGE-Aufrufer bekommen den Kontext** — Indikator-Tabelle,
-Asset-Kalender, History-Panel, Compare-Matrix. Die **bias-ableitenden** Aufrufer
+Asset-Kalender, History-Panel. Die **bias-ableitenden** Aufrufer
 (`indBiasFromEvent`, `researchBias`) und `surpriseIndex` bekommen ihn **nicht**:
 dort dreht bereits `deriveMacroBiasAll()`, ein zweites Drehen würde die Umkehr
 doppelt anwenden. Wer hier etwas ergänzt, muss diese Trennung halten.

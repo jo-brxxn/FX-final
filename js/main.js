@@ -4509,14 +4509,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}if(Array.isArray(_imp.cmpCols)){cmpCols=_imp.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -4753,7 +4753,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.cmpCols=cmpCols;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -4900,7 +4900,6 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
-        if(Array.isArray(cd.cmpCols)){cmpCols=cd.cmpCols;try{localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));}catch(e){}}
       }
       processCalEvts();
       // Dieselbe Absicherung wie in save() (siehe dort, Nutzer-Bugreport
@@ -11189,145 +11188,6 @@ function addWidget(){
   openM('mRename');
 }
 
-// ══ COMPARE / CROSS-CURRENCY MATRIX ═══════════════════════════════
-// Vergleichsseite: pro Makro-Karte eine Tabelle - Symbole oben (Spalten),
-// Indikatoren links (Zeilen), je Zelle Actual · (Forecast / Previous), plus
-// eine Score-Zeile pro Karte/Spalte. Spalten frei wählbar (FX + Non-FX).
-const CMP_RUBS=['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data',MACRO_NAME];
-const CMP_RUB_ICON={'Inflation':'📈','Interest Rates':'🏦','Labour Market':'👷','Economic Growth':'🌐','COT Data':'📊',[MACRO_NAME]:'⚖️'};
-// Auswählbare Vergleichsspalten: alle FX-Währungen + alle Non-FX-Assets.
-function cmpAvailableIds(){return[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];}
-// Aktuell gewählte Spalten (persistiert, cloud-synct wie tabStacks -
-// Audit-Agent-Fund 2026-07-20, siehe CLAUDE.md "WICHTIGSTE
-// REGEL"). Default: alle FX-Währungen.
-let cmpCols=(()=>{try{const v=JSON.parse(localStorage.getItem('fxpro_cmp_cols'));return Array.isArray(v)&&v.length?v:[...FX];}catch(e){return[...FX];}})();
-function cmpColIds(){const avail=cmpAvailableIds();let sel=cmpCols.filter(id=>avail.includes(id));if(!sel.length)sel=[...FX];return avail.filter(id=>sel.includes(id));}
-function saveCmpCols(){
-  localStorage.setItem('fxpro_cmp_cols',JSON.stringify(cmpCols));
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-}
-function toggleCmpCol(id){const i=cmpCols.indexOf(id);if(i>=0)cmpCols.splice(i,1);else cmpCols.push(id);saveCmpCols();renderCompare();}
-function cmpSelectAllFx(){cmpCols=[...FX];saveCmpCols();renderCompare();}
-function cmpSelectAllAssets(){cmpCols=cmpAvailableIds().filter(id=>isNonFx(id));saveCmpCols();renderCompare();}
-function cmpSelectAll(){cmpCols=cmpAvailableIds();saveCmpCols();renderCompare();}
-// Maße/Einheiten, die je Währung für ein und denselben Indikatornamen
-// abweichen können (z.B. "NFP / Employment Change": USD = monatliche
-// Job-Veränderung in Tsd., EUR = q/q %-Wachstum, GBP = absolutes Level).
-// Damit das im Compare-Vergleich nicht wie "falsche Zahl" wirkt, wird ein
-// kleines Hinweis-Badge an der Zelle angezeigt, wenn die Recherchedaten
-// ein "unit" hinterlegt haben.
-const IND_UNIT_LABEL={count:'Δ count',percent:'% chg',level:'Level'};
-const IND_INTERVAL_LABEL={monthly:'m/m',quarterly:'q/q',weekly:'w/w',annual:'y/y'};
-function cmpUnitBadge(ind){
-  const r=ind&&ind.research;if(!r||!r.unit)return null;
-  const u=IND_UNIT_LABEL[r.unit]||r.unit;
-  const iv=r.interval?(IND_INTERVAL_LABEL[r.interval]||r.interval):null;
-  return iv?u+' · '+iv:u;
-}
-// Liefert {a,f,p,color,name,badge} für einen Indikator eines Symbols - exakt
-// dieselbe Quelle/Priorität wie die Detailkarte (Live-Event vor Recherche).
-function cmpCellData(symId,rubName,baseName){
-  const sym=syms.find(s=>s.id===symId);if(!sym)return null;
-  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
-  const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===baseName);
-  if(!ind)return null;
-  const badge=cmpUnitBadge(ind);
-  // Feed-abgedeckte Indikatoren (ind.research.feed===true) haben volle
-  // Exklusivitaet gegenueber dem Kalender-Pfad (Dual-Source-Fix, siehe
-  // CLAUDE.md) - sonst konnte hier ein falsch zugeordnetes Kalender-Event
-  // einen falschen Wert im Compare-Tab zeigen (Bugreport 2026-07-20, EUR PPI).
-  const ev=(ind.research&&ind.research.feed)?null:findIndEvent(symId,ind.name);
-  if(ev)return{a:ev.actual,f:ev.forecast,p:ev.previous,color:actualColor(ev,symId),name:ind.name,badge};
-  if(ind.research){
-    const r=ind.research;
-    const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
-    const color=r.bond?r.bondColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},symId);
-    return{a:A.val,f:F.val,p:P.val,color,name:ind.name,badge};
-  }
-  return{a:null,f:null,p:null,color:'',name:ind.name,badge};
-}
-// Karten-Score eines Symbols für eine Rubrik (null, wenn die Rubrik fehlt).
-function cmpRubScore(symId,rubName){const sym=syms.find(s=>s.id===symId);if(!sym)return null;const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;return rubScore(rub);}
-function cmpScoreColor(sc){return sc>0?'var(--green)':sc<0?'var(--red)':'var(--amber)';}
-// Investing.com-Link(s) eines Indikators für ein Symbol - identische Quelle/
-// Priorität wie in der Detailkarte (kuratierter Link > Research-Quelle, plus
-// optionaler m/m-Sekundärlink). null, wenn der Indikator dort nicht existiert.
-function cmpCellLinks(symId,rubName,base){
-  const sym=syms.find(s=>s.id===symId);if(!sym)return null;
-  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return null;
-  const ind=(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
-  if(!ind)return null;
-  const ccy=macroCcyFor(symId);
-  const cs=(ccy?indResearchSource(ccy,base):null)||(ind.research&&ind.research.source)||'';
-  const fin=(ccy&&indLinkCustom&&indLinkCustom[indLinkKey(ccy,base)])||cs;
-  const out={primary:null,secondary:null};
-  if(fin)out.primary={url:fin,label:srcLabel(fin)};
-  if(ind.research&&ind.research.secondarySource)out.secondary={url:ind.research.secondarySource,label:ind.research.secondaryLabel||srcLabel(ind.research.secondarySource)};
-  return out;
-}
-// Welche Indikator-Zeilen sind aktuell ausgeklappt (Key: "Rubrik|Basisname").
-const cmpOpenRows=new Set();
-function toggleCmpRow(enc){const key=decodeURIComponent(enc);if(cmpOpenRows.has(key))cmpOpenRows.delete(key);else cmpOpenRows.add(key);renderCompare();}
-function renderCompare(){
-  const el=document.getElementById('cmpCards');if(!el)return;
-  const cols=cmpColIds();
-  const avail=cmpAvailableIds();
-  // Filterleiste: FX-Chips, Non-FX-Chips, Schnellaktionen.
-  const allSel=cols.length===avail.length;
-  const nfAvail=avail.filter(id=>isNonFx(id));
-  const assetsSel=nfAvail.length>0&&cols.length===nfAvail.length&&cols.every(id=>nfAvail.includes(id));
-  const chip=id=>{const on=cols.includes(id);const nf=isNonFx(id);return`<button class="cmp-chip${on?' on':''}${nf?' nf':''}" onclick="toggleCmpCol('${id}')">${escH(id)}</button>`;}
-  const filterBar=`<div class="cmp-filter">
-    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Currencies</span>${FX.map(chip).join('')}</div>
-    <div class="cmp-filter-grp"><span class="cmp-filter-lbl">Assets</span>${nfAvail.map(chip).join('')||'<span class="cmp-filter-none">none</span>'}</div>
-    <div class="cmp-filter-grp"><button class="cmp-quick" onclick="cmpSelectAllFx()">FX only</button><button class="cmp-quick${assetsSel?' on':''}" onclick="cmpSelectAllAssets()" title="Select only non-FX assets">Select</button><button class="cmp-quick${allSel?' on':''}" onclick="cmpSelectAll()">Select all</button></div>
-  </div>`;
-  const cards=CMP_RUBS.map(rubName=>{
-    // Union der Indikator-Basisnamen über die gewählten Spalten (in Spalten-
-    // reihenfolge -> erste Spalte gibt die Zeilenfolge vor, Extras hinten dran).
-    const bases=[];
-    cols.forEach(id=>{
-      const sym=syms.find(s=>s.id===id);if(!sym)return;
-      const rub=(sym.rubrics||[]).find(r=>r.name===rubName);if(!rub)return;
-      (rub.indicators||[]).forEach(ind=>{const b=stripPeriodSuffix(ind.name).base;if(b&&!bases.includes(b))bases.push(b);});
-    });
-    if(!bases.length)return'';
-    const head=`<th class="cmp-corner">Indicator</th>`+cols.map(id=>`<th class="${isNonFx(id)?'cmp-col-nf':''}">${escH(id)}</th>`).join('');
-    // Score-Zeile (Karten-Score je Spalte).
-    const scoreCells=cols.map(id=>{const sc=cmpRubScore(id,rubName);if(sc==null)return`<td class="cmp-na">–</td>`;return`<td><span class="cmp-score" style="color:${cmpScoreColor(sc)};border-color:${cmpScoreColor(sc)}">${sc>0?'+':''}${sc}</span></td>`;}).join('');
-    const scoreRow=`<tr class="cmp-score-row"><td class="cmp-ind">⚡ Score</td>${scoreCells}</tr>`;
-    const rows=bases.map(base=>{
-      const key=rubName+'|'+base;const open=cmpOpenRows.has(key);const enc=encodeURIComponent(key);
-      const cells=cols.map(id=>{
-        const d=cmpCellData(id,rubName,base);
-        if(!d||d.a==null)return`<td class="cmp-na">–</td>`;
-        const fp=[d.f!=null&&d.f!==''?'F '+escH(d.f):null,d.p!=null&&d.p!==''?'P '+escH(d.p):null].filter(Boolean).join('  ·  ');
-        const badge=d.badge?`<div class="cmp-unit" title="Unit/frequency may differ from other currencies - direct numeric comparison isn't 1:1">${escH(d.badge)}</div>`:'';
-        return`<td><div class="cmp-a ${d.color}">${escH(d.a)}</div>${fp?`<div class="cmp-fp">${fp}</div>`:''}${badge}</td>`;
-      }).join('');
-      const mainRow=`<tr class="cmp-data-row${open?' open':''}" onclick="toggleCmpRow('${escJH(enc)}')"><td class="cmp-ind"><span class="cmp-caret">▸</span>${escH(base)}</td>${cells}</tr>`;
-      if(!open)return mainRow;
-      // Ausgeklappte Link-Zeile: pro Spalte der/die passende(n) investing.com-Link(s).
-      const linkCells=cols.map(id=>{
-        const lk=cmpCellLinks(id,rubName,base);
-        if(!lk||(!lk.primary&&!lk.secondary))return`<td class="cmp-na">–</td>`;
-        const parts=[];
-        if(lk.primary)parts.push(`<a href="${safeUrl(lk.primary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.primary.label)} ↗</a>`);
-        if(lk.secondary)parts.push(`<a href="${safeUrl(lk.secondary.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${escH(lk.secondary.label)} ↗</a>`);
-        return`<td class="cmp-link-cell"><div class="cmp-link-wrap">${parts.join('')}</div></td>`;
-      }).join('');
-      return mainRow+`<tr class="cmp-exp-row"><td class="cmp-ind cmp-exp-lbl">🔗 Sources</td>${linkCells}</tr>`;
-    }).join('');
-    return`<div class="cmp-card">
-      <div class="cmp-title"><span class="cmp-title-ic">${CMP_RUB_ICON[rubName]||''}</span><span>${escH(rubName)}</span><small>Actual · (Forecast / Previous)</small></div>
-      <div class="cmp-scroll"><table class="cmp-tbl"><thead><tr>${head}</tr></thead><tbody>${scoreRow}${rows}</tbody></table></div>
-    </div>`;
-  }).join('');
-  el.innerHTML=filterBar+(cards||`<div style="color:var(--t3);font-size:12px;padding:14px 0">No columns selected.</div>`);
-}
 // ══ MATRIX / STÄRKE ════════════════════════════════════════════════
 // Persistenter Score-Verlauf: pro FX-Währung 1 Wert je Tag (bis zu 3 Jahre,
 // wie chartHist/COT-3y%ile anderswo in der App). Separat vom Haupt-State
@@ -12971,30 +12831,54 @@ function gaugeNeedleAnim(root){
 // vertikales Scrollen zu, blockt aber horizontales Wischen/Verschieben. ──
 const _chvReg={};let _chvSeq=0;
 // svg fuellt den Wrapper; pts: [{fx,fy,col,tip}] mit fx,fy in 0..1 der SVG-Box.
-function chartHoverWrap(svg,pts,wrapStyle){
+function chartHoverWrap(svg,pts,wrapStyle,group){
   const id='chv'+(_chvSeq++);_chvReg[id]=pts||[];
-  return`<div class="chv" data-chv="${id}"${wrapStyle?` style="${wrapStyle}"`:''}>${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
+  return`<div class="chv" data-chv="${id}"${group?` data-chv-group="${escH(group)}"`:''}${wrapStyle?` style="${wrapStyle}"`:''}>${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
 }
 function attachChartHovers(root){
   (root||document).querySelectorAll('.chv[data-chv]').forEach(w=>{
     if(w._chvWired)return;w._chvWired=1;
-    const pts=_chvReg[w.dataset.chv]||[];
     const line=w.querySelector('.chv-line'),dot=w.querySelector('.chv-dot'),tip=w.querySelector('.chv-tip');
     const hide=()=>{if(line)line.style.display='none';if(dot)dot.style.display='none';if(tip)tip.style.display='none';};
-    const move=cx=>{
+    w._chvHide=hide;
+    // Solange der Zeiger IM Diagramm ist, ist IMMER ein Datenpunkt gewaehlt
+    // (Nutzer-Wunsch 2026-09-05). Vorher blendete der Cursor am linken/
+    // rechten Rand (fx ausserhalb -0.03..1.03) komplett aus - man stand im
+    // Chart und sah trotzdem nichts. Jetzt wird fx auf 0..1 geklemmt, es
+    // gibt also immer einen naechsten Punkt.
+    w._chvShowAt=fx=>{
+      const pts=_chvReg[w.dataset.chv]||[];
       const r=w.getBoundingClientRect();if(!r.width||!pts.length){hide();return;}
-      const fx=(cx-r.left)/r.width;if(fx<-0.03||fx>1.03){hide();return;}
-      let best=pts[0],bd=1e9;pts.forEach(p=>{const d=Math.abs(p.fx-fx);if(d<bd){bd=d;best=p;}});
+      const f=Math.max(0,Math.min(1,fx));
+      let best=pts[0],bd=1e9;pts.forEach(p=>{const d=Math.abs(p.fx-f);if(d<bd){bd=d;best=p;}});
       const px=best.fx*r.width,py=best.fy*r.height;
-      if(line){line.style.left=px+'px';line.style.display='';}
+      // Duenne graue Linie SENKRECHT vom Punkt bis zum Boden des Diagramms
+      // ("dort zieht sich dann auch eine duenne graue Linie senkrecht zum
+      // Boden hoch"). Vorher lief sie ueber die volle Chart-Hoehe, also auch
+      // oberhalb des Punktes - dadurch war nicht ablesbar, WELCHER Punkt
+      // gemeint ist. top+height gewinnen gegen das bottom aus dem CSS.
+      if(line){const bot=Math.max(0,r.height-22),ty=Math.min(py,bot);line.style.left=px+'px';line.style.top=ty+'px';line.style.height=Math.max(0,bot-ty)+'px';line.style.display='';}
       if(dot){dot.style.left=px+'px';dot.style.top=py+'px';dot.style.borderColor=best.col||'var(--t3)';dot.style.display='';}
       if(tip){tip.innerHTML=best.tip;tip.style.display='';const tw=tip.offsetWidth||120;tip.style.left=Math.max(tw/2+2,Math.min(r.width-tw/2-2,px))+'px';tip.style.top=Math.max(4,py)+'px';}
     };
+    // Diagramme mit derselben data-chv-group (Insights > Data, bis zu 4
+    // Panels) teilen sich den Cursor: alle zeigen denselben Zeitpunkt, sonst
+    // vergleicht man vier Charts und weiss nie, welcher Balken zu welchem
+    // gehoert.
+    const grp=w.dataset.chvGroup||'';
+    const peers=()=>grp?[...document.querySelectorAll('.chv[data-chv-group="'+grp+'"]')]:[w];
+    const move=cx=>{
+      const r=w.getBoundingClientRect();if(!r.width)return;
+      const fx=(cx-r.left)/r.width;
+      peers().forEach(p=>{if(p._chvShowAt)p._chvShowAt(fx);});
+    };
+    const leave=()=>peers().forEach(p=>{if(p._chvHide)p._chvHide();});
+    w.addEventListener('mouseenter',e=>move(e.clientX));
     w.addEventListener('mousemove',e=>move(e.clientX));
-    w.addEventListener('mouseleave',hide);
+    w.addEventListener('mouseleave',leave);
     w.addEventListener('touchstart',e=>{const t=e.touches[0];if(t)move(t.clientX);},{passive:true});
     w.addEventListener('touchmove',e=>{const t=e.touches[0];if(t)move(t.clientX);},{passive:true});
-    w.addEventListener('touchend',hide);w.addEventListener('touchcancel',hide);
+    w.addEventListener('touchend',leave);w.addEventListener('touchcancel',leave);
   });
 }
 function sentSpark(series,lo,hi,loTh,hiTh){
@@ -13188,13 +13072,17 @@ function indChartSeries(ind,symId){
   if(pts.length<2){pts=valHistPts(ind);unit=null;}
   return pts.length>=2?{pts,unit}:{pts:own,unit:null};
 }
-function indHistChart(ind,symId){
+// opts: {noToolbar:true} laesst die Zeitraum-Leiste weg (Insights > Data
+// hat EINE gemeinsame Leiste ueber allen Panels), {group:'x'} haengt den
+// Chart an einen gemeinsamen Hover-Cursor (siehe attachChartHovers).
+function indHistChart(ind,symId,opts){
+  opts=opts||{};
   const _cs=indChartSeries(ind,symId);
   const all=_cs.pts;
   const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange');
   const legend=`<div class="ind-hist-legend"><span>■ Actual</span><span>— Forecast</span></div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
-  const toolbar=`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
+  const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -13309,7 +13197,7 @@ function indHistChart(ind,symId){
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
   const hasFc=use.some(p=>p[2]!=null);
   const legend2=`<div class="ind-hist-legend"><span>■ Actual</span>${hasFc?'<span>— Forecast</span>':''}</div>`;
-  const toolbar2=`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
+  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span>■ Actual</span>${hasFc?'<span>— Forecast</span>':''}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
@@ -13321,47 +13209,88 @@ function indHistChart(ind,symId){
     let lbl;try{lbl=fmtDayHdr(p[0]);}catch(e){lbl=p[0];}
     return{fx:xOf(i)/W,fy:yOf(p[1])/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
   });
-  return`<div class="ind-hist-wrap">${toolbar2}${chartHoverWrap(svg,hpts)}</div>`;
+  return`<div class="ind-hist-wrap">${toolbar2}${chartHoverWrap(svg,hpts,null,opts.group)}</div>`;
 }
-// ── Insights-Tab "Data" (Nutzer-Wunsch 2026-07-14): Asset waehlen, dann
-// einen Indikator (gruppiert nach dessen Karte - Inflation, Interest Rates,
-// ...; unterschiedliche Assets tracken unterschiedliche Indikatoren, daher
-// wird die Liste live aus sym.rubrics des GEWAEHLTEN Assets gebaut statt
-// aus einer festen Liste). Zeigt darunter denselben indHistChart wie beim
-// Ausklappen eines Indikators auf der Asset-Seite.
-let dataAsset='USD',dataIndBase='CPI (Headline)';
-function setDataAsset(v){dataAsset=v||'';dataIndBase='';renderDataTab();}
+// ── Insights-Tab "Data" ────────────────────────────────────────────
+// Nutzer-Wunsch 2026-09-05 (woertlich): "bei insights bei data will ich das
+// man dort sich mehrere Assets gleichzeitig auswaehlen kann. Es soll den
+// Bildschirm in bis zu 4 Haelften teilen und man kann bis zu 4 Assets
+// auswaehlen und der Indikator den man auswaehlt ist bei jedem gleich.
+// Zeitfilter ist dann einmal da und veraendert alle Diagramme." Daher:
+// bis zu 4 Panels in einem 2x2-Raster, EIN Indikator-Dropdown und EINE
+// Zeitraum-Leiste (indHistRange, dieselbe wie auf der Asset-Detailseite)
+// ueber allen Panels - die Panel-Charts bekommen deshalb noToolbar:true.
+// Die Indikator-Liste ist die VEREINIGUNG aller gewaehlten Assets: nicht
+// jedes Asset fuehrt jeden Indikator, und ein Panel, das ihn nicht fuehrt,
+// sagt das ausdruecklich, statt irgendetwas anderes zu zeigen (CLAUDE.md
+// Regel 4).
+// Die Auswahl bleibt bewusst LOKAL/fluechtig - wie seasAsset/rateProbSel
+// ist sie eine reine Chart-Auswahl, kein persistierter Zustand (siehe die
+// Begruendung an loadPrefs).
+const DATA_MAX_PANELS=4;
+let dataAssets=['USD'],dataIndBase='CPI (Headline)';
+// Watchlist-Quicklinks springen mit GENAU EINEM Asset hierher - das ersetzt
+// die ganze Panel-Auswahl, sonst landet man auf einem Raster, in dem das
+// angeklickte Asset irgendwo dazwischen steht.
+function setDataAsset(v){dataAssets=v?[v]:[];dataIndBase='';renderDataTab();}
+function addDataAsset(v){
+  if(v&&!dataAssets.includes(v)&&dataAssets.length<DATA_MAX_PANELS)dataAssets.push(v);
+  renderDataTab();
+}
+function removeDataAsset(id){
+  const i=dataAssets.indexOf(id);if(i>=0)dataAssets.splice(i,1);
+  renderDataTab();
+}
 function setDataInd(v){dataIndBase=v||'';renderDataTab();}
 function renderDataTab(){
   const el=document.getElementById('dataBody');if(!el)return;
   const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
-  if(dataAsset&&!ids.includes(dataAsset))dataAsset='';
-  const assetPicker=assetFilterSelect(ids,dataAsset,'setDataAsset','Choose an asset...','Filter by asset',null);
-  const sym=dataAsset?syms.find(s=>s.id===dataAsset):null;
-  let indPicker='',chartSection='';
-  if(sym){
-    const groups=(sym.rubrics||[]).map(rub=>{
-      const items=(rub.indicators||[]).map(ind=>({base:stripPeriodSuffix(ind.name).base,name:ind.displayName||ind.name,ind}));
-      return items.length?{name:rub.name,items}:null;
-    }).filter(Boolean);
-    if(dataIndBase&&!groups.some(g=>g.items.some(it=>it.base===dataIndBase)))dataIndBase='';
-    const opts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
-    indPicker=`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Filter by indicator" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator...</option>${opts}</select></div>`;
-    if(dataIndBase){
+  dataAssets=dataAssets.filter(id=>ids.includes(id)).slice(0,DATA_MAX_PANELS);
+  const panels=dataAssets.map(id=>syms.find(s=>s.id===id)).filter(Boolean);
+  // Indikator-Auswahl: Vereinigung ueber alle gewaehlten Assets, gruppiert
+  // nach Karte (Inflation, Interest Rates, ...).
+  const groups=[];
+  panels.forEach(sym=>(sym.rubrics||[]).forEach(rub=>{
+    let g=groups.find(x=>x.name===rub.name);
+    if(!g){g={name:rub.name,items:[]};groups.push(g);}
+    (rub.indicators||[]).forEach(ind=>{
+      const base=stripPeriodSuffix(ind.name).base;
+      if(base&&!g.items.some(it=>it.base===base))g.items.push({base,name:ind.displayName||ind.name});
+    });
+  }));
+  const allBases=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.base)),[]);
+  if(dataIndBase&&!allBases.includes(dataIndBase))dataIndBase='';
+  // Kopfleiste: Chips der gewaehlten Panels (Klick entfernt) + Dropdown zum
+  // Hinzufuegen, bis 4 belegt sind.
+  const chips=dataAssets.map(id=>`<button class="cmp-chip on${isNonFx(id)?' nf':''}" onclick="removeDataAsset('${escJH(id)}')" title="Remove this panel">${escH(id)} ✕</button>`).join('');
+  const rest=ids.filter(id=>!dataAssets.includes(id));
+  const addPicker=dataAssets.length>=DATA_MAX_PANELS
+    ?`<span class="cmp-filter-none">4 of 4 panels in use — remove one to add another</span>`
+    :assetFilterSelect(rest,'','addDataAsset','Add an asset…','Add an asset panel',null);
+  const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
+  const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="The same indicator is shown in every panel" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
+  const rangeBar=(panels.length&&dataIndBase)
+    ?`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange')}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`:'';
+  const head=`<div class="cot-card"><div class="cot-card-title">Data<span style="font-weight:500;color:var(--t3);font-size:11px;margin-left:10px">up to 4 assets side by side · one indicator · one time range</span><span style="margin-left:auto">${addPicker}</span></div>
+    <div class="data-ctrls">
+      <div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No asset selected</span>'}</div>
+      ${indPicker}${rangeBar}
+    </div></div>`;
+  let body;
+  if(!panels.length)body=`<div class="cot-empty">Pick up to 4 assets above to see their indicator history side by side.</div>`;
+  else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — the same one is shown in every panel.</div>`;
+  else{
+    body=`<div class="data-grid${panels.length>1?' split':''}">`+panels.map(sym=>{
       const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
       const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
-      if(ind)chartSection=`<div class="cot-card"><div class="cot-card-title">${escH(ind.displayName||ind.name)} — ${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(rub.name)}</span></div><div style="padding:12px 14px">${indHistChart(ind,sym.id)}</div></div>`;
-    }
+      const title=`<div class="cot-card-title">${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(ind?(ind.displayName||ind.name):dataIndBase)}</span></div>`;
+      const inner=ind
+        ?indHistChart(ind,sym.id,{noToolbar:true,group:'data'})
+        :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(dataIndBase)}”. Pick a different indicator, or remove this panel.</div>`;
+      return`<div class="cot-card">${title}<div style="padding:12px 14px">${inner}</div></div>`;
+    }).join('')+`</div>`;
   }
-  // Asset-Filter jetzt oben rechts in einem Karten-Titel, wie bei den
-  // anderen Kategorien (Nutzer-Wunsch 2026-08-31: "Asset Filter sollen
-  // ueberall einheitlich sein... immer oben rechts") - vorher eine
-  // titel-lose Zeile ohne erkennbare Kategorie-Ueberschrift. Der
-  // Indikator-Filter ist ein davon ABHAENGIGER zweiter Schritt (erst
-  // sichtbar/sinnvoll, wenn ein Asset gewaehlt ist) und bleibt deshalb als
-  // eigene Zeile darunter, nicht mit im selben Titel.
-  const dataHead=`<div class="cot-card"><div class="cot-card-title">Data<span style="margin-left:auto">${assetPicker}</span></div>${indPicker?`<div style="padding:0 14px 12px">${indPicker}</div>`:''}</div>`;
-  el.innerHTML=dataHead+(chartSection||`<div class="cot-empty">${sym?'Pick an indicator above.':'Pick an asset above to browse its indicator history.'}</div>`);
+  el.innerHTML=head+body;
   attachChartHovers(el);
 }
 function sentReadBadge(ev){
@@ -15788,14 +15717,14 @@ function renderRateProb(){
   scrollRateProbTo(rateProbFocus,false);
 }
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',cmp:'pgCmp',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
 // zusammenmachen, Non-FX unter FX anreihen") - die 'cur'-Seite zeigt jetzt
 // immer ALLE SB_CATS-Kategorien (FX zuerst, dann Crypto/Metals/Energy/
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
-const TAB_ORDER=['dash','fx','cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
+const TAB_ORDER=['dash','fx','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
 const TABS={
   dash:{label:'Dashboard',tab:'dash'},
   // Label 2026-08-03 von 'FX' auf 'Assets' umbenannt (Nutzer-Wunsch, per Foto):
@@ -15805,7 +15734,6 @@ const TABS={
   // 'fx' und tab:'cur' bleiben bewusst (gespeicherte tabStacks/URLs halten),
   // gleiches Muster wie beim 'notes'->'Research'-Umbenennen oben.
   fx:{label:'Assets',tab:'cur'},
-  cmp:{label:'Compare',tab:'cmp'},
   mx:{label:'Matrix',tab:'mx'},
   trends:{label:'Trends',tab:'trends'},
   cot:{label:'COT',tab:'cot'},
@@ -15834,6 +15762,14 @@ let expandedStack=null;     // id des gerade ausgeklappten Stapels
 let activeTabId='dash';     // aktuell aktive Kategorie
 function loadTabStacks(){
   try{const s=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(s)){tabStacks=s;
+    // Der Compare-Tab ist am 2026-09-05 ersatzlos entfernt worden (Nutzer-
+    // Wunsch: "compare bei insights komplett entfernen"). Bestandsnutzer
+    // haben ihn aber in ihren gespeicherten Stapeln stehen - ohne diese
+    // Migration bliebe eine Kachel in der Leiste, deren Klick auf eine
+    // Seite zeigt, die es nicht mehr gibt (leere Flaeche).
+    let _cmpDrop=false;
+    tabStacks.forEach(st=>{if(st&&Array.isArray(st.members)&&st.members.includes('cmp')){st.members=st.members.filter(m=>m!=='cmp');_cmpDrop=true;}});
+    if(_cmpDrop){try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     // Sentiment nachtraeglich in einen bestehenden Insights-Stapel einreihen
     // (direkt nach COT), falls noch nicht vorhanden - damit der neue Tab bei
     // Bestandsnutzern nicht heimatlos in der Hauptleiste landet.
@@ -15885,7 +15821,7 @@ function loadTabStacks(){
     }
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['mx','trends','cot','sent','seas','data','rate','news','edge','carry']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -15909,7 +15845,6 @@ function selectTab(id){const d=TABS[id];if(!d)return;showTab(d.tab,null,d.mode);
 const TAB_ICONS={
   dash:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   fx:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/>',
-  cmp:'<rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/>',
   mx:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
   trends:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>',
   cot:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -16156,7 +16091,6 @@ function showTab(tab,btn,fxMode){
   if(tab==='cur'&&_resReturnActive&&_quickReturnAssetId){_resReturnActive=false;_quickReturnAssetId=null;document.body.classList.remove('res-return-active');}
   if(tab==='dash'){resetGlobeLon();renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
-  else if(tab==='cmp')renderCompare();
   else if(tab==='mx')renderMatrix();
   else if(tab==='trends'){renderTrends();autoFetchPriceData();}
   else if(tab==='cot'){renderCot();autoFetchCot();}
@@ -16175,7 +16109,6 @@ function showTab(tab,btn,fxMode){
 function rerender(){
   if(curPage==='dash')renderDash();
   else if(curPage==='cur'){renderSidebar();renderDetail();}
-  else if(curPage==='cmp')renderCompare();
   else if(curPage==='mx')renderMatrix();
   else if(curPage==='trends')renderTrends();
   else if(curPage==='cot')renderCot();
@@ -17103,7 +17036,6 @@ setInterval(()=>{
   if(document.hidden)return;
   if(curPage==='cal'){const y=window.scrollY;renderCalendar();window.scrollTo(0,y);}
   else if(curPage==='dash'){renderDash();}
-  else if(curPage==='cmp'){renderCompare();}
   else if(curPage==='mx'){renderMatrix();}
 },60*1000);
 // ⚠ Kompatibilitaets-Bruecke fuer die schrittweise Modul-Aufteilung (Nutzer-
@@ -17213,9 +17145,7 @@ Object.assign(window,{
   setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
   corrWarnHtml,ESI_HALFLIFE_D,ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,
   DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
-  CMP_RUBS,CMP_RUB_ICON,cmpAvailableIds,cmpColIds,saveCmpCols,toggleCmpCol,cmpSelectAllFx,cmpSelectAllAssets,
-  cmpSelectAll,IND_UNIT_LABEL,IND_INTERVAL_LABEL,cmpUnitBadge,cmpCellData,cmpRubScore,cmpScoreColor,cmpCellLinks,
-  cmpOpenRows,toggleCmpRow,renderCompare,SCOREHIST_KEY,loadScoreHist,mergeScoreHist,mergeResearchNotes,mergeResearchFolders,rubScoreByName,trendAssets,
+  SCOREHIST_KEY,loadScoreHist,mergeScoreHist,mergeResearchNotes,mergeResearchFolders,rubScoreByName,trendAssets,
   recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
@@ -17232,7 +17162,7 @@ Object.assign(window,{
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
-  setDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
+  DATA_MAX_PANELS,setDataAsset,addDataAsset,removeDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
   setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
   markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
@@ -17384,7 +17314,6 @@ Object.defineProperty(window,'_indEditTimer',{get:()=>_indEditTimer,set:v=>{_ind
 Object.defineProperty(window,'_indEditStart',{get:()=>_indEditStart,set:v=>{_indEditStart=v;},configurable:true});
 Object.defineProperty(window,'perfWindow',{get:()=>perfWindow,set:v=>{perfWindow=v;},configurable:true});
 Object.defineProperty(window,'_renameCb',{get:()=>_renameCb,set:v=>{_renameCb=v;},configurable:true});
-Object.defineProperty(window,'cmpCols',{get:()=>cmpCols,set:v=>{cmpCols=v;},configurable:true});
 Object.defineProperty(window,'scoreHist',{get:()=>scoreHist,set:v=>{scoreHist=v;},configurable:true});
 Object.defineProperty(window,'_scanBusy',{get:()=>_scanBusy,set:v=>{_scanBusy=v;},configurable:true});
 Object.defineProperty(window,'corrA',{get:()=>corrA,set:v=>{corrA=v;},configurable:true});
@@ -17411,7 +17340,7 @@ Object.defineProperty(window,'_chvSeq',{get:()=>_chvSeq,set:v=>{_chvSeq=v;},conf
 Object.defineProperty(window,'indHistRange',{get:()=>indHistRange,set:v=>{indHistRange=v;},configurable:true});
 Object.defineProperty(window,'indHistCustomFrom',{get:()=>indHistCustomFrom,set:v=>{indHistCustomFrom=v;},configurable:true});
 Object.defineProperty(window,'indHistCustomTo',{get:()=>indHistCustomTo,set:v=>{indHistCustomTo=v;},configurable:true});
-Object.defineProperty(window,'dataAsset',{get:()=>dataAsset,set:v=>{dataAsset=v;},configurable:true});
+Object.defineProperty(window,'dataAssets',{get:()=>dataAssets,set:v=>{dataAssets=v;},configurable:true});
 Object.defineProperty(window,'dataIndBase',{get:()=>dataIndBase,set:v=>{dataIndBase=v;},configurable:true});
 Object.defineProperty(window,'sentSub',{get:()=>sentSub,set:v=>{sentSub=v;},configurable:true});
 Object.defineProperty(window,'sentSym',{get:()=>sentSym,set:v=>{sentSym=v;},configurable:true});

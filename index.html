@@ -1751,37 +1751,14 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
 .cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-quick.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
-.cmp-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
-.cmp-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px}
-.cmp-title-ic{font-size:15px;filter:saturate(1.2)}
-.cmp-title small{font-weight:500;color:var(--t3);font-size:10px;margin-left:auto;font-family:var(--ff-num)}
-.cmp-scroll{overflow-x:auto}
-.cmp-tbl{border-collapse:separate;border-spacing:0;width:100%;font-family:var(--ff-num);font-size:11px}
-.cmp-tbl th,.cmp-tbl td{padding:7px 12px;text-align:center;border-bottom:1px solid var(--bd);border-right:1px solid rgba(255,255,255,.04);white-space:nowrap}
-.cmp-tbl thead th{background:var(--bg4);color:var(--t2);font-weight:700;position:sticky;top:0;z-index:1;font-size:12px;letter-spacing:.5px}
-.cmp-tbl thead th.cmp-col-nf{color:var(--purple)}
-.cmp-tbl td.cmp-ind,.cmp-tbl th.cmp-corner{text-align:left;position:sticky;left:0;background:var(--bg3);font-weight:600;color:var(--t1);z-index:1;min-width:140px}
-.cmp-tbl th.cmp-corner{z-index:2;color:var(--t2);font-weight:700}@media (hover:hover){.cmp-tbl tbody tr:hover td{background:var(--bg4)}}@media (hover:hover){.cmp-tbl tbody tr:hover td.cmp-ind{background:var(--bg5)}}
-.cmp-tbl tr.cmp-score-row td{background:rgba(var(--blue-rgb),.05);border-bottom:1px solid var(--bd2)}@media (hover:hover){.cmp-tbl tr.cmp-score-row:hover td{background:rgba(var(--blue-rgb),.09)}}
-.cmp-tbl tr.cmp-score-row td.cmp-ind{background:var(--bg5);color:var(--t0);font-weight:700;letter-spacing:.3px}
-.cmp-score{display:inline-block;min-width:30px;padding:2px 8px;border:1px solid;border-radius:999px;font-weight:800;font-size:11px;background:rgba(255,255,255,.02)}
-.cmp-a{font-weight:800;color:var(--t1);font-size:12px}
-.cmp-a.act-good{color:var(--green)}
-.cmp-a.act-bad{color:var(--red)}
-.cmp-a.bond-up{color:var(--green)}
-.cmp-a.bond-down{color:var(--red)}
-.cmp-a.bond-flat{color:var(--amber)}
-.cmp-fp{font-size:10px;color:var(--t2);margin-top:2px;letter-spacing:.2px}
-.cmp-unit{display:inline-block;font-size:8px;font-weight:700;color:var(--amber);background:rgba(var(--amber-rgb),.13);border:1px solid rgba(var(--amber-rgb),.3);border-radius:5px;padding:1px 5px;margin-top:3px;letter-spacing:.2px;cursor:help}
-.cmp-na{color:var(--t3);opacity:.5}
-.cmp-data-row{cursor:pointer}
-.cmp-caret{display:inline-block;width:11px;color:var(--t2);font-size:10px;margin-right:5px;transition:transform .14s}
-.cmp-data-row.open .cmp-caret{transform:rotate(90deg);color:var(--blue)}
-.cmp-data-row.open td.cmp-ind{color:var(--blue)}
-.cmp-tbl tr.cmp-exp-row td{background:var(--bg0);border-bottom:1px solid var(--bd2);padding:6px 12px}
-.cmp-tbl tr.cmp-exp-row td.cmp-exp-lbl{background:var(--bg1);color:var(--t3);font-weight:600;font-size:10px}
-.cmp-link-wrap{display:flex;flex-direction:column;gap:3px;align-items:center}
-.cmp-link-cell a{color:var(--blue);text-decoration:none;font-size:10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}@media (hover:hover){.cmp-link-cell a:hover{text-decoration:underline;color:var(--t0)}}
+/* ── INSIGHTS > DATA: bis zu 4 Panels (Nutzer-Wunsch 2026-09-05) ── */
+.data-ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 14px 12px}
+.data-ctrls .cot-filterbar{margin:0}
+.data-ctrls .ind-hist-toolbar{margin:0}
+.data-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.data-grid.split{grid-template-columns:repeat(2,minmax(0,1fr))}
+.data-grid .cot-card{margin-bottom:0;min-width:0}
+@media(max-width:900px){.data-grid.split{grid-template-columns:minmax(0,1fr)}}
 /* ── MATRIX / STRENGTH ── */
 .mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .mx-card-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -1866,7 +1843,7 @@ body.res-return-active .rterm-back-pill{display:flex}
    Wrapper erlaubt vertikales Seiten-Scrollen, verhindert aber horizontales
    Wischen/Verschieben des Diagramms (Nutzer-Wunsch 2026-07-11). */
 .chv{position:relative;touch-action:pan-y}
-.chv-line{position:absolute;top:4px;bottom:22px;width:1px;background:var(--t3);opacity:.45;pointer-events:none}
+.chv-line{position:absolute;top:4px;bottom:22px;width:1px;background:var(--t3);opacity:.55;pointer-events:none}/* top/height setzt attachChartHovers: die Linie laeuft vom gewaehlten Punkt senkrecht bis zum Boden des Diagramms, nicht ueber die volle Hoehe */
 .chv-dot{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:transparent;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.45)}
 .chv-tip{position:absolute;z-index:6;background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;font-family:var(--ff-num);font-size:11px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.4);pointer-events:none;white-space:nowrap;transform:translate(-50%,calc(-100% - 10px))}
 .chv-tip b{color:var(--t0)}.chv-tip .chv-tip-d{color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:2px}
@@ -4149,11 +4126,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-467 - Indikator-Namen brachen beim Start Zeichen fuer Zeichen um (Nutzer-Screenshot 2026-09-05, "wenn ich die Webseite oeffne sieht es anfangs immer so aus"): steht ein Badge (AWAITING VALUE / OUT OF DATE) in der Namensspalte, nahm es als white-space:nowrap-Element 97 der 128px Spaltenbreite - fuer den Namen blieben 10px, die overflow-wrap:anywhere dann buchstabenweise umbrach ("No nfa rm Pa yro lls"), Zeilenhoehe 50 -> 360px. Beim Start sind diese Badges da, weil der Kalender noch der gespeicherte alte Stand ist; sobald die frischen Feeds landen, verschwinden sie - daher "nach einer Zeit ist das weg". Fix: .ir-name bricht jetzt um (flex-wrap), der Name behaelt min-width:3.5em, die Badges schrumpfen nicht mehr auf Kosten des Namens und passen sich notfalls per Ellipsis an. Gemessen danach: Name behaelt volle 116px, Zeile 69px statt 360px, kein Tabellen-/Kartenueberlauf bei 390/430/520/820px."Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-468 - Compare-Tab ersatzlos entfernt und Insights &gt; Data neu gebaut (Nutzer-Wunsch 2026-09-05): bis zu 4 Assets gleichzeitig, jedes in einem eigenen Panel (2x2-Raster, einspaltig unter 900px), EIN Indikator-Dropdown fuer alle Panels (Vereinigung der Indikatoren der gewaehlten Assets; ein Asset ohne diesen Indikator sagt das ausdruecklich, statt etwas anderes zu zeigen) und EINE Zeitraum-Leiste, die alle Diagramme gleichzeitig umstellt. Chart-Cursor ueberall: solange der Zeiger im Diagramm ist, ist IMMER der naechste Datenpunkt gewaehlt (fx wird auf 0..1 geklemmt statt am Rand auszublenden), und vom Punkt laeuft eine duenne graue Linie senkrecht bis zum Boden des Diagramms statt ueber die volle Hoehe. Die vier Data-Panels teilen sich diesen Cursor (data-chv-group), zeigen also denselben Zeitpunkt. Compare ist komplett raus: Seite, CSS, Render-Pfade, cmpCols samt Cloud-Sync/Export - gespeicherte Tab-Stapel von Bestandsnutzern werden beim Laden migriert, damit keine tote Kachel stehen bleibt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-467</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-468</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4181,14 +4158,6 @@ function introLogin(){
        mit der id "sidebar" - es wird nur an anderer Stelle erzeugt
        (renderTabBar), damit die ~35 Aufrufer unveraendert bleiben. -->
   <div class="detail" id="detail" onpointerdown="indEditPressStart(event)" onpointermove="indEditPressMove(event)" onpointerup="indEditPressEnd()" onpointercancel="indEditPressEnd()" onpointerleave="indEditPressEnd()"></div>
-</div>
-<!-- PAGE: COMPARE -->
-<div class="pc" id="pgCmp" style="display:none">
-  <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Compare</div>
-    <div style="font-size:12px;color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Side-by-side macro data across all currencies · each cell shows Actual · (Forecast / Previous)</div>
-  </div>
-  <div id="cmpCards"></div>
 </div>
 <!-- PAGE: MATRIX -->
 <div class="pc" id="pgMx" style="display:none">

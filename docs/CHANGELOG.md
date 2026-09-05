@@ -9895,3 +9895,88 @@ Ueberlaufmessung mit Badge in JEDER Zeile bei 390/430/520/820px Viewport:
 kein Tabellen- und kein Kartenueberlauf, hoechste Zeile 124px (Telefon).
 Screenshot der Inflations-Karte mit Badges: Name in Zeile 1, Badge darunter,
 Werte unveraendert ausgerichtet. `node check/all.js` komplett gruen.
+
+## 2026-09-05 (2) — Compare entfernt, Insights > Data auf bis zu 4 Panels umgebaut (VERSION-CHECK-468)
+
+**Nutzer-Wunsch (wörtlich):** *„Ich will das du compare bei insights komplett
+entfernst und dann bei insights bei data will ich das man dort sich mehrere
+Assets gleichzeitig auswählen kann. Es soll [den] Bildschirm in bis zu 4
+Hälften teilen und man kann bis zu 4 Assets auswählen und der Indikator den
+man auswählt ist bei jedem gleich. Zeitfilter ist dann einmal da und verändert
+alle Diagramme und wenn ich generell mit meiner Maus in den Diagrammen bin
+soll immer ein Datenpunkt ausgewählt sein und dort zieht sich dann auch eine
+dünne graue Linie senkrecht zum Boden hoch."*
+
+### 1. Compare ist vollständig raus
+
+Nicht nur der Tab-Eintrag — die ganze Fläche:
+
+| Weg | Was entfernt wurde |
+|---|---|
+| `index.html` | Seite `#pgCmp`, die Compare-eigenen CSS-Regeln (`.cmp-card` … `.cmp-link-cell`) |
+| `js/main.js` | `renderCompare` + alle `cmp*`-Helfer, `CMP_RUBS`/`CMP_RUB_ICON`, `IND_UNIT_LABEL`/`IND_INTERVAL_LABEL`, `PAGE_IDS`/`TAB_ORDER`/`TABS`/`TAB_ICONS`, die drei Render-Zweige (`showTab`, `rerender`, 60-s-Tick), die window-Brücken-Zeilen |
+| Sync | `cmpCols` an allen vier Stellen (`exportData`, `importData`, `cloudPush`, `cloudPull`) plus `localStorage['fxpro_cmp_cols']` — Eintrag in `docs/state-sync.md` gestrichen |
+
+**Bewusst NICHT entfernt:** `.cmp-filter`/`.cmp-filter-grp`/`.cmp-filter-lbl`/
+`.cmp-filter-none`/`.cmp-chip`/`.cmp-quick`. Diese Klassen heißen zwar `cmp-`,
+sind aber der geteilte Filterleisten-Baustein von Set-ups, Sentiment, Trends —
+und jetzt auch der Asset-Chips im Data-Tab. Wer sie mit „gehört zu Compare"
+löscht, nimmt vier anderen Tabs die Filterleiste.
+
+**Migration für Bestandsnutzer:** gespeicherte `tabStacks` enthalten `'cmp'`.
+`loadTabStacks()` filtert es jetzt beim Laden heraus und schreibt zurück —
+sonst bliebe eine Kachel in der Navigation stehen, deren Klick auf eine Seite
+zeigt, die es nicht mehr gibt (leere Fläche, kein Fehler, für den Nutzer
+schlicht kaputt). Verifiziert: Stapel mit `cmp` vorbelegt → nach dem Laden
+`["mx","trends","cot","sent","seas","data","rate","news","edge","carry"]`.
+
+### 2. Data: bis zu 4 Panels, ein Indikator, ein Zeitfilter
+
+`dataAsset` (ein String) → `dataAssets` (Array, `DATA_MAX_PANELS=4`).
+
+- **Raster:** `.data-grid` — eine Spalte bei einem Asset, `repeat(2,minmax(0,1fr))`
+  ab zwei; unter 900 px wieder einspaltig, sonst sind vier Charts auf dem iPad
+  hochkant unlesbar.
+- **Ein Indikator-Dropdown für alle.** Die Liste ist die **Vereinigung** der
+  Indikatoren aller gewählten Assets, gruppiert nach Karte. Führt ein Asset
+  den gewählten Indikator nicht (USD hat „Core PPI", EUR nicht), sagt das
+  Panel das ausdrücklich („EUR does not track …") — kein Ausweichen auf einen
+  anderen Indikator, kein leeres Feld (CLAUDE.md Regel 4).
+- **Eine Zeitraum-Leiste** über allen Panels. Sie schreibt in dasselbe
+  `indHistRange`/`indHistCustomFrom/To` wie die Asset-Detailseite; die
+  Panel-Charts bekommen dafür `indHistChart(ind,symId,{noToolbar:true})` —
+  neuer optionaler dritter Parameter, alte Aufrufer bleiben unverändert.
+- Die Auswahl bleibt **bewusst lokal/flüchtig** (wie `seasAsset`,
+  `rateProbSel`): eine reine Chart-Auswahl, kein persistierter Zustand — die
+  Begründung stand schon vor diesem Umbau an drei Stellen im Code.
+- `setDataAsset(id)` bleibt (Watchlist-Quicklinks springen damit hierher) und
+  bedeutet jetzt „genau dieses eine Asset zeigen".
+
+### 3. Chart-Cursor: immer ein Punkt, Linie vom Punkt zum Boden
+
+Betrifft **alle** Diagramme der App (`attachChartHovers`), nicht nur Data:
+
+- **Vorher:** `if(fx<-0.03||fx>1.03){hide();return;}` — am linken/rechten Rand
+  verschwand der Cursor komplett, obwohl der Zeiger im Diagramm stand.
+  **Jetzt:** `fx` wird auf 0…1 geklemmt, es gibt also immer einen nächsten
+  Punkt. Zusätzlich `mouseenter` (vorher nur `mousemove`), damit der Punkt
+  schon beim Betreten steht.
+- **Vorher:** die graue Linie lief über die volle Chart-Höhe (CSS `top:4px;
+  bottom:22px`), also auch *oberhalb* des Punktes — dadurch war nicht
+  ablesbar, welcher Punkt gemeint ist. **Jetzt** setzt das JS `top`/`height`
+  auf „vom gewählten Punkt senkrecht bis zum Boden des Diagramms"
+  (`bot=r.height-22`); `top+height` gewinnen gegen das `bottom` aus dem CSS.
+- **Gemeinsamer Cursor:** `chartHoverWrap(svg,pts,wrapStyle,group)` setzt
+  optional `data-chv-group`. Die vier Data-Panels laufen in Gruppe `data` und
+  zeigen deshalb denselben Zeitpunkt — vier Charts mit vier unabhängigen
+  Cursorn kann man nicht vergleichen. Alle anderen Charts bleiben einzeln.
+
+### Verifiziert (Playwright, 1400×1000)
+
+4 Panels aus USD/EUR/GBP/JPY, ein fünftes `addDataAsset` wird abgelehnt;
+genau **1** Range-Leiste und **1** Indikator-Dropdown für 4 Charts; `3M`
+stellt alle vier gleichzeitig um; Maus im ersten Panel → alle vier zeigen
+Punkt + Linie (`top 47 / height 106` bei `bottom 153`, also Punkt→Boden);
+linker und rechter Rand behalten den Punkt; Verlassen blendet alle vier aus;
+Asset-Detailseite hat weiterhin ihre eigene Range-Leiste. Keine
+Konsolen-/Page-Errors.
