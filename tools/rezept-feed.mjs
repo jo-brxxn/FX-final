@@ -25,7 +25,7 @@
 // ihrem eigenen try/catch und meldet, was sie geliefert hat. Ein Feed, der
 // heute 500 zurueckgibt, kostet ein paar Vorschlaege - nicht den Vorrat.
 //
-// Aufruf:  node tools/rezept-feed.mjs [--out rezept_feed.json] [--max 90]
+// Aufruf:  node tools/rezept-feed.mjs [--out rezept_feed.json] [--max 270]
 // Umgebung: SPOONACULAR_KEY (freiwillig)
 
 import fs from 'node:fs';
@@ -47,7 +47,19 @@ const UA = 'Mozilla/5.0 (compatible; PerfectRezeptBot/1.0; +https://github.com/j
 const args = process.argv.slice(2);
 const argOf = (n, f) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : f; };
 const AUS = path.resolve(WURZEL, argOf('--out', 'rezept_feed.json'));
-const MAX = Math.max(9, Number(argOf('--max', '90')) || 90);
+// ⚠ WIE GROSS DER VORRAT SEIN MUSS - gerechnet, nicht geschaetzt. Die App
+// zeigt drei Karten und blaettert mit "Show 3 more" um je drei weiter; ein
+// Thema traegt also erst dann einen Filter, wenn es mindestens vier Reihen
+// hat = 12 Karten. Gemessen an den 90 Eintraegen vom 2026-09-04 haelt das
+// SELTENSTE der 13 Themen (Soup und Breakfast) 4 Eintraege = 4,4 % des
+// Vorrats. 12 / 0,044 = 270. Deshalb 270 und nicht 90: bei 90 hatte "Pasta"
+// 9 Karten - drei Reihen, dann war Schluss, genau der Nutzer-Befund
+// 2026-09-04 ("wenn ich Nudeln filtere habe ich wenig Vorschlaege").
+// Platz dafuer: gemessen 67 KB je Bild, 84 % der Eintraege haben ein
+// lokales - rund 15 MB statt bisher 5,2 MB im Repo. Die taegliche Aenderung
+// waechst dadurch NICHT: sie haengt daran, wie viele Eintraege je Lauf neu
+// dazukommen, nicht daran, wie viele der Vorrat haelt.
+const MAX = Math.max(9, Number(argOf('--max', '270')) || 270);
 // ⚠ WARUM DIE BILDER IM REPO LIEGEN: ein Bild von einer fremden Adresse
 // laesst sich im Browser NICHT lokal speichern, wenn der fremde Server kein
 // CORS erlaubt - und das tun Foodblogs meist nicht. Gemessen: aus einem
@@ -122,7 +134,12 @@ async function quelleSpoonacular(cfg, key) {
 async function quelleJsonLd(cfg) {
   const seiten = (cfg.seiten || []).filter(s => s && s.feed);
   if (!seiten.length) { log('JSON-LD: keine Seiten eingetragen (tools/rezept-quellen.json)'); return []; }
-  const proSeite = Math.max(1, Math.min(6, cfg.proSeite || 3));
+  // ⚠ Deckel 10 statt bisher 6: der Vorrat fasst seit 2026-09-04 270 statt 90
+  // Eintraege, und die deutschsprachigen Seiten sollen ihn praegen - mit 6
+  // haetten sie ihn erst nach Tagen gefuellt. Ein RSS-Feed fuehrt ueblich
+  // 10-25 Beitraege, mehr als 10 abzurufen holt also vor allem Alteintraege,
+  // die das Entdoppeln danach ohnehin wegwirft.
+  const proSeite = Math.max(1, Math.min(10, cfg.proSeite || 3));
   const raus = [];
   for (const s of seiten) {
     const xml = await hole(s.feed);
@@ -130,7 +147,7 @@ async function quelleJsonLd(cfg) {
     // "pro" an EINER Seite schlaegt den gemeinsamen Wert - so bekommen neu
     // ausgewaehlte Quellen mehr Gewicht im Vorrat, ohne dass jede alte
     // Seite mitwaechst (Nutzer-Wunsch 2026-09-03: neue Quellen staerker).
-    const links = feedLinks(xml, Math.max(1, Math.min(6, s.pro || proSeite)));
+    const links = feedLinks(xml, Math.max(1, Math.min(10, s.pro || proSeite)));
     log(`JSON-LD ${s.name}: ${links.length} neue Beitraege`);
     for (const u of links) {
       const html = await hole(u);

@@ -22,9 +22,22 @@ import {themenOf} from './themen.js';
 export function saeubere(s) {
   return String(s == null ? '' : s)
     .replace(/<br\s*\/?>/gi, '\n')
+    // ⚠ Ein Listen-/Absatzende ist eine ZEILENGRENZE, kein Leerzeichen.
+    // Deutsche Seiten legen die Zutaten oefter als <ul><li>-Block in EIN
+    // Feld; ohne diese Zeile klebte daraus eine einzige lange Zutat
+    // zusammen, die dann an der Laengengrenze still verschwand.
+    .replace(/<\/(?:li|p|div|tr|h[1-6])\s*>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    // ⚠ Mengen stehen auf europaeischen Seiten oft als Entity
+    // ("&frac12; TL Salz", "&#189; Zwiebel"). Unaufgeloest landete das so in
+    // der Einkaufsliste. Aufgeloest wird nur, was eindeutig ist - geraten
+    // (etwa aus "eine halbe") wird nichts.
+    .replace(/&frac12;/gi, '½').replace(/&frac14;/gi, '¼').replace(/&frac34;/gi, '¾')
+    .replace(/&deg;/gi, '°')
+    .replace(/&#(\d{2,5});/g, (_, d) => { const n = +d; return n > 8 && n < 0x10000 ? String.fromCharCode(n) : ' '; })
+    .replace(/&#x([0-9a-f]{2,5});/gi, (_, h) => { const n = parseInt(h, 16); return n > 8 && n < 0x10000 ? String.fromCharCode(n) : ' '; })
     .replace(/[ \t ]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
@@ -39,17 +52,41 @@ export function saeubere(s) {
 // "Notes" oder "Storing:" an. Beides stand als eigener Kochschritt in der
 // App: "Schritt 1 von 9: step 1". Solche Zeilen fliegen raus, und ab einer
 // Nachbemerkungs-Ueberschrift endet die Anleitung.
-const NUR_SCHRITTNUMMER = /^(?:step|schritt)\s*\d+\s*[:.]?$/i;
-const NACHBEMERKUNG = /^(?:notes?|notizen|hinweise?|storing|storage|aufbewahrung|tips?|tipps?|nutrition|naehrwerte|nährwerte|variations?|variationen)\s*[:.]?$/i;
+const NUR_SCHRITTNUMMER = /^(?:(?:step|schritt)\s*\d+(?:\s*(?:von|of)\s*\d+)?|\d{1,2}\s*[.)]?\s*(?:step|schritt))\s*[:.]?$/i;
+const NACHBEMERKUNG = /^(?:notes?|notizen|hinweise?|storing|storage|aufbewahrung|tips?|tipps?|nutrition|naehrwerte|nährwerte|variations?|variationen|conservazione)\s*[:.]?$/i;
+// ⚠ UEBERSCHRIFT IST KEIN KOCHSCHRITT. Deutsche und italienische Seiten
+// stellen ihrer Anleitung eine Zeile "Zubereitung" / "Preparazione" voran -
+// im Kochmodus stand die dann als "Schritt 1 von 9: Zubereitung" da, also
+// derselbe Muell wie das englische "step 1", nur unentdeckt, weil die
+// bisherigen Muster englisch waren. Es zaehlt NUR die alleinstehende Zeile:
+// "Die Zubereitung dauert 20 Minuten." ist ein echter Satz und bleibt.
+const NUR_UEBERSCHRIFT = /^(?:zubereitung|anleitung|arbeitsschritte|zutaten|und so geht'?s|preparation|instructions?|directions?|method|preparazione|procedimento|esecuzione|ingredienti|ingredients)\s*[:.]?$/i;
+// ⚠ Ein Gruss ist kein Arbeitsschritt. "Guten Appetit!" als letzter
+// Schritt im Kochmodus ist keine Anweisung, sondern das Ende des Textes.
+const NUR_GRUSS = /^(?:guten appetit|lass(?:t)? es euch schmecken|viel spa(?:ß|ss) beim (?:nachkochen|nachbacken)|buon appetito|bon app[eé]tit|enjoy(?: your meal| it)?)\s*[!.]*$/i;
+// Eine Zeile, die zwar Text ist, aber kein Schritt: Schrittnummer,
+// Ueberschrift oder Gruss.
+// ⚠ Die Nachbemerkungs-Ueberschrift steht bewusst NICHT hier drin: sie
+// ist das ENDEZEICHEN der Anleitung und muss deshalb bis putzeSchritte()
+// stehen bleiben. Gemessen an einer Anleitung, die als Liste einzelner
+// Absaetze ankommt: wird "Tipps" schon beim Zerlegen des einzelnen Absatzes
+// weggeworfen, findet der Abschneider spaeter nichts mehr - und der
+// Tipp-Text darunter stand als letzter Kochschritt in der App.
+function istKeinSchritt(x) {
+  return NUR_SCHRITTNUMMER.test(x) || NUR_UEBERSCHRIFT.test(x) || NUR_GRUSS.test(x);
+}
 // ⚠ Dieselben Filter auf eine BESTEHENDE Schrittliste anwenden. Gebraucht
 // fuer den Vorrat: verbessert sich das Zerlegen, muessen auch die schon
 // gespeicherten Eintraege mitwandern - sonst steht "step 1" dort fuer
 // immer, obwohl die Ursache behoben ist (dieselbe Regel wie bei den Themen).
 export function putzeSchritte(schritte) {
-  let liste = (schritte || []).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
+  let liste = (Array.isArray(schritte) ? schritte : []).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
   const bis = liste.findIndex(x => NACHBEMERKUNG.test(x));
+  // ⚠ Nur ab der ZWEITEN Zeile abschneiden: stuende "Notes" ganz vorn,
+  // bliebe sonst gar nichts uebrig. Die Zeile selbst faellt trotzdem weg -
+  // dafuer sorgt istKeinSchritt().
   if (bis > 0) liste = liste.slice(0, bis);
-  return liste.filter(x => !NUR_SCHRITTNUMMER.test(x));
+  return liste.filter(x => !istKeinSchritt(x) && !NACHBEMERKUNG.test(x));
 }
 export function zuSchritten(text) {
   const roh = saeubere(text);
@@ -57,7 +94,7 @@ export function zuSchritten(text) {
   let teile = roh.split(/\r?\n+/).map(x => x.replace(/^\s*(?:\d{1,2}[.)]|[-–—•*])\s*/, '').trim()).filter(Boolean);
   const bis = teile.findIndex(x => NACHBEMERKUNG.test(x));
   if (bis > 0) teile = teile.slice(0, bis);
-  teile = teile.filter(x => !NUR_SCHRITTNUMMER.test(x));
+  teile = teile.filter(x => !istKeinSchritt(x));
   if (teile.length <= 1) {
     teile = roh.split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ0-9])/).map(x => x.trim()).filter(Boolean);
   }
@@ -66,7 +103,7 @@ export function zuSchritten(text) {
     if (t.length > 200) t.split(/(?<=[.!?])\s+/).forEach(x => { const y = x.trim(); if (y) fein.push(y); });
     else fein.push(t);
   });
-  return fein.filter(x => x.length > 2).slice(0, 40);
+  return fein.filter(x => x.length > 2 && !istKeinSchritt(x)).slice(0, 40);
 }
 
 // ISO-8601-Dauer ("PT1H30M") in Minuten.
@@ -93,16 +130,69 @@ export function normTitel(t) {
   return String(t || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
+// ⚠ ZUTATEN KOMMEN IN VIELEN VERPACKUNGEN. schema.org verlangt fuer
+// recipeIngredient zwar Text, aber gemessen an echten Seiten liefert das
+// Markup ausserdem: EINEN String mit Zeilenumbruechen, eine <li>-Liste in
+// einem Feld, Objekte ({name}/{text}), nach Gruppen verschachtelte Listen -
+// und mittendrin Ueberschriften wie "Für den Teig:" oder "Per la pasta:".
+// Ungepackt zaehlte eine ganze Zutatenliste als EINE Zutat (oder als
+// "[object Object]"), womit das Gericht an der Schwelle "mindestens zwei
+// Zutaten" scheiterte. Auspacken ist kein Raten: es entsteht kein Wert,
+// der nicht in der Quelle stand.
+const ZUTAT_UEBERSCHRIFT = /^(?:(?:f(?:ü|ue)r|for)\s+(?:den|die|das|dem|the)\b|per\s+(?:il|la|le|lo|i|gli|l')\b|(?:zutaten|ingredients?|ingredienti|teig|f(?:ü|ue)llung|belag|topping|dressing|marinade|so(?:ß|ss)e|sauce|garnitur|dekoration|deko|au(?:ß|ss)erdem|zum servieren|to serve)\s*$)/i;
+const PORTIONSKOPF = /^(?:f(?:ü|ue)r|per|for)\s+\d+\s*(?:person|personen|portion|portionen|st(?:ü|ue)ck|persone|porzioni|serving|servings)\b/i;
+// ⚠ Im Zweifel bleibt die Zeile drin: eine Ueberschrift zu viel in der
+// Liste ist ein Schoenheitsfehler, eine fehlende Zutat ein leerer Posten
+// im Einkauf. Deshalb drei Bremsen: eine Ueberschrift traegt KEINE Menge
+// ("Für die Deko: 2 EL Zucker" ist eine Zutat), sie ist kurz, und steht
+// hinter dem Doppelpunkt noch etwas ("Für den Belag: Käse"), ist das die
+// Zutat und die Zeile bleibt.
+function istZutatUeberschrift(x) {
+  if (PORTIONSKOPF.test(x)) return true;
+  if (/\d/.test(x)) return false;
+  if (x.length > 60) return false;
+  if (/:\s*$/.test(x)) return true;
+  if (x.includes(':')) return false;
+  return ZUTAT_UEBERSCHRIFT.test(x);
+}
+export function zutatenAus(v, tiefe) {
+  const t = tiefe || 0;
+  if (v == null || t > 5) return [];
+  if (Array.isArray(v)) { const raus = []; v.forEach(x => raus.push(...zutatenAus(x, t + 1))); return raus; }
+  if (typeof v === 'object') {
+    // Objektform: nur die Felder lesen, die die Zutat WIRKLICH enthalten.
+    const s2 = v.name || v.text || v.ingredient || v.item;
+    return typeof s2 === 'string' ? zutatenAus(s2, t + 1) : [];
+  }
+  return saeubere(v).split(/\r?\n+/)
+    .map(x => x.replace(/^\s*[-–—•*]\s*/, '').trim())
+    .filter(x => x && x.length < 160 && !istZutatUeberschrift(x));
+}
+
 // Ein Vorschlag ist nur brauchbar, wenn er Titel, Bild UND genug Inhalt hat.
 // ⚠ Halbe Eintraege werden VERWORFEN, nicht mit Platzhaltern aufgefuellt:
 // eine Karte ohne Zutaten sieht aus wie ein Rezept, ist aber keins.
+// ⚠ ZUTATEN SIND PFLICHT, Schritte allein reichen nicht (docs/rezept.md).
+// Mit der frueheren Oder-Schwelle (weniger als 2 Zutaten UND weniger als 2
+// Schritte) kam ein Restaurant-Vlog mit 0 Zutaten und 3 Absaetzen durch -
+// jeder Absatz der Videobeschreibung zaehlte als Kochschritt. Fuer diese
+// App ist das kein Rezept: die Einkaufsliste bliebe leer.
+// ⚠ Gezaehlt wird NACH dem Putzen. Zwei Zeilen "step 1"/"step 2" sind kein
+// Inhalt, sahen aber wie zwei Schritte aus.
 export function baue(o) {
   const titel = saeubere(o.title).slice(0, 120);
-  const zutaten = (o.ingredients || []).map(x => saeubere(x)).filter(x => x && x.length < 160).slice(0, 40);
-  const schritte = (o.steps || []).filter(Boolean);
+  const zutaten = zutatenAus(o.ingredients).slice(0, 40);
+  // ⚠ Auch die Schritte kommen in mehreren Verpackungen an: als Liste von
+  // Saetzen (Vorrat, TheMealDB), als Fliesstext oder als Knoten aus dem
+  // Markup. Ein Knoten, der als String behandelt wird, ergibt die Zeile
+  // "[object Object]" - genau so ein Wert darf nie in einer Karte landen.
+  const roh = Array.isArray(o.steps) ? o.steps
+    : (typeof o.steps === 'string' ? zuSchritten(o.steps) : anweisungenAus(o.steps));
+  const schritte = putzeSchritte(roh.flatMap(x =>
+    (x && typeof x === 'object') ? anweisungenAus(x) : [saeubere(x)])).slice(0, 40);
   if (!titel || titel.length < 3) return null;
   if (!o.image) return null;
-  if (zutaten.length < 2 && schritte.length < 2) return null;
+  if (zutaten.length < 2) return null;
   return {
     id: idAus((o.url || '') + '|' + normTitel(titel)),
     src: o.src,
@@ -115,7 +205,7 @@ export function baue(o) {
     min: o.min || null,
     servings: o.servings || null,
     ingredients: zutaten,
-    steps: schritte.map(x => saeubere(x)).filter(Boolean).slice(0, 40),
+    steps: schritte,
     themes: themenOf(titel, zutaten, o.tags || []),
     tags: (o.tags || []).map(x => saeubere(x)).filter(Boolean).slice(0, 6),
     added: new Date().toISOString(),
@@ -171,19 +261,34 @@ export function bildAus(v) {
   return '';
 }
 
-export function anweisungenAus(v) {
-  if (!v) return [];
+// ⚠ ANLEITUNGEN SIND VERSCHACHTELT, nicht flach. Gemessen an echten
+// Seiten kommt recipeInstructions in mindestens fuenf Formen: Fliesstext,
+// Liste von HowToStep, HowToSection mit itemListElement, HowToStep mit
+// HowToDirection DARIN (kein eigenes "text"), und als ItemList-Huelle.
+// Die frueheren Fassung kannte nur die ersten drei; bei den anderen fiel
+// der echte Text weg und stattdessen landete der Name des Knotens
+// ("Schritt 1", "Zubereitung") als Kochschritt in der App - also gleich
+// zweimal falsch. Deshalb: erst nach Kindern schauen, dann nach Text.
+// ⚠ Ein Abschnittsname ist eine UEBERSCHRIFT und wird nie zum Schritt;
+// der Name eines Schritts dagegen ist auf vielen Seiten der Schritt selbst.
+// ⚠ HowToTip/HowToSupply sind bewusst draussen: ein Tipp ist kein
+// Arbeitsschritt (dieselbe Linie wie "Notes"/"Storing").
+const HUELLE = /^(?:howtosection|itemlist|list|creativework)$/;
+const KEIN_SCHRITT_TYP = /^(?:howtotip|howtosupply|howtotool|imageobject|videoobject)$/;
+export function anweisungenAus(v, tiefe) {
+  const t = tiefe || 0;
+  if (!v || t > 6) return [];
   if (typeof v === 'string') return zuSchritten(v);
-  const raus = [];
-  [].concat(v).forEach(s => {
-    if (typeof s === 'string') { raus.push(...zuSchritten(s)); return; }
-    if (!s || typeof s !== 'object') return;
-    const typ = String(s['@type'] || '').toLowerCase();
-    if (typ === 'howtosection' && s.itemListElement) { raus.push(...anweisungenAus(s.itemListElement)); return; }
-    if (s.text) raus.push(...zuSchritten(s.text));
-    else if (s.name) raus.push(saeubere(s.name));
-  });
-  return raus;
+  if (Array.isArray(v)) { const raus = []; v.forEach(x => raus.push(...anweisungenAus(x, t + 1))); return raus; }
+  if (typeof v !== 'object') return [];
+  const typ = String([].concat(v['@type'] || '')[0] || '').toLowerCase();
+  if (KEIN_SCHRITT_TYP.test(typ)) return [];
+  const kinder = v.itemListElement || v.steps || v.step;
+  if (HUELLE.test(typ) && kinder) return anweisungenAus(kinder, t + 1);
+  if (v.text) return anweisungenAus(v.text, t + 1);
+  if (kinder) return anweisungenAus(kinder, t + 1);
+  if (v.name && !HUELLE.test(typ)) return zuSchritten(v.name);
+  return [];
 }
 
 // ── TheMealDB: deren Antwort in einen Vorschlag uebersetzen ──────────────

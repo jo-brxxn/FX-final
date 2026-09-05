@@ -1,90 +1,250 @@
 {
-  "_hinweis": "Quellen fuer die taeglichen Essensvorschlaege der Rezept-App (Perfect Rezept). Diese Datei ist zum Bearbeiten von Hand gedacht - siehe docs/rezept.md, Abschnitt 'Taegliche Vorschlaege'. Der Lauf ueberspringt jede Quelle, die nicht antwortet, statt abzubrechen.",
+  "_hinweis": "Quellen fuer die taeglichen Essensvorschlaege der Rezept-App (Perfect Rezept). Diese Datei ist zum Bearbeiten von Hand gedacht - siehe docs/rezept.md, Abschnitt 'Taegliche Vorschlaege'. Der Lauf ueberspringt jede Quelle, die nicht antwortet, statt abzubrechen. ⚠ REIHENFOLGE IST ABSICHT: die deutschsprachigen und mediterranen Seiten stehen oben, weil die eingesammelten Eintraege in dieser Reihenfolge in den Vorrat wandern - der Nutzer soll deutsches Essen zuerst sehen, nicht als Nachtrag.",
   "themealdb": {
     "an": true,
-    "anzahl": 5,
-    "_hinweis": "Frei und ohne Schluessel. Liefert vollstaendige Rezepte mit Bild, Mengen und Anleitung. Bewusst von 10 auf 5 gesenkt (Nutzer-Wunsch 2026-09-03): die ausgewaehlten Blogs und Kanaele sollen den Vorrat praegen, TheMealDB nur ergaenzen - und das Live-Nachladen im Knopf braucht die Quelle weiterhin."
+    "anzahl": 2,
+    "_hinweis": "Frei und ohne Schluessel. ⚠ Von 5 auf 2 gesenkt (Nutzer-Befund 2026-09-04: 'bei Inspiration kommt nur auslaendisches Essen'). Nachgemessen war TheMealDB mit 20 von 90 Eintraegen trotz anzahl:5 die GROESSTE Einzelquelle im Vorrat - sie ist eine internationale Zufallsdatenbank, die weder deutsch noch italienisch kocht, und ihre Eintraege haeuften sich als Altbestand an, weil jeder Lauf 5 neue dazulegte. NICHT ganz abgeschaltet, aus zwei Gruenden: der Knopf 'Load new ones' laedt bei leerem Vorrat live bei TheMealDB nach - das ist die einzige Quelle, die eine Browser-Abfrage erlaubt, und ein 'an: false' hier waere ein Widerspruch zu dem, was die App im Notfall tut; und zwei Gerichte pro Tag halten die internationale Beimischung, ohne den Vorrat zu praegen (2 von rund 180 neuen Eintraegen je Lauf statt 5 von 60)."
   },
   "spoonacular": {
     "an": true,
     "anzahl": 4,
-    "_hinweis": "Laeuft nur, wenn das GitHub-Secret SPOONACULAR_KEY gesetzt ist - sonst wird die Quelle still uebersprungen. Kostenloses Kontingent: 50 Punkte pro Tag."
+    "_hinweis": "Laeuft nur, wenn das GitHub-Secret SPOONACULAR_KEY gesetzt ist - sonst wird die Quelle still uebersprungen. Kostenloses Kontingent: 50 Punkte pro Tag. Gemessen 2026-09-04: liefert 0 Eintraege, der Schluessel ist also nicht gesetzt."
   },
   "jsonld": {
     "an": true,
     "proSeite": 4,
     "seiten": [
       {
+        "name": "Einfach Malene",
+        "feed": "https://www.einfachmalene.de/feed/",
+        "richtung": "deutsch, Alltag - Runde 5 geprueft: 'Cannelloni mit Hackfleisch', 23 Zutaten/26 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Emmi kocht einfach",
+        "feed": "https://emmikochteinfach.de/feed/",
+        "richtung": "deutsch, Hausmannskost - Runde 5 geprueft: 14 Zutaten/28 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Gaumenfreundin",
+        "feed": "https://www.gaumenfreundin.de/feed/",
+        "richtung": "deutsch, Familienkueche - Runde 5 geprueft: 10 Zutaten/4 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Kuechengoetter",
+        "feed": "https://www.kuechengoetter.de/rezepte.rss",
+        "richtung": "deutsch, Verlagsseite - Runde 5 geprueft: 7 Zutaten/13 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Kochen aus Liebe",
+        "feed": "https://kochenausliebe.com/feed/",
+        "richtung": "deutsch - Runde 5 geprueft: 12 Zutaten/11 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "essen & trinken",
+        "feed": "https://www.essen-und-trinken.de/feed/rss/",
+        "richtung": "deutsch, Verlagsseite, Runde 4 geprueft: 15 Zutaten/15 Schritte",
+        "pro": 8
+      },
+      {
+        "name": "Zimtliebe",
+        "feed": "https://zimtliebe.de/feed/",
+        "richtung": "deutsch, Alltag - Runde 5 geprueft: 10 Zutaten/9 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Kochkarussell",
+        "feed": "https://www.kochkarussell.com/feed",
+        "richtung": "deutsch, schnelle Alltagskueche",
+        "pro": 6
+      },
+      {
+        "name": "Malte's Kitchen",
+        "feed": "https://www.malteskitchen.de/feed/",
+        "richtung": "deutsch",
+        "pro": 6
+      },
+      {
+        "name": "Backen macht gluecklich",
+        "feed": "https://www.backenmachtgluecklich.de/feed",
+        "richtung": "deutsch, aber fast nur Suesses - bewusst kleiner gehalten, der Vorrat hatte schon 15 Sweet-Eintraege",
+        "pro": 4
+      },
+      {
+        "name": "Eat this!",
+        "feed": "https://www.eat-this.org/feed/",
+        "richtung": "deutsch, pflanzlich - Runde 5 geprueft: 13 Zutaten/14 Schritte, Bild ja",
+        "pro": 4
+      },
+      {
+        "name": "Oma kocht",
+        "feed": "https://www.oma-kocht.de/feed/",
+        "richtung": "deutsch, klassische Hausmannskost - Runde 6 geprueft: 'Omas Kartoffelcremesuppe mit Pilzeinlage', 13 Zutaten/19 Schritte, Themen meat+soup+potato",
+        "pro": 8
+      },
+      {
+        "name": "Elle Republic",
+        "feed": "https://ellerepublic.de/feed/",
+        "richtung": "deutsch, Alltag - Runde 6 geprueft: 'Pilaw mit Wildreis', 14 Zutaten/10 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Cookie und Co",
+        "feed": "https://cookieundco.de/feed/",
+        "richtung": "deutsch - Runde 6 geprueft: 'Zwiebelkuchen vom Blech', 15 Zutaten/22 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Ina Isst",
+        "feed": "https://inaisst.de/feed/",
+        "richtung": "deutsch, Alltag - Runde 6 geprueft: 'Einfacher Apfel-Honigkuchen', 6 Zutaten/11 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "The Pasta Project",
+        "feed": "https://www.the-pasta-project.com/feed/",
+        "richtung": "italienisch, AUSSCHLIESSLICH Pasta - Runde 6 geprueft: 'Italian homemade eggless tagliatelle', 11 Zutaten/25 Schritte. Steht wegen des Nutzer-Befunds 'wenn ich Nudeln filtere habe ich wenig Vorschlaege' ganz oben in der Mittelmeer-Gruppe",
+        "pro": 8
+      },
+      {
+        "name": "Ricette della Nonna",
+        "feed": "https://www.ricettedellanonna.net/feed/",
+        "richtung": "italienisch - Runde 5 geprueft: 'Blecs friulani', 17 Zutaten/16 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Misya",
+        "feed": "https://www.misya.info/feed",
+        "richtung": "italienisch, grosse Alltagsseite - Runde 6 geprueft: 'Rose di pasta ai mirtilli', 16 Zutaten/8 Schritte, Bild ja",
+        "pro": 8
+      },
+      {
+        "name": "Recipes from Italy",
+        "feed": "https://www.recipesfromitaly.com/feed/",
+        "richtung": "italienisch (englisch geschrieben) - Runde 6 geprueft: 8 Zutaten/21 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Inside the Rustic Kitchen",
+        "feed": "https://www.insidetherustickitchen.com/feed/",
+        "richtung": "italienisch (englisch geschrieben) - Runde 6 geprueft: 12 Zutaten/22 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "An Italian in my Kitchen",
+        "feed": "https://anitalianinmykitchen.com/feed/",
+        "richtung": "italienisch (englisch geschrieben) - Runde 6 geprueft: 'No Knead Lievito Madre Bread', 6 Zutaten/10 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Real Greek Recipes",
+        "feed": "https://realgreekrecipes.com/feed/",
+        "richtung": "griechisch - Runde 6 geprueft: 'Eggplant Saganaki', 12 Zutaten/19 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Give Recipe",
+        "feed": "https://www.giverecipe.com/feed/",
+        "richtung": "tuerkisch - Runde 6 geprueft: 'Ali Nazik Kebab', 12 Zutaten/40 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Turkish Foodie",
+        "feed": "https://turkishfoodie.com/feed/",
+        "richtung": "tuerkisch - Runde 6 geprueft: 'Sultan Mezesi', 10 Zutaten/18 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Recetas de Rechupete",
+        "feed": "https://www.recetasderechupete.com/feed/",
+        "richtung": "spanisch - Runde 6 geprueft: 6 Zutaten/2 Schritte, Bild ja. ⚠ Bestanden, aber der geprueste Beitrag war eine Sammelseite ('los 18 platos...'), kein einzelnes Rezept - deshalb bewusst kleiner Anteil, bis der Vorrat zeigt, was von dort wirklich kommt",
+        "pro": 3
+      },
+      {
+        "name": "My Greek Dish",
+        "feed": "https://www.mygreekdish.com/feed/",
+        "richtung": "griechisch (englisch geschrieben) - Runde 5 geprueft: 'Baked Feta Pasta', 9 Zutaten/13 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Spanish Sabores",
+        "feed": "http://feeds.feedburner.com/spanishsabores/wmCs",
+        "richtung": "spanisch (englisch geschrieben) - Runde 5 geprueft: 7 Zutaten/17 Schritte, Bild ja",
+        "pro": 6
+      },
+      {
+        "name": "Kitchen Stories",
+        "feed": "https://www.kitchenstories.com/feed",
+        "richtung": "trendig, Runde 4 geprueft: 15/16 - englisch, deshalb zurueckgenommen (war 4)",
+        "pro": 3
+      },
+      {
         "name": "NYT Cooking",
         "feed": "https://cooking.nytimes.com/next/api/v1/rss/recipes",
-        "richtung": "Runde 4 geprueft: 16/25 - der Feed liefert die Rezepte vollstaendig aus",
+        "richtung": "Runde 4 geprueft: 16/25 - englisch, bleibt als Beimischung",
+        "pro": 3
+      },
+      {
+        "name": "The Big Man's World",
+        "feed": "https://thebigmansworld.com/feed/",
+        "richtung": "high protein (ausdruecklicher Nutzer-Wunsch) - englisch, von 6 auf 3 zurueckgenommen",
+        "pro": 3
+      },
+      {
+        "name": "Skinnytaste",
+        "feed": "https://www.skinnytaste.com/feed/",
+        "richtung": "gesund (ausdruecklicher Nutzer-Wunsch) - englisch, von 6 auf 3 zurueckgenommen",
+        "pro": 3
+      },
+      {
+        "name": "RecipeTin Eats",
+        "feed": "https://www.recipetineats.com/feed/",
+        "richtung": "englisch, kocht viel europaeisch",
         "pro": 3
       },
       {
         "name": "Bon Appetit",
         "feed": "https://www.bonappetit.com/feed/rss",
-        "richtung": "trendig, Runde 4 geprueft: 5/12",
-        "pro": 3
-      },
-      {
-        "name": "Kitchen Stories",
-        "feed": "https://www.kitchenstories.com/feed",
-        "richtung": "trendig, Runde 4 geprueft: 15/16",
-        "pro": 4
-      },
-      {
-        "name": "essen & trinken",
-        "feed": "https://www.essen-und-trinken.de/feed/rss/",
-        "richtung": "Verlagsseite, Runde 4 geprueft: 15 Zutaten/15 Schritte",
-        "pro": 4
-      },
-      {
-        "name": "The Big Man's World",
-        "feed": "https://thebigmansworld.com/feed/",
-        "richtung": "high protein",
-        "pro": 6
-      },
-      {
-        "name": "Skinnytaste",
-        "feed": "https://www.skinnytaste.com/feed/",
-        "richtung": "gesund",
-        "pro": 6
-      },
-      {
-        "name": "Kochkarussell",
-        "feed": "https://www.kochkarussell.com/feed"
-      },
-      {
-        "name": "Backen macht gluecklich",
-        "feed": "https://www.backenmachtgluecklich.de/feed"
-      },
-      {
-        "name": "Malte's Kitchen",
-        "feed": "https://www.malteskitchen.de/feed/"
+        "richtung": "trendig, Runde 4 geprueft: 5/12 - englisch",
+        "pro": 2
       },
       {
         "name": "Budget Bytes",
-        "feed": "https://www.budgetbytes.com/feed/"
-      },
-      {
-        "name": "RecipeTin Eats",
-        "feed": "https://www.recipetineats.com/feed/"
+        "feed": "https://www.budgetbytes.com/feed/",
+        "richtung": "englisch, guenstig",
+        "pro": 2
       },
       {
         "name": "Minimalist Baker",
-        "feed": "https://minimalistbaker.com/feed/"
+        "feed": "https://minimalistbaker.com/feed/",
+        "richtung": "englisch, pflanzlich",
+        "pro": 2
       },
       {
         "name": "Half Baked Harvest",
-        "feed": "https://www.halfbakedharvest.com/feed/"
+        "feed": "https://www.halfbakedharvest.com/feed/",
+        "richtung": "englisch",
+        "pro": 2
       },
       {
         "name": "Pinch of Yum",
-        "feed": "https://pinchofyum.com/feed"
+        "feed": "https://pinchofyum.com/feed",
+        "richtung": "englisch",
+        "pro": 2
+      },
+      {
+        "name": "Elavegan",
+        "feed": "https://elavegan.com/feed/",
+        "richtung": "pflanzlich, englisch - Runde 5 geprueft: 8 Zutaten/16 Schritte, Bild ja. Bestanden, aber englisch und damit nicht das, was hier fehlt: kleiner Anteil",
+        "pro": 2
       }
     ],
-    "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen. Optional \"pro\": N an einer Seite - dann holt der Lauf von DIESER Seite N Beitraege statt proSeite (1-6).",
-    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2 (Nutzer-Auswahl: gesund, trendig, proteinreich): The Big Man's World und Skinnytaste kamen dazu. Nicht bestanden: Eating Bird Food und Fit Foodie Finds (Feed ohne Beitragslinks), Downshiftology, Pick Up Limes und bevegt (kein schema.org-Rezept). Eat this! und Elavegan haben bestanden, wurden vom Nutzer aber nicht ausgewaehlt - sie stehen weiter in den Kandidaten. Runde 4 (Kochplattformen, nachdem 32 namentlich genannte Koeche 0 verwertbare Quellen ergaben): 4 von 15 bestanden - essen & trinken, Kitchen Stories, Bon Appetit, NYT Cooking, alle mit vollstaendigen Zutaten und Bild. Nicht bestanden: Chefkoch (403) und Serious Eats (402) sperren den Abruf; EatSmarter und Brigitte haben zwar einen Feed, darin stehen aber Themenseiten statt Rezepte; lecker.de, Koch-Mit, Springlane, Zucker&Jagdwurst, Emmi kocht einfach, Einfach Backen und Gaumenfreundin gaben keinen Feed her."
+    "_hinweis": "Eigene Rezeptseiten/Foodblogs. Jeder Eintrag: {\"name\": \"Anzeigename\", \"feed\": \"https://.../feed\"} - der Feed darf RSS oder Atom sein. Aus jedem neuen Beitrag wird das schema.org/Recipe-Markup gelesen (Titel, Bild, Zutaten, Schritte, Dauer). Seiten ohne dieses Markup werden uebersprungen. Optional \"pro\": N an einer Seite - dann holt der Lauf von DIESER Seite N Beitraege statt proSeite (1-10). ⚠ Seit 2026-09-04 traegt JEDE Seite ihr eigenes \"pro\": die Sprachmischung des Vorrats ist damit an einer Stelle ablesbar, statt aus proSeite und ein paar Ausnahmen zusammengerechnet werden zu muessen. Angefordert werden damit je Lauf 100 Beitraege von deutschsprachigen, 75 von Mittelmeer-/Urlaubsseiten (italienisch, griechisch, tuerkisch, spanisch) und 27 von englischsprachigen Alltagsseiten - zusammen 202 von 38 Seiten. Vorher waren es 16 deutsch, 0 Mittelmeer und 42 englisch (zusammen 58 von 14 Seiten): die Mehrheit hat also die Seite gewechselt, statt dass nur etwas dazugekommen ist.",
+    "_geprueft": "Alle Eintraege sind auf dem Runner geprueft (`--pruefe`), nichts ist geraten. Runde 2 (gesund/trendig/proteinreich): The Big Man's World und Skinnytaste. Runde 4 (Kochplattformen, nachdem 32 namentlich genannte Koeche 0 verwertbare Quellen ergaben): 4 von 15 - essen & trinken, Kitchen Stories, Bon Appetit, NYT Cooking. Runde 5 am 2026-09-04 (deutsch/italienisch/Urlaubskueche, Nutzer-Befund 'bei Inspiration kommt nur auslaendisches Essen'): 11 von 20 bestanden und sind eingetragen - Einfach Malene, Emmi kocht einfach, Gaumenfreundin, Kuechengoetter, Eat this!, Elavegan, Zimtliebe, Kochen aus Liebe, Ricette della Nonna, My Greek Dish, Spanish Sabores. Nicht bestanden in Runde 5: Lecker & Co, Griechische Rezepte (Elenis) und Kroatien Kulinarisch (Seite gar nicht erreichbar), Tuerkische Kueche (kein Feed), Pasta Grammar (404 auf allen Feed-Pfaden), Fatto in Casa da Benedetta (403), Herzelieb, Giallo Zafferano und Gennaro Contaldo (Feed da, aber kein schema.org-Rezept in den Beitraegen). ⚠ Emmi kocht einfach und Gaumenfreundin waren in Runde 4 noch mit 'kein Feed gefunden' durchgefallen - sie bestehen erst, seit der Lauf nach dem Seitenkopf auch die Standardpfade probiert. Runde 6 am 2026-09-04 (gezielt italienisch/Pasta, deutsche Hausmannskost, Urlaubskueche - weil Runde 5 nur EINE italienische Seite gebracht hatte): 13 von 21 bestanden und sind eingetragen - Misya, The Pasta Project, Recipes from Italy, Inside the Rustic Kitchen, An Italian in my Kitchen, Elle Republic, Cookie und Co, Ina Isst, Oma kocht, Real Greek Recipes, Give Recipe, Turkish Foodie, Recetas de Rechupete. Nicht bestanden in Runde 6: Il Cucchiaio d'Argento, Sale&Pepe, Einfach Kochen und Sallys Blog (404 auf allen Feed-Pfaden), Memorie di Angelina und Balkan Lunch Box (403), La Cucina Italiana und Kuechenmomente (Feed da, aber kein schema.org-Rezept in den Beitraegen)."
   },
   "youtube": {
     "an": true,
@@ -97,25 +257,31 @@
         "pro": 4
       },
       {
-        "name": "FitMenCook",
-        "id": "UCtaNepQqDZc0a-dfRlt7UZg",
-        "richtung": "high protein",
+        "name": "Sallys Welt",
+        "id": "UCPNqPbXJHMvrH3NwRKKR5IQ",
+        "richtung": "deutsch - von proKanal 2 auf 4 angehoben, deutsche Quellen sollen den Vorrat praegen",
         "pro": 4
       },
       {
-        "name": "Sallys Welt",
-        "id": "UCPNqPbXJHMvrH3NwRKKR5IQ"
+        "name": "Thomas kocht",
+        "id": "UC-X3Hzdqo6rTjRLI5dRVb3w",
+        "richtung": "deutsch, Hausmannskost - von proKanal 2 auf 4 angehoben",
+        "pro": 4
       },
       {
-        "name": "Thomas kocht",
-        "id": "UC-X3Hzdqo6rTjRLI5dRVb3w"
+        "name": "FitMenCook",
+        "id": "UCtaNepQqDZc0a-dfRlt7UZg",
+        "richtung": "high protein, englisch - von 4 auf 2 zurueckgenommen",
+        "pro": 2
       },
       {
         "name": "Ethan Chlebowski",
-        "id": "UCDq5v10l4wkV5-ZBIJJFbzQ"
+        "id": "UCDq5v10l4wkV5-ZBIJJFbzQ",
+        "richtung": "englisch",
+        "pro": 2
       }
     ],
-    "_hinweis": "Kochkanaele. Jeder Eintrag: {\"name\": \"Anzeigename\", \"id\": \"UC...\"} - die Kanal-ID steht in der Kanal-URL oder im Quelltext der Kanalseite (channelId). Aus Titel und Videobeschreibung entsteht ein Rezeptentwurf ueber denselben Parser, den auch der Reel-Import benutzt. Optional \"pro\": N an einem Kanal - dann holt der Lauf von DIESEM Kanal N Videos statt proKanal (1-5).",
-    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2: von 16 Kandidaten schreiben nur 5 ueberhaupt ein Rezept in die Videobeschreibung; der Nutzer hat davon Felicitas Then (13 Zutaten/12 Schritte im Test) und FitMenCook (9/16) ausgewaehlt. Ohne Rezept in der Beschreibung und deshalb NICHT eingetragen: The Protein Chef, Fit Green Mind, Will Tennyson, Downshiftology, Rainbow Plant Life, Nick DiGiovanni, Fitness Oskar. Handle nicht aufloesbar: Jose Ramirez, Clean & Delicious, Scheck Eats, Kochen mit Diana."
+    "_hinweis": "Kochkanaele. Jeder Eintrag: {\"name\": \"Anzeigename\", \"id\": \"UC...\"} - die Kanal-ID steht in der Kanal-URL oder im Quelltext der Kanalseite (channelId). Aus Titel und Videobeschreibung entsteht ein Rezeptentwurf ueber denselben Parser, den auch der Reel-Import benutzt. Optional \"pro\": N an einem Kanal - dann holt der Lauf von DIESEM Kanal N Videos statt proKanal (1-5). ⚠ YouTube ist die schwaechste der vier Quellen: gemessen am 2026-09-04 kamen aus 14 angeforderten Videos nur 6 verwertbare Rezepte - viele Beschreibungen enthalten keine Zutatenliste. Deshalb traegt der Vorrat die Sprachmischung ueber die Blogs, nicht ueber die Kanaele.",
+    "_geprueft": "2026-09-03 auf dem Runner geprueft. Runde 2: von 16 Kandidaten schreiben nur 5 ueberhaupt ein Rezept in die Videobeschreibung; der Nutzer hat davon Felicitas Then (13 Zutaten/12 Schritte im Test) und FitMenCook (9/16) ausgewaehlt. Ohne Rezept in der Beschreibung und deshalb NICHT eingetragen: The Protein Chef, Fit Green Mind, Will Tennyson, Downshiftology, Rainbow Plant Life, Nick DiGiovanni, Fitness Oskar. Handle nicht aufloesbar: Jose Ramirez, Clean & Delicious, Scheck Eats, Kochen mit Diana. Runde 3/4: 32 namentlich genannte TV- und Sternekoeche - 0 von 32, kein einziger schreibt eine Zutatenliste in die Beschreibung (siehe docs/rezept.md)."
   }
 }
