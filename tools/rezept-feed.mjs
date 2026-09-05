@@ -528,7 +528,49 @@ export async function lauf() {
     gesehen.add(schluessel); gesehen.add(titelKey);
     zusammen.push(e);
   }
-  const items = zusammen.slice(0, MAX);
+  // ⚠ HERKUNFTS-QUOTE. Ohne sie gewinnt IMMER der Altbestand: der Vorrat
+  // schreibt sich fort (neue Eintraege vorne dazu, gekuerzt wird am Ende),
+  // ein einmal englisch dominierter Vorrat bleibt also monatelang englisch -
+  // egal wie viele deutsche Quellen dazukommen. Nutzer-Bugreport 2026-09-05:
+  // "Immernoch fast alles auslaendisches Essen", gemessen 75% auslaendisch
+  // bei 20 eingetragenen deutschen Quellen.
+  //
+  // ⚠ Und die REIHENFOLGE zaehlt genauso wie der Anteil: die App zeigt drei
+  // Karten auf einmal. Ein Vorrat, der zu 60% deutsch ist, aber alle
+  // deutschen Gerichte hinten hat, sieht fuer den Nutzer weiter englisch
+  // aus. Deshalb wird verschraenkt, nicht nur quotiert.
+  //
+  // ⚠ Geraten wird hier nichts: das Land steht an der QUELLE
+  // (tools/rezept-quellen.json), nicht am Gericht. Ein deutscher Foodblog
+  // schreibt auch mal Shakshuka - das bleibt dann eben ein Treffer aus
+  // deutscher Quelle, kein Etikett am Gericht.
+  const landJeQuelle = new Map();
+  for (const s of (cfg.jsonld && cfg.jsonld.seiten) || []) if (s && s.name) landJeQuelle.set(s.name, s.land || 'int');
+  for (const k of (cfg.youtube && cfg.youtube.kanaele) || []) if (k && k.name) landJeQuelle.set(k.name, k.land || 'int');
+  const istNah = e => {
+    const l = e.land || landJeQuelle.get(e.srcName) || 'int';
+    return l === 'de' || l === 'it';
+  };
+  zusammen.forEach(e => { if (!e.land) e.land = landJeQuelle.get(e.srcName) || 'int'; });
+
+  const nah = zusammen.filter(istNah);
+  const weit = zusammen.filter(e => !istNah(e));
+  // Zielanteil: zwei von drei Karten aus dem naeheren Kulturkreis. Bewusst
+  // nicht 100% - der Nutzer wollte auch Urlaubskueche, nur nicht als Mehrheit.
+  const ANTEIL = 2 / 3;
+  const sollNah = Math.min(nah.length, Math.round(MAX * ANTEIL));
+  const sollWeit = Math.min(weit.length, MAX - sollNah);
+  const nahListe = nah.slice(0, sollNah), weitListe = weit.slice(0, sollWeit);
+  // Verschraenken im Verhaeltnis 2:1, damit auch die ERSTEN Karten stimmen.
+  const items = [];
+  let iN = 0, iW = 0;
+  while (iN < nahListe.length || iW < weitListe.length) {
+    if (iN < nahListe.length) items.push(nahListe[iN++]);
+    if (iN < nahListe.length) items.push(nahListe[iN++]);
+    if (iW < weitListe.length) items.push(weitListe[iW++]);
+  }
+  log(`Herkunft: ${nahListe.length} aus deutschen/italienischen Quellen, ${weitListe.length} andere `
+    + `(von ${nah.length}/${weit.length} verfuegbar, Ziel ${Math.round(ANTEIL * 100)}%)`);
 
   // ⚠ ERST die Bilder holen, DANN vergleichen. Andersherum haette ein Lauf,
   // der "nur" Bilder lokal gemacht hat, als "nichts Neues" gegolten und
