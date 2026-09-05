@@ -9980,3 +9980,119 @@ Punkt + Linie (`top 47 / height 106` bei `bottom 153`, also Punkt→Boden);
 linker und rechter Rand behalten den Punkt; Verlassen blendet alle vier aus;
 Asset-Detailseite hat weiterhin ihre eigene Range-Leiste. Keine
 Konsolen-/Page-Errors.
+
+## 2026-09-05 (3) — Zahlen über Forecast, Compare-Sprung aus dem Indikator, Back-Leiste im Fluss, Mehrfach-Asset-Filter (VERSION-CHECK-469)
+
+Drei Nachbesserungen am Umbau von VERSION-CHECK-468.
+
+### 1. Die Actual-Zahl verschwand hinter dem Forecast
+
+*„weil teilweise die Zahl verdeckt wird [mach] das sie über dem Balken steht
+und auch über dem forecast"*
+
+`indHistChart` setzte das Wert-Label stur `top-4`, also 4 px über der
+**Balken**oberkante. Der Forecast ist aber eine eigene Ebene darüber: liegt er
+höher als der Actual — und das ist genau der interessante Fall, jede
+Verfehlung nach unten —, lief der rote Punkt (r = 3,2) samt Linie mitten durch
+die Ziffern. Bei USD CPI betraf das 6 von 11 Balken.
+
+Das Label steht jetzt über dem **höheren von beidem**:
+
+```js
+const fcTop = p[2]!=null ? yOf(p[2])-fcR-2 : Infinity;
+const lblY  = Math.max(10, Math.min(top, fcTop) - 5);
+```
+
+Dazu ein Halo in Kartenfarbe (`paint-order:stroke; stroke:var(--bg1);
+stroke-width:3`) — die Forecast-**Linie** läuft zwischen zwei Punkten schräg
+und kann ein Label auch dann kreuzen, wenn beide Endpunkte tiefer liegen.
+`fcR` ist jetzt eine Variable statt zweier Literale, damit Punktradius und
+Label-Abstand nicht auseinanderlaufen können.
+
+Gemessen danach (USD CPI, 1Y): 11 Labels, alle 11 mit einem Forecast-Punkt in
+derselben Spalte, **0** Überlappungen, geringster Abstand 6 px.
+
+Das gilt automatisch überall, wo dieser Chart steht — Asset-Detailseite **und**
+alle vier Panels in Insights > Data; es ist dieselbe Funktion. Andere
+Diagramme der App haben dieses Problem nicht: die AAII-Balken tragen ihre
+Zahlen *im* Segment, Rate-Probabilities und Bond-Spread schreiben sie schon
+über den Punkt.
+
+### 2. Compare-Sprung direkt aus dem aufgeklappten Indikator
+
+*„wenn man in einem Asset ein Indikator aufklappt dort direkt die Möglichkeit
+hat über einen Button in so ein Vergleich Menü reinzukommen und automatisch
+schon der Indikator und die Währung ausgewählt ist"*
+
+Neue Funktion `indCompareGo(indId)` + ein **Compare**-Button (rechtsbündig,
+`.ind-data-act`) in jeder aufgeklappten Indikator-Zeile. Sie setzt **beides**
+vor — `dataAssets=[symId]` und `dataIndBase` aus `stripPeriodSuffix(ind.name)`
+— und springt nach Insights > Data; die restlichen bis zu drei
+Vergleichs-Assets wählt man dort dazu.
+
+Der Rückweg läuft über das bestehende Muster (`_resReturnActive` +
+`_quickReturnAssetId`, wie `assetQuickGo`), führt also zu **genau diesem**
+Asset zurück, nicht ins Research-Terminal.
+
+### 3. Der Zurück-Button steht jetzt im Seitenfluss statt darüber
+
+*„positioniere den Button bitte oben rechts unter der Leiste aber er muss sich
+ins Menü einfügen und darf nichts verdecken"*
+
+Vorher: `.rterm-back-pill{position:fixed;left:14px;bottom:14px}` — eine
+knallrote Pille, die unten links **über** dem Inhalt schwebte.
+
+Jetzt sitzt die Pille in einer Leiste `#resBackBar`, die `showTab()` als
+**erstes Kind in die gerade sichtbare Seite** hängt. Damit steht sie oben
+rechts direkt unter der Kopfleiste, im normalen Fluss: sie schiebt den Inhalt
+herunter statt ihn zu überdecken und scrollt mit. Optisch ein Button des
+Design-Systems (`rgba(var(--red-rgb),.08)` auf `.3`-Rand) statt einer
+Vollton-Fläche.
+
+⚠ **Nicht in `'cur'`**: diese Seite ist ein Flex-Row (Sidebar + Detail), eine
+Leiste als Flex-Kind würde die Spalten auseinanderreißen. Dort ist der Button
+ohnehin nie sichtbar — er *führt* dorthin zurück.
+
+Gemessen: 22 px vom rechten Seitenrand, 16 px unter dem Seitenanfang, kein
+Überlappen mit der Kopfkarte des Data-Tabs.
+
+### 4. Asset-Filter: mehrere Assets in einem Zug
+
+*„ich will das in dem Filter man aufeinmal schon mehrere Assets auswählen kann
+und er nach jedem Klick speichert und dann Schließt er sich bei 4 oder wenn
+man ihn wegklickt"*
+
+Ein `<select>` kann das grundsätzlich nicht — es schließt nach **jeder**
+einzelnen Auswahl, für vier Panels musste man es viermal aufziehen. Ersetzt
+durch einen Button `Assets n/4` mit Popup (`.data-picker`, am `<body>` mit
+`position:fixed`, weil die Kopfkarte `overflow` hat und ein Kind-Popup dort
+abgeschnitten würde):
+
+- Chips wie in jedem anderen Asset-Filter, gruppiert Watchlist → FX → Crypto →
+  Metals → Energy → Indices → Yields (dieselbe Reihenfolge wie
+  `sbCatsOptgroups`).
+- **Jeder Tipp wird sofort übernommen** (`renderDataTab()` läuft nach jedem
+  Klick), das Popup bleibt offen und zeigt den Stand `n/4`.
+- Beim vierten Panel sind die übrigen 20 Chips `disabled`, und das Popup
+  **schließt sich**.
+- Ein Tipp daneben schließt es ebenfalls (`pointerdown`-Capture-Listener, erst
+  im nächsten Tick registriert — sonst schließt der öffnende Klick selbst).
+
+`renderDataTab()` ruft am Ende `renderDataAssetPicker()`, damit sich das offene
+Popup nach dem Neuaufbau wieder am frisch erzeugten Button ausrichtet.
+
+### Verifiziert (Playwright, 1400×1000 und 820×1100)
+
+Popup bleibt über USD→EUR→GBP offen, Panels wachsen 1→2→3 mit, Zähler
+2/4→3/4, beim vierten schließt es und es stehen 4 Panels; bei 4/4 sind 20
+Chips gesperrt; Klick daneben schließt. Compare-Button in der aufgeklappten
+CPI-Zeile → `curPage='data'`, `dataAssets=['USD']`, `dataIndBase='CPI
+(Headline)'`; Back führt zurück auf `cur`/USD und die Leiste verschwindet.
+Keine Konsolen-/Page-Errors.
+
+⚠ **Test-Fallstrick**: der ERSTE Klick in den Inhaltsbereich wird von der App
+bewusst geschluckt (er klappt nur die Sidebar ein, siehe der
+`pageArea`-`click`-Capture-Handler). Ein Playwright-Test, der direkt auf einen
+Button klickt, sieht deshalb „nichts passiert" — erst ein Aufwärm-Klick
+irgendwo im Inhalt macht die Messung gültig. Genau darauf ist dieser Test
+zweimal hereingefallen, bevor der Grund gefunden war.

@@ -1485,8 +1485,13 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 @media(max-width:900px){.rterm-shell{flex-direction:column}.rterm-side{flex-direction:row}.rterm-tree{width:100%}.rterm-side-collapsed{width:100%;flex-direction:row;flex-wrap:wrap}.rterm-lower{flex-direction:column}.rterm-timeline{flex:1 1 auto;max-width:none;max-height:280px}}
 /* Rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04): schwebt unten links auf
    JEDER Seite, sobald ein Research-Terminal-Shortcut benutzt wurde. */
-.rterm-back-pill{display:none;position:fixed;left:14px;bottom:14px;z-index:9000;align-items:center;gap:6px;padding:9px 14px 9px 11px;border-radius:999px;border:none;background:var(--red);color:var(--on-accent);font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35)}
-body.res-return-active .rterm-back-pill{display:flex}
+/* Zurueck-Leiste: steht oben rechts unter der Kopfleiste IM Seitenfluss
+   (showTab haengt sie als erstes Kind in die aktive Seite) - sie schiebt den
+   Inhalt herunter statt ihn zu ueberdecken. Vorher schwebte sie als
+   position:fixed-Pille unten links ueber allem. */
+#resBackBar{display:none;justify-content:flex-end;margin:0 0 10px}
+body.res-return-active #resBackBar{display:flex}
+.rterm-back-pill{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);color:var(--red);transition:all .15s}@media (hover:hover){.rterm-back-pill:hover{background:rgba(var(--red-rgb),.16);border-color:var(--red)}}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
 /* ── Sektions-Navigation der Assets-Seite ──
    Schmale Leiste statt einer weiteren Karte: der aktive Eintrag bekommt nur
@@ -1751,6 +1756,17 @@ body.res-return-active .rterm-back-pill{display:flex}
 .cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
 .cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-quick.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
+/* Compare-Sprung aus einem aufgeklappten Indikator (Nutzer-Wunsch 2026-09-05) */
+.ind-data-act{display:flex;justify-content:flex-end;padding:2px 0 8px}
+.ind-cmp-btn{display:inline-flex;align-items:center;gap:6px}
+/* Mehrfach-Asset-Auswahl im Data-Tab: Popup unter dem "Assets"-Button */
+.data-picker{position:fixed;z-index:9500;min-width:250px;max-width:min(440px,calc(100vw - 16px));overflow-y:auto;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shadow-pop)}
+.data-picker-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--bd);font-size:12px;font-weight:700;color:var(--t1)}
+.data-picker-hd b{font-family:var(--ff-num);color:var(--blue)}
+.data-picker-body{padding:10px 13px;display:flex;flex-direction:column;gap:10px}
+.data-picker-grp{display:flex;flex-direction:column;gap:5px}
+.data-picker-ft{padding:8px 13px;border-top:1px solid var(--bd);font-size:10.5px;color:var(--t3);line-height:1.45}
+.data-picker .cmp-chip:disabled{opacity:.35;cursor:not-allowed}
 /* ── INSIGHTS > DATA: bis zu 4 Panels (Nutzer-Wunsch 2026-09-05) ── */
 .data-ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 14px 12px}
 .data-ctrls .cot-filterbar{margin:0}
@@ -4126,11 +4142,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-468 - Compare-Tab ersatzlos entfernt und Insights &gt; Data neu gebaut (Nutzer-Wunsch 2026-09-05): bis zu 4 Assets gleichzeitig, jedes in einem eigenen Panel (2x2-Raster, einspaltig unter 900px), EIN Indikator-Dropdown fuer alle Panels (Vereinigung der Indikatoren der gewaehlten Assets; ein Asset ohne diesen Indikator sagt das ausdruecklich, statt etwas anderes zu zeigen) und EINE Zeitraum-Leiste, die alle Diagramme gleichzeitig umstellt. Chart-Cursor ueberall: solange der Zeiger im Diagramm ist, ist IMMER der naechste Datenpunkt gewaehlt (fx wird auf 0..1 geklemmt statt am Rand auszublenden), und vom Punkt laeuft eine duenne graue Linie senkrecht bis zum Boden des Diagramms statt ueber die volle Hoehe. Die vier Data-Panels teilen sich diesen Cursor (data-chv-group), zeigen also denselben Zeitpunkt. Compare ist komplett raus: Seite, CSS, Render-Pfade, cmpCols samt Cloud-Sync/Export - gespeicherte Tab-Stapel von Bestandsnutzern werden beim Laden migriert, damit keine tote Kachel stehen bleibt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-469 - Drei Nachbesserungen (Nutzer-Wunsch 2026-09-05): (1) Die Actual-Zahl im Verlaufschart stand stur 4px ueber dem Balken - lag der Forecast hoeher (jede Verfehlung nach unten, also genau die interessanten Faelle), lief der rote Punkt samt Linie mitten durch die Ziffern. Sie steht jetzt ueber dem hoeheren von beidem, mit Halo in Kartenfarbe fuer die schraeg durchlaufende Forecast-Linie; gilt ueberall, wo dieser Chart steht (Asset-Detailseite und Insights &gt; Data). (2) Ein aufgeklappter Indikator hat jetzt einen Compare-Button, der Insights &gt; Data mit genau diesem Asset UND diesem Indikator vorgewaehlt oeffnet - dort laesst sich bis zu drei weitere Assets dazuwaehlen. (3) Der Zurueck-Button schwebt nicht mehr als rote Pille unten links ueber dem Inhalt, sondern sitzt oben rechts unter der Kopfleiste im normalen Seitenfluss (showTab haengt die Leiste in die aktive Seite): er schiebt den Inhalt herunter statt ihn zu verdecken und scrollt mit. (4) Der Asset-Filter im Data-Tab ist ein Mehrfach-Popup statt eines Dropdowns - ein &lt;select&gt; schliesst nach jeder einzelnen Auswahl, man musste es viermal aufziehen. Jeder Tipp wird sofort uebernommen, das Popup zeigt den Stand 0/4 bis 4/4, deaktiviert die restlichen Chips beim vierten Panel und schliesst sich bei 4 oder beim Tippen daneben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-468</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-469</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4783,7 +4799,7 @@ function introLogin(){
      Research-Baum benutzt wurde (researchShortcutGo), unabhaengig von der
      restlichen Tab-Rendering-Pipeline (body.res-return-active steuert die
      Sichtbarkeit rein per CSS). -->
-<button id="resBackPill" class="rterm-back-pill" onclick="researchBackFromShortcut()" title="Back to the Research Terminal"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button>
+<div id="resBackBar"><button id="resBackPill" class="rterm-back-pill" onclick="researchBackFromShortcut()" title="Back to the Research Terminal"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button></div>
 
 <script type="module" src="js/main.js"></script>
 </body>

@@ -340,3 +340,42 @@ denselben Zeitraum zeigen** (Insights > Data, bis zu 4 Panels), bekommen sie
 über den vierten Parameter dieselbe Gruppe (`chartHoverWrap(svg,pts,null,'data')`
 → `data-chv-group`): alle zeigen dann denselben Zeitpunkt. Vier Charts mit vier
 unabhängigen Cursorn kann man nicht vergleichen — genau dafür stehen sie da.
+
+## Wert-Labels in Diagrammen: über ALLEM, was in derselben Spalte liegt
+
+Regel seit 2026-09-05: Ein Zahlenlabel wird nie nur relativ zu *einer* Ebene
+positioniert. Trägt ein Chart mehrere Ebenen an derselben x-Position (Balken =
+Actual **und** Forecast-Punkt/-Linie darüber), steht die Zahl über dem
+**höheren von beidem** — `Math.min(barTop, forecastTop) - 5`, geklemmt auf den
+oberen Rand der viewBox. Zusätzlich ein Halo in Kartenfarbe
+(`paint-order:stroke; stroke:var(--bg1); stroke-width:3`), weil eine
+Verbindungslinie zwischen zwei Punkten auch dann schräg durch ein Label laufen
+kann, wenn beide Endpunkte tiefer liegen.
+
+Ein Radius/Abstand, der an zwei Stellen gebraucht wird (Punktgröße beim
+Zeichnen, Punktgröße bei der Label-Position), gehört in **eine** Variable —
+zwei Literale laufen beim nächsten Anfassen auseinander.
+
+## Ein globaler Zurück-Button gehört in den Seitenfluss, nicht darüber
+
+Regel seit 2026-09-05 (Nutzer-Wunsch: *„er muss sich ins Menü einfügen und darf
+nichts verdecken"*): Die Zurück-Leiste (`#resBackBar`) wird von `showTab()` als
+erstes Kind in die gerade sichtbare Seite gehängt und steht dort oben rechts
+unter der Kopfleiste. Sie schiebt den Inhalt herunter und scrollt mit, statt
+als `position:fixed`-Pille darüber zu schweben. Optik: getönter Button des
+Design-Systems (`rgba(var(--red-rgb),.08)` auf `.3`-Rand), keine Vollton-Pille.
+
+⚠ Nicht in Flex-Row-Seiten einhängen (`'cur'` = Sidebar + Detail) — eine Leiste
+als Flex-Kind reißt die Spalten auseinander.
+
+## Mehrfachauswahl: Popup mit Chips, nie ein `<select>`
+
+Soll der Nutzer in EINEM Zug mehrere Dinge wählen, ist ein `<select>` das
+falsche Bauteil — es schließt nach jeder einzelnen Auswahl. Muster stattdessen
+(`.data-picker` im Data-Tab): Button mit Zähler `n/max` → Popup am `<body>`
+(`position:fixed`, weil Kartencontainer `overflow` haben), Chips in derselben
+Gruppierung wie jeder andere Asset-Filter, **jeder Klick wird sofort
+übernommen**, restliche Chips werden beim Maximum `disabled`, und das Popup
+schließt bei Erreichen des Maximums oder per `pointerdown`-Capture-Listener
+außerhalb — der erst im nächsten Tick registriert wird, sonst schließt der
+öffnende Klick es selbst wieder.

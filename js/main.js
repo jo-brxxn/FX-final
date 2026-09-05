@@ -5721,7 +5721,10 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
   if(!detailBody)return mainRow;
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="5"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
+  // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
+  const cmpBtn=`<div class="ind-data-act"><button class="btn ind-cmp-btn" onclick="event.stopPropagation();indCompareGo('${escJH(ind.id)}')" title="Open Insights &gt; Data with ${escH(getSym().name||getSym().id)} and this indicator already selected — add up to three more assets there">${icn('bars',13)}<span>Compare</span></button></div>`;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="5"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${cmpBtn}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -9105,6 +9108,25 @@ function applyAssetQuickFilter(tabId,id){
   else if(tabId==='netflow'){setSentSub('netflow');setPcAsset(macroCcyFor(id));}
   else if(tabId==='retail'){setSentSub('retail');setSentSym(retailSymFor(dataId));}
   else if(tabId==='feargreed')setSentSub('feargreed');
+}
+// Direkt aus einem aufgeklappten Indikator in den Vergleich (Insights >
+// Data) springen - Nutzer-Wunsch 2026-09-05: "wenn man in einem Asset ein
+// Indikator aufklappt dort direkt die Moeglichkeit hat ueber einen Button in
+// so ein Vergleich Menue reinzukommen und automatisch schon der Indikator und
+// die Waehrung ausgewaehlt ist". Setzt BEIDES vor: das Asset als einziges
+// Panel und den Basisnamen des Indikators; von dort aus kann man die
+// restlichen bis zu drei Vergleichs-Assets dazuwaehlen. Die Zurueck-Pille
+// fuehrt zu genau diesem Asset zurueck (gleiches Muster wie assetQuickGo).
+function indCompareGo(indId){
+  const c=getSym();if(!c)return;
+  let base='';
+  (c.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{if(i.id===indId)base=stripPeriodSuffix(i.name).base;}));
+  dataAssets=[c.id];
+  if(base)dataIndBase=base;
+  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;
+  document.body.classList.add('res-return-active');
+  setBackPillTitle(`Back to ${c.name||c.id}`);
+  showTab('data');
 }
 function assetQuickGo(tabId){
   const c=getSym();if(!c)return;
@@ -13139,6 +13161,10 @@ function indHistChart(ind,symId,opts){
   const bw=Math.max(1.5,(W-padL-padR)/n*0.56);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const showLbl=!lineMode&&bw>=22;
+  // Radius des Forecast-Punktes - wird zweimal gebraucht: beim Zeichnen und
+  // bei der Frage, wie hoch die Actual-Zahl stehen muss, um NICHT hinter dem
+  // Forecast zu verschwinden (Nutzer-Bugreport 2026-09-05).
+  const fcR=n>40?1.6:3.2;
   // Einheit: bei einer abgeleiteten Reihe (Anleihen/COT/Sentiment) gibt
   // indChartSeries() sie mit, sonst wie bisher aus der Recherche.
   const unit=_cs.unit!=null?_cs.unit:((ind.research&&ind.research.unit)||'');
@@ -13160,7 +13186,20 @@ function indHistChart(ind,symId,opts){
     use.forEach((p,i)=>{
       const x=xOf(i),y=yOf(p[1]),top=Math.min(y,y0),h=Math.abs(y-y0);
       bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)"/>`;
-      if(showLbl)bars+=`<text x="${x.toFixed(1)}" y="${(top-4).toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0)">${escH(fmtV(p[1]))}</text>`;
+      if(showLbl){
+        // Die Zahl steht ueber ALLEM, was an dieser Stelle im Chart liegt -
+        // ueber dem Balken UND ueber dem Forecast-Punkt (Nutzer-Wunsch
+        // 2026-09-05: "teilweise wird die Zahl verdeckt"). Vorher sass sie
+        // stur 4px ueber dem Balken; lag der Forecast hoeher als der Actual
+        // (jede Verfehlung nach unten - also genau die interessanten Faelle),
+        // lief der rote Punkt samt Linie mitten durch die Ziffern.
+        // Zusaetzlich ein Halo in Kartenfarbe (paint-order:stroke), damit die
+        // Zahl auch dort lesbar bleibt, wo die Forecast-Linie zwischen zwei
+        // Punkten schraeg durchs Label laeuft.
+        const fcTop=p[2]!=null?yOf(p[2])-fcR-2:Infinity;
+        const lblY=Math.max(10,Math.min(top,fcTop)-5);
+        bars+=`<text x="${x.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0);paint-order:stroke;stroke:var(--bg1);stroke-width:3px;stroke-linejoin:round">${escH(fmtV(p[1]))}</text>`;
+      }
     });
   }
   let fcPath='',started=false,fcDots='';
@@ -13169,7 +13208,7 @@ function indHistChart(ind,symId,opts){
     const x=xOf(i),y=yOf(p[2]);
     fcPath+=(started?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
     started=true;
-    fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${n>40?1.6:3.2}" fill="var(--red)"/>`;
+    fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${fcR}" fill="var(--red)"/>`;
   });
   // Datumsbeschriftung ausduennen, wenn zu viele Punkte fuer lesbare Labels.
   const lblEvery=Math.max(1,Math.ceil(n/10));
@@ -13241,6 +13280,71 @@ function removeDataAsset(id){
   const i=dataAssets.indexOf(id);if(i>=0)dataAssets.splice(i,1);
   renderDataTab();
 }
+// ── Mehrfach-Asset-Auswahl (Nutzer-Wunsch 2026-09-05: "in dem Filter man
+// aufeinmal schon mehrere Assets auswaehlen kann und er nach jedem Klick
+// speichert und dann schliesst er sich bei 4 oder wenn man ihn wegklickt").
+// Ein <select> kann das nicht: es schliesst nach jeder einzelnen Auswahl, man
+// muss es also viermal aufziehen. Stattdessen ein Popup mit Chips - jeder
+// Klick uebernimmt SOFORT (renderDataTab baut die Panels neu), das Popup
+// bleibt offen und zeigt den Stand, und es schliesst sich, sobald das vierte
+// Panel belegt ist oder man daneben tippt.
+let _dataPickerOpen=false;
+function _dataPickerOutside(e){
+  const t=e.target;
+  if(t&&t.closest&&t.closest('#dataAssetPicker,#dataAddBtn'))return;
+  closeDataAssetPicker();
+}
+function closeDataAssetPicker(){
+  _dataPickerOpen=false;
+  document.removeEventListener('pointerdown',_dataPickerOutside,true);
+  const el=document.getElementById('dataAssetPicker');if(el)el.remove();
+  const b=document.getElementById('dataAddBtn');if(b)b.classList.remove('on');
+}
+function openDataAssetPicker(){
+  if(_dataPickerOpen){closeDataAssetPicker();return;}
+  _dataPickerOpen=true;
+  renderDataAssetPicker();
+  // Erst im naechsten Tick lauschen, sonst schliesst der Klick, der das
+  // Popup gerade geoeffnet hat, es sofort wieder.
+  setTimeout(()=>{if(_dataPickerOpen)document.addEventListener('pointerdown',_dataPickerOutside,true);},0);
+}
+function toggleDataAsset(id){
+  const i=dataAssets.indexOf(id);
+  if(i>=0)dataAssets.splice(i,1);
+  else if(dataAssets.length<DATA_MAX_PANELS)dataAssets.push(id);
+  else return;                       // voll - der Chip ist ohnehin deaktiviert
+  renderDataTab();                   // uebernimmt sofort, nach JEDEM Klick
+  if(dataAssets.length>=DATA_MAX_PANELS)closeDataAssetPicker();
+}
+// Baut/aktualisiert das Popup und haengt es unter den "Add asset"-Button.
+// Es haengt bewusst am <body> (position:fixed): die Kopfkarte hat overflow,
+// ein Kind-Popup wuerde dort abgeschnitten.
+function renderDataAssetPicker(){
+  if(!_dataPickerOpen)return;
+  const btn=document.getElementById('dataAddBtn');
+  if(!btn){closeDataAssetPicker();return;}
+  btn.classList.add('on');
+  let el=document.getElementById('dataAssetPicker');
+  if(!el){el=document.createElement('div');el.id='dataAssetPicker';el.className='data-picker';document.body.appendChild(el);}
+  const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
+  const full=dataAssets.length>=DATA_MAX_PANELS;
+  const chip=id=>{
+    const on=dataAssets.includes(id);
+    return`<button class="cmp-chip${on?' on':''}${isNonFx(id)?' nf':''}"${!on&&full?' disabled':''} onclick="toggleDataAsset('${escJH(id)}')" title="${escH(COT_NAME[id]||id)}">${escH(id)}</button>`;
+  };
+  // Gleiche Gruppierung/Reihenfolge wie jeder andere Asset-Filter der App
+  // (Watchlist zuerst, dann SB_CATS) - siehe sbCatsOptgroups.
+  const wl=watchlistedAssetIds(ids),wlSet=new Set(wl);
+  const grp=(label,list)=>list.length?`<div class="data-picker-grp"><span class="cmp-filter-lbl">${escH(label)}</span><div class="cmp-filter-grp">${list.map(chip).join('')}</div></div>`:'';
+  const body=grp('Watchlist',wl)+SB_CATS.map(cat=>grp(cat.l,cat.ids.filter(id=>ids.includes(id)&&!wlSet.has(id)))).join('');
+  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to 4 assets</span><b>${dataAssets.length}/${DATA_MAX_PANELS}</b></div>
+    <div class="data-picker-body">${body}</div>
+    <div class="data-picker-ft">Every tap is applied right away · closes at 4 or when you tap outside</div>`;
+  const r=btn.getBoundingClientRect();
+  el.style.top=Math.round(r.bottom+6)+'px';
+  el.style.right=Math.max(8,Math.round(window.innerWidth-r.right))+'px';
+  el.style.maxHeight=Math.max(160,Math.round(window.innerHeight-r.bottom-24))+'px';
+}
 function setDataInd(v){dataIndBase=v||'';renderDataTab();}
 function renderDataTab(){
   const el=document.getElementById('dataBody');if(!el)return;
@@ -13263,10 +13367,9 @@ function renderDataTab(){
   // Kopfleiste: Chips der gewaehlten Panels (Klick entfernt) + Dropdown zum
   // Hinzufuegen, bis 4 belegt sind.
   const chips=dataAssets.map(id=>`<button class="cmp-chip on${isNonFx(id)?' nf':''}" onclick="removeDataAsset('${escJH(id)}')" title="Remove this panel">${escH(id)} ✕</button>`).join('');
-  const rest=ids.filter(id=>!dataAssets.includes(id));
-  const addPicker=dataAssets.length>=DATA_MAX_PANELS
-    ?`<span class="cmp-filter-none">4 of 4 panels in use — remove one to add another</span>`
-    :assetFilterSelect(rest,'','addDataAsset','Add an asset…','Add an asset panel',null);
+  // Mehrfachauswahl statt Dropdown: der Button oeffnet ein Popup, in dem man
+  // in EINEM Zug bis zu vier Assets antippt (siehe openDataAssetPicker).
+  const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to 4 assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${DATA_MAX_PANELS}</b></button>`;
   const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
   const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="The same indicator is shown in every panel" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
   const rangeBar=(panels.length&&dataIndBase)
@@ -13292,6 +13395,10 @@ function renderDataTab(){
   }
   el.innerHTML=head+body;
   attachChartHovers(el);
+  // Der "Assets"-Button wurde gerade neu gebaut - das offene Popup muss sich
+  // wieder daran ausrichten und den neuen Stand (4/4, deaktivierte Chips)
+  // zeigen. No-op, solange kein Popup offen ist.
+  renderDataAssetPicker();
 }
 function sentReadBadge(ev){
   if(!ev)return`<span style="color:var(--t3);font-size:12px">no data</span>`;
@@ -16042,6 +16149,17 @@ function showTab(tab,btn,fxMode){
   updateAuroraColors();
   if(tab!=='cot')cotStopCountdown();
   const pgEl=document.getElementById(PAGE_IDS[tab]);
+  // Zurueck-Button (Nutzer-Wunsch 2026-09-05: "oben rechts unter der Leiste
+  // ... muss sich ins Menue einfuegen und darf nichts verdecken"): statt als
+  // fest positionierte Pille unten links ueber dem Inhalt zu schweben, wandert
+  // die Leiste als ERSTES Kind in die gerade sichtbare Seite. Damit steht sie
+  // oben rechts direkt unter der Kopfleiste, im normalen Fluss - sie schiebt
+  // den Inhalt herunter, statt ihn zu ueberdecken, und scrollt mit.
+  const _bb=document.getElementById('resBackBar');
+  // Nicht in 'cur': diese Seite ist ein Flex-Row (Sidebar + Detail), eine
+  // Leiste als Flex-Kind wuerde die Spalten auseinanderreissen. Dort ist der
+  // Zurueck-Button ohnehin nie sichtbar - er FUEHRT ja dorthin zurueck.
+  if(_bb&&pgEl&&tab!=='cur'&&_bb.parentElement!==pgEl)pgEl.insertBefore(_bb,pgEl.firstChild);
   if(pgEl){
     pgEl.style.display=tab==='cur'?'flex':'block';
     // Animation neu auslösen (Reflow erzwingen), falls dieselbe Seite kurz
@@ -17162,7 +17280,8 @@ Object.assign(window,{
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
-  DATA_MAX_PANELS,setDataAsset,addDataAsset,removeDataAsset,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
+  DATA_MAX_PANELS,setDataAsset,addDataAsset,removeDataAsset,toggleDataAsset,openDataAssetPicker,closeDataAssetPicker,
+  renderDataAssetPicker,indCompareGo,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
   setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
   markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
