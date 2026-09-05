@@ -395,6 +395,28 @@ body{
 .ph-cal-d{font-size:var(--fs-lg);font-weight:800;color:var(--t0);font-family:var(--ff-num);line-height:1.05;margin-top:3px}
 /* Rezepte = Kochbuch: runde Marke, feine Linie. */
 .ph-rec .ph-ic{border-radius:50%}
+/* Inspiration = Pinnwand: das Zeichen haengt leicht schief, wie ein
+   angehefteter Zettel. Nur die MARKE dreht sich, nicht der Text daneben -
+   schiefe Schrift liest sich schlechter. */
+.ph-insp .ph-ic{transform:rotate(-4deg)}
+/* Koch-Verlauf = Logbuch: kraeftige Grundlinie, wie unter einem Eintrag. */
+.ph-cook{border-bottom-width:2px;border-bottom-color:var(--bd2)}
+/* Overview = Armaturenbrett: gefuellte Marke, das ist die Startseite. */
+.ph-ov .ph-ic{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ══ ZWISCHENBAND ════════════════════════════════════════════════════
+   Trennt zwei Bloecke auf EINER Seite (etwa die taeglichen Vorschlaege von
+   den eigenen Ideen). Ohne so eine Kante laufen zwei Raster ineinander und
+   man sieht nicht, wo das eine aufhoert. */
+.sec{display:flex;align-items:center;gap:10px;margin:calc(var(--gap-block) + 4px) 0 var(--gap-block)}
+.sec-t{flex-shrink:0;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);
+  text-transform:uppercase;color:var(--t1)}
+.sec-n{flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;font-family:var(--ff-num);color:var(--t2);
+  background:var(--bg3);border:1px solid var(--bd);border-radius:999px;padding:2px 8px}
+.sec-line{flex:1;min-width:10px;height:0;border-bottom:1px solid var(--bd)}
+.sec-hint{flex-shrink:0;font-size:var(--fs-sm);color:var(--t3);max-width:52%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:640px){.sec{flex-wrap:wrap}.sec-hint{max-width:100%;white-space:normal}}
 
 /* ══ BUTTONS / FORMULARE ═════════════════════════════════════════════ */
 .btn{background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);padding:6px 10px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:var(--ff-num);white-space:nowrap;line-height:1.4;outline:none;display:inline-flex;align-items:center;gap:6px}
@@ -506,6 +528,8 @@ body{
 .rd-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--ff-num);
   font-size:var(--fs-sm);font-weight:800;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
 .rd-step .rd-block{flex:1;min-width:0;margin-bottom:0}
+.rd-num-leer{background:rgba(0,0,0,0);border:1px dashed var(--bd2)}
+.rd-step .rd-block img{border-radius:var(--rs);margin-top:7px}
 .rd-chip{font-size:var(--fs-sm);font-weight:700;font-family:var(--ff-num);color:var(--t1);background:var(--bg3);border:1px solid var(--bd);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:5px}
 .rd-chip svg{width:12px;height:12px;color:var(--accent)}
 .rd-sec{margin-bottom:20px}
@@ -626,6 +650,8 @@ body{
    der durch die 1px-Luecken des Rasters scheint), eine Kopfzeile mit den
    Wochentagen, das Wochenende abgesetzt und HEUTE als gefuellter Kreis auf
    der Zahl - genau so markiert ein Kalender einen Tag. */
+.cal-nav{margin-bottom:9px;gap:7px}
+.cal-nav .week-range{margin-right:6px}
 .week-range{font-size:var(--fs-md);font-weight:800;font-family:var(--ff-num);color:var(--t0);letter-spacing:var(--ls-title);padding:0 4px}
 .cal{border:1px solid var(--bd2);border-radius:var(--r);overflow:hidden;background:var(--bd);box-shadow:var(--shadow-card)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--bd)}
@@ -638,14 +664,15 @@ body{
 .week-dt{flex-shrink:0;width:31px;height:31px;display:flex;align-items:center;justify-content:center;border-radius:50%;
   font-size:var(--fs-lg);font-weight:800;font-family:var(--ff-num);font-variant-numeric:tabular-nums;color:var(--t0);line-height:1}
 .week-day.on .week-dt{background:var(--accent);color:#fff}
-.week-mo{font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
+.week-mo{margin-left:auto;font-size:var(--fs-2xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t3)}
 .week-wd{display:none;font-size:var(--fs-xs);font-weight:800;letter-spacing:var(--ls-label);text-transform:uppercase;color:var(--t2)}
 .week-day.on .week-wd{color:var(--accent)}
 .week-body{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
 .week-item{display:flex;align-items:center;gap:8px;min-width:0;background:var(--bg1);border:1px solid var(--bd);
   border-left:3px solid var(--accent);border-radius:var(--rss);padding:5px 6px}
 .week-thumb{width:32px;height:26px;flex-shrink:0;border-radius:4px;object-fit:cover;background:var(--bg4);border:1px solid var(--bd);cursor:pointer;display:block}
-.week-nm{flex:1;min-width:0;font-size:var(--fs-sm);color:var(--t0);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.week-nm{flex:1;min-width:0;font-size:var(--fs-sm);color:var(--t0);font-weight:700;cursor:pointer;
+  line-height:var(--lh-snug);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:anywhere}
 .week-x{flex-shrink:0;width:20px;height:20px;border:none;background:transparent;color:var(--t3);cursor:pointer;font-size:14px;line-height:1;border-radius:4px;padding:0}
 @media (hover:hover){.week-x:hover{color:var(--live);background:var(--bg4)}}
 .week-empty{font-size:var(--fs-sm);color:var(--t3);opacity:.7;padding:2px}
@@ -697,12 +724,15 @@ body{
 /* Der Zettel selbst */
 .shop-cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:var(--gap-block);align-items:start}
 @media (max-width:940px){.shop-cols{grid-template-columns:1fr}}
-.pad{position:relative;min-width:0;background:var(--bg1);border:1px solid var(--bd2);
-  border-radius:3px 3px var(--r) var(--r);box-shadow:var(--shadow-card);padding-top:8px}
-/* Abrisskante: die Kerben sind die Seitenflaeche (--bg0), in das Blatt gestanzt. */
-.pad::before{content:'';position:absolute;left:0;right:0;top:-1px;height:9px;pointer-events:none;
-  background-image:radial-gradient(circle at 7px -1px,var(--bg0) 5px,rgba(0,0,0,0) 5.5px);
-  background-size:14px 9px;background-repeat:repeat-x}
+.pad{position:relative;min-width:0;background:var(--bg2);border:1px solid var(--bd2);
+  border-radius:3px 3px var(--r) var(--r);box-shadow:var(--shadow-card);padding-top:9px}
+/* Abrisskante: die Kerben sind die Seitenflaeche (--bg0), in das Blatt
+   gestanzt. ⚠ Das Blatt liegt auf --bg2, nicht auf --bg1: --bg0 und --bg1
+   liegen in mehreren Paletten nur einen Hauch auseinander, und dann sah man
+   weder das Blatt noch die Kerben. */
+.pad::before{content:'';position:absolute;left:0;right:0;top:-1px;height:10px;pointer-events:none;z-index:4;
+  background-image:radial-gradient(circle at 8px 0,var(--bg0) 5.5px,rgba(0,0,0,0) 6px);
+  background-size:16px 10px;background-repeat:repeat-x}
 .pad-hd{display:flex;align-items:center;gap:10px;padding:5px 14px 8px;border-bottom:2px solid var(--bd2)}
 .pad-ttl{font-family:var(--ff-title);font-size:var(--fs-lg);font-weight:800;letter-spacing:var(--ls-title);color:var(--t0)}
 .pad-n{margin-left:auto;flex-shrink:0;font-size:var(--fs-sm);font-weight:800;font-family:var(--ff-num);color:var(--t2);
@@ -716,9 +746,12 @@ body{
 .pad-empty{padding:26px 16px;text-align:center;font-size:var(--fs-sm);color:var(--t3);line-height:var(--lh-base)}
 .pad-empty b{display:block;font-size:var(--fs-base);color:var(--t2);margin-bottom:3px;font-family:var(--ff-title)}
 /* Randstrich wie im Notizblock - liegt UEBER den Zeilen, genau wie auf
-   Papier, und laeuft deshalb auch durch die Abteilungs-Schilder. */
+   Papier, und laeuft deshalb auch durch die Abteilungs-Schilder.
+   ⚠ Nicht --accent-soft: das ist in fast jeder Palette eine sehr blasse
+   Flaechenfarbe und war als 2px-Strich schlicht nicht zu sehen. Der volle
+   Akzent mit opacity haelt die Farbe am Theme und wird trotzdem sichtbar. */
 .pad-todo .pad-body::before{content:'';position:absolute;left:48px;top:0;bottom:0;width:2px;
-  background:var(--accent-soft);pointer-events:none;z-index:2}
+  background:var(--accent);opacity:.34;pointer-events:none;z-index:2}
 
 /* Abteilungen wie die Schilder ueber den Gaengen im Laden */
 .shop-cat+.shop-cat{border-top:1px solid var(--bd)}
@@ -750,7 +783,7 @@ body{
   -webkit-mask-image:var(--x-mark);mask-image:var(--x-mark);
   -webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .shop-row input[type=checkbox]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.shop-txt{flex:1;min-width:0;font-size:var(--fs-md);color:var(--t0);overflow-wrap:anywhere;line-height:var(--lh-snug)}
+.shop-txt{flex:0 1 auto;margin-right:auto;min-width:0;font-size:var(--fs-md);color:var(--t0);overflow-wrap:anywhere;line-height:var(--lh-snug)}
 .shop-row.done .shop-txt{color:var(--t3)}
 .shop-qty{flex-shrink:0;font-size:var(--fs-sm);font-weight:800;font-family:var(--ff-num);font-variant-numeric:tabular-nums;
   color:var(--t1);background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rss);padding:2px 8px}
@@ -1205,11 +1238,11 @@ body.no-anim .week-thumb,body.no-anim .cook-thumb,body.no-anim .trash-thumb,body
   </div>
   <div class="hdr-status">
     <span class="saved" id="rezSaveBadge">✓ Saved locally</span>
-    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-18 - "Load new ones" im Hinweis "You have been through everything" gibt jetzt sofort Rueckmeldung ("Loading new suggestions…"). Vorher passierte nach dem Klick sekundenlang sichtbar nichts, wenn das Internet langsam war: die Ladeanzeige haing am Knopf "Show 3 more", den es in diesem Zustand gar nicht mehr gibt. Ohne Internet fiel das nie auf, weil sofort eine Fehlermeldung kam - der Grund, warum die Pruefung lokal gruen und auf dem Server rot war. Der Ladezustand gehoert jetzt an den ganzen Abschnitt."Show 3 more" blaettert jetzt sofort weiter, statt erst auf das Speichern zu warten - mit Internet sah der Knopf sekundenlang aus, als wuerde er nichts tun."High protein" und zwei neue Quellen nach Wunsch: Felicitas Then und FitMenCook als Kanaele, The Big Man's World und Skinnytaste als Seiten - alle vier auf dem Runner geprueft, bevor sie eingetragen wurden. Proteinreich wird an den ZUTATEN erkannt (Haehnchenbrust, Quark, Skyr, Tofu, Linsen, Proteinpulver): ein Titel wie "Protein Bowl" ohne Eiweisstraeger darin zaehlt nicht, und zwei Eier im Kuchen machen daraus kein Proteingericht. Einen "Healthy"-Filter gibt es bewusst NICHT - Naehrwerte liefert keine der freien Quellen, das waere ein erfundenes Etikett; gesund kommt ueber die Auswahl der Quellen. Ausserdem: sagt ein Rezept selbst "vegan" oder "vegetarisch", gilt es nie als Fleisch- oder Fischgericht - pflanzliche Produkte heissen nun mal "vegane Salami" oder "Raeuchertofu".">
+    <span class="hdr-livebanner" id="rezVerBanner" title="REZEPT-CHECK-19 - Neues Aussehen: die Einkaufsliste sieht jetzt aus wie ein echter Zettel und steht in ZWEI Spalten (links was fehlt, rechts was schon im Wagen ist, auf dem Handy untereinander), mit Fortschrittsbalken und Abteilungen wie im Supermarkt. Der Wochenplan ist ein Kalenderblatt statt sieben loser Karten. Ausserdem drei neue Filter in den Vorschlaegen: Seafood, Italian und German - der Nutzer hatte bemaengelt, dass bei Inspiration nur auslaendisches Essen kommt und ein Nudel-Filter kaum etwas liefert. Nachgemessen stimmte das: 78% der Quellen waren englischsprachig, nur 9 von 90 Gerichten waren Nudelgerichte und Garnelen kamen kein einziges Mal vor. Die Quellen sind auf deutsche, italienische und Urlaubskueche umgestellt."Load new ones" im Hinweis "You have been through everything" gibt jetzt sofort Rueckmeldung ("Loading new suggestions…"). Vorher passierte nach dem Klick sekundenlang sichtbar nichts, wenn das Internet langsam war: die Ladeanzeige haing am Knopf "Show 3 more", den es in diesem Zustand gar nicht mehr gibt. Ohne Internet fiel das nie auf, weil sofort eine Fehlermeldung kam - der Grund, warum die Pruefung lokal gruen und auf dem Server rot war. Der Ladezustand gehoert jetzt an den ganzen Abschnitt."Show 3 more" blaettert jetzt sofort weiter, statt erst auf das Speichern zu warten - mit Internet sah der Knopf sekundenlang aus, als wuerde er nichts tun."High protein" und zwei neue Quellen nach Wunsch: Felicitas Then und FitMenCook als Kanaele, The Big Man's World und Skinnytaste als Seiten - alle vier auf dem Runner geprueft, bevor sie eingetragen wurden. Proteinreich wird an den ZUTATEN erkannt (Haehnchenbrust, Quark, Skyr, Tofu, Linsen, Proteinpulver): ein Titel wie "Protein Bowl" ohne Eiweisstraeger darin zaehlt nicht, und zwei Eier im Kuchen machen daraus kein Proteingericht. Einen "Healthy"-Filter gibt es bewusst NICHT - Naehrwerte liefert keine der freien Quellen, das waere ein erfundenes Etikett; gesund kommt ueber die Auswahl der Quellen. Ausserdem: sagt ein Rezept selbst "vegan" oder "vegetarisch", gilt es nie als Fleisch- oder Fischgericht - pflanzliche Produkte heissen nun mal "vegane Salami" oder "Raeuchertofu".">
       <span class="hlb-dot"></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-18</span>
+      <span class="hlb-name" id="rezVerName">REZEPT-CHECK-19</span>
     </span>
   </div>
   <div class="hdr-r">

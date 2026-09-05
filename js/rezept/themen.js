@@ -63,14 +63,16 @@ export const THEMEN = [
   // ploetzlich vegetarisch, und das ist die gefaehrliche Richtung.
   { id: 'seafood',    label: 'Seafood',     icon: '🦐' },
   // ⚠ KUECHE/HERKUNFT (Nutzer-Wunsch 2026-09-04: "deutsch, italienisch und
-  // was Deutsche im Urlaub essen"). Nur diese zwei, und nur weil beide
-  // MESSBAR sind: die Quelle nennt die Kueche selbst im Tag ("Italian",
-  // "Italienisch", "Deutsch", "Deutschland"), oder der Gerichtname ist
-  // eindeutig (Carbonara, Maultaschen). "Mediterran" bzw. "Urlaubsessen"
-  // gibt es bewusst NICHT: das waere ein geratenes Etikett wie "Healthy" -
-  // es gibt kein Merkmal im Rezept, an dem "was Deutsche im Urlaub essen"
-  // haengt, und der Tag "Mediterranean" steht in diesen Daten auf einem
-  // Gurkensalat wie auf Kofta-Kebabs.
+  // was Deutsche im Urlaub essen"). Nur diese zwei, und nur ueber den
+  // GERICHTNAMEN IM TITEL (Carbonara, Maultaschen) - der Kuechen-Tag der
+  // Quelle ist gemessen worden und durchgefallen, Zahlen an KUECHE.
+  // "Mediterran" bzw. "Urlaubsessen" gibt es bewusst NICHT: das waere ein
+  // geratenes Etikett wie "Healthy" - es gibt kein Merkmal im Rezept, an
+  // dem "was Deutsche im Urlaub essen" haengt, und der Tag "Mediterranean"
+  // steht in diesen Daten auf einem Gurkensalat wie auf Kofta-Kebabs.
+  // ⚠ Beide Themen sind PRAEZISE, aber duenn besetzt: 10 bzw. 2 der 90
+  // Eintraege. Das liegt am Vorrat (fast nur US-Blogs), nicht an der
+  // Erkennung - ein falscher Treffer waere schlimmer als ein leerer Filter.
   { id: 'italian',    label: 'Italian',     icon: '🇮🇹' },
   { id: 'german',     label: 'German',      icon: '🥨' },
 ];
@@ -160,7 +162,7 @@ const WOERTER = {
   // "gratin". Die Ablation an echten Daten zeigt, warum - "Tirolean
   // Dumplings" sind Semmelknoedel (Brot + Milch), "Jamaican Boiled
   // Dumplings" sind Mehlkloesse in Wasser, "Taco Casserole" und "Vegetable
-  // Enchilada Casserole" sind Tortilla-Aufl3aufe. Kein Gramm Teigware, und
+  // Enchilada Casserole" sind Tortilla-Auflaeufe. Kein Gramm Teigware, und
   // wer nach Nudeln filtert, will keinen Enchilada-Auflauf.
   pasta: ['pasta', 'nudel', 'nudeln', 'spaghetti', 'penne', 'fusilli', 'rigatoni', 'tagliatelle',
     'linguine', 'farfalle', 'lasagne', 'lasagna', 'ravioli', 'tortellini', 'gnocchi', 'orzo',
@@ -220,6 +222,14 @@ const WOERTER = {
 // rezept_feed.json: das Wort wurde einzeln entfernt und neu klassifiziert,
 // bis feststand, welche Zeile das falsche Thema traegt.
 const AUSNAHMEN = {
+  // ⚠ "meat free"/"meatless" enthaelt das Wort "meat" - und das steht seit
+  // 2026-09-04 in der Fleischliste (Beleg: "Holiday Wine-Braised Short
+  // Ribs" stand mit 6 Pfund Short Ribs unter "No meat"). Ohne diese
+  // Ausnahme waere ein "Meat-free Monday"-Rezept ein Fleischgericht - die
+  // gefaehrliche Richtung. In diesen 90 Eintraegen kommt keine dieser
+  // Schreibweisen vor; die Ausnahme steht hier, BEVOR sie jemand einliefert.
+  meat: ['meat free', 'meatless', 'meat substitute', 'meat alternative',
+    'plant based meat', 'mock meat', 'fleischlos', 'fleischfrei', 'ohne fleisch'],
   // "1 Bowl!" heisst SCHUESSEL, nicht Bowl-Gericht. Minimalist Baker
   // schreibt das in fast jeden Titel; "Easy Fattoush Salad (1 Bowl!)" stand
   // dadurch unter "Rice & Bowls". Reisessig und Reiswein sind Wuerzmittel:
@@ -227,7 +237,17 @@ const AUSNAHMEN = {
   // Korn Reis - in diesen 90 Eintraegen steckt 5x Reisessig.
   rice: ['1 bowl', 'one bowl', 'in a bowl', 'mixing bowl', 'large bowl', 'medium bowl',
     'small bowl', 'separate bowl', 'serving bowl', 'rice vinegar', 'reisessig',
-    'rice wine vinegar', 'rice wine', 'reiswein', 'mirin'],
+    'rice wine vinegar', 'rice wine', 'reiswein', 'mirin',
+    // ⚠ REISNUDELN SIND NUDELN, KEIN REIS. "Drunken noodles (pad kee mao)"
+    // (200g Flat Rice Noodles) stand unter "Rice & Bowls" - wer Reis
+    // filtert, bekam ein Nudelgericht. "pasta" faengt es weiter ueber
+    // "noodles". Reispapier ist genauso wenig ein Reisgericht.
+    'rice noodles', 'rice noodle', 'reisnudeln', 'glasnudeln', 'glass noodles',
+    'rice paper', 'reispapier',
+    // "3 sheets nori (dried seaweed sheets for sushi)" hat "Furikake" zu
+    // einem Reisgericht gemacht - Furikake ist ein Streuwuerze-Rezept ohne
+    // ein Korn Reis. Das Wort beschreibt hier die Zutat, nicht das Gericht.
+    'for sushi', 'für sushi', 'fuer sushi'],
   // Paniermehl ist eine Panade, kein Brotgericht: "Crispy Parmesan Chicken"
   // (1 1/2 cup panko bread crumbs) und "Classic Christmas pudding" (100g
   // Breadcrumbs) standen unter "Bread & Dough".
@@ -248,7 +268,10 @@ const AUSNAHMEN = {
 // Servieren" haengt an den Zucchini Puffern. Was zum Servieren daneben
 // steht, ist kein Nachweis fuer das Thema des Gerichts - dieselbe Regel wie
 // beim Öl zum Braten. In diesen 90 Eintraegen betrifft es 8 Zeilen.
-const BEILAGE = /\b(for|to)\s+(serving|serve|garnish|top)\b|\bzum\s+(servieren|garnieren)\b|\bals\s+beilage\b|\bdazu\s+servieren\b/i;
+// ⚠ "Optional mix-ins (add to taste): ... crushed potato or corn chips ..."
+// hat "Furikake" - eine Streuwuerze - unter "Potato" gebracht. Was man
+// wahlweise obendrauf streut, ist nicht das Gericht.
+const BEILAGE = /\b(for|to)\s+(serving|serve|garnish|top)\b|\bzum\s+(servieren|garnieren|bestreuen)\b|\bals\s+(beilage|topping)\b|\bdazu\s+servieren\b|\bmix[\s-]?ins?\b/i;
 
 // ⚠ PROTEINREICH: nur EIWEISSTRAEGER, die ein Gericht wirklich tragen.
 // Speck als Garnitur oder ein Ei im Kuchen zaehlen nicht - siehe die Regel
@@ -287,7 +310,12 @@ const NICHT_VEGGIE = ['gelatine', 'gelatin', 'worcester', 'worcestershire', 'fis
   'anchovy', 'anchovies', 'anchovy paste', 'anchovy fillet', 'anchovy fillets',
   'sardelle', 'sardellen', 'sardellenpaste', 'sardellenfilet', 'schmalz', 'lard', 'brühwürfel',
   'bruehwuerfel', 'hühnerbrühe', 'huehnerbruehe', 'chicken stock', 'chicken broth',
-  'beef stock', 'rinderbrühe', 'rinderbruehe', 'bacon fat'];
+  'beef stock', 'rinderbrühe', 'rinderbruehe', 'bacon fat',
+  // 2026-09-04: Bonitoflocken und Dashi sind getrockneter Fisch als
+  // WUERZE - dieselbe Klasse wie Fischsauce. "Furikake" (2 EL dried bonito
+  // flakes) stand dadurch unter "No meat": ein Streuwuerze-Rezept mit Fisch
+  // darin, angeboten an Leute, die kein Fleisch essen wollen.
+  'bonito', 'bonitoflocken', 'katsuobushi', 'dashi'];
 
 // ⚠ DEUTSCHE ZUSAMMENSETZUNGEN. "Tomatensuppe" ist EIN Wort - eine Suche
 // nach ganzen Woertern findet "suppe" darin nie, und das Gericht haette
@@ -312,31 +340,46 @@ const STAMM = ['suppe', 'eintopf', 'salat', 'kuchen', 'nudel', 'kartoffel', 'fle
 // ganzes Wort ("Öl zum Braten") sagt es etwas ueber Fleisch aus.
 
 // ── Kueche/Herkunft ──────────────────────────────────────────────────────
-// ⚠ ZWEI GETRENNTE BEWEISARTEN, und das ist der ganze Trick:
-//   `tags`     - nur in den TAGS der Quelle gesucht. Die Quelle sagt selbst,
-//                aus welcher Kueche das Rezept kommt.
-//   `gerichte` - in Titel UND Zutaten gesucht. Nur Namen, die es praktisch
-//                nur in dieser Kueche gibt.
-// ⚠ WARUM DIE TRENNUNG: "Italian seasoning" steht in 4 Zutatenlisten und
-// "italienische Kräuter" in 3 weiteren. Wuerde das Wort "italian" auch in
-// den Zutaten zaehlen, waere jedes Haehnchen mit italienischer
-// Kraeutermischung ein italienisches Gericht - genau der Fehler, der schon
-// bei "Öl zum Braten" und "1 Topf Basilikum" passiert ist.
+// ⚠ NUR DER GERICHTNAME, NUR IM TITEL. Weder die Tags der Quelle noch die
+// Zutaten zaehlen. Beides ist an rezept_feed.json (90 Eintraege) gemessen
+// worden, und beides ist durchgefallen:
+//
+//   QUELLEN-TAG "Deutsch"/"Deutschland": 4 Eintraege, davon 3 KEINE
+//   deutsche Kueche - "Zucchini-Quiche mit Feta", "Linsensalat mit Feta,
+//   Gurke und Tomaten", "Knusprige Dinkelbrötchen". Ein deutscher Foodblog
+//   taggt seine SPRACHE, nicht die Kueche. 75% falsch - das ist genau das
+//   geratene Etikett, wegen dem es auch kein "Healthy" gibt.
+//
+//   QUELLEN-TAG "Italian": 8 Eintraege, davon 1 falsch ("Maple-Shallot Pork
+//   Tenderloin" von NYT Cooking - Ahornsirup und Schalotten). Besser als
+//   "Deutsch", aber dieselbe Bauart: die Quelle behauptet die Kueche, das
+//   Rezept belegt sie nicht.
+//
+//   ZUTATEN: "Italian seasoning" steht in 4 Zutatenlisten und
+//   "italienische Kräuter" in 3 weiteren; Burrata und Ciabatta stehen als
+//   Beilage in fremden Rezepten. Ein Haehnchen mit italienischer
+//   Kraeutermischung ist kein italienisches Gericht - derselbe Fehler wie
+//   "Öl zum Braten" und "1 Topf Basilikum".
+//
+// Der Titel dagegen traegt in diesen Daten JEDEN echten Treffer: 10 von 10
+// italienischen und beide deutschen Gerichte stehen mit ihrem Namen darin,
+// bei null Fehltreffern. Eine Kueche ist eine Eigenschaft des GERICHTS, und
+// wie das Gericht heisst, steht im Titel.
 // ⚠ NICHT hier stehen Zutaten wie Parmesan, Mozzarella, Pancetta oder
-// Mascarpone: die liegen heute in jeder Kueche im Kuehlschrank. Parmesan im
-// "Chicken Broccoli Casserole" macht daraus kein italienisches Gericht.
+// Mascarpone: die liegen heute in jeder Kueche im Kuehlschrank.
 const KUECHE = {
   italian: {
-    tags: ['italian', 'italienisch', 'italy', 'italien', 'italian inspired', 'italienische küche'],
     gerichte: ['spaghetti', 'lasagne', 'lasagna', 'ravioli', 'tortellini', 'tortelloni',
       'gnocchi', 'risotto', 'carbonara', 'bolognese', 'arrabbiata', 'amatriciana',
       'cacio e pepe', 'aglio e olio', 'pesto', 'pizza', 'focaccia', 'ciabatta', 'bruschetta',
       'caprese', 'burrata', 'parmigiana', 'saltimbocca', 'ossobuco', 'osso buco',
       'vitello tonnato', 'piccata', 'arancini', 'minestrone', 'salsiccia', 'antipasti',
-      'tiramisu', 'panna cotta', 'cannoli', 'panettone', 'affogato', 'gelato'],
+      'tiramisu', 'panna cotta', 'cannoli', 'panettone', 'affogato', 'gelato',
+      // Nachgetragen, weil der Tag-Weg wegfaellt und diese zwei Gerichte
+      // vorher nur ueber ihn gefunden wurden - beide unstrittig italienisch:
+      'cacciatore', 'ragù', 'ragu alla bolognese', 'ragu'],
   },
   german: {
-    tags: ['deutsch', 'deutschland', 'german', 'germany', 'hausmannskost'],
     // ⚠ DEUTSCHE SPRACHE IST KEINE DEUTSCHE KUECHE. Ein deutscher Foodblog
     // schreibt auch Shakshuka und Omelett auf Deutsch. Hier stehen deshalb
     // nur Gerichte, die es so nur hier gibt - keine allgemeinen deutschen
@@ -421,10 +464,14 @@ export function themenOf(titel, zutaten, tags) {
   const text = gesaeubert.text, versteckt = gesaeubert.gefunden;
   const raus = [];
 
-  const hatChicken = !!enthaelt(text, WOERTER.chicken);
-  const hatMeat = !!enthaelt(text, WOERTER.meat);
-  const hatFish = !!enthaelt(text, WOERTER.fish);
-  const hatSeafood = !!enthaelt(text, WOERTER.seafood);
+  // ⚠ Die Ausnahmen gelten IMMER NUR FUER EIN THEMA - deshalb je ein
+  // eigener Text statt einer gemeinsamen Saeuberung. "meat free" darf das
+  // Wort "meat" verlieren, ohne dass ein anderes Thema Text einbuesst.
+  const fuer = id => (AUSNAHMEN[id] ? ohneWorte(text, AUSNAHMEN[id]).text : text);
+  const hatChicken = !!enthaelt(fuer('chicken'), WOERTER.chicken);
+  const hatMeat = !!enthaelt(fuer('meat'), WOERTER.meat);
+  const hatFish = !!enthaelt(fuer('fish'), WOERTER.fish);
+  const hatSeafood = !!enthaelt(fuer('seafood'), WOERTER.seafood);
 
   // ⚠ SAGT DAS REZEPT SELBST "vegan"/"vegetarisch", gibt es KEIN Fleisch und
   // keinen Fisch - egal was in der Zutatenliste steht. Grund (Pruef-Lauf
@@ -457,8 +504,7 @@ export function themenOf(titel, zutaten, tags) {
 
   ['pasta', 'rice', 'soup', 'salad', 'potato', 'bread', 'sweet', 'breakfast'].forEach(id => {
     // Ausnahmen gelten immer nur fuer DIESES Thema (siehe AUSNAHMEN).
-    const t = AUSNAHMEN[id] ? ohneWorte(text, AUSNAHMEN[id]).text : text;
-    if (enthaelt(t, WOERTER[id])) raus.push(id);
+    if (enthaelt(fuer(id), WOERTER[id])) raus.push(id);
   });
 
   // ⚠ PROTEINREICH nur, wenn ein Eiweisstraeger IN DEN ZUTATEN steht - der
@@ -476,10 +522,10 @@ export function themenOf(titel, zutaten, tags) {
     if (traeger || (nurEier && !raus.includes('sweet'))) raus.push('protein');
   }
 
-  // Kueche/Herkunft: Tag der Quelle ODER eindeutiger Gerichtname.
-  const tagText = normText(alleTags);
+  // Kueche/Herkunft: NUR der Gerichtname im Titel - Begruendung an KUECHE.
+  const titelText = normText(titel);
   Object.keys(KUECHE).forEach(id => {
-    if (enthaelt(tagText, KUECHE[id].tags) || enthaelt(text, KUECHE[id].gerichte)) raus.push(id);
+    if (enthaelt(titelText, KUECHE[id].gerichte)) raus.push(id);
   });
 
   // Reihenfolge wie in THEMEN, damit die Chips ueberall gleich stehen.

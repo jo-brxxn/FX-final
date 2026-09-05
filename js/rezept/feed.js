@@ -39,6 +39,11 @@ export function saeubere(s) {
     .replace(/&#(\d{2,5});/g, (_, d) => { const n = +d; return n > 8 && n < 0x10000 ? String.fromCharCode(n) : ' '; })
     .replace(/&#x([0-9a-f]{2,5});/gi, (_, h) => { const n = parseInt(h, 16); return n > 8 && n < 0x10000 ? String.fromCharCode(n) : ' '; })
     .replace(/[ \t ]+/g, ' ')
+    // ⚠ Der Umbruch aus </li> laesst das Leerzeichen des folgenden <li>
+    // stehen ("...vorheizen.\n Gemuese..."). Wer spaeter an \n trennt,
+    // bekaeme Zeilen mit fuehrendem Leerzeichen - und die Zeilen-Muster
+    // (Ueberschrift, Nachbemerkung) griffen dann nicht mehr.
+    .replace(/[ \t ]*\n[ \t ]*/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -79,12 +84,34 @@ function istKeinSchritt(x) {
 // fuer den Vorrat: verbessert sich das Zerlegen, muessen auch die schon
 // gespeicherten Eintraege mitwandern - sonst steht "step 1" dort fuer
 // immer, obwohl die Ursache behoben ist (dieselbe Regel wie bei den Themen).
+// ⚠ DAS LECK ZWISCHEN DEN BEIDEN STUFEN - der teuerste Fehler hier.
+// Stufe 1 (saeubere) macht aus </li> einen ZEILENUMBRUCH, Stufe 2 nahm
+// jeden Listeneintrag als EINE Zeile. Kommt eine Anleitung als ein
+// einziges Feld mit <ol><li>-Block, entstand daraus genau ein Eintrag
+// "Ofen vorheizen.\nGemuese schneiden.\n45 Minuten backen." - im Kochmodus
+// ein Schritt statt drei. Schlimmer: die Zeilen-Muster unten sind auf eine
+// ALLEINSTEHENDE Zeile geschrieben (^...$), also traf keins mehr - weder
+// "Zubereitung" noch "step 1" noch der Abschneider vor "Tipps". Der ganze
+// Filter lief ins Leere, obwohl beide Stufen fuer sich richtig arbeiteten.
+// Deshalb ist HIER die Naht: erst an \n trennen, dann filtern.
 export function putzeSchritte(schritte) {
-  let liste = (Array.isArray(schritte) ? schritte : []).map(x => String(x == null ? '' : x).trim()).filter(Boolean);
+  let liste = [];
+  (Array.isArray(schritte) ? schritte : []).forEach(x => {
+    // ⚠ Objekte (HowToStep & Co.) gehoeren in anweisungenAus(); hier
+    // wuerde String(x) daraus "[object Object]" machen - eine Zeile, die
+    // nie in einer Karte stehen darf.
+    if (x == null || typeof x === 'object') return;
+    String(x).split(/\r?\n+/).forEach(z => {
+      // Dieselbe Normierung wie in zuSchritten(): eine Aufzaehlungsmarke
+      // oder eine vorangestellte Schrittnummer ist nicht Teil des Schritts.
+      const y = z.replace(/^\s*(?:\d{1,2}[.)]|[-\u2013\u2014\u2022*])\s*/, '').trim();
+      if (y) liste.push(y);
+    });
+  });
   const bis = liste.findIndex(x => NACHBEMERKUNG.test(x));
   // ⚠ Nur ab der ZWEITEN Zeile abschneiden: stuende "Notes" ganz vorn,
   // bliebe sonst gar nichts uebrig. Die Zeile selbst faellt trotzdem weg -
-  // dafuer sorgt istKeinSchritt().
+  // dafuer sorgt der Filter darunter.
   if (bis > 0) liste = liste.slice(0, bis);
   return liste.filter(x => !istKeinSchritt(x) && !NACHBEMERKUNG.test(x));
 }
@@ -95,8 +122,15 @@ export function zuSchritten(text) {
   const bis = teile.findIndex(x => NACHBEMERKUNG.test(x));
   if (bis > 0) teile = teile.slice(0, bis);
   teile = teile.filter(x => !istKeinSchritt(x));
-  if (teile.length <= 1) {
-    teile = roh.split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ0-9])/).map(x => x.trim()).filter(Boolean);
+  // ⚠ Zweite Stelle desselben Lecks: der Rueckfall zerlegte den ROHTEXT
+  // neu und holte damit alles zurueck, was eine Zeile vorher gerade
+  // aussortiert wurde. "Zubereitung\nAlles mischen." hatte danach die
+  // Ueberschrift wieder drin, weil vor dem Umbruch kein Satzzeichen steht
+  // und der Satz-Zerleger deshalb gar nicht trennt. Zerlegt wird jetzt die
+  // GEFILTERTE Zeile; ist nach dem Filtern nichts mehr da, ist auch nichts
+  // mehr da - dann wird nichts wiederbelebt.
+  if (teile.length === 1) {
+    teile = teile[0].split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ0-9])/).map(x => x.trim()).filter(Boolean);
   }
   const fein = [];
   teile.forEach(t => {

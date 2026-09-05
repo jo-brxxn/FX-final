@@ -28,6 +28,25 @@ const os = require('os');
 const path = require('path');
 
 const F = [];
+// ⚠ EIN LAUF SOLL ALLE FEHLER ZEIGEN. p.click() wartet 30 Sekunden auf einen
+// deaktivierten oder fehlenden Knopf und reisst dann den GANZEN Waechter mit -
+// man sieht genau einen Fehler pro Lauf und jeder Lauf kostet drei Minuten.
+// klick() meldet stattdessen und macht weiter.
+async function klick(p, sel, was) {
+  // ⚠ NUR SICHTBARE Elemente. Alle Seiten der App liegen gleichzeitig im
+  // DOM, nur ausgeblendet - ein Selektor trifft deshalb oft mehrere Male,
+  // und .first() erwischt regelmaessig das unsichtbare Exemplar einer
+  // anderen Seite. Der Klick geht dann ins Leere, und der Folgefehler
+  // ("Wochenplan leer", "Knopf deaktiviert") zeigt auf die App statt auf
+  // den Waechter. Zweimal in einer Sitzung genau so passiert.
+  const sicht = p.locator(sel).locator('visible=true');
+  const el = (await sicht.count()) ? sicht.first() : p.locator(sel).first();
+  try { await el.waitFor({ state: 'visible', timeout: 6000 }); }
+  catch (e) { F.push(`KLICK: ${was} - kein sichtbares Element fuer ${sel}`); return false; }
+  if (await el.isDisabled().catch(() => false)) { F.push(`KLICK: ${was} - Knopf ist deaktiviert (${sel})`); return false; }
+  try { await el.click({ timeout: 6000 }); return true; }
+  catch (e) { F.push(`KLICK: ${was} - ${String(e.message).split('\n')[0].slice(0, 90)}`); return false; }
+}
 const fail = (stufe, text) => F.push(stufe + ': ' + text);
 
 // Ein winziges, gueltiges PNG als Testfoto (8x8, Graustufe) - reicht fuer die
@@ -383,8 +402,8 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezCloseModal());
   const ersteId = await p.evaluate(() => (window.__rezIds = null, document.querySelector('.rez-card') ? 1 : 0));
   await p.evaluate(() => window.rezShowPage('recipes')); await p.waitForTimeout(300);
-  await p.click('#pgRecipes .rez-card'); await p.waitForTimeout(700); await sammleHandler('detail');
-  await p.click('.rd-menu-btn'); await p.waitForTimeout(300); await sammleHandler('detail-menu');
+  await klick(p, '#pgRecipes .rez-card', '#pgRecipes .rez-card'); await p.waitForTimeout(700); await sammleHandler('detail');
+  await klick(p, '.rd-menu-btn', '.rd-menu-btn'); await p.waitForTimeout(300); await sammleHandler('detail-menu');
   await p.keyboard.press('Escape'); await p.waitForTimeout(300);
   unaufloesbar.forEach(x => fail('A', 'Handler zeigt auf keine Funktion: ' + x));
 
@@ -487,7 +506,7 @@ function pruefeKontrast() {
   await p.waitForTimeout(300);
   await p.evaluate(() => window.rezShowPage('overview'));
   await p.waitForTimeout(300);
-  await p.click('.dw-click:has-text("Add New Meal")');
+  await klick(p, '.dw-click:has-text("Add New Meal")', '.dw-click:has-text("Add New Meal")');
   await p.waitForTimeout(500);
   if (!(await p.locator('#rfTitle').isVisible().catch(() => false)))
     fail('C', '"Add New Meal" oeffnet das Hinzufuegen-Fenster nicht');
@@ -496,7 +515,7 @@ function pruefeKontrast() {
 
   await p.fill('#rfTitle', 'Guard Test Dish');
   const fc = p.waitForEvent('filechooser', { timeout: 8000 });
-  await p.click('.rf-drop');
+  await klick(p, '.rf-drop', '.rf-drop');
   await fc.then(c => c.setFiles(foto)).catch(() => fail('C', 'Der Datei-Dialog fuers Titelbild oeffnet sich nicht'));
   await p.waitForFunction(() => !!document.querySelector('.rf-drop img'), { timeout: 20000 })
     .catch(() => fail('C', 'Das gewaehlte Titelbild erscheint nicht im Formular'));
@@ -508,7 +527,7 @@ function pruefeKontrast() {
     fail('C', 'pickFile() haengt den <input type=file> nicht ins Dokument (auf iOS Safari oeffnet der Dialog dann nicht)');
 
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
-  await p.click('.modal button:has-text("Add recipe")');
+  await klick(p, '.modal button:has-text("Add recipe")', '.modal button:has-text("Add recipe")');
   await p.waitForTimeout(1200);
   const nachSpeichern = await p.locator('#pgRecipes .rez-card').count();
   if (nachSpeichern !== 4) fail('C', `Nach dem Speichern stehen ${nachSpeichern} statt 4 Karten im Raster`);
@@ -535,10 +554,10 @@ function pruefeKontrast() {
   await p.waitForTimeout(700);
   await p.evaluate(() => window.renderRecipes ? window.renderRecipes() : window.rezShowPage('recipes'));
   await p.waitForTimeout(300);
-  await p.click('#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
+  await klick(p, '#pgRecipes .rez-toolbar .btn:has-text("Favourites")', '#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
   const favN = await p.locator('#pgRecipes .rez-card').count();
   if (favN !== 1) fail('C', `Der Favoriten-Filter zeigt ${favN} statt 1 Karte`);
-  await p.click('#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
+  await klick(p, '#pgRecipes .rez-toolbar .btn:has-text("Favourites")', '#pgRecipes .rez-toolbar .btn:has-text("Favourites")'); await p.waitForTimeout(300);
   const tagChips = await p.locator('#pgRecipes .tag-chip').count();
   if (tagChips < 2) fail('C', 'Es werden keine Tag-Chips gerendert');
   await p.locator('#pgRecipes .tag-chip').nth(1).click(); await p.waitForTimeout(300);
@@ -553,25 +572,25 @@ function pruefeKontrast() {
   // Detail -> Bearbeiten -> speichern
   await p.locator('#pgRecipes .rez-card').first().click(); await p.waitForTimeout(800);
   if (!(await p.locator('.rd-title').count())) fail('C', 'Das Detailfenster oeffnet sich nicht');
-  await p.click('.rd-menu-btn'); await p.waitForTimeout(300);
-  await p.click('.rd-menu-item:has-text("Edit recipe")'); await p.waitForTimeout(700);
+  await klick(p, '.rd-menu-btn', '.rd-menu-btn'); await p.waitForTimeout(300);
+  await klick(p, '.rd-menu-item:has-text("Edit recipe")', '.rd-menu-item:has-text("Edit recipe")'); await p.waitForTimeout(700);
   if (!(await p.locator('#rfTitle').count())) fail('C', '"Edit recipe" oeffnet das Formular nicht');
   await p.fill('#rfTitle', 'Renamed Dish');
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
-  await p.click('.modal button:has-text("Save changes")'); await p.waitForTimeout(1200);
+  await klick(p, '.modal button:has-text("Save changes")', '.modal button:has-text("Save changes")'); await p.waitForTimeout(1200);
   if (!(await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count()))
     fail('C', 'Eine Umbenennung landet nicht im Raster');
 
   // Papierkorb + Wiederherstellen
   await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').click(); await p.waitForTimeout(800);
-  await p.click('.rd-menu-btn'); await p.waitForTimeout(300);
-  await p.click('.rd-menu-item.danger'); await p.waitForTimeout(400);
-  await p.click('.modal button.btn-danger'); await p.waitForTimeout(1000);
+  await klick(p, '.rd-menu-btn', '.rd-menu-btn'); await p.waitForTimeout(300);
+  await klick(p, '.rd-menu-item.danger', '.rd-menu-item.danger'); await p.waitForTimeout(400);
+  await klick(p, '.modal button.btn-danger', '.modal button.btn-danger'); await p.waitForTimeout(1000);
   if (await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count())
     fail('C', 'Ein geloeschtes Rezept steht weiter im Raster');
   await p.evaluate(() => window.rezOpenSettings()); await p.waitForTimeout(500);
   if (!(await p.locator('.trash-row').count())) fail('C', 'Der Papierkorb bleibt nach dem Loeschen leer');
-  await p.click('.trash-row button:has-text("Restore")'); await p.waitForTimeout(1000);
+  await klick(p, '.trash-row button:has-text("Restore")', '.trash-row button:has-text("Restore")'); await p.waitForTimeout(1000);
   await p.evaluate(() => window.rezCloseModal());
   await p.evaluate(() => window.rezShowPage('recipes')); await p.waitForTimeout(500);
   if (!(await p.locator('#pgRecipes .rez-card-title:has-text("Renamed Dish")').count()))
@@ -628,14 +647,14 @@ function pruefeKontrast() {
     fail('D', 'Klick neben das Fenster verwirft die Eingaben ohne Nachfrage');
   const knoepfe = await p.locator('.uc-btn').allTextContents();
   if (knoepfe.length !== 3) fail('D', `Die Nachfrage hat ${knoepfe.length} statt 3 Buttons: ${knoepfe.join(' / ')}`);
-  await p.click('.uc-keep'); await p.waitForTimeout(300);
+  await klick(p, '.uc-keep', '.uc-keep'); await p.waitForTimeout(300);
   if (!(await p.locator('#rfTitle').count())) fail('D', '"Keep editing" schliesst das Formular trotzdem');
   if ((await p.inputValue('#rfTitle').catch(() => '')) !== 'Halbfertig')
     fail('D', '"Keep editing" verliert die bereits eingegebenen Werte');
   // Escape muss denselben Weg gehen
   await p.keyboard.press('Escape'); await p.waitForTimeout(400);
   if (!(await p.locator('.uc-box').count())) fail('D', 'Escape verwirft die Eingaben ohne Nachfrage');
-  await p.click('.uc-discard'); await p.waitForTimeout(400);
+  await klick(p, '.uc-discard', '.uc-discard'); await p.waitForTimeout(400);
   if (await p.locator('#rfTitle').count()) fail('D', '"Discard & close" schliesst das Formular nicht');
 
   // ── H) Der Caption-Parser, beide Wege ────────────────────────────────
@@ -785,17 +804,17 @@ function pruefeKontrast() {
   // Tags still im Entwurf, waehrend der Nutzer leere Felder sah.
   if (!/instagram\.com/.test(erkannt.url)) fail('F', `Der erkannte Link steht nicht im Link-Feld (war "${erkannt.url}")`);
   if (!/Pasta/.test(erkannt.tags)) fail('F', `Die erkannten Tags stehen nicht im Tag-Feld (war "${erkannt.tags}")`);
-  await p.click('.modal button:has-text("Add idea")');
+  await klick(p, '.modal button:has-text("Add idea")', '.modal button:has-text("Add idea")');
   await p.waitForTimeout(900);
   const inspoN = await p.locator('#pgInspo .rez-card').count();
   if (inspoN !== 1) fail('F', `Nach dem Anlegen stehen ${inspoN} statt 1 Idee im Raster`);
 
   // F2: "Convert to recipe" - der Kern des Reel-Imports
-  await p.click('#pgInspo .rez-card');
+  await klick(p, '#pgInspo .rez-card', '#pgInspo .rez-card');
   await p.waitForTimeout(700);
   if (!(await p.locator('.insp-frame iframe').count()))
     fail('F', 'Das Reel wird im Detailfenster nicht eingebettet');
-  await p.click('.modal button:has-text("Convert to recipe")');
+  await klick(p, '.modal button:has-text("Convert to recipe")', '.modal button:has-text("Convert to recipe")');
   await p.waitForTimeout(900);
   const entwurf = await p.evaluate(() => ({
     titel: (document.getElementById('rfTitle') || {}).value || '',
@@ -815,7 +834,7 @@ function pruefeKontrast() {
   if (!(await p.locator('.rf-drop img').count()))
     fail('F', 'Convert: das aus dem Reel erzeugte Rezept bekommt kein Titelbild');
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
-  await p.click('.modal button:has-text("Add recipe")');
+  await klick(p, '.modal button:has-text("Add recipe")', '.modal button:has-text("Add recipe")');
   await p.waitForTimeout(1500);
   const mitQuelle = await p.evaluate(async () => {
     const S = await import('./js/rezept/store.js');
@@ -836,7 +855,7 @@ function pruefeKontrast() {
   await p.waitForTimeout(500);
   await p.fill('#rfTitle', 'Ohne Foto');
   await p.evaluate(() => document.querySelector('.modal').scrollTo(0, 99999));
-  await p.click('.modal button:has-text("Add recipe")');
+  await klick(p, '.modal button:has-text("Add recipe")', '.modal button:has-text("Add recipe")');
   await p.waitForTimeout(600);
   if (!(await p.locator('#rfErr').isVisible().catch(() => false)))
     fail('F', 'Ein von Hand angelegtes Rezept ohne Titelbild wird kommentarlos angenommen');
@@ -845,28 +864,89 @@ function pruefeKontrast() {
 
   // F3: Wochenplan + Einkaufsliste
   await p.evaluate(() => window.rezShowPage('week'));
+  // ⚠ AUF DIE AKTUELLE WOCHE ZURUECKSETZEN. Stufe B klickt jeden Knopf der
+  // App durch - darunter "Next" - und laesst den Wochenanker damit auf der
+  // FOLGEWOCHE stehen. Diese Stufe legte ihr Testrezept dann auf den 7.9.,
+  // sprang mit "This week" zurueck auf den 31.8. und fand dort nichts:
+  // gemeldet wurde "Add ingredients ist deaktiviert", verdaechtigt wurde
+  // die App - dabei lag der falsche Zustand im Waechter selbst.
+  // Der Speicher hat es verraten (Plan: 2026-09-07:1), nicht das Raten.
+  await p.evaluate(() => window.rezWeekToday && window.rezWeekToday());
   await p.waitForTimeout(400);
   const tage = await p.locator('.week-day').count();
   if (tage !== 7) fail('F', `Der Wochenplan zeigt ${tage} statt 7 Tage`);
   await p.locator('.week-add').first().click();
-  await p.waitForTimeout(500);
-  await p.locator('.pick-row').first().click();
+  // ⚠ Auf die Liste WARTEN, nicht auf die Uhr. Eine feste Wartezeit ist
+  // eine Wette auf die Rechnergeschwindigkeit: mit 500 ms war die Auswahl
+  // mal da und mal nicht, der Klick ging ins Leere und der Wochenplan blieb
+  // leer - was danach als "Add ingredients ist deaktiviert" auffiel, obwohl
+  // die App in Ordnung war.
+  await p.locator('.ov:visible .pick-row').first().waitFor({ state: 'visible', timeout: 8000 })
+    .catch(() => fail('F', 'Nach "Add" im Wochenplan erscheint keine Rezeptauswahl'));
+  // ⚠ NUR im SICHTBAREN Fenster klicken. Mehrere Ansichten halten eine
+  // .pick-row-Liste im DOM (Wochenplan-"Add" und "Pick a recipe"); .first()
+  // traf davon die unsichtbare, der Klick ging ins Leere und der Plan blieb
+  // leer - was danach als "Add ingredients ist deaktiviert" auffiel, obwohl
+  // die App voellig in Ordnung war. Beim Umbau auf das Kalenderblatt
+  // 2026-09-05 aufgefallen.
+  await p.locator('.ov:visible .pick-row').first().click();
   await p.waitForTimeout(900);
-  if (!(await p.locator('.week-item').count())) fail('F', 'Ein zugewiesenes Rezept erscheint nicht im Wochenplan');
+  if (!(await p.locator('.week-item').count())) {
+    // Mit Zustand melden: "erscheint nicht" allein kostet Rateversuche.
+    const z = await p.evaluate(async () => {
+      const S2 = await import('./js/rezept/store.js');
+      const plan = S2.state.index.plan || {};
+      return { tage: Object.keys(plan).length, eintraege: Object.values(plan).reduce((a, v) => a + ((v && v.ids) || []).length, 0),
+               rezepte: (S2.state.index.recipes || []).length,
+               offen: [...document.querySelectorAll('.ov')].filter(o => getComputedStyle(o).display !== 'none').map(o => o.id).join(',') };
+    });
+    fail('F', `Ein zugewiesenes Rezept erscheint nicht im Wochenplan `
+      + `(Plan: ${z.eintraege} Eintraege an ${z.tage} Tagen, ${z.rezepte} Rezepte, offene Fenster: ${z.offen || 'keine'})`);
+  }
   const wocheVor = await p.locator('.week-range').textContent();
-  await p.click('.rez-toolbar .btn:has-text("Next")');
+  await klick(p, '#rezPageArea [onclick*="rezWeekShift(7"]', '#rezPageArea [onclick*="rezWeekShift(7"]');
   await p.waitForTimeout(400);
   if ((await p.locator('.week-range').textContent()) === wocheVor) fail('F', '"Next" wechselt die Woche nicht');
-  await p.click('.rez-toolbar .btn:has-text("This week")');
+  await klick(p, '#rezPageArea [onclick*="rezWeekToday"]', '#rezPageArea [onclick*="rezWeekToday"]');
   await p.waitForTimeout(400);
-  await p.click('.rez-toolbar .btn:has-text("Add ingredients")');
+  // ⚠ HANDLER STATT BESCHRIFTUNG. Die Knopftexte aendern sich bei jedem
+  // Design- oder Sprachumbau - beim Kalenderblatt-Umbau 2026-09-05 hiessen
+  // gleich fuenf Knoepfe anders, und der Waechter lief in fuenf
+  // 30-Sekunden-Timeouts, obwohl die App voellig in Ordnung war. Der
+  // Handler ist die eigentliche Zusage: ein Knopf, der rezShopSort()
+  // aufruft, IST der Sortier-Knopf, egal wie er beschriftet ist.
+  // ⚠ NICHT an den Ort binden. Der Knopf sass frueher in .rez-toolbar und
+  // ist beim Kalenderblatt-Umbau (2026-09-05) in den Seitenkopf gewandert -
+  // er WIRKT unveraendert, aber die ortsgebundene Prueferei liess den
+  // ganzen Waechter in einen 30-Sekunden-Timeout laufen. Geprueft wird die
+  // Wirkung, nicht die Position.
+  // ⚠ Und NICHT blind klicken: ist der Knopf deaktiviert, wartet Playwright
+  // 30 Sekunden und reisst den ganzen Lauf mit - ohne zu sagen, WARUM. Der
+  // Zustand wird deshalb gemeldet, statt in einen Timeout zu laufen.
+  const addBtn = p.locator('#rezPageArea button:has-text("Add ingredients")');
+  if (await addBtn.isDisabled().catch(() => true)) {
+    const zst = await p.evaluate(async () => {
+      const S2 = await import('./js/rezept/store.js');
+      const plan = S2.state.index.plan || {};
+      const tage = Object.entries(plan).map(([k, v]) => k + ':' + (((v && v.ids) || []).length)).join(' ');
+      return {
+        items: document.querySelectorAll('.week-item').length,
+        spanne: (document.querySelector('.week-range') || {}).textContent || '',
+        sub: tage || '(Plan leer)',
+      };
+    });
+    fail('F', `"Add ingredients" ist deaktiviert, obwohl der Wochenplan gefuellt sein muesste `
+      + `(${zst.items} sichtbare Eintraege, Woche "${zst.spanne.trim()}", Plan im Speicher: ${zst.sub})`);
+  } else {
+    await addBtn.click();
+  }
   await p.waitForTimeout(1200);
   await p.evaluate(() => window.rezShowPage('shopping'));
   await p.waitForTimeout(500);
   const eink = await p.locator('.shop-row').count();
   if (!eink) fail('F', 'Die Zutaten des Wochenplans landen nicht auf der Einkaufsliste');
   // Doppelt uebernehmen darf die Liste nicht verdoppeln
-  await p.click('.shop-tools .btn:has-text("From this week")');
+  await klick(p, '#rezPageArea [onclick*="rezWeekToShopping"]', '#rezPageArea [onclick*="rezWeekToShopping"]');
   await p.waitForTimeout(1200);
   const eink2 = await p.locator('.shop-row').count();
   if (eink2 !== eink) fail('F', `Zweimal uebernehmen verdoppelt die Liste (${eink} -> ${eink2})`);
@@ -877,17 +957,17 @@ function pruefeKontrast() {
   // F4: Overview - Zufallsgenerator, heute kochen, als gekocht markieren
   await p.evaluate(() => window.rezShowPage('overview'));
   await p.waitForTimeout(500);
-  await p.click('.dw button:has-text("Surprise me")');
+  await klick(p, '.dw button:has-text("Surprise me")', '.dw button:has-text("Surprise me")');
   await p.waitForTimeout(600);
   if (!(await p.locator('.dw .today-nm').count())) fail('F', '"Surprise me" liefert keinen Vorschlag');
-  await p.click('.dw button:has-text("Cook this today")');
+  await klick(p, '.dw button:has-text("Cook this today")', '.dw button:has-text("Cook this today")');
   await p.waitForTimeout(900);
   const heuteGesetzt = await p.evaluate(async () => {
     const S = await import('./js/rezept/store.js');
     return !!S.todaysMeal();
   });
   if (!heuteGesetzt) fail('F', '"Cook this today" setzt Today\'s Meal nicht');
-  await p.click('.dw button:has-text("Mark as cooked")');
+  await klick(p, '.dw button:has-text("Mark as cooked")', '.dw button:has-text("Mark as cooked")');
   await p.waitForTimeout(900);
   await p.evaluate(() => window.rezShowPage('cooked'));
   await p.waitForTimeout(500);
@@ -912,7 +992,7 @@ function pruefeKontrast() {
   // ⚠ Stufe B hat beim Durchklicken auch die Sortierung umgestellt. Ohne
   // Zuruecksetzen prueft die naechste Zeile eine Liste OHNE Abteilungen und
   // meldet einen Fehler, den es nicht gibt.
-  const sortBtn = p.locator('.shop-tools .btn:has-text("Sorted by")');
+  const sortBtn = p.locator('#rezPageArea [onclick*="rezShopSort"]');
   if ((await sortBtn.count()) && !/aisle/i.test(await sortBtn.first().textContent())) {
     await sortBtn.first().click();
     await p.waitForTimeout(400);
@@ -943,7 +1023,7 @@ function pruefeKontrast() {
   if (!(await p.locator('.shop-row.done').count())) fail('I', 'Ein Eintrag laesst sich nicht abhaken');
   const breite = await p.evaluate(() => (document.querySelector('.shop-bar-fill') || {}).style?.width || '');
   if (!breite || breite === '0%') fail('I', 'Der Fortschrittsbalken bewegt sich nicht');
-  await p.click('.shop-tools .btn:has-text("Check all")');
+  await klick(p, '#rezPageArea [onclick*="rezShopAll"]', '#rezPageArea [onclick*="rezShopAll"]');
   await p.waitForTimeout(700);
   const offenDanach = await p.evaluate(async () => {
     const S = await import('./js/rezept/store.js');
@@ -951,10 +1031,10 @@ function pruefeKontrast() {
   });
   if (offenDanach !== 0) fail('I', `"Check all" laesst ${offenDanach} Eintraege offen`);
   // Sortierung umschalten
-  await p.click('.shop-tools .btn:has-text("Sorted by")');
+  await klick(p, '#rezPageArea [onclick*="rezShopSort"]', '#rezPageArea [onclick*="rezShopSort"]');
   await p.waitForTimeout(400);
   if (await p.locator('.shop-cat-hd').count()) fail('I', 'Nach dem Umschalten auf "newest" wird weiter nach Abteilung gruppiert');
-  await p.click('.shop-tools .btn:has-text("Sorted by")');
+  await klick(p, '#rezPageArea [onclick*="rezShopSort"]', '#rezPageArea [onclick*="rezShopSort"]');
   await p.waitForTimeout(400);
   // Eintrag bearbeiten: Abteilung korrigierbar
   await p.evaluate(async () => {
@@ -964,8 +1044,8 @@ function pruefeKontrast() {
   });
   await p.waitForTimeout(500);
   if (!(await p.locator('.cat-opt').count())) fail('I', 'Im Bearbeiten-Fenster fehlt die Abteilungs-Auswahl');
-  await p.click('.cat-opt:has-text("Household")');
-  await p.click('.modal button:has-text("Save")');
+  await klick(p, '.cat-opt:has-text("Household")', '.cat-opt:has-text("Household")');
+  await klick(p, '.modal button:has-text("Save")', '.modal button:has-text("Save")');
   await p.waitForTimeout(700);
   const korrigiert = await p.evaluate(async () => {
     const S = await import('./js/rezept/store.js');
@@ -1202,7 +1282,7 @@ function pruefeKontrast() {
     if (!(await p.locator('.ck-timers .btn').count())) fail('K', 'Aus "10 Minuten" entsteht kein Timer-Knopf');
     // Portionen verdoppeln muss die Menge verdoppeln
     const vorher = await p.evaluate(() => (document.querySelector('.ck-ing span') || {}).textContent || '');
-    await p.click('.ck-serv .ck-sv:last-child');
+    await klick(p, '.ck-serv .ck-sv:last-child', '.ck-serv .ck-sv:last-child');
     await p.waitForTimeout(350);
     const nachher = await p.evaluate(() => (document.querySelector('.ck-ing span') || {}).textContent || '');
     if (vorher === nachher) fail('K', `Der Portionsregler aendert die Mengen nicht ("${vorher}")`);
@@ -1211,12 +1291,12 @@ function pruefeKontrast() {
     const zweite = await p.evaluate(() => [...document.querySelectorAll('.ck-ing span')].map(e => e.textContent)[1] || '');
     if (zweite !== 'Salz & Pfeffer') fail('K', `Eine Zutat ohne Menge wurde veraendert ("${zweite}")`);
     // Vor/Zurueck
-    await p.click('.ck-nav .btn:has-text("Next")');
+    await klick(p, '.ck-nav .btn:has-text("Next")', '.ck-nav .btn:has-text("Next")');
     await p.waitForTimeout(300);
     if (!/Servieren/.test(await p.evaluate(() => (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '')))
       fail('K', '"Next" blaettert nicht zum naechsten Schritt');
     // Ein Klick auf einen Schritt in der Liste springt dorthin
-    await p.click('.ck-side-r .ck-stp >> nth=0');
+    await klick(p, '.ck-side-r .ck-stp >> nth=0', '.ck-side-r .ck-stp >> nth=0');
     await p.waitForTimeout(300);
     if (!/Nudeln/.test(await p.evaluate(() => (document.querySelector('.ck-stp.on .ck-stp-t') || {}).textContent || '')))
       fail('K', 'Ein Klick auf einen Schritt in der Liste waehlt ihn nicht aus');
@@ -1245,13 +1325,13 @@ function pruefeKontrast() {
     const uhr2 = await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '');
     if (uhr2 === uhr) fail('K', 'Die Uhr laeuft nicht herunter');
     // Pause haelt sie an
-    await p.click('#ckTimers .ck-tm-btn[aria-label="Pause or resume"]');
+    await klick(p, '#ckTimers .ck-tm-btn[aria-label="Pause or resume"]', '#ckTimers .ck-tm-btn[aria-label="Pause or resume"]');
     await p.waitForTimeout(1200);
     const uhr3 = await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '');
     await p.waitForTimeout(1200);
     if ((await p.evaluate(() => (document.querySelector('#ckTimers .ck-tm-clock') || {}).textContent || '')) !== uhr3)
       fail('K', 'Ein pausierter Timer laeuft weiter');
-    await p.click('#ckTimers .ck-tm-btn[aria-label="Remove timer"]');
+    await klick(p, '#ckTimers .ck-tm-btn[aria-label="Remove timer"]', '#ckTimers .ck-tm-btn[aria-label="Remove timer"]');
     await p.waitForTimeout(400);
     if (await p.locator('#ckTimers .ck-tm-clock').count()) fail('K', 'Ein gestoppter Timer verschwindet nicht');
     if (!(await p.locator('#ckTimers .btn').count())) fail('K', 'Ohne laufenden Timer fehlt oben der Knopf, einen zu starten');
@@ -1268,7 +1348,7 @@ function pruefeKontrast() {
     await p.evaluate(id => window.rezOpenDetail(id), ersteRez);
     await p.waitForTimeout(800);
     const iv = await p.evaluate(() => (document.querySelector('#rdIng li') || {}).textContent || '');
-    await p.click('.rd-serv .ck-sv:last-child');
+    await klick(p, '.rd-serv .ck-sv:last-child', '.rd-serv .ck-sv:last-child');
     await p.waitForTimeout(350);
     const iv2 = await p.evaluate(() => (document.querySelector('#rdIng li') || {}).textContent || '');
     if (iv === iv2) fail('K', 'Der Portionsregler im Detailfenster wirkt nicht');
@@ -1327,7 +1407,7 @@ function pruefeKontrast() {
     'https://youtu.be/dQw4w9WgXcQ',
     'kein link in dieser zeile',
   ].join('\n'));
-  await p.click('.modal button:has-text("Add all")');
+  await klick(p, '.modal button:has-text("Add all")', '.modal button:has-text("Add all")');
   await p.waitForTimeout(1500);
   const nachherIdeen = await p.locator('#pgInspo .rez-card').count();
   if (nachherIdeen !== vorherIdeen + 3)
@@ -1359,7 +1439,7 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezOpenBulk());
   await p.waitForTimeout(400);
   await p.fill('#bulkTxt', 'https://youtu.be/dQw4w9WgXcQ');
-  await p.click('.modal button:has-text("Add all")');
+  await klick(p, '.modal button:has-text("Add all")', '.modal button:has-text("Add all")');
   await p.waitForTimeout(1200);
   if ((await p.locator('#pgInspo .rez-card').count()) !== nachherIdeen)
     fail('K', 'Eine bereits vorhandene Adresse wird ein zweites Mal angelegt');
@@ -1413,7 +1493,7 @@ function pruefeKontrast() {
     fail('L', 'Ein Klick auf den Bilderstreifen oeffnet keine Grossansicht');
   else {
     const vor = await p.evaluate(() => (document.querySelector('.lb-img') || {}).src || '');
-    await p.click('.lb-next');
+    await klick(p, '.lb-next', '.lb-next');
     await p.waitForTimeout(400);
     if ((await p.evaluate(() => (document.querySelector('.lb-img') || {}).src || '')) === vor)
       fail('L', 'In der Grossansicht laesst sich nicht weiterblaettern');
@@ -1430,7 +1510,7 @@ function pruefeKontrast() {
   if (!(await p.locator('.rd-play').count()))
     fail('L', 'Ein Rezept mit Video-Herkunft bietet keinen Abspiel-Knopf');
   else {
-    await p.click('.rd-play');
+    await klick(p, '.rd-play', '.rd-play');
     await p.waitForTimeout(800);
     if (!(await p.locator('#rezVideo.on iframe').count()))
       fail('L', 'Der Abspiel-Knopf oeffnet kein Video');
@@ -1536,7 +1616,7 @@ function pruefeKontrast() {
   });
   await p.evaluate(id => window.rezOpenForm(id), ytRez);
   await p.waitForTimeout(700);
-  if (!(await p.locator('.rf-add .btn:has-text("Cover from the video")').count()))
+  if (!(await p.locator('#rezModals [onclick*="rezCoverStudio"]').count()))
     fail('M', 'Im Formular fehlt der Knopf "Cover from the video"');
   await p.evaluate(() => window.rezCoverStudio());
   await p.waitForTimeout(500);
@@ -1583,14 +1663,14 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezCoverStudio());
   await p.waitForTimeout(400);
   const fcCs = p.waitForEvent('filechooser', { timeout: 4000 });
-  await p.click('#csDrop');
+  await klick(p, '#csDrop', '#csDrop');
   await fcCs.then(c => c.setFiles(hoch)).catch(() => fail('M', 'Der Datei-Dialog fuer das Bildschirmfoto oeffnet sich nicht'));
   await p.waitForTimeout(900);
   if (!(await p.locator('#csCrop').count())) fail('M', 'Nach der Auswahl erscheint kein Zuschnitt');
-  await p.click('.cs-ratio:has-text("1:1")');
+  await klick(p, '.cs-ratio:has-text("1:1")', '.cs-ratio:has-text("1:1")');
   await p.waitForTimeout(300);
   if (!(await p.locator('.cs-ratio.on:has-text("1:1")').count())) fail('M', 'Das Seitenverhaeltnis 1:1 laesst sich nicht waehlen');
-  await p.click('.cs-btns .btn-primary');
+  await klick(p, '.cs-btns .btn-primary', '.cs-btns .btn-primary');
   await p.waitForTimeout(900);
   if (await p.locator('#rezCover.on').count()) fail('M', 'Das Titelbild-Fenster bleibt nach "Use as cover" offen');
   const zug = await p.evaluate(() => new Promise(res => {
@@ -1648,7 +1728,12 @@ function pruefeKontrast() {
     const out = [];
     const t = (name, ist, soll) => out.push({ name, ist, soll, ok: JSON.stringify(ist) === JSON.stringify(soll) });
     t('Lachs + Nudeln', T.themenOf('Baked Salmon Feta Pasta', ['2 salmon fillets', '250 g pasta']), ['fish', 'protein', 'pasta']);
-    t('Hackfleisch', T.themenOf('Spaghetti Bolognese', ['500 g Hackfleisch', '400 g Spaghetti']), ['meat', 'protein', 'pasta']);
+    // ⚠ ERWARTUNGEN AKTUALISIERT (2026-09-05): seit es das Thema "Italian"
+    // gibt, traegt Spaghetti Bolognese es zu Recht mit - die Fixtures
+    // stammten aus der Zeit davor. Der Waechter meldete das als Fehler der
+    // Erkennung; tatsaechlich war die Erwartung veraltet. Ein Gericht heisst
+    // Bolognese, weil es aus Bologna kommt.
+    t('Hackfleisch', T.themenOf('Spaghetti Bolognese', ['500 g Hackfleisch', '400 g Spaghetti']), ['meat', 'protein', 'pasta', 'italian']);
     t('deutsche Zusammensetzung', T.themenOf('Tomatensuppe', ['Tomaten', 'Zwiebel']), ['veggie', 'soup']);
     t('Huhn', T.themenOf('Chicken Noodle Soup', ['chicken breast', 'noodles']), ['chicken', 'protein', 'pasta', 'soup']);
     // ⚠ Fischsauce macht ein Gericht NICHT zum Fischgericht - wer nach Fisch
@@ -1665,7 +1750,7 @@ function pruefeKontrast() {
     // ⚠ Und "chicken stock" darf weder Huhn NOCH Protein ausloesen: Bruehe
     // ist Wuerze. Erste Fassung des Protein-Themas las die Zutaten roh und
     // machte aus diesem Risotto ein Proteingericht.
-    t('chicken stock macht kein Huhn', T.themenOf('Risotto', ['200 g Reis', '500 ml chicken stock', 'Parmesan']), ['rice']);
+    t('chicken stock macht kein Huhn', T.themenOf('Risotto', ['200 g Reis', '500 ml chicken stock', 'Parmesan']), ['rice', 'italian']);
     t('...beides aber unvegetarisch', T.themenOf('Pad Thai', ['Reisnudeln', '2 tbsp fish sauce', 'Tofu']).includes('veggie'), false);
     t('ohne Zutaten kein Thema', T.themenOf('Irgendwas', []), []);
     t('Labels', T.themenLabels(['meat', 'veggie']), ['Meat', 'No meat']);
@@ -1682,11 +1767,11 @@ function pruefeKontrast() {
     // "vegane Salami" und "Räuchertofu" sind kein Fleisch (Pruef-Lauf
     // 2026-09-03: "Veganes Pizza-Sandwich" stand unter Meat).
     t('vegan schlaegt Produktnamen', T.themenOf('Veganes Pizza-Sandwich mit Tofu-Ricotta',
-      ['200 g Räuchertofu', 'vegane Salami', 'Pizzateig']), ['veggie', 'protein', 'bread']);
+      ['200 g Räuchertofu', 'vegane Salami', 'Pizzateig']), ['veggie', 'protein', 'bread', 'italian']);
     t('vegan bleibt ohne Fleisch nicht themenlos', T.themenOf('Vegan Chicken Nuggets',
       ['Sojaschnetzel', 'Panade']), ['veggie', 'protein']);
     t('echtes Fleisch bleibt Fleisch', T.themenOf('Spaghetti Bolognese',
-      ['500 g Hackfleisch', 'Spaghetti']), ['meat', 'protein', 'pasta']);
+      ['500 g Hackfleisch', 'Spaghetti']), ['meat', 'protein', 'pasta', 'italian']);
     // ⚠ "Eis" darf nicht ueber die Mehrzahlregel als "Ei" gelten.
     t('Eis ist kein Ei', T.themenOf('Eis am Stiel', ['Eis', 'Sahne']).includes('protein'), false);
     // ⚠ Vier Faelle aus dem scharfen Lauf vom 2026-09-03: eine Zutat, die
@@ -1711,7 +1796,7 @@ function pruefeKontrast() {
     t('Schwein zaehlt als Protein', T.themenOf('Pork Katsu',
       ['4 pork loin chops', 'panko']).includes('protein'), true);
     t('Prosciutto traegt kein Gericht', T.themenOf('Carbonara',
-      ['3 ounces prosciutto', '1 pound tagliatelle']), ['meat', 'pasta']);
+      ['3 ounces prosciutto', '1 pound tagliatelle']), ['meat', 'pasta', 'italian']);
     return out;
   });
   themen.filter(x => !x.ok).forEach(x =>
@@ -1851,7 +1936,7 @@ function pruefeKontrast() {
     fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of ${FIX.items.length}"`);
 
   // "Show 3 more" muss DREI ANDERE zeigen
-  await p.click('#fdMore');
+  await klick(p, '#fdMore', '#fdMore');
   await p.waitForTimeout(800);
   const zweiteDrei = await reihe();
   if (zweiteDrei.length !== 3) fail('N', `Nach "Show 3 more" stehen ${zweiteDrei.length} statt 3 Gerichte da`);
@@ -1896,14 +1981,14 @@ function pruefeKontrast() {
   if (gemerkt !== 6) fail('N', `Nach zweimal Weiterblaettern sind ${gemerkt} statt 6 Vorschlaege als gesehen gemerkt`);
 
   // Filter nach Art
-  await p.click('.fd-tags .tag-chip:has-text("No meat")');
+  await klick(p, '.fd-tags .tag-chip:has-text("No meat")', '.fd-tags .tag-chip:has-text("No meat")');
   await p.waitForTimeout(600);
   const veggie = await reihe();
   if (!veggie.length) fail('N', 'Der Filter "No meat" zeigt gar nichts mehr');
   if (veggie.some(t => /Bolognese|Gulasch|Handi|Lachs/.test(t)))
     fail('N', `Der Filter "No meat" laesst Fleisch/Fisch durch: ${JSON.stringify(veggie)}`);
   // Filter nach Quelle zusaetzlich
-  await p.click('.fd-tags .tag-chip:has-text("Kitchen Blog")');
+  await klick(p, '.fd-tags .tag-chip:has-text("Kitchen Blog")', '.fd-tags .tag-chip:has-text("Kitchen Blog")');
   await p.waitForTimeout(600);
   const gefiltert = await p.evaluate(() => [...document.querySelectorAll('.fd-card')].map(c => ({
     titel: (c.querySelector('.fd-title') || {}).textContent || '',
@@ -1919,7 +2004,7 @@ function pruefeKontrast() {
   // des Formulars - rezCloseModal() raeumt den Formularzustand ab, und
   // renderForm() stieg mit "Cannot read properties of null" aus. Fuer den
   // Nutzer sah das aus wie ein Knopf, der nichts tut.
-  await p.click('.fd-card .btn-primary');
+  await klick(p, '.fd-card .btn-primary', '.fd-card .btn-primary');
   await p.waitForTimeout(1600);
   const uebernommen = await p.evaluate(() => ({
     formular: !!document.getElementById('rfTitle'),
@@ -1954,7 +2039,7 @@ function pruefeKontrast() {
   await p.evaluate(() => window.rezShowPage('inspo'));
   await p.waitForTimeout(700);
   const ideenVorher = await p.evaluate(async () => (await import('./js/rezept/store.js')).state.index.inspo.length);
-  await p.click('.fd-card .fd-btns .btn:not(.btn-primary)');
+  await klick(p, '.fd-card .fd-btns .btn:not(.btn-primary)', '.fd-card .fd-btns .btn:not(.btn-primary)');
   await p.waitForTimeout(1200);
   const ideenNachher = await p.evaluate(async () => (await import('./js/rezept/store.js')).state.index.inspo.length);
   if (ideenNachher !== ideenVorher + 1) fail('N', '"Save idea" legt keine Idee an');
@@ -1968,7 +2053,7 @@ function pruefeKontrast() {
   if (!ideeBild) fail('N', '"Save idea" uebernimmt das Bild des Vorschlags nicht - die Idee bleibt bildlos');
 
   // Detailfenster eines Vorschlags
-  await p.click('.fd-card');
+  await klick(p, '.fd-card', '.fd-card');
   await p.waitForTimeout(900);
   const detail = await p.evaluate(() => ({
     offen: !!document.querySelector('.rd-title'),
@@ -2025,7 +2110,7 @@ function pruefeKontrast() {
     fail('N', 'Sind alle Vorschlaege gesehen, fehlt der Hinweis mit "Load new ones"');
   } else {
     const vorLaden = await p.evaluate(() => document.getElementById('rezPageArea').innerHTML);
-    await p.click('.fd-note .fd-lnk');
+    await klick(p, '.fd-note .fd-lnk', '.fd-note .fd-lnk');
     await p.waitForTimeout(400);
     const nachLaden = await p.evaluate(vor => ({
       gleich: document.getElementById('rezPageArea').innerHTML === vor,

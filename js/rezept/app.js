@@ -197,6 +197,43 @@ export function rezShowPage(id){
   else if(id==='cooked')renderCooked();
 }
 
+// ── SEITENKOPF ───────────────────────────────────────────────────────────
+// EIN Baustein fuer alle sechs Kategorien (Nutzer-Wunsch 2026-09-04: "Das
+// Design von allen Sachen muss uebersichtlicher werden"). Gleiches Geruest -
+// Zeichen, Kicker, Titel, Untertitel, Aktionen rechts -, aber je Bereich eine
+// andere Abschlusslinie und ein anderes Zeichen (`.ph-shop` Abrisskante,
+// `.ph-week` Doppellinie + Abreisskalender, `.ph-rec` runde Marke). Das ist
+// der Unterschied zwischen sechs gleichen Seiten und sechs Orten.
+// ⚠ Der Untertitel bleibt `.psub`, der Titel `.ptitle` - beide Klassen sind
+// an anderen Stellen (und in den Pruefungen) verankert.
+function pageHead(o){
+  return`<div class="ph ph-${o.kind}">`
+    +`<div class="ph-ic">${o.icon}</div>`
+    +`<div class="ph-tx">`
+      +(o.kicker?`<div class="ph-kick">${escH(o.kicker)}</div>`:'')
+      +`<div class="ptitle">${escH(o.title)}</div>`
+      +(o.sub?`<div class="psub">${o.sub}</div>`:'')
+    +`</div>`
+    +(o.actions?`<div class="ph-acts">${o.actions}</div>`:'')
+  +`</div>`;
+}
+// Der Wochenplan traegt statt eines Symbols ein Abreisskalender-Blatt mit dem
+// echten heutigen Datum - dasselbe Bild, das ueber jedem Kalender haengt.
+function calLeaf(d){
+  return`<span class="ph-cal-m">${MON[d.getMonth()]}</span><span class="ph-cal-d">${d.getDate()}</span>`;
+}
+// Zwischenband: trennt zwei Bloecke auf EINER Seite voneinander (etwa die
+// taeglichen Vorschlaege von den eigenen Ideen). Ohne so eine Kante laufen
+// zwei Raster ineinander und man sieht nicht, wo das eine aufhoert.
+function secBand(titel,n,hinweis){
+  return`<div class="sec">`
+    +`<span class="sec-t">${escH(titel)}</span>`
+    +(n?`<span class="sec-n">${n}</span>`:'')
+    +`<span class="sec-line"></span>`
+    +(hinweis?`<span class="sec-hint">${escH(hinweis)}</span>`:'')
+  +`</div>`;
+}
+
 // ── OVERVIEW ─────────────────────────────────────────────────────────────
 // Drei Karten. "Today's Meal" und "Random Picker" sind ausdrueckliche
 // PLATZHALTER (Nutzer: "Mach nur einen Platzhalter hin. Die Funktion kommt
@@ -209,9 +246,11 @@ export function renderOverview(){
   const heute=S.todaysMeal();
   const offen=S.shoppingItems().filter(i=>!i.done).length;
   el.innerHTML=
-    `<div class="ptitle">Overview</div>`
-   +`<div class="psub">${n?`${n} recipe${n===1?'':'s'} in your collection`:'Your collection is still empty'}`
-     +(offen?` · ${offen} item${offen===1?'':'s'} on the shopping list`:'')+`</div>`
+    pageHead({kind:'ov',icon:icn('overview',24),kicker:'Kitchen dashboard',title:'Overview',
+      sub:`${n?`${n} recipe${n===1?'':'s'} in your collection`:'Your collection is still empty'}`
+        +(offen?` · ${offen} item${offen===1?'':'s'} on the shopping list`:''),
+      actions:`<button class="btn" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button>`
+        +`<button class="btn btn-primary" onclick="rezAddFromOverview()">${icn('plus',13)} Add recipe</button>`})
    +`<div class="ov-grid stagger">`
    +todayCardHtml(heute)
    +randomCardHtml()
@@ -230,17 +269,21 @@ export function renderOverview(){
 // Kein eigenes Feld: was heute ansteht, ist der erste Eintrag im Wochenplan
 // fuer heute (S.todaysMeal). Sonst haette man zwei Wahrheiten, die
 // auseinanderlaufen, sobald jemand die Woche umplant.
+// ⚠ Die Karte belegt zwei Spalten (`.ov-hero`) und zeigt das Bild GROSS:
+// "was esse ich heute" ist die Frage, mit der man die App aufmacht - sie als
+// eine von vier gleich grossen Kacheln zu zeigen beantwortet sie nicht auf
+// einen Blick (Nutzer-Wunsch 2026-09-04: "alles extremer optisch aufwerten").
 function todayCardHtml(r){
-  const kopf=`<div class="dw-hdr"><div class="dw-title">${icn('plate',16)} Today's Meal</div>`
+  const kopf=`<div class="dw-hdr"><div class="dw-title">${icn('plate',18)} Today's Meal</div>`
     +(r?`<button class="btn" onclick="rezPickToday()">Change</button>`:'')+`</div>`;
   if(!r){
-    return`<div class="dw">${kopf}<div class="dw-ph"><div class="dw-ph-big">Nothing planned</div>`
+    return`<div class="dw ov-hero">${kopf}<div class="dw-ph"><div class="dw-ph-big">Nothing planned</div>`
       +`<div>Pick what you are cooking today.</div>`
       +`<button class="btn btn-primary" style="margin-top:4px" onclick="rezPickToday()">Pick a recipe</button></div></div>`;
   }
   const st=S.cookedStats(r.id);
-  return`<div class="dw">${kopf}`
-    +`<div class="today-wrap" onclick="rezOpenDetail('${r.id}')" role="button" tabindex="0">`
+  return`<div class="dw ov-hero">${kopf}`
+    +`<div class="today-wrap big" onclick="rezOpenDetail('${r.id}')" role="button" tabindex="0">`
       +(r.thumb?`<img class="today-img" src="${r.thumb}" alt="">`:`<div class="today-img"></div>`)
       +`<div class="today-meta"><div class="today-nm">${escH(r.title)}</div>`
         +`<div class="today-sub">${icn('clock',12)} ${fmtDur(r.min)}${st.count?` · cooked ${st.count}×`:''}</div></div>`
@@ -373,14 +416,14 @@ export function renderRecipes(){
   const total=S.state.index.recipes.length;
   const durOpts=[0,15,30,45,60,90].map(m=>`<option value="${m}"${filters.maxMin===m?' selected':''}>${m?'≤ '+fmtDur(m):'Any duration'}</option>`).join('');
   el.innerHTML=
-    `<div class="ptitle">Recipes</div>`
-   +`<div class="psub">${total?`${list.length} of ${total} shown`:'Nothing here yet — add your first recipe'}</div>`
+    pageHead({kind:'rec',icon:icn('recipes',24),kicker:'Your collection',title:'Recipes',
+      sub:total?`${list.length} of ${total} shown`:'Nothing here yet — add your first recipe',
+      actions:`<button class="btn btn-primary" onclick="rezOpenForm(null)">${icn('plus',13)} Add Recipe</button>`})
    +`<div class="rez-toolbar">`
      +`<div class="rez-search">`+icn('search',15)
        +`<input id="rezSearchInp" type="search" placeholder="Search recipes..." value="${escH(filters.q)}" oninput="rezSetQuery(this.value)"></div>`
      +`<select class="rez-sel" onchange="rezSetMaxMin(this.value)">${durOpts}</select>`
      +`<button class="btn${filters.favOnly?' btn-primary':''}" onclick="rezToggleFavFilter()" title="Show favourites only">${icn('star',14)} Favourites</button>`
-     +`<button class="btn btn-primary" onclick="rezOpenForm(null)">${icn('plus',14)} Add Recipe</button>`
    +`</div>`
    +(tags.length?`<div class="rez-tags">`
      +`<button class="tag-chip${filters.tag?'':' on'}" onclick="rezSetTag('')">All</button>`
@@ -1677,17 +1720,22 @@ export function rezOpenFeed(id){
   const themen=(i.themes||[]).map(t=>(THEMA_BY_ID[t]||{}).label).filter(Boolean);
   openModal(
      (i.image?`<div class="rd-hero"><img src="${escH(i.image)}" alt=""></div>`:'')
-    +`<div class="rd-title">${escH(i.title)}</div>`
-    +`<div class="rd-meta">`
-      +`<span class="rd-chip">${escH(i.srcName||'')}</span>`
-      +(i.creator?`<span class="rd-chip">${escH(i.creator)}</span>`:'')
-      +(i.min?`<span class="rd-chip">${icn('clock',12)}${fmtDur(i.min)}</span>`:'')
-      +themen.map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('')
+    // Derselbe Kochbuch-Aufbau wie beim eigenen Rezept - ein Vorschlag darf
+    // nicht wie eine zweite Sorte Seite aussehen.
+    +`<div class="rd-head"><div class="rd-title">${escH(i.title)}</div>`
+      +`<div class="rd-rule"><span>${escH(i.srcName||'Suggestion')}</span></div>`
+      +`<div class="rd-meta">`
+        +(i.creator?`<span class="rd-chip">${escH(i.creator)}</span>`:'')
+        +(i.min?`<span class="rd-chip">${icn('clock',12)}${fmtDur(i.min)}</span>`:'')
+        +themen.map(t=>`<span class="rd-chip">${escH(t)}</span>`).join('')
+      +`</div></div>`
+    +`<div class="rd-cols">`
+      +(i.ingredients.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients</div>`
+        +`<div class="rd-ingbox"><ul class="rd-ing">`+i.ingredients.map(z=>`<li>${escH(z)}</li>`).join('')+`</ul></div></div>`:'')
+      +(i.steps.length?`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
+        +i.steps.map((s,n)=>`<div class="rd-step"><div class="rd-num">${n+1}</div>`
+          +`<div class="rd-block"><p>${escH(s)}</p></div></div>`).join('')+`</div>`:'')
     +`</div>`
-    +(i.ingredients.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients</div>`
-      +`<ul class="rd-ing">`+i.ingredients.map(z=>`<li>${escH(z)}</li>`).join('')+`</ul></div>`:'')
-    +(i.steps.length?`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
-      +`<div class="rd-block">`+i.steps.map((s,n)=>`<p><b>${n+1}.</b> ${escH(s)}</p>`).join('')+`</div></div>`:'')
     +`<div class="m-btns" style="flex-wrap:wrap">`
       +(i.url?`<a class="btn" style="margin-right:auto" href="${escH(i.url)}" target="_blank" rel="noopener">Open source</a>`:'')
       +`<button class="btn" onclick="rezFeedToInspo('${i.id}')">${icn('inspo',13)} Save idea</button>`
@@ -1743,20 +1791,23 @@ export function renderInspo(){
   _inspoCreatorListe=kuenstler;_inspoTagListe=themen;
   const sortLbl={new:'Newest first',creator:'By creator',title:'By title',dur:'By duration'}[inspoSort];
   el.innerHTML=
-     `<div class="ptitle">Inspiration</div>`
+     pageHead({kind:'insp',icon:icn('inspo',24),kicker:'Reels, links & daily picks',title:'Inspiration',
+       sub:'Fresh suggestions every day — your own saved ideas below',
+       actions:`<button class="btn" onclick="rezOpenBulk()">${icn('link',13)} Add many</button>`
+         +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',13)} Add idea</button>`})
     // ⚠ Die taeglichen Vorschlaege stehen OBEN, die eigenen Ideen darunter:
     // der Nutzer wollte beides in einer Kategorie (2026-09-03), aber was
     // taeglich neu ist, gehoert nach vorn - was man selbst gesammelt hat,
     // findet man auch weiter unten.
     +feedAbschnitt()
-    +`<div class="psub">${alle.length?`${liste.length} of ${alle.length} shown`
+    // Zwischenband: ohne es liefen taegliche Vorschlaege und eigene Ideen
+    // optisch ineinander - man sah nicht, wo das eine aufhoert.
+    +secBand('Your ideas',alle.length,alle.length?`${liste.length} of ${alle.length} shown`
         +(kuenstler.length?` · ${kuenstler.length} creator${kuenstler.length===1?'':'s'}`:'')
-      :'Save reels, links and ideas you want to cook one day'}</div>`
+      :'Save reels, links and ideas you want to cook one day')
     +`<div class="rez-toolbar">`
       +`<div class="rez-search">${icn('search',15)}<input id="inspoQ" type="search" placeholder="Search ideas, creators, tags..." value="${escH(inspoFilter)}" oninput="rezInspoQuery(this.value)"></div>`
       +`<button class="btn" onclick="rezInspoSort()">${sortLbl}</button>`
-      +`<button class="btn" onclick="rezOpenBulk()">${icn('link',14)} Add many</button>`
-      +`<button class="btn btn-primary" onclick="rezOpenInspoForm(null)">${icn('plus',14)} Add idea</button>`
     +`</div>`
     +(kuenstler.length?`<div class="rez-tags"><span class="shop-quick-lbl">Creators</span>`
         +`<button class="tag-chip${inspoCreator?'':' on'}" onclick="rezInspoCreator(-1)">All</button>`
@@ -2215,33 +2266,46 @@ export function renderWeek(){
   const von=tage[0],bis=tage[6];
   const spanne=`${von.getDate()} ${MON[von.getMonth()]} – ${bis.getDate()} ${MON[bis.getMonth()]} ${bis.getFullYear()}`;
   const geplant=tage.reduce((a,d)=>a+S.planFor(S.dayKey(d)).length,0);
+  // ⚠ EIN Kalenderblatt statt sieben loser Karten (Nutzer-Entscheidung
+  // 2026-09-04): Wochentags-Kopfzeile, Haarlinien-Raster, Wochenende
+  // abgesetzt, HEUTE als gefuellter Kreis auf der Zahl. Kopfzeile und Tage
+  // liegen im SELBEN Raster - nur so stehen sie spaltentreu untereinander.
   el.innerHTML=
-     `<div class="ptitle">Week</div>`
-    +`<div class="psub">${geplant?`${geplant} meal${geplant===1?'':'s'} planned this week`:'Nothing planned for this week yet'}</div>`
-    +`<div class="rez-toolbar">`
+     pageHead({kind:'week',icon:calLeaf(new Date()),kicker:'Meal plan',title:'Week',
+       sub:geplant?`${geplant} meal${geplant===1?'':'s'} planned this week`:'Nothing planned for this week yet',
+       actions:`<button class="btn btn-primary" onclick="rezWeekToShopping()" ${geplant?'':'disabled'}>`
+         +`${icn('shopping',13)} Add ingredients to shopping list</button>`})
+    +`<div class="rez-toolbar cal-nav">`
+      +`<span class="week-range">${escH(spanne)}</span>`
       +`<button class="btn" onclick="rezWeekShift(-7)">${icn('arrowL',13)} Previous</button>`
       +`<button class="btn" onclick="rezWeekToday()">This week</button>`
       +`<button class="btn" onclick="rezWeekShift(7)">Next ${icn('arrowR',13)}</button>`
-      +`<span class="week-range">${escH(spanne)}</span>`
-      +`<button class="btn btn-primary" onclick="rezWeekToShopping()" ${geplant?'':'disabled'}>${icn('shopping',13)} Add ingredients to shopping list</button>`
     +`</div>`
-    +`<div class="week-grid stagger">`+tage.map(d=>{
+    +`<div class="cal"><div class="cal-grid stagger">`
+      +WT.map(w=>`<div class="cal-wd">${w}</div>`).join('')
+      +tage.map(d=>{
         const k=S.dayKey(d),ids=S.planFor(k),ist=k===heute;
-        return`<div class="week-day${ist?' on':''}">`
-          +`<div class="week-hd"><span class="week-wd">${WT[(d.getDay()+6)%7]}</span>`
-            +`<span class="week-dt">${d.getDate()} ${MON[d.getMonth()]}</span></div>`
+        const wt=(d.getDay()+6)%7;
+        // Der Monat steht nur dort, wo er sich aendert (Wochenanfang oder
+        // Monatsbeginn) - in JEDER Zelle waere er Rauschen, kein Kalender
+        // wiederholt ihn sieben Mal.
+        const mo=(wt===0||d.getDate()===1)?MON[d.getMonth()]:'';
+        return`<div class="week-day${ist?' on':''}${wt>4?' we':''}">`
+          +`<div class="week-hd"><span class="week-dt">${d.getDate()}</span>`
+            +`<span class="week-wd">${WT[wt]}</span>`
+            +`<span class="week-mo">${mo}</span></div>`
           +`<div class="week-body">`+(ids.length?ids.map(id=>{
               const r=S.state.index.recipes.find(x=>x.id===id);
               if(!r)return'';
               return`<div class="week-item">`
                 +(r.thumb?`<img class="week-thumb" src="${r.thumb}" alt="" onclick="rezOpenDetail('${r.id}')">`:`<span class="week-thumb"></span>`)
-                +`<span class="week-nm" onclick="rezOpenDetail('${r.id}')">${escH(r.title)}</span>`
+                +`<span class="week-nm" onclick="rezOpenDetail('${r.id}')" title="${escH(r.title)}">${escH(r.title)}</span>`
                 +`<button class="week-x" onclick="rezWeekRemove('${k}','${r.id}')" title="Remove" aria-label="Remove">×</button></div>`;
-            }).join(''):`<div class="week-empty">—</div>`)
+            }).join(''):'')
           +`</div>`
           +`<button class="week-add" onclick="rezWeekAdd('${k}')">${icn('plus',13)} Add</button>`
         +`</div>`;
-      }).join('')+`</div>`;
+      }).join('')+`</div></div>`;
   afterRender(el);
 }
 export function rezWeekShift(t){
@@ -2276,7 +2340,7 @@ export async function rezWeekToShopping(){
 // Die Abteilung kommt aus js/rezept/groceries.js und ist je Eintrag
 // ueberschreibbar - was das Woerterbuch nicht kennt, landet in "Other" statt
 // in einer plausibel klingenden, aber geratenen Abteilung.
-const shopState={sort:'cat',zu:new Set(),vorschlag:-1,letzteQ:''};
+const shopState={sort:'cat',zu:new Set(),cartZu:false,vorschlag:-1,letzteQ:''};
 function catOf(i){return i.cat||categorize(i.text);}
 // Eigene Historie: alles, was schon einmal auf der Liste stand - nach
 // Haeufigkeit. Trifft den Sprachgebrauch des Nutzers besser als jedes
@@ -2300,8 +2364,9 @@ export function renderShopping(){
   const haeufig=shopVerlauf().filter(v=>v.n>1&&!items.some(i=>!i.done&&i.text.toLowerCase()===v.text.toLowerCase())).slice(0,6);
 
   el.innerHTML=
-     `<div class="ptitle">Shopping</div>`
-    +`<div class="psub">${items.length?`${offen.length} still to buy · ${erledigt.length} done`:'Your shopping list is empty'}</div>`
+     pageHead({kind:'shop',icon:icn('shopping',24),kicker:'Grocery list',title:'Shopping',
+       sub:items.length?`${offen.length} still to buy · ${erledigt.length} in the cart`:'Your shopping list is empty',
+       actions:`<button class="btn" onclick="rezShowPage('week')">${icn('week',13)} Plan the week</button>`})
     +`<div class="shop-add">`
       +`<div class="shop-inp">${icn('plus',15)}`
         +`<input id="shopNew" type="text" autocomplete="off" placeholder="Add an item — suggestions appear as you type"`
@@ -2312,10 +2377,11 @@ export function renderShopping(){
     +(haeufig.length?`<div class="shop-quick"><span class="shop-quick-lbl">Often bought</span>`
       +haeufig.map((v,i)=>`<button class="tag-chip" onclick="rezShopQuick(${i})">${escH(v.text)}</button>`).join('')+`</div>`:'')
     +(items.length?
-       `<div class="shop-bar"><div class="shop-bar-fill" style="width:${fortschritt}%"></div></div>`
-      +`<div class="shop-tools">`
-        +`<span class="shop-count">${erledigt.length} of ${items.length} done</span>`
-        +`<span class="shop-tools-sp"></span>`
+       // Fortschritt und Werkzeuge in EINER Leiste: der Balken ohne Zahl sagt
+       // wenig, die Zahl ohne Balken zeigt nichts auf einen Blick.
+       `<div class="shop-tools">`
+        +`<span class="shop-count">${erledigt.length} / ${items.length}</span>`
+        +`<div class="shop-bar"><div class="shop-bar-fill" style="width:${fortschritt}%"></div></div>`
         +`<button class="btn" onclick="rezWeekToShopping()">${icn('week',13)} From this week's plan</button>`
         +`<button class="btn" onclick="rezShopSort()">${shopState.sort==='cat'?'Sorted by aisle':'Sorted by newest'}</button>`
         +`<button class="btn" onclick="rezShopAll(${offen.length?'true':'false'})">${offen.length?'Check all':'Uncheck all'}</button>`
@@ -2339,38 +2405,66 @@ function shopZeile(i){
     +`<span class="shop-txt">${escH(name)}</span>`
     +(qty?`<span class="shop-qty">${escH(qty)}</span>`:'')
     +(i.src?`<span class="shop-src" title="${escH(i.src)}">${escH(i.src)}</span>`:'')
-    +`<button class="rf-x" onclick="event.preventDefault();rezShopEdit('${i.id}')" title="Edit" aria-label="Edit">✎</button>`
-    +`<button class="rf-x" onclick="event.preventDefault();rezShopRemove('${i.id}')" title="Remove" aria-label="Remove">×</button></label>`;
+    +`<span class="shop-acts">`
+      +`<button class="rf-x" onclick="event.preventDefault();rezShopEdit('${i.id}')" title="Edit" aria-label="Edit">✎</button>`
+      +`<button class="rf-x" onclick="event.preventDefault();rezShopRemove('${i.id}')" title="Remove" aria-label="Remove">×</button>`
+    +`</span></label>`;
 }
+// ⚠ ZWEI SPALTEN (Nutzer-Entscheidung 2026-09-04): links, was noch fehlt -
+// rechts, was schon im Wagen liegt. Vorher wuchs die Liste beim Abhaken nach
+// unten weiter, obwohl der Einkauf kuerzer wurde; jetzt wandert jeder Haken
+// sichtbar von links nach rechts. Unter 940px stehen die Spalten
+// untereinander (CSS `.shop-cols`), links zuerst - beim Einkaufen zaehlt, was
+// noch fehlt.
 function shopBody(items){
-  if(shopState.sort!=='cat'){
-    const sortiert=[...items].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.up||'').localeCompare(a.up||''));
-    return`<div class="shop-list">`+sortiert.map(shopZeile).join('')+`</div>`;
-  }
-  // Nach Abteilung gruppiert; erledigte Eintraege sammeln sich unten, damit
-  // die Liste beim Einkaufen kuerzer wird statt gleich lang zu bleiben.
   const offen=items.filter(i=>!i.done),erledigt=items.filter(i=>i.done);
-  let html='';
-  CATS.forEach(c=>{
-    const drin=offen.filter(i=>catOf(i)===c.id);
-    if(!drin.length)return;
-    const zu=shopState.zu.has(c.id);
-    html+=`<div class="shop-cat${zu?' zu':''}">`
-      +`<button class="shop-cat-hd" onclick="rezShopFold('${c.id}')">`
-        +`<span class="shop-cat-ic">${c.icon}</span><span class="shop-cat-nm">${escH(c.label)}</span>`
-        +`<span class="shop-cat-n">${drin.length}</span><span class="shop-cat-ar">▾</span></button>`
-      +`<div class="shop-cat-body">`+drin.map(shopZeile).join('')+`</div></div>`;
-  });
-  if(erledigt.length){
-    html+=`<div class="shop-cat"><div class="shop-cat-hd shop-cat-done">`
-      +`<span class="shop-cat-ic">${icn('check',14)}</span><span class="shop-cat-nm">Done</span>`
-      +`<span class="shop-cat-n">${erledigt.length}</span></div>`
-      +`<div class="shop-cat-body">`+erledigt.map(shopZeile).join('')+`</div></div>`;
+  let links;
+  if(!offen.length){
+    links=`<div class="pad-empty"><b>All done</b>Everything on this list is in the cart.</div>`;
+  }else if(shopState.sort!=='cat'){
+    // ⚠ Ohne Abteilungen KEINE `.shop-cat-hd` erzeugen - genau daran erkennt
+    // die Pruefung (check/rezept.js Stufe I), dass "Sorted by newest" wirkt.
+    const sortiert=[...offen].sort((a,b)=>(b.up||'').localeCompare(a.up||''));
+    links=sortiert.map(shopZeile).join('');
+  }else{
+    links=CATS.map(c=>{
+      const drin=offen.filter(i=>catOf(i)===c.id);
+      if(!drin.length)return'';
+      const zu=shopState.zu.has(c.id);
+      // Punktlinie zwischen Name und Zahl: das Schild ueber dem Ladengang.
+      return`<div class="shop-cat${zu?' zu':''}">`
+        +`<button class="shop-cat-hd" onclick="rezShopFold('${c.id}')">`
+          +`<span class="shop-cat-ic">${c.icon}</span><span class="shop-cat-nm">${escH(c.label)}</span>`
+          +`<span class="shop-cat-dots"></span>`
+          +`<span class="shop-cat-n">${drin.length}</span><span class="shop-cat-ar">▾</span></button>`
+        +`<div class="shop-cat-body">`+drin.map(shopZeile).join('')+`</div></div>`;
+    }).join('');
   }
-  return`<div class="shop-list">`+(html||`<div class="shop-sep">Everything done</div>`)+`</div>`;
+  const zuKarre=shopState.cartZu;
+  const rechts=erledigt.length
+    ? `<div class="pad-body">`+[...erledigt].reverse().map(shopZeile).join('')+`</div>`
+    : `<div class="pad-body"><div class="pad-empty"><b>Cart is empty</b>Tick an item on the left and it moves over here.</div></div>`;
+  return`<div class="shop-cols">`
+    +`<section class="pad pad-todo">`
+      +`<div class="pad-hd"><span class="pad-ttl">To buy</span><span class="pad-n">${offen.length}</span></div>`
+      +`<div class="pad-body">${links}</div>`
+    +`</section>`
+    +`<section class="pad pad-cart${zuKarre?' zu':''}">`
+      +`<div class="pad-hd"><span class="pad-ttl">In the cart</span><span class="pad-n">${erledigt.length}</span>`
+        +`<button class="pad-fold" onclick="rezShopFoldCart()" title="${zuKarre?'Show the cart':'Hide the cart'}"`
+        +` aria-label="${zuKarre?'Show the cart':'Hide the cart'}">${zuKarre?'▸':'▾'}</button></div>`
+      +rechts
+    +`</section>`
+  +`</div>`;
 }
 export function rezShopFold(id){
   if(shopState.zu.has(id))shopState.zu.delete(id);else shopState.zu.add(id);
+  renderShopping();
+}
+// Der Wagen laesst sich zuklappen: wer 40 Sachen abgehakt hat, will beim
+// naechsten Gang wieder nur die offene Spalte sehen.
+export function rezShopFoldCart(){
+  shopState.cartZu=!shopState.cartZu;
   renderShopping();
 }
 export function rezShopSort(){
@@ -2512,10 +2606,15 @@ export function renderCooked(){
   const el=$('pgCooked');if(!el)return;
   const log=S.state.index.cooked;
   const monat=d=>{const x=new Date(d);return MON[x.getMonth()]+' '+x.getFullYear();};
+  // Ein Verlauf ist eine Chronik, keine Tabelle: Monatsbaender mit Anzahl
+  // als Zwischenueberschrift. Die Zahl je Monat wird VORHER gezaehlt - im
+  // Band selbst waere sie erst nach der Zeile bekannt.
+  const proMonat=log.reduce((a,e)=>(a[monat(e.date)]=(a[monat(e.date)]||0)+1,a),{});
   let letzter='';
   const zeilen=log.map(e=>{
     const m=monat(e.date);
-    const kopf=(m!==letzter)?(letzter=m,`<div class="shop-sep">${escH(m)}</div>`):'';
+    const kopf=(m!==letzter)?(letzter=m,`<div class="log-sep">${escH(m)}`
+      +`<span class="log-n">${proMonat[m]}</span></div>`):'';
     const d=new Date(e.date);
     return kopf+`<div class="cook-row">`
       +(e.thumb?`<img class="cook-thumb" src="${e.thumb}" alt="" onclick="rezOpenDetail('${e.recipeId}')">`:`<span class="cook-thumb"></span>`)
@@ -2529,10 +2628,14 @@ export function renderCooked(){
       +`<button class="rf-x" onclick="rezRemoveCooked('${e.id}')" title="Remove" aria-label="Remove">×</button>`
     +`</div>`;
   }).join('');
+  const bew=log.filter(e=>e.rating>0);
+  const schnitt=bew.length?(bew.reduce((a,e)=>a+e.rating,0)/bew.length):0;
   el.innerHTML=
-     `<div class="ptitle">Cooked</div>`
-    +`<div class="psub">${log.length?`${log.length} meal${log.length===1?'':'s'} logged`:'Nothing logged yet'}</div>`
-    +(log.length?`<div class="shop-list">${zeilen}</div>`
+     pageHead({kind:'cook',icon:icn('cooked',24),kicker:'Kitchen log',title:'Cooked',
+       sub:log.length?`${log.length} meal${log.length===1?'':'s'} logged`
+           +(bew.length?` · ${schnitt.toFixed(1)} average rating`:''):'Nothing logged yet',
+       actions:`<button class="btn" onclick="rezShowPage('overview')">Go to Overview</button>`})
+    +(log.length?`<div class="log-list">${zeilen}</div>`
       :`<div class="rez-empty"><h4>No history yet</h4>`
        +`<p>Every time you tap “Mark as cooked” on the Overview, the meal lands here — with a rating, and the Random Picker learns to skip what you just had.</p>`
        +`<button class="btn btn-primary" onclick="rezShowPage('overview')">Go to Overview</button></div>`);
@@ -2676,21 +2779,31 @@ export async function rezOpenDetail(id){
     +(_aktuelleBilder.length>1?`<div class="rd-strip">`
        +_aktuelleBilder.map((b,i)=>`<img src="${b.src}" alt="" onclick="rezShowImage(${i})" loading="lazy">`).join('')
      +`</div>`:'')
-    +`<div class="rd-title">${escH(doc.title||'Untitled')}</div>`
-    +`<div class="rd-meta"><span class="rd-chip">${icn('clock',12)}${fmtDur(doc.min)}</span>`
-      +(doc.fav?`<span class="rd-chip" style="color:var(--star)">${icn('star',12)}Favourite</span>`:'')
-      +tags+`</div>`
-    +(ing.length?`<div class="rd-sec"><div class="rd-sec-h">Ingredients`
-        +`<span class="rd-serv"><button class="ck-sv" onclick="rezDetailServ('${id}',-1)" aria-label="Fewer servings">−</button>`
-        +`<span id="rdServN">${detailServ}</span><button class="ck-sv" onclick="rezDetailServ('${id}',1)" aria-label="More servings">+</button></span></div>`
-        +`<ul class="rd-ing" id="rdIng">${ingHtml(doc,detailServ)}</ul></div>`:'')
-    +`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
-      +(blocks.length?blocks.map(b=>{
-          if(b.t!=='img')return`<div class="rd-block"><p>${escH(b.v)}</p></div>`;
-          const bi=_aktuelleBilder.findIndex(x=>x.src===b.v);
-          return`<div class="rd-block"><img src="${b.v}" alt="" style="cursor:zoom-in" onclick="rezShowImage(${bi})"></div>`;
-        }).join('')
-        :`<div class="rd-empty">No preparation steps written down yet.</div>`)
+    // ── KOCHBUCHSEITE (Nutzer-Wunsch 2026-09-04) ─────────────────────
+    // Zentrierter Titel mit Zierlinie darunter, dann ZWEI Spalten: links
+    // die Zutaten als abgesetzter Kasten, rechts die Schritte mit grossen
+    // Ziffern. Das ist der Aufbau jeder Kochbuchseite - vorher war es eine
+    // durchlaufende Spalte, in der man beim Kochen die Zutaten nicht mehr
+    // sah. Unter 720px wird daraus wieder eine Spalte (CSS `.rd-cols`).
+    +`<div class="rd-head">`
+      +`<div class="rd-title">${escH(doc.title||'Untitled')}</div>`
+      +`<div class="rd-rule"><span>${fmtDur(doc.min)} · serves ${detailServ}</span></div>`
+      +`<div class="rd-meta">`
+        +(doc.fav?`<span class="rd-chip" style="color:var(--accent)">${icn('star',12)}Favourite</span>`:'')
+        +tags+`</div>`
+    +`</div>`
+    +`<div class="rd-cols">`
+      +`<div class="rd-sec">`
+        +(ing.length?`<div class="rd-sec-h">Ingredients`
+          +`<span class="rd-serv"><button class="ck-sv" onclick="rezDetailServ('${id}',-1)" aria-label="Fewer servings">−</button>`
+          +`<span id="rdServN">${detailServ}</span><button class="ck-sv" onclick="rezDetailServ('${id}',1)" aria-label="More servings">+</button></span></div>`
+          +`<div class="rd-ingbox"><ul class="rd-ing" id="rdIng">${ingHtml(doc,detailServ)}</ul></div>`
+          :`<div class="rd-sec-h">Ingredients</div><div class="rd-empty">No ingredients listed yet.</div>`)
+      +`</div>`
+      +`<div class="rd-sec"><div class="rd-sec-h">Preparation</div>`
+        +(blocks.length?schritteHtml(blocks)
+          :`<div class="rd-empty">No preparation steps written down yet.</div>`)
+      +`</div>`
     +`</div>`
     // Notizen: die Information, die beim ZWEITEN Kochen zaehlt ("weniger
     // Salz"). Direkt im Detailfenster editierbar, nicht nur im Formular -
@@ -2710,6 +2823,28 @@ export async function rezOpenDetail(id){
   ,'modal-wide');
 }
 let detailServ=2;
+// Zubereitung als nummerierte Schritte. ⚠ Ein Bild wird an den
+// VORHERGEHENDEN Schritt geheftet, statt ein eigener, textloser Schritt zu
+// werden - dieselbe Regel wie im Kochmodus (docs/rezept.md): Bild und
+// Anweisung gehoeren zusammen. Nur ein Bild ganz am Anfang steht allein.
+function schritteHtml(blocks){
+  const teile=[];
+  let n=0;
+  blocks.forEach(b=>{
+    if(b.t==='img'){
+      const bi=_aktuelleBilder.findIndex(x=>x.src===b.v);
+      const img=`<img src="${b.v}" alt="" style="cursor:zoom-in" onclick="rezShowImage(${bi})">`;
+      if(teile.length)teile[teile.length-1].bilder.push(img);
+      else teile.push({txt:'',bilder:[img],nr:0});
+      return;
+    }
+    teile.push({txt:b.v,bilder:[],nr:++n});
+  });
+  return teile.map(t=>`<div class="rd-step">`
+    +(t.nr?`<div class="rd-num">${t.nr}</div>`:`<div class="rd-num rd-num-leer"></div>`)
+    +`<div class="rd-block">`+(t.txt?`<p>${escH(t.txt)}</p>`:'')+t.bilder.join('')+`</div>`
+  +`</div>`).join('');
+}
 function ingHtml(doc,serv){
   const basis=doc.servings||2;
   const f=basis?serv/basis:1;
@@ -3226,7 +3361,7 @@ Object.assign(window,{
   renderWeek,rezWeekShift,rezWeekToday,rezWeekAdd,rezWeekRemove,rezWeekToShopping,
   // Einkaufsliste
   renderShopping,rezShopAdd,rezShopToggle,rezShopRemove,rezShopClearDone,
-  rezShopSuggest,rezShopKey,rezShopPick,rezShopQuick,rezShopFold,rezShopSort,rezShopAll,
+  rezShopSuggest,rezShopKey,rezShopPick,rezShopQuick,rezShopFold,rezShopFoldCart,rezShopSort,rezShopAll,
   rezShopEdit,rezShopPickCat,rezShopSaveEdit,rezShopRemoveFromEdit,
   // Verlauf
   renderCooked,rezRate,rezRemoveCooked,
