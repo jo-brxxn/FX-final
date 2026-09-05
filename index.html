@@ -1657,7 +1657,20 @@ body.res-return-active .rterm-back-pill{display:flex}
    Flex-Text (.ir-name-txt, flex:1 1 auto) erbt text-align:right, wodurch
    kurze Namen weit nach rechts rutschen statt alle am selben linken Rand zu
    beginnen (Nutzer-Bugreport 2026-08-04, per Foto). */
-.ind-table td.ir-name{text-align:left;white-space:normal;display:flex;align-items:center;gap:3px;min-width:0}
+/* flex-wrap ist Pflicht, sobald ein Badge (AWAITING VALUE / OUT OF DATE)
+   in der Zeile steht: das Badge traegt white-space:nowrap, kann also nicht
+   schrumpfen, waehrend .ir-name-txt mit min-width:0 bis auf null
+   zusammengedrueckt wurde. Gemessen am echten Stand (iPad-Breite, USD,
+   Nonfarm Payrolls): Namensspalte 128px, davon nahm das Badge 97px - fuer
+   den Namen blieben 10px, den overflow-wrap:anywhere dann Zeichen fuer
+   Zeichen umbrach ("No nfa rm Pa yro lls"). Die Zeile wuchs dadurch von
+   50px auf 360px (Nutzer-Screenshot 2026-09-05: "wenn ich die Webseite
+   oeffne sieht es anfangs immer so aus" - beim Start sind die Badges da,
+   weil der Kalender noch der gespeicherte alte Stand ist; sobald die
+   frischen Feeds landen, verschwinden sie wieder).
+   Mit Umbruch rutscht das Badge in eine zweite Zeile, statt dem Namen den
+   Platz wegzunehmen. */
+.ind-table td.ir-name{text-align:left;white-space:normal;display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
 /* Sehr lange Indikator-Namen werden auf einer Zeile abgeschnitten ("...")
    statt die feste Tabellenbreite zu sprengen (Nutzer-Wunsch 2026-08-03) -
    braucht min-width:0 auf dem Flex-Item, sonst verweigert Flexbox das
@@ -1666,7 +1679,12 @@ body.res-return-active .rterm-back-pill{display:flex}
    Namens-KUERZUNG langer Indikatoren (eigener Mechanismus) bleibt davon
    unberuehrt; hier ging es nur darum, dass der bereits gekuerzte Name
    nicht zusaetzlich noch vom Kasten abgeschnitten wird. */
-.ir-name-txt{font-weight:700;color:var(--t0);font-family:var(--ff-text);font-size:13px;min-width:0;flex:1 1 auto;overflow-wrap:anywhere}
+/* min-width:3.5em statt 0: der Name darf schrumpfen (dafuer war die 0 da),
+   aber nicht unter ein paar Zeichen - sonst greift der Zeichenumbruch von
+   overflow-wrap:anywhere (siehe .ir-name oben). 3.5em bleibt auch in der
+   schmalsten Stufe (9.5px-Schrift, Namensspalte 19%) klar unter der
+   Spaltenbreite, kann die Tabelle also nicht aufziehen. */
+.ir-name-txt{font-weight:700;color:var(--t0);font-family:var(--ff-text);font-size:13px;min-width:3.5em;flex:1 1 auto;overflow-wrap:anywhere}
 .ir-act{font-weight:800;color:var(--t1)}
 .ir-act.act-good{color:var(--green)}
 .ir-act.act-bad{color:var(--red)}
@@ -3710,8 +3728,8 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 /* Veralteter Indikator in der Tabelle: gedaempft + eigener Hinweis, aber
    NICHT versteckt - der Wert bleibt lesbar, er zaehlt nur nicht mehr. */
 .ind-row.ind-stale .ir-name-txt{opacity:.55}
-.ir-stale{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
-.ir-await{display:inline-block;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--t3);border:1px dashed var(--t3);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
+.ir-stale{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
+.ir-await{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;margin-left:6px;font-size:var(--fs-2xs);font-weight:700;color:var(--t3);border:1px dashed var(--t3);border-radius:4px;padding:0 5px;vertical-align:middle;white-space:nowrap}
 /* Meldung 'Release faellig, kein Wert' - bewusst neutraler als die
    Veraltet-Meldung: dort zaehlt etwas nicht mehr, hier fehlt nur eine
    Zahl, die es geben muesste. */
@@ -4131,11 +4149,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-466 - Zehn Design-Vorlagen zur Auswahl (Einstellungen &gt; Appearance): fuenf helle - Terminal Pro (das bisherige Design, bleibt Standard), Linear Light, Stripe Slate, Swiss Editorial, Notion Warm - und fuenf dunkle: Carbon Dark, Midnight Terminal, Graphite Dark, Nordic Dark, Solarized Dark. Die Wahl gilt auf allen Geraeten. Farben mit Bedeutung bleiben Bedeutung: bullish ist in JEDER Vorlage blau, bearish rot, neutral grau - angepasst wird nur die Helligkeit an die Flaeche, damit sie auch auf dunklem Grund lesbar sind. Nachgerechnet von einem neuen Waechter, der jede Textfarbe gegen jede Flaeche und den Farbton-Abstand zwischen bullish und bearish prueft. Dabei fielen zwei Kontrastmaengel im bisherigen Design auf, die seit Wochen bestanden: Sekundaertext und Akzentfarbe lagen auf der dunkelsten hellen Flaeche unter dem Lesbarkeitsminimum - beide sind minimal nachgedunkelt."Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-467 - Indikator-Namen brachen beim Start Zeichen fuer Zeichen um (Nutzer-Screenshot 2026-09-05, "wenn ich die Webseite oeffne sieht es anfangs immer so aus"): steht ein Badge (AWAITING VALUE / OUT OF DATE) in der Namensspalte, nahm es als white-space:nowrap-Element 97 der 128px Spaltenbreite - fuer den Namen blieben 10px, die overflow-wrap:anywhere dann buchstabenweise umbrach ("No nfa rm Pa yro lls"), Zeilenhoehe 50 -> 360px. Beim Start sind diese Badges da, weil der Kalender noch der gespeicherte alte Stand ist; sobald die frischen Feeds landen, verschwinden sie - daher "nach einer Zeit ist das weg". Fix: .ir-name bricht jetzt um (flex-wrap), der Name behaelt min-width:3.5em, die Badges schrumpfen nicht mehr auf Kosten des Namens und passen sich notfalls per Ellipsis an. Gemessen danach: Name behaelt volle 116px, Zeile 69px statt 360px, kein Tabellen-/Kartenueberlauf bei 390/430/520/820px."Der fix hat nichts gebracht"): ind.chartHist wird nur aus dem Kalender-Feed gefuellt, deshalb hatten Anleiherenditen, 2Y/10Y-Spreads, COT und VIX/Fear&amp;Greed/AAII NIE einen Chart - obwohl ihre komplette Reihe in bond_data.json (series), cot_data.json (history) bzw. sentiment_data.json (series/history) laengst vorliegt. indChartSeries() leitet sie jetzt zur Anzeigezeit ab (nicht persistiert, damit snap()/Cloud-Sync nicht aufgeblaeht wird): 119 von 173 chartlosen Indikatoren haben damit sofort einen Verlauf. Dichte Level-Reihen (Rendite, COT-Anteil, VIX) werden als Linie mit min/max-Skala gezeichnet statt als Balken ab Null, in denen 81 fast gleich hohe Balken jede Bewegung verstecken. Ausserdem: Datumsbeschriftung ohne Dopplung/Ueberlappung, ehrlicher Leertext fuer kuratierte Einzelwerte ohne Reihe, und der Hinweissatz bricht endlich um statt am Kartenrand abgeschnitten zu werden (white-space:normal, die Indikator-Tabelle vererbte nowrap)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-466</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-467</span>
     </span>
   </div>
   <div class="hdr-r">

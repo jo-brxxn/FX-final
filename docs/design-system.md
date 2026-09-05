@@ -293,3 +293,33 @@ Platz). `.hdr-status` (Saved/Offline/LIVE/VERSION-CHECK) bekam `flex:1` +
 Platz. Bleibt ein echtes Flex-Kind im normalen Fluss — **keine** absolute
 Positionierung, das führte früher auf schmalen Screens zu Überlappungen mit
 Undo/Redo bzw. dem Alarm-Zähler.
+
+## ⚠️ Badge neben schrumpfbarem Text: immer `flex-wrap` + Mindestbreite
+
+Merksatz aus dem Bugreport 2026-09-05 (Details: `docs/CHANGELOG.md`): eine
+Flex-Zeile aus **Text + Badge** kippt lautlos, sobald es eng wird.
+
+Das Muster, das den Fehler erzeugt:
+- Das Badge hat `white-space:nowrap` (soll ja nicht umbrechen) → seine
+  Mindestbreite ist die volle Badge-Breite, es schrumpft **nie**.
+- Der Text hat `min-width:0` (damit er ueberhaupt schrumpfen darf) und
+  `overflow-wrap:anywhere`/`break-word` (damit lange Namen umbrechen).
+
+Ergebnis: das Badge nimmt sich seinen Platz zuerst, der Text bekommt den
+Rest — gemessen 10px von 128px — und bricht dann Zeichen fuer Zeichen um.
+Die Zeile wuchs dadurch von 50px auf 360px.
+
+**Regel fuer jede solche Zeile (Indikatorname, Notiztitel, Watchlist-Zeile,
+Kartenkopf):**
+1. Container `flex-wrap:wrap`, damit das Badge notfalls in die naechste
+   Zeile rutscht, statt dem Text den Platz zu nehmen.
+2. Text `min-width` in `em` (nicht `0`), gross genug fuer ein paar Zeichen
+   und klein genug, dass er die schmalste Spaltenstufe nicht aufzieht.
+3. Badge `flex-shrink:0` **plus** `max-width:100%` mit Ellipsis — es gibt
+   nichts mehr ab, sprengt aber auch nichts, wenn die Spalte einmal
+   schmaler ist als das Badge selbst.
+
+Gegenprobe beim Testen: Badge in JEDE Zeile setzen und bei 390/430/520/820px
+messen (`scrollWidth` vs `clientWidth` von Tabelle UND Karte, hoechste
+Zeilenhoehe) — ein einzelner Screenshot in Standardbreite zeigt den Fehler
+nicht, weil dort genug Platz ist.

@@ -9841,3 +9841,57 @@ nachgedunkelt auf 4,60 bzw. 3,05; Farbton unverändert.
 `--chrome-quick` blieb grün, weil das Token still von `:root` erbt und
 `getComputedStyle` brav einen Wert liefert. Pflicht-Tokens werden seither
 **statisch im CSS-Text** geprüft.
+
+## 2026-09-05 — Indikator-Namen brachen beim Start buchstabenweise um (VERSION-CHECK-467)
+
+**Bugreport mit zwei Screenshots (iPad):** *„wenn ich die Webseite öffne
+sieht es anfangs immer so aus. Nach einer Zeit ist das weg beheb das"* — die
+Indikatornamen standen als Buchstabenkolonnen untereinander („No nfa rm Pa
+yro lls (N FP)", „Un em plo ym ent Rat e", „JO LT S Jo b Op eni ng s").
+
+**Reproduktion:** Playwright bei iPad-Breite (1180px), Messung direkt nach
+dem Laden in Intervallen. Bei t=0 war die hoechste Namenszelle **141px**
+hoch, ab t=250ms wieder 50px — der Zustand ist also echt und verschwindet
+von selbst, genau wie beschrieben. Gezielte Messung an der USD-NFP-Zeile mit
+Badge:
+
+| | Namensspalte | Textbreite | Zeilenhoehe |
+|---|---|---|---|
+| ohne Badge | 128px | 116px | 50px |
+| **mit `AWAITING VALUE`** | 128px | **10px** | **360px** |
+
+**Root Cause:** `.ir-name` ist ein Flex-Container. Das Badge (`.ir-await`
+bzw. `.ir-stale`) traegt `white-space:nowrap`, seine Mindestbreite ist damit
+die volle Badge-Breite (gemessen 97px) — es kann nicht schrumpfen. Der Name
+(`.ir-name-txt`) hatte dagegen `min-width:0` (bewusst gesetzt, damit er
+ueberhaupt schrumpfen darf) **und** `overflow-wrap:anywhere`. Beides
+zusammen heisst: das Badge nimmt sich seinen Platz, der Name wird auf den
+Rest gequetscht — 10px — und `anywhere` bricht ihn dann Zeichen fuer
+Zeichen um.
+
+**Warum nur beim Start:** `indAwaitingEvent()` meldet „Release war faellig,
+aber kein Wert da" gegen `calEvts`. Beim Oeffnen ist das noch der
+gespeicherte, alte Kalenderstand — viele Indikatoren sehen dadurch kurz
+faellig-ohne-Wert aus. Sobald `ff_calendar.json`/`ind_data.json` frisch
+geladen sind, tragen die Events ihre Actuals und die Badges verschwinden.
+Die Badge-Logik selbst ist also korrekt; kaputt war nur die Darstellung —
+und zwar IMMER wenn ein Badge steht, nicht nur beim Start.
+
+**Fix (`index.html`, reines CSS):**
+- `.ind-table td.ir-name` bekommt `flex-wrap:wrap` — passt beides nicht
+  nebeneinander, rutscht das Badge in eine zweite Zeile, statt dem Namen den
+  Platz wegzunehmen.
+- `.ir-name-txt` bekommt `min-width:3.5em` statt `0` — schrumpfen ja, aber
+  nicht unter ein paar Zeichen. 3.5em bleibt auch in der schmalsten Stufe
+  (9.5px-Schrift, Namensspalte 19%) klar unter der Spaltenbreite und kann
+  die Tabelle daher nicht aufziehen.
+- `.ir-await`/`.ir-stale` bekommen `flex-shrink:0` plus `max-width:100%` mit
+  Ellipsis: sie geben dem Namen nichts mehr weg, passen sich aber an, falls
+  die Spalte einmal schmaler ist als das Badge selbst.
+
+**Geprueft:** dieselbe Messung nach dem Fix — Name behaelt die vollen 116px,
+Zeile 69px statt 360px; erster Frame nach dem Laden 69px statt 141px.
+Ueberlaufmessung mit Badge in JEDER Zeile bei 390/430/520/820px Viewport:
+kein Tabellen- und kein Kartenueberlauf, hoechste Zeile 124px (Telefon).
+Screenshot der Inflations-Karte mit Badges: Name in Zeile 1, Badge darunter,
+Werte unveraendert ausgerichtet. `node check/all.js` komplett gruen.
