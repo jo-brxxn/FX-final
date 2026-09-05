@@ -397,3 +397,34 @@ Zwei Punkte, die dabei bewusst so sind:
    nie eintritt). Undatierte Punkte aus `valHist` (Erstkontakt-Seeding, siehe
    `trackIndValues()`) zaehlen ebenfalls nicht: ohne echtes Release-Datum
    gibt es keinen Punkt auf der Zeitachse.
+
+## Preisdaten: `price_data.json` liefert NUR Schlusskurse
+
+`price_data.json` enthält je Asset `{source, invert, series:[[Datum, Close], …]}`
+— **kein Open/High/Low**. Abgedeckt sind die acht FX-Währungen (über ihr
+liquidestes USD-Paar, `invert:true` bei USD/XXX-Notierungen) plus GOLD, SILVER,
+OIL, BTC, DAX, SP500 und NAS. Alles andere (Yields, GER100, Einzelaktien) hat
+**keine** Reihe; der Preischart sagt das dort ausdrücklich, statt etwas zu
+zeichnen.
+
+**Daraus folgt für Kerzendarstellungen** (Regel seit 2026-09-05): Es gibt keine
+echten OHLC-Kerzen und darf keine geben. Der Kerzenmodus des Preischarts
+zeichnet **Close-zu-Close-Körper** (Vortagesschluss → Schluss) und hat deshalb
+**keine Dochte** — die bräuchten High/Low und wären erfunden (Regel 4). Der
+Modus heißt in der Oberfläche darum nicht einfach „Candles", sondern erklärt im
+Titel, warum die Dochte fehlen.
+
+## ⚠️ `ind.research.unit` ist eine ART, kein Suffix
+
+`unit` ist ausschließlich `'count'`, `'level'` oder `'percent'` — eine
+Klassifizierung für das Hinweis-Badge (`IND_UNIT_LABEL`), **kein anhängbares
+Zeichen**. Wer es an einen Wert hängt, schreibt `115000count` in den Chart
+(gefunden 2026-09-05 an den Event-Kärtchen des Preischarts, die dieselbe
+Formatierung nutzen wie `indHistChart` — der Fehler steckte dort schon länger,
+war nur nie sichtbar, weil die meisten Indikatoren gar kein `unit` tragen).
+
+Ein echtes Suffix gibt es nur bei abgeleiteten Reihen; das liefert
+`indChartSeries()` als `_cs.unit` (`'%'`). Zahlen selbst formatiert
+`fmtIndVal(v, unit)`: ab 10.000 mit Tausendertrennzeichen, sonst auf zwei
+Nachkommastellen gerundet — **keine** K/M-Abkürzung, die würde Stellen
+verschlucken.

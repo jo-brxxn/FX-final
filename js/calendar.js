@@ -39,7 +39,14 @@ function isEvtPast(ev){
 // Datum (YYYY-MM-DD) um n Tage verschieben, lokal gerechnet (kein UTC-Versatz).
 function dateAddStr(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Today';if(n===1)return'Tomorrow';if(n===-1)return'Yesterday';return n>1?`in ${n}d`:`${-n}d ago`;}
-function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'});}catch(e){return dateStr;}}
+// ⚠ IMMER MIT JAHR (Nutzer-Regel 2026-09-05): "mach bitte das ueberall wo
+// ein Datum steht in zwei Zahlen immer auch da steht das Jahr also 26 fuer
+// 2026 ... generell in der ganzen Webseite". Ohne Jahr ist "Mar 26" nicht
+// unterscheidbar von "26. Maerz" - und die App zeigt bis zu drei Jahre
+// Historie, in der genau diese Verwechslung staendig auftritt. fmtDayHdr ist
+// der zentrale Tagesformatierer; wer hier das Jahr entfernt, entfernt es
+// appweit.
+function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});}catch(e){return dateStr;}}
 
 // ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
 // Vergleicht "Actual" ausschliesslich mit "Forecast" (kein Previous-Fallback

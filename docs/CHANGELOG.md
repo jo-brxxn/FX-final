@@ -10096,3 +10096,130 @@ bewusst geschluckt (er klappt nur die Sidebar ein, siehe der
 Button klickt, sieht deshalb „nichts passiert" — erst ein Aufwärm-Klick
 irgendwo im Inhalt macht die Messung gültig. Genau darauf ist dieser Test
 zweimal hereingefallen, bevor der Grund gefunden war.
+
+## 2026-09-05 (4) — Preischart je Asset, Datum überall mit Jahr, Indikator je Panel (VERSION-CHECK-470)
+
+### 1. Preischart hinter einem Button an jedem Asset
+
+Neuer Button **Price chart** in der Kopfleiste jeder Asset-Detailseite (neben
+History/Data quality), öffnet das Fenster `#mPrice`.
+
+**⚠ Datenlage zuerst, weil sie das ganze Design bestimmt:** `price_data.json`
+liefert je Asset ausschließlich **Tages-Schlusskurse** (`[Datum, Close]`) —
+kein Open/High/Low. Es kann hier also keine echten OHLC-Kerzen geben. Der
+Kerzenmodus zeichnet **Close-zu-Close-Körper** (Vortagesschluss → Schluss), und
+**genau deshalb haben sie keine Dochte**: die bräuchten High/Low und wären
+erfunden (CLAUDE.md Regel 4). Der Nutzer-Wunsch „Kerzen ohne wicks" trifft sich
+hier zufällig genau mit dem, was die Daten hergeben — der Modus sagt im Titel
+trotzdem, warum. Assets ohne Reihe (Yields, GER100, Einzelaktien) bekommen einen
+ehrlichen Leertext statt einer gezeichneten Linie.
+
+- **Drei Modi:** `Candles` (close-to-close), `Line`, `Step`.
+- **Zeitfilter** wie überall (`timeRangeBarHtml`), und die **Kerzenbreite folgt
+  automatisch** der Punktzahl im Fenster: gemessen 18,9 → 2,2 → 1,0 px
+  (viewBox-Einheiten) bei 1M → 1Y → Max.
+- **Kerzen in Bias-Farbe** gegen den Vortagesschluss. Der erste Balken im
+  Fenster nimmt dafür den letzten Schluss **vor** dem Fenster; gibt es keinen,
+  bleibt er neutral statt geraten.
+
+### 2. Event-Kärtchen unter dem Chart, mit Linie verbunden
+
+Unter dem Chart steht je Tag mit Releases ein Kärtchen: Datum, Indikatorname,
+Actual in Bedeutungsfarbe, darunter Forecast/Previous — „wie im Kalender", weil
+die Farbe aus **derselben** `actualColor()`-Logik kommt.
+
+**Zwei echte Quellen, keine dritte:**
+1. `calEvts` — der Kalender-Feed, reicht aber nur `CAL_PAST_DAYS = 10` Tage
+   zurück.
+2. die **Release-Historie der Indikatoren** (`ind.chartHist`, bis zu 3 Jahre) —
+   dieselben Zahlen, die auch der Indikator-Verlaufschart zeichnet.
+
+Erst beides zusammen deckt einen 1Y- oder Max-Chart ab. Doppelte Einträge
+desselben Tages werden über den `stripPeriodSuffix`-Basisnamen entfernt.
+
+Die Verbindung ist eine dünne Bézier-Kurve in einem 26 px hohen Band zwischen
+Chart und Kartenleiste (`drawPriceConnectors()`). Da die Leiste horizontal
+scrollt, während der Chart stehen bleibt, werden die Kurven **bei jedem Scrollen
+neu gezogen** (rAF-gedrosselt); Karten außerhalb des Ausschnitts bekommen keine
+Linie, sonst liefe sie quer ins Nichts.
+
+### 3. Cursor: Move in Prozent, Karte markiert
+
+Der Chart-Cursor zeigt über dem Tag den **Tagesmove in Prozent in Bias-Farbe**
+(plus Kurs und Anzahl der Releases) und **umrandet die Karte** dieses Tages.
+
+Dafür wurde **nicht** eine zweite Hover-Implementierung gebaut — das hätte die
+Regel aus `docs/design-system.md` gebrochen. Stattdessen hat
+`chartHoverWrap(svg, pts, wrapStyle, group, onPick)` einen fünften, optionalen
+Parameter bekommen: einen Rückruf mit dem gerade gewählten Punkt (und `null`
+beim Verlassen). `attachChartHovers` ruft ihn auf; der Preischart markiert
+darüber die Karte. Liegt sie außerhalb des Leisten-Ausschnitts, wird sie
+hereingescrollt — sonst markiert man etwas, das man nicht sieht.
+
+### 4. Datum trägt jetzt appweit das zweistellige Jahr
+
+*„mach bitte das überall wo ein Datum steht in zwei Zahlen immer auch da steht
+das Jahr also 26 für 2026 also mach das generell in der ganzen Webseite so"*
+
+Ohne Jahr ist „Mar 26" nicht von „26. März" zu unterscheiden — und die App zeigt
+bis zu drei Jahre Historie, in der genau diese Verwechslung ständig auftritt.
+Geändert:
+
+| Stelle | vorher → jetzt |
+|---|---|
+| `fmtDayHdr` (zentral, ~25 Aufrufer) | `Fri, 10 Apr` → `Fri, Apr 10, 26` |
+| Indikator-Verlaufschart (Tagesachse) | `10 Apr` → `10 Apr 26` |
+| Trends / Score-vs-Price (2 Achsen) | `10 Apr` → `10 Apr 26` |
+| History-Panel (Wochenlabel) | `10 Apr` → `10 Apr 26` |
+| Event-Alarm-Zeitstempel | `Fri, 10 Apr 08:30` → `Fri, Apr 10, 26 08:30` |
+| News-Tagesüberschrift | `Fri, 10 Apr` → `Fri, Apr 10, 26` |
+| Kalender-Detail | `10 Apr 2026` → `10 Apr 26` (einheitlich zweistellig) |
+
+**Nicht** geändert: reine Wochentags- oder Tageszahl-Labels in Wochenrastern
+(History-Streifen, Kalender-Spalten). Dort steht die Jahreszahl schon in der
+Überschrift des Rasters, und „Mo 26" wäre kein Datum, sondern Rauschen.
+
+**Folgekorrektur:** `10 Apr 26` ist rund ein Drittel breiter als `10 Apr`. Die
+Achsenbeschriftung dünnt bei Tages-Labels deshalb auf **8 statt 10** Labels aus,
+sonst stoßen sie aneinander.
+
+### 5. Indikator je Panel — das Prinzip in einem Satz
+
+*„denk dir ein Prinzip aus das simpel ist mit dem man noch für jedes Asset
+einzeln den Indikator auswählen kann"*
+
+> **Oben stellst du alle ein, im Panel nur eines.**
+
+Mehr muss man sich nicht merken. Das Dropdown in der Kopfleiste setzt jedes
+Panel und **löscht dabei alle Abweichungen**; das Dropdown **im** Panel setzt nur
+dieses eine und listet nur die Indikatoren, die **dieses** Asset führt (die
+Vereinigung wäre dort irreführend — das Panel kann fremde gar nicht zeichnen).
+Ein abweichendes Panel trägt ein `Custom ✕`-Zeichen; Klick hängt es wieder an
+die gemeinsame Auswahl. Abweichungen entfernter Panels werden mit aufgeräumt.
+
+Bewusst **kein** Sperr-/Verkettungsmodus mit eigenen Zuständen: der Wunsch war
+ausdrücklich „simpel", und ein Satz schlägt ein Schlosssymbol.
+
+### 6. Zwei Altlasten, die dabei aufgefallen sind
+
+- **`research.unit` ist eine ART, kein Suffix.** `unit` ist nur `'count'`,
+  `'level'` oder `'percent'` (Klassifizierung für `IND_UNIT_LABEL`). `indHistChart`
+  hängte es trotzdem an den Wert — im Chart stand `115000count`. Sichtbar wurde
+  es erst an den neuen Event-Kärtchen, weil die meisten Indikatoren gar kein
+  `unit` tragen. Jetzt formatiert `fmtIndVal(v, unit)` zentral: ab 10.000 mit
+  Tausendertrennzeichen (`6,866,000` statt `6866000`), sonst auf zwei
+  Nachkommastellen — **keine** K/M-Abkürzung, die würde Stellen verschlucken.
+- **Vier freie Schriftgrößen** aus den Änderungen der Vortage (Zurück-Pille
+  12.5px, Popup-Fußzeile 10.5px, Popup-Kopf, Data-Unterzeile) auf die Token-Skala
+  gezogen. Die Regel dazu steht jetzt in `docs/design-system.md`.
+
+### Verifiziert (Playwright, 1400×1000 und 820×1100)
+
+Modal öffnet mit Titel `USD — price`; 228 Kerzen-Rechtecke, 80 Event-Karten,
+Verbinder-Pfad gezeichnet; Kerzenbreite 18,9/2,2/1,0 bei 1M/1Y/Max; Moduswechsel
+liefert Pfade statt Rechtecke und zurück; Kerzenfarben nur `BC.bull`/`BC.bear`;
+Hover zeigt `+0,25%` in Bias-Farbe und markiert genau eine Karte, die beim Hover
+am rechten Rand in den Blick gescrollt wird; Achsen zeigen `Jun 5, 26`; kein
+Kartenüberlauf, kein horizontaler Überlauf des Modals bei 820 px. Data-Panels:
+`Custom ✕` erscheint nur beim abweichenden Panel, Relink stellt her, das obere
+Dropdown setzt beide zurück. Keine Konsolen-/Page-Errors.

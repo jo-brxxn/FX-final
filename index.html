@@ -1491,7 +1491,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
    position:fixed-Pille unten links ueber allem. */
 #resBackBar{display:none;justify-content:flex-end;margin:0 0 10px}
 body.res-return-active #resBackBar{display:flex}
-.rterm-back-pill{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);color:var(--red);transition:all .15s}@media (hover:hover){.rterm-back-pill:hover{background:rgba(var(--red-rgb),.16);border-color:var(--red)}}
+.rterm-back-pill{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font:700 var(--fs-sm)/1.3 var(--ff-text);cursor:pointer;background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);color:var(--red);transition:all .15s}@media (hover:hover){.rterm-back-pill:hover{background:rgba(var(--red-rgb),.16);border-color:var(--red)}}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
 /* ── Sektions-Navigation der Assets-Seite ──
    Schmale Leiste statt einer weiteren Karte: der aktive Eintrag bekommt nur
@@ -1756,21 +1756,55 @@ body.res-return-active #resBackBar{display:flex}
 .cmp-chip.nf.on{background:rgba(var(--purple-rgb),.18);border-color:var(--purple);color:var(--purple)}
 .cmp-quick{font:600 11px/1 system-ui,sans-serif;color:var(--t2);background:var(--bg4);border:1px solid var(--bd2);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .13s}@media (hover:hover){.cmp-quick:hover{border-color:var(--blue);color:var(--t0)}}
 .cmp-quick.on{background:rgba(var(--blue-rgb),.16);border-color:var(--blue);color:var(--blue)}
+/* ── PREISCHART (Nutzer-Wunsch 2026-09-05) ──
+   Schrifthierarchie nach docs/design-system.md: Kartendatum = Label (2xs,
+   versal, gesperrt), Indikatorname = Body (xs), Wert = Zahl (sm, 800),
+   Forecast/Previous = Meta (2xs, t3). */
+.px-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
+.px-toolbar-sp{flex:1 1 auto}
+.px-modes{display:flex;gap:4px}
+.px-src{font:600 var(--fs-2xs)/1 var(--ff-num);color:var(--blue);text-decoration:none;white-space:nowrap}
+@media (hover:hover){.px-src:hover{text-decoration:underline}}
+.px-chart{background:var(--bg1);border:1px solid var(--bd);border-radius:12px;padding:8px 6px 2px}
+.px-empty{color:var(--t3);font:400 var(--fs-sm)/1.55 var(--ff-text);padding:18px 4px;white-space:normal}
+.px-link{height:26px;pointer-events:none}
+.px-cards{display:flex;gap:8px;overflow-x:auto;padding:0 2px 6px}
+.px-card{flex:0 0 auto;width:186px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:8px 10px 9px;transition:border-color .13s,box-shadow .13s,opacity .13s;opacity:.72}
+.px-card.px-card-linked{opacity:1}
+.px-card.on{border-color:var(--blue);box-shadow:0 0 0 2px rgba(var(--blue-rgb),.35);opacity:1}
+.px-card-d{font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.7px;text-transform:uppercase;color:var(--t2);margin-bottom:5px}
+.px-card-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.px-card-nm{font:500 var(--fs-xs)/1.35 var(--ff-text);color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.px-card-a{font:800 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0);flex-shrink:0}
+.px-card-a.act-good{color:var(--green)}.px-card-a.act-bad{color:var(--red)}
+.px-card-a.bond-up{color:var(--green)}.px-card-a.bond-down{color:var(--red)}.px-card-a.bond-flat{color:var(--amber)}
+.px-card-fp{font:400 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t3);margin:0 0 4px}
+.px-card-more{font:600 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:3px}
+.px-tip-px{font:600 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t2);margin-top:2px}
+.px-tip-ev{font:400 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t3);margin-top:1px}
 /* Compare-Sprung aus einem aufgeklappten Indikator (Nutzer-Wunsch 2026-09-05) */
 .ind-data-act{display:flex;justify-content:flex-end;padding:2px 0 8px}
+.ind-cmp-btn span{font:700 var(--fs-sm)/1.3 var(--ff-text)}
 .ind-cmp-btn{display:inline-flex;align-items:center;gap:6px}
 /* Mehrfach-Asset-Auswahl im Data-Tab: Popup unter dem "Assets"-Button */
 .data-picker{position:fixed;z-index:9500;min-width:250px;max-width:min(440px,calc(100vw - 16px));overflow-y:auto;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shadow-pop)}
-.data-picker-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--bd);font-size:12px;font-weight:700;color:var(--t1)}
+.data-picker-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 13px;border-bottom:1px solid var(--bd);font:700 var(--fs-sm)/1.3 var(--ff-text);color:var(--t1)}
 .data-picker-hd b{font-family:var(--ff-num);color:var(--blue)}
 .data-picker-body{padding:10px 13px;display:flex;flex-direction:column;gap:10px}
 .data-picker-grp{display:flex;flex-direction:column;gap:5px}
-.data-picker-ft{padding:8px 13px;border-top:1px solid var(--bd);font-size:10.5px;color:var(--t3);line-height:1.45}
+.data-picker-ft{padding:8px 13px;border-top:1px solid var(--bd);font:400 var(--fs-2xs)/1.45 var(--ff-text);color:var(--t3)}
 .data-picker .cmp-chip:disabled{opacity:.35;cursor:not-allowed}
 /* ── INSIGHTS > DATA: bis zu 4 Panels (Nutzer-Wunsch 2026-09-05) ── */
 .data-ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 14px 12px}
+.data-sub{font:500 var(--fs-xs)/1.4 var(--ff-text);color:var(--t3);margin-left:10px}
 .data-ctrls .cot-filterbar{margin:0}
 .data-ctrls .ind-hist-toolbar{margin:0}
+/* Indikator-Wahl je Panel ("oben alle, im Panel eines") */
+.px-panel-ctrls{display:flex;align-items:center;gap:6px;margin-left:auto;min-width:0}
+.px-panel-sel{max-width:190px;background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rs);padding:4px 7px;font:600 var(--fs-2xs)/1.3 var(--ff-num);cursor:pointer;text-overflow:ellipsis}
+@media (hover:hover){.px-panel-sel:hover{border-color:var(--blue);color:var(--t0)}}
+.px-panel-chip{background:rgba(var(--blue-rgb),.14);border:1px solid var(--blue);color:var(--blue);border-radius:999px;padding:3px 8px;font:700 var(--fs-2xs)/1.2 var(--ff-num);cursor:pointer;white-space:nowrap;flex-shrink:0}
+@media(max-width:520px){.px-panel-sel{max-width:120px}}
 .data-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .data-grid.split{grid-template-columns:repeat(2,minmax(0,1fr))}
 .data-grid .cot-card{margin-bottom:0;min-width:0}
@@ -4142,11 +4176,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-469 - Drei Nachbesserungen (Nutzer-Wunsch 2026-09-05): (1) Die Actual-Zahl im Verlaufschart stand stur 4px ueber dem Balken - lag der Forecast hoeher (jede Verfehlung nach unten, also genau die interessanten Faelle), lief der rote Punkt samt Linie mitten durch die Ziffern. Sie steht jetzt ueber dem hoeheren von beidem, mit Halo in Kartenfarbe fuer die schraeg durchlaufende Forecast-Linie; gilt ueberall, wo dieser Chart steht (Asset-Detailseite und Insights &gt; Data). (2) Ein aufgeklappter Indikator hat jetzt einen Compare-Button, der Insights &gt; Data mit genau diesem Asset UND diesem Indikator vorgewaehlt oeffnet - dort laesst sich bis zu drei weitere Assets dazuwaehlen. (3) Der Zurueck-Button schwebt nicht mehr als rote Pille unten links ueber dem Inhalt, sondern sitzt oben rechts unter der Kopfleiste im normalen Seitenfluss (showTab haengt die Leiste in die aktive Seite): er schiebt den Inhalt herunter statt ihn zu verdecken und scrollt mit. (4) Der Asset-Filter im Data-Tab ist ein Mehrfach-Popup statt eines Dropdowns - ein &lt;select&gt; schliesst nach jeder einzelnen Auswahl, man musste es viermal aufziehen. Jeder Tipp wird sofort uebernommen, das Popup zeigt den Stand 0/4 bis 4/4, deaktiviert die restlichen Chips beim vierten Panel und schliesst sich bei 4 oder beim Tippen daneben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-470 - Preischart je Asset, Datum ueberall mit Jahr, Indikator je Panel (Nutzer-Wunsch 2026-09-05). (1) Jedes Asset hat in der Kopfleiste einen Price-chart-Button; das Fenster zeigt die Tages-Schlusskurse als Linie, Stufenlinie oder Close-zu-Close-Kerzen. price_data.json liefert NUR Schlusskurse - kein Open/High/Low -, deshalb bewusst keine Dochte statt erfundener (CLAUDE.md Regel 4); der Modus sagt das im Titel. Zeitfilter wie ueberall sonst, die Kerzenbreite folgt automatisch der Punktzahl im Fenster, Kerzen in Bias-Farbe gegen den Vortagesschluss. (2) Unter dem Chart stehen Kaertchen mit den Releases des jeweiligen Tages - Kalender-Feed plus bis zu drei Jahre Indikator-Release-Historie, Farbe aus derselben actualColor-Logik wie im Kalender -, per duenner Kurve mit ihrem Tag im Chart verbunden; die Kurven werden beim Scrollen der Leiste neu gezogen. (3) Der Chart-Cursor zeigt den Tagesmove in Prozent in Bias-Farbe und markiert die zugehoerige Karte umrandet - ueber einen neuen optionalen onPick-Rueckruf in chartHoverWrap, also ohne zweite Hover-Implementierung. (4) Datumsangaben tragen jetzt appweit das zweistellige Jahr (fmtDayHdr und alle Chart-Achsen), weil "Mar 26" sonst nicht von "26. Maerz" zu unterscheiden ist; die Achsenbeschriftung duennt dafuer auf 8 statt 10 Labels aus. (5) Insights &gt; Data: der Indikator ist jetzt auch je Panel waehlbar, Prinzip "oben stellst du alle ein, im Panel nur eines" - ein abweichendes Panel traegt ein Custom-Zeichen, Klick haengt es wieder an die gemeinsame Auswahl."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-469</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-470</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4449,6 +4483,14 @@ function introLogin(){
   </div>
 </div>
 <!-- MODAL: History -->
+<!-- PREISCHART EINES ASSETS (Nutzer-Wunsch 2026-09-05) -->
+<div class="ov" id="mPrice" style="display:none">
+  <div class="modal px-modal" style="max-width:min(1180px,96vw)">
+    <h3 id="mPriceTitle">Price chart</h3>
+    <div id="pxBody"></div>
+    <div class="m-btns"><button class="btn g" onclick="closeM('mPrice')">Done</button></div>
+  </div>
+</div>
 <div class="ov" id="mHist" style="display:none">
   <div class="modal" style="max-width:min(900px,94vw)">
     <h3 id="mHistTitle">History</h3>

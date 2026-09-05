@@ -1304,7 +1304,7 @@ function renderSymHistoryPanel(id){
     const last=scored.length?scored[0].score:null;
     const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
     const end=dateAddStr(w.start,6);
-    const label=new Date(w.start+'T00:00:00').toLocaleDateString('en',{day:'numeric',month:'short'});
+    const label=new Date(w.start+'T00:00:00').toLocaleDateString('en',{day:'numeric',month:'short',year:'2-digit'});
     const tip=net!=null
       ?`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: ${net>0?'+':''}${net} this week`
       :`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: no recorded change`;
@@ -5287,6 +5287,7 @@ function renderDetail(){
   // AskUserQuestion bestaetigt) hier in der Kopfzeilen-Leiste erreichbar -
   // Klick schaltet zwischen Macro/Notes um wie zuvor die Buttons.
   const dmetaControls=`<div class="dmeta-controls">
+    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openPriceChart('${c.id}')" title="Price chart: daily closes as a line, step line or close-to-close candles, with the releases of each day as cards underneath">Price chart</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
@@ -8244,7 +8245,7 @@ function evtAlertLabel(a){
   return a.name||'(untitled alert)';
 }
 function fmtAlertFireAt(iso){
-  try{const d=new Date(iso);return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short'})+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}catch(e){return iso;}
+  try{const d=new Date(iso);return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short',year:'2-digit'})+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}catch(e){return iso;}
 }
 // Liste aller bereits angelegten Alarme (im Press-and-Hold-Modal) - einzige
 // Stelle, an der auch Custom-Alarme (ohne Kalenderzeile mit eigener Glocke)
@@ -11922,7 +11923,7 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   // auf der ersten Linie mit Wert an diesem Tag.
   const fitSvg=svg.replace('<svg class="tr-svg"','<svg class="tr-svg" preserveAspectRatio="xMidYMid meet" style="display:block;width:100%;height:auto"')+`</svg>`;
   const hpts=dates.map((d,i)=>{
-    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});}catch(e){lbl=d;}
     let dotY=yMid,dotCol='var(--t3)',hasDot=false;
     const rows=ids.map(id=>{
       const v=valOf[id][d];const c=useBiasColor?(BC[biasGroup(biasOf[id][d])]||colorOverride):(colorOverride||TREND_COLORS[id]||'#888');
@@ -12026,7 +12027,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   dates.forEach((d,i)=>{
     const sv=scoreMap[d];const pv=priceMap[d];
     if(sv==null||!isFinite(sv))return;
-    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short'});}catch(e){lbl=d;}
+    let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});}catch(e){lbl=d;}
     hpts.push({fx:xOf(i)/w,fy:yOfScore(sv)/h,col,tip:`<div class="chv-tip-d">${escH(lbl)}</div><div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${col}">Score</span><b>${sv>0?'+':''}${sv}</b></div>${pv!=null&&isFinite(pv)?`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:var(--t0)">Price</span><b>${fmtPriceTick(pv)}</b></div>`:''}`});
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
@@ -12563,7 +12564,7 @@ function cotChartShowIdx(i){
   const y=meta.yPct(m.longPct);
   if(dot){dot.setAttribute('cx',x.toFixed(1));dot.setAttribute('cy',y.toFixed(1));dot.style.display='block';}
   if(vline){vline.setAttribute('x1',x.toFixed(1));vline.setAttribute('x2',x.toFixed(1));vline.style.display='block';}
-  let dt;try{const d=new Date(e.date+'T00:00:00');dt=d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});}catch(err){dt=e.date;}
+  let dt;try{const d=new Date(e.date+'T00:00:00');dt=d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});}catch(err){dt=e.date;}
   const tip=document.getElementById('cotHoverTip');if(!tip)return;
   tip.innerHTML=`<div class="cot-tip-date">${escH(dt)}</div>
     <div class="cot-tip-row"><span>Net Bullish Positioning</span><b style="color:${BC.bull}">${m.longPct.toFixed(1)}%</b></div>
@@ -12852,16 +12853,24 @@ function gaugeNeedleAnim(root){
 // Finger/Maus; verschwinden beim Loslassen. touch-action:pan-y (CSS) laesst
 // vertikales Scrollen zu, blockt aber horizontales Wischen/Verschieben. ──
 const _chvReg={};let _chvSeq=0;
+// Optionale Rueckmeldung je Diagramm: wird mit dem gerade gewaehlten Punkt
+// aufgerufen (und mit null beim Verlassen). Damit kann eine Seite auf den
+// Cursor reagieren, OHNE eine zweite Hover-Implementierung zu bauen - der
+// Preischart markiert darueber die zugehoerige Event-Karte unter dem Chart
+// (Nutzer-Wunsch 2026-09-05). Die Regel "jedes Diagramm nutzt chartHoverWrap"
+// (docs/design-system.md) bleibt damit gueltig.
+const _chvPick={};
 // svg fuellt den Wrapper; pts: [{fx,fy,col,tip}] mit fx,fy in 0..1 der SVG-Box.
-function chartHoverWrap(svg,pts,wrapStyle,group){
-  const id='chv'+(_chvSeq++);_chvReg[id]=pts||[];
+function chartHoverWrap(svg,pts,wrapStyle,group,onPick){
+  const id='chv'+(_chvSeq++);_chvReg[id]=pts||[];if(onPick)_chvPick[id]=onPick;
   return`<div class="chv" data-chv="${id}"${group?` data-chv-group="${escH(group)}"`:''}${wrapStyle?` style="${wrapStyle}"`:''}>${svg}<div class="chv-line" style="display:none"></div><div class="chv-dot" style="display:none"></div><div class="chv-tip" style="display:none"></div></div>`;
 }
 function attachChartHovers(root){
   (root||document).querySelectorAll('.chv[data-chv]').forEach(w=>{
     if(w._chvWired)return;w._chvWired=1;
     const line=w.querySelector('.chv-line'),dot=w.querySelector('.chv-dot'),tip=w.querySelector('.chv-tip');
-    const hide=()=>{if(line)line.style.display='none';if(dot)dot.style.display='none';if(tip)tip.style.display='none';};
+    const hide=()=>{if(line)line.style.display='none';if(dot)dot.style.display='none';if(tip)tip.style.display='none';
+      const cb=_chvPick[w.dataset.chv];if(cb)try{cb(null);}catch(e){}};
     w._chvHide=hide;
     // Solange der Zeiger IM Diagramm ist, ist IMMER ein Datenpunkt gewaehlt
     // (Nutzer-Wunsch 2026-09-05). Vorher blendete der Cursor am linken/
@@ -12882,6 +12891,7 @@ function attachChartHovers(root){
       if(line){const bot=Math.max(0,r.height-22),ty=Math.min(py,bot);line.style.left=px+'px';line.style.top=ty+'px';line.style.height=Math.max(0,bot-ty)+'px';line.style.display='';}
       if(dot){dot.style.left=px+'px';dot.style.top=py+'px';dot.style.borderColor=best.col||'var(--t3)';dot.style.display='';}
       if(tip){tip.innerHTML=best.tip;tip.style.display='';const tw=tip.offsetWidth||120;tip.style.left=Math.max(tw/2+2,Math.min(r.width-tw/2-2,px))+'px';tip.style.top=Math.max(4,py)+'px';}
+      const cb=_chvPick[w.dataset.chv];if(cb)try{cb(best);}catch(e){}
     };
     // Diagramme mit derselben data-chv-group (Insights > Data, bis zu 4
     // Panels) teilen sich den Cursor: alle zeigen denselben Zeitpunkt, sonst
@@ -13167,8 +13177,14 @@ function indHistChart(ind,symId,opts){
   const fcR=n>40?1.6:3.2;
   // Einheit: bei einer abgeleiteten Reihe (Anleihen/COT/Sentiment) gibt
   // indChartSeries() sie mit, sonst wie bisher aus der Recherche.
-  const unit=_cs.unit!=null?_cs.unit:((ind.research&&ind.research.unit)||'');
-  const fmtV=v=>v==null?'':(Math.round(v*100)/100)+unit;
+  // ⚠ research.unit ist eine ART ('count'/'level'/'percent', siehe
+  // IND_UNIT_LABEL), KEIN anhaengbares Suffix. Frueher wurde es trotzdem
+  // drangehaengt - im Chart stand dann "115000count" (aufgefallen 2026-09-05
+  // an den Event-Kaertchen des Preischarts, die dieselbe Formatierung
+  // nutzen). Ein echtes Suffix gibt es nur bei abgeleiteten Reihen, das
+  // liefert indChartSeries() als _cs.unit ('%').
+  const unit=_cs.unit!=null?_cs.unit:'';
+  const fmtV=v=>fmtIndVal(v,unit);
   let bars='';
   if(lineMode){
     // Flaeche + Linie. Die Flaeche laeuft bis zum unteren Rand des Fensters
@@ -13210,8 +13226,6 @@ function indHistChart(ind,symId,opts){
     started=true;
     fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${fcR}" fill="var(--red)"/>`;
   });
-  // Datumsbeschriftung ausduennen, wenn zu viele Punkte fuer lesbare Labels.
-  const lblEvery=Math.max(1,Math.ceil(n/10));
   // Bei einem Fenster unter ~13 Monaten Tag+Monat statt Monat+Jahr: eine
   // Tages-/Wochenreihe zeigte sonst "Mar 26, Mar 26, Apr 26 ..." - dieselbe
   // Beschriftung mehrfach, ohne dass man die Punkte auseinanderhalten kann
@@ -13219,8 +13233,13 @@ function indHistChart(ind,symId,opts){
   let spanDays=9999;
   try{spanDays=Math.abs(new Date(use[n-1][0])-new Date(use[0][0]))/86400000;}catch(e){}
   const dayLbl=spanDays<=400;
+  // Datumsbeschriftung ausduennen, wenn zu viele Punkte fuer lesbare Labels.
+  // "10 Apr 26" ist rund ein Drittel breiter als das fruehere "10 Apr" (Jahr
+  // ist seit 2026-09-05 Pflicht, siehe fmtDayHdr) - deshalb bei Tages-Labels
+  // 8 statt 10 Beschriftungen, sonst stossen sie aneinander.
+  const lblEvery=Math.max(1,Math.ceil(n/(dayLbl?8:10)));
   const fmtLbl=d=>{
-    try{const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en',dayLbl?{day:'numeric',month:'short'}:{month:'short',year:'2-digit'});}
+    try{const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en',dayLbl?{day:'numeric',month:'short',year:'2-digit'}:{month:'short',year:'2-digit'});}
     catch(e){return d;}
   };
   let xlab='';
@@ -13250,6 +13269,243 @@ function indHistChart(ind,symId,opts){
   });
   return`<div class="ind-hist-wrap">${toolbar2}${chartHoverWrap(svg,hpts,null,opts.group)}</div>`;
 }
+// ══ PREISCHART EINES ASSETS (Nutzer-Wunsch 2026-09-05) ════════════
+// "bei jedem Asset ueber einen Button den preischart davon oeffnen ... als
+// Linie oder als stufenlinie oder als Kerzen ohne wicks ... und unter dem
+// Diagramm soll mit einer Linie leicht verbunden sein sollen so Kaertchen
+// stehen wo drinne steht was an dem Tag passiert ist ... wenn man mit der
+// Maus ueber den Chart drueber geht dann soll immer ueber dem Tag stehen
+// welchen move in Prozent er gemacht hat und das in bias Farbe und es
+// sollen unten dann die zugehoerigen Karten umrandet markiert werden."
+//
+// ⚠ DATENLAGE: price_data.json liefert AUSSCHLIESSLICH Tages-Schlusskurse
+// ([Datum, Close]) - kein Open/High/Low. Deshalb gibt es hier bewusst KEINE
+// echten OHLC-Kerzen: der Kerzen-Modus zeichnet Close-zu-Close-Koerper
+// (Vortagesschluss -> Schluss). Genau deshalb haben sie auch keine Dochte -
+// die gaebe es nur mit High/Low, und die wuerden hier erfunden (CLAUDE.md
+// Regel 4). Der Modus heisst in der Oberflaeche darum "Candles (close-to-
+// close)" und sagt im Titel, warum keine Dochte da sind.
+// Indikator-Zahlen lesbar, aber EXAKT: ab 10.000 mit Tausenderpunkten
+// (6.866.000 statt 6866000), darunter auf zwei Nachkommastellen gerundet.
+// Keine K/M-Abkuerzung - die wuerde Stellen verschlucken.
+function fmtIndVal(v,unit){
+  if(v==null||!isFinite(v))return'';
+  const r=Math.round(v*100)/100;
+  return(Math.abs(r)>=1e4?r.toLocaleString('en-US'):String(r))+(unit||'');
+}
+const PRICE_MODES=[['candle','Candles'],['line','Line'],['step','Step']];
+let priceChartAsset=null,priceChartMode='candle';
+let priceRange=6,priceCustomFrom=null,priceCustomTo=null;
+function setPriceMode(m){priceChartMode=m;renderPriceChart();}
+function setPriceRange(v){priceRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderPriceChart();}
+// ⚠ MUSS existieren: timeRangeCustomHtml baut den Handlernamen als String
+// zusammen ("<setFnName>Custom") - siehe die Warnung bei setIndHistRangeCustom.
+function setPriceRangeCustom(from,to){priceCustomFrom=from||null;priceCustomTo=to||null;renderPriceChart();}
+function openPriceChart(id){
+  priceChartAsset=id||((getSym()||{}).id||'');
+  openM('mPrice');
+  renderPriceChart();
+}
+// Fenster der Zeitreihe nach dem aktuellen Zeitfilter - identische Logik wie
+// im Indikator-Verlaufschart, damit beide Filterleisten gleich reagieren.
+function priceWindow(pts){
+  if(priceRange==='MAX')return pts;
+  if(priceRange==='CUSTOM')return pts.filter(p=>(!priceCustomFrom||p[0]>=priceCustomFrom)&&(!priceCustomTo||p[0]<=priceCustomTo));
+  const cut=new Date();cut.setMonth(cut.getMonth()-priceRange);
+  let cs='';try{cs=cut.toISOString().slice(0,10);}catch(e){}
+  const out=pts.filter(p=>p[0]>=cs);
+  return out.length>=2?out:pts.slice(-Math.min(pts.length,30));
+}
+// Was ist an einem Tag passiert? Zwei echte Quellen, keine dritte:
+//   1) calEvts - der Kalender-Feed, aber nur CAL_PAST_DAYS Tage rueckwaerts.
+//   2) die Release-Historie der Indikatoren (ind.chartHist, bis zu 3 Jahre) -
+//      dieselben Zahlen, die auch der Indikator-Verlaufschart zeichnet.
+// Erst beides zusammen deckt die Chart-Zeitraeume ab. Die Farbe kommt in
+// BEIDEN Faellen aus actualColor(), also exakt der Kalender-Logik
+// ("wie die herausgekommen sind ... Wie im Kalender").
+function priceEventsByDay(symId){
+  const map={};
+  const key=n=>String(n||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const add=(date,o)=>{
+    const list=map[date]||(map[date]=[]);
+    if(list.some(x=>key(x.base)===key(o.base)))return;
+    list.push(o);
+  };
+  (calEvts||[]).forEach(ev=>{
+    if(!ev||!ev.date||ev.actual==null||ev.actual==='')return;
+    if(!evtMatchesSym(ev,symId))return;
+    add(ev.date,{base:stripPeriodSuffix(ev.name||'').base,name:ev.name||'',
+      actual:ev.actual,forecast:ev.forecast,previous:ev.previous,
+      col:actualColor(ev,symId),high:evtImpact(ev)==='high'});
+  });
+  const sym=syms.find(s=>s.id===symId);
+  ((sym&&sym.rubrics)||[]).forEach(r=>(r.indicators||[]).forEach(ind=>{
+    const hist=Array.isArray(ind.chartHist)?ind.chartHist:[];
+    if(hist.length<1)return;
+    const fmt=v=>fmtIndVal(v,'');
+    const nm=ind.displayName||ind.name;
+    hist.forEach((p,i)=>{
+      if(!p||!p[0])return;
+      const evLike={name:ind.name,actual:fmt(p[1]),forecast:fmt(p[2]),previous:i>0?fmt(hist[i-1][1]):''};
+      if(evLike.actual==='')return;
+      add(p[0],{base:stripPeriodSuffix(ind.name).base,name:nm,
+        actual:evLike.actual,forecast:evLike.forecast,previous:evLike.previous,
+        col:actualColor(evLike,symId),high:false});
+    });
+  }));
+  return map;
+}
+// Zeichnet die Verbindungslinien zwischen Chart-Tag und Event-Kaertchen neu.
+// Muss nach jedem Rendern UND bei jedem Scrollen der Kartenleiste laufen,
+// weil sich dabei nur die Karten bewegen, nicht der Chart.
+function drawPriceConnectors(){
+  const band=document.getElementById('pxLink');
+  const strip=document.getElementById('pxCards');
+  const chart=document.getElementById('pxChart');
+  if(!band||!strip||!chart)return;
+  const br=band.getBoundingClientRect(),cr=chart.getBoundingClientRect(),sr=strip.getBoundingClientRect();
+  if(!br.width)return;
+  const H=br.height||26;
+  let d='';
+  [...strip.querySelectorAll('.px-card')].forEach(card=>{
+    const fx=parseFloat(card.dataset.fx);
+    if(!isFinite(fx))return;
+    const kr=card.getBoundingClientRect();
+    // Karten ausserhalb des sichtbaren Leisten-Ausschnitts bekommen keine
+    // Linie - sonst laeuft sie quer durch die halbe Leiste ins Nichts.
+    if(kr.right<sr.left+2||kr.left>sr.right-2){card.classList.remove('px-card-linked');return;}
+    card.classList.add('px-card-linked');
+    const x1=cr.left-br.left+fx*cr.width;
+    const x2=Math.max(sr.left,Math.min(sr.right,kr.left+kr.width/2))-br.left;
+    d+=`M${x1.toFixed(1)} 0 C${x1.toFixed(1)} ${(H*0.55).toFixed(1)} ${x2.toFixed(1)} ${(H*0.45).toFixed(1)} ${x2.toFixed(1)} ${H}`;
+  });
+  band.innerHTML=`<svg width="100%" height="100%" style="display:block;overflow:visible"><path d="${d}" fill="none" stroke="var(--bd2)" stroke-width="1" opacity=".85"/></svg>`;
+}
+// Hebt die Karte(n) des gerade unter dem Cursor liegenden Tages hervor.
+function markPriceCards(date){
+  const strip=document.getElementById('pxCards');if(!strip)return;
+  let first=null;
+  [...strip.querySelectorAll('.px-card')].forEach(c=>{
+    const on=!!date&&c.dataset.date===date;
+    c.classList.toggle('on',on);
+    if(on&&!first)first=c;
+  });
+  // Ohne dieses Nachziehen markiert man eine Karte, die gerade gar nicht im
+  // Ausschnitt steht - man sieht die Markierung also nie.
+  if(first){
+    const sr=strip.getBoundingClientRect(),kr=first.getBoundingClientRect();
+    if(kr.left<sr.left||kr.right>sr.right)strip.scrollLeft+=kr.left-sr.left-24;
+  }
+}
+function renderPriceChart(){
+  const el=document.getElementById('pxBody');if(!el)return;
+  const id=priceChartAsset;
+  const sym=syms.find(s=>s.id===id);
+  const ttl=document.getElementById('mPriceTitle');
+  if(ttl)ttl.textContent=(sym?(sym.name||id):id)+' — price';
+  const feed=(typeof PRICE_DATA_FEED!=='undefined'&&PRICE_DATA_FEED)?PRICE_DATA_FEED[id]:null;
+  const all=priceSeriesFor(id);
+  // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
+  // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
+  const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'Close-to-close bodies. price_data.json delivers daily closes only - there is no open/high/low, so there are deliberately no wicks: they would have to be invented.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
+  const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange')}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange')}</div>`;
+  const src=feed&&feed.source?`<a class="px-src" href="${safeUrl(feed.source)}" target="_blank" rel="noopener">Source ↗</a>`:'';
+  const bar=`<div class="px-toolbar">${modeBar}${rangeBar}<div class="px-toolbar-sp"></div>${src}</div>`;
+  if(!all||all.length<2){
+    el.innerHTML=bar+`<div class="px-empty">No price series for ${escH(sym?(sym.name||id):id)}. price_data.json covers the eight FX currencies plus Gold, Silver, Oil, BTC, DAX, S&amp;P 500 and Nasdaq — nothing is estimated for the rest.</div>`;
+    return;
+  }
+  const use=priceWindow(all);
+  const n=use.length;
+  const W=1000,H=330,padL=12,padR=12,padT=26,padB=30;
+  const vals=use.map(p=>p[1]);
+  let vMin=Math.min(...vals),vMax=Math.max(...vals);
+  const pad=(vMax-vMin)*0.08||Math.abs(vMax||1)*0.01||1;
+  vMin-=pad;vMax+=pad;
+  if(vMin===vMax){vMin-=1;vMax+=1;}
+  const yOf=v=>padT+(1-(v-vMin)/(vMax-vMin))*(H-padT-padB);
+  const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
+  // Kerzenbreite folgt automatisch der Punktzahl im gewaehlten Zeitraum
+  // ("dann verändert sich auch automatisch die Größe der Kerzen").
+  const bw=Math.max(1,(W-padL-padR)/n*0.62);
+  // Bezugswert des ersten Punktes: der letzte Schluss VOR dem Fenster, sonst
+  // haette der erste Balken keine Richtung. Ist keiner da (Fenster beginnt am
+  // Anfang der Reihe), bleibt er farblich neutral statt geraten.
+  const firstIdx=all.indexOf(use[0]);
+  const prevOf=i=>i>0?use[i-1][1]:(firstIdx>0?all[firstIdx-1][1]:null);
+  const dirCol=(v,p)=>p==null?'var(--t3)':(v>=p?BC.bull:BC.bear);
+  let body='';
+  if(priceChartMode==='candle'){
+    use.forEach((p,i)=>{
+      const pv=prevOf(i),y1=yOf(p[1]),y0=pv==null?y1:yOf(pv);
+      const top=Math.min(y0,y1),h=Math.max(1.2,Math.abs(y1-y0));
+      body+=`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2,bw/4).toFixed(1)}" fill="${dirCol(p[1],pv)}"/>`;
+    });
+  }else{
+    let d='';
+    use.forEach((p,i)=>{
+      const x=xOf(i).toFixed(1),y=yOf(p[1]).toFixed(1);
+      if(!i)d+='M'+x+' '+y;
+      else if(priceChartMode==='step')d+=' H'+x+' V'+y;
+      else d+=' L'+x+' '+y;
+    });
+    const area=d+` L${xOf(n-1).toFixed(1)} ${(H-padB).toFixed(1)} L${xOf(0).toFixed(1)} ${(H-padB).toFixed(1)} Z`;
+    body=`<path d="${area}" fill="var(--blue)" opacity=".09"/>`
+        +`<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  // Tage MIT Ereignis bekommen eine leise Markierung auf der Grundlinie -
+  // erst dadurch sieht man im Chart, wohin die Kaertchen unten gehoeren.
+  const evMap=priceEventsByDay(id);
+  const evDays=use.map((p,i)=>({i,date:p[0],evs:evMap[p[0]]||[]})).filter(d=>d.evs.length);
+  const ticks=evDays.map(d=>`<rect x="${(xOf(d.i)-1).toFixed(1)}" y="${(H-padB).toFixed(1)}" width="2" height="5" rx="1" fill="var(--bd2)"/>`).join('');
+  let spanDays=9999;
+  try{spanDays=Math.abs(new Date(use[n-1][0])-new Date(use[0][0]))/86400000;}catch(e){}
+  const fmtLbl=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('en',spanDays<=400?{day:'numeric',month:'short',year:'2-digit'}:{month:'short',year:'2-digit'});}catch(e){return d;}};
+  const every=Math.max(1,Math.ceil(n/(spanDays<=400?8:10)));
+  let xlab='';
+  use.forEach((p,i)=>{
+    const isLast=i===n-1;
+    if(i%every!==0&&!isLast)return;
+    if(isLast&&i%every!==0&&(i%every)<every*0.6)return;
+    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+    <line x1="${padL}" y1="${(H-padB).toFixed(1)}" x2="${W-padR}" y2="${(H-padB).toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
+    ${body}${ticks}${xlab}
+  </svg>`;
+  const hpts=use.map((p,i)=>{
+    const pv=prevOf(i);
+    const pct=pv?((p[1]/pv-1)*100):null;
+    const col=pct==null?'var(--t3)':(pct>=0?BC.bull:BC.bear);
+    const nEv=(evMap[p[0]]||[]).length;
+    return{fx:xOf(i)/W,fy:yOf(p[1])/H,col,date:p[0],
+      tip:`<div class="chv-tip-d">${escH(fmtDayHdr(p[0]))}</div>`
+        +`<b style="color:${col};font-size:14px">${pct==null?'–':(pct>0?'+':'')+pct.toFixed(2)+'%'}</b>`
+        +`<div class="px-tip-px">${escH(fmtPriceTick(p[1]))}</div>`
+        +(nEv?`<div class="px-tip-ev">${nEv} release${nEv===1?'':'s'} that day</div>`:'')};
+  });
+  const cards=evDays.map(d=>{
+    const rows=d.evs.slice(0,4).map(e=>`<div class="px-card-row">
+        <span class="px-card-nm" title="${escH(e.name)}">${escH(e.name)}</span>
+        <span class="px-card-a ${escH(e.col||'')}">${escH(e.actual)}</span>
+      </div>${(e.forecast||e.previous)?`<div class="px-card-fp">${e.forecast?'F '+escH(e.forecast):''}${e.forecast&&e.previous?' · ':''}${e.previous?'P '+escH(e.previous):''}</div>`:''}`).join('');
+    const more=d.evs.length>4?`<div class="px-card-more">+${d.evs.length-4} more</div>`:'';
+    return`<div class="px-card" data-date="${escH(d.date)}" data-fx="${(xOf(d.i)/W).toFixed(4)}">
+      <div class="px-card-d">${escH(fmtDayHdr(d.date))}</div>${rows}${more}</div>`;
+  }).join('');
+  const strip=evDays.length
+    ?`<div class="px-link" id="pxLink"></div><div class="px-cards" id="pxCards">${cards}</div>`
+    :`<div class="px-empty" style="margin-top:12px">No releases on record for this asset inside the selected range.</div>`;
+  el.innerHTML=bar
+    +`<div class="px-chart" id="pxChart">${chartHoverWrap(svg,hpts,null,null,pt=>markPriceCards(pt&&pt.date))}</div>`
+    +strip;
+  attachChartHovers(el);
+  const sc=document.getElementById('pxCards');
+  if(sc&&!sc._pxWired){sc._pxWired=1;sc.addEventListener('scroll',()=>{
+    if(sc._pxRaf)return;sc._pxRaf=requestAnimationFrame(()=>{sc._pxRaf=0;drawPriceConnectors();});
+  },{passive:true});}
+  requestAnimationFrame(drawPriceConnectors);
+}
 // ── Insights-Tab "Data" ────────────────────────────────────────────
 // Nutzer-Wunsch 2026-09-05 (woertlich): "bei insights bei data will ich das
 // man dort sich mehrere Assets gleichzeitig auswaehlen kann. Es soll den
@@ -13268,6 +13524,26 @@ function indHistChart(ind,symId,opts){
 // Begruendung an loadPrefs).
 const DATA_MAX_PANELS=4;
 let dataAssets=['USD'],dataIndBase='CPI (Headline)';
+// ── Indikator je Panel: EIN Satz als Prinzip ──────────────────────
+// "denk dir ein Prinzip aus das simpel ist mit dem man noch fuer jedes Asset
+// einzeln den Indikator auswaehlen kann" (Nutzer-Wunsch 2026-09-05).
+//
+//   Oben stellst du ALLE ein, im Panel nur EINES.
+//
+// Mehr muss man sich nicht merken. Das Dropdown in der Kopfleiste setzt jedes
+// Panel (und loescht dabei alle Abweichungen), das Dropdown IM Panel setzt nur
+// dieses eine. Ein Panel, das abweicht, traegt ein "Custom"-Zeichen - Klick
+// darauf haengt es wieder an die gemeinsame Auswahl.
+// Bewusst KEIN Sperr-/Verkettungs-Modus mit Zustaenden: der Nutzer wollte es
+// simpel, und "oben alle, im Panel eines" ist in einem Satz erklaert.
+let dataIndOverride={};
+function dataIndFor(id){return dataIndOverride[id]||dataIndBase;}
+function setDataIndFor(id,v){
+  if(!v||v===dataIndBase)delete dataIndOverride[id];
+  else dataIndOverride[id]=v;
+  renderDataTab();
+}
+function relinkDataInd(id){delete dataIndOverride[id];renderDataTab();}
 // Watchlist-Quicklinks springen mit GENAU EINEM Asset hierher - das ersetzt
 // die ganze Panel-Auswahl, sonst landet man auf einem Raster, in dem das
 // angeklickte Asset irgendwo dazwischen steht.
@@ -13345,11 +13621,12 @@ function renderDataAssetPicker(){
   el.style.right=Math.max(8,Math.round(window.innerWidth-r.right))+'px';
   el.style.maxHeight=Math.max(160,Math.round(window.innerHeight-r.bottom-24))+'px';
 }
-function setDataInd(v){dataIndBase=v||'';renderDataTab();}
+function setDataInd(v){dataIndBase=v||'';dataIndOverride={};renderDataTab();}
 function renderDataTab(){
   const el=document.getElementById('dataBody');if(!el)return;
   const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
   dataAssets=dataAssets.filter(id=>ids.includes(id)).slice(0,DATA_MAX_PANELS);
+  Object.keys(dataIndOverride).forEach(k=>{if(!dataAssets.includes(k))delete dataIndOverride[k];});
   const panels=dataAssets.map(id=>syms.find(s=>s.id===id)).filter(Boolean);
   // Indikator-Auswahl: Vereinigung ueber alle gewaehlten Assets, gruppiert
   // nach Karte (Inflation, Interest Rates, ...).
@@ -13371,25 +13648,37 @@ function renderDataTab(){
   // in EINEM Zug bis zu vier Assets antippt (siehe openDataAssetPicker).
   const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to 4 assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${DATA_MAX_PANELS}</b></button>`;
   const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
-  const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="The same indicator is shown in every panel" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
+  const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
   const rangeBar=(panels.length&&dataIndBase)
     ?`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange')}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`:'';
-  const head=`<div class="cot-card"><div class="cot-card-title">Data<span style="font-weight:500;color:var(--t3);font-size:11px;margin-left:10px">up to 4 assets side by side · one indicator · one time range</span><span style="margin-left:auto">${addPicker}</span></div>
+  const head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">up to 4 assets side by side · one indicator for all, or one per panel</span><span style="margin-left:auto">${addPicker}</span></div>
     <div class="data-ctrls">
       <div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No asset selected</span>'}</div>
       ${indPicker}${rangeBar}
     </div></div>`;
   let body;
   if(!panels.length)body=`<div class="cot-empty">Pick up to 4 assets above to see their indicator history side by side.</div>`;
-  else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — the same one is shown in every panel.</div>`;
+  else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — it sets every panel at once. Each panel can then pick its own.</div>`;
   else{
     body=`<div class="data-grid${panels.length>1?' split':''}">`+panels.map(sym=>{
-      const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===dataIndBase));
-      const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===dataIndBase);
-      const title=`<div class="cot-card-title">${escH(sym.name||sym.id)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${escH(ind?(ind.displayName||ind.name):dataIndBase)}</span></div>`;
+      const base=dataIndFor(sym.id);
+      const own=!!dataIndOverride[sym.id];
+      const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base));
+      const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
+      // Das Panel-Dropdown listet NUR die Indikatoren dieses Assets - hier
+      // waere die Vereinigung aller gewaehlten Assets irrefuehrend, weil das
+      // Panel fremde gar nicht zeichnen kann.
+      const ownOpts=(sym.rubrics||[]).map(r=>{
+        const items=[];
+        (r.indicators||[]).forEach(i=>{const b=stripPeriodSuffix(i.name).base;if(b&&!items.some(x=>x.b===b))items.push({b,n:i.displayName||i.name});});
+        return items.length?`<optgroup label="${escH(r.name)}">${items.map(it=>`<option value="${escH(it.b)}"${it.b===base?' selected':''}>${escH(it.n)}</option>`).join('')}</optgroup>`:'';
+      }).join('');
+      const sel=`<select class="px-panel-sel" onchange="setDataIndFor('${escJH(sym.id)}',this.value)" title="Indicator for this panel only — the picker at the top sets all four">${ownOpts}</select>`;
+      const chip=own?`<button class="px-panel-chip" onclick="relinkDataInd('${escJH(sym.id)}')" title="This panel shows its own indicator — click to follow the shared picker again">Custom ✕</button>`:'';
+      const title=`<div class="cot-card-title">${escH(sym.name||sym.id)}<span class="px-panel-ctrls">${chip}${sel}</span></div>`;
       const inner=ind
         ?indHistChart(ind,sym.id,{noToolbar:true,group:'data'})
-        :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(dataIndBase)}”. Pick a different indicator, or remove this panel.</div>`;
+        :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different indicator for this panel above, or remove it.</div>`;
       return`<div class="cot-card">${title}<div style="padding:12px 14px">${inner}</div></div>`;
     }).join('')+`</div>`;
   }
@@ -13667,7 +13956,7 @@ function newsDayLabel(iso){
   const g=x=>x.toISOString().slice(0,10);
   if(g(d)===g(heute))return'Today';
   if(g(d)===g(gestern))return'Yesterday';
-  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'2-digit'});
 }
 // Schlagzeilen zu genau einem Asset. Zuordnung kommt aus dem Workflow
 // (Feld a[]), hier wird nichts neu erraten.
@@ -17280,6 +17569,9 @@ Object.assign(window,{
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
+  PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
+  drawPriceConnectors,markPriceCards,priceWindow,
+  dataIndFor,setDataIndFor,relinkDataInd,
   DATA_MAX_PANELS,setDataAsset,addDataAsset,removeDataAsset,toggleDataAsset,openDataAssetPicker,closeDataAssetPicker,
   renderDataAssetPicker,indCompareGo,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,

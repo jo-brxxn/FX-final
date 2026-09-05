@@ -379,3 +379,46 @@ Gruppierung wie jeder andere Asset-Filter, **jeder Klick wird sofort
 schließt bei Erreichen des Maximums oder per `pointerdown`-Capture-Listener
 außerhalb — der erst im nächsten Tick registriert wird, sonst schließt der
 öffnende Klick es selbst wieder.
+
+## ⚠️ Schriftgrößen kommen aus der Skala — nirgends eine freie Zahl
+
+Regel seit 2026-09-05 (Nutzer-Wunsch: *„mach alles in einem schicken Design mit
+richtiger Schriften hierachie usw. Kontrolliere das auch nochmal bei den
+letzten Änderungen und im Rest der Webseite und halte das als Regel fest"*).
+
+Es gibt **eine** Skala, sie steht als Token in `index.html`:
+
+| Token | Größe | Wofür |
+|---|---|---|
+| `--fs-hero` | 30px | Hero-Zahl einer Karte (Score, Kurs) |
+| `--fs-xl` | 24px | Seitentitel |
+| `--fs-lg` | 17px | Abschnittstitel |
+| `--fs-md` | 15px | Kartentitel |
+| `--fs-base` | 13px | Fließtext |
+| `--fs-sm` | 12px | Buttons, dichte Tabellenzeilen |
+| `--fs-xs` | 11px | Sekundärtext in Karten |
+| `--fs-2xs` | 10px | Label, Meta, Achsenbeschriftung |
+
+**Fünf Rollen, jede mit fester Kombination** — daran hängt die Hierarchie, nicht
+an der Größe allein:
+
+1. **Titel** — `--fs-md`/`--fs-lg`, `font-weight:700`, `var(--t0)`.
+2. **Label** (Spalten-/Gruppenüberschrift) — `--fs-2xs`, `700`,
+   `text-transform:uppercase`, `letter-spacing:.7px`, `var(--t2)`.
+3. **Body** — `--fs-base`/`--fs-xs`, `400–500`, `var(--t1)`.
+4. **Zahl** (die Aussage der Karte) — eine Stufe größer als der Body, `800`,
+   `var(--ff-num)`, Bedeutungsfarbe.
+5. **Meta** (Forecast/Previous, Quelle, Zeitstempel) — `--fs-2xs`, `400`,
+   `var(--t3)`.
+
+Praktisch heißt das: `font: <weight> var(--fs-x)/<line-height> var(--ff-*)` als
+**eine** Kurzschreibweise statt verstreuter `font-size`/`font-weight`-Zeilen.
+Ein `font-size:12.5px` oder `font-size:10.5px` ist immer ein Fehler — es gibt
+keine Zwischenstufe, und wer eine erfindet, bricht die Hierarchie für alle
+danebenliegenden Elemente.
+
+**Bei jeder Änderung mitprüfen**, nicht nur beim neuen Baustein: die Zeile
+daneben, die Karte darüber. Beim Preischart-Umbau (2026-09-05) sind dabei vier
+Altlasten aus den Änderungen der Vortage aufgefallen und mitkorrigiert worden
+(Zurück-Pille 12.5px, Popup-Fußzeile 10.5px, Popup-Kopf und die Unterzeile der
+Data-Kopfkarte mit freien px-Werten).
