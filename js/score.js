@@ -12,7 +12,7 @@
 // Bidirektional mit js/main.js verbunden (Muster: docs/module-split.md).
 import {BC,FX} from './constants.js';
 import {IND_DATA_FEED,priceSeriesFor} from './data-feeds.js';
-import {IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,escH,evtMatchesSym,getSym,macroCcyFor,markLsUpdatedSeen,markPrefEdit,openM,parseNumLike,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,rerender,save,scoreHist,selId,setSuppressBiasFlipAlerts,stripPeriodSuffix,syms,todayStr} from './main.js';
+import {DATA_LIVE_OK,IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,escH,evtMatchesSym,getSym,macroCcyFor,markLsUpdatedSeen,markPrefEdit,openM,parseNumLike,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,rerender,save,scoreHist,selId,setSuppressBiasFlipAlerts,stripPeriodSuffix,syms,todayStr} from './main.js';
 
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
 function bRC(b){return(b==='bull'||b==='sbull')?'#0B5FCC20':(b==='bear'||b==='sbear')?'#C50F1A20':'#55617A20';}
@@ -273,6 +273,45 @@ function indCycleTextDays(ind){
   if(/month/.test(t))return 30;
   return null;
 }
+// Ist der Zyklus WIRKLICH bekannt, oder ist er nur der 30-Tage-Notnagel aus
+// indCycleDaysCalc?
+//
+// ⚠ Nutzer-Bugreport 2026-09-06, zweite Runde ("Aud gdp immernoch out of Date
+// und generell ohne Historie"). Der erste Fix (VERSION-CHECK-472) war richtig,
+// traf aber nur einen von zwei Wegen in denselben Zustand. Der zweite:
+// erreicht der Indikator-Feed ein Geraet gar nicht, bleibt ind.chartHist LEER
+// (kein Chart) - und indCycleDaysCalc faellt dann auf pauschale 30 Tage
+// zurueck, sobald auch ind.interval fehlt (aeltere gespeicherte Staende
+// kennen das Feld nicht). Fuer einen Quartalswert ist die Altersgrenze damit
+// 60 statt 180 Tage, und er faellt nach zwei Monaten faelschlich auf
+// OUT OF DATE.
+//
+// Per Playwright am echten AUD GDP nachgestellt, Feed blockiert, Datum
+// unveraendert 2026-06-03 (95 Tage alt):
+//   mit interval:'quarterly'  ->  stale false   (95/90 = 1,06 Zyklen)
+//   ohne interval             ->  stale TRUE    (95/30 = 3,17 Zyklen)
+// Beide vom Nutzer gemeldeten Symptome kommen also aus EINER Bedingung:
+// keine Historie da UND kein Turnus bekannt.
+//
+// Die 30 Tage sind eine Schaetzung, und aus einer Schaetzung darf kein Urteil
+// werden (CLAUDE.md Regel 4). Fuer die GEWICHTUNG (Decay, Halbwertszeit)
+// bleibt der Notnagel, dort ist irgendein Wert noetig und er wirkt weich; die
+// Altersgrenze dagegen ist eine harte Aussage ueber den Indikator und
+// unterbleibt jetzt, solange der Zyklus nur geraten ist.
+function indCycleIsGuess(ind){
+  if(indCycleTextDays(ind))return false;            // Turnus steht am Indikator
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const ds=h.map(e=>e&&e[0]).filter(Boolean).sort();
+  if(ds.length>=4){
+    const gaps=[];
+    for(let i=1;i<ds.length;i++){
+      const g=(new Date(ds[i])-new Date(ds[i-1]))/86400000;
+      if(isFinite(g)&&g>0&&g<400)gaps.push(g);
+    }
+    if(gaps.length>=3)return false;                 // aus der eigenen Reihe gemessen
+  }
+  return true;                                      // nur der Notnagel
+}
 function indCycleDaysCalc(ind,h){
   const ds=h.map(e=>e&&e[0]).filter(Boolean).sort();
   const txt=indCycleTextDays(ind);
@@ -486,6 +525,10 @@ function indOverdueCycles(ind){
   // Rein manuelle/qualitative Indikatoren (CB Tone, Geopolitics, Risk
   // Correlation) haben bewusst kein Release-Konzept - sie altern nicht.
   if(r.bond||r.cot||r.sent)return null;
+  // Zyklus nur geraten (siehe indCycleIsGuess) -> nicht bewertbar. Sonst
+  // erklaert der 30-Tage-Notnagel einen Quartalswert nach zwei Monaten fuer
+  // veraltet, obwohl niemand weiss, wann sein naechster Termin waere.
+  if(indCycleIsGuess(ind))return null;
   const cyc=indCycleDays(ind);
   if(!isFinite(cyc)||cyc<=0)return null;
   const age=(new Date(todayStr())-new Date(String(r.date).slice(0,10)))/86400000;
@@ -501,6 +544,17 @@ function indIsStale(ind){
   // (indScoreParts prueft SCORE_ZERO ohnehin VOR der Altersgrenze) - es
   // ging allein um die Aussage.
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return false;
+  // ⚠ Ist der Indikator-Feed in DIESER Sitzung nicht angekommen, weiss die App
+  // ueberhaupt nichts ueber den aktuellen Stand - dann darf sie auch nicht
+  // behaupten, ein einzelner Indikator sei ueberfaellig. Gemessen (Playwright,
+  // ind_data.json blockiert): 286 von 591 Indikatoren trugen OUT OF DATE,
+  // obwohl die Ursache EINE war - der Abruf. Die Marke suchte die Schuld beim
+  // Indikator und verstellte damit genau den Blick auf den echten Grund, der
+  // als "Live data unavailable: Indicators" ohnehin schon auf dem Dashboard
+  // steht (dataFeedStaleNotifyHtml). Exakt dieselbe Ueberlegung wie beim
+  // SCORE_ZERO-Ausschluss darueber: keine Marke fuer einen Grund, den es so
+  // nicht gibt.
+  if(typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.ind===false)return false;
   const c=indOverdueCycles(ind);
   return c!=null&&c>IND_STALE_CYCLES;
 }
@@ -1462,7 +1516,7 @@ export {
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
-  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
+  indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
   scoreInfoTotalRow,indSurpriseStats,indHalfLifeDays,dqNum,openDataQuality,openScoreInfoRub,openScoreInfoSym,symStrengthSectionHtml,
@@ -1477,4 +1531,4 @@ export {
 // check/display.js/check/runtime.js/check/scorediff.js direkt per
 // page.evaluate() als globalen Bezeichner aufrufen (docs/module-split.md,
 // Abschnitt "check/*.js selbst durchsuchen").
-if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,scoreMode,setScoreMode,symScore,symScoreCmp,pairCarryAdj,symStrength10});
+if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,scoreMode,setScoreMode,symScore,symScoreCmp,pairCarryAdj,symStrength10});

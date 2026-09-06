@@ -10591,3 +10591,81 @@ Jetzt-Zeile ist in allen Fällen die erste. USD heute:
 | ▼ 4,2 › 4,1 › 4,1 | ▼ 2,1 › 1,5 › 1,5`, direkt darüber der Cut vom 10.12.25
 mit `▲ 2,7 › 2,9 › 3,0`. `NOW`-Etikett neutral in `rgb(86,99,127)`, kein
 Dokument-Überlauf, keine Konsolen- oder Page-Errors.
+
+---
+
+## 2026-09-06 — AUD GDP, zweite Runde: der zweite Weg in denselben Zustand (VERSION-CHECK-476)
+
+**Nutzer:** *„Aud gdp immernoch out of Date und generell ohne Historie"*
+
+Der Fix aus VERSION-CHECK-472 (`reapplyLiveFeeds()` in `applySnap()`) war
+richtig, traf aber nur **einen von zwei** Wegen in denselben Zustand. Der
+zweite braucht gar keinen Snapshot.
+
+### Die Ursache
+
+Erreicht `ind_data.json` ein Gerät nicht, passiert zweierlei gleichzeitig:
+
+1. `ind.chartHist` bleibt **leer** → kein Verlaufschart.
+2. `indCycleDaysCalc()` hat damit keine Abstände zum Messen und fällt auf
+   `indCycleTextDays(ind) || 30` zurück. Fehlt auch `ind.interval` — ältere
+   gespeicherte Stände kennen das Feld nicht —, sind das **pauschale 30 Tage**.
+   Für einen Quartalswert ist die Altersgrenze (`IND_STALE_CYCLES`=2) damit
+   **60 statt 180 Tage**.
+
+Per Playwright am echten AUD GDP nachgestellt, `ind_data.json` blockiert,
+Datum unverändert `2026-06-03` (95 Tage alt):
+
+| | Zyklus | overdue | Ergebnis |
+|---|---|---|---|
+| mit `interval:'quarterly'` | 90 d | 1,06 | nicht veraltet |
+| ohne `interval` | 30 d (geraten) | 3,17 | **OUT OF DATE** |
+
+**Beide gemeldeten Symptome kommen also aus einer einzigen Bedingung:** keine
+Historie da *und* kein Turnus bekannt.
+
+### Drei Korrekturen
+
+**1. Aus einer Schätzung darf kein Urteil werden.** Neue Funktion
+`indCycleIsGuess(ind)`: ist der Zyklus weder am Indikator hinterlegt noch aus
+mindestens drei eigenen Abständen gemessen, gibt `indOverdueCycles()` jetzt
+`null` zurück — keine Altersgrenze. Für die *Gewichtung* (Decay,
+Halbwertszeit) bleibt der 30-Tage-Notnagel: dort ist irgendein Wert nötig und
+er wirkt weich. Die Altersgrenze dagegen ist eine harte Aussage und
+unterbleibt, solange sie nur auf einer Annahme steht (CLAUDE.md Regel 4).
+
+**2. Bei Feed-Ausfall keine Schuldzuweisung an einzelne Indikatoren.**
+Gemessen mit blockiertem Feed: **286 von 591** Indikatoren trugen OUT OF DATE,
+obwohl die Ursache **eine** war — der Abruf. `indIsStale()` gibt jetzt
+`false` zurück, solange `DATA_LIVE_OK.ind===false`. Exakt dieselbe Überlegung
+wie beim bestehenden `SCORE_ZERO`-Ausschluss: keine Marke für einen Grund, den
+es so nicht gibt. Der echte Grund steht als „Live data unavailable:
+Indicators" ohnehin auf dem Dashboard (`dataFeedStaleNotifyHtml`).
+
+**3. Die Chart-Meldung log.** Ohne Feed trägt ein Indikator kein
+`research.feed`, bekam damit Fall (b) und behauptete: *„its source only
+publishes the current reading"*. Für AUD GDP mit zwölf Punkten in
+`ind_data.json` schlicht falsch — und eine Meldung, die die Schuld bei der
+Quelle sucht, verstellt den Blick auf die echte Ursache. Neuer dritter Fall:
+*„The indicator feed did not load in this session …"*.
+
+### Wirkung, gemessen
+
+| | vorher | nachher |
+|---|---|---|
+| Feed da: AUD GDP | 12 Punkte, nicht veraltet | unverändert |
+| Feed da: veraltete Indikatoren gesamt | 2 (CAD Consumer Confidence + Spiegel) | unverändert |
+| **Feed weg**: AUD GDP veraltet | **ja** | nein |
+| **Feed weg**: OUT-OF-DATE-Marken gesamt | **286** | **0** |
+| Feed weg: Chart-Meldung | „source only publishes the current reading" | „feed did not load in this session" |
+
+### Neuer Wächter (`check/score.js`, Abschnitt E2)
+
+Zwei Netze. Das erste prüft den Bestand: kein Indikator mit geratenem Zyklus
+darf veraltet sein. Das allein hinge leer in der Luft, deshalb stellt das
+zweite den Ausfall an **Kopien** echter Indikatoren nach (`chartHist:[]`,
+`interval:undefined` — das Original bleibt unangetastet, damit die folgenden
+Abschnitte weiter auf dem echten Stand rechnen) und verlangt, dass keine davon
+veraltet ist. 117 Indikatoren geprüft, **0** Befunde; mit wieder ausgebautem
+Fix **10** Befunde. Der Wächter ist also scharf und nicht durch Altlasten
+stumpf.

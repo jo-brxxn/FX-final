@@ -465,7 +465,7 @@ import {
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
-  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
+  indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
   scoreInfoTotalRow,indSurpriseStats,indHalfLifeDays,dqNum,openDataQuality,openScoreInfoRub,openScoreInfoSym,symStrengthSectionHtml,
@@ -13211,8 +13211,20 @@ function indHistChart(ind,symId,opts){
     //     Avg Hourly Earnings, ...). Da baut sich nichts auf, solange die
     //     Quelle keine Reihe liefert - das gehoert dann auch so dagestanden,
     //     statt eine Historie zu versprechen, die nie kommt.
+    // (c) ⚠ Dritter Fall, 2026-09-06 nachgetragen. Ist der Indikator-Feed
+    //     diese Sitzung NICHT angekommen (DATA_LIVE_OK.ind===false), steht
+    //     hier ein Indikator ohne research.feed - und bekam damit Satz (b)
+    //     zu sehen: "seine Quelle veroeffentlicht nur den aktuellen Wert".
+    //     Das ist schlicht falsch und war der zweite Teil des Bugreports zu
+    //     AUD GDP: die Reihe existiert (zwoelf Punkte in ind_data.json), sie
+    //     ist nur nicht angekommen. Eine Meldung, die dem Nutzer die Schuld
+    //     bei der Quelle sucht, verstellt genau den Blick auf die echte
+    //     Ursache.
+    const feedTot=(typeof DATA_LIVE_OK!=='undefined')&&DATA_LIVE_OK.ind===false;
     const accumulates=!!(ind.research&&(ind.research.feed||ind.research.bond||ind.research.cot||ind.research.sent));
-    const msg=accumulates
+    const msg=feedTot&&!accumulates
+      ?'The indicator feed did not load in this session, so no history could be read — this indicator may well have a full series. Check your connection and reload; nothing here is filled in from memory.'
+      :accumulates
       ?'Not enough history yet — builds up automatically as new releases come in (up to 3 years, one release at a time).'
       :'No history series for this indicator — its source only publishes the current reading, so there is nothing to chart yet. The value above stays up to date.';
     return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">${msg}</div></div>`;

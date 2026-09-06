@@ -192,3 +192,21 @@ als stiller Eintrag — heute nur `applyScoreHistServerFeed` (schreibt in
 Gegenprobe gemacht: `applyCotDataFeed()` aus `reapplyLiveFeeds()` entfernt →
 `STRUKTURFEHLER: Feed fehlt in reapplyLiveFeeds() … applyCotDataFeed`; wieder
 eingesetzt → grün. Auf dem Bestand meldet das Netz **0** Fälle.
+
+## `score.js`, Abschnitt E2: OUT OF DATE nur bei bekanntem Zyklus (seit 2026-09-06)
+
+**Anlass:** Bugreport „Aud gdp immernoch out of Date und generell ohne
+Historie" — die zweite Runde zu demselben Indikator. Erreicht der Feed ein
+Gerät nicht, bleibt `chartHist` leer (kein Chart) *und* `indCycleDaysCalc()`
+rät pauschale 30 Tage, sobald auch `ind.interval` fehlt. Ein Quartalswert
+fällt damit nach zwei Monaten fälschlich auf OUT OF DATE.
+
+Zwei Netze: das erste prüft den Bestand (kein Indikator mit geratenem Zyklus
+darf veraltet sein), das zweite stellt den Ausfall an **Kopien** echter
+Indikatoren nach (`chartHist:[]`, `interval:undefined`) — sonst hinge das
+erste leer in der Luft, weil im normalen Lauf ja alles da ist. Die Kopien
+lassen das Original unangetastet, damit die folgenden Abschnitte weiter auf
+dem echten Stand rechnen.
+
+Gegenprobe: 117 geprüft, **0** Befunde; `indCycleIsGuess`-Zeile wieder
+ausgebaut → **10** Befunde; zurück → 0.

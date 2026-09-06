@@ -312,3 +312,23 @@ ECHT score-relevant, anders als der 6→7-Fall oben: `check/scorediff.js`
 zaehlte 21 geaenderte Stellen - die Indikatorenzahl in USDs Economic-Growth-
 Karte sinkt, das wirkt sich (Modus `normalized`) auch auf die vergleichende
 Staerke-Note ANDERER Waehrungen aus, nicht nur auf USD selbst.
+
+### Altersgrenze: zwei Bedingungen, die sie NICHT stellen darf (seit 2026-09-06)
+
+`indIsStale()` ist eine harte Aussage ueber einen Indikator. Sie unterbleibt
+in zwei Faellen, in denen die App die noetige Grundlage nicht hat:
+
+1. **Zyklus nur geraten** (`indCycleIsGuess`). Ohne `chartHist` zum Messen und
+   ohne `ind.interval` faellt `indCycleDaysCalc()` auf pauschale 30 Tage
+   zurueck. Fuer einen Quartalswert ist die Grenze damit 60 statt 180 Tage.
+   Fuer die GEWICHTUNG (Decay/Halbwertszeit) bleibt der Notnagel - dort ist
+   irgendein Wert noetig und er wirkt weich; fuer die Altersgrenze nicht.
+2. **Indikator-Feed diese Sitzung nicht angekommen**
+   (`DATA_LIVE_OK.ind===false`). Dann weiss die App nichts ueber den aktuellen
+   Stand und darf nicht einzelnen Indikatoren die Schuld geben - gemessen
+   trugen sonst 286 von 591 die Marke, obwohl die Ursache eine war. Der echte
+   Grund steht als "Live data unavailable: Indicators" auf dem Dashboard.
+
+Dieselbe Ueberlegung wie beim aelteren `SCORE_ZERO`-Ausschluss: keine Marke
+fuer einen Grund, den es so nicht gibt. Geprueft von `check/score.js`,
+Abschnitt E2 (stellt den Feed-Ausfall an Kopien echter Indikatoren nach).

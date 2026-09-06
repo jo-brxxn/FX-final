@@ -82,6 +82,37 @@ const MODE = process.argv[2] || 'normalized';
     if(isNonFx(sym.id))return;                            // ueber deriveRules gespiegelt
     if(rub.bias!==soll)add('Karten-Badge != rubScore/Schwelle',{sym:sym.id,rub:rub.name,score:+sc.toFixed(3),thr,ist:rub.bias,soll});
   }));
+  // ── E2) OUT OF DATE nur bei BEKANNTEM Zyklus ───────────────────
+  // Nutzer-Bugreport 2026-09-06 (AUD GDP, zweite Runde): ohne Historie UND
+  // ohne ind.interval faellt indCycleDaysCalc auf pauschale 30 Tage zurueck.
+  // Fuer einen Quartalswert ist die Altersgrenze damit 60 statt 180 Tage - er
+  // trug OUT OF DATE, obwohl niemand wusste, wann sein naechster Termin
+  // waere. Aus einer Schaetzung darf kein Urteil werden (CLAUDE.md Regel 4).
+  // Die Regel: ist der Zyklus nur geraten, gibt es keine Altersgrenze.
+  // Zwei Netze. (1) Der Bestand: kein Indikator mit geratenem Zyklus darf
+  // veraltet sein.
+  syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+    if(!indCycleIsGuess(ind))return;
+    let stale=false;try{stale=!!indScoreParts(ind,sym.id).stale;}catch(e){return;}
+    if(stale)add('OUT OF DATE trotz nur geratenem Zyklus',{sym:sym.id,ind:ind.name,
+      interval:ind.interval||null,hist:(ind.chartHist||[]).length,date:(ind.research||{}).date||null});
+  })));
+  // (2) Die eigentliche Reproduktion, sonst haengt Netz 1 leer in der Luft:
+  // ein Geraet OHNE Feed hat weder chartHist noch (bei aelteren gespeicherten
+  // Staenden) ind.interval. Genau dieser Zustand wird hier an KOPIEN echter
+  // Indikatoren nachgestellt - das Original bleibt unangetastet, damit die
+  // folgenden Abschnitte weiter auf dem echten Stand rechnen.
+  ok.geratenerZyklus={geprueft:0,stale:0};
+  syms.filter(s=>!isNonFx(s.id)).forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+    const r=ind.research||{};
+    if(!r.date||r.bond||r.cot||r.sent)return;
+    const kopie=Object.assign({},ind,{chartHist:[],valHist:[],valDates:[],interval:undefined,
+      research:Object.assign({},r,{interval:undefined})});
+    ok.geratenerZyklus.geprueft++;
+    let stale=false;try{stale=!!indScoreParts(kopie,sym.id).stale;}catch(e){return;}
+    if(stale){ok.geratenerZyklus.stale++;
+      add('Ohne Feed faelschlich OUT OF DATE (Zyklus nur geraten)',{sym:sym.id,ind:ind.name,date:r.date});}
+  })));
   // ── F) Feed-Idempotenz ─────────────────────────────────────────
   const feeds={applyIndDataFeed,applyBondDataFeed,applyCotDataFeed,applySentimentFeed};
   ok.idempotenz={};
