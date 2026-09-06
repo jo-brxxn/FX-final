@@ -137,3 +137,23 @@ Voraussetzung, damit der Aufruf in jedem Pfad unschädlich bleibt: jede
 `apply*`-Funktion muss **idempotent** sein und mit `false` aussteigen, solange
 ihr Feed nicht geladen ist (`if(!X_FEED)return false`) — ein Import auf einem
 frisch geöffneten Tab darf nichts kaputtmachen.
+
+## `btReasons` (Backtester: „Decisive factor") — Fall 1, über `snap()`
+
+Die selbst geschriebenen Begründungen je Zinsentscheid laufen über
+`snap()`/`applySnap()` und brauchen deshalb **kein** manuelles Sync-Wiring —
+Cloud-Sync, Undo/Redo, Export und Import laufen automatisch mit.
+
+Schlüssel ist **Währung + Datum** (`btReasonKey`), nicht Asset + Datum: der
+Grund gehört zur Entscheidung, und Gold, die Yields und die Indizes spiegeln
+dieselbe Notenbanksitzung wie ihre verbundene Währung.
+
+Zwei Feinheiten, die beim Anfassen leicht kaputtgehen:
+
+- `btReasonText()` prüft auf **`undefined`**, nicht auf Wahrheitswert. Ein
+  leeres eigenes Feld ist eine Entscheidung des Nutzers und muss den
+  recherchierten Seed schlagen; mit einem Wahrheitswert-Check käme der Seed
+  zurück, sobald jemand das Feld leert.
+- Setzt der Nutzer den Text exakt auf den Seed-Text, **löscht**
+  `setBtReason()` den Eintrag. Sonst friert eine spätere Korrektur der
+  Recherche für diesen Nutzer für immer ein.

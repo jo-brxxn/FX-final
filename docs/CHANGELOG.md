@@ -10970,3 +10970,83 @@ Quicklink je Asset: USD → FedWatch, EUR → /ecb, GBP → /boe, JPY → /boj,
 CAD → /boc, AUD → /rba, GOLD → FedWatch (folgt korrekt seiner verbundenen
 Währung), CHF und NZD → Hinweisfenster. Keine Konsolen- oder Page-Errors, kein
 Überlauf.
+
+---
+
+## 2026-09-06 — Backtester: eigene Spalte „Decisive factor", 59 Entscheidungen recherchiert (VERSION-CHECK-481)
+
+**Nutzer:** *„eine neue Tabellenspalte hat ganz rechts in die man selber den
+Grund reinschreiben kann was der entscheidende Faktor war. Und ich will das du
+das für jedes Events in der Vergangenheit jetzt selber alles für jedes Asset
+recherchierst und dafür statements und Presse Konferenzen und Schlagzeilen und
+Berichte dazu anguckst und das nachträgst"*
+
+### Die Spalte
+
+Ganz rechts, ein Textfeld je Zeile — auch in der Jetzt-Zeile, dort für die
+Erwartung an die nächste Sitzung. Gespeichert wird beim Verlassen des Feldes,
+nicht bei jedem Tastendruck: sonst gäbe es pro Zeichen einen Undo-Punkt und
+einen Cloud-Push.
+
+**Schlüssel ist Währung + Datum, nicht Asset + Datum.** Der Grund hängt an der
+Entscheidung, und Gold, der US-Yield und die Aktienindizes spiegeln dieselbe
+Fed-Sitzung wie USD — was man bei einem einträgt, steht sofort bei allen.
+Verifiziert: Text bei USD gesetzt, erscheint bei Gold.
+
+Persistenz über `snap()`/`applySnap()`, damit läuft Cross-Device-Sync und Undo
+automatisch mit (CLAUDE.md Regel 1, `docs/state-sync.md` Fall 1). Schreibpfad
+mit `try/catch` und sichtbarer Warnung im Fenster (Regel 6).
+
+### Die Recherche
+
+**59 von 59** Zinsentscheiden vorbelegt — jeder mit Quelle, per ↗ direkt
+aufrufbar. Abgedeckt: USD 6, EUR 9, GBP 6, CHF 6, JPY 5, CAD 9, AUD 7, NZD 11.
+Geprüft, dass Seed-Schlüssel und tatsächliche Entscheidungen exakt
+deckungsgleich sind — keine Lücke, kein Eintrag ohne zugehörige Sitzung, keiner
+ohne Text oder Quelle.
+
+Ein paar Beispiele für das, was dabei herauskam:
+
+- **EUR 11.06.2026** — erste Anhebung seit fast drei Jahren: der Energieschock
+  aus dem Iran-Krieg und gestörte Schifffahrtswege trieben die Inflation auf
+  3,2 %. Lagarde wies das Wort „insurance hike" ausdrücklich zurück.
+- **USD 10.12.2025** — drei Gegenstimmen, die meisten seit 2019: Miran wollte
+  50 bp, Schmid und Goolsbee gar nichts.
+- **CHF 19.06.2025** — zurück auf null, nachdem die Schweizer Preise im Mai um
+  0,1 % gefallen waren, erstmals seit vier Jahren.
+- **CAD 12.03.2025** — der Schnitt unter „new crisis": US-Zölle sollten die
+  Aktivität bremsen und gleichzeitig die Inflation anschieben.
+- **NZD 08.07.2026** — erste Anhebung seit drei Jahren, nachdem die Inflation
+  mit 4,1 % 1,1 Punkte über der Bandobergrenze lag.
+
+### ⚠ Wie genau die Texte sind
+
+Recherchiert per Websuche. **Wo eine Quelle die einzelne Sitzung begründet,
+steht das so; wo sie den Zyklus begründet, ist der Text entsprechend
+formuliert** — als Schritt innerhalb dieses Zyklus, nicht als Protokoll einer
+Sitzung, das es nicht gibt. Das betrifft vor allem die Mittelstücke der langen
+Senkungsserien (EUR 09/10-2024, GBP 11-2024 und 08-2025, CHF 2024, CAD
+07–12-2024, NZD 08-2025).
+
+Die Domain `rateprobability.com` war vom Netz-Proxy blockiert, die
+Notenbank-Seiten selbst teilweise auch (`bankofcanada.ca` direkt) — die
+Websuche lieferte deren Inhalte aber mitsamt Original-Links, die im Fenster
+hinterlegt sind.
+
+### Sichtbarer Unterschied: Recherche vs. eigene Fassung
+
+Recherchierter Text steht **gestrichelt umrandet und gedämpft**, eigener Text
+normal — man sieht auf einen Blick, was von der App kam. Sobald getippt wird,
+gilt die eigene Fassung. Setzt man den Text exakt auf den recherchierten
+zurück, wird der eigene Eintrag gelöscht, sodass eine spätere Korrektur der
+Recherche wieder durchschlägt. Ein **leeres** eigenes Feld ist dagegen eine
+Entscheidung („weg damit") und gewinnt gegen den Seed — deshalb prüft
+`btReasonText()` auf `undefined` statt auf Wahrheitswert.
+
+### Verifiziert (Playwright)
+
+6 Spaltenköpfe, 7 Textfelder (Jetzt-Zeile + 6 Entscheidungen), 6 aus der
+Recherche vorbelegt (die Jetzt-Zeile bleibt leer — es gibt noch keine
+Entscheidung), 6 Quellen-Links. Eigener Text speichert, überlebt das erneute
+Öffnen, verliert die Seed-Optik und erscheint bei Gold mit. Kein Überlauf,
+keine Konsolen- oder Page-Errors.

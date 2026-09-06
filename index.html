@@ -3937,6 +3937,18 @@ button.rate-watch{background:none;border:none;padding:0;cursor:pointer;font:inhe
 .bt-none{color:var(--t3);font-style:italic;font-size:var(--fs-xs);cursor:help}
 .bt-note{font-size:var(--fs-xs);color:var(--t2);line-height:1.6;margin-bottom:11px}
 .bt-note b{color:var(--t0)}
+/* Spalte "Decisive factor": eigenes Textfeld je Entscheidung. Bewusst ein
+   textarea statt input - die Begruendungen sind oft zwei Zeilen lang. */
+.bt-table th.bt-th-why{min-width:210px}
+.bt-whyc{vertical-align:top;position:relative;white-space:normal!important;min-width:210px}
+.bt-why{width:100%;box-sizing:border-box;resize:vertical;min-height:44px;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:6px 8px;font:500 var(--fs-2xs)/1.45 var(--ff-text);color:var(--t0)}
+.bt-why::placeholder{color:var(--t3);font-style:italic}
+.bt-why:focus{outline:none;border-color:var(--blue);background:var(--bg2)}
+/* Recherchierter Text sieht anders aus als ein selbst geschriebener - man
+   soll auf einen Blick sehen, was von der App kam und was von einem selbst. */
+.bt-why.bt-why-seed{background:var(--bg4);color:var(--t1);border-style:dashed}
+.bt-why-src{position:absolute;top:2px;right:3px;font-size:var(--fs-2xs);color:var(--blue);text-decoration:none;padding:1px 3px}
+.bt-savewarn{margin-bottom:10px;padding:9px 12px;border-radius:var(--rs);background:rgba(var(--red-rgb),.09);border:1px solid var(--red);color:var(--red);font:600 var(--fs-xs)/1.5 var(--ff-num)}
 .bt-legend{font-size:var(--fs-xs);color:var(--t2);line-height:1.65;margin-top:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
 .bt-legend b{color:var(--t0)}
 .bt-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.6;padding:14px 0}
@@ -4330,11 +4342,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-480 - Rate Probabilities ist jetzt eine reine Link-Liste (Nutzer-Vorgabe 2026-09-06: &quot;ich will das da nicht mehr die Diagramme sondern nur noch die links zu den Webseiten sind&quot;). Je Waehrung eine Zeile mit Kuerzel, Notenbank und Zielseite: USD auf das CME FedWatch Tool, EUR/GBP/JPY/CAD/AUD auf ihre eigene Seite bei rateprobability.com (/ecb /boe /boj /boc /rba - die ersten beiden Pfade vom Nutzer genannt, die uebrigen nach demselben Kuerzel-Muster, per AskUserQuestion bestaetigt; die Domain ist vom Netz-Proxy blockiert, ich konnte sie nicht selbst pruefen). CHF und NZD haben dort keine Seite und stehen ausdruecklich mit &quot;No source available&quot; in der Liste, statt stillschweigend zu fehlen. Der Quicklink in den Assets fuehrt nicht mehr auf den Tab, sondern direkt auf die richtige Seite; bei CHF und NZD oeffnet sich ein Fenster, das sagt warum es keine gibt und wie man per Langdruck einen eigenen Link hinterlegt. Dasselbe gilt fuer das Symbol in der Interest-Rates-Karte: mit Quelle ein Link, ohne Quelle ein Knopf, der das Fenster oeffnet - kein Link ins Leere. Wird das Oeffnen vom Pop-up-Blocker verhindert, sagt die App das ebenfalls statt still zu bleiben."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-481 - Backtester: neue Spalte &quot;Decisive factor&quot; ganz rechts, in die man selbst schreiben kann, was den Ausschlag gab (Nutzer-Wunsch 2026-09-06). Der Grund haengt an der ENTSCHEIDUNG, nicht am Asset - Schluessel ist Waehrung plus Datum, was man bei USD eintraegt steht sofort auch bei Gold und beim US-Yield. Gespeichert ueber snap()/applySnap() und damit automatisch geraeteuebergreifend und im Undo-Stapel (CLAUDE.md Regel 1). Alle 59 vergangenen Zinsentscheide der acht Notenbanken sind recherchiert und vorbelegt - aus Notenbank-Mitteilungen, Pressekonferenzen und Berichten, jeder Eintrag mit Quelle, die per Pfeil direkt aufrufbar ist. Recherchierter Text steht gestrichelt und gedaempft, eigener Text normal: man sieht auf einen Blick, was von der App kam und was von einem selbst. Sobald man tippt, gilt die eigene Fassung; setzt man den Text exakt auf den recherchierten zurueck, greift wieder die Recherche. Wo eine Quelle nur den ZYKLUS begruendet und nicht die einzelne Sitzung, ist der Text auch so formuliert - kein Protokoll, das es nicht gibt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-480</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-481</span>
     </span>
   </div>
   <div class="hdr-r">

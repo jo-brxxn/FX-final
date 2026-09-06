@@ -1,6 +1,7 @@
 'use strict';
 import {BC,BL,FX,FX_FLAG,aiStar,aiStars,AI_EU_STARS,AI_UNION_JACK,AI_MAPLE,AI_FLAGS,YIELD_CCY,AI_SYMBOLS,AI_BOND_BADGE,aiIndex,AI_INDEX_ACCENT} from './constants.js';
 import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES,ASSET_BEHAVIOR_SUBTOPICS} from './asset-notes-seed.js';
+import {BT_REASON_SEED} from './backtest-seed.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -4048,7 +4049,7 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -4182,7 +4183,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();reapplyLiveFeeds();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();reapplyLiveFeeds();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -4290,7 +4291,7 @@ function permaDeleteTrashItem(id){
 }
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
+let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},btReasons={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -13694,6 +13695,72 @@ function btCellHtml(sym,rubName,datum){
   const fehlt=pts.length<BT_LOOKBACK?`<span class="bt-short" title="Only ${pts.length} of ${BT_LOOKBACK} releases available before this meeting — the series starts later. The missing ones are left out rather than filled in.">${pts.length}/${BT_LOOKBACK}</span>`:'';
   return`<td class="bt-cell"><span class="bt-arrow ${t.cls}">${t.arrow}</span><span class="bt-vals">${vals}</span>${fehlt}</td>`;
 }
+// ══ BACKTESTER: "Decisive factor" je Zinsentscheid ═══════════════════════
+// Nutzer-Wunsch 2026-09-06: "eine neue Tabellenspalte hat ganz rechts in die
+// man selber den Grund reinschreiben kann was der entscheidende Faktor war."
+//
+// Der Grund haengt an der ENTSCHEIDUNG, nicht am Asset - Gold und der
+// US-Yield spiegeln dieselbe Fed-Sitzung wie USD. Schluessel ist deshalb
+// Waehrung + Datum, nicht Asset + Datum; was man bei USD eintraegt, steht
+// sofort auch bei Gold.
+//
+// Persistiert ueber snap()/applySnap() und damit automatisch im Cloud-Sync
+// und im Undo-Stapel (CLAUDE.md Regel 1, docs/state-sync.md Fall 1).
+function btReasonKey(ccy,date){return ccy+'|'+date;}
+// Was in der Zelle steht: der eigene Text, sonst der recherchierte Seed.
+// Ein LEERER eigener Text ist eine Entscheidung des Nutzers ("weg damit") und
+// gewinnt deshalb auch gegen den Seed - deshalb wird auf 'undefined' geprueft,
+// nicht auf Wahrheitswert.
+function btReasonText(ccy,date){
+  const k=btReasonKey(ccy,date);
+  if(btReasons&&btReasons[k]!==undefined)return btReasons[k];
+  const seed=(typeof BT_REASON_SEED!=='undefined'&&BT_REASON_SEED)?BT_REASON_SEED[k]:null;
+  return seed?seed.txt:'';
+}
+// Stammt der angezeigte Text aus der Recherche oder vom Nutzer?
+function btReasonIsSeed(ccy,date){
+  const k=btReasonKey(ccy,date);
+  return !(btReasons&&btReasons[k]!==undefined)&&!!(typeof BT_REASON_SEED!=='undefined'&&BT_REASON_SEED&&BT_REASON_SEED[k]);
+}
+function setBtReason(ccy,date,val){
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6):
+  // schlaegt save() fehl (z.B. localStorage voll), darf der Tippende das
+  // nicht erst beim naechsten Laden merken.
+  try{
+    pushU();
+    const k=btReasonKey(ccy,date),v=String(val==null?'':val).trim();
+    const seed=(typeof BT_REASON_SEED!=='undefined'&&BT_REASON_SEED)?BT_REASON_SEED[k]:null;
+    // Zurueck auf exakt den Seed-Text = "keine eigene Fassung" -> Eintrag weg,
+    // damit eine spaetere Korrektur der Recherche wieder durchschlaegt.
+    if(seed&&v===seed.txt)delete btReasons[k];
+    else btReasons[k]=v;
+    save();
+  }catch(e){
+    const el=document.getElementById('mBtBody');
+    if(el){
+      let w=el.querySelector('.bt-savewarn');
+      if(!w){w=document.createElement('div');w.className='bt-savewarn';el.prepend(w);}
+      w.textContent='Could not save your note — '+(e&&e.message?e.message:'unknown error')+'. Copy the text before closing this window.';
+    }
+  }
+}
+// Die Zelle selbst: ein Textfeld, das beim Verlassen speichert. Kein
+// Auto-Save bei jedem Tastendruck - das wuerde bei jedem Zeichen einen
+// Undo-Punkt und einen Cloud-Push ausloesen.
+function btReasonCell(ccy,date,ph){
+  const txt=btReasonText(ccy,date);
+  const ausRecherche=btReasonIsSeed(ccy,date);
+  const seed=(typeof BT_REASON_SEED!=='undefined'&&BT_REASON_SEED)?BT_REASON_SEED[btReasonKey(ccy,date)]:null;
+  const quelle=ausRecherche&&seed&&seed.src?`<a class="bt-why-src" href="${safeUrl(seed.src)}" target="_blank" rel="noopener" title="Source for the researched text — open and check it yourself">↗</a>`:'';
+  const tip=ausRecherche
+    ?'Researched from the central bank\'s own statement or press conference. Overwrite it with your own reading at any time; typing replaces it, clearing it empties the cell.'
+    :'Your own note on what decided this meeting. Saved across your devices.';
+  return`<td class="bt-whyc">
+    <textarea class="bt-why${ausRecherche?' bt-why-seed':''}" rows="2" placeholder="${escH(ph)}…" title="${escH(tip)}"
+      onclick="event.stopPropagation()"
+      onchange="setBtReason('${escJH(ccy)}','${escJH(date)}',this.value)">${escH(txt)}</textarea>${quelle}
+  </td>`;
+}
 function openBacktester(symId){
   const sym=(syms||[]).find(s=>s.id===symId)||getSym();
   if(!sym)return;
@@ -13706,7 +13773,7 @@ function openBacktester(symId){
   const kopf=BT_AREAS.map(([rubName,label])=>{
     const ind=btAnchorInd(sym,rubName);
     return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(ind.displayName||ind.name):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
-  }).join('');
+  }).join('')+`<th class="bt-th bt-th-why"><span class="bt-th-l">Decisive factor</span><span class="bt-th-s">yours to fill in</span></th>`;
   // Kopfzeile "wo stehen wir jetzt" (Nutzer-Wunsch 2026-09-06: "mach ganz oben
   // eine Zeile wo die aktuellen Daten stehen also alles ausser halt ob es ein
   // hike oder cut ist"). Dieselben drei Bereichszellen wie jede historische
@@ -13724,6 +13791,7 @@ function openBacktester(symId){
       <td class="bt-date">Today<span class="bt-now-d">${escH(fmtDayHdr(heute))}</span></td>
       <td class="bt-move"><span class="bt-tag bt-now">NOW</span>${aktSatz!=null?`<span class="bt-bp">${escH(fmtIndVal(aktSatz,'%'))}</span>`:'<span class="bt-rate">rate not on file</span>'}${seit?`<span class="bt-rate">since ${escH(fmtDayHdr(seit))}</span>`:''}</td>
       ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,heute)).join('')}
+      ${btReasonCell(ccy,heute,'What you expect to decide the next meeting')}
     </tr>`;
   if(!moves.length){
     if(el)el.innerHTML=spiegel+`<div class="bt-scroll"><table class="bt-table">
@@ -13740,6 +13808,7 @@ function openBacktester(symId){
       <td class="bt-date">${escH(fmtDayHdr(m.date))}</td>
       <td class="bt-move"><span class="bt-tag ${cls}">${m.dir==='hike'?'HIKE':'CUT'}</span><span class="bt-bp">${bp} bp</span><span class="bt-rate">${escH(fmtIndVal(m.prev,'%'))} → <b>${escH(fmtIndVal(m.rate,'%'))}</b></span></td>
       ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,m.date)).join('')}
+      ${btReasonCell(ccy,m.date,'What decided this meeting')}
     </tr>`;
   }).join('');
   const hikes=moves.filter(m=>m.dir==='hike').length;
@@ -18119,6 +18188,7 @@ Object.assign(window,{
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
+  btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
