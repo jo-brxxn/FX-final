@@ -123,7 +123,42 @@ for(const m of alles.matchAll(HANDLER)){
     if(!new RegExp('\\b'+n+'\\b').test(bruecke)) ohneExport.add(n);
   }
 }
+// Fuenftes Netz: jede apply*Feed()-Funktion, die in `syms` schreibt, muss auch
+// in reapplyLiveFeeds() stehen.
+//
+// ⚠ Nutzer-Bugreport 2026-09-06 (AUD GDP: OUT OF DATE trotz neuem Wert, dazu
+// leerer Verlaufschart). applySnap() - der gemeinsame Trichter fuer Cloud-Sync,
+// Undo/Redo, Backup-Restore und Import - ersetzt `syms` komplett, also auch
+// ind.research und ind.chartHist. Beide fuellt AUSSCHLIESSLICH ein Live-Feed,
+// und der wurde danach nie wieder darueber gelegt: applyIndDataFeed() lief nur
+// beim Boot und in assetCfgApply(). Ein Snapshot von einem Geraet ohne
+// erfolgreichen Feed-Abruf zog die App damit auf dessen alten Stand zurueck.
+// Der Fix (reapplyLiveFeeds()) haelt nur, solange ein SPAETER dazukommender
+// Feed dort auch eingetragen wird - genau das prueft dieses Netz, statt sich
+// auf den Absatz in docs/state-sync.md zu verlassen.
+//
+// Ausnahmen brauchen hier einen Grund, keinen stillen Eintrag:
+const FEED_AUSNAHMEN={
+  // schreibt in scoreHist (eigener Merge ueber mergeScoreHist), nicht in syms -
+  // applySnap() uebernimmt scoreLog/scoreHist bewusst aus dem Snapshot.
+  applyScoreHistServerFeed:'schreibt nicht in syms'
+};
+const reapplyBody=(()=>{
+  const m=jsAlle.match(/function\s+reapplyLiveFeeds\s*\(\)\s*\{[\s\S]*?\n\}/);
+  return m?m[0]:null;
+})();
+const feedFehlt=[];
+if(!reapplyBody){
+  feedFehlt.push('(reapplyLiveFeeds() gar nicht gefunden)');
+}else{
+  for(const m of jsAlle.matchAll(/function\s+(apply[A-Za-z]*Feed)\s*\(/g)){
+    const n=m[1];
+    if(FEED_AUSNAHMEN[n]) continue;
+    if(!new RegExp('\\b'+n+'\\b').test(reapplyBody)) feedFehlt.push(n);
+  }
+}
 const befunde=[];
+if(feedFehlt.length) befunde.push('Feed fehlt in reapplyLiveFeeds() (Cloud-Sync/Undo setzt die App still auf alte Werte zurueck, siehe docs/state-sync.md): '+feedFehlt.join(', '));
 if(doppelt.length) befunde.push('doppelte ids: '+doppelt.map(([k,v])=>k+' x'+v).join(', '));
 if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeileA+' und '+blockDup.zeileB);
 if(fehlend.size) befunde.push('Handler ohne Funktion: '+[...fehlend].join(', '));

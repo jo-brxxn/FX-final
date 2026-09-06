@@ -3940,6 +3940,38 @@ function ensureBuiltinSyms(){
   const have=new Set(syms.map(s=>s&&s.id));
   DEF.forEach(d=>{if(!have.has(d.id))syms.push({...d});});
 }
+// ⚠ Nutzer-Bugreport 2026-09-06 ("bei AUD bei GDP steht out of date, aber es
+// gibt schon neue Daten, und es gibt auch keine Historie da"). Per Playwright
+// reproduziert - und es war NICHT die Datenquelle: ind_data.json fuehrt AUD
+// GDP Growth QoQ seit dem 02.09. mit Actual 0,4% und zwoelf Punkten in
+// historyFull, im frisch geladenen Tab stand beides korrekt.
+//
+// Ursache ist applySnap(): die Funktion ersetzt `syms` KOMPLETT durch den
+// Snapshot - und damit auch ind.research (Actual/Forecast/Datum) und
+// ind.chartHist (die Punkte des Verlaufscharts). Beide Felder werden aber
+// ausschliesslich von den Live-Feeds gefuellt, und die wurden danach NIE
+// wieder darueber gelegt: applyIndDataFeed() lief nur beim Boot
+// (bootFetchScoreFeeds) und in assetCfgApply(). Ein Snapshot, der auf einem
+// Geraet OHNE erfolgreichen Feed-Abruf entstanden ist - oder schlicht aelter
+// ist als der letzte Release - zog die App ueber Cloud-Sync, Undo/Redo,
+// Backup-Restore und Import damit auf genau diesen alten Stand zurueck und
+// liess sie bis zum naechsten vollen Reload dort stehen.
+//
+// Gemessen an AUD GDP: research.date fiel von 2026-09-02 auf 2026-03-04,
+// chartHist von 12 Punkten auf 0. Die Zeile trug danach OUT OF DATE (186
+// Tage = 2,05 eigene Zyklen ueberfaellig) und der Chart meldete "Not enough
+// history" - beide vom Nutzer gemeldeten Symptome aus derselben Ursache.
+//
+// Alle vier apply*-Funktionen sind idempotent und steigen mit `false` aus,
+// solange ihr Feed nicht geladen ist (`if(!X_FEED)return false`) - der
+// Aufruf ist deshalb in JEDEM applySnap()-Pfad sicher, auch beim Import auf
+// einem frisch geoeffneten Tab, bei dem noch kein Feed da ist.
+function reapplyLiveFeeds(){
+  [()=>(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)?applyIndDataFeed():false,
+   ()=>applyBondDataFeed(),
+   ()=>applyCotDataFeed(),
+   ()=>applySentimentFeed()].forEach(fn=>{try{fn();}catch(e){}});
+}
 function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // Nutzer-Bugreport 2026-09-01 ("Notizen in mehreren Ordnern sind weg,
   // obwohl kein zweites Geraet benutzt wurde"): per Playwright reproduziert
@@ -3966,7 +3998,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();reapplyLiveFeeds();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder

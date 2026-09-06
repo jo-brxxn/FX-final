@@ -10304,3 +10304,73 @@ Titel = Indikator + Rubrik als Unterzeile, `AS OF Wed, Aug 12, 26 · NEXT in 5d`
 Zähler 3/4, schließt beim vierten. Zurück auf By asset: 2 Panels, beide mit
 As-of/Next-Zeile. Kein Kartenüberlauf bei 1400 und 820 px, keine
 Konsolen-/Page-Errors.
+
+---
+
+## 2026-09-06 — Live-Feeds nach jedem Snapshot erneut anwenden (VERSION-CHECK-472)
+
+**Nutzer-Bugreport:** *„bei aud bei gdp steht out of Date aber es gibt schon
+neue Daten und es gibt auch keine Historie da also korrigier das"*
+
+### Was NICHT die Ursache war
+
+Zuerst gegen die Datenquelle geprüft, bevor am Code etwas angefasst wurde.
+`ind_data.json` führt `AUD → GDP Growth QoQ` seit dem 02.09.2026 mit
+Actual 0,4 % / Forecast 0,3 % und **zwölf** Punkten in `historyFull`
+(zurück bis 12/2023) — und zwar in jedem der letzten acht stündlichen
+Daten-Commits, also seit über einem Tag unverändert korrekt. Im frisch
+geladenen Tab stand beides ebenfalls richtig: Playwright zeigte
+`research.date = 2026-09-02`, `chartHist.length = 12`, `indScoreParts().stale`
+= false, und `staleIndicators()` listete app-weit nur einen einzigen
+Indikator (CAD Consumer Confidence). Der Fehler war also **nicht** im Feed,
+nicht im Namens-Matching (`stripPeriodSuffix('GDP Growth QoQ q/q').base`
+trifft den Feed-Schlüssel) und nicht in der Altersgrenze.
+
+### Die Ursache: `applySnap()` legt die Feeds nicht neu darüber
+
+`applySnap()` ist laut CLAUDE.md der EINE gemeinsame Trichter für Cloud-Sync,
+Undo/Redo, Backup-Restore und Import. Die Funktion ersetzt `syms` **komplett**
+durch den Snapshot — und damit auch die beiden Felder, die ausschließlich der
+Live-Feed füllt:
+
+| Feld | gefüllt von | zeigt |
+|---|---|---|
+| `ind.research` | `applyIndDataFeed()` | Actual/Forecast/Previous/**Datum** |
+| `ind.chartHist` | `adoptChartHist()` im selben Lauf | die Punkte des Verlaufscharts |
+
+`applyIndDataFeed()` lief aber nur an **zwei** Stellen: einmal beim Boot
+(`bootFetchScoreFeeds()`) und in `assetCfgApply()`. Nach einem `applySnap()`
+wurde der Feed nie wieder darübergelegt. Ein Snapshot, der auf einem Gerät
+**ohne** erfolgreichen Feed-Abruf entstanden ist — oder schlicht älter ist als
+der letzte Release —, zog die App damit auf genau diesen alten Stand zurück
+und ließ sie bis zum nächsten vollen Reload dort stehen.
+
+**Reproduktion (Playwright):** einen Snapshot bauen, in dem AUD GDP auf
+`date 2026-03-04` / `actual 0.8%` / `chartHist []` steht, dann
+`_flipCauseTag='sync'; applySnap(...)`:
+
+```
+vorher: date 2026-09-02  actual 0.4%  hist 12  stale false
+nachher: date 2026-03-04  actual 0.8%  hist  0  stale true
+```
+
+186 Tage = 2,05 eigene Zyklen überfällig → `OUT OF DATE`, und `chartHist`
+leer → „Not enough history". **Beide vom Nutzer gemeldeten Symptome aus einer
+einzigen Ursache** — genau deshalb traten sie gemeinsam auf.
+
+### Der Fix
+
+Neue Funktion `reapplyLiveFeeds()` direkt über `applySnap()`, aufgerufen
+unmittelbar vor `recomputeAuto()` am Ende von `applySnap()`. Sie legt alle
+**vier** auf `syms` wirkenden Feeds wieder darüber (Indikatoren, Anleihen,
+COT, Sentiment) — nicht nur den Indikator-Feed, denn `applySnap()` überschreibt
+deren Ergebnisse genauso.
+
+Sicher in jedem Pfad: alle vier `apply*`-Funktionen steigen mit `false` aus,
+solange ihr Feed nicht geladen ist (`if(!X_FEED)return false`), und sind
+idempotent — ein Import auf einem frisch geöffneten Tab ohne Feed ändert also
+nichts, und ein Undo/Redo bekommt dieselbe Überlagerung, die der Boot-Pfad
+ohnehin macht. Manuell gesetzte Bias-Werte bleiben geschützt, dafür sorgt
+weiterhin `indBiasPinned()` in `applyTrendModel()`.
+
+Gegenprobe nach dem Fix: `nachher` = `vorher` (Datum 2026-09-02, hist 12).

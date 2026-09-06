@@ -168,3 +168,27 @@ Der Wächter sammelt dafür alle Brücken-Blöcke aus `js/*.js` (ab
 Handler-Namen, der nur in `js/*.js` definiert ist und dort nicht vorkommt. In
 `index.html` selbst definierte Funktionen sind ausgenommen — die stehen ohnehin
 global.
+
+## `structure.js`, fünftes Netz: Feed fehlt in `reapplyLiveFeeds()` (seit 2026-09-06)
+
+**Anlass:** Bugreport „bei AUD bei GDP steht out of date, aber es gibt schon
+neue Daten, und es gibt auch keine Historie da". `applySnap()` — der gemeinsame
+Trichter für Cloud-Sync, Undo/Redo, Backup-Restore und Import — ersetzt `syms`
+komplett, also auch `ind.research` (Actual/Forecast/Datum) und `ind.chartHist`
+(die Chartpunkte). Beide Felder füllt **ausschließlich** ein Live-Feed, und der
+wurde danach nie wieder darübergelegt. Ein Snapshot von einem Gerät ohne
+erfolgreichen Feed-Abruf zog die App still auf dessen alten Stand zurück.
+
+Der Fix ist `reapplyLiveFeeds()` in `applySnap()`. Der hält aber nur, solange
+ein **später dazukommender** Feed dort auch eingetragen wird — und genau das
+ist die Sorte Regel, die ein Absatz in `docs/state-sync.md` niemandem in
+Erinnerung ruft. Deshalb als Netz: jede `function apply…Feed()` in `js/*.js`
+muss namentlich im Rumpf von `reapplyLiveFeeds()` vorkommen.
+
+Ausnahmen stehen als `FEED_AUSNAHMEN` **mit Begründung** im Prüfskript, nicht
+als stiller Eintrag — heute nur `applyScoreHistServerFeed` (schreibt in
+`scoreHist`, nicht in `syms`).
+
+Gegenprobe gemacht: `applyCotDataFeed()` aus `reapplyLiveFeeds()` entfernt →
+`STRUKTURFEHLER: Feed fehlt in reapplyLiveFeeds() … applyCotDataFeed`; wieder
+eingesetzt → grün. Auf dem Bestand meldet das Netz **0** Fälle.

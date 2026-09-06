@@ -109,3 +109,31 @@ Cloud-Stufe drüber, sobald irgendein anderes Gerät zwischen Toggle und
 1,5-s-Push gepusht hat. `cloudPull` lässt bei gesetztem Pending-Flag die
 lokalen Präferenz-Felder (Kompakt-Stufe, designHue) in Ruhe und schiebt sie
 danach als neue Version hoch; ein MANUELLER Download übernimmt weiter alles.
+
+## Regel: was nur ein Live-Feed füllt, muss nach `applySnap()` neu darübergelegt werden
+
+`applySnap()` ist der EINE gemeinsame Trichter für Cloud-Sync, Undo/Redo,
+Backup-Restore und Import — und er ersetzt `syms` **komplett** durch den
+Snapshot. Alles, was normalerweise erst ein Feed-Abruf in `syms` hineinschreibt,
+ist danach also auf dem Stand des Snapshots, nicht auf dem der Quelle.
+
+Betroffen sind heute vier Feeds mit ihren Zielfeldern:
+
+| Feed | `apply*`-Funktion | schreibt in |
+|---|---|---|
+| `ind_data.json` | `applyIndDataFeed()` | `ind.research`, `ind.chartHist`, `ind.valHist`, Bias |
+| `bond_data.json` | `applyBondDataFeed()` | `ind.research` der Renditen |
+| `cot_data.json` | `applyCotDataFeed()` | `ind.research` der COT-Indikatoren |
+| `sentiment_data.json` | `applySentimentFeed()` | `ind.research` der Sentiment-Indikatoren |
+
+Deshalb ruft `applySnap()` seit VERSION-CHECK-472 `reapplyLiveFeeds()` direkt
+vor `recomputeAuto()` auf. **Kommt ein fünfter Feed dazu, der in `syms`
+schreibt, gehört er dort hinein** — sonst zieht der nächste Cloud-Pull die App
+still auf einen alten Stand zurück, und zwar sichtbar als „OUT OF DATE" plus
+leerem Verlaufschart (so 2026-09-06 an AUD GDP gemeldet, siehe
+`docs/CHANGELOG.md`).
+
+Voraussetzung, damit der Aufruf in jedem Pfad unschädlich bleibt: jede
+`apply*`-Funktion muss **idempotent** sein und mit `false` aussteigen, solange
+ihr Feed nicht geladen ist (`if(!X_FEED)return false`) — ein Import auf einem
+frisch geöffneten Tab darf nichts kaputtmachen.

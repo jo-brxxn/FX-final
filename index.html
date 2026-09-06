@@ -4190,11 +4190,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-471 - Indikator-Vergleich, Naechster-Wert-Countdown (Nutzer-Wunsch 2026-09-05). (1) Insights &gt; Data hat jetzt zwei Leserichtungen im selben Panel-Raster: By asset (ein Indikator, bis zu 4 Assets - wie bisher) und By indicator (ein Asset, bis zu 4 seiner Indikatoren - neu). Der Indikator-Picker arbeitet wie der Asset-Picker: jeder Tipp wirkt sofort, Zaehler n/4, bei 4 schliesst er. (2) Ueber jedem Vergleichs-Chart steht jetzt, von wann der Wert ist und wann der naechste kommt; ist der naechste in 7 Tagen oder weniger, steht er rot. (3) Die Indikator-Tabelle jedes Assets hat eine neue Spalte Next mit NUR der Restzeit (in 3d / Tomorrow / Today), rot ab 7 Tagen - das Datum steht bewusst nur im ausgeklappten Zustand. ⚠ Das Kalender-Fenster reicht nur rund eine Woche voraus; ist kein Termin bekannt, steht ein Strich statt einer hochgerechneten Schaetzung (CLAUDE.md Regel 4)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-472 - Live-Feeds werden nach jedem Snapshot erneut angewendet (Nutzer-Bugreport 2026-09-06, AUD GDP: OUT OF DATE trotz neuem Wert, dazu leerer Verlaufschart). Ursache: applySnap() - der gemeinsame Trichter fuer Cloud-Sync, Undo/Redo, Backup-Restore und Import - ersetzt syms komplett, also auch ind.research (Actual/Forecast/Datum) und ind.chartHist (die Chartpunkte). Beide Felder fuellt ausschliesslich der Live-Feed, und der wurde danach nie wieder darueber gelegt: applyIndDataFeed() lief nur beim Boot und in assetCfgApply(). Ein Snapshot von einem Geraet ohne erfolgreichen Feed-Abruf zog die App damit auf dessen alten Stand zurueck und liess sie bis zum naechsten vollen Reload dort stehen. Gemessen an AUD GDP: Datum fiel von 02.09. auf 04.03., chartHist von 12 Punkten auf 0. applySnap() legt jetzt alle vier Feeds (Indikatoren, Anleihen, COT, Sentiment) direkt vor dem Recompute wieder darueber - idempotent und ohne Wirkung, solange ein Feed nicht geladen ist."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-471</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-472</span>
     </span>
   </div>
   <div class="hdr-r">
