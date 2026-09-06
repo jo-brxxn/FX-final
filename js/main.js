@@ -1558,13 +1558,61 @@ const IND_NEXT_SOON_D=7;
 // Datum steht im ausgeklappten Zustand (Nutzer-Entscheidung 2026-09-05:
 // "Nur wann kommt ein neuer weil das Datum sieht man im ausgeklappten
 // Zustand").
+// Erwarteter naechster Termin aus dem EIGENEN Rhythmus des Indikators.
+//
+// ⚠ Nutzer-Vorgabe 2026-09-06: "Mach die ersten Tage nur den median und 10
+// Tage davor weis man ja den Wert also ab dann soll es genau sein." Genau so:
+// steht der Termin im Kalender (dessen Fenster rund 10 Tage voraus reicht),
+// gilt das exakte Datum; davor die Erwartung aus dem gemessenen Turnus.
+//
+// Anlass: die Spalte war fast leer. Gemessen ueber alle Assets hatten nur
+// 1 bis 6 von rund 25 Zeilen einen Kalendertermin - bei AUD genau eine, bei
+// NZD keine einzige. Mehr ECHTE Termine gibt es nicht, das Fenster endete am
+// 16.09. bei 106 Events.
+//
+// Der Zyklus ist kein geratener Wert, sondern der Median der tatsaechlichen
+// Abstaende der eigenen Reihe (indCycleDays) - dieselbe Groesse, mit der auch
+// die Altersgrenze rechnet. Trotzdem bleibt es eine ERWARTUNG, und die wird
+// als solche gekennzeichnet (Tilde + gedaempfte Schrift + Erklaerung im
+// Titel), damit sie nie wie ein bestaetigter Termin aussieht.
+//
+// Drei Bedingungen, unter denen NICHTS behauptet wird (CLAUDE.md Regel 4):
+//   - kein Release-Konzept (Bond/COT/Sentiment - laufen kontinuierlich)
+//   - Rhythmus nur geraten (indCycleIsGuess) statt gemessen
+//   - die Reihe laeuft ihrem Rhythmus mehr als NEXT_EST_MAX_CYC hinterher;
+//     dann ist sie sichtbar aus dem Takt und eine Fortschreibung waere eine
+//     Behauptung ueber eine Quelle, die gerade nicht liefert.
+const NEXT_EST_MAX_CYC=3;
+function indNextExpected(ind){
+  const r=(ind&&ind.research)||{};
+  if(r.bond||r.cot||r.sent)return null;
+  const last=r.date?String(r.date).slice(0,10):'';
+  if(!last)return null;
+  if(indCycleIsGuess(ind))return null;
+  const cyc=indCycleDays(ind);
+  if(!isFinite(cyc)||cyc<=0)return null;
+  const heute=new Date(todayStr()+'T00:00:00Z').getTime();
+  const basis=new Date(last+'T00:00:00Z').getTime();
+  if(!isFinite(basis))return null;
+  let t=basis+cyc*86400000,n=1;
+  while(t<heute&&n<NEXT_EST_MAX_CYC){t+=cyc*86400000;n++;}
+  if(t<heute)return null;                 // mehr als drei Zyklen aus dem Takt
+  return new Date(t).toISOString().slice(0,10);
+}
 function indNextReleaseCell(symId,ind){
   const ev=findIndNextEvent(symId,ind&&ind.name);
-  if(!ev)return`<span class="ir-dash" title="No scheduled release for this indicator inside the calendar window — the feed only looks about a week ahead, and nothing beyond it is estimated.">–</span>`;
-  const d=daysUntil(ev.date);
+  if(ev){
+    const d=daysUntil(ev.date);
+    const soon=d<=IND_NEXT_SOON_D;
+    const lbl=d<=0?'Today':d===1?'Tomorrow':'in '+d+'d';
+    return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar)${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${escH(lbl)}</span>`;
+  }
+  const exp=indNextExpected(ind);
+  if(!exp)return`<span class="ir-dash" title="No scheduled release inside the calendar window, and this indicator has no measured release rhythm to expect one from — so nothing is claimed here.">–</span>`;
+  const d=daysUntil(exp);
   const soon=d<=IND_NEXT_SOON_D;
-  const lbl=d<=0?'Today':d===1?'Tomorrow':'in '+d+'d';
-  return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''}${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${escH(lbl)}</span>`;
+  const lbl=d<=0?'due':d===1?'~tomorrow':'~in '+d+'d';
+  return`<span class="ir-next ir-next-est${soon?' soon':''}" title="Expected around ${escH(fmtDayHdr(exp))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps) counted from its last release on ${escH(fmtDayHdr((ind.research||{}).date||''))}. The calendar only carries about ten days ahead; once the release enters that window, the exact date replaces this.">${escH(lbl)}</span>`;
 }
 // Lange Form fuer den Vergleich: von wann der Wert ist UND wann der naechste
 // kommt (Nutzer-Wunsch 2026-09-05).
@@ -1573,10 +1621,17 @@ function indAsOfNextHtml(symId,ind){
   const ev=findIndEvent(symId,ind&&ind.name);
   const asOf=(ev&&ev.date)||r.date||'';
   const nx=findIndNextEvent(symId,ind&&ind.name);
-  const d=nx?daysUntil(nx.date):null;
+  // Dieselbe Staffelung wie in der Tabelle (indNextReleaseCell): exaktes
+  // Datum, sobald es im Kalender steht, davor die Erwartung aus dem
+  // gemessenen Turnus - gekennzeichnet, nie als Termin ausgegeben.
+  const exp=nx?null:indNextExpected(ind);
+  const datum=nx?nx.date:exp;
+  const d=datum?daysUntil(datum):null;
   const soon=d!=null&&d<=IND_NEXT_SOON_D;
-  const nxTxt=nx?(d<=0?'today':d===1?'tomorrow':'in '+d+'d'):null;
-  return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${nx?`<b class="px-next${soon?' soon':''}" title="${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''}">${escH(nxTxt)}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window — the feed looks about a week ahead and nothing beyond it is estimated.">not scheduled yet</b>`}</div>`;
+  const nxTxt=datum==null?null:nx?(d<=0?'today':d===1?'tomorrow':'in '+d+'d'):(d<=0?'due':d===1?'~tomorrow':'~in '+d+'d');
+  const nxTitle=nx?`${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''} (confirmed date from the calendar)`
+    :`Expected around ${escH(fmtDayHdr(exp||''))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps). Once the release enters the calendar window, roughly ten days ahead, the exact date replaces this.`;
+  return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${datum?`<b class="px-next${nx?'':' px-next-est'}${soon?' soon':''}" title="${nxTitle}">${escH(nxTxt)}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window, and no measured release rhythm to expect one from — so nothing is claimed here.">not scheduled yet</b>`}</div>`;
 }
 // Eigene, rollierende Werte-Historie je Indikator (unabhaengig vom kurzen
 // calEvts-Rueckblickfenster von CAL_PAST_DAYS Tagen). calEvts behaelt naemlich
@@ -17917,7 +17972,7 @@ Object.assign(window,{
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
-  findIndNextEvent,IND_NEXT_SOON_D,indNextReleaseCell,indAsOfNextHtml,
+  findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,

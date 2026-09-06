@@ -10669,3 +10669,81 @@ Abschnitte weiter auf dem echten Stand rechnen) und verlangt, dass keine davon
 veraltet ist. 117 Indikatoren geprüft, **0** Befunde; mit wieder ausgebautem
 Fix **10** Befunde. Der Wächter ist also scharf und nicht durch Altlasten
 stumpf.
+
+---
+
+## 2026-09-06 — Next-Spalte: Median für die weite Sicht, exakt im Kalenderfenster (VERSION-CHECK-477)
+
+**Nutzer:** *„die neue Tabellen Spalte next bleibt dauerhaft leer … ich will da
+sehen wie lange es braucht bis eine neue Version des Indikators kommt … und
+wenn es 7 oder weniger Tage sind soll er orange sein sonst in normaler
+schriftfarbe"* — und auf Rückfrage: *„Mach die ersten Tage nur den median und
+10 Tage davor weis man ja den Wert also ab dann soll es genau sein"*.
+
+### Nachgemessen: nicht leer, aber fast
+
+Gemessen über alle 24 Assets hatten nur **1 bis 6 von rund 25 Zeilen** je Asset
+einen Kalendertermin — bei AUD genau **eine**, bei NZD **keine einzige**. Mehr
+echte Termine gibt es nicht: `calEvts` führte 106 Events und endete am
+**16.09.**, also rund zehn Tage voraus. Wer AUD oder NZD offen hatte, sah eine
+Spalte voller Striche.
+
+### Die Staffelung
+
+| Lage | Anzeige | Schrift |
+|---|---|---|
+| Termin steht im Kalender | `in 5d` / `Tomorrow` / `Today` | fett, `--t1` |
+| kein Termin, Turnus gemessen | `~in 31d` | leichter, `--t3` |
+| kein Release-Konzept / Turnus nur geraten / >3 Zyklen aus dem Takt | `–` | — |
+
+Der Turnus ist **kein geratener Wert**, sondern der Median der tatsächlichen
+Abstände der eigenen Reihe (`indCycleDays`) — dieselbe Größe, mit der auch die
+Altersgrenze rechnet. Trotzdem bleibt es eine Erwartung, und die ist als solche
+gekennzeichnet: Tilde, leichtere Schrift, und im Titel steht ausgeschrieben,
+woraus sie stammt und dass der exakte Termin sie ersetzt, sobald er ins
+Kalenderfenster rutscht. Ein bestätigter Termin sieht anders aus als eine
+Erwartung — das ist der Punkt (CLAUDE.md Regel 4).
+
+Drei Fälle, in denen **nichts** behauptet wird: Indikatoren ohne
+Release-Konzept (Renditen, COT, Sentiment, die vier Einschätzungs-Indikatoren),
+ein nur geratener Turnus (`indCycleIsGuess`, siehe VERSION-CHECK-476), und eine
+Reihe, die mehr als `NEXT_EST_MAX_CYC`=3 Zyklen aus dem Takt ist — dann liefert
+die Quelle sichtbar nicht, und eine Fortschreibung wäre eine Behauptung über
+sie.
+
+### Wirkung, gemessen
+
+| | vorher | nachher |
+|---|---|---|
+| gefüllte Zellen gesamt | 98 | **362** (98 exakt + 264 erwartet) |
+| AUD | 1 | **12** |
+| NZD | 0 | **12** |
+| Striche je Asset | 16–24 | ~10 — genau die ohne Release-Konzept |
+
+Bei AUD sind das exakt: 3 Renditen/Spread, 3 COT, plus CB Tone, Next CB Move,
+Risk Correlation und Geopolitics = 10.
+
+### Orange, und warum es einen neuen Token braucht
+
+Die 7-Tage-Hervorhebung war rot. **`--amber` ist in diesem Design gar kein
+Orange**, sondern ein neutrales Schiefergrau (`#55617A`) — die gelbliche
+Neutralfarbe wurde am 2026-08-21 bewusst ersetzt, und `check/theme.js` erzwingt
+seither eine Sättigung ≤ 28 % darauf.
+
+Deshalb ein **eigener, zweckgebundener Token `--due`** statt eines Umbaus an
+`--amber`: hell `#B45309`, dunkel `#F0913A`, je Vorlage nach der Helligkeit
+ihres `--bg2` gesetzt (5 helle, 5 dunkle). Rot bleibt frei — es ist in dieser
+App die Bedeutungsfarbe für bearish, und ein naher Termin ist keine Richtung,
+sondern ein Hinweis.
+
+`check/theme.js` prüft `--due` jetzt mit: der erste Wurf mit einem einzigen
+dunklen Orange fiel auf sieben dunklen Vorlagen durch (bis herunter zu 1,65:1
+auf `--bg5`) — genau dafür ist der Wächter da.
+
+### Compare-Modus
+
+Die gewünschte Funktion („bis zu 4 Indikatoren einer Währung vergleichen")
+existiert seit VERSION-CHECK-471: **Insights → Data → „By indicator"**, dann
+über `Indicators n/4` bis zu vier Indikatoren desselben Assets wählen.
+Verifiziert, dass sie unverändert läuft. Die As-of/Next-Zeile über den Panels
+benutzt jetzt dieselbe Staffelung wie die Tabelle.

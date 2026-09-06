@@ -422,3 +422,20 @@ daneben, die Karte darüber. Beim Preischart-Umbau (2026-09-05) sind dabei vier
 Altlasten aus den Änderungen der Vortage aufgefallen und mitkorrigiert worden
 (Zurück-Pille 12.5px, Popup-Fußzeile 10.5px, Popup-Kopf und die Unterzeile der
 Data-Kopfkarte mit freien px-Werten).
+
+## `--due`: eigener Ton für „Termin steht bevor" (seit 2026-09-06)
+
+`--amber` ist in diesem Design **kein Orange**, sondern ein neutrales
+Schiefergrau (`#55617A`) — die gelbliche Neutralfarbe wurde am 2026-08-21
+ersetzt, und `check/theme.js` erzwingt darauf eine Sättigung ≤ 28 %. Wer
+Orange braucht, darf `--amber` deshalb **nicht** umbiegen.
+
+Dafür gibt es `--due` (hell `#B45309`, dunkel `#F0913A`, je Vorlage nach der
+Helligkeit ihres `--bg2`). Verwendung: ein bevorstehender Termin, heute die
+Next-Spalte und die Next-Angabe über den Vergleichs-Charts ab
+`IND_NEXT_SOON_D`=7 Tagen.
+
+**Nicht** für Bedeutung im Score-Sinn: bullish ist `--green`/`--blue`, bearish
+`--red`, neutral `--amber`. Ein naher Termin ist keine Richtung. `--due` wird
+von `check/theme.js` auf denselben Kontrast (≥ 3:1 gegen `--bg2` und `--bg5`)
+geprüft wie die Bedeutungsfarben.

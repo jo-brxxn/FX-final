@@ -53,7 +53,7 @@ function sat([r, g, b]) {
 }
 
 const PFLICHT = ['--bg0','--bg1','--bg2','--bg3','--bg4','--bg5','--bg6','--bd','--bd2',
-  '--t0','--t1','--t2','--t3','--green','--red','--amber','--blue','--accent',
+  '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
   '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
   '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
   '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--a-risk','--success','--live','--purple'];
@@ -97,7 +97,7 @@ function pruefeTokensStatisch() {
       const cs = getComputedStyle(document.documentElement);
       const g = n => cs.getPropertyValue(n).trim();
       const namen = ['--bg0','--bg1','--bg2','--bg3','--bg4','--bg5','--bg6','--bd','--bd2',
-        '--t0','--t1','--t2','--t3','--green','--red','--amber','--blue','--accent',
+        '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
         '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
         '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
         '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--a-risk','--success','--live','--purple'];
@@ -127,7 +127,7 @@ function pruefeTokensStatisch() {
       }
     }
     // Bias-Farben muessen auf der Kartenflaeche lesbar sein
-    for (const bn of ['--green','--red','--amber','--success','--live','--accent']) {
+    for (const bn of ['--green','--red','--amber','--due','--success','--live','--accent']) {
       const bc = parse(w[bn]); if (!bc) continue;
       for (const fn of ['--bg2','--bg5']) {
         const fc = parse(w[fn]); if (!fc) continue;
