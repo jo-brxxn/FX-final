@@ -4049,6 +4049,35 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
+// ── Sichtbare Meldung, wenn der lokale Speicher voll ist ────────────────
+// Absichtlich KEIN Modal: save() laeuft auch aus Hintergrund-Timern und beim
+// Verlassen der Seite: ein Fenster, das sich ungefragt aufdraengt, waere dort
+// falsch. Stattdessen eine feste Leiste am oberen Rand, die stehen bleibt, bis
+// ein Speichern wieder klappt - plus die Zahlen, die man zum Aufraeumen
+// braucht.
+let _saveQuotaBad=false;
+function saveQuotaKB(){
+  try{let n=0;for(const k in localStorage){if(!Object.prototype.hasOwnProperty.call(localStorage,k))continue;n+=k.length+(localStorage.getItem(k)||'').length;}return Math.round(n/1024);}catch(e){return null;}
+}
+function saveQuotaFail(e){
+  const istQuota=e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||/quota/i.test(e.message||''));
+  _saveQuotaBad=true;
+  let bar=document.getElementById('saveQuotaBar');
+  if(!bar){
+    bar=document.createElement('div');bar.id='saveQuotaBar';bar.className='save-quota-bar';
+    document.body.appendChild(bar);
+  }
+  const kb=saveQuotaKB();
+  bar.innerHTML=istQuota
+    ?`<b>Local storage is full — your last changes were NOT saved.</b> This device is holding about ${kb!=null?kb+' KB':'the maximum'} for this app, and the browser refused to write more. Your data is still on screen and still in the cloud if sync is on. Free some room: Settings → Backups (delete old ones), or open Settings → Cloud and sync, then reload.`
+    :`<b>Saving failed — your last changes were NOT stored on this device.</b> ${escH((e&&e.message)||'Unknown error')}. Your data is still on screen; copy anything important before reloading.`;
+  const b=document.getElementById('saveBadge');if(b)b.textContent='⚠ Not saved';
+}
+function saveQuotaOk(){
+  if(!_saveQuotaBad)return;
+  _saveQuotaBad=false;
+  const bar=document.getElementById('saveQuotaBar');if(bar)bar.remove();
+}
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
@@ -4707,7 +4736,21 @@ function save(){
       if(changed)localStorage.setItem('fxpro_updated',new Date().toISOString());
       _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
       const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
-    }catch(e){}
+      saveQuotaOk();
+    }catch(e){
+      // ⚠ Hier stand bis 2026-09-06 ein leeres catch(e){}. Damit war der
+      // haeufigste ernste Fehlerfall dieser App KOMPLETT stumm: reisst das
+      // localStorage-Kontingent (typisch 5 MB je Herkunft, auf iOS/Safari am
+      // strengsten), wirft setItem einen QuotaExceededError, der Snapshot wird
+      // NICHT geschrieben - und der Nutzer sieht nichts. Das "✓ Saved"-Abzeichen
+      // bleibt einfach auf der alten Uhrzeit stehen, was niemandem auffaellt.
+      // Gemessen an diesem Stand: Snapshot 1.422 KB, localStorage gesamt
+      // 1.491 KB - noch reichlich Luft, aber der Verlaufschart-Anteil waechst
+      // mit jeder Historien-Erweiterung (siehe docs/data-sources.md).
+      // Stiller Datenverlust ist der schlimmste Ausgang; jetzt sagt es die App
+      // (CLAUDE.md Regel 6).
+      saveQuotaFail(e);
+    }
     recordScoreHist();
     if(changed)cloudAutoSync();
   };
@@ -18187,6 +18230,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
+  saveQuotaFail,saveQuotaOk,saveQuotaKB,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,

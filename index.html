@@ -3879,6 +3879,10 @@ a.rpl-card:hover{background:var(--bg3)}
 .rpl-go{font-size:var(--fs-sm);color:var(--blue)}
 .rpl-card.rpl-none{opacity:.72}
 .rpl-nolink{font:600 var(--fs-xs)/1.3 var(--ff-num);color:var(--t3);font-style:italic;cursor:help;white-space:nowrap}
+/* Speicher-voll-Warnung: fest oben, bleibt bis ein Speichern wieder klappt.
+   Kein Modal - save() laeuft auch aus Timern und beim Verlassen der Seite. */
+.save-quota-bar{position:fixed;top:0;left:0;right:0;z-index:99999;padding:11px 16px;background:var(--red);color:#fff;font:500 13px/1.55 var(--ff-num);box-shadow:0 2px 14px rgba(0,0,0,.28)}
+.save-quota-bar b{font-weight:800}
 .rw-none-txt{font-size:var(--fs-sm);line-height:1.65;color:var(--t1)}
 .rw-none-txt b{color:var(--t0)}
 .rw-none-txt a{color:var(--blue);word-break:break-all}
@@ -4342,11 +4346,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-481 - Backtester: neue Spalte &quot;Decisive factor&quot; ganz rechts, in die man selbst schreiben kann, was den Ausschlag gab (Nutzer-Wunsch 2026-09-06). Der Grund haengt an der ENTSCHEIDUNG, nicht am Asset - Schluessel ist Waehrung plus Datum, was man bei USD eintraegt steht sofort auch bei Gold und beim US-Yield. Gespeichert ueber snap()/applySnap() und damit automatisch geraeteuebergreifend und im Undo-Stapel (CLAUDE.md Regel 1). Alle 59 vergangenen Zinsentscheide der acht Notenbanken sind recherchiert und vorbelegt - aus Notenbank-Mitteilungen, Pressekonferenzen und Berichten, jeder Eintrag mit Quelle, die per Pfeil direkt aufrufbar ist. Recherchierter Text steht gestrichelt und gedaempft, eigener Text normal: man sieht auf einen Blick, was von der App kam und was von einem selbst. Sobald man tippt, gilt die eigene Fassung; setzt man den Text exakt auf den recherchierten zurueck, greift wieder die Recherche. Wo eine Quelle nur den ZYKLUS begruendet und nicht die einzelne Sitzung, ist der Text auch so formuliert - kein Protokoll, das es nicht gibt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-482 - Stiller Datenverlust behoben. Die Zeile, die den Snapshot nach localStorage schreibt, endete auf einem LEEREN catch(e){}. Reisst das Kontingent (typisch 5 MB je Herkunft, auf iOS/Safari am strengsten), wirft setItem einen QuotaExceededError, der Snapshot wird nicht geschrieben - und der Nutzer sah NICHTS: das Abzeichen blieb einfach auf der alten Uhrzeit stehen. Damit war der ernsteste Fehlerfall der App komplett stumm. Jetzt erscheint eine feste rote Leiste am oberen Rand, die sagt, dass nicht gespeichert wurde, wie viel dieses Geraet belegt und was man dagegen tun kann; sie verschwindet automatisch, sobald ein Speichern wieder klappt. Bewusst keine Dialogbox: save() laeuft auch aus Hintergrund-Timern und beim Verlassen der Seite. Gegenprobe per Playwright: Kontingent kuenstlich erschoepft, Leiste erscheint mit der gemessenen Belegung und dem Abzeichen &quot;Not saved&quot;; Kontingent wieder frei, Leiste verschwindet. Ausserdem neuer, von Hand startbarer Workflow &quot;Probe indicator history depth&quot;: misst, bis zu welchem Jahr die Indikator-Quelle ueberhaupt Daten liefert - das ist nirgends dokumentiert, und der aktuelle Bestand zeigt nur den Deckel des Abruf-Workflows (3 Jahre), nicht die Grenze der Quelle. Der Lauf schreibt nichts in die Daten und kann den stuendlichen Job nicht beschaedigen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-481</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-482</span>
     </span>
   </div>
   <div class="hdr-r">

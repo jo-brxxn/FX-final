@@ -11050,3 +11050,78 @@ Recherche vorbelegt (die Jetzt-Zeile bleibt leer — es gibt noch keine
 Entscheidung), 6 Quellen-Links. Eigener Text speichert, überlebt das erneute
 Öffnen, verliert die Seed-Optik und erscheint bei Gold mit. Kein Überlauf,
 keine Konsolen- oder Page-Errors.
+
+---
+
+## 2026-09-06 — Stiller Datenverlust bei vollem Speicher + Messlauf für die Datentiefe (VERSION-CHECK-482)
+
+**Anlass:** Nutzer-Frage zur Historien-Erweiterung bis 2006 — *„Wo werden
+diese ganzen Daten eigentlich gespeichert? Ist das ein Problem?"* … *„Was mache
+ich wenn das gegen das Limit geht was gibt es für Lösungen"*. Beim Nachmessen
+kam ein Fehler zum Vorschein, der nichts mit 2006 zu tun hat, aber schwerer
+wiegt.
+
+### Der Fund: `catch(e){}`
+
+Die Stelle, die den Snapshot nach `localStorage` schreibt, endete auf einem
+**leeren** `catch`. Reisst das Kontingent, wirft `setItem` einen
+`QuotaExceededError`, der Snapshot wird nicht geschrieben — **und der Nutzer
+sieht nichts**. Das „✓ Saved"-Abzeichen bleibt auf der alten Uhrzeit stehen,
+was niemandem auffällt. Damit war der ernsteste Fehlerfall der App der einzige
+komplett stumme.
+
+Jetzt: feste rote Leiste am oberen Rand, die sagt, dass nicht gespeichert
+wurde, **wie viel dieses Gerät belegt** und was zu tun ist; das Abzeichen
+schaltet auf `⚠ Not saved`. Verschwindet automatisch, sobald ein Speichern
+wieder klappt. Bewusst **keine Dialogbox**: `save()` läuft auch aus
+Hintergrund-Timern und beim Verlassen der Seite, dort wäre ein Fenster falsch.
+
+Gegenprobe (Playwright): `setItem` für den Snapshot-Schlüssel künstlich werfen
+lassen → Leiste erscheint, `rgb(197,15,26)`, mit der gemessenen Belegung
+(1 491 KB) und Abzeichen `⚠ Not saved`; Werfen abgestellt → Leiste weg,
+Abzeichen wieder `✓ Saved`.
+
+⚠ Beim Testen selbst hereingefallen: der erste Testlauf zeigte nichts, weil
+`save()` **ganz oben** aussteigt, wenn der Multi-Tab-Schutz greift
+(`fxpro_updated !== _lsUpdatedSeen` und länger als 3 s keine Nutzeraktion).
+Der Test muss vorher `markUserEditTs()` rufen, sonst prüft er nichts.
+
+### Die Messung zur Speicherfrage
+
+| | gemessen |
+|---|---|
+| `snap()` gesamt | **1 422 KB** |
+| davon `chartHist` | **258 KB = 18 %** |
+| localStorage gesamt | 1 491 KB |
+| Punkte in `chartHist` | 10 706 |
+| Punkte in `ind_data.json` | 2 856 |
+| Verhältnis | **3,7×** — dieselbe Reihe liegt mehrfach, weil 24 Assets 8 Währungen spiegeln |
+| `ind_data.json` roh / gzip | 195 KB / **23 KB** |
+| Undo-Stapel | bis zu **60** volle Snapshots im Speicher |
+
+Hochrechnung auf 2006 (20 statt 3 Jahre, gemessene Frequenzen: 68 monatlich,
+22 quartalsweise, 1 wöchentlich): **~21 760 Punkte statt 2 856 = 7,6×**.
+`chartHist` würde auf ~1,9 MB wachsen, der Snapshot auf **~3,1 MB** — bei
+einem typischen Kontingent von 5 MB je Herkunft, auf iPad/Safari am
+strengsten. Und jeder Cloud-Push trüge diese 3,1 MB.
+
+### Warum das eine Inkonsistenz im eigenen Code ist
+
+`js/main.js` begründet ab Zeile ~13058 ausdrücklich, dass abgeleitete Reihen
+(Anleihen, COT, Sentiment) **nicht** in `chartHist` persistiert werden, weil
+sie sonst „im snap()-Schnappschuss (Undo-Stapel UND Cloud-Sync) zehntausende
+Punkte zusaetzlich mitschleppen" würden. Die Indikator-Historie ist die eine
+Reihe, die trotzdem persistiert wird — genau entgegen diesem Grundsatz.
+
+### Der Messlauf (`.github/workflows/probe-history-depth.yml`)
+
+Wie weit die Quelle zurückreicht, ist **nirgends dokumentiert** — und aus dem
+Bestand nicht ablesbar: der älteste Punkt liegt bei 2023-09-08, aber dort
+steht auch `TARGET_CHUNKS=18` (3 Jahre), und `_histChunksFetched` steht
+bereits auf 18. Der Bestand zeigt also die **Grenze des Abrufs, nicht die der
+Quelle**.
+
+Vom Sandkasten aus ist der Endpunkt durch den Netz-Proxy blockiert; GitHubs
+Runner sind es nicht. Deshalb ein von Hand startbarer Workflow, der je Jahr
+ein Januar-Fenster abfragt und Events sowie Events *mit Actual* zählt.
+Schreibt nichts in die Daten, kann den stündlichen Job nicht beschädigen.

@@ -1,0 +1,57 @@
+# Wie weit reicht die Indikator-Quelle wirklich zurueck?
+#
+# Anlass (Nutzer-Frage 2026-09-06): "ich will das du das auf bis 2006
+# erweiterst ... guck mal bis wie weit es Daten gibt". Die Antwort ist
+# NICHT dokumentiert - weder TradingView noch Dritte nennen die Tiefe des
+# Kalender-Endpunkts. Und aus der bestehenden ind_data.json laesst sie sich
+# nicht ablesen: der aelteste Punkt liegt bei 2023-09-08, aber genau dort
+# steht auch der Deckel des Daten-Workflows (TARGET_CHUNKS=18 = 3 Jahre).
+# Der Bestand zeigt also die GRENZE DES ABRUFS, nicht die der Quelle.
+#
+# Dieser Lauf misst es. Er laeuft NUR von Hand (workflow_dispatch), schreibt
+# NICHTS in die Daten und ist damit vom stuendlichen Job vollstaendig
+# entkoppelt - ein Fehlschlag hier kann die App nicht beschaedigen.
+name: Probe indicator history depth
+
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: 'Jahre, die geprueft werden (kommagetrennt)'
+        required: false
+        default: '2006,2010,2014,2018,2020,2022,2023,2024'
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fenster je Jahr abfragen und zaehlen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          YEARS="${{ github.event.inputs.years }}"
+          YEARS="${YEARS:-2006,2010,2014,2018,2020,2022,2023,2024}"
+          echo "## Datentiefe der Indikator-Quelle" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Jahr | HTTP | Events im Januar-Fenster | mit Actual |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          IFS=',' read -ra YS <<< "$YEARS"
+          for Y in "${YS[@]}"; do
+            Y=$(echo "$Y" | tr -d ' ')
+            CODE=$(curl -sL -o "probe_$Y.json" -w "%{http_code}" --max-time 40 \
+              -A "$UA" -H "Origin: https://www.tradingview.com" \
+              "https://economic-calendar.tradingview.com/events?from=${Y}-01-01T00:00:00.000Z&to=${Y}-02-15T00:00:00.000Z&countries=US,EU,DE,GB,JP,CA,AU,NZ,CH" || echo "000")
+            read N NA < <(node -e '
+              const fs=require("fs");
+              try{
+                const d=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+                const r=Array.isArray(d.result)?d.result:[];
+                console.log(r.length+" "+r.filter(e=>e&&e.actual!=null&&e.actual!=="").length);
+              }catch(e){console.log("0 0");}
+            ' "probe_$Y.json")
+            echo "| $Y | $CODE | $N | $NA |" >> $GITHUB_STEP_SUMMARY
+            echo "[probe] $Y: HTTP $CODE, $N Events, davon $NA mit Actual"
+            sleep 3
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Ein Jahr mit **0 Events bei HTTP 200** liegt vor dem Beginn der Quelle." >> $GITHUB_STEP_SUMMARY
+          echo "Das aelteste Jahr mit Events **mit Actual** ist die tatsaechliche Grenze fuer den Verlaufschart." >> $GITHUB_STEP_SUMMARY
