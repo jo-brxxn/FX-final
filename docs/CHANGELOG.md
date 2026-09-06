@@ -10897,3 +10897,76 @@ nennt laut Kommentar im Code ausdrücklich nur den nächsten **High-Impact**-
 Release, konsistent zur roten Flagge. Das ist eine bewusste Entscheidung, kein
 Fehler; hier nur festgehalten, damit es nicht beim nächsten Mal als Bug
 gemeldet und „gefixt" wird.
+
+---
+
+## 2026-09-06 — Rate Probabilities: nur noch Links, je Notenbank eine eigene Seite (VERSION-CHECK-480)
+
+**Nutzer:** *„Veränder die Kategorie Rate probabilities ich will das da nicht
+mehr die Diagramme sondern nur noch die links zu den Webseiten sind bei usw
+isr das fed Watch bei den anderen die die Seite rateprobabilitjes mit /boc
+oder /boj … für nzd und chf gibt es kein link. Und wenn man den quicklink in
+den Assets nutzt soll man Direkt auf die richte Internet Seite kommen. Bei
+nzd und chf kommt ein Fenster das sagt das es das nicht gibt"*
+
+### Link-Karte
+
+Vorher zeigte `RATE_WATCH` für alle Nicht-USD-Währungen dieselbe Startseite
+`rateprobability.com`. Jetzt je Währung die Seite ihrer Notenbank:
+
+| | Ziel |
+|---|---|
+| USD | CME FedWatch Tool |
+| EUR | rateprobability.com/ecb |
+| GBP | /boe |
+| JPY | /boj |
+| CAD | /boc |
+| AUD | /rba |
+| **CHF, NZD** | **keine Seite** (`null`) |
+
+⚠ `/boc` und `/boj` stammen vom Nutzer. `/ecb`, `/boe` und `/rba` sind nach
+demselben Kürzel-Muster gebildet und per `AskUserQuestion` bestätigt worden —
+**die Domain ist vom Netz-Proxy dieser Umgebung blockiert**, ich konnte die
+Pfade nicht selbst abrufen. Sollte einer ins Leere gehen, korrigiert ihn der
+Langdruck auf das 📈-Symbol dauerhaft und gerätesynchron
+(`rateWatchCustom`).
+
+### CHF/NZD: gesagt statt verschwiegen
+
+Für SNB und RBNZ gibt es dort keine Seite. Ein Link auf die Startseite wäre
+hier kein Entgegenkommen, sondern die Behauptung, dort sei etwas zu sehen.
+Stattdessen:
+
+- **In der Liste** stehen beide drin, mit `No source available` — nicht
+  weggelassen. Dieselbe Überlegung wie beim CAD-Kalender am selben Tag: ein
+  leerer Zustand darf nicht aussehen, als hätte man nicht nachgesehen.
+- **Der Quicklink** öffnet ein Fenster (`#mRwNone`), das nennt, warum es keine
+  Quelle gibt, und wie man per Langdruck eine eigene hinterlegt.
+- **Das 📈-Symbol** in der Interest-Rates-Karte ist mit Quelle ein `<a>`, ohne
+  Quelle ein `<button>`, der dasselbe Fenster öffnet — kein `href` ins Leere.
+  Der Langdruck zum Hinterlegen bleibt in beiden Fällen erhalten.
+
+### Der Tab
+
+`renderRateProb()` von 5 699 auf 2 410 Zeichen: keine Währungsleiste, keine
+Meeting-Pillen, kein Zeitregler, kein Timeline-Chart, keine Term-Structure-
+Karte. Verifiziert: **0 `<svg>`** im Tab, 8 Zeilen, Reihenfolge USD EUR GBP
+JPY CAD AUD CHF NZD (bewusst gesetzt — die beiden ohne Quelle ans Ende, statt
+mitten in der Liste).
+
+⚠ **Ehrlich zum Zustand des Codes:** die Chart-Bausteine
+(`rateProbTimelineChart`, `termStructureCardHtml`, `rateProbBuildPts`,
+`scrollRateProbTo` …) haben damit **keinen Aufrufer mehr** — nachgeprüft, nicht
+vermutet; ein erster Kommentarentwurf behauptete das Gegenteil und war falsch.
+Sie bleiben stehen, weil `rate_probabilities.json` weiter stündlich erzeugt
+wird und die Rechnung dahinter über Monate gewachsen ist (Meeting-Verteilungen,
+Approx-Modus für Währungen ohne 1-Monats-Futures, Term-Structure-Kurven). Wer
+aufräumt, muss sie zusammen mit dem Fetch, dem Info-Text `rateprob` und den
+Einträgen in der window-Brücke entfernen — einzeln geht es nicht.
+
+### Verifiziert (Playwright)
+
+Quicklink je Asset: USD → FedWatch, EUR → /ecb, GBP → /boe, JPY → /boj,
+CAD → /boc, AUD → /rba, GOLD → FedWatch (folgt korrekt seiner verbundenen
+Währung), CHF und NZD → Hinweisfenster. Keine Konsolen- oder Page-Errors, kein
+Überlauf.

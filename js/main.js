@@ -588,17 +588,63 @@ function nonFxWatchIconHtml(assetId){
 // investing.com-Kalenderseiten pro Waehrung. Gilt sowohl fuer die Interest-
 // Rates-Karte (renderRub, 📈-Link) als auch den Rate-Probabilities-Tab -
 // beide lesen ueber rateWatchUrl() aus derselben Quelle.
+// ⚠ Nutzer-Vorgabe 2026-09-06: je Waehrung die SEITE DER ZUSTAENDIGEN
+// NOTENBANK, nicht mehr fuer alle dieselbe Startseite. rateprobability.com
+// fuehrt jede Bank unter ihrem Kuerzel (/boc, /boj vom Nutzer genannt; /ecb,
+// /boe, /rba nach demselben Muster, per AskUserQuestion bestaetigt). USD
+// bleibt beim CME FedWatch Tool - das ist das eigentliche Vorbild-Tool.
+//
+// CHF und NZD stehen bewusst auf null: fuer SNB und RBNZ gibt es dort KEINE
+// Seite (Nutzer-Angabe). Ein Link auf die Startseite waere hier kein
+// Entgegenkommen, sondern eine Behauptung, es gaebe dort etwas zu sehen -
+// stattdessen sagt die App das offen (rateWatchMissingHtml/openRateWatchNone).
 const RATE_WATCH={
   USD:'https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html',
-  EUR:'https://rateprobability.com',
-  GBP:'https://rateprobability.com',
-  CHF:'https://rateprobability.com',
-  JPY:'https://rateprobability.com',
-  CAD:'https://rateprobability.com',
-  AUD:'https://rateprobability.com',
-  NZD:'https://rateprobability.com',
+  EUR:'https://rateprobability.com/ecb',
+  GBP:'https://rateprobability.com/boe',
+  JPY:'https://rateprobability.com/boj',
+  CAD:'https://rateprobability.com/boc',
+  AUD:'https://rateprobability.com/rba',
+  CHF:null,
+  NZD:null,
 };
-function rateWatchUrl(id){return(rateWatchCustom&&rateWatchCustom[id])||RATE_WATCH[macroCcyFor(id)]||RATE_WATCH.USD;}
+// Wie die Seite je Waehrung heisst - fuer Beschriftung und Hinweistext.
+const RATE_WATCH_BANK={USD:'Fed',EUR:'ECB',GBP:'Bank of England',JPY:'Bank of Japan',CAD:'Bank of Canada',AUD:'Reserve Bank of Australia',CHF:'Swiss National Bank',NZD:'Reserve Bank of New Zealand'};
+const RATE_WATCH_SITE={USD:'CME FedWatch Tool',EUR:'rateprobability.com/ecb',GBP:'rateprobability.com/boe',JPY:'rateprobability.com/boj',CAD:'rateprobability.com/boc',AUD:'rateprobability.com/rba'};
+// null = fuer diese Waehrung existiert keine Seite. Ein selbst gesetzter Link
+// (Langdruck aufs Symbol) gewinnt immer, auch bei CHF/NZD - findet der Nutzer
+// dort doch eine Quelle, soll die App ihm nicht im Weg stehen.
+function rateWatchUrl(id){
+  const c=macroCcyFor(id);
+  return(rateWatchCustom&&rateWatchCustom[id])||(RATE_WATCH[c]!==undefined?RATE_WATCH[c]:RATE_WATCH.USD);
+}
+// Quicklink "Rate Probabilities" in den Assets: fuehrt seit 2026-09-06 NICHT
+// mehr auf den Tab, sondern direkt auf die zustaendige Seite (Nutzer-Wunsch:
+// "wenn man den quicklink in den Assets nutzt soll man Direkt auf die richte
+// Internet Seite kommen"). Gibt es fuer die Waehrung keine Seite (CHF/NZD),
+// oeffnet sich ein Fenster, das genau das sagt - statt eines Links ins Leere
+// oder eines Knopfes, der scheinbar nichts tut (CLAUDE.md Regel 6).
+function openRateWatchFor(id){
+  const url=rateWatchUrl(id);
+  const c=macroCcyFor(id);
+  if(!url){
+    const t=document.getElementById('mRwNoneTxt');
+    if(t)t.innerHTML=`There is no rate-expectations page for <b>${escH(c)}</b>. rateprobability.com does not carry one for the ${escH(RATE_WATCH_BANK[c]||c)}, and the CME FedWatch Tool covers the Fed only.<br><br>Nothing is linked here rather than sending you to a page that has no data for ${escH(c)}. If you know a source, long-press the 📈 icon in this asset's Interest Rates card to store your own link — it is kept across your devices.`;
+    openM('mRwNone');
+    return;
+  }
+  // ⚠ Kein Schreib-/Oeffnungspfad ohne sichtbare Meldung (CLAUDE.md Regel 6):
+  // blockt ein Pop-up-Blocker das Fenster, gibt window.open null zurueck ODER
+  // wirft - beides darf nicht still bleiben, sonst sieht der Knopf fuer den
+  // Nutzer exakt so aus, als sei er kaputt.
+  let w=null;
+  try{w=window.open(url,'_blank','noopener');}catch(e){w=null;}
+  if(!w){
+    const t=document.getElementById('mRwNoneTxt');
+    if(t)t.innerHTML=`The link could not be opened — your browser most likely blocked the new tab.<br><br>Allow pop-ups for this app, or open it yourself:<br><a href="${safeUrl(url)}" target="_blank" rel="noopener">${escH(url)}</a>`;
+    openM('mRwNone');
+  }
+}
 // Langes Drücken (≈500ms, funktioniert per Touch auf Handy/iPad und per Maus
 // am PC) auf das Zinserwartungs-Icon öffnet ein Feld zum Bearbeiten des Links;
 // ein kurzer Klick/Tap öffnet wie gewohnt den Link.
@@ -5802,7 +5848,16 @@ function renderRub(rub,ri,total){
       <span class="ind-edit-ctrls"><button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button></span>
       <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="markUserEditTs();getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
       <span class="ind-edit-ctrls">
-        ${rub.name==='Interest Rates'?`<a class="rate-watch" href="${safeUrl(rateWatchUrl(getSym().id))}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false" onclick="return rwClick(event,'${getSym().id}')">📈</a>`:''}
+        ${rub.name==='Interest Rates'?(()=>{
+          // Ohne Quelle (CHF/NZD) KEIN Link, der ins Leere zeigt - stattdessen
+          // dasselbe Icon als Knopf, der das Hinweisfenster oeffnet. Der
+          // Langdruck zum Hinterlegen eines eigenen Links bleibt in beiden
+          // Faellen erhalten.
+          const _u=rateWatchUrl(getSym().id),_press=`onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false"`;
+          return _u
+            ?`<a class="rate-watch" href="${safeUrl(_u)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" ${_press} onclick="return rwClick(event,'${getSym().id}')">📈</a>`
+            :`<button class="rate-watch" title="No rate-expectations source for ${escH(macroCcyFor(getSym().id))} · long-press to store your own link" ${_press} onclick="event.stopPropagation();if(!rwClick(event,'${getSym().id}'))return false;openRateWatchFor('${getSym().id}')">📈</button>`;
+        })():''}
         ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
         <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
         <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
@@ -9647,7 +9702,7 @@ function researchAnalysisPanelHtml(assetId){
     ['shuffle','COT Data',`showTab('cot');pickCotFilter('${escJH(assetId)}')`],
     ['zap','Sentiment',`showTab('sent')`],
     ['note','Data',`showTab('data');setDataAsset('${escJH(assetId)}')`],
-    ['flame','Rate Probabilities',`showTab('rate')`],
+    ['flame','Rate Probabilities',`openRateWatchFor('${escJH(assetId)}')`],
   ];
   const quickHtml=`<div class="ranl-quick">${quick.map(([ic,lbl,fn])=>`<button class="ranl-quickbtn" onclick="${fn}">${icn(ic,13)} ${escH(lbl)}</button>`).join('')}</div>`;
   const rubs=sym.rubrics||[];
@@ -16557,75 +16612,54 @@ function termStructureCardHtml(){
     <div class="edge-note">Each line steps at that bank's own meeting dates, so the steps do not line up — that is the point. Where two lines diverge, the rate gap between those two currencies is expected to widen; where they converge, it narrows. Derived from the same futures curve as the probability cards, not from a separate source.</div>
   </div>`;
 }
+// ⚠ Nutzer-Vorgabe 2026-09-06: "ich will das da nicht mehr die Diagramme
+// sondern nur noch die links zu den Webseiten sind". Der Tab zeigt deshalb
+// keine eigene Wahrscheinlichkeitsrechnung mehr, sondern je Waehrung eine
+// Karte mit dem Link auf die zustaendige Quelle - USD auf das CME FedWatch
+// Tool, die uebrigen auf die Seite ihrer Notenbank bei rateprobability.com.
+//
+// Fuer CHF und NZD gibt es dort keine Seite. Diese beiden stehen trotzdem in
+// der Liste, aber ausdruecklich als "keine Quelle" statt stillschweigend zu
+// fehlen - dieselbe Ueberlegung wie beim CAD-Kalender am selben Tag: ein
+// leerer Zustand darf nicht so aussehen, als haette man nicht nachgesehen.
+//
+// ⚠ Die Chart-Bausteine (rateProbTimelineChart, termStructureCardHtml,
+// rateProbBuildPts, scrollRateProbTo, die Meeting-Pillen ...) haben damit
+// KEINEN Aufrufer mehr - nachgeprueft, nicht vermutet. Sie bleiben trotzdem
+// stehen, und zwar aus einem Grund: rate_probabilities.json wird weiter
+// stuendlich vom Workflow erzeugt, die Rechnung dahinter ist ueber Monate
+// gewachsen (Meeting-Verteilungen, Approx-Modus fuer Waehrungen ohne
+// 1-Monats-Futures, Term-Structure-Kurven). Waer sie geloescht, muesste sie
+// jemand nachbauen, sobald die Diagramme wieder gewuenscht sind.
+// Wer hier aufraeumt, entfernt sie zusammen mit dem Fetch
+// (fetchRateProbData/autoFetchRateProb), dem Info-Text 'rateprob' und den
+// zugehoerigen Eintraegen in der window-Bruecke - einzeln geht es nicht.
 function renderRateProb(){
   const el=document.getElementById('rateBody');if(!el)return;
-  // Waehrungs-Umschalter (Nutzer-Wunsch 2026-07-25: "auch fuer die anderen
-  // Waehrungen") - steht IMMER oben, unabhaengig davon ob fuer die aktuell
-  // gewaehlte Waehrung schon Daten da sind, damit man auch aus einem
-  // Leer-/Ladezustand heraus die Waehrung wechseln kann.
-  const ccyBar=`<div class="rateprob-ccybar">${RATEPROB_CCYS.map(c=>{
-    const cd=RATE_PROB_DATA&&(RATE_PROB_DATA[c]||(c==='USD'&&RATE_PROB_DATA.currentRate!=null?RATE_PROB_DATA:null));
-    const isApprox=cd&&cd.method==='approx';
-    return`<button class="rateprob-ccy-btn${c===rateProbCcy?' on':''}" onclick="setRateProbCcy('${c}')">${c}${isApprox?'<span class="rateprob-approx-tag" title="Approximate: only 3-month futures are freely available for this currency, see the info button for details">≈</span>':''}</button>`;
-  }).join('')}</div>`;
-  const D=rateProbCcyData();
-  if(RATEPROB_NO_CURVE.has(rateProbCcy)&&(!D||!Array.isArray(D.meetings)||!D.meetings.length)){
-    el.innerHTML=ccyBar+`<div class="cot-empty">No free forward-looking futures curve is available for ${escH(rateProbCcy)} (checked 2026-07-26) - only the current reference rate exists, which isn't enough to build a meeting-by-meeting probability distribution. This isn't a temporary loading state.</div>`;
-    return;
-  }
-  if(!D||!Array.isArray(D.meetings)||!D.meetings.length){
-    el.innerHTML=ccyBar+`<div class="cot-empty">Loading ${escH(rateProbCcy)} rate probabilities… (computed hourly by the GitHub workflow into rate_probabilities.json — if this stays empty, the first run for this currency simply hasn't happened yet).</div>`;
-    return;
-  }
-  const withData=D.meetings.filter(m=>m.deltaBp!=null);
-  if(!withData.length){
-    el.innerHTML=ccyBar+`<div class="cot-empty">No futures contract data for the upcoming ${escH(rateProbCcy)} meetings yet.</div>`;
-    return;
-  }
-  const{pts,distTimeline,todayIdx,pastCount}=rateProbBuildPts(D);
-  // Adaptive Slotbreite: die komplette Punktreihe soll in die echte Breite von
-  // #rateBody passen (abzgl. Viewport-Padding 2x14 + Achsen-Raender). Bei wenig
-  // Punkten deckelt Math.min auf die urspruenglichen 170px (Optik wie bisher),
-  // bei vielen Punkten drueckt es bis RATEPROB_MIN_SLOT zusammen.
-  const availW=(el.clientWidth||900)-28-RATEPROB_PADL-RATEPROB_AXIS_GAP-RATEPROB_PADR;
-  rateProbSlot=Math.max(RATEPROB_MIN_SLOT,Math.min(RATEPROB_SLOT,availW/Math.max(1,pts.length-1)));
-  // Pillen nur fuer Today/Meetings (+ ein evtl. realisiertes vergangenes
-  // Meeting) - NICHT eine Pille pro Historientag (waeren potenziell
-  // hunderte). Die Historie ist trotzdem sichtbar: "Today" zentriert den
-  // sichtbaren Ausschnitt, die links angehaengten Historientage liegen
-  // dadurch automatisch mit im Blickfeld (Nutzer-Wunsch 2026-07-21: "Die
-  // Historie soll auch oben mit in die Grafik rein").
-  const pillIdxs=[];
-  for(let i=0;i<pastCount;i++)pillIdxs.push(i);
-  for(let i=todayIdx;i<pts.length;i++)pillIdxs.push(i);
-  if(!pillIdxs.includes(rateProbFocus))rateProbFocus=todayIdx;
-  const days=daysUntil(withData[0].date);
-  const pills=pillIdxs.map(i=>{
-    const p=pts[i],isPast=i<pastCount,isFuture=i>todayIdx;
-    const short=i===todayIdx?'Today':(()=>{const{day,mo}=fmtDate(p.date);return day+' '+mo;})();
-    return`<button class="rateprob-pill${i===rateProbFocus?' on':''}${isPast?' realized':''}${isFuture?' future':''}" data-idx="${i}" title="${escH(p.label)}${isPast?' (realized)':''}" onclick="scrollRateProbTo(${i})">${isPast?'✓ ':''}${escH(short)}</button>`;
+  // Reihenfolge bewusst gesetzt statt aus RATEPROB_CCYS uebernommen (die ist
+  // historisch gewachsen): erst die Waehrungen MIT Quelle in der ueblichen
+  // Major-Reihenfolge, die beiden ohne Quelle ans Ende - sonst stehen die
+  // Sackgassen mitten in der Liste.
+  const RPL_ORDER=['USD','EUR','GBP','JPY','CAD','AUD','CHF','NZD'];
+  const karten=RPL_ORDER.filter(c=>RATEPROB_CCYS.includes(c)).map(c=>{
+    const url=RATE_WATCH[c];
+    const bank=RATE_WATCH_BANK[c]||c;
+    if(!url)return`<div class="rpl-card rpl-none">
+      <div class="rpl-l"><span class="rpl-ccy">${escH(c)}</span><span class="rpl-bank">${escH(bank)}</span></div>
+      <div class="rpl-r"><span class="rpl-nolink" title="rateprobability.com does not carry a page for this central bank, and the CME FedWatch tool covers the Fed only. Nothing is linked here rather than sending you to a page that has no data for ${escH(c)}.">No source available</span></div>
+    </div>`;
+    return`<a class="rpl-card" href="${safeUrl(url)}" target="_blank" rel="noopener" title="Opens ${escH(RATE_WATCH_SITE[c]||url)} in a new tab">
+      <div class="rpl-l"><span class="rpl-ccy">${escH(c)}</span><span class="rpl-bank">${escH(bank)}</span></div>
+      <div class="rpl-r"><span class="rpl-site">${escH(RATE_WATCH_SITE[c]||url)}</span><span class="rpl-go">↗</span></div>
+    </a>`;
   }).join('');
-  const rangeBar=timeRangeBarHtml(rateProbHistRange,'setRateProbHistRange')+timeRangeCustomHtml(rateProbHistRange,rateProbHistCustomFrom,rateProbHistCustomTo,'setRateProbHistRange');
-  const upd=D.asOf?new Date(D.asOf).toLocaleDateString():'–';
-  const refLabel=RATEPROB_CCY_REFLABEL[rateProbCcy]||'Reference Rate';
-  const meetLabel=RATEPROB_CCY_MEETLABEL[rateProbCcy]||'meeting';
-  const linkUrl=rateWatchUrl(rateProbCcy);
-  const linkTxt=rateProbCcy==='USD'?'📈 CME FedWatch Tool ↗':'📈 rateprobability.com ↗';
-  // approx-Badge direkt am Titel (Nutzer-Wunsch "klar markiert") - zusaetzlich
-  // zum ≈-Tag am Waehrungs-Button oben, damit die Einschraenkung auch sichtbar
-  // ist, wenn man bereits auf dieser Waehrung steht und den Button nicht sieht.
-  const approxBadge=D.method==='approx'?`<span class="rateprob-approx-badge" title="Approximate: derived from 3-month futures (no 1-month contracts freely available for this currency) - see the info button for details">≈ approx</span>`:'';
-  el.innerHTML=ccyBar+`<div class="cot-card">
-      <div class="cot-card-title">Current ${escH(rateProbCcy)} ${escH(refLabel)}${approxBadge}${iBtn('rateprob')}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">source: ${escH(D.refSource||'')} · ${escH(upd)}</span></div>
-      <div style="padding:10px 14px 2px;font-size:22px;font-weight:700;color:var(--t0);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${D.currentRate!=null?D.currentRate.toFixed(2)+'%':'–'}</div>
-      <div style="padding:0 14px 10px;font-size:12.5px;color:var(--t2)"><b style="color:var(--t0)">${days}</b> day${days===1?'':'s'} until the next ${escH(meetLabel)} (${escH(withData[0].label)}) · <a class="rate-watch" href="${safeUrl(linkUrl)}" target="_blank" rel="noopener" title="Official source">${linkTxt}</a></div>
-      <div class="rateprob-pillbar">${pills}</div>
-      <div style="padding:0 14px 4px">${rangeBar}</div>
-      ${rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount)}
-    </div>`+termStructureCardHtml();
-  attachChartHovers(el);
-  scrollRateProbTo(rateProbFocus,false);
+  el.innerHTML=`<div class="cot-card">
+    <div class="cot-card-title">Market rate expectations${iBtn('rateprob')}</div>
+    <div class="rpl-note">Where the market prices the next policy moves. Each row opens the source for that central bank directly — the Fed at the CME FedWatch Tool, the others at their own page on rateprobability.com.</div>
+    <div class="rpl-list">${karten}</div>
+  </div>`;
 }
+
 // ══ TABS ══════════════════════════════════════════════════════════
 const PAGE_IDS={edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
@@ -18084,6 +18118,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
+  openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
