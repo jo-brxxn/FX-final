@@ -55,6 +55,27 @@ const MODE=process.argv[2]||'normalized';
     if(v==null||Math.abs(v-soll[id])>0.051)F.push({ort:'Asset-Kopf',id,angezeigt:v,soll:soll[id],txt:cand[0].innerText.replace(/\n/g,'|')});
   });
   ok.assetKopf=n2;ok.assetKopfOhneBadge=fehlend;
+  // 2b) Die Event-Sektion muss auf JEDEM Asset stehen.
+  // ⚠ Nutzer-Bugreport 2026-09-06 ("Bei Assets bei cad gibt es kein
+  // minimalender"): die Sektion haengte an `symEvts.length` und verschwand
+  // komplett, sobald kein Event ins Fenster (-10 bis +7 Tage) fiel. Gemessen
+  // war CAD das einzige betroffene Asset (0 Events im Fenster, alle anderen
+  // 1-19) - und die App kannte den naechsten CAD-Termin sehr wohl
+  // (2026-09-14, 8 Tage entfernt, knapp ausserhalb des Fensters). Mit der
+  // Liste fiel auch die Kopfzeile mit "Next Event" weg, also genau die
+  // Information, die vorlag. Ein leerer Zustand darf nichts verschlucken,
+  // was bekannt ist - deshalb hier als Dauerpruefung ueber ALLE Assets,
+  // nicht nur ueber das eine, das gerade auffiel.
+  let n2b=0;
+  Object.keys(soll).forEach(id=>{
+    selSym(id);
+    if(!document.querySelector('#detail .evt-section')){
+      F.push({ort:'Event-Sektion fehlt',id,hinweis:'Asset zeigt weder Kalender noch "Next Event"'});
+      return;
+    }
+    n2b++;
+  });
+  ok.evtSektion=n2b;
   // 3) Score-Fenster: Summe der Zeilen == angezeigter Gesamtwert
   let n3=0;
   Object.keys(soll).forEach(id=>{

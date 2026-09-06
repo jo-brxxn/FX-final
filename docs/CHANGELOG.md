@@ -10830,3 +10830,70 @@ mitgefixt hat, die der Screenshot gar nicht zeigte.
 Nur noch die Restzeit: `21d` statt `in 21d`, entsprechend `~31d` statt
 `~in 31d`. `Today`/`Tomorrow` bleiben Wörter — dort wäre eine Zahl keine
 Auskunft.
+
+---
+
+## 2026-09-06 — CAD ohne Mini-Kalender: leerer Zustand verschluckte den Termin (VERSION-CHECK-479)
+
+**Nutzer:** *„Bei Assets bei cad gibt es kein minimalender"*
+
+### Reproduziert, bevor etwas geändert wurde
+
+Über alle Assets die `.evt-section` im DOM gezählt:
+
+| | Events im Fenster | Sektion da? | nächster High-Impact |
+|---|---|---|---|
+| USD / EUR | 19 | ja | 10.09. / 07.09. |
+| GBP | 6 | ja | 11.09. |
+| JPY | 5 | ja | 07.09. |
+| CHF / AUD | 4 | ja | 07.09. / 08.09. |
+| NZD | 1 | ja | — |
+| **CAD** | **0** | **NEIN** | **14.09.** |
+
+CAD war das einzige betroffene Asset.
+
+### Die Ursache — und warum sie schlimmer ist, als sie aussieht
+
+Die ganze Sektion hing an `symEvts.length`:
+
+```js
+${symEvts.length?`<div class="evt-section">…</div>`:''}
+```
+
+Fällt kein Event ins Fenster (die letzten `CAL_PAST_DAYS`=10 bis +7 Tage),
+verschwindet sie komplett. **Die App kannte den nächsten CAD-Termin aber sehr
+wohl** — `nextHighDate` stand auf `2026-09-14`, acht Tage entfernt und damit
+knapp ausserhalb des Fensters. Mit der Liste fiel auch die Kopfzeile weg, die
+genau diese Information trägt. Ein leerer Zustand hat also nicht „nichts"
+angezeigt, sondern etwas Vorhandenes **verschluckt**.
+
+### Der Fix
+
+Die Sektion steht jetzt immer da. Zugeklappt zeigt sie wie überall
+`Next Event: Mon, Sep 14, 26 (in 8d)`; aufgeklappt steht dort, dass in den
+nächsten sieben Tagen nichts ansteht und wann der nächste High-Impact-Release
+fällt — oder, wenn auch der unbekannt ist, dass der Kalender-Feed nur rund
+eine Woche vorausschaut und nichts darüber hinaus geschätzt wird.
+
+### Fehlerklasse durchsucht
+
+Gesucht nach weiteren Stellen, an denen ein ganzer Abschnitt bei leerer Liste
+verschwindet und dabei vorhandene Information mitnimmt. Zwei Kandidaten, beide
+unkritisch: die Watchlist hat bereits einen echten Leerzustand („Nothing on
+your watchlist yet — the strongest pairs right now:"), und der
+Indikator-Picker ohne Panels hat tatsächlich nichts zu wählen. Die
+Event-Sektion war die einzige Stelle dieser Art.
+
+### Neuer Wächter (`check/display.js`, Abschnitt 2b)
+
+Prüft auf **allen 24 Assets**, dass die Event-Sektion existiert — nicht nur
+auf dem einen, das gerade auffiel. Gegenprobe: Fehler zurückgebaut → **2**
+Treffer (CAD und sein Yield-Spiegel CAYIELD), Fix zurück → **0**.
+
+### Nebenbefund, bewusst nicht geändert
+
+NZD zeigt `Next Event: –`, obwohl ein Event im Fenster liegt — das Label
+nennt laut Kommentar im Code ausdrücklich nur den nächsten **High-Impact**-
+Release, konsistent zur roten Flagge. Das ist eine bewusste Entscheidung, kein
+Fehler; hier nur festgehalten, damit es nicht beim nächsten Mal als Bug
+gemeldet und „gefixt" wird.

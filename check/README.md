@@ -230,3 +230,19 @@ mindestens eines mit Block-Margin, Mittenversatz ≥ 3px → Befund.
 
 Gegenprobe: Margin zurückgebaut → 2 Treffer (`cot-ctrl-r`, `data-ctrls`),
 Margin raus → 0.
+
+## `display.js`, Abschnitt 2b: Event-Sektion auf jedem Asset (seit 2026-09-06)
+
+**Anlass:** Bugreport „Bei Assets bei cad gibt es kein minimalender". Die
+Event-Sektion der Asset-Seite hing an `symEvts.length` und verschwand ganz,
+sobald kein Event ins Fenster (-10 bis +7 Tage) fiel. CAD war das einzige
+betroffene Asset (0 im Fenster, alle anderen 1–19).
+
+Der Kern des Fehlers war nicht die leere Liste, sondern dass mit ihr die
+Kopfzeile mit „Next Event" wegfiel — und die trug eine Information, die
+vorlag: CADs nächster High-Impact-Release am 14.09., acht Tage entfernt und
+damit knapp ausserhalb des Fensters.
+
+Das Netz prüft die Sektion auf **allen 24 Assets**, nicht nur auf dem einen,
+das aufgefallen ist. Gegenprobe: Fehler zurückgebaut → 2 Treffer (CAD und
+sein Yield-Spiegel), Fix zurück → 0.

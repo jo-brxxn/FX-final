@@ -5522,13 +5522,31 @@ function renderDetail(){
       <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
-    ${symEvts.length?`<div class="evt-section">
+    ${`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
         ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span>Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
-      ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true,symId:getSym().id}):`<div class="cal-empty-day">No high-impact events</div>`;})()}</div>`:''}
-    </div>`:''}
+      ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{
+        // ⚠ Nutzer-Bugreport 2026-09-06 ("Bei Assets bei cad gibt es kein
+        // minimalender"): die ganze .evt-section haengt frueher an
+        // `symEvts.length` - faellt KEIN Event ins Fenster (die letzten
+        // CAL_PAST_DAYS bis +7 Tage), verschwand sie komplett. Gemessen war
+        // CAD das einzige Asset ohne Sektion (0 Events im Fenster, alle
+        // anderen 1-19).
+        //
+        // Das Schlimme daran: die App KENNT den naechsten CAD-Termin sehr
+        // wohl - nextHighDate stand auf 2026-09-14, also 8 Tage entfernt und
+        // damit knapp ausserhalb des Fensters. Sie hat ihn nur nicht gezeigt,
+        // weil mit der Liste auch die Kopfzeile mit "Next Event" wegfiel.
+        // Ein leerer Zustand darf keine Information verschlucken, die
+        // vorliegt - jetzt steht die Sektion immer da und sagt, was Sache
+        // ist.
+        if(!symEvts.length)return`<div class="cal-empty-day">Nothing scheduled in the next 7 days${nextHighDate?` — the next high-impact release for this asset is on <b>${escH(fmtDayHdr(nextHighDate))}</b>, just outside this window.`:'. The calendar feed looks about a week ahead; nothing beyond it is estimated.'}</div>`;
+        const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;
+        return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true,symId:getSym().id}):`<div class="cal-empty-day">No high-impact events</div>`;
+      })()}</div>`:''}
+    </div>`}
     ${renderSpecTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
