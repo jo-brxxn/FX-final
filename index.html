@@ -1797,7 +1797,6 @@ body.res-return-active #resBackBar{display:flex}
 /* ── INSIGHTS > DATA: bis zu 4 Panels (Nutzer-Wunsch 2026-09-05) ── */
 .data-ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:0 14px 12px}
 .data-sub{font:500 var(--fs-xs)/1.4 var(--ff-text);color:var(--t3);margin-left:10px}
-.data-ctrls .cot-filterbar{margin:0}
 .data-ctrls .ind-hist-toolbar{margin:0}
 /* "Next"-Spalte: nur die Restzeit bis zum naechsten Release, rot ab 7 Tagen
    (Nutzer-Wunsch 2026-09-05 - das Datum steht im ausgeklappten Zustand) */
@@ -1882,8 +1881,15 @@ body.res-return-active #resBackBar{display:flex}
 .ind-hist-range-btn{padding:3px 9px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
 .ind-hist-range-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
 .ind-hist-legend{display:flex;gap:10px;font-size:9.5px;font-weight:700;white-space:nowrap}
-.ind-hist-legend span{color:var(--blue)}
-.ind-hist-legend span:last-child{color:var(--red)}
+/* ⚠ Bugreport 2026-09-06 (Screenshot, EUR Employment Change): das Quadrat
+   vor "Actual" war ROT, obwohl die Balken im Chart blau sind. Ursache war
+   dieses :last-child - hat eine Reihe KEINEN Forecast, steht nur EIN span
+   in der Legende, und der ist dann zugleich erster und letzter. Er bekam
+   damit die Forecast-Farbe. Positionsabhaengige Selektoren brechen genau
+   dann, wenn ein Element wegfaellt; die Farbe haengt jetzt an der
+   Bedeutung, nicht am Platz. */
+.ind-hist-legend .lg-act{color:var(--blue)}
+.ind-hist-legend .lg-fc{color:var(--red)}
 .time-range-custom{display:flex;align-items:center;gap:5px;color:var(--t3);font-size:10.5px;white-space:nowrap}
 /* Rate Probabilities: CME-FedWatch-artige Meeting-Pillen + Timeline-Chart
    (Nutzer-Wunsch 2026-07-20). Pillen navigieren per scrollRateProbTo() eine
@@ -1952,7 +1958,21 @@ body.res-return-active #resBackBar{display:flex}
 .cot-refresh.spin .cot-refresh-ic{animation:cotSpin .7s linear infinite}
 @keyframes cotSpin{to{transform:rotate(360deg)}}
 /* COT single Filter button + grouped pop-up list */
-.cot-filterbar{display:flex;align-items:center;gap:10px;margin-bottom:13px;min-width:0}
+/* ⚠ Bugreport 2026-09-06 (Screenshot, COT Report): der Refresh-Button sass
+   7px tiefer als das Waehrungs-Dropdown daneben. Ursache war NICHT die
+   Ausrichtung - .cot-ctrl-r hat align-items:center - sondern dieser
+   margin-bottom: in einer Flex-Zeile zaehlt der Margin zur AUSSENbox des
+   Kindes. 36px Leiste + 13px Margin = 49px Aussenbox, exakt die gemessene
+   Zeilenhoehe; zentriert wird die 49er-Box, wodurch die sichtbare Leiste
+   oben klebt und der 34px-Button in der Mitte der Zeile landet.
+   Die Leiste kommt ueber assetFilterSelect() ueberall in der App vor, und
+   genau dieselbe Kollision wurde schon DREIMAL einzeln weggepatcht
+   (.data-ctrls, .sent-toolbar>, .cot-card-title je margin:0) - die
+   COT-Kontrollzeile war die vierte Stelle. Deshalb jetzt an der Wurzel:
+   KEIN Default-Margin mehr. Nachgemessen ueber alle Tabs, dass keine
+   sichtbare Platzierung ihn braucht (sent/seas/data hatten ihn ohnehin
+   ueberschrieben). Wer Abstand braucht, setzt ihn am Container. */
+.cot-filterbar{display:flex;align-items:center;gap:10px;min-width:0}
 /* min-width:0 auf dem <select> selbst (Bugreport/Waechter-Fund 2026-08-31,
    layout+cards: "Data"/Seasonality-Karte lief auf Mobile ueber den Rand
    hinaus): ein <select> ohne feste Breite bemisst sich in Chromium an
@@ -1961,9 +1981,7 @@ body.res-return-active #resBackBar{display:flex}
    schmale Karte. max-width:100% + min-width:0 lassen es in seinem
    Flex-Container tatsaechlich schrumpfen statt zu ueberlaufen. */
 .cot-filterbar select{font-size:14px;padding:8px 15px;min-width:0;max-width:100%}
-.sent-toolbar>.cot-filterbar{margin-bottom:0}
 /* Asset-Filter oben rechts in der Karten-Titelzeile (Sentiment) */
-.cot-card-title .cot-filterbar{margin:0}
 .cot-card-title .cot-filterbar select{font-size:12.5px;padding:5px 10px}
 /* Zeitraum-Leiste kompakt IN der Grafik (direkt ueber der Plot-Flaeche) */
 .pc-inchart-range{margin:0 0 8px}
@@ -3009,6 +3027,38 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-brk-v{font:800 10.5px/1 var(--ff-num)}
 .histp-delta{font:800 11.5px/1 var(--ff-num);margin-left:auto;margin-right:7px}
 .histp-modelnote{color:var(--t3);font-size:11px;line-height:1.45;padding:10px 2px 2px;margin-top:6px;border-top:1px solid var(--bd)}
+/* ── History: offene Wochenabschnitte (Nutzer-Wunsch 2026-09-06) ──────
+   Inhaltlich lag alles schon vor, aber hinter zwei Klicks im Zeitstrahl.
+   Hier steht jede Woche als eigener Abschnitt mit einer Zeile je Tag:
+   Wochentag, Score am Tagesende, Delta zum Vortag, Ursachen. Vier feste
+   Spalten, damit Score und Delta untereinander vergleichbar bleiben; die
+   Ursachen-Spalte bricht als letzte um. */
+.hw-list{margin-top:14px;display:flex;flex-direction:column;gap:14px}
+.hw-week{border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden;background:var(--bg2)}
+.hw-hd{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--bg3);border-bottom:1px solid var(--bd)}
+.hw-hd-r{font:700 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
+.hw-hd-n{font:700 var(--fs-xs)/1.3 var(--ff-num);white-space:nowrap}
+.hw-cols{display:grid;grid-template-columns:minmax(120px,1.1fr) 62px 54px minmax(0,3fr);gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd2);font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.5px;text-transform:uppercase;color:var(--t3)}
+.hw-cols span:nth-child(2),.hw-cols span:nth-child(3){text-align:right}
+.hw-day{display:grid;grid-template-columns:minmax(120px,1.1fr) 62px 54px minmax(0,3fr);gap:10px;align-items:baseline;padding:8px 12px;border-bottom:1px solid var(--bd2)}
+.hw-day:last-child{border-bottom:none}
+.hw-day.hw-today{background:rgba(var(--blue-rgb),.05)}
+.hw-wd{font:600 var(--fs-sm)/1.3 var(--ff-text);color:var(--t0)}
+.hw-dt{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:1px}
+.hw-d2,.hw-d3{text-align:right}
+.hw-sc{font:800 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
+.hw-dl{font:700 var(--fs-xs)/1.3 var(--ff-num)}
+.hw-d4{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.hw-c{font:700 var(--fs-2xs)/1.4 var(--ff-num);border:1px solid var(--bd);border-radius:5px;padding:1px 6px;white-space:nowrap;cursor:help}
+.hw-e{font:500 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t2);background:var(--bg4);border-radius:5px;padding:1px 6px;cursor:help;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hw-e.hw-more{color:var(--t3)}
+.hw-m{font:700 var(--fs-2xs)/1.4 var(--ff-num);color:var(--purple);background:rgba(var(--purple-rgb),.09);border-radius:5px;padding:1px 6px;cursor:help}
+.hw-none{font:500 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t3);font-style:italic}
+@media(max-width:640px){
+  .hw-cols,.hw-day{grid-template-columns:minmax(90px,1fr) 54px 48px;}
+  .hw-cols span:nth-child(4){display:none}
+  .hw-d4{grid-column:1/-1}
+}
 .tr-carrynote{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--accent);border-radius:var(--rs);padding:8px 11px;margin-bottom:9px;color:var(--t2);font-size:11.5px;line-height:1.5}
 .tr-modelnote{color:var(--t3);font-size:11px;line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
@@ -4257,11 +4307,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-477 - Next-Spalte: Median fuer die weite Sicht, exakt sobald der Termin im Kalender steht (Nutzer-Vorgabe 2026-09-06: &quot;Mach die ersten Tage nur den median und 10 Tage davor weis man ja den Wert also ab dann soll es genau sein&quot;). Anlass: die Spalte war fast leer - gemessen hatten nur 1 bis 6 von rund 25 Zeilen je Asset einen Kalendertermin, bei AUD genau eine, bei NZD keine einzige. Mehr ECHTE Termine gibt es nicht, das Fenster endet nach rund zehn Tagen. Neu: liegt kein Kalendertermin vor, wird der erwartete Termin aus dem GEMESSENEN Turnus des Indikators gebildet (Median der tatsaechlichen Abstaende, dieselbe Groesse wie bei der Altersgrenze) und als Erwartung gekennzeichnet - Tilde, leichtere Schrift, Erklaerung im Titel; ein bestaetigter Termin steht fett und ohne Tilde. Nichts behauptet wird bei Indikatoren ohne Release-Konzept, bei nur geratenem Turnus und wenn die Reihe mehr als drei Zyklen aus dem Takt ist. Gemessen: gefuellte Zellen von 98 auf 362, AUD von 1 auf 12, NZD von 0 auf 12; die verbleibenden Striche sind genau die Renditen, COT-, Sentiment- und Einschaetzungs-Indikatoren. Ausserdem: die 7-Tage-Hervorhebung ist jetzt ORANGE statt rot. Dafuer gibt es einen eigenen Token --due (hell #B45309, dunkel #F0913A, je Vorlage passend) - --amber ist in diesem Design ein neutrales Schiefergrau und bleibt es; rot ist die Bedeutungsfarbe fuer bearish und ein naher Termin ist keine Richtung. Der Theme-Waechter prueft --due jetzt mit."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-478 - History nach Wochen, zwei Screenshot-Bugs, Next-Spalte gekuerzt. (1) HISTORY: unter dem Zeitstrahl steht jetzt jede Woche als offener Abschnitt - Wochenkopf mit Zeitraum und Netto-Bewegung, darunter eine Zeile je Wochentag mit Score am Tagesende, Delta zum Vortag und den Ursachen. Inhaltlich lag das meiste schon vor, aber hinter zwei Klicks. recordScoreHist zeichnet ab jetzt auch Interest Rates, COT Data und Risk Environment je Tag auf (Feld 10-12) - vorher lagen die drei ununterscheidbar in einem Sammelposten, jetzt wird COT einzeln benannt. Verifiziert, dass die Teile exakt das Tagesdelta ergeben (-0,6 -0,6 -1,3 = -2,5). Tage VOR dieser Version behalten den Sammelposten, statt eine nie aufgezeichnete Aufteilung zu erfinden. (2) BUG aus dem Screenshot, COT Report: der Refresh-Knopf sass 7px tiefer als das Dropdown. Nicht die Ausrichtung - align-items:center war gesetzt - sondern ein margin-bottom AM KIND, der in einer Flex-Zeile die Aussenbox aufblaeht (36+13=49px, exakt die gemessene Zeilenhoehe). Dieselbe Kollision war schon dreimal einzeln weggepatcht; jetzt an der Wurzel entfernt und die drei Patches mit. (3) BUG aus dem Screenshot, Chart-Legende: das Quadrat vor Actual war rot, obwohl die Balken blau sind. Ursache war ein :last-child - ohne Forecast steht nur EIN span in der Legende, der ist dann zugleich erster und letzter und bekam die Forecast-Farbe. Farbe haengt jetzt an der Bedeutung statt am Platz. Alle weiteren positionsabhaengigen Farbregeln geprueft, dort ist kein Element bedingt. Neuer Waechter in check/layout.js findet verrutschte Flex-Kinder appweit. (4) Next-Spalte zeigt nur noch die Restzeit: 21d statt in 21d."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-477</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-478</span>
     </span>
   </div>
   <div class="hdr-r">

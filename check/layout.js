@@ -64,6 +64,35 @@ const { chromium } = require(PW);
             out.push(`${vpName}/${tab}: card content CLIPPED vertically: "${title.trim().slice(0,40)}" (${card.scrollHeight}>${card.clientHeight})`);
           }
         });
+        // 4. Flex-Zeile will zentrieren, ein Kind verrutscht trotzdem
+        // ⚠ Bugreport 2026-09-06 (Screenshot, COT Report): der Refresh-Button
+        // sass 7px tiefer als das Dropdown daneben. Ursache war NICHT die
+        // Ausrichtung - .cot-ctrl-r hat align-items:center - sondern ein
+        // margin-bottom AM KIND: in einer Flex-Zeile zaehlt der Margin zur
+        // Aussenbox, zentriert wird die vergroesserte Box, die sichtbare
+        // klebt oben. Genau diese Kollision war zu dem Zeitpunkt schon
+        // DREIMAL einzeln weggepatcht worden, ohne dass jemand die Ursache
+        // entfernt hat - also gehoert sie in einen Waechter, nicht in einen
+        // vierten Patch. Gegenprobe beim Einbau: Margin zurueckgebaut ->
+        // 2 Treffer (cot-ctrl-r, data-ctrls), Margin raus -> 0.
+        document.querySelectorAll('*').forEach(el => {
+          if (!el.offsetParent) return;
+          const cs = getComputedStyle(el);
+          if (!cs.display.includes('flex') || cs.flexDirection.startsWith('column')) return;
+          if (cs.alignItems !== 'center') return;            // nur Zeilen, die zentrieren WOLLEN
+          const kinder = [...el.children].filter(c => c.offsetParent);
+          if (kinder.length < 2) return;
+          const mit = kinder.filter(c => { const m = getComputedStyle(c); return parseFloat(m.marginTop) || parseFloat(m.marginBottom); });
+          if (!mit.length) return;
+          const boxen = kinder.map(c => c.getBoundingClientRect());
+          const tops = boxen.map(b => b.top);
+          if (Math.max(...tops) - Math.min(...tops) > 40) return;   // umgebrochen, anderer Fall
+          const mitten = boxen.map(b => b.top + b.height / 2);
+          const spanne = Math.round(Math.max(...mitten) - Math.min(...mitten));
+          if (spanne < 3) return;
+          const wer = mit.map(c => (c.className || c.tagName) + ' mb=' + getComputedStyle(c).marginBottom).join(', ');
+          out.push(`${vpName}/${tab}: Flex-Zeile "${(el.className||el.id||el.tagName).toString().slice(0,32)}" zentriert, Kind verrutscht ${spanne}px durch Margin (${wer})`);
+        });
         return out;
       }, {tab:t, vpName});
       res.forEach(r => findings.push(r));

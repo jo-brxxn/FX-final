@@ -210,3 +210,23 @@ dem echten Stand rechnen.
 
 Gegenprobe: 117 geprüft, **0** Befunde; `indCycleIsGuess`-Zeile wieder
 ausgebaut → **10** Befunde; zurück → 0.
+
+## `layout.js`, viertes Netz: verrutschte Flex-Kinder (seit 2026-09-06)
+
+**Anlass:** Screenshot-Bugreport, COT Report — der Refresh-Knopf sass 7px
+tiefer als das Dropdown daneben. Nicht die Ausrichtung (`align-items:center`
+war gesetzt), sondern ein `margin-bottom` am Kind: in einer Flex-Zeile zählt
+der Margin zur Aussenbox, zentriert wird die vergrösserte Box, die sichtbare
+klebt oben.
+
+Entscheidend für die Wächter-Entscheidung: diese Kollision war zu dem
+Zeitpunkt bereits **dreimal einzeln weggepatcht** worden, ohne dass jemand
+die Ursache entfernt hat — ein Muster, das sich ohne roten Lauf beliebig oft
+wiederholt.
+
+Das Netz prüft über alle Viewports und Tabs: Flex-Zeile mit
+`align-items:center`, mindestens zwei sichtbare Kinder auf derselben Zeile,
+mindestens eines mit Block-Margin, Mittenversatz ≥ 3px → Befund.
+
+Gegenprobe: Margin zurückgebaut → 2 Treffer (`cot-ctrl-r`, `data-ctrls`),
+Margin raus → 0.

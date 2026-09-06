@@ -149,3 +149,40 @@ das ist ab jetzt Standard-Verhalten fuer dieses Projekt.
   Teil ohne Browser). Läuft zusätzlich automatisch bei jedem Push
   (`.github/workflows/checks.yml`). Details/volle Liste der Prüfungen:
   `check/README.md`.
+
+## Gezeigte Bugs: der Ablauf (Nutzer-Regel 2026-09-06)
+
+Zeigt der Nutzer einen Fehler — per Screenshot, Beschreibung oder
+Sprachnachricht — gilt immer derselbe Ablauf. Kurzfassung steht als Regel 8
+in `CLAUDE.md`; hier das Warum.
+
+**1. Reproduzieren, nicht raten.** Den Fehler im Browser herstellen und
+messen, bevor eine Zeile geändert wird. Am 2026-09-06 wurde zweimal
+hintereinander ein Bugreport zu AUD GDP aus dem Code heraus "erklärt" und
+gefixt — und der Nutzer meldete beide Male, dass er noch da ist. Erst die
+Messung mit blockiertem Feed zeigte die echte Ursache. Eine aus dem Code
+abgeleitete Vermutung ist keine Reproduktion.
+
+**2. Ursache belegen und an der Wurzel beheben.** Beispiel vom selben Tag:
+der Refresh-Knopf im COT-Report sass 7px zu tief. Die naheliegende Erklärung
+(Ausrichtung fehlt) war falsch — `align-items:center` war gesetzt. Gemessen
+war es ein `margin-bottom` AM KIND, der in einer Flex-Zeile die Aussenbox
+aufbläht. **Steht an einer Stelle schon ein Einzel-Patch für dasselbe
+Problem, lebt die Wurzel noch:** hier war die Kollision bereits dreimal mit
+`margin:0` weggepatcht worden (`.data-ctrls`, `.sent-toolbar>`,
+`.cot-card-title`), die vierte Stelle war schlicht vergessen worden.
+
+**3. Dokumentieren** mit den Messwerten in `docs/CHANGELOG.md` — nicht nur
+"behoben", sondern die Zahlen, an denen man es wiedererkennt.
+
+**4. Fehlerklasse suchen.** Danach gezielt prüfen, wo derselbe Fehler sonst
+noch auftreten kann. Beim Legenden-Bug (`:last-child` färbte das einzige
+verbliebene Element falsch, wenn der Forecast-Eintrag wegfiel) hiess das:
+alle positionsabhängigen Selektoren durchgehen, die eine FARBE setzen, und
+prüfen, ob dort ein Element bedingt gerendert wird. Vier weitere Fundstellen
+geprüft, alle unkritisch (Elemente immer fest im Markup) — auch dieses
+Ergebnis gehört ins Changelog, damit niemand dieselbe Suche zweimal macht.
+
+**5. Wächter ergänzen**, wo die Klasse automatisch prüfbar ist — mit
+Gegenprobe, dass er den Fehler wirklich rot meldet. Ein Absatz erinnert
+niemanden, ein roter Lauf schon.

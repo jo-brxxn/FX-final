@@ -10747,3 +10747,86 @@ existiert seit VERSION-CHECK-471: **Insights → Data → „By indicator"**, da
 über `Indicators n/4` bis zu vier Indikatoren desselben Assets wählen.
 Verifiziert, dass sie unverändert läuft. Die As-of/Next-Zeile über den Panels
 benutzt jetzt dieselbe Staffelung wie die Tabelle.
+
+---
+
+## 2026-09-06 — History nach Wochen, zwei Screenshot-Bugs, Next gekürzt (VERSION-CHECK-478)
+
+### 1. History: offene Wochenabschnitte
+
+**Nutzer:** *„mach das man da schön unterteilt sieht die Wochen und dann soll
+man pro Woche jeden Woche Tag sehen wo steht Score am Ende des Tages dann
+Scoreveränderung zum Vortag und dann die Ursachen für diese Veränderung"*
+
+Inhaltlich lag das meiste bereits vor — aber hinter **zwei Klicks**
+(Wochenbalken → Tagesbalken → Detailkarte). Der Zeitstrahl bleibt als
+Übersicht (Nutzer-Wunsch 2026-08-31, nicht ersetzt); darunter steht jetzt jede
+Woche als offener Abschnitt: Kopf mit Zeitraum und Netto-Bewegung, darunter je
+Wochentag eine Zeile mit **Score am Tagesende · Δ zum Vortag · Ursachen**.
+
+**COT und Risk Environment sind jetzt einzeln benennbar.** Bis hierher zeichnete
+`recordScoreHist()` nur drei der sechs score-tragenden Rubriken je Tag auf
+(Inflation, Labour Market, Economic Growth); Interest Rates, COT Data und Risk
+Environment lagen ununterscheidbar in einem Sammelposten „Other cards". Neue
+Felder 10–12 speichern sie einzeln — dieselbe Erweiterung wie am 2026-08-23 bei
+Feld 8/9, mit derselben Regel: **Tage, die vor dieser Version aufgezeichnet
+wurden, behalten den Sammelposten**, statt eine Aufteilung zu erfinden, die nie
+erfasst wurde.
+
+Verifiziert an zwei synthetischen Tagen mit vollen Feldern: Inflation −0,6,
+Labour Market −0,6, COT Data −1,3 — Summe **−2,5**, exakt das Tagesdelta.
+
+⚠ Die numerische Zerlegung erscheint erst, wenn **beide** verglichenen Tage die
+Felder tragen, also ab dem Tag nach diesem Release. Für ältere Tage bleiben die
+datierten Releases als Ursache stehen.
+
+### 2. Bug aus dem Screenshot: Refresh-Knopf verrutscht (COT Report)
+
+Der Knopf sass **7 px tiefer** als das Währungs-Dropdown daneben. Die
+naheliegende Erklärung war falsch: `.cot-ctrl-r` hat `align-items:center`.
+Gemessen war es ein `margin-bottom:13px` **am Kind** — in einer Flex-Zeile
+zählt der Margin zur Außenbox: 36 px Leiste + 13 px = 49 px, exakt die
+gemessene Zeilenhöhe. Zentriert wird die 49er-Box, die sichtbare Leiste klebt
+oben, der 34 px hohe Knopf zentriert sich in der Zeile.
+
+**Die Wurzel lebte, weil dreimal das Symptom gepatcht worden war:**
+`.data-ctrls`, `.sent-toolbar>` und `.cot-card-title` setzten je einzeln
+`margin:0`. Die COT-Kontrollzeile war die vierte Stelle. Über alle Tabs
+nachgemessen, dass keine sichtbare Platzierung den Margin braucht → aus der
+Basisregel entfernt, die drei Einzel-Patches mit.
+
+Gemessen: Versatz 7 px → **0 px**, Zeilenhöhe 49 → 36 px.
+
+### 3. Bug aus dem Screenshot: Legenden-Quadrat rot statt blau
+
+Bei EUR Employment Change stand ein **rotes** Quadrat vor „Actual", obwohl die
+Balken **blau** sind. Ursache:
+
+```css
+.ind-hist-legend span:last-child{color:var(--red)}   /* = Forecast */
+```
+
+Hat eine Reihe **keinen Forecast**, steht nur EIN span in der Legende — und der
+ist dann zugleich erster *und* letzter, bekommt also die Forecast-Farbe.
+Allein bei EUR betraf das **7 Indikatoren**. Positionsabhängige Selektoren
+brechen genau dann, wenn ein Element wegfällt; die Farbe hängt jetzt an
+Klassen (`.lg-act`/`.lg-fc`), also an der Bedeutung statt am Platz.
+
+**Fehlerklasse durchsucht:** alle weiteren positionsabhängigen Regeln, die eine
+FARBE setzen — `.live-src-row`, `.aaii-tbl`, `.bt-table`, `.si-ftab`. In allen
+vier Fällen sind die Elemente **fest im Markup**, nie bedingt gerendert; die
+Legende war die einzige gefährdete Stelle.
+
+### 4. Neuer Wächter (`check/layout.js`, viertes Netz)
+
+Findet appweit Flex-Zeilen mit `align-items:center`, deren Kinder durch einen
+Block-Margin verrutschen — über alle 5 Viewports und 17 Tabs. Gegenprobe:
+Margin zurückgebaut → **2 Treffer** (`cot-ctrl-r`, `data-ctrls`), Margin raus →
+**0**. Der zweite Treffer zeigt, dass die Wurzelbehandlung eine Stelle
+mitgefixt hat, die der Screenshot gar nicht zeigte.
+
+### 5. Next-Spalte gekürzt
+
+Nur noch die Restzeit: `21d` statt `in 21d`, entsprechend `~31d` statt
+`~in 31d`. `Today`/`Tomorrow` bleiben Wörter — dort wäre eine Zahl keine
+Auskunft.

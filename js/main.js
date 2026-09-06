@@ -1051,7 +1051,8 @@ function renderSymHistory(id){
 // Daten nicht zusammen und es wird gar keine Zerlegung gezeigt - lieber
 // nichts als eine Rechnung, die nicht aufgeht.
 const HIST_BRK_MAX_REST=0.35;
-function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,names){
+const HIST_REST_NAMES=['Interest Rates','COT Data','Risk Environment'];
+function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,names,histRest){
   if(!delta||!prevDate)return[];
   const cN=histCmp[date],cP=histCmp[prevDate];
   const rawN=histRaw[date],rawP=histRaw[prevDate];
@@ -1066,8 +1067,27 @@ function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,name
     if(v)parts.push({name:nm,v:v,tip:nm+' moved from '+rP[i]+' to '+rN[i]+' (card score), which is '+(v>0?'+':'')+v+' on the comparable scale'});
   });
   if(vollstaendig){
-    const v=Math.round(((rawN-sumN)-(rawP-sumP))*cN*10)/10;
-    if(v)parts.push({name:'Other cards',v:v,tip:'Interest Rates, COT Data and Risk Environment together — these are not stored per card per day, so they are shown as one figure'});
+    // ⚠ Nutzer-Wunsch 2026-09-06: die Ursachen sollen COT und Risk
+    // Environment EINZELN benennen. Dafuer zeichnet recordScoreHist seit
+    // demselben Tag auch Interest Rates (Feld 9), COT Data (10) und Risk
+    // Environment (11) je Tag auf. Liegen sie fuer BEIDE Tage vor, werden
+    // sie hier einzeln aufgeschluesselt; fuer aeltere Tage, die die Felder
+    // nicht haben, bleibt es beim gemeinsamen Sammelposten - eine
+    // Aufteilung, die nie aufgezeichnet wurde, wird nicht erfunden.
+    const xN=histRest&&histRest[date],xP=histRest&&histRest[prevDate];
+    const einzeln=xN&&xP&&HIST_REST_NAMES.every((_,i)=>xN[i]!=null&&xP[i]!=null);
+    if(einzeln){
+      HIST_REST_NAMES.forEach((nm,i)=>{
+        const v=Math.round((xN[i]-xP[i])*cN*10)/10;
+        if(v)parts.push({name:nm,v:v,tip:nm+' moved from '+xP[i]+' to '+xN[i]+' (card score), which is '+(v>0?'+':'')+v+' on the comparable scale'});
+      });
+      const summeX=HIST_REST_NAMES.reduce((a,_,i)=>a+(xN[i]-xP[i]),0);
+      const uebrig=Math.round(((rawN-sumN)-(rawP-sumP)-summeX)*cN*10)/10;
+      if(uebrig)parts.push({name:'Other cards',v:uebrig,tip:'Any further cards on this asset beyond the six that are recorded per day (e.g. a category you added yourself)'});
+    }else{
+      const v=Math.round(((rawN-sumN)-(rawP-sumP))*cN*10)/10;
+      if(v)parts.push({name:'Other cards',v:v,tip:'Interest Rates, COT Data and Risk Environment together — one of these two days was recorded before 2026-09-06, when those three were not yet stored separately, so they cannot be split apart for it'});
+    }
   }
   const vF=Math.round(rawP*(cN-cP)*10)/10;
   if(vF)parts.push({name:'Comparability factor',v:vF,tip:'The score is scaled by the average indicator count of the FX majors so assets with fewer indicators stay comparable. This factor moved from '+cP+' to '+cN+'.'});
@@ -1141,12 +1161,13 @@ function renderSymHistoryPanel(id){
   // Vortage auf +2,4/+3/+3,1 - alle aus dem Modell VOR dem Bias-Fix). Der
   // Wert wird deshalb weiterhin gezeigt (er ist echt aufgezeichnet), aber
   // gedaempft und mit Begruendung - nicht geloescht und nicht umgerechnet.
-  const histMap={},histOld={},histRub={},histCmp={},histRaw={},histTag={};
+  const histMap={},histOld={},histRub={},histCmp={},histRaw={},histTag={},histRest={};
   (scoreHist[id]||[]).forEach(e=>{
     histMap[e[0]]=e[1];histOld[e[0]]=!scoreHistEntryCurrent(e);histRub[e[0]]=[e[2],e[3],e[4]];histTag[e[0]]=e[6]||null;
     // Nur Eintraege ab 2026-08-23 tragen Faktor und Rohscore. Aeltere sind
     // NICHT zerlegbar - fuer sie wird darum auch keine Zerlegung gezeigt,
     // statt eine zu erfinden, die nicht aufgeht.
+    histRest[e[0]]=(e[9]!=null&&e[10]!=null&&e[11]!=null)?[+e[9],+e[10],+e[11]]:null;
     histCmp[e[0]]=(e[7]!=null&&isFinite(e[7])&&+e[7]>0)?+e[7]:null;
     histRaw[e[0]]=(e[8]!=null&&isFinite(e[8]))?+e[8]:null;
   });
@@ -1252,7 +1273,7 @@ function renderSymHistoryPanel(id){
     // (Interest Rates, COT Data, Risk Environment) oder aus dem
     // Fairness-Faktor - das wird auch so benannt und NICHT einer Karte
     // zugeschrieben, die es gar nicht war.
-    const parts=histDeltaParts(d.date,prevDate,delta,histMap,histRub,histCmp,histRaw,HIST_RUB_NAMES);
+    const parts=histDeltaParts(d.date,prevDate,delta,histMap,histRub,histCmp,histRaw,HIST_RUB_NAMES,histRest);
     const brk=parts.length?`<div class="histp-brk">${parts.map(p=>
       `<span class="histp-brk-i" title="${escH(p.tip)}"><span class="histp-brk-n">${escH(p.name)}</span><span class="histp-brk-v" style="color:${p.v>0?BC.bull:p.v<0?BC.bear:'var(--t3)'}">${(p.v>0?'+':'')+p.v}</span></span>`).join('')}</div>`:'';
     // "Alles begruendet": bewegt sich der Score ohne Release, ohne manuelle
@@ -1274,7 +1295,25 @@ function renderSymHistoryPanel(id){
         :`<div class="histp-noevt">No change.</div>`)
       :'';
     const has=!!(evs.length||manual.length||delta||bekannteGrenze);
-    return{date:d.date,score:dayScore,delta,has,html:`<div class="histp-day${isToday?' histp-today':''}">
+    // Kompakte Ursachen-Spalte fuer die offene Wochenliste unten. Speist sich
+    // aus GENAU denselben Quellen wie die Detailkarte darueber - die
+    // numerische Zerlegung (parts), die datierten Releases (evs) und die
+    // manuellen/automatischen Aenderungen (manual). Keine zweite Herleitung
+    // daneben, die auseinanderlaufen koennte.
+    const causeChips=parts.map(pp=>
+      `<span class="hw-c" style="color:${pp.v>0?BC.bull:pp.v<0?BC.bear:'var(--t3)'}" title="${escH(pp.tip)}">${escH(pp.name)} ${(pp.v>0?'+':'')+pp.v}</span>`).join('');
+    const causeEvts=evs.slice(0,3).map(ev=>
+      `<span class="hw-e" title="${escH(ev.name)}${ev.actual?' — actual '+escH(ev.actual):''}">${escH(ev.name.length>34?ev.name.slice(0,33)+'…':ev.name)}</span>`).join('');
+    const mehrEvts=evs.length>3?`<span class="hw-e hw-more">+${evs.length-3} more</span>`:'';
+    const causeMan=manual.length?`<span class="hw-m" title="Manual or recorded automatic changes on this day">${manual.length}× ${manual.some(m=>m.kind!=='auto')?'edited':'auto'}</span>`:'';
+    const causes=(causeChips||causeEvts||causeMan)
+      ?causeChips+causeEvts+mehrEvts+causeMan
+      :(delta
+        ?`<span class="hw-none">moved ${dTxt}, recorded before the breakdown existed</span>`
+        :bekannteGrenze
+        ?`<span class="hw-none">score model changed — not compared</span>`
+        :dayScore==null?`<span class="hw-none">no score recorded</span>`:'');
+    return{date:d.date,score:dayScore,delta,has,causes,html:`<div class="histp-day${isToday?' histp-today':''}">
       <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
         ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
         <span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
@@ -1335,7 +1374,48 @@ function renderSymHistoryPanel(id){
   const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
   const bar=`<div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
     `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>`;
-  return`<div class="histp">${bar}${weekChart}${dayChart}${dayDetail}${fuss}</div>`;
+  // ── Offene Wochenabschnitte (Nutzer-Wunsch 2026-09-06) ──────────────
+  // "mach das man da schoen unterteilt sieht die Wochen und dann soll man pro
+  // Woche jeden Woche Tag sehen wo steht Score am Ende des Tages dann
+  // Scoreveraenderung zum Vortag und dann die Ursachen fuer diese
+  // Veraenderung".
+  //
+  // Inhaltlich stand das alles schon da - aber hinter ZWEI Klicks
+  // (Wochenbalken -> Tagesbalken -> Detailkarte). Der Zeitstrahl bleibt als
+  // Uebersicht (Nutzer-Wunsch 2026-08-31, nicht ersetzt), darunter steht
+  // jetzt jede Woche als offener Abschnitt mit einer Zeile je Tag.
+  // Wochenkopf traegt Zeitraum und Netto-Bewegung der Woche; die Tageszeile
+  // Score am Tagesende, Delta zum Vortag und die Ursachen. Tage ohne
+  // aufgezeichneten Score bleiben sichtbar und sagen das - sonst entstuende
+  // der Eindruck einer luekenlosen Reihe, die es nicht gibt.
+  const wochen=weeks.map(w=>{
+    const scored=w.cards.filter(c=>c.score!=null);
+    const first=scored.length?scored[scored.length-1].score:null;
+    const last=scored.length?scored[0].score:null;
+    const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
+    const netCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
+    const zeilen=w.cards.map(c=>{
+      const wd=new Date(c.date+'T00:00:00').toLocaleDateString('en',{weekday:'long'});
+      const heute=c.date===today;
+      const dCol=c.delta==null?'var(--t3)':c.delta>0?BC.bull:c.delta<0?BC.bear:'var(--t3)';
+      const dTxt=c.delta==null?'·':(c.delta>0?'+':'')+c.delta;
+      const sTxt=c.score!=null?((c.score>0?'+':'')+c.score):'–';
+      const ursachen=c.causes||'<span class="hw-none">no recorded cause</span>';
+      return`<div class="hw-day${heute?' hw-today':''}">
+        <div class="hw-d1"><span class="hw-wd">${escH(wd)}</span><span class="hw-dt">${escH(fmtDayHdr(c.date))}</span></div>
+        <div class="hw-d2"><span class="hw-sc" title="Score at the end of this day">${escH(sTxt)}</span></div>
+        <div class="hw-d3"><span class="hw-dl" style="color:${dCol}" title="Change against the previous recorded day">${escH(dTxt)}</span></div>
+        <div class="hw-d4">${ursachen}</div>
+      </div>`;
+    }).join('');
+    return`<div class="hw-week">
+      <div class="hw-hd"><span class="hw-hd-r">${escH(fmtDayHdr(w.start))} – ${escH(fmtDayHdr(dateAddStr(w.start,6)))}</span>
+        <span class="hw-hd-n" style="color:${netCol}" title="Net move across this week">${net==null?'no recorded change':((net>0?'+':'')+net+' this week')}</span></div>
+      <div class="hw-cols"><span>Day</span><span>Score</span><span>Δ</span><span>What moved it</span></div>
+      ${zeilen}
+    </div>`;
+  }).join('');
+  return`<div class="histp">${bar}${weekChart}${dayChart}${dayDetail}<div class="hw-list">${wochen}</div>${fuss}</div>`;
 }
 function openHistModal(id){
   const c=syms.find(s=>s.id===id);if(!c)return;
@@ -1604,14 +1684,17 @@ function indNextReleaseCell(symId,ind){
   if(ev){
     const d=daysUntil(ev.date);
     const soon=d<=IND_NEXT_SOON_D;
-    const lbl=d<=0?'Today':d===1?'Tomorrow':'in '+d+'d';
+    // Nutzer-Wunsch 2026-09-06: nur die Restzeit, ohne Praeposition -
+    // "21d" statt "in 21d". Today/Tomorrow bleiben Woerter, dort waere eine
+    // Zahl keine Auskunft.
+    const lbl=d<=0?'Today':d===1?'Tomorrow':d+'d';
     return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar)${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${escH(lbl)}</span>`;
   }
   const exp=indNextExpected(ind);
   if(!exp)return`<span class="ir-dash" title="No scheduled release inside the calendar window, and this indicator has no measured release rhythm to expect one from — so nothing is claimed here.">–</span>`;
   const d=daysUntil(exp);
   const soon=d<=IND_NEXT_SOON_D;
-  const lbl=d<=0?'due':d===1?'~tomorrow':'~in '+d+'d';
+  const lbl=d<=0?'due':d===1?'~tomorrow':'~'+d+'d';
   return`<span class="ir-next ir-next-est${soon?' soon':''}" title="Expected around ${escH(fmtDayHdr(exp))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps) counted from its last release on ${escH(fmtDayHdr((ind.research||{}).date||''))}. The calendar only carries about ten days ahead; once the release enters that window, the exact date replaces this.">${escH(lbl)}</span>`;
 }
 // Lange Form fuer den Vergleich: von wann der Wert ist UND wann der naechste
@@ -11455,6 +11538,16 @@ function recordScoreHist(){
     // sinn": Kopfzeile -0,8, Kartenzeile in Summe -1,4).
     const cmp=symCmpFactor(sym),raw=symScore(sym);
     const inf=rubScoreByName(sym,'Inflation'),lab=rubScoreByName(sym,'Labour Market'),gro=rubScoreByName(sym,'Economic Growth');
+    // 10.-12. Feld (ab 2026-09-06, Nutzer-Wunsch "die Ursachen fuer diese
+    // Veraenderung also News oder cot oder weil vlt Risk Environment
+    // geaendert wurde"): die drei restlichen score-tragenden Rubriken.
+    // Ohne sie war die Tagesveraenderung nur bis zu einem Sammelposten
+    // zerlegbar - Interest Rates, COT und Risk Environment lagen
+    // ununterscheidbar im Rest. Genau dieselbe Erweiterung wie beim 8./9.
+    // Feld am 2026-08-23: aeltere Eintraege haben die Felder nicht und
+    // bekommen deshalb weiterhin den Sammelposten gezeigt, statt eine
+    // Aufteilung zu erfinden, die nicht aufgezeichnet wurde.
+    const ir=rubScoreByName(sym,'Interest Rates'),ct=rubScoreByName(sym,'COT Data'),re=rubScoreByName(sym,MACRO_NAME);
     const arr=scoreHist[id]||(scoreHist[id]=[]);
     const last=arr[arr.length-1];
     // 7. Feld: unter WELCHEM Score-Modell dieser Wert entstanden ist
@@ -11463,9 +11556,9 @@ function recordScoreHist(){
     // ist. Aeltere Eintraege haben das Feld nicht und gelten damit
     // automatisch als "anderes Modell" - genau richtig, denn sie sind es.
     const tag=SCORE_MODEL_TAG();
-    const e=[t,tot,inf,lab,gro,sym.bias,tag,cmp,raw];
+    const e=[t,tot,inf,lab,gro,sym.bias,tag,cmp,raw,ir,ct,re];
     if(last&&last[0]===t){
-      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias||last[6]!==tag||last[7]!==cmp||last[8]!==raw){arr[arr.length-1]=e;changed=true;}
+      if(last[1]!==tot||last[2]!==inf||last[3]!==lab||last[4]!==gro||last[5]!==sym.bias||last[6]!==tag||last[7]!==cmp||last[8]!==raw||last[9]!==ir||last[10]!==ct||last[11]!==re){arr[arr.length-1]=e;changed=true;}
     }else{arr.push(e);changed=true;}
     // 1100 Tage (~3 Jahre) statt vorher 95 (~3 Monate) - "maximale Historie"
     // (Nutzer-Wunsch 2026-07-20), angelehnt an den 3-Jahres-Horizont, den
@@ -13254,7 +13347,7 @@ function indHistChart(ind,symId,opts){
   const _cs=indChartSeries(ind,symId);
   const all=_cs.pts;
   const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange');
-  const legend=`<div class="ind-hist-legend"><span>■ Actual</span><span>— Forecast</span></div>`;
+  const legend=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span></div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
   const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
   if(all.length<2){
@@ -13408,8 +13501,8 @@ function indHistChart(ind,symId,opts){
   // Legende erst jetzt endgueltig: eine Reihe ohne Forecast (Anleihen, COT,
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
   const hasFc=use.some(p=>p[2]!=null);
-  const legend2=`<div class="ind-hist-legend"><span>■ Actual</span>${hasFc?'<span>— Forecast</span>':''}</div>`;
-  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span>■ Actual</span>${hasFc?'<span>— Forecast</span>':''}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
+  const legend2=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</div>`;
+  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}

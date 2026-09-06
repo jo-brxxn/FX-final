@@ -94,6 +94,22 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Produktivadresse — ein Cloudflare Worker hinter Cloudflare Access,
    NICHT primär GitHub Pages — sowie den ungeschützten GitHub-Pages-Mirror
    speist; nicht der Session-Dev-Branch). Details: `docs/workflow.md`.
+8. **Gezeigte Bugs immer nach demselben Ablauf** (Nutzer-Regel 2026-09-06,
+   ausdrücklich als Dauerregel gesetzt — gilt für Screenshots, beschriebene
+   Fehler und Sprachnachrichten gleichermaßen):
+   1. **Reproduzieren, nicht raten.** Den Fehler im Browser herstellen und
+      MESSEN (Playwright, Bounding-Boxen, `getComputedStyle`), bevor
+      irgendeine Zeile geändert wird. Eine aus dem Code abgeleitete
+      Vermutung ist keine Reproduktion.
+   2. **Ursache belegen.** Erst wenn die Messung die Ursache zeigt, wird
+      korrigiert — und zwar an der Wurzel, nicht am Symptom. Steht an einer
+      Stelle schon ein Einzel-Patch für dasselbe Problem, ist das ein
+      Hinweis, dass die Wurzel noch lebt.
+   3. **Dokumentieren** mit den Messwerten in `docs/CHANGELOG.md`.
+   4. **Fehlerklasse suchen.** Danach gezielt prüfen, wo derselbe Fehler
+      sonst noch auftreten kann, und die Fundstellen mitbeheben.
+   5. **Wächter ergänzen**, wo die Klasse automatisch prüfbar ist
+      (`check/`) — mit Gegenprobe, dass er den Fehler wirklich rot meldet.
 
 ## Meta-Grundsatz: wo eine neue Regel hingehört
 
