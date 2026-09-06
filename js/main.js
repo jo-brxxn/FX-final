@@ -13470,14 +13470,36 @@ function openBacktester(symId){
   const tt=document.getElementById('mBtTitle');
   if(tt)tt.textContent='Rate decisions vs. data — '+(sym.name||sym.id);
   const spiegel=isNonFx(sym.id)?`<div class="bt-note">Macro data mirrored from <b>${escH(ccy)}</b>, the currency this asset is linked to — the same series its macro card uses.</div>`:'';
-  if(!moves.length){
-    if(el)el.innerHTML=spiegel+`<div class="bt-empty">No rate change on file for ${escH(ccy)}. The decision history reaches back to about September 2023; if a central bank has only held since then, there is nothing to show here — nothing is inferred beyond the recorded decisions.</div>`;
-    openM('mBt');return;
-  }
   const kopf=BT_AREAS.map(([rubName,label])=>{
     const ind=btAnchorInd(sym,rubName);
     return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(ind.displayName||ind.name):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
   }).join('');
+  // Kopfzeile "wo stehen wir jetzt" (Nutzer-Wunsch 2026-09-06: "mach ganz oben
+  // eine Zeile wo die aktuellen Daten stehen also alles ausser halt ob es ein
+  // hike oder cut ist"). Dieselben drei Bereichszellen wie jede historische
+  // Zeile, nur mit dem heutigen Datum als Stichtag - dadurch steht die
+  // aktuelle Datenlage im GLEICHEN Raster wie die Lage vor jedem vergangenen
+  // Schritt und ist direkt darunter vergleichbar.
+  // Kein Hike/Cut-Etikett: die naechste Sitzung hat noch nicht stattgefunden,
+  // eine Richtung dort waere geraten (CLAUDE.md Regel 4). Stattdessen der
+  // aktuell geltende Satz und seit wann er gilt.
+  const heute=todayStr();
+  const stufen=(typeof rateSteps==='function')?rateSteps(ccy):null;
+  const aktSatz=(Array.isArray(stufen)&&stufen.length)?stufen[stufen.length-1][1]:null;
+  const seit=moves.length?moves[0].date:null;
+  const jetztZeile=`<tr class="bt-now-row">
+      <td class="bt-date">Today<span class="bt-now-d">${escH(fmtDayHdr(heute))}</span></td>
+      <td class="bt-move"><span class="bt-tag bt-now">NOW</span>${aktSatz!=null?`<span class="bt-bp">${escH(fmtIndVal(aktSatz,'%'))}</span>`:'<span class="bt-rate">rate not on file</span>'}${seit?`<span class="bt-rate">since ${escH(fmtDayHdr(seit))}</span>`:''}</td>
+      ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,heute)).join('')}
+    </tr>`;
+  if(!moves.length){
+    if(el)el.innerHTML=spiegel+`<div class="bt-scroll"><table class="bt-table">
+      <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
+      <tbody>${jetztZeile}</tbody>
+    </table></div>
+    <div class="bt-empty">No rate change on file for ${escH(ccy)} — the top row shows where the data stands today, but there is nothing to compare it against. The decision history reaches back to about September 2023; if this central bank has only held since then, nothing beyond the recorded decisions is inferred.</div>`;
+    openM('mBt');return;
+  }
   const zeilen=moves.map(m=>{
     const cls=m.dir==='hike'?'bt-hike':'bt-cut';
     const bp=Math.round(Math.abs(m.delta)*100);
@@ -13496,9 +13518,9 @@ function openBacktester(symId){
     </div>
     <div class="bt-scroll"><table class="bt-table">
       <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
-      <tbody>${zeilen}</tbody>
+      <tbody>${jetztZeile}${zeilen}</tbody>
     </table></div>
-    <div class="bt-legend">Each cell holds the last ${BT_LOOKBACK} releases <b>before that meeting</b>, oldest to newest, the value the bank actually had in front of it on the right. The arrow compares the newest against the oldest of those three and is coloured the way the app reads it everywhere else — for the unemployment rate a fall is the good direction. Only meetings that <b>changed</b> the rate are listed; holds are left out. Decisions and releases both come from the live feed, so a series that does not reach back far enough is shown short rather than filled in.</div>`;
+    <div class="bt-legend">The <b>top row is today</b>: the rate now in force and the latest ${BT_LOOKBACK} readings, in the same grid as every past decision, so you can hold the current picture against the ones that made the bank move. It carries no hike/cut label — the next meeting has not happened, and a direction there would be guesswork. Every row below holds the last ${BT_LOOKBACK} releases <b>before that meeting</b>, oldest to newest, the value the bank actually had in front of it on the right. The arrow compares the newest against the oldest of those three and is coloured the way the app reads it everywhere else — for the unemployment rate a fall is the good direction. Only meetings that <b>changed</b> the rate are listed; holds are left out. Decisions and releases both come from the live feed, so a series that does not reach back far enough is shown short rather than filled in.</div>`;
   openM('mBt');
 }
 const PRICE_MODES=[['candle','Candles'],['line','Line'],['step','Step']];

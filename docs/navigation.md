@@ -1287,7 +1287,13 @@ Knopf `Backtester` in `.dmeta-controls`, zwischen `History` und
 `Data quality` — dieselbe Leiste, dieselbe Knopfklasse
 (`.dmeta-hist-btn`). Oeffnet das Fenster `#mBt` (`openBacktester(symId)`).
 
-Inhalt: jeder **echte Zinsschritt** der zustaendigen Notenbank (Hike/Cut,
+Ganz oben steht die **Jetzt-Zeile** (`bt-now-row`): heutiges Datum, aktuell
+geltender Satz mit neutralem `NOW`-Etikett statt Hike/Cut, und dieselben drei
+Bereichszellen - dadurch liegt die aktuelle Datenlage im selben Raster wie
+jede vergangene Entscheidung. Ein Richtungs-Etikett gibt es dort bewusst
+nicht: die naechste Sitzung hat noch nicht stattgefunden.
+
+Inhalt darunter: jeder **echte Zinsschritt** der zustaendigen Notenbank (Hike/Cut,
 keine Holds) mit den letzten **drei** Releases vor der Sitzung je Bereich
 (Inflation / Labour Market / Economic Growth).
 

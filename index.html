@@ -3828,6 +3828,13 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .bt-date{font:600 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
 .bt-move{display:flex;align-items:baseline;gap:7px}
 .bt-tag{font:800 var(--fs-2xs)/1 var(--ff-num);letter-spacing:.6px;padding:3px 6px;border-radius:4px}
+.bt-tag.bt-now{color:var(--t2);background:var(--bd2);border:1px solid var(--bd)}
+/* Die Jetzt-Zeile steht im selben Raster wie die Historie, muss sich aber
+   als Bezugspunkt davon absetzen - abgesetzter Grund plus eine kraeftigere
+   Trennlinie nach unten, KEINE Bedeutungsfarbe (sie sagt ja gerade nichts
+   ueber eine Richtung aus). */
+.bt-table tr.bt-now-row td{background:var(--bg2);border-bottom:2px solid var(--bd)}
+.bt-now-d{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:1px}
 .bt-tag.bt-hike{color:var(--blue);background:rgba(var(--blue-rgb),.11)}
 .bt-tag.bt-cut{color:var(--red);background:rgba(var(--red-rgb),.11)}
 .bt-bp{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t1)}
@@ -4239,11 +4246,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-474 - Backtester je Asset (Nutzer-Wunsch 2026-09-06). Neuer Knopf in der Kopfzeile jeder Asset-Seite, neben Data quality. Zeigt jeden Zinsschritt der zustaendigen Notenbank - nur echte Hikes und Cuts, keine Holds - und daneben, wie Inflation, Labour Market und Economic Growth zu diesem Zeitpunkt dastanden: je Bereich die letzten DREI Releases VOR der Sitzung, von alt nach neu, der juengste betont, davor ein Trendpfeil. Der Pfeil zeigt die Richtung der Daten, seine Farbe die Bedeutung nach derselben Regel wie ueberall sonst - bei der Arbeitslosenquote ist fallend die gute Richtung. Quellen sind die vorhandenen: rateSteps fuer die Beschluesse (kennt den Fed-Korridor), RUB_ANCHOR_IND fuer den Anker je Rubrik, ind.chartHist fuer die Werte - keine zweite Datenauswahl daneben. Reicht eine Reihe an einem Datum noch nicht drei Releases zurueck, steht dort 1/3 bzw. no data yet statt eines hochgerechneten Werts. Non-FX-Assets spiegeln die Reihe ihrer verbundenen Waehrung und sagen das im Fenster. Ausserdem: die Klasse modal-wide wurde seit August im Markup vergeben, eine CSS-Regel dazu gab es nie - beide breiten Fenster scrollten deshalb selbst auf grossen Bildschirmen immer horizontal; jetzt bis 1080px breit."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-475 - Backtester: Jetzt-Zeile ganz oben (Nutzer-Wunsch 2026-09-06: &quot;mach ganz oben eine Zeile wo die aktuellen Daten stehen also alles ausser halt ob es ein hike oder cut ist&quot;). Die Zeile steht im GLEICHEN Raster wie jede historische Entscheidung - heutiges Datum als Stichtag, dieselben drei Bereichszellen mit den letzten drei Releases - und ist dadurch direkt gegen die Lage vor jedem vergangenen Schritt vergleichbar. Statt HIKE/CUT traegt sie ein neutrales NOW mit dem aktuell geltenden Satz und seit wann er gilt; eine Richtung fuer die naechste Sitzung waere geraten (CLAUDE.md Regel 4). Abgesetzt durch eigenen Grund und eine kraeftigere Trennlinie, bewusst OHNE Bedeutungsfarbe. Hat eine Notenbank seit 09/2023 nur gehalten, steht die Jetzt-Zeile trotzdem da, mit dem Hinweis, dass es nichts zum Vergleichen gibt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-474</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-475</span>
     </span>
   </div>
   <div class="hdr-r">

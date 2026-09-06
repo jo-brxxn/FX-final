@@ -10556,3 +10556,38 @@ Indikatornamen. Pfeilfarben wie oben gemessen (`rgb(11,95,204)` /
 `rgb(197,15,26)`). Kein Dokument-Überlauf in beiden Breiten, keine
 Konsolen- oder Page-Errors, Knopf steht in der Kopfzeile zwischen History und
 Data quality.
+
+---
+
+## 2026-09-06 — Backtester: Jetzt-Zeile ganz oben (VERSION-CHECK-475)
+
+**Nutzer-Wunsch:** *„Und mach ganz oben eine Zeile wo die aktuellen Daten
+stehen also alles außer halt ob es ein hike oder cut ist"*
+
+Die Zeile steht im **gleichen Raster** wie jede historische Entscheidung —
+heutiges Datum als Stichtag, dieselbe `btCellHtml()`-Zelle je Bereich mit den
+letzten drei Releases. Genau das ist der Punkt: die aktuelle Datenlage liegt
+damit direkt über der Lage vor jedem vergangenen Schritt und lässt sich Zeile
+für Zeile dagegenhalten.
+
+**Kein Hike/Cut-Etikett**, wie gewünscht — und aus einem zweiten Grund richtig:
+die nächste Sitzung hat nicht stattgefunden, eine Richtung dort wäre geraten
+(CLAUDE.md Regel 4). Stattdessen ein neutrales `NOW` mit dem aktuell geltenden
+Satz und seit wann er gilt, z. B. `NOW 3.75% since Wed, Dec 10, 25`.
+
+Optisch abgesetzt durch eigenen Grund (`--bg2`) und eine kräftigere
+Trennlinie nach unten, **bewusst ohne Bedeutungsfarbe** — die Zeile sagt ja
+gerade nichts über eine Richtung aus.
+
+Hat eine Notenbank seit 09/2023 nur gehalten, erscheint die Jetzt-Zeile
+trotzdem, mit dem Hinweis, dass es nichts zum Vergleichen gibt — vorher blieb
+das Fenster in dem Fall komplett leer.
+
+### Verifiziert (Playwright)
+
+USD 7 Zeilen (1 + 6), JPY 6, AUD 8, Gold 7 (aus USD gespiegelt) — die
+Jetzt-Zeile ist in allen Fällen die erste. USD heute:
+`Today · Sun, Sep 6, 26 | NOW 3.75% since Wed, Dec 10, 25 | ▼ 4,2 › 3,5 › 3,4
+| ▼ 4,2 › 4,1 › 4,1 | ▼ 2,1 › 1,5 › 1,5`, direkt darüber der Cut vom 10.12.25
+mit `▲ 2,7 › 2,9 › 3,0`. `NOW`-Etikett neutral in `rgb(86,99,127)`, kein
+Dokument-Überlauf, keine Konsolen- oder Page-Errors.
