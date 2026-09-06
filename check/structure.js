@@ -79,9 +79,54 @@ for(const m of alles.matchAll(/timeRange(?:Bar|Custom)Html\(([\s\S]{0,200}?)\)/g
     if(!def.has(basis+'Custom')) fehlend.add(basis+'Custom');
   }
 }
+// Viertes Netz: ein Handler-Name, der NUR in js/*.js definiert ist, muss auch
+// in der window-Bruecke stehen.
+//
+// ⚠ Genau diese Luecke hat 2026-09-06 zugeschlagen: setDataMode() war sauber
+// definiert, das dritte Netz oben war deshalb zufrieden - aber der Name fehlte
+// in Object.assign(window,{...}). Die Modus-Buttons im Data-Tab warfen beim
+// Klick still einen ReferenceError. Ein inline-Handler wird im GLOBALEN Scope
+// ausgewertet; eine Modul-Funktion ist dort nur sichtbar, wenn sie exportiert
+// wurde. CLAUDE.md Regel 6 nennt die vergessene Bruecken-Zeile ausdruecklich
+// als haeufigsten Grund fuer "der Button macht nichts" - jetzt faellt es rot
+// auf statt erst beim Klicken.
+const bruecke=(()=>{
+  let out='';
+  let dateien=[];
+  try{dateien=fs.readdirSync(jsDir).filter(f=>f.endsWith('.js'));}catch(e){}
+  dateien.forEach(f=>{
+    const t=fs.readFileSync(path.join(jsDir,f),'utf8');
+    const L=t.split('\n');
+    for(let i=0;i<L.length;i++){
+      if(!/Object\.assign\(\s*window\s*,\s*\{/.test(L[i]))continue;
+      for(let k=i;k<L.length;k++){out+='\n'+L[k];if(/\}\s*\)\s*;?\s*$/.test(L[k]))break;}
+    }
+    for(const m of t.matchAll(/Object\.defineProperty\(\s*window\s*,\s*['"]([\w$]+)/g))out+='\n'+m[1];
+  });
+  return out;
+})();
+// Nur in js/*.js definiert = braucht den Export. In index.html selbst
+// definierte Funktionen stehen ohnehin global.
+const defNurJs=new Set();
+for(const m of jsAlle.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g))defNurJs.add(m[1]);
+const defImHtml=new Set();
+for(const m of h.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\(/g))defImHtml.add(m[1]);
+const ohneExport=new Set();
+for(const m of alles.matchAll(HANDLER)){
+  if(inKommentar(m.index)) continue;
+  for(const c of m[2].matchAll(/([A-Za-z_$][\w$]*)\s*\(/g)){
+    const vor=m[2].slice(0,c.index);
+    if(METHODEN.test(vor)) continue;
+    const n=c[1];
+    if(EINGEBAUT.has(n)||/^[A-Z]/.test(n)) continue;
+    if(defImHtml.has(n)||!defNurJs.has(n)) continue;
+    if(!new RegExp('\\b'+n+'\\b').test(bruecke)) ohneExport.add(n);
+  }
+}
 const befunde=[];
 if(doppelt.length) befunde.push('doppelte ids: '+doppelt.map(([k,v])=>k+' x'+v).join(', '));
 if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeileA+' und '+blockDup.zeileB);
 if(fehlend.size) befunde.push('Handler ohne Funktion: '+[...fehlend].join(', '));
+if(ohneExport.size) befunde.push('Handler nicht in der window-Bruecke (Klick wirft ReferenceError): '+[...ohneExport].join(', '));
 if(befunde.length){console.log('STRUKTURFEHLER:\n  '+befunde.join('\n  '));process.exit(1);}
 console.log('Struktur ok: keine doppelten ids, kein wiederholter Block, '+def.size+' Funktionen, alle Handler aufloesbar');

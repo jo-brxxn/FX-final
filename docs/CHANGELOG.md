@@ -10223,3 +10223,84 @@ am rechten Rand in den Blick gescrollt wird; Achsen zeigen `Jun 5, 26`; kein
 Kartenüberlauf, kein horizontaler Überlauf des Modals bei 820 px. Data-Panels:
 `Custom ✕` erscheint nur beim abweichenden Panel, Relink stellt her, das obere
 Dropdown setzt beide zurück. Keine Konsolen-/Page-Errors.
+
+## 2026-09-06 — Indikator-Vergleich, „Next"-Countdown, Wächter für die window-Brücke (VERSION-CHECK-471)
+
+### 1. Zweite Leserichtung im Data-Raster
+
+*„füg noch die Option hinzu Indikatoren in einem einzelnen Asset zu vergleichen"*
+
+Statt einer zweiten Seite bekommt das bestehende Panel-Raster einen Umschalter —
+das Prinzip bleibt, nur was fest und was variabel ist, tauscht:
+
+| Modus | fest | variabel |
+|---|---|---|
+| **By asset** (bisher) | ein Indikator | bis zu 4 **Assets** |
+| **By indicator** (neu) | ein Asset | bis zu 4 seiner **Indikatoren** |
+
+Beide nutzen dieselben Panels, dieselbe Zeitraum-Leiste und denselben
+gemeinsamen Chart-Cursor. Der Indikator-Picker arbeitet exakt wie der
+Asset-Picker (jeder Tipp wirkt sofort, Zähler `n/4`, bei 4 schließt er, Tipp
+daneben schließt auch) — er listet nur die Indikatoren **dieses** Assets. Beim
+Moduswechsel wandert das erste gewählte Asset bzw. der gemeinsame Indikator
+mit, damit nie ein leeres Raster dasteht.
+
+### 2. „Von wann" und „wann kommt der nächste"
+
+Über jedem Vergleichs-Chart steht jetzt `AS OF <Datum> · NEXT in Xd`. Ist der
+nächste Release **in 7 Tagen oder weniger**, steht er rot (`IND_NEXT_SOON_D`).
+
+Neue Funktion `findIndNextEvent(symId, indName)` — das Spiegelbild von
+`findIndEventHistory`: das früheste noch **nicht** veröffentlichte
+Kalender-Event, das zu diesem Indikator passt (gleiche Matcher, gleiche
+Perioden-Prüfung).
+
+**⚠ Grenze, die im Design sichtbar bleiben muss:** `ff_calendar.json` deckt nur
+rund zwei Wochen um heute ab, reicht also knapp eine Woche voraus. Für die
+meisten Indikatoren ist an den meisten Tagen **kein** Termin bekannt — dann
+steht dort ein Strich bzw. „not scheduled yet". Aus dem Release-Rhythmus einen
+Termin hochzurechnen wäre geraten und ist ausgeschlossen (CLAUDE.md Regel 4).
+
+### 3. Neue Spalte „Next" in der Indikator-Tabelle
+
+Nutzer-Entscheidung auf Rückfrage: *„Nur wann kommt ein neuer weil das Datum
+sieht man im ausgeklappten Zustand"* — die Spalte trägt deshalb **nur** die
+Restzeit (`in 3d` / `Tomorrow` / `Today`), rot ab 7 Tagen, ein Strich wenn kein
+Termin bekannt ist. Das Release-Datum bleibt der Detailzeile vorbehalten.
+
+Die Tabelle hat damit 6 statt 5 Spalten: `colgroup` von `29/18/18/18/17` auf
+`26/16/15/15/13/15`, und das `colspan` der Detailzeile von 5 auf **6** — wer das
+vergisst, bekommt eine Detailzeile, die eine Spalte zu kurz ist. Gemessen
+danach: 143/89/83/83/72/84 px bei 1400 px Fenster, kein Überlauf, höchste Zeile
+50 px.
+
+### 4. ⚠ Neuer Wächter: Handler ohne window-Brücke
+
+**Beim Bauen selbst hereingefallen:** `setDataMode()` war sauber definiert, das
+dritte Netz von `check/structure.js` („jeder Handler-Name muss als Funktion
+existieren") war deshalb zufrieden — aber der Name fehlte in
+`Object.assign(window,{…})`. Die beiden Modus-Buttons warfen beim Klick still
+einen `ReferenceError`. Aufgefallen ist es erst im Playwright-Lauf.
+
+Ein inline-`onclick` wird im **globalen** Scope ausgewertet; eine Modul-Funktion
+ist dort nur sichtbar, wenn sie exportiert wurde. CLAUDE.md Regel 6 nennt die
+vergessene Brücken-Zeile ausdrücklich als häufigsten Grund für „der Button macht
+nichts" — bisher stand das nur als Absatz da. Jetzt prüft `check/structure.js`
+es als **viertes Netz**: jeder Handler-Name, der ausschließlich in `js/*.js`
+definiert ist, muss in einem `Object.assign(window,{…})`-Block oder als
+`Object.defineProperty(window,'x',…)` auftauchen.
+
+Gegenprobe gemacht: Export entfernt → `STRUKTURFEHLER: Handler nicht in der
+window-Bruecke (Klick wirft ReferenceError): setDataMode`; Export zurück → grün.
+Auf dem Bestand meldet der Wächter **0** Fälle, ist also sofort scharf und nicht
+durch Altlasten stumpf.
+
+### Verifiziert (Playwright, 1400×1000 und 820×1100)
+
+Tabelle: 6 Spalten/6 `<td>` pro Zeile, `colspan="6"`, Werte `in 5d` / `in 4d` /
+`–`, 4 rote Zellen in `rgb(197,15,26)`. By indicator: 4 Panels aus einem Asset,
+Titel = Indikator + Rubrik als Unterzeile, `AS OF Wed, Aug 12, 26 · NEXT in 5d`
+(rot) bzw. `not scheduled yet`, genau 1 Zeitraum-Leiste, Popup mit 29 Chips und
+Zähler 3/4, schließt beim vierten. Zurück auf By asset: 2 Panels, beide mit
+As-of/Next-Zeile. Kein Kartenüberlauf bei 1400 und 820 px, keine
+Konsolen-/Page-Errors.

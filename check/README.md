@@ -148,3 +148,23 @@ Anlass: der Carry-Fix vom 2026-08-23 fasste `pairCarryAdj`/`actualColor` an
 (beide in der Flaeche), liess aber 0 von 16 Symbol-Scores, 0 von 96
 Karten-Scores und 0 von 16 Staerke-Noten unveraendert. Veraendert haben sich
 nur 5 von 35 Paar-Scores - und die stehen nirgends in `scoreHist`.
+
+## `structure.js`, viertes Netz: Handler ohne window-Brücke (seit 2026-09-06)
+
+Ein inline-`onclick="fn()"` wird im **globalen** Scope ausgewertet. Eine in
+`js/*.js` definierte Funktion ist dort nur sichtbar, wenn sie in der
+window-Brücke steht (`Object.assign(window,{…})` oder
+`Object.defineProperty(window,'x',…)`). Fehlt der Export, ist die Funktion
+sauber definiert — das dritte Netz („Handler ohne Funktion") ist zufrieden —,
+aber der Klick wirft still einen `ReferenceError` und der Button sieht für den
+Nutzer einfach kaputt aus.
+
+Genau das ist beim Data-Modus-Umschalter passiert (2026-09-06, `setDataMode`).
+CLAUDE.md Regel 6 nennt diese Fehlerklasse ausdrücklich; seitdem wird sie
+geprüft statt nur beschrieben.
+
+Der Wächter sammelt dafür alle Brücken-Blöcke aus `js/*.js` (ab
+`Object.assign(window,{` bis zur schließenden Zeile) und meldet jeden
+Handler-Namen, der nur in `js/*.js` definiert ist und dort nicht vorkommt. In
+`index.html` selbst definierte Funktionen sind ausgenommen — die stehen ohnehin
+global.

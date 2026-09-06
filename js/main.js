@@ -1525,6 +1525,59 @@ function findIndEventHistory(symId,indName,n){
 function findIndEvent(symId,indName){
   return findIndEventHistory(symId,indName,1)[0]||null;
 }
+// ── Wann kommt der NAECHSTE Wert? (Nutzer-Wunsch 2026-09-05) ───────
+// Spiegelbild von findIndEventHistory: das FRUEHESTE noch nicht
+// veroeffentlichte Kalender-Event, das zu diesem Indikator passt.
+//
+// ⚠ Das Kalender-Fenster reicht nur rund eine Woche voraus (ff_calendar.json
+// deckt ~2 Wochen um heute ab). Fuer die meisten Indikatoren ist an den
+// meisten Tagen also KEIN Termin bekannt - dann steht hier "–" und sonst
+// nichts. Aus dem Release-Rhythmus einen Termin hochzurechnen waere geraten
+// und ist damit ausgeschlossen (CLAUDE.md Regel 4).
+function findIndNextEvent(symId,indName){
+  const{base,period}=stripPeriodSuffix(indName||'');
+  const matcher=IND_EVENT_MATCHERS[base];
+  if(!matcher)return null;
+  const ccy=macroCcyFor(symId);
+  if(!ccy)return null;
+  const today=todayStr();
+  let best=null;
+  (calEvts||[]).forEach(ev=>{
+    if(!ev||!ev.date||ev.actual)return;          // schon veroeffentlicht
+    if(ev.date<today)return;
+    if(!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return;
+    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return;}
+    if(!best||ev.date<best.date||(ev.date===best.date&&(ev.time||'').localeCompare(best.time||'')<0))best=ev;
+  });
+  return best;
+}
+// Ab wie vielen Tagen Restzeit die Angabe rot wird (Nutzer-Wunsch: "wenn das
+// in 7 oder weniger Tagen ist dann soll der Wert in rot stehen").
+const IND_NEXT_SOON_D=7;
+// Kurzform fuer die Indikator-Tabelle: NUR die Restzeit, kein Datum - das
+// Datum steht im ausgeklappten Zustand (Nutzer-Entscheidung 2026-09-05:
+// "Nur wann kommt ein neuer weil das Datum sieht man im ausgeklappten
+// Zustand").
+function indNextReleaseCell(symId,ind){
+  const ev=findIndNextEvent(symId,ind&&ind.name);
+  if(!ev)return`<span class="ir-dash" title="No scheduled release for this indicator inside the calendar window — the feed only looks about a week ahead, and nothing beyond it is estimated.">–</span>`;
+  const d=daysUntil(ev.date);
+  const soon=d<=IND_NEXT_SOON_D;
+  const lbl=d<=0?'Today':d===1?'Tomorrow':'in '+d+'d';
+  return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''}${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${escH(lbl)}</span>`;
+}
+// Lange Form fuer den Vergleich: von wann der Wert ist UND wann der naechste
+// kommt (Nutzer-Wunsch 2026-09-05).
+function indAsOfNextHtml(symId,ind){
+  const r=(ind&&ind.research)||{};
+  const ev=findIndEvent(symId,ind&&ind.name);
+  const asOf=(ev&&ev.date)||r.date||'';
+  const nx=findIndNextEvent(symId,ind&&ind.name);
+  const d=nx?daysUntil(nx.date):null;
+  const soon=d!=null&&d<=IND_NEXT_SOON_D;
+  const nxTxt=nx?(d<=0?'today':d===1?'tomorrow':'in '+d+'d'):null;
+  return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${nx?`<b class="px-next${soon?' soon':''}" title="${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''}">${escH(nxTxt)}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window — the feed looks about a week ahead and nothing beyond it is estimated.">not scheduled yet</b>`}</div>`;
+}
 // Eigene, rollierende Werte-Historie je Indikator (unabhaengig vom kurzen
 // calEvts-Rueckblickfenster von CAL_PAST_DAYS Tagen). calEvts behaelt naemlich
 // nur ~10 Tage Vergangenheit + den Kalender-Vorschau-Zeitraum - bei monatlichen
@@ -5642,8 +5695,8 @@ function renderIndsTable(rub,ri){
   // auch auf schmalen Screens ohne Ueberlauf (siehe auch Namens-Kuerzung in
   // renderIndRow fuer sehr lange Indikator-Namen).
   return`<table class="ind-table">
-    <colgroup><col style="width:29%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:17%"></colgroup>
-    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th class="iht-trend">Trend</th></tr></thead>
+    <colgroup><col style="width:26%"><col style="width:16%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:15%"></colgroup>
+    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th class="iht-next" title="Days until the next scheduled release of this indicator. Red at 7 days or less. A dash means the calendar feed - which only looks about a week ahead - has no date for it yet; nothing beyond that is estimated.">Next</th><th class="iht-trend">Trend</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="add-row ind-edit-ctrls" style="margin-top:8px">
@@ -5719,13 +5772,14 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     <td class="ir-act${actCls?' '+actCls:''}">${escH(actTxt)}</td>
     <td class="ir-fc">${escH(fcTxt)}</td>
     <td class="ir-prev${prevCls?' '+prevCls:''}">${escH(prevTxt)}</td>
+    <td class="ir-nextc">${indNextReleaseCell(getSym().id,ind)}</td>
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
   if(!detailBody)return mainRow;
   // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
   // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
   const cmpBtn=`<div class="ind-data-act"><button class="btn ind-cmp-btn" onclick="event.stopPropagation();indCompareGo('${escJH(ind.id)}')" title="Open Insights &gt; Data with ${escH(getSym().name||getSym().id)} and this indicator already selected — add up to three more assets there">${icn('bars',13)}<span>Compare</span></button></div>`;
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="5"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${cmpBtn}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${cmpBtn}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -13544,6 +13598,98 @@ function setDataIndFor(id,v){
   renderDataTab();
 }
 function relinkDataInd(id){delete dataIndOverride[id];renderDataTab();}
+// ── Zwei Vergleichsrichtungen, ein Raster ─────────────────────────
+// Nutzer-Wunsch 2026-09-05: "fueg noch die Option hinzu Indikatoren in einem
+// einzelnen Asset zu vergleichen". Statt einer zweiten Seite bekommt das
+// bestehende Panel-Raster eine zweite Leserichtung - das Prinzip bleibt
+// dasselbe, nur was fest und was variabel ist, tauscht:
+//
+//   By asset      EIN Indikator, bis zu 4 ASSETS      (bisheriger Modus)
+//   By indicator  EIN Asset,     bis zu 4 INDIKATOREN (neu)
+//
+// Beide nutzen dieselben Panels, dieselbe Zeitraum-Leiste und denselben
+// gemeinsamen Chart-Cursor.
+let dataMode='assets';                  // 'assets' | 'inds'
+let dataIndList=['CPI (Headline)'];     // bis zu 4 Indikatoren im Modus 'inds'
+function setDataMode(m){
+  dataMode=(m==='inds')?'inds':'assets';
+  // Beim Wechsel den jeweils festen Teil sinnvoll vorbelegen, damit nie ein
+  // leeres Raster dasteht: das erste gewaehlte Asset bzw. der gemeinsame
+  // Indikator wandern in den neuen Modus mit.
+  if(dataMode==='inds'){
+    if(!dataAssets.length)dataAssets=['USD'];
+    dataAssets=[dataAssets[0]];
+    if(!dataIndList.length)dataIndList=[dataIndBase||'CPI (Headline)'];
+  }
+  closeDataAssetPicker();closeDataIndPicker();
+  renderDataTab();
+}
+// Alle Indikator-Basisnamen EINES Assets, gruppiert nach Karte.
+function dataIndGroupsOf(sym){
+  return((sym&&sym.rubrics)||[]).map(r=>{
+    const items=[];
+    (r.indicators||[]).forEach(i=>{
+      const b=stripPeriodSuffix(i.name).base;
+      if(b&&!items.some(x=>x.b===b))items.push({b,n:i.displayName||i.name});
+    });
+    return items.length?{name:r.name,items}:null;
+  }).filter(Boolean);
+}
+// ── Indikator-Popup (Modus 'inds') ────────────────────────────────
+// Gleiches Verhalten wie der Asset-Picker: jeder Tipp wirkt sofort, bei 4
+// ist Schluss und es schliesst sich, ein Tipp daneben schliesst es auch.
+let _dataIndPickerOpen=false;
+function _dataIndPickerOutside(e){
+  const t=e.target;
+  if(t&&t.closest&&t.closest('#dataIndPicker,#dataIndBtn'))return;
+  closeDataIndPicker();
+}
+function closeDataIndPicker(){
+  _dataIndPickerOpen=false;
+  document.removeEventListener('pointerdown',_dataIndPickerOutside,true);
+  const el=document.getElementById('dataIndPicker');if(el)el.remove();
+  const b=document.getElementById('dataIndBtn');if(b)b.classList.remove('on');
+}
+function openDataIndPicker(){
+  if(_dataIndPickerOpen){closeDataIndPicker();return;}
+  _dataIndPickerOpen=true;
+  renderDataIndPicker();
+  setTimeout(()=>{if(_dataIndPickerOpen)document.addEventListener('pointerdown',_dataIndPickerOutside,true);},0);
+}
+function toggleDataListInd(base){
+  const i=dataIndList.indexOf(base);
+  if(i>=0)dataIndList.splice(i,1);
+  else if(dataIndList.length<DATA_MAX_PANELS)dataIndList.push(base);
+  else return;
+  renderDataTab();
+  if(dataIndList.length>=DATA_MAX_PANELS)closeDataIndPicker();
+}
+function removeDataListInd(base){
+  const i=dataIndList.indexOf(base);if(i>=0)dataIndList.splice(i,1);
+  renderDataTab();
+}
+function renderDataIndPicker(){
+  if(!_dataIndPickerOpen)return;
+  const btn=document.getElementById('dataIndBtn');
+  if(!btn){closeDataIndPicker();return;}
+  btn.classList.add('on');
+  let el=document.getElementById('dataIndPicker');
+  if(!el){el=document.createElement('div');el.id='dataIndPicker';el.className='data-picker';document.body.appendChild(el);}
+  const sym=syms.find(s=>s.id===dataAssets[0]);
+  const full=dataIndList.length>=DATA_MAX_PANELS;
+  const groups=dataIndGroupsOf(sym);
+  const body=groups.map(g=>`<div class="data-picker-grp"><span class="cmp-filter-lbl">${escH(g.name)}</span><div class="cmp-filter-grp">${g.items.map(it=>{
+    const on=dataIndList.includes(it.b);
+    return`<button class="cmp-chip${on?' on':''}"${!on&&full?' disabled':''} onclick="toggleDataListInd('${escJH(it.b)}')" title="${escH(it.n)}">${escH(it.n)}</button>`;
+  }).join('')}</div></div>`).join('')||`<div class="cmp-filter-none">This asset tracks no indicators.</div>`;
+  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to 4 indicators</span><b>${dataIndList.length}/${DATA_MAX_PANELS}</b></div>
+    <div class="data-picker-body">${body}</div>
+    <div class="data-picker-ft">All of ${escH(sym?(sym.name||sym.id):'this asset')} · every tap is applied right away · closes at 4 or when you tap outside</div>`;
+  const r=btn.getBoundingClientRect();
+  el.style.top=Math.round(r.bottom+6)+'px';
+  el.style.right=Math.max(8,Math.round(window.innerWidth-r.right))+'px';
+  el.style.maxHeight=Math.max(160,Math.round(window.innerHeight-r.bottom-24))+'px';
+}
 // Watchlist-Quicklinks springen mit GENAU EINEM Asset hierher - das ersetzt
 // die ganze Panel-Auswahl, sonst landet man auf einem Raster, in dem das
 // angeklickte Asset irgendwo dazwischen steht.
@@ -13627,67 +13773,81 @@ function renderDataTab(){
   const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
   dataAssets=dataAssets.filter(id=>ids.includes(id)).slice(0,DATA_MAX_PANELS);
   Object.keys(dataIndOverride).forEach(k=>{if(!dataAssets.includes(k))delete dataIndOverride[k];});
-  const panels=dataAssets.map(id=>syms.find(s=>s.id===id)).filter(Boolean);
-  // Indikator-Auswahl: Vereinigung ueber alle gewaehlten Assets, gruppiert
-  // nach Karte (Inflation, Interest Rates, ...).
-  const groups=[];
-  panels.forEach(sym=>(sym.rubrics||[]).forEach(rub=>{
-    let g=groups.find(x=>x.name===rub.name);
-    if(!g){g={name:rub.name,items:[]};groups.push(g);}
-    (rub.indicators||[]).forEach(ind=>{
-      const base=stripPeriodSuffix(ind.name).base;
-      if(base&&!g.items.some(it=>it.base===base))g.items.push({base,name:ind.displayName||ind.name});
-    });
-  }));
-  const allBases=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.base)),[]);
-  if(dataIndBase&&!allBases.includes(dataIndBase))dataIndBase='';
-  // Kopfleiste: Chips der gewaehlten Panels (Klick entfernt) + Dropdown zum
-  // Hinzufuegen, bis 4 belegt sind.
-  const chips=dataAssets.map(id=>`<button class="cmp-chip on${isNonFx(id)?' nf':''}" onclick="removeDataAsset('${escJH(id)}')" title="Remove this panel">${escH(id)} ✕</button>`).join('');
-  // Mehrfachauswahl statt Dropdown: der Button oeffnet ein Popup, in dem man
-  // in EINEM Zug bis zu vier Assets antippt (siehe openDataAssetPicker).
-  const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to 4 assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${DATA_MAX_PANELS}</b></button>`;
-  const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
-  const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
-  const rangeBar=(panels.length&&dataIndBase)
-    ?`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange')}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`:'';
-  const head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">up to 4 assets side by side · one indicator for all, or one per panel</span><span style="margin-left:auto">${addPicker}</span></div>
-    <div class="data-ctrls">
-      <div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No asset selected</span>'}</div>
-      ${indPicker}${rangeBar}
-    </div></div>`;
-  let body;
-  if(!panels.length)body=`<div class="cot-empty">Pick up to 4 assets above to see their indicator history side by side.</div>`;
-  else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — it sets every panel at once. Each panel can then pick its own.</div>`;
-  else{
-    body=`<div class="data-grid${panels.length>1?' split':''}">`+panels.map(sym=>{
+  if(dataMode==='inds'&&dataAssets.length>1)dataAssets=[dataAssets[0]];
+  const modeBar=`<div class="px-modes">
+    <button class="ind-hist-range-btn${dataMode==='assets'?' on':''}" onclick="setDataMode('assets')" title="One indicator, up to four assets side by side">By asset</button>
+    <button class="ind-hist-range-btn${dataMode==='inds'?' on':''}" onclick="setDataMode('inds')" title="One asset, up to four of its indicators side by side">By indicator</button>
+  </div>`;
+  const rangeBarHtml=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange')}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`;
+  // Panel-Bausteine sind in beiden Modi identisch - nur woher Asset und
+  // Indikator kommen, unterscheidet sich.
+  const panelHtml=(sym,base,title,ctrls)=>{
+    const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base));
+    const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
+    const inner=ind
+      ?indAsOfNextHtml(sym.id,ind)+indHistChart(ind,sym.id,{noToolbar:true,group:'data'})
+      :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
+    return`<div class="cot-card"><div class="cot-card-title">${title}<span class="px-panel-ctrls">${ctrls||''}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
+  };
+  let head,body;
+  if(dataMode==='inds'){
+    // ── EIN Asset, bis zu 4 Indikatoren ──
+    const sym=syms.find(s=>s.id===dataAssets[0]);
+    const groups=sym?dataIndGroupsOf(sym):[];
+    const known=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.b)),[]);
+    dataIndList=dataIndList.filter(b=>known.includes(b)).slice(0,DATA_MAX_PANELS);
+    const assetSel=`<div class="cot-filterbar">${assetFilterSelect(ids,dataAssets[0]||'','setDataAsset','','The single asset whose indicators are compared',null)}</div>`.replace('<div class="cot-filterbar"><div class="cot-filterbar">','<div class="cot-filterbar">').replace('</div></div>','</div>');
+    const indBtn=`<button class="btn" id="dataIndBtn" onclick="openDataIndPicker()" title="Pick up to 4 indicators of this asset at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Indicators</span> <b style="font-family:var(--ff-num)">${dataIndList.length}/${DATA_MAX_PANELS}</b></button>`;
+    const chips=dataIndList.map(b=>{
+      const it=known.includes(b)?(groups.find(g=>g.items.some(x=>x.b===b))||{items:[]}).items.find(x=>x.b===b):null;
+      return`<button class="cmp-chip on" onclick="removeDataListInd('${escJH(b)}')" title="Remove this panel">${escH(it?it.n:b)} ✕</button>`;
+    }).join('');
+    head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">one asset · up to 4 of its indicators side by side · one time range</span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">${modeBar}${indBtn}</span></div>
+      <div class="data-ctrls">${assetSel}<div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No indicator selected</span>'}</div>${dataIndList.length?rangeBarHtml():''}</div></div>`;
+    if(!sym)body=`<div class="cot-empty">Pick an asset above.</div>`;
+    else if(!dataIndList.length)body=`<div class="cot-empty">Pick up to 4 indicators of ${escH(sym.name||sym.id)} above to compare them side by side.</div>`;
+    else body=`<div class="data-grid${dataIndList.length>1?' split':''}">`+dataIndList.map(b=>{
+      const g=groups.find(x=>x.items.some(i=>i.b===b));
+      const nm=g?(g.items.find(i=>i.b===b)||{}).n:b;
+      const title=`${escH(nm||b)}<span class="px-panel-sub">${escH(g?g.name:'')}</span>`;
+      return panelHtml(sym,b,title,`<button class="px-panel-chip" onclick="removeDataListInd('${escJH(b)}')" title="Remove this panel">✕</button>`);
+    }).join('')+`</div>`;
+  }else{
+    // ── EIN Indikator, bis zu 4 Assets (bisheriger Modus) ──
+    const panels=dataAssets.map(id=>syms.find(s=>s.id===id)).filter(Boolean);
+    const groups=[];
+    panels.forEach(sym=>(sym.rubrics||[]).forEach(rub=>{
+      let g=groups.find(x=>x.name===rub.name);
+      if(!g){g={name:rub.name,items:[]};groups.push(g);}
+      (rub.indicators||[]).forEach(ind=>{
+        const base=stripPeriodSuffix(ind.name).base;
+        if(base&&!g.items.some(it=>it.base===base))g.items.push({base,name:ind.displayName||ind.name});
+      });
+    }));
+    const allBases=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.base)),[]);
+    if(dataIndBase&&!allBases.includes(dataIndBase))dataIndBase='';
+    const chips=dataAssets.map(id=>`<button class="cmp-chip on${isNonFx(id)?' nf':''}" onclick="removeDataAsset('${escJH(id)}')" title="Remove this panel">${escH(id)} ✕</button>`).join('');
+    const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to 4 assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${DATA_MAX_PANELS}</b></button>`;
+    const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
+    const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
+    head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">up to 4 assets side by side · one indicator for all, or one per panel</span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">${modeBar}${addPicker}</span></div>
+      <div class="data-ctrls"><div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No asset selected</span>'}</div>${indPicker}${(panels.length&&dataIndBase)?rangeBarHtml():''}</div></div>`;
+    if(!panels.length)body=`<div class="cot-empty">Pick up to 4 assets above to see their indicator history side by side.</div>`;
+    else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — it sets every panel at once. Each panel can then pick its own.</div>`;
+    else body=`<div class="data-grid${panels.length>1?' split':''}">`+panels.map(sym=>{
       const base=dataIndFor(sym.id);
       const own=!!dataIndOverride[sym.id];
-      const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base));
-      const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
-      // Das Panel-Dropdown listet NUR die Indikatoren dieses Assets - hier
-      // waere die Vereinigung aller gewaehlten Assets irrefuehrend, weil das
-      // Panel fremde gar nicht zeichnen kann.
-      const ownOpts=(sym.rubrics||[]).map(r=>{
-        const items=[];
-        (r.indicators||[]).forEach(i=>{const b=stripPeriodSuffix(i.name).base;if(b&&!items.some(x=>x.b===b))items.push({b,n:i.displayName||i.name});});
-        return items.length?`<optgroup label="${escH(r.name)}">${items.map(it=>`<option value="${escH(it.b)}"${it.b===base?' selected':''}>${escH(it.n)}</option>`).join('')}</optgroup>`:'';
-      }).join('');
+      const ownOpts=dataIndGroupsOf(sym).map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.b)}"${it.b===base?' selected':''}>${escH(it.n)}</option>`).join('')}</optgroup>`).join('');
       const sel=`<select class="px-panel-sel" onchange="setDataIndFor('${escJH(sym.id)}',this.value)" title="Indicator for this panel only — the picker at the top sets all four">${ownOpts}</select>`;
       const chip=own?`<button class="px-panel-chip" onclick="relinkDataInd('${escJH(sym.id)}')" title="This panel shows its own indicator — click to follow the shared picker again">Custom ✕</button>`:'';
-      const title=`<div class="cot-card-title">${escH(sym.name||sym.id)}<span class="px-panel-ctrls">${chip}${sel}</span></div>`;
-      const inner=ind
-        ?indHistChart(ind,sym.id,{noToolbar:true,group:'data'})
-        :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different indicator for this panel above, or remove it.</div>`;
-      return`<div class="cot-card">${title}<div style="padding:12px 14px">${inner}</div></div>`;
+      return panelHtml(sym,base,escH(sym.name||sym.id),chip+sel);
     }).join('')+`</div>`;
   }
   el.innerHTML=head+body;
   attachChartHovers(el);
-  // Der "Assets"-Button wurde gerade neu gebaut - das offene Popup muss sich
-  // wieder daran ausrichten und den neuen Stand (4/4, deaktivierte Chips)
-  // zeigen. No-op, solange kein Popup offen ist.
-  renderDataAssetPicker();
+  // Die Buttons wurden gerade neu gebaut - ein offenes Popup muss sich wieder
+  // daran ausrichten und den neuen Stand zeigen. No-ops, solange zu.
+  renderDataAssetPicker();renderDataIndPicker();
 }
 function sentReadBadge(ev){
   if(!ev)return`<span style="color:var(--t3);font-size:12px">no data</span>`;
@@ -17569,9 +17729,11 @@ Object.assign(window,{
   fetchSentimentData,autoFetchSentiment,applySentimentFeed,sentGauge,_gaugeAnimPrev,gaugeNeedleAnim,_chvReg,
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
+  findIndNextEvent,IND_NEXT_SOON_D,indNextReleaseCell,indAsOfNextHtml,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
-  dataIndFor,setDataIndFor,relinkDataInd,
+  dataIndFor,setDataIndFor,relinkDataInd,setDataMode,dataIndGroupsOf,openDataIndPicker,closeDataIndPicker,
+  renderDataIndPicker,toggleDataListInd,removeDataListInd,
   DATA_MAX_PANELS,setDataAsset,addDataAsset,removeDataAsset,toggleDataAsset,openDataAssetPicker,closeDataAssetPicker,
   renderDataAssetPicker,indCompareGo,setDataInd,renderDataTab,sentReadBadge,SENT_INFO,openSentInfoM,iBtn,toggleSentCcy,setSentScope,
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,

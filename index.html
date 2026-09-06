@@ -1799,6 +1799,20 @@ body.res-return-active #resBackBar{display:flex}
 .data-sub{font:500 var(--fs-xs)/1.4 var(--ff-text);color:var(--t3);margin-left:10px}
 .data-ctrls .cot-filterbar{margin:0}
 .data-ctrls .ind-hist-toolbar{margin:0}
+/* "Next"-Spalte: nur die Restzeit bis zum naechsten Release, rot ab 7 Tagen
+   (Nutzer-Wunsch 2026-09-05 - das Datum steht im ausgeklappten Zustand) */
+.ind-table th.iht-next{text-align:center}
+.ind-table td.ir-nextc{text-align:center}
+.ir-next{font:700 var(--fs-xs)/1.3 var(--ff-num);color:var(--t2);white-space:nowrap}
+.ir-next.soon{color:var(--red)}
+/* "As of / Next" ueber jedem Vergleichs-Chart */
+.px-asof{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;margin:0 0 8px;font:500 var(--fs-xs)/1.4 var(--ff-num);color:var(--t2)}
+.px-asof-lbl{font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.7px;text-transform:uppercase;color:var(--t3)}
+.px-asof b{color:var(--t1);font-weight:700}
+.px-asof-sep{color:var(--t3)}
+.px-asof b.px-next.soon{color:var(--red)}
+.px-asof b.px-next-none{color:var(--t3);font-weight:500}
+.px-panel-sub{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:1px}
 /* Indikator-Wahl je Panel ("oben alle, im Panel eines") */
 .px-panel-ctrls{display:flex;align-items:center;gap:6px;margin-left:auto;min-width:0}
 .px-panel-sel{max-width:190px;background:var(--bg3);border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rs);padding:4px 7px;font:600 var(--fs-2xs)/1.3 var(--ff-num);cursor:pointer;text-overflow:ellipsis}
@@ -4176,11 +4190,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-470 - Preischart je Asset, Datum ueberall mit Jahr, Indikator je Panel (Nutzer-Wunsch 2026-09-05). (1) Jedes Asset hat in der Kopfleiste einen Price-chart-Button; das Fenster zeigt die Tages-Schlusskurse als Linie, Stufenlinie oder Close-zu-Close-Kerzen. price_data.json liefert NUR Schlusskurse - kein Open/High/Low -, deshalb bewusst keine Dochte statt erfundener (CLAUDE.md Regel 4); der Modus sagt das im Titel. Zeitfilter wie ueberall sonst, die Kerzenbreite folgt automatisch der Punktzahl im Fenster, Kerzen in Bias-Farbe gegen den Vortagesschluss. (2) Unter dem Chart stehen Kaertchen mit den Releases des jeweiligen Tages - Kalender-Feed plus bis zu drei Jahre Indikator-Release-Historie, Farbe aus derselben actualColor-Logik wie im Kalender -, per duenner Kurve mit ihrem Tag im Chart verbunden; die Kurven werden beim Scrollen der Leiste neu gezogen. (3) Der Chart-Cursor zeigt den Tagesmove in Prozent in Bias-Farbe und markiert die zugehoerige Karte umrandet - ueber einen neuen optionalen onPick-Rueckruf in chartHoverWrap, also ohne zweite Hover-Implementierung. (4) Datumsangaben tragen jetzt appweit das zweistellige Jahr (fmtDayHdr und alle Chart-Achsen), weil "Mar 26" sonst nicht von "26. Maerz" zu unterscheiden ist; die Achsenbeschriftung duennt dafuer auf 8 statt 10 Labels aus. (5) Insights &gt; Data: der Indikator ist jetzt auch je Panel waehlbar, Prinzip "oben stellst du alle ein, im Panel nur eines" - ein abweichendes Panel traegt ein Custom-Zeichen, Klick haengt es wieder an die gemeinsame Auswahl."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-471 - Indikator-Vergleich, Naechster-Wert-Countdown (Nutzer-Wunsch 2026-09-05). (1) Insights &gt; Data hat jetzt zwei Leserichtungen im selben Panel-Raster: By asset (ein Indikator, bis zu 4 Assets - wie bisher) und By indicator (ein Asset, bis zu 4 seiner Indikatoren - neu). Der Indikator-Picker arbeitet wie der Asset-Picker: jeder Tipp wirkt sofort, Zaehler n/4, bei 4 schliesst er. (2) Ueber jedem Vergleichs-Chart steht jetzt, von wann der Wert ist und wann der naechste kommt; ist der naechste in 7 Tagen oder weniger, steht er rot. (3) Die Indikator-Tabelle jedes Assets hat eine neue Spalte Next mit NUR der Restzeit (in 3d / Tomorrow / Today), rot ab 7 Tagen - das Datum steht bewusst nur im ausgeklappten Zustand. ⚠ Das Kalender-Fenster reicht nur rund eine Woche voraus; ist kein Termin bekannt, steht ein Strich statt einer hochgerechneten Schaetzung (CLAUDE.md Regel 4)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-470</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-471</span>
     </span>
   </div>
   <div class="hdr-r">
