@@ -303,10 +303,42 @@ function indCycleDaysCalc(ind,h){
   }
   return txt||30;
 }
-// Streuung der historischen Prognosefehler (actual - forecast). null, wenn zu
-// wenige Beobachtungen - dann wird NICHT normiert statt auf duenner Basis zu
-// raten.
-function indSurpriseSigma(ind){
+// Typische Groesse eines Prognosefehlers (actual - forecast) dieses
+// Indikators - der Massstab, an dem die AKTUELLE Ueberraschung gemessen wird.
+// null, wenn zu wenige Beobachtungen: dann wird NICHT normiert, statt den
+// Massstab auf duenner Basis zu raten.
+//
+// ⚠ Bis VERSION-CHECK-472 war das die STANDARDABWEICHUNG der Fehler.
+// Nutzer-Vorgabe 2026-09-06, woertlich: "man nimmt actual vs forecast bei
+// allen Historie Werten und macht ueberall das Vorzeichen weg. Dann nimmt man
+// den Durchschnitt der zeigt was die durchschnittliche Abweichung war ...
+// bei durchschnittlich ist 1". Also die MITTLERE ABSOLUTE ABWEICHUNG (MAD)
+// statt der Standardabweichung.
+//
+// Warum das besser ist, an den echten Daten gemessen (76 Indikatoren mit
+// mindestens NORM_MIN_OBS Beobachtungen, 2387 historische Releases):
+// die Varianz QUADRIERT, ein einzelner Ausreisser dominiert sie deshalb.
+// Normal liegt MAD/Sigma bei rund 0,78 (Median hier: 0,772, Theoriewert fuer
+// eine gutartige Verteilung 0,798) - bei USD PCE aber bei 0,55 (Sigma 0,064
+// gegen MAD 0,035), bei GBP Unemployment Claims 0,54, bei EUR Core CPI 0,61.
+// Dort blaehen ein paar grosse Fehlschuesse das Sigma so auf, dass danach
+// JEDE normale Abweichung winzig aussieht: USD PCE fiel von z=2,83 (MAD) auf
+// z=1,56 (Sigma). Die MAD hat dieses Problem nicht.
+//
+// Gemessen wird sie UM DEN MITTELWERT der Fehler, nicht um die Null (Wahl des
+// Nutzers nach dem Vergleich): liegt der Konsens systematisch daneben - immer
+// 0,2 zu niedrig - ist das keine Ueberraschung, sondern ein bekannter Bias,
+// den der Markt einpreist. Auf den meisten Indikatoren macht das kaum einen
+// Unterschied (|Mittelwert|/MAD im Median 0,215), im obersten Zehntel aber
+// sehr wohl (0,844; JPY PPI 0,67, CHF CPI Headline 0,35) - genau dort waere
+// sonst der Grossteil der "Ueberraschung" ein Dauer-Bias.
+//
+// Nettoeffekt auf den Massstab: die MAD ist rund 23% kleiner als das Sigma,
+// die z-Werte werden also entsprechend groesser (Median 0,48 -> 0,60), der
+// Faktor-Median steigt von 0,69 auf 0,78. Das ist ueberwiegend eine
+// Einheitenaenderung - die Rangfolge der Indikatoren untereinander
+// verschiebt sich kaum.
+function indSurpriseScale(ind){
   if(ind._sigCache!==undefined&&ind._sigCacheLen===(ind.chartHist||[]).length)return ind._sigCache;
   const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
   const s=[];
@@ -319,25 +351,43 @@ function indSurpriseSigma(ind){
   let out=null;
   if(s.length>=NORM_MIN_OBS){
     const m=s.reduce((x,y)=>x+y,0)/s.length;
-    const v=s.reduce((x,y)=>x+(y-m)*(y-m),0)/s.length;
-    const sd=Math.sqrt(v);
-    if(isFinite(sd)&&sd>0)out=sd;
+    const mad=s.reduce((x,y)=>x+Math.abs(y-m),0)/s.length;
+    if(isFinite(mad)&&mad>0)out=mad;
   }
   try{Object.defineProperty(ind,'_sigCache',{value:out,writable:true,enumerable:false,configurable:true});
       Object.defineProperty(ind,'_sigCacheLen',{value:h.length,writable:true,enumerable:false,configurable:true});}catch(e){}
   return out;
 }
-// Wie gross war die AKTUELLE Ueberraschung, gemessen in eigenen
-// Standardabweichungen? 1,0 = eine durchschnittlich grosse Ueberraschung.
+// Wie gross war die AKTUELLE Ueberraschung, gemessen an der typischen
+// Abweichung dieses Indikators? 1,0 = so gross wie ein durchschnittlicher
+// Prognosefehler.
+//
+// ⚠ Zur Erwartung: das TYPISCHE Release landet trotzdem bei rund 0,78, nicht
+// bei 1,0 - kein Fehler. Der Durchschnitt der Abweichungen wird von den
+// wenigen grossen Fehlschuessen nach oben gezogen, mehr als die Haelfte aller
+// Releases liegt darunter (gemessener z-Median 0,60). z=1 heisst "so gross
+// wie der durchschnittliche Fehlschuss" und ist damit ein
+// ueberdurchschnittliches Ereignis.
 function indSurpriseMag(ind){
   const r=ind.research||{};
   const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
   if(a==null||f==null)return 1;
-  const sd=indSurpriseSigma(ind);
+  const sd=indSurpriseScale(ind);
   if(sd==null)return 1;
   const z=Math.abs(a-f)/sd;
   // z=1 (durchschnittliche Ueberraschung) -> Faktor 1. Wurzel daempft
-  // Extremwerte, damit ein 5-Sigma-Ausreisser nicht den halben Score traegt.
+  // Extremwerte, damit ein Ausreisser (gemessenes Maximum z=4,84) nicht das
+  // Fuenffache eines normalen Releases traegt.
+  //
+  // Die Wurzel ist gegen drei Alternativen gemessen worden (je mit der
+  // Klemmung SCORE_NORM_MIN/MAX): linear klemmt 60% aller Indikatoren weg,
+  // 1+ln(z)/ln(3) 54%, z^0,75 51%, die Wurzel 43%, z^0,4 38%. z^0,4 ist aber
+  // so flach, dass die Ueberraschungsgroesse den Score kaum noch bewegt -
+  // die Wurzel bleibt (Nutzer-Entscheidung 2026-09-06).
+  //
+  // Von den 43% Klemmung ist fast alles die UNTERgrenze und gewollt:
+  // 25 der 68 Indikatoren hatten actual == forecast punktgenau (app-weit 691
+  // von 2387 Releases, also 29%) - z=0, Faktor SCORE_NORM_MIN.
   return Math.sqrt(Math.max(0.05,z));
 }
 // Zyklus-relativer Zeit-Decay: 0,5^(Alter / (1,5 * eigener Zyklus)).
@@ -398,11 +448,11 @@ function indNormFactor(ind,symId){
 // wirkt, sondern jeder Teilfaktor einzeln nachvollziehbar bleibt.
 function indNormBreakdown(ind,symId){
   const mag=indSurpriseMag(ind),dec=indDecayWeight(ind),mkt=indMarketWeight(ind,symId);
-  const sd=indSurpriseSigma(ind);
+  const sd=indSurpriseScale(ind);
   const r=ind.research||{};
   const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
   const z=(a!=null&&f!=null&&sd)?Math.abs(a-f)/sd:null;
-  return{mag,dec,mkt,sigma:sd,z,cycle:indCycleDays(ind),
+  return{mag,dec,mkt,scale:sd,z,cycle:indCycleDays(ind),
          total:Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,mag*dec*mkt))};
 }
 
@@ -693,29 +743,29 @@ function scoreInfoIndRow(ind,rub){
     if(nb.z!=null&&Math.abs(nb.mag-1)>0.005){
       chips.push(`<span class="si-chip">Surprise size <span class="v">×${nb.mag.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
       const st=indSurpriseStats(ind);
-      factorPanels+=`<details class="si-factor"><summary>Beat/Miss im historischen Vergleich</summary><div class="si-factor-body"><table class="si-ftab">
-        <tr><td>Abweichung jetzt</td><td>${nb.z.toFixed(2)}σ</td></tr>
-        <tr><td>Eigene Streuung σ (Prognosefehler)</td><td>${st.sigma!=null?st.sigma.toFixed(3):'–'}</td></tr>
-        <tr><td>Beobachtungen</td><td>${st.n||0} vergangene Releases</td></tr>
-        <tr><td>Faktor (√, gedämpft auf 0,05–…)</td><td>×${nb.mag.toFixed(2)}</td></tr>
+      factorPanels+=`<details class="si-factor"><summary>Beat/miss against its own history</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Miss this time</td><td>${nb.z.toFixed(2)}×</td></tr>
+        <tr><td>Average miss (sign removed)</td><td>${st.scale!=null?st.scale.toFixed(3):'–'}</td></tr>
+        <tr><td>Observations</td><td>${st.n||0} past releases</td></tr>
+        <tr><td>Factor (square root, damped)</td><td>×${nb.mag.toFixed(2)}</td></tr>
       </table></div></details>`;
     }
     if(Math.abs(nb.dec-1)>0.005){
       chips.push(`<span class="si-chip">Age <span class="v">×${nb.dec.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
       const hl=indHalfLifeDays(ind);
-      factorPanels+=`<details class="si-factor"><summary>Veraltungsperiode &amp; Halbwertszeit</summary><div class="si-factor-body"><table class="si-ftab">
-        <tr><td>Release-Datum</td><td>${escH(r.date||'?')}</td></tr>
-        <tr><td>Eigener Zyklus</td><td>${Math.round(nb.cycle)} Tage</td></tr>
-        <tr><td>Halbwertszeit (${DECAY_HALFLIFE_CYCLES}× Zyklus)</td><td>${hl!=null?Math.round(hl):'?'} Tage</td></tr>
-        <tr><td>Altersgrenze (0 ab)</td><td>${IND_STALE_CYCLES} eigene Zyklen</td></tr>
-        <tr><td>Gewicht jetzt</td><td>×${nb.dec.toFixed(2)}</td></tr>
+      factorPanels+=`<details class="si-factor"><summary>Ageing &amp; half-life</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Release date</td><td>${escH(r.date||'?')}</td></tr>
+        <tr><td>Own cycle</td><td>${Math.round(nb.cycle)} days</td></tr>
+        <tr><td>Half-life (${DECAY_HALFLIFE_CYCLES}× cycle)</td><td>${hl!=null?Math.round(hl):'?'} days</td></tr>
+        <tr><td>Counts 0 from</td><td>${IND_STALE_CYCLES} own cycles overdue</td></tr>
+        <tr><td>Weight now</td><td>×${nb.dec.toFixed(2)}</td></tr>
       </table></div></details>`;
     }
     if(Math.abs(nb.mkt-1)>0.005){
       chips.push(`<span class="si-chip">Market impact <span class="v">×${nb.mkt.toFixed(2)}</span><button type="button" class="si-info-btn" tabindex="-1">i</button></span>`);
-      factorPanels+=`<details class="si-factor"><summary>Marktrelevanz — Ø-Kursausschlag an Release-Tagen</summary><div class="si-factor-body"><table class="si-ftab">
-        <tr><td>Ø-Bewegung an Release-Tagen ggü. sonst</td><td>×${nb.mkt.toFixed(2)}</td></tr>
-        <tr><td>Beobachtungen</td><td>${(Array.isArray(ind.chartHist)?ind.chartHist.length:0)} Releases mit Kurs-Historie</td></tr>
+      factorPanels+=`<details class="si-factor"><summary>Market impact — average move on release days</summary><div class="si-factor-body"><table class="si-ftab">
+        <tr><td>Move on release days vs. all days</td><td>×${nb.mkt.toFixed(2)}</td></tr>
+        <tr><td>Observations</td><td>${(Array.isArray(ind.chartHist)?ind.chartHist.length:0)} releases with price history</td></tr>
       </table></div></details>`;
     }
   }
@@ -780,11 +830,11 @@ function indSurpriseStats(ind){
     if(a==null||f==null)return;
     s.push(a-f);
   });
-  if(!s.length)return{n:0,median:null,medianAbs:null,sigma:indSurpriseSigma(ind)};
+  if(!s.length)return{n:0,median:null,medianAbs:null,scale:indSurpriseScale(ind)};
   const sorted=s.slice().sort((a,b)=>a-b);
   const mid=x=>{const k=Math.floor(x.length/2);return x.length%2?x[k]:(x[k-1]+x[k])/2;};
   const abs=s.map(Math.abs).sort((a,b)=>a-b);
-  return{n:s.length,median:mid(sorted),medianAbs:mid(abs),sigma:indSurpriseSigma(ind)};
+  return{n:s.length,median:mid(sorted),medianAbs:mid(abs),scale:indSurpriseScale(ind)};
 }
 // Halbwertszeit in TAGEN. Der Score rechnet sie zyklus-relativ
 // (DECAY_HALFLIFE_CYCLES eigene Release-Zyklen), damit ein Quartalswert
@@ -818,20 +868,20 @@ function openDataQuality(symId){
       const mkt=indMarketWeight(ind,symId);
       const nb=indNormBreakdown(ind,symId);
       rows.push({rub:rub.name,name:ind.displayName||ind.name,
-        n:st.n,median:st.median,medianAbs:st.medianAbs,sigma:st.sigma,
+        n:st.n,median:st.median,medianAbs:st.medianAbs,scale:st.scale,
         cyc,hl,mkt,z:nb.z,norm:nb.total,
         stale:indIsStale(ind),over:indOverdueCycles(ind),
         date:r.date||null});
     });
   });
   rows.sort((a,b)=>b.mkt-a.mkt);
-  const belastbar=rows.filter(r=>r.sigma!=null).length;
+  const belastbar=rows.filter(r=>r.scale!=null).length;
   const veraltet=rows.filter(r=>r.stale).length;
   const mktRange=rows.length?[Math.min(...rows.map(r=>r.mkt)),Math.max(...rows.map(r=>r.mkt))]:[1,1];
 
   const head=`<div class="dq-summary">
     <div class="dq-sum-item"><span class="dq-sum-v">${rows.length}</span><span class="dq-sum-l">indicators with history</span></div>
-    <div class="dq-sum-item"><span class="dq-sum-v" style="color:${belastbar>=8?BC.bull:belastbar>=5?'var(--amber)':BC.bear}">${belastbar}</span><span class="dq-sum-l">with a usable spread<br><span style="color:var(--t3)">(at least ${NORM_MIN_OBS} past forecasts)</span></span></div>
+    <div class="dq-sum-item"><span class="dq-sum-v" style="color:${belastbar>=8?BC.bull:belastbar>=5?'var(--amber)':BC.bear}">${belastbar}</span><span class="dq-sum-l">with a usable yardstick<br><span style="color:var(--t3)">(at least ${NORM_MIN_OBS} past forecasts)</span></span></div>
     <div class="dq-sum-item"><span class="dq-sum-v" style="color:${veraltet?'var(--amber)':'var(--t2)'}">${veraltet}</span><span class="dq-sum-l">out of date<br><span style="color:var(--t3)">(over ${IND_STALE_CYCLES} own cycles overdue)</span></span></div>
   </div>`;
 
@@ -840,8 +890,8 @@ function openDataQuality(symId){
       <th class="dq-l">Indicator</th>
       <th title="How many past releases carry both an actual and a forecast — everything to the right rests on this number">n</th>
       <th title="Median surprise (actual minus forecast). Median, not mean: a single outlier barely moves it. Near zero = the forecasters are unbiased for this series.">Median</th>
-      <th title="Standard deviation of the past forecast errors. This is the yardstick that makes NFP and CPI comparable — a surprise is measured in these units, not in raw points. Needs at least ${NORM_MIN_OBS} observations, otherwise it stays empty rather than being guessed.">Spread σ</th>
-      <th title="Current surprise measured in those standard deviations. 1.0 = an averagely large surprise for this indicator.">Now</th>
+      <th title="Average size of a past forecast miss, with the sign removed and measured around the median bias. This is the yardstick that makes NFP and CPI comparable — a surprise is measured in these units, not in raw points. The average is used rather than the standard deviation because squaring lets a single outlier inflate the yardstick and make every normal miss look small. Needs at least ${NORM_MIN_OBS} observations, otherwise it stays empty rather than being guessed.">Avg miss</th>
+      <th title="Current miss divided by that average miss. 1.0 = as big as an average miss for this indicator, which is already an above-median event: the average is pulled up by the few large misses, so more than half of all releases land below it.">Now</th>
       <th title="Typical gap between releases, taken as the median of the actual gaps in its own history.">Cycle</th>
       <th title="After this many days the age weighting has halved. Derived from the indicator's own cycle (${DECAY_HALFLIFE_CYCLES} cycles), so a quarterly series ages slower than a weekly one.">Half-life</th>
       <th title="Average price move on this indicator's release days, divided by the average move on all days. Above 1 = the market tends to move more than usual when this one prints. Measured, not assigned.">Impact</th>
@@ -851,8 +901,8 @@ function openDataQuality(symId){
       <td class="dq-l"><span class="dq-name">${escH(r.name)}</span><span class="dq-rub">${escH(r.rub)}</span>${r.stale?`<span class="ir-stale" title="Last release ${escH(r.date||'?')}">OUT OF DATE</span>`:''}</td>
       <td>${r.n||'–'}</td>
       <td>${dqNum(r.median)}</td>
-      <td${r.sigma==null?' class="dq-dim" title="Fewer than '+NORM_MIN_OBS+' past forecasts — no spread is computed rather than one being guessed from thin data"':''}>${r.sigma==null?'too few':dqNum(r.sigma)}</td>
-      <td>${r.z==null?'–':r.z.toFixed(2)+'σ'}</td>
+      <td${r.scale==null?' class="dq-dim" title="Fewer than '+NORM_MIN_OBS+' past forecasts — no spread is computed rather than one being guessed from thin data"':''}>${r.scale==null?'too few':dqNum(r.scale)}</td>
+      <td>${r.z==null?'–':r.z.toFixed(2)+'×'}</td>
       <td>${Math.round(r.cyc)}d</td>
       <td>${r.hl==null?'–':Math.round(r.hl)+'d'}</td>
       <td style="color:${r.mkt>1.15?BC.bull:r.mkt<0.85?'var(--t3)':'var(--t1)'}">${r.mkt.toFixed(2)}×</td>
@@ -862,7 +912,7 @@ function openDataQuality(symId){
 
   const note=`<div class="dq-note">
     <b>How to read this.</b> Every column is measured from this indicator's own past releases — nothing here is assigned by hand.
-    <b>Spread σ</b> is the yardstick: NFP misses by tens of thousands, CPI by hundredths of a percent, so a surprise only becomes comparable once it is expressed in the indicator's own standard deviations. This follows Citi's construction for its Economic Surprise Index.
+    <b>Avg miss</b> is the yardstick: NFP misses by tens of thousands, CPI by hundredths of a percent, so a surprise only becomes comparable once it is expressed in that indicator's own typical miss. Citi builds its Economic Surprise Index the same way but normalises by the standard deviation; this app uses the average miss instead, because squaring lets a single outlier inflate the yardstick and make every normal miss afterwards look small — measured on the real series, USD PCE drops from 2.83 to 1.56 that way.
     <b>Impact</b> answers a different question — not "how far off was the forecast" but "does the market actually care". It compares the average price move on release days against the average move on all days, so it is observed behaviour rather than an opinion.
     <b>Half-life</b> is deliberately measured in the indicator's own cycles, not in fixed days: otherwise a quarterly series would always look stale next to a weekly one.
     Where the history is too thin, the cell stays empty instead of showing a number derived from too few observations.
@@ -1323,7 +1373,16 @@ function symScoreCmp(sym){
 // V4 (2026-08-19): AAII bekam eine Altersgrenze (AAII_STALE_DAYS) - eine
 // Wochenumfrage, die drei Veroeffentlichungen verpasst hat, zaehlt nicht
 // mehr. Das aendert den Score-Beitrag und damit die Zusammensetzung.
-const SCORE_MODEL_VERSION=8;
+// V9 (2026-09-06): der Massstab der Ueberraschungsgroesse ist von der
+// STANDARDABWEICHUNG auf die MITTLERE ABSOLUTE ABWEICHUNG der Prognosefehler
+// umgestellt (Nutzer-Vorgabe, Herleitung in indSurpriseScale()). Die MAD ist
+// rund 23% kleiner als das Sigma, alle z-Werte werden also entsprechend
+// groesser (Median 0,48 -> 0,60) und der Ueberraschungs-Faktor steigt im
+// Median von 0,69 auf 0,78. Betrifft NUR den Modus "normalized" - im Modus
+// "classic" ist indNormFactor() ohnehin 1 - und ausserdem den Surprise-Index
+// (esiForCcy/esiSeries), der denselben Massstab benutzt. Aufgezeichnete Tage
+// davor sind eine andere Rechnung.
+const SCORE_MODEL_VERSION=9;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -1403,7 +1462,7 @@ export {
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
-  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseSigma,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
+  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
   scoreInfoTotalRow,indSurpriseStats,indHalfLifeDays,dqNum,openDataQuality,openScoreInfoRub,openScoreInfoSym,symStrengthSectionHtml,

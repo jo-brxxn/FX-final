@@ -10374,3 +10374,100 @@ ohnehin macht. Manuell gesetzte Bias-Werte bleiben geschützt, dafür sorgt
 weiterhin `indBiasPinned()` in `applyTrendModel()`.
 
 Gegenprobe nach dem Fix: `nachher` = `vorher` (Datum 2026-09-02, hist 12).
+
+---
+
+## 2026-09-06 — Surprise Size: mittlere absolute Abweichung statt Sigma (VERSION-CHECK-473, SCORE_MODEL_VERSION 9)
+
+**Nutzer-Vorgabe:** *„die surprise size muss verbessert werden ich will
+folgende rechenweise da haben: man nimmt actual vs forecast bei allen Historie
+Werten und macht überall das Vorzeichen weg. Dann nimmt man den Durchschnitt
+der zeigt was die durchschnittliche Abweichung war … bei durchschnittlich ist
+1 und dann wie weiter? Und wie unterscheidet sich das von der aktuellen Regel
+und was ist besser"*
+
+Vor dem Umbau gegen die echten Daten durchgerechnet (76 Indikatoren mit ≥5
+Beobachtungen aus `ind_data.json`, 2.387 historische Releases), dann mit dem
+Nutzer entschieden.
+
+### Es gab genau zwei Unterschiede zur alten Regel
+
+**1. Der Maßstab.** Für eine gutartige Verteilung ist MAD ≈ 0,80·σ; gemessener
+Median **0,772**, Theoriewert 0,798. Die neue Regel liefert also systematisch
+~29 % größere z-Werte. Überwiegend eine *Einheitenänderung* — die Rangfolge
+der Indikatoren untereinander verschiebt sich kaum.
+
+**2. Der Nullpunkt** — der einzige inhaltliche Unterschied. σ misst um den
+Mittelwert der Fehler, eine MAD-von-Null um die Null. Ein systematischer
+Konsens-Bias zählt dann bei jedem Release als Überraschung mit. Gemessen:
+|Mittelwert|/MAD im Median nur 0,215, im obersten Zehntel aber **0,844**
+(JPY PPI 0,67, CHF CPI Headline 0,35).
+
+### Warum die MAD trotzdem besser ist
+
+Die Varianz **quadriert** — ein einzelner Ausreißer dominiert sie. Wo das
+Verhältnis MAD/σ deutlich unter die normalen 0,78 fällt, ist genau das
+passiert:
+
+| Indikator | σ | MAD | MAD/σ | z mit σ | z mit MAD |
+|---|---|---|---|---|---|
+| USD PCE | 0,064 | 0,035 | 0,55 | 1,56 | 2,83 |
+| GBP Unemployment Claims | 30,99 | 16,77 | 0,54 | 0,72 | 1,32 |
+| EUR Core CPI | 0,094 | 0,057 | 0,61 | 1,07 | 1,76 |
+
+Ein paar große Fehlschüsse blähen σ auf und lassen danach *jede* normale
+Abweichung winzig aussehen. Die MAD hat das Problem nicht.
+
+**Entschieden wurde die Kombination aus beidem:** MAD (robust) **um den
+Mittelwert** (bias-frei). Auf den echten Daten praktisch deckungsgleich mit
+der reinen MAD-von-Null (z-Median 0,60 vs. 0,61), schützt aber die ~10 %
+Indikatoren mit starkem Konsens-Bias.
+
+### „Und dann wie weiter?" — die Abbildung
+
+z = |aktueller Fehler| / MAD, dann gedämpft, sonst trüge ein Ausreißer
+(gemessenes Maximum z = 4,84) fast das Fünffache eines normalen Releases.
+Vier Alternativen gemessen, je mit der Klemmung [0,4 ; 1,8]:
+
+| Abbildung | Faktor-Median | geklemmt |
+|---|---|---|
+| linear F = z | 0,61 | 60 % |
+| F = z^0,75 | 0,69 | 51 % |
+| **F = √z (bleibt)** | **0,78** | **43 %** |
+| F = z^0,4 | 0,82 | 38 % |
+| F = 1 + ln(z)/ln 3 | 0,55 | 54 % |
+
+√z bleibt: linear und log klemmen deutlich mehr weg, z^0,4 ist so flach, dass
+die Überraschungsgröße den Score kaum noch bewegt.
+
+**Von den 43 % Klemmung ist fast alles die Untergrenze und gewollt:** 25 der
+68 Indikatoren hatten `actual == forecast` punktgenau — app-weit **691 von
+2.387 Releases (29 %)**. z = 0 → Faktor `SCORE_NORM_MIN`.
+
+### Erwartungs-Fallstrick, im Code festgehalten
+
+Auch mit der neuen Regel landet das *typische* Release bei 0,78, nicht bei 1,0.
+Kein Fehler: der Durchschnitt der Abweichungen wird von den wenigen großen
+Fehlschüssen nach oben gezogen, mehr als die Hälfte aller Releases liegt
+darunter. z = 1 heißt „so groß wie der durchschnittliche Fehlschuss" und ist
+damit bereits ein überdurchschnittliches Ereignis.
+
+### Umsetzung
+
+- `indSurpriseSigma()` → **`indSurpriseScale()`** umbenannt (der Name sagt
+  jetzt, was drinsteht), Feld `sigma` → `scale`. Rechnung: MAD um den
+  Mittelwert der Fehler.
+- `SCORE_MODEL_VERSION` 8 → **9**. Betrifft nur den Modus `normalized` (im
+  Modus `classic` ist `indNormFactor()` ohnehin 1) — **und den Surprise-Index**
+  (`esiForCcy`/`esiSeries`), der denselben Maßstab benutzt.
+- Am echten Stand gemessen: **120 von 258** Indikator-Instanzen ändern ihren
+  Überraschungs-Faktor, Median **+0,101**, Maximum **+0,348** (USD PCE — genau
+  der Ausreißer-Fall aus der Tabelle oben). `check/scorediff.js` meldet
+  0 Änderungen, weil es im Standardmodus `classic` läuft, wo der Faktor
+  konstant 1 ist.
+- Die drei Faktor-Panels im Score-Fenster („Beat/Miss im historischen
+  Vergleich", „Veraltungsperiode & Halbwertszeit", „Marktrelevanz") standen
+  noch auf **Deutsch** — beim Umschreiben auf Englisch gezogen, wie es die
+  Dauerregel für die Oberfläche verlangt. Ebenso die Spalte `Spread σ` im
+  Datenqualitäts-Fenster → **`Avg miss`**, und die Einheit `σ` hinter den
+  z-Werten → `×`.

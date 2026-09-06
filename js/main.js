@@ -465,7 +465,7 @@ import {
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
-  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseSigma,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
+  indCycleDays,indCycleTextDays,indCycleDaysCalc,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
   scoreInfoTotalRow,indSurpriseStats,indHalfLifeDays,dqNum,openDataQuality,openScoreInfoRub,openScoreInfoSym,symStrengthSectionHtml,
@@ -10614,7 +10614,7 @@ function esiForCcy(ccy){
       if(r.bond||r.cot||r.sent)return;         // keine Ueberraschungs-Semantik
       const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
       if(a==null||f==null||!r.date)return;
-      const sd=indSurpriseSigma(ind);
+      const sd=indSurpriseScale(ind);
       if(sd==null)return;                       // <5 Beobachtungen -> auslassen
       let z=(a-f)/sd;
       if(LOWER_IS_BETTER_RE.test(ind.name||''))z=-z;
@@ -10646,7 +10646,7 @@ function esiSeries(ccy){
       if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
       const r=ind.research||{};
       if(r.bond||r.cot||r.sent)return;
-      const sd=indSurpriseSigma(ind);
+      const sd=indSurpriseScale(ind);
       if(sd==null||!(sd>0))return;
       // ⚠ MUSS dieselbe Aufnahmebedingung sein wie in esiForCcy: dort faellt
       // ein Indikator raus, sobald sein AKTUELLER Release keinen Forecast

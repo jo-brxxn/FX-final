@@ -59,13 +59,52 @@ mitpruefen.
 
 | Faktor | Funktion | Was er misst |
 |---|---|---|
-| Ueberraschungsgroesse | `indSurpriseMag` | (Actual − Forecast) / Streuung der eigenen historischen Prognosefehler. Erst dadurch sind NFP (σ ≈ 75.700) und CPI (σ ≈ 0,12) vergleichbar. Ab `NORM_MIN_OBS`=5 Beobachtungen, sonst neutral statt geraten. |
+| Ueberraschungsgroesse | `indSurpriseMag` | \|Actual − Forecast\| / `indSurpriseScale` (der typischen Abweichung dieses Indikators), dann Wurzel. Erst dadurch sind NFP (Abweichungen in Zehntausenden) und CPI (in Hundertsteln eines Prozents) vergleichbar. Ab `NORM_MIN_OBS`=5 Beobachtungen, sonst neutral statt geraten. |
 | Zeit-Decay | `indDecayWeight` | Halbwertszeit = `DECAY_HALFLIFE_CYCLES`=1,5 EIGENE Zyklen. Bei einem 28-Tage-Zyklus also 42 Tage. Zyklus-relativ, damit Quartalswerte langsamer altern. |
 | Marktrelevanz | `indMarketWeight` | durchschnittliche Kursbewegung an den Release-Tagen dieses Indikators, geteilt durch die durchschnittliche Bewegung aller Tage. Wurzel-gedaempft. Gemessen, nicht zugewiesen. Braucht ≥60 Preistage und ≥5 Treffer. |
 
 Produkt geklemmt auf `SCORE_NORM_MIN`=0,4 bis `SCORE_NORM_MAX`=1,8 und um
 1,0 zentriert - die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein
 frei laufender Faktor haette sie still bedeutungslos gemacht.
+
+### Der Massstab: mittlere absolute Abweichung, nicht Sigma (seit 2026-09-06)
+
+`indSurpriseScale()` liefert die **mittlere absolute Abweichung** (MAD) der
+historischen Prognosefehler, gemessen **um deren Mittelwert**. Vorher war es
+die Standardabweichung. Nutzer-Vorgabe, gegen die echten Daten geprueft
+(76 Indikatoren mit ≥5 Beobachtungen, 2.387 Releases):
+
+- **Warum nicht Sigma:** die Varianz quadriert, ein einzelner Ausreisser
+  dominiert sie. Normal liegt MAD/σ bei rund 0,78 (Median hier 0,772,
+  Theoriewert 0,798) — bei USD PCE aber bei 0,55, bei GBP Unemployment
+  Claims 0,54, bei EUR Core CPI 0,61. Dort blaeht ein Ausreisser das Sigma
+  so auf, dass jede normale Abweichung danach winzig wirkt (USD PCE: z fiel
+  von 2,83 auf 1,56).
+- **Warum um den Mittelwert statt um die Null:** ein systematischer
+  Konsens-Bias ist keine Ueberraschung, sondern bekannt und eingepreist.
+  \|Mittelwert\|/MAD ist im Median nur 0,215, im obersten Zehntel aber 0,844
+  (JPY PPI 0,67, CHF CPI Headline 0,35) — dort waere sonst der Grossteil der
+  „Ueberraschung" ein Dauer-Bias.
+- **Warum die Wurzel bleibt:** gegen linear (klemmt 60% aller Indikatoren
+  weg), `1+ln(z)/ln 3` (54%), `z^0,75` (51%) und `z^0,4` (38%) gemessen. Die
+  Wurzel liegt bei 43%, und `z^0,4` ist so flach, dass die
+  Ueberraschungsgroesse den Score kaum noch bewegt.
+- **Wirkung:** MAD ist rund 23% kleiner als Sigma, z-Werte steigen
+  entsprechend (Median 0,48 → 0,60), Faktor-Median 0,69 → 0,78. Am echten
+  Stand aendern 120 von 258 Indikator-Instanzen ihren Faktor, Median +0,101,
+  Maximum +0,348 (USD PCE). Ueberwiegend eine Massstabsaenderung — die
+  Rangfolge der Indikatoren untereinander verschiebt sich kaum.
+
+⚠ **z = 1 heisst nicht „Median-Release".** Der Durchschnitt der Abweichungen
+wird von den wenigen grossen Fehlschuessen nach oben gezogen; mehr als die
+Haelfte aller Releases liegt darunter (z-Median 0,60, Faktor 0,78). z = 1
+heisst „so gross wie der durchschnittliche Fehlschuss" und ist damit bereits
+ein ueberdurchschnittliches Ereignis. Von der Klemmung ist fast alles die
+UNTERgrenze und gewollt: 25 der 68 Indikatoren trafen den Forecast
+punktgenau (app-weit 691 von 2.387 Releases = 29%) → z = 0.
+
+Derselbe Massstab speist den **Surprise Index** (`esiForCcy`/`esiSeries`) —
+eine Aenderung hier wirkt dort mit.
 
 ## Datenstand-Regel (Vintages)
 
@@ -88,7 +127,8 @@ Revisionen kippte dadurch die Signalrichtung.
 Pro Asset erreichbar ueber den Knopf "Data quality" in der Kopfzeile der
 Detailseite. Zeigt je Indikator: Beobachtungen, Median-Ueberraschung
 (Median statt Mittelwert - ein Ausreisser verschiebt den Mittelwert stark,
-den Median kaum), Streuung σ, aktuelle Ueberraschung in σ, Zyklus in
+den Median kaum), durchschnittliche Abweichung ("Avg miss", siehe
+`indSurpriseScale`), aktuelle Ueberraschung als Vielfaches davon, Zyklus in
 Tagen, Halbwertszeit in Tagen, gemessene Marktrelevanz, resultierender
 Gewichtsfaktor. Alles aus denselben Funktionen wie der Score - nichts
 eigens fuer die Anzeige gerechnet.
