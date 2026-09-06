@@ -3800,6 +3800,55 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .dq-note{font-size:var(--fs-xs);color:var(--t2);line-height:1.65;margin-top:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
 .dq-note b{color:var(--t0)}
 .dq-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.6;padding:14px 0}
+/* ⚠ .modal-wide wurde seit 2026-08-08 im Markup vergeben (Datenqualitaet,
+   jetzt auch Backtester), eine CSS-Regel dazu gab es aber NIE - die Fenster
+   blieben auf den normalen 720px und ihre breiten Tabellen scrollten
+   deshalb selbst auf einem 1440px-Bildschirm immer horizontal. Die Klasse
+   war offensichtlich als "dieses Fenster braucht mehr Platz" gemeint;
+   hier ist sie. 94vw als Deckel, damit auf dem Telefon nichts anstoesst. */
+.modal.modal-wide{max-width:min(1080px,94vw)}
+
+/* ── Backtester: Zinsschritte gegen die Datenlage (Nutzer-Wunsch 2026-09-06)
+   Erbt bewusst die Bausteine des Datenqualitaets-Fensters (Summary-Kacheln,
+   Scroll-Rahmen, Notiz-Kasten) - dieselbe Sorte Fenster, also dieselbe
+   Optik. Eigen ist nur die Bereichs-Zelle: drei Werte von alt nach neu, der
+   juengste betont, davor der Trendpfeil in Bias-Farbe. */
+.bt-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:13px}
+.bt-sum-item{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 12px;display:flex;align-items:baseline;gap:9px}
+.bt-sum-v{font-size:var(--fs-lg);font-weight:800;color:var(--t0);font-family:var(--ff-num);line-height:1;white-space:nowrap}
+.bt-sum-l{font-size:var(--fs-2xs);color:var(--t2);line-height:1.4}
+.bt-scroll{overflow-x:auto;border:1px solid var(--bd);border-radius:var(--rs)}
+.bt-table{width:100%;border-collapse:collapse;font-size:var(--fs-sm);min-width:720px}
+.bt-table th.bt-th{text-align:left;padding:8px 10px;background:var(--bg2);border-bottom:1px solid var(--bd);white-space:nowrap;vertical-align:bottom}
+.bt-th-l{display:block;font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.4px;text-transform:uppercase;color:var(--t3)}
+.bt-th-s{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);opacity:.75;margin-top:2px}
+.bt-table th.bt-th:first-child,.bt-table th.bt-th:nth-child(2){font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.4px;text-transform:uppercase;color:var(--t3)}
+.bt-table td{padding:8px 10px;border-bottom:1px solid var(--bd2);color:var(--t1);vertical-align:middle;white-space:nowrap}
+.bt-table tr:last-child td{border-bottom:none}
+.bt-date{font:600 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
+.bt-move{display:flex;align-items:baseline;gap:7px}
+.bt-tag{font:800 var(--fs-2xs)/1 var(--ff-num);letter-spacing:.6px;padding:3px 6px;border-radius:4px}
+.bt-tag.bt-hike{color:var(--blue);background:rgba(var(--blue-rgb),.11)}
+.bt-tag.bt-cut{color:var(--red);background:rgba(var(--red-rgb),.11)}
+.bt-bp{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t1)}
+.bt-rate{font:500 var(--fs-2xs)/1 var(--ff-num);color:var(--t3)}
+.bt-rate b{color:var(--t1);font-weight:700}
+.bt-cell{font-family:var(--ff-num)}
+.bt-arrow{display:inline-block;width:13px;font-size:var(--fs-xs);color:var(--t3);margin-right:5px}
+.bt-arrow.bt-up{color:var(--blue)}
+.bt-arrow.bt-down{color:var(--red)}
+.bt-arrow.bt-flat{color:var(--t3)}
+.bt-vals{display:inline-flex;align-items:baseline;gap:4px}
+.bt-v{font:500 var(--fs-xs)/1.3 var(--ff-num);color:var(--t3)}
+.bt-v.bt-v-now{font-weight:800;font-size:var(--fs-sm);color:var(--t0)}
+.bt-sep{color:var(--bd);font-size:var(--fs-2xs)}
+.bt-short{margin-left:7px;font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--amber);cursor:help}
+.bt-none{color:var(--t3);font-style:italic;font-size:var(--fs-xs);cursor:help}
+.bt-note{font-size:var(--fs-xs);color:var(--t2);line-height:1.6;margin-bottom:11px}
+.bt-note b{color:var(--t0)}
+.bt-legend{font-size:var(--fs-xs);color:var(--t2);line-height:1.65;margin-top:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
+.bt-legend b{color:var(--t0)}
+.bt-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.6;padding:14px 0}
 
 /* ── Score-Aufschluesselung als Karten (Nutzer-Wunsch 2026-08-11) ────
    Ersetzt die vorherige flache Zeilenliste in scoreInfoIndRow() durch
@@ -4190,11 +4239,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-473 - Surprise Size misst jetzt an der durchschnittlichen Abweichung statt an der Standardabweichung (Nutzer-Vorgabe 2026-09-06: &quot;man nimmt actual vs forecast bei allen Historie Werten und macht ueberall das Vorzeichen weg, dann nimmt man den Durchschnitt ... bei durchschnittlich ist 1&quot;). Gemessen an 76 Indikatoren und 2387 Releases: die Varianz quadriert, ein einzelner Ausreisser blaeht sie auf und laesst danach jede normale Abweichung winzig wirken - bei USD PCE fiel die aktuelle Ueberraschung dadurch von 2,83 auf 1,56. Die mittlere absolute Abweichung hat das Problem nicht. Gemessen wird sie um den MITTELWERT der Fehler, damit ein systematischer Konsens-Bias (im obersten Zehntel 0,84 der ganzen Abweichung) nicht als Ueberraschung zaehlt. Die Abbildung bleibt Wurzel mit Klemmung 0,4-1,8, gegen linear, log, z^0,75 und z^0,4 geprueft. Folge: z-Werte rund 23 Prozent groesser (Median 0,48 -&gt; 0,60), Faktor-Median 0,69 -&gt; 0,78. Betrifft nur den Modus normalized und den Surprise-Index; SCORE_MODEL_VERSION 8 -&gt; 9, aufgezeichnete Tage davor sind eine andere Rechnung. Die drei Faktor-Panels im Score-Fenster standen noch auf Deutsch und sind jetzt englisch wie der Rest der Oberflaeche."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-474 - Backtester je Asset (Nutzer-Wunsch 2026-09-06). Neuer Knopf in der Kopfzeile jeder Asset-Seite, neben Data quality. Zeigt jeden Zinsschritt der zustaendigen Notenbank - nur echte Hikes und Cuts, keine Holds - und daneben, wie Inflation, Labour Market und Economic Growth zu diesem Zeitpunkt dastanden: je Bereich die letzten DREI Releases VOR der Sitzung, von alt nach neu, der juengste betont, davor ein Trendpfeil. Der Pfeil zeigt die Richtung der Daten, seine Farbe die Bedeutung nach derselben Regel wie ueberall sonst - bei der Arbeitslosenquote ist fallend die gute Richtung. Quellen sind die vorhandenen: rateSteps fuer die Beschluesse (kennt den Fed-Korridor), RUB_ANCHOR_IND fuer den Anker je Rubrik, ind.chartHist fuer die Werte - keine zweite Datenauswahl daneben. Reicht eine Reihe an einem Datum noch nicht drei Releases zurueck, steht dort 1/3 bzw. no data yet statt eines hochgerechneten Werts. Non-FX-Assets spiegeln die Reihe ihrer verbundenen Waehrung und sagen das im Fenster. Ausserdem: die Klasse modal-wide wurde seit August im Markup vergeben, eine CSS-Regel dazu gab es nie - beide breiten Fenster scrollten deshalb selbst auf grossen Bildschirmen immer horizontal; jetzt bis 1080px breit."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-473</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-474</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4780,7 +4829,7 @@ function introLogin(){
   <div class="modal" style="max-width:560px">
     <h3>❓ How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
-    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>, from the release beating or missing its forecast. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted; the same half weight applies to bond yields, COT net positioning and CB Tone. Most biases update automatically from calendar releases; manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the direction against the <b>previous</b> value sets the bias instead, counted at <b>±0.5</b> — half strength, because it is a weaker signal. Marking an indicator <b>★ important</b> adds <b>+0.5</b> on top. A release that is more than <b>2 of its own cycles overdue</b> counts <b>0</b> and is marked <b>OUT OF DATE</b> — measured against its own release rhythm, so quarterly reporters are not penalised. The <b>2Y/10Y spread</b> is display-only and always counts 0.</div><div class="help-p"><b>What is shown but deliberately NOT scored:</b> the <b>📈 2-step momentum trend</b> and <b>revisions of the previous value</b>. Both were part of the score until August 2026 and were taken out: the trend had grown into an equal-ranked driver rather than the intended bonus (it accounted for 47% of the USD score and 100% of AUD's), and Citi's CESI leaves a trend term out for the same reason — surprise and momentum act on different horizons. Revisions arrived unreliably (the source carries them for about three days only) and their effect depended on reporting frequency rather than on content. Both still appear on the card, with their colour, because they tell you something — they just no longer move the number.</div><div class="help-p">The <b>weighting switch</b> in the header changes how the points are combined. <b>Classic</b> is the plain sum described above, recomputable in your head. <b>Normalised</b> multiplies each indicator by three <i>measured</i> factors: how big the surprise is in units of that indicator's own historical forecast error (this is what makes NFP, σ ≈ 75,700, comparable to CPI, σ ≈ 0.12), how old the release is (half-life 1.5 of its own cycles), and how much the price actually moved on that indicator's release days in the past. The product is clamped to 0.4–1.8 and centred on 1.0 so the ±2/±3 thresholds keep their meaning. Nothing is assigned by hand; "Data quality" in the asset header shows every number behind it.</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>, from the release beating or missing its forecast. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted; the same half weight applies to bond yields, COT net positioning and CB Tone. Most biases update automatically from calendar releases; manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the direction against the <b>previous</b> value sets the bias instead, counted at <b>±0.5</b> — half strength, because it is a weaker signal. Marking an indicator <b>★ important</b> adds <b>+0.5</b> on top. A release that is more than <b>2 of its own cycles overdue</b> counts <b>0</b> and is marked <b>OUT OF DATE</b> — measured against its own release rhythm, so quarterly reporters are not penalised. The <b>2Y/10Y spread</b> is display-only and always counts 0.</div><div class="help-p"><b>What is shown but deliberately NOT scored:</b> the <b>📈 2-step momentum trend</b> and <b>revisions of the previous value</b>. Both were part of the score until August 2026 and were taken out: the trend had grown into an equal-ranked driver rather than the intended bonus (it accounted for 47% of the USD score and 100% of AUD's), and Citi's CESI leaves a trend term out for the same reason — surprise and momentum act on different horizons. Revisions arrived unreliably (the source carries them for about three days only) and their effect depended on reporting frequency rather than on content. Both still appear on the card, with their colour, because they tell you something — they just no longer move the number.</div><div class="help-p">The <b>weighting switch</b> in the header changes how the points are combined. <b>Classic</b> is the plain sum described above, recomputable in your head. <b>Normalised</b> multiplies each indicator by three <i>measured</i> factors: how big the surprise is against that indicator's own average forecast miss (this is what makes NFP, which misses by tens of thousands, comparable to CPI, which misses by hundredths of a percent — the average miss is used rather than the standard deviation, because squaring lets one outlier inflate the yardstick and make every normal miss afterwards look small), how old the release is (half-life 1.5 of its own cycles), and how much the price actually moved on that indicator's release days in the past. The product is clamped to 0.4–1.8 and centred on 1.0 so the ±2/±3 thresholds keep their meaning. Nothing is assigned by hand; "Data quality" in the asset header shows every number behind it.</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
@@ -4839,6 +4888,14 @@ function introLogin(){
     <h3 id="dqTitle">Data quality &amp; weighting</h3>
     <div id="dqBody"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mDataQuality')">Close</button></div>
+  </div>
+</div>
+<!-- MODAL: Backtester - Zinsschritte gegen die Datenlage (Nutzer-Wunsch 2026-09-06) -->
+<div class="ov" id="mBt" style="display:none" onclick="if(event.target===this)closeM('mBt')">
+  <div class="modal modal-wide">
+    <h3 id="mBtTitle">Rate decisions vs. data</h3>
+    <div id="mBtBody"></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mBt')">Close</button></div>
   </div>
 </div>
 <!-- MODAL: Asset-Strength-Karte, Asset-Auswahl (Nutzer-Wunsch 2026-07-27) -->

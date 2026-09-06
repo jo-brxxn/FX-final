@@ -1280,3 +1280,28 @@ offen bleibt — strenger als vorher. Neu dazu **E2** als Gegenprobe: der
 Assets-Stapel klappt beim Wechsel auf die Assets-Seite auf, wird hervorgehoben und
 enthält mindestens ein Asset. Ohne E2 könnte eine spätere Verschärfung von E den
 Stapel dauerhaft zuklappen, ohne dass es auffällt.
+
+## Backtester (Kopfzeile jeder Asset-Seite, seit 2026-09-06)
+
+Knopf `Backtester` in `.dmeta-controls`, zwischen `History` und
+`Data quality` — dieselbe Leiste, dieselbe Knopfklasse
+(`.dmeta-hist-btn`). Oeffnet das Fenster `#mBt` (`openBacktester(symId)`).
+
+Inhalt: jeder **echte Zinsschritt** der zustaendigen Notenbank (Hike/Cut,
+keine Holds) mit den letzten **drei** Releases vor der Sitzung je Bereich
+(Inflation / Labour Market / Economic Growth).
+
+Regeln, die beim Erweitern gelten:
+
+- **Kein eigener Datenpfad.** Beschluesse kommen aus `rateSteps()`, der Anker
+  je Bereich aus `RUB_ANCHOR_IND`, die Werte aus `ind.chartHist`. Wer hier
+  einen vierten Bereich ergaenzt, traegt ihn in `BT_AREAS` ein und braucht
+  dafuer einen Eintrag in `RUB_ANCHOR_IND` — keine zweite Zuordnungstabelle.
+- **Pfeilrichtung = Daten, Pfeilfarbe = Bedeutung** (`LOWER_IS_BETTER_RE`).
+  Ein steigender Pfeil darf rot sein (Arbeitslosenquote) — das ist gewollt.
+- **Kurze Reihen bleiben kurz.** Weniger als `BT_LOOKBACK` Releases vor einer
+  Sitzung → `n/3`-Marke bzw. `no data yet`, nie ein hochgerechneter Wert.
+
+Breite Fenster tragen `class="modal modal-wide"` (max. 1080px) — die Regel
+dazu steht seit 2026-09-06 im CSS und gilt auch fuer das
+Datenqualitaets-Fenster.

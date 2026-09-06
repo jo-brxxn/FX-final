@@ -5374,6 +5374,7 @@ function renderDetail(){
   const dmetaControls=`<div class="dmeta-controls">
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openPriceChart('${c.id}')" title="Price chart: daily closes as a line, step line or close-to-close candles, with the releases of each day as cards underneath">Price chart</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
+    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openBacktester('${c.id}')" title="Backtester: every rate hike and cut on file, and the inflation, labour and growth readings the central bank had in front of it — three releases each, so the trend into the decision is visible">Backtester</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
@@ -13379,6 +13380,127 @@ function fmtIndVal(v,unit){
   const r=Math.round(v*100)/100;
   return(Math.abs(r)>=1e4?r.toLocaleString('en-US'):String(r))+(unit||'');
 }
+// ══ BACKTESTER: WIE SAH DIE DATENLAGE BEI JEDEM ZINSSCHRITT AUS? ═══════
+// Nutzer-Wunsch 2026-09-06: "Ich willst sehen die Historie wann haben Banken
+// Zinsen gesenkt oder gehikt und wie waren zu dem Zeitpunkt die Inflation die
+// economic Groth und Labour Markt und nicht nur ein Wert zu den Bereichen
+// sondern 3 Werte auch schon davor damit man Trend und so sieht."
+//
+// Quellen bewusst NICHT neu aufgebaut, sondern die vorhandenen benutzt:
+//   Zinsschritte      -> rateSteps(ccy) (parsePolicyRate, kennt den Fed-Korridor)
+//   drei Bereiche     -> RUB_ANCHOR_IND, derselbe Anker je Rubrik, den auch die
+//                        Kartentexte benutzen (Inflation/Labour Market/
+//                        Economic Growth). Keine zweite Indikator-Auswahl, die
+//                        neben der bestehenden auseinanderlaufen kann.
+//   Werte je Bereich  -> ind.chartHist des Assets, also genau die Reihe, die
+//                        auch der Verlaufschart zeichnet.
+//
+// Nur ECHTE Schritte (Hike/Cut), keine Holds - so gewuenscht. Non-FX-Assets
+// zeigen ueber macroCcyFor die Reihe ihrer verbundenen Waehrung, genau wie
+// ihre gespiegelte Makro-Karte.
+const BT_AREAS=[['Inflation','Inflation'],['Labour Market','Labour'],['Economic Growth','Growth']];
+const BT_LOOKBACK=3;   // so viele Releases VOR der Sitzung je Bereich
+// Alle Zinsschritte einer Waehrung, neueste zuerst. [] wenn der Feed fehlt -
+// dann meldet das Fenster das, statt eine Reihe zu erfinden.
+function btRateMoves(ccy){
+  const pts=(typeof rateSteps==='function')?rateSteps(ccy):null;
+  if(!Array.isArray(pts)||pts.length<2)return[];
+  const out=[];
+  for(let i=1;i<pts.length;i++){
+    const prev=pts[i-1][1],now=pts[i][1];
+    if(prev==null||now==null||Math.abs(now-prev)<1e-9)continue;   // Hold
+    out.push({date:pts[i][0],rate:now,prev,delta:now-prev,dir:now>prev?'hike':'cut'});
+  }
+  return out.reverse();
+}
+// Die letzten BT_LOOKBACK Werte eines Indikators bis EINSCHLIESSLICH datum,
+// aeltester zuerst. Kuerzer, wenn die Reihe an dem Tag noch nicht so weit
+// zurueckreichte - dann bleibt die Zelle entsprechend leer, statt einen Wert
+// zu extrapolieren (CLAUDE.md Regel 4).
+function btValuesBefore(ind,datum,n){
+  if(!ind)return[];
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  const pts=[];
+  h.forEach(e=>{
+    if(!Array.isArray(e)||!e[0])return;
+    const d=String(e[0]).slice(0,10);
+    if(d>datum)return;
+    const v=parseNumLike(e[1]);
+    if(v==null)return;
+    pts.push([d,v]);
+  });
+  pts.sort((a,b)=>a[0].localeCompare(b[0]));
+  return pts.slice(-(n||BT_LOOKBACK));
+}
+// Anker-Indikator eines Bereichs auf dem gerade betrachteten Asset.
+function btAnchorInd(sym,rubName){
+  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);
+  if(!rub)return null;
+  return findIndByBase(rub,RUB_ANCHOR_IND[rubName])||null;
+}
+// Richtung der drei Werte (juengster gegen aeltesten) als Bias-Farbe. Benutzt
+// dieselbe Bedeutungsregel wie der Rest der App: bei Arbeitslosigkeit/
+// Erstantraegen ist WENIGER besser, sonst mehr (LOWER_IS_BETTER_RE).
+function btTrend(ind,pts){
+  if(!ind||pts.length<2)return{arrow:'',cls:''};
+  const a=pts[0][1],b=pts[pts.length-1][1];
+  if(Math.abs(b-a)<1e-9)return{arrow:'→',cls:'bt-flat'};
+  const up=b>a;
+  const gut=LOWER_IS_BETTER_RE.test(stripPeriodSuffix(ind.name).base)?!up:up;
+  return{arrow:up?'▲':'▼',cls:gut?'bt-up':'bt-down'};
+}
+// Eine Bereichs-Zelle: die drei Werte von alt nach neu, der juengste betont,
+// davor der Trendpfeil.
+function btCellHtml(sym,rubName,datum){
+  const ind=btAnchorInd(sym,rubName);
+  if(!ind)return`<td class="bt-cell"><span class="bt-none" title="This asset has no ${escH(RUB_ANCHOR_IND[rubName]||rubName)} indicator">–</span></td>`;
+  const pts=btValuesBefore(ind,datum,BT_LOOKBACK);
+  if(!pts.length)return`<td class="bt-cell"><span class="bt-none" title="No ${escH(ind.displayName||ind.name)} release on file before ${escH(datum)} — the series does not reach back that far. Nothing is estimated.">no data yet</span></td>`;
+  const t=btTrend(ind,pts);
+  const vals=pts.map((p,i)=>`<span class="bt-v${i===pts.length-1?' bt-v-now':''}" title="${escH(fmtDayHdr(p[0]))}">${escH(fmtIndVal(p[1]))}</span>`).join('<span class="bt-sep">›</span>');
+  const fehlt=pts.length<BT_LOOKBACK?`<span class="bt-short" title="Only ${pts.length} of ${BT_LOOKBACK} releases available before this meeting — the series starts later. The missing ones are left out rather than filled in.">${pts.length}/${BT_LOOKBACK}</span>`:'';
+  return`<td class="bt-cell"><span class="bt-arrow ${t.cls}">${t.arrow}</span><span class="bt-vals">${vals}</span>${fehlt}</td>`;
+}
+function openBacktester(symId){
+  const sym=(syms||[]).find(s=>s.id===symId)||getSym();
+  if(!sym)return;
+  const ccy=macroCcyFor(sym.id);
+  const moves=btRateMoves(ccy);
+  const el=document.getElementById('mBtBody');
+  const tt=document.getElementById('mBtTitle');
+  if(tt)tt.textContent='Rate decisions vs. data — '+(sym.name||sym.id);
+  const spiegel=isNonFx(sym.id)?`<div class="bt-note">Macro data mirrored from <b>${escH(ccy)}</b>, the currency this asset is linked to — the same series its macro card uses.</div>`:'';
+  if(!moves.length){
+    if(el)el.innerHTML=spiegel+`<div class="bt-empty">No rate change on file for ${escH(ccy)}. The decision history reaches back to about September 2023; if a central bank has only held since then, there is nothing to show here — nothing is inferred beyond the recorded decisions.</div>`;
+    openM('mBt');return;
+  }
+  const kopf=BT_AREAS.map(([rubName,label])=>{
+    const ind=btAnchorInd(sym,rubName);
+    return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(ind.displayName||ind.name):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
+  }).join('');
+  const zeilen=moves.map(m=>{
+    const cls=m.dir==='hike'?'bt-hike':'bt-cut';
+    const bp=Math.round(Math.abs(m.delta)*100);
+    return`<tr>
+      <td class="bt-date">${escH(fmtDayHdr(m.date))}</td>
+      <td class="bt-move"><span class="bt-tag ${cls}">${m.dir==='hike'?'HIKE':'CUT'}</span><span class="bt-bp">${bp} bp</span><span class="bt-rate">${escH(fmtIndVal(m.prev,'%'))} → <b>${escH(fmtIndVal(m.rate,'%'))}</b></span></td>
+      ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,m.date)).join('')}
+    </tr>`;
+  }).join('');
+  const hikes=moves.filter(m=>m.dir==='hike').length;
+  if(el)el.innerHTML=spiegel+`<div class="bt-summary">
+      <div class="bt-sum-item"><span class="bt-sum-v">${moves.length}</span><span class="bt-sum-l">rate changes on file</span></div>
+      <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bull}">${hikes}</span><span class="bt-sum-l">hikes</span></div>
+      <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bear}">${moves.length-hikes}</span><span class="bt-sum-l">cuts</span></div>
+      <div class="bt-sum-item"><span class="bt-sum-v">${escH(fmtDayHdr(moves[moves.length-1].date))}</span><span class="bt-sum-l">oldest decision on file</span></div>
+    </div>
+    <div class="bt-scroll"><table class="bt-table">
+      <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
+      <tbody>${zeilen}</tbody>
+    </table></div>
+    <div class="bt-legend">Each cell holds the last ${BT_LOOKBACK} releases <b>before that meeting</b>, oldest to newest, the value the bank actually had in front of it on the right. The arrow compares the newest against the oldest of those three and is coloured the way the app reads it everywhere else — for the unemployment rate a fall is the good direction. Only meetings that <b>changed</b> the rate are listed; holds are left out. Decisions and releases both come from the live feed, so a series that does not reach back far enough is shown short rather than filled in.</div>`;
+  openM('mBt');
+}
 const PRICE_MODES=[['candle','Candles'],['line','Line'],['step','Step']];
 let priceChartAsset=null,priceChartMode='candle';
 let priceRange=6,priceCustomFrom=null,priceCustomTo=null;
@@ -17762,6 +17884,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextReleaseCell,indAsOfNextHtml,
+  BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
   dataIndFor,setDataIndFor,relinkDataInd,setDataMode,dataIndGroupsOf,openDataIndPicker,closeDataIndPicker,

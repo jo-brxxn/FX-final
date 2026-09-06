@@ -10471,3 +10471,88 @@ damit bereits ein überdurchschnittliches Ereignis.
   Dauerregel für die Oberfläche verlangt. Ebenso die Spalte `Spread σ` im
   Datenqualitäts-Fenster → **`Avg miss`**, und die Einheit `σ` hinter den
   z-Werten → `×`.
+
+---
+
+## 2026-09-06 — Backtester je Asset: Zinsschritte gegen die Datenlage (VERSION-CHECK-474)
+
+**Nutzer-Wunsch:** *„Bau auch noch für jedes asset einen Button für einen
+backtester. Ich willst sehen die Historie wann haben Banken Zinsen gesenkt
+oder gehikt und wie waren zu dem Zeitpunkt die Inflation die economic Groth und
+Labour Markt und nicht nur ein Wert zu den Bereichen sondern 3 Werte auch schon
+davor damit man Trend und so sieht"*
+
+Zwei Punkte vorher per `AskUserQuestion` geklärt: **nur Hikes und Cuts**, keine
+Holds; und die **drei Werte nebeneinander mit Trendpfeil** statt Mini-Chart
+oder Karte je Entscheidung.
+
+### Datenlage zuerst geprüft, dann gebaut
+
+`ind_data.json` führt je Währung 12–24 Notenbank-Beschlüsse zurück bis
+09/2023. Daraus echte Schritte:
+
+| | USD | EUR | GBP | CHF | JPY | CAD | AUD | NZD |
+|---|---|---|---|---|---|---|---|---|
+| Hikes | 0 | 1 | 0 | 0 | 5 | 0 | 4 | 2 |
+| Cuts | 6 | 8 | 6 | 6 | 0 | 9 | 3 | 9 |
+
+Also 6–11 Zeilen je Währung — genug für einen Vergleich, ohne dass das Fenster
+unübersichtlich wird. Die drei Anker-Indikatoren reichen bei allen acht
+Währungen weit genug zurück (CPI 12–72 Releases, Unemployment Rate 12–37,
+GDP Growth QoQ 12–36).
+
+### Keine zweite Datenauswahl daneben
+
+Bewusst alles aus vorhandenen Quellen, damit nichts auseinanderlaufen kann:
+
+| gebraucht | benutzt | warum genau die |
+|---|---|---|
+| Zinsschritte | `rateSteps(ccy)` | kennt den Fed-**Korridor** („3.50%-3.75%" → Mitte); `parseNumLike` würde die Untergrenze nehmen |
+| Indikator je Bereich | `RUB_ANCHOR_IND` | derselbe Anker, den auch die Kartentexte benutzen — CPI (Headline) / Unemployment Rate / GDP Growth QoQ |
+| Werte | `ind.chartHist` | genau die Reihe, die auch der Verlaufschart zeichnet |
+
+### Trendpfeil: Richtung von den Daten, Farbe von der Bedeutung
+
+Der Pfeil vergleicht den jüngsten der drei Werte gegen den ältesten. Seine
+**Richtung** ist die der Daten, seine **Farbe** folgt `LOWER_IS_BETTER_RE`,
+also derselben Regel wie im Rest der App. Gemessen an USD, Cut vom 10.12.25:
+Inflation `2,7 › 2,9 › 3,0` **▲ blau** (steigende Inflation = hawkisch),
+Labour `4,2 › 4,3 › 4,4` **▲ rot** (steigende Arbeitslosigkeit = schlecht),
+Growth `3,3 › 3,8 › 4,3` **▲ blau**. Ein steigender Pfeil kann also rot sein —
+das ist der Punkt.
+
+### Was NICHT erfunden wird
+
+Reicht eine Reihe an einem Sitzungstag noch nicht drei Releases zurück, steht
+dort `1/3` bzw. `2/3` in Bernstein (mit Erklärung im Titel) oder
+`no data yet` — kein extrapolierter Wert (CLAUDE.md Regel 4). Gemessen bei AUD
+am 07.11.2023: Inflation `5,4` mit `1/3`, Labour `3,7 › 3,6` mit `2/3`, Growth
+`no data yet`. Hat eine Bank seit 09/2023 nur gehalten, sagt das Fenster genau
+das, statt eine Reihe zu konstruieren.
+
+Non-FX-Assets (Gold, S&P 500, Yields …) zeigen die Reihe ihrer verbundenen
+Währung — dieselbe Spiegelung wie bei ihrer Makro-Karte — und schreiben das
+als Hinweis über die Tabelle (Gold → USD, 6 Zeilen).
+
+### Nebenbefund: `.modal-wide` gab es gar nicht
+
+Die Klasse wird seit dem 08.08. im Markup vergeben (Datenqualitäts-Fenster),
+eine **CSS-Regel dazu existierte nie**. Beide breiten Fenster blieben deshalb
+auf den normalen 720 px, und ihre Tabellen scrollten selbst auf einem
+1440-px-Bildschirm immer horizontal. Jetzt `max-width:min(1080px,94vw)`:
+gemessen 1015 px bei 1440 und 725 px bei 820 — die Backtester-Tabelle passt in
+beiden Fällen ohne Scrollen hinein, und der `.bt-scroll`-Rahmen bleibt als
+Rückfallebene für sehr schmale Geräte.
+
+Ebenfalls mitgezogen: der Hilfetext zum Normierungs-Modus sprach noch von
+`σ ≈ 75.700` / `σ ≈ 0,12` — nach der Umstellung auf die durchschnittliche
+Abweichung (VERSION-CHECK-473) falsch, jetzt korrigiert.
+
+### Verifiziert (Playwright, 1440×1000 und 820×1100)
+
+USD 6 Zeilen, JPY 5, AUD 7, NZD 11, CHF 6, Gold 6 (aus USD gespiegelt, mit
+Hinweiszeile). Spaltenköpfe tragen Bereich + tatsächlich benutzten
+Indikatornamen. Pfeilfarben wie oben gemessen (`rgb(11,95,204)` /
+`rgb(197,15,26)`). Kein Dokument-Überlauf in beiden Breiten, keine
+Konsolen- oder Page-Errors, Knopf steht in der Kopfzeile zwischen History und
+Data quality.
