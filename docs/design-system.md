@@ -439,3 +439,38 @@ Next-Spalte und die Next-Angabe über den Vergleichs-Charts ab
 `--red`, neutral `--amber`. Ein naher Termin ist keine Richtung. `--due` wird
 von `check/theme.js` auf denselben Kontrast (≥ 3:1 gegen `--bg2` und `--bg5`)
 geprüft wie die Bedeutungsfarben.
+
+## Karten-Raster: nach der Breite des BEHÄLTERS messen, nicht des Fensters (seit 2026-09-07)
+
+Regel für jede mehrspaltige Kartenliste (erstmals in der Watchlist,
+`.wt-grid`/`.wt-card`): sobald Karten **nebeneinander** stehen können, sagt die
+Fensterbreite nichts mehr über den Platz *in* einer Karte. Bei 1600 px Fenster
+ist eine Watchlist-Karte nur ~530 px breit — eine `@media`-Abfrage hätte dort
+die Innenaufteilung der vollen Breite (~1380 px) benutzt und die Kacheln
+zusammengequetscht. Umgekehrt ändert das Ein-/Ausklappen der Navigationsleiste
+die verfügbare Breite, ohne dass sich das Fenster ändert.
+
+Deshalb:
+
+1. Der Listen-Behälter bekommt `container: <name>/inline-size`, die Karte
+   ebenfalls (eigener Name). Die Namen sind Pflicht — bei verschachtelten
+   Containern greift eine unbenannte Abfrage sonst am nächstgelegenen
+   Vorfahren, was beim Umbauen still kippt.
+2. Wie viele **Spalten**, entscheidet die Abfrage am Listen-Behälter.
+3. Wie der **Karteninhalt** aufgeteilt wird, entscheidet die Abfrage an der
+   Karte.
+4. **Höchstens so viele Spalten wie gewollt** — `repeat(auto-fill,minmax(Xpx,1fr))`
+   ist hier die falsche Wahl: es liefert bei genug Platz eine dritte Spalte,
+   und unterhalb von `X` zwingt es die Karte auf `X` px Breite, also aus dem
+   Inhaltsbereich heraus (gemessen: 200 px über den Rand im 390-px-Fenster).
+   Stattdessen `1fr` als Grundzustand und die zweite Spalte per
+   Container-Abfrage dazuschalten.
+5. Ein Raster kann sich **nicht** überlappen — jede Karte hat ihre Zelle.
+   `align-items:start`, damit eine kurze Karte neben einer langen nicht auf
+   deren Höhe aufgeblasen wird, und `margin-bottom:0` an den Karten im Raster,
+   sonst kommt der Rasterabstand zum Aussenabstand hinzu.
+
+Gegenprobe beim Testen: an mindestens sieben Breiten (1920/1600/1440/1280/1180/820/390)
+Kartenbreite, Karten je Zeile, Überlappung Karte-gegen-Karte, Überlauf aus der
+Karte **und** `scrollWidth > clientWidth` an jedem Textelement messen — ein
+Screenshot in Standardbreite zeigt keinen dieser Fälle.

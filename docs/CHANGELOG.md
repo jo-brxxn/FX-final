@@ -11372,3 +11372,76 @@ sie prueft jetzt auf den **Aufruf**.
 ⚠ Merksatz fuer die Sammlung in `check/README.md`: ein Waechter, der ohne
 echten Fund rot wird, ist genauso schaedlich wie einer, der nichts findet —
 man klickt ihn irgendwann weg.
+
+## 2026-09-07 — Watchlist: zwei Karten je Zeile (VERSION-CHECK-486)
+
+**Nutzer:** *„Bei der Watchlist sind mir die Asset zu lang gezogen von rechts
+nach links mach das zwei in eine Zeile passen aber achte darauf das Nix
+überlappt"*.
+
+**Ausgangslage gemessen:** eine Karte war bei 1600 px Fenster **1 382 px breit
+bei 427 px Höhe** — eine Zeile pro Eintrag über die volle Breite.
+
+### Umbau
+
+Die Karten jeder Sektion stehen jetzt in einem eigenen Raster-Behälter
+(`.wt-grid`; die Überschrift `.wt-sec` bleibt bewusst ausserhalb, sonst wäre
+sie eine eigene Rasterzelle neben der ersten Karte). Im Raster kann sich
+grundsätzlich nichts überlappen — jede Karte hat ihre Zelle.
+
+### Zwei Sackgassen, beide gemessen und verworfen
+
+| Versuch | Messung | Konsequenz |
+|---|---|---|
+| `repeat(auto-fill,minmax(520px,1fr))` | bei 1920 px **drei** Karten je Zeile (je 561 px) | höchstens zwei Spalten, explizit |
+| dieselbe Regel im 390-px-Fenster | Karte auf **520 px** gezwungen, Platz war 306 px → **200 px aus dem Inhaltsbereich heraus** | `1fr` als Grundzustand, zweite Spalte per Abfrage dazu |
+
+### Gemessen statt nach Fensterbreite geraten
+
+Umgeschaltet wird nach der Breite der **Liste** (`@container wl`), nicht des
+Fensters: die Navigationsleiste lässt sich ein- und ausklappen, ohne dass das
+Fenster schmaler wird. Der Karteninhalt richtet sich aus demselben Grund nach
+der **Kartenbreite** (`@container wlcard`) — bei 1600 px Fenster ist die Karte
+nur ~530 px breit, eine Fensterabfrage hätte dort die Innenmasse der vollen
+Breite benutzt. Muster festgehalten in `docs/design-system.md`.
+
+### Zwei Altlasten dabei mitbehoben
+
+- **„Next event" war an JEDER Breite abgeschnitten** (289 px Text gegen 262 px
+  Kachel — auch schon in der alten Karte über die volle Fensterbreite, und
+  gegen 158 px sobald zwei Karten nebeneinander stehen). Jetzt vier
+  Zahlenkacheln nebeneinander und der Termin darunter über die ganze Zeile:
+  bei 1920 px 816 px statt 158 px, vollständig lesbar — und die vier
+  Zahlenkacheln werden dabei sogar breiter (199 px statt 158 px).
+- **Quicklinks:** der umbrechende Flex-Container legte bei 847 px Karte 6 + 2
+  Knöpfe um und liess jedem der sechs nur 130 px, dort stand `Rate Probabi…`.
+  Jetzt ein gleichmässiges Raster (4 Spalten breit / 3 schmal / 2 im
+  Handy-Fenster). Keine abgeschnittene Beschriftung mehr.
+
+### Verifiziert (Playwright, acht Einträge: vier FX-Paare, GOLD, BTC, SP500)
+
+| Fenster | Kartenbreite | je Zeile | Karte↔Karte | ragt aus Karte | abgeschnittener Text |
+|---|---|---|---|---|---|
+| 1920 | 847 | **2** | 0 | 0 | 0 |
+| 1600 | 687 | **2** | 0 | 0 | 0 |
+| 1440 | 607 | **2** | 0 | 0 | 0 |
+| 1280 | 527 | **2** | 0 | 0 | 0 |
+| 1180 | 962 | 1 | 0 | 0 | 0 |
+| 820 | 602 | 1 | 0 | 0 | 0 |
+| 390 | 306 | 1 | 0 | 0 | unverändert zum Bestand |
+
+Bei 1 180 px reicht der Platz (962 px) nicht für zwei Karten von je ≥ 515 px —
+dort bleibt es bewusst bei einer Spalte, statt zwei zu quetschen. Der
+390-px-Fall wurde gegen den Stand VOR der Änderung gemessen: dieselben zwei
+Stellen waren schon vorher knapp (`Rate Probabilities` 101 px gegen 91 px), es
+ist also kein Rückschritt — und der lange Termintext ist dort jetzt mit 255 px
+statt 114 px sichtbar.
+
+### Fehlerklasse + Wächter
+
+`check/cards.js` lief auf dem `watch`-Tab über eine **leere** Watchlist — es
+wurde also nie eine einzige Watchlist-Karte geprüft, und der 200-px-Überlauf
+oben wäre unbemerkt geblieben. Der Wächter befüllt die Liste jetzt selbst
+(vier FX-Paare + zwei Non-FX-Assets) und `.wt-card` steht im Karten-Selektor.
+Gegenprobe: mit `minmax(520px,1fr)` meldet er **6 Treffer** („steht 200px über
+den rechten Rand des Inhaltsbereichs hinaus"), mit der jetzigen Regel 0.

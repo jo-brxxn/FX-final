@@ -1543,8 +1543,19 @@ body.res-return-active #resBackBar{display:flex}
    die 4-Spalten-Zwangsbreite (variable Anzahl je Asset/Paar - siehe
    watchQuickLinksHtml) und ohne die 300px-Notizen-Spalte daneben, deshalb
    ein eigener, umbrechender Flex-Container statt .aqr/.aqr-links. */
-.wt-quick{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-.wt-quick .aql{flex:1 1 120px}
+/* ⚠ Seit zwei Karten nebeneinander stehen, ist ein umbrechender Flex-Container
+   hier nicht mehr richtig: bei 1920px Fenster (Karte 847px) passten 6 der 8
+   Knoepfe in die erste Zeile, die restlichen 2 zogen sich auf halbe Breite -
+   und weil 6 Knoepfe nur je 130px bekamen, stand dort "Rate Probabi…" statt
+   der vollen Beschriftung (gemessen 2026-09-07). Ein festes Raster verteilt
+   den Platz gleichmaessig: 4 Spalten in der breiten Karte (je ~199px, alle
+   Beschriftungen vollstaendig), 3 in der schmalen (je ~159px, dieselbe
+   Aufteilung wie bisher). Die Asset-Zeile darunter bleibt flexibel, weil sie
+   je nach Paar EINEN oder ZWEI Knoepfe hat und die volle Breite fuellen soll. */
+.wt-quick{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0}
+@container wlcard (max-width:620px){.wt-quick{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.wt-quick.wt-quick-assets{display:flex;flex-wrap:wrap}
+.wt-quick-assets .aql{flex:1 1 120px}
 /* Zweite Zeile darunter (Nutzer-Wunsch 2026-08-31): Direktlinks zur
    Assets-Detailseite je Paar-Seite (watchAssetLinksHtml) - bewusst farblich
    abgehoben von den Kategorie-Quicklinks darueber, damit klar ist, dass sie
@@ -3777,7 +3788,32 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 /* ── Watchlist-Tab (Nutzer-Wunsch 2026-08-07) ───────────────────────── */
 .wt-sec{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t3);margin:14px 2px 7px}
 .wt-sec:first-child{margin-top:0}
-.wt-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--bd2);border-radius:var(--r);padding:11px 13px 12px;margin-bottom:9px}
+/* Zwei Karten nebeneinander, sobald der Platz fuer zwei reicht (Nutzer-Wunsch
+   2026-09-07: "mach das zwei in eine Zeile passen aber achte darauf das Nix
+   überlappt"). align-items:start, damit eine kurze Karte neben einer langen
+   nicht auf deren Hoehe aufgeblasen wird - im Raster kann sich ohnehin nichts
+   ueberlappen, jede Karte hat ihre eigene Zelle.
+   ⚠ Gemessen und verworfen: repeat(auto-fill,minmax(520px,1fr)). Das ergab
+   bei 1920px Fenster DREI Karten je Zeile (je 561px) statt der gewuenschten
+   zwei, und auf dem Handy (Fensterbreite 390, Platz 306px) zwang die feste
+   Untergrenze die Karte auf 520px Breite - also Ueberlauf genau dort, wo am
+   wenigsten Platz ist. Deshalb ausdruecklich hoechstens zwei Spalten.
+   ⚠ Und gemessen wird die BREITE DER LISTE, nicht die des Fensters
+   (container statt @media): die Navigationsleiste laesst sich ein- und
+   ausklappen, das Fenster bleibt dabei gleich breit. Eine Fensterabfrage
+   haette bei eingeklappter Leiste zwei Spalten verpasst und bei
+   ausgeklappter zu frueh umgeschaltet. */
+#watchBody{container:wl/inline-size}
+.wt-grid{display:grid;grid-template-columns:1fr;gap:9px;align-items:start}
+@container wl (min-width:1040px){.wt-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ⚠ Der Karten-Innenraum haengt jetzt an der KARTENBREITE, nicht mehr an der
+   Fensterbreite - deshalb container-type. Ohne das haette ein breites Fenster
+   mit zwei Spalten (Karte ~530px) dieselben Innenmasse benutzt wie eine
+   Karte ueber die volle Breite (~1380px) und die Metrik-Kacheln waeren auf
+   ~90px zusammengequetscht worden. Der Behaelter ist BENANNT (wlcard), damit
+   die Abfrage unten eindeutig die Karte meint und nicht die Liste (wl). */
+.wt-card{background:var(--bg2);border:1px solid var(--bd);border-left:4px solid var(--bd2);border-radius:var(--r);padding:11px 13px 12px;margin-bottom:9px;container:wlcard/inline-size}
+.wt-grid>.wt-card{margin-bottom:0}   /* sonst Rasterabstand PLUS Aussenabstand */
 .wt-head{display:flex;align-items:center;gap:9px;cursor:pointer;flex-wrap:wrap}
 .wt-icons{font-size:15px;display:flex;align-items:center;gap:3px;flex:0 0 auto}
 .wt-name{font-size:15px;font-weight:800;color:var(--t0);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3785,7 +3821,15 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .wt-score{font-size:14px;font-weight:800;font-family:var(--ff-num);min-width:40px;text-align:right}
 .wt-open{display:flex;align-items:center;color:var(--t3);flex:0 0 auto}
 @media(hover:hover){.wt-head:hover .wt-name{text-decoration:underline}.wt-head:hover .wt-open{color:var(--blue)}}
-.wt-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px;margin-top:10px}
+/* Vier gleich breite Kacheln, "Next event" (immer die letzte) darunter ueber
+   die volle Breite. ⚠ Vorher: repeat(auto-fit,minmax(112px,1fr)) - alle FUENF
+   nebeneinander. Gemessen 2026-09-07 war der laengste Termintext dabei an
+   JEDER Breite abgeschnitten (289px Text gegen 262px Kachel selbst in der
+   frueheren Karte ueber die volle Fensterbreite, gegen 158px sobald zwei
+   Karten nebeneinander stehen). Ueber die volle Zeile passt er vollstaendig,
+   und die vier Zahlenkacheln werden dabei sogar breiter. */
+.wt-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.wt-metrics .wt-metric:last-child{grid-column:1/-1}
 .wt-metric{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--rs);padding:6px 9px;min-width:0}
 .wt-m-l{display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t2);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-m-v{display:block;font-size:13px;font-weight:700;color:var(--t0);font-family:var(--ff-num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3811,7 +3855,15 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 .wt-empty-s{font-size:12px;color:var(--t3);line-height:1.6;margin-bottom:12px}
 .wl-row.wl-click{cursor:pointer}
 @media(hover:hover){.wl-row.wl-click:hover .wl-name{text-decoration:underline;color:var(--t0)}}
-@media(max-width:560px){.wt-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* ⚠ War frueher @media(max-width:560px), also an der FENSTERbreite. Seit die
+   Karten zu zweit nebeneinander stehen, sagt die Fensterbreite nichts mehr
+   ueber den Platz IN der Karte: bei 1600px Fenster ist die Karte nur ~530px
+   breit. Deshalb Container-Abfrage - sie misst die Karte selbst.
+   620px: darunter reicht der Platz nicht mehr fuer vier Zahlenkacheln
+   nebeneinander. 420px: darunter blieben von einer Quicklink-Beschriftung nur
+   43px ("Seasonality" braucht 67px) - gemessen am iPhone-Fenster (390px). */
+@container wlcard (max-width:620px){.wt-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container wlcard (max-width:420px){.wt-quick{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ── Meldung: veraltete Indikatoren (Nutzer-Auftrag 2026-08-08) ─────────
    Optik nach dem bestehenden Muster der Dashboard-Meldungen: neutraler
@@ -4362,11 +4414,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-485 - Speicher-Teufelskreis aufgebrochen (Nutzer-Screenshot 2026-09-07, zweites Mal: die Leiste stand weiter bei exakt 2582 KB, obwohl der Snapshot durch VERSION-CHECK-484 um 46 Prozent kleiner geworden war). Der Grund war kein Rechenfehler, sondern eine Sackgasse: der kleinere Stand konnte nicht geschrieben werden, WEIL der Speicher voll war - und er blieb voll, weil der grosse alte Eintrag noch drinstand. setItem prueft das Kontingent nicht zwingend gegen den freiwerdenden Platz des Werts, den es ersetzt; deshalb scheitert selbst ein deutlich kleinerer Schreibvorgang. Blosses Verkleinern loest das nie. Neu ist eine Rettungs-Leiter: erst den alten Eintrag ausdruecklich entfernen, damit sein Platz sicher frei ist, dann - falls noetig - Entbehrliches wegwerfen, Sicherungskopien und Caches zuerst, nach jedem Schritt neu versuchen. An die eigentlichen Daten geht die App nie. Gelingt es, erscheint eine kurze blaue Meldung, die sagt WOMIT Platz geschaffen wurde, und das Abzeichen steht auf gespeichert; die rote Leiste kommt nur noch, wenn alle Stufen scheitern. Fuer diesen letzten Fall sagt sie jetzt ausserdem ausdruecklich, wenn nach dem Aufraeumen gar kein gespeicherter Stand mehr auf dem Geraet liegt - dann duerfen die Daten nur noch ueber Cloud oder Export gerettet werden, und der Tab darf nicht geschlossen werden. Alle drei Stufen und der Totalausfall per Playwright gegen die nachgebaute iPad-Lage geprueft."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-486 - Watchlist: zwei Karten je Zeile statt einer ueber die volle Breite (Nutzer-Wunsch 2026-09-07: die Eintraege waren von rechts nach links zu lang gezogen, zwei sollen in eine Zeile passen, ohne dass sich etwas ueberlappt). Die Karten stehen jetzt in einem Raster - dort kann sich grundsaetzlich nichts ueberlappen, jede Karte hat ihre eigene Zelle. Gemessen und verworfen wurde ein erster Versuch mit auto-fill: der ergab bei 1920px DREI Karten je Zeile und zwang die Karte im 390px-Fenster auf 520px Breite, also 200px aus dem Inhaltsbereich heraus. Jetzt hoechstens zwei Spalten, und umgeschaltet wird nach der Breite der LISTE statt der des Fensters (Container-Abfrage), weil sich die Navigationsleiste ein- und ausklappen laesst, ohne dass das Fenster schmaler wird. Der Karteninhalt richtet sich aus demselben Grund nach der KARTENbreite: vier Zahlenkacheln nebeneinander und Next event darueber die volle Zeile - der laengste Termintext war vorher an jeder Breite abgeschnitten (289px Text gegen 262px Kachel) und ist jetzt vollstaendig lesbar; Quicklinks als gleichmaessiges Raster, damit keine Beschriftung mehr abgeschnitten wird. An sieben Fensterbreiten von 1920 bis 390 nachgemessen: keine Ueberlappung, nichts ragt aus einer Karte heraus. check/cards.js befuellt die Watchlist jetzt selbst - vorher war sie im Waechter immer leer und keine einzige Watchlist-Karte wurde je geprueft."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-485</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-486</span>
     </span>
   </div>
   <div class="hdr-r">

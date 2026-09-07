@@ -8718,7 +8718,12 @@ function renderWatchlistTab(){
   // zeigt (pairScore), damit Sortierung und Anzeige nie auseinanderlaufen.
   const byScoreDesc=(a,b)=>pairScore(b.name)-pairScore(a.name);
   const fx=list.filter(p=>isPureFxPair(p.name)).sort(byScoreDesc),other=list.filter(p=>!isPureFxPair(p.name)).sort(byScoreDesc);
-  const sec=(t,arr)=>arr.length?`<div class="wt-sec">${escH(t)}</div>${arr.map(watchRowHtml).join('')}`:'';
+  // ⚠ Die Karten stehen in einem eigenen Raster-Behaelter (Nutzer-Wunsch
+  // 2026-09-07: "die Asset zu lang gezogen von rechts nach links mach das
+  // zwei in eine Zeile passen"). Der Behaelter ist noetig, weil die
+  // Ueberschrift (.wt-sec) sonst als eigene Rasterzelle neben der ersten
+  // Karte landen wuerde - sie bleibt bewusst ausserhalb.
+  const sec=(t,arr)=>arr.length?`<div class="wt-sec">${escH(t)}</div><div class="wt-grid">${arr.map(watchRowHtml).join('')}</div>`:'';
   el.innerHTML=cloudNotConnectedNoticeHtml()+sec('FX Pairs',fx)+sec('Other Assets',other);
   el.querySelectorAll('.wt-note').forEach(t=>{ar(t);});
   if(keep&&keep.id){

@@ -17,7 +17,21 @@ const TABS=['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','
 // Breites, aber endliches Set der im Projekt tatsaechlich verwendeten
 // Karten-Klassen (CLAUDE.md: "Karten-Inhalt darf nie ueber den Kartenrand
 // hinausgehen"). Ergaenzt sich bei neuen Kartentypen - siehe README.
-const KARTEN_SEL='.dw,.cot-card,.rub-card,.tr-card,.ov-card,.pov-card,.aaii-kpi,.edge-verdict,.cal-day,.ind-hist-toolbar,.rterm-card';
+const KARTEN_SEL='.dw,.cot-card,.rub-card,.tr-card,.ov-card,.pov-card,.aaii-kpi,.edge-verdict,.cal-day,.ind-hist-toolbar,.rterm-card,.wt-card';
+// ⚠ Blinder Fleck bis 2026-09-07: die Watchlist ist bei einem frischen Start
+// LEER, der Waechter lief auf dem 'watch'-Tab also ueber eine Leerzustands-
+// Meldung und sah nie eine einzige Watchlist-Karte. Aufgefallen beim Umbau
+// auf zwei Karten je Zeile - ein erster Versuch
+// (repeat(auto-fill,minmax(520px,1fr))) zwang die Karte im 390px-Fenster auf
+// 520px Breite, also weit aus dem Inhaltsbereich heraus, und KEIN Waechter
+// haette das gemeldet. Deshalb wird die Liste jetzt vor dem Durchlauf
+// befuellt: vier FX-Paare (zwei Seiten, lange Namen) und zwei Non-FX-Assets
+// (kuerzere Karte, anderer Aufbau).
+const WATCHLIST_FUELLEN=()=>{try{
+  ['EUR/USD','GBP/USD','USD/JPY','AUD/USD'].forEach(n=>{try{toggleWatch(n);}catch(e){}});
+  ['GOLD','BTC'].forEach(id=>{try{toggleWatch(watchPairNameForAsset(id));}catch(e){}});
+  renderWatchlistTab();
+}catch(e){}};
 
 (async()=>{
   const b=await chromium.launch();
@@ -29,6 +43,7 @@ const KARTEN_SEL='.dw,.cot-card,.rub-card,.tr-card,.ov-card,.pov-card,.aaii-kpi,
     await p.evaluate(()=>{['lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});document.querySelectorAll('.ov').forEach(o=>o.style.display='none');});
     await p.waitForTimeout(1000);
     await p.evaluate(()=>{document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none');});
+    await p.evaluate(s=>{eval('('+s+')()');},WATCHLIST_FUELLEN.toString());
 
     for(const tab of TABS){
       await p.evaluate(t=>{try{showTab(t);}catch(e){}},tab);
