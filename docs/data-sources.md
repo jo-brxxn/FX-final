@@ -462,3 +462,32 @@ hochgerechnet wird nichts (Grundsatz „nie schätzen/raten").
 Feed-Ableitung und steht seit 2026-09-07 nicht mehr im Schnappschuss (siehe
 `SNAP_REPLACER`, `docs/state-sync.md`) — sonst hätte die tiefere Historie den
 localStorage sofort wieder gesprengt.
+
+## Wie ein Indikator seine Datenreihe findet (seit 2026-09-07)
+
+Der Abgleich läuft über den **Namen** des Indikators, nicht über eine ID. Das
+ist die empfindlichste Stelle der ganzen Datenkette — dreimal derselbe
+Bugreport (AUD GDP) ging darauf zurück.
+
+`feedEntryFor(feed, name)` in `js/main.js`:
+
+1. **Exakt**: `feed[stripPeriodSuffix(name).base]` — der Normalfall.
+2. **Kanonisch** (Rückfall): `kanonIndName()` räumt den Zeitraum in *beiden*
+   Schreibweisen ab (`QoQ`/`q/q`, `YoY`/`y/y`, `MoM`/`m/m`), kleinschreibt und
+   normalisiert Leerzeichen. `GDP Growth QoQ` und `GDP Growth q/q` zeigen
+   damit auf dieselbe Reihe.
+3. **Nur bei Eindeutigkeit**: passen mehrere Feed-Schlüssel auf denselben
+   kanonischen Namen, wird **nichts** zugeordnet. Eine falsche Reihe wäre
+   schlimmer als eine leere. Stand 2026-09-07: 0 Kollisionen über alle 109
+   Einträge der acht Währungen.
+
+**Regel für neue Indikatoren:** der Name im Zustand und der Schlüssel im Feed
+müssen kanonisch übereinstimmen. Ist das nicht der Fall, meldet
+`check/display.js` (2d) das als *stillen Verlust* — aber nur, wenn es die
+Reihe wirklich gibt. Führt die Quelle den Indikator für diese Währung gar
+nicht (z. B. NZD PPI), ist das eine ehrliche Lücke und kein Fehler.
+
+**Anzeige vs. Schlüssel:** angezeigt wird `indName(ind)` — dort steht der
+Zeitraum immer nur einmal. Der *gespeicherte* Name bleibt unverändert, weil
+Feed, Kalender und Recherche über ihn zusammenfinden. Wer den Namen ändert,
+kappt die Verbindung zu den Daten.

@@ -8,7 +8,7 @@ export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScor
   DATA_BASE,DATA_LIVE_OK,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,
   applyRevisionToValHist,applyTrendModel,checkPriceAlerts,fmtDayHdr,indBiasInputSig,indBiasPinned,
   invalidateRateStepCache,isNonFx,macroCcyFor,parseNumLike,pushU,renderDash,rerender,researchBias,
-  resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,todayStr,trackIndValues,widgets,
+  resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,todayStr,trackIndValues,widgets,feedEntryFor,kanonIndName,
   IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,evtMatchesSym,getSym,markLsUpdatedSeen,
   markPrefEdit,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,scoreHist,selId,setSuppressBiasFlipAlerts,
   MACRO_DERIVE_RUBS,calCcyFilter,calHighOnly,calOpenDays,compactView,effDeriveRules,escJH,eventAlerts,
@@ -963,7 +963,7 @@ function symScoreDrivingEventsByDate(id){
     const meta={sc,scBias:sb,scZero:sc===0,scStale:(()=>{try{return !!indIsStale(ind);}catch(e){return false;}})(),
       scDisplayOnly:(typeof SCORE_ZERO!=='undefined'&&SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))};
     if(r&&r.feed&&r.date&&r.actual!=null){
-      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous},meta);
+      const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
@@ -972,17 +972,17 @@ function symScoreDrivingEventsByDate(id){
     // wuerde den gemeinsamen Kalender-Datensatz veraendern.
     if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(Object.assign({},ev,meta));return;}
     if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
-      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true},meta);
+      const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
     if(r&&r.cot&&r.date&&r.actual!=null){
-      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:r.previous,cot:true},meta);
+      const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:null,previous:r.previous,cot:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
       return;
     }
     if(r&&r.sent&&r.date&&r.actual!=null){
-      const synth=Object.assign({name:ind.displayName||ind.name,date:r.date,time:'',actual:r.actual,forecast:null,previous:null,sent:true},meta);
+      const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:null,previous:null,sent:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
     }
   };
@@ -1961,7 +1961,7 @@ function openTrendInfo(ri,ii){
   const lowerBetter=LOWER_IS_BETTER_RE.test(ind.name||'');
   const mag=indTrendAdjMag(ind,rub);
   const magS=mag===1?'1':'0.5';
-  document.getElementById('trendInfoTitle').textContent='📈 Trend – '+(ind.displayName||ind.name);
+  document.getElementById('trendInfoTitle').textContent='📈 Trend – '+(indName(ind));
   let html='';
   const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span style="color:var(--t3)">${l}</span><span style="font-weight:700">${v}${sub?` <span style="color:var(--t3);font-weight:600">${sub}</span>`:''}</span></div>`;
   if(isBond){
@@ -2569,6 +2569,74 @@ function stripPeriodSuffix(name){
   const res=Object.freeze(m?{base:key.slice(0,-m[0].length),period:periodLabel(m[1])}:{base:key,period:null});
   _stripPeriodCache.set(key,res);
   return res;
+}
+// ── Der Zeitraum steht IMMER nur einmal im Namen ───────────────────────
+// Nutzer-Wunsch 2026-09-07: "ich will auch nicht das das da doppelt steht bei
+// anderen Indikatoren ist das so pruef das und mach das das immer nur einmal
+// da steht". Gemessen war genau EIN Name betroffen: "GDP Growth QoQ q/q" -
+// alle 42 anderen tragen das Kuerzel einmal ("PPI y/y", "Retail Sales m/m").
+// Ursache: applyIndResearch baut den Namen als <Basisname> + <Zeitraum>, und
+// der Basisname aus den Recherchedaten traegt bei GDP den Zeitraum schon in
+// Langform ("GDP Growth QoQ").
+// ⚠ Der gespeicherte Name bleibt unangetastet - er ist der Schluessel, mit dem
+// Feed, Kalender und Recherche zusammenfinden. Normalisiert wird nur, was
+// ANGEZEIGT wird.
+const NAME_PERIOD_LANG_RE=/\s+(qoq|yoy|mom)(?=\s|$)/i;
+// ── Kanonischer Name: Zeitraum in JEDER Schreibweise abgeraeumt ─────────
+// ⚠ Nutzer-Bugreport 2026-09-07 ("Aud gdp hat immernoch keine Daten oder
+// Historie", dritte Meldung zu diesem Indikator). Gemessen: die Rohdaten
+// hatten AUD GDP vollstaendig (0,4 % vom 2026-09-02, 54 Punkte ab 2013), die
+// Standard-App zeigte sie auch - der gespeicherte Zustand des Nutzers traegt
+// den Indikator aber unter einem anderen Namen. Der Feed-Abgleich war ein
+// reiner Schluessel-Zugriff feed[base], und base entsteht durch Abschneiden
+// NUR der Kurzform:
+//     "GDP Growth QoQ q/q" -> base "GDP Growth QoQ" -> Treffer
+//     "GDP Growth q/q"     -> base "GDP Growth"     -> KEIN Treffer
+// Ergebnis: kein Wert, keine Historie, keine Meldung - der Indikator sah aus,
+// als gaebe es ihn nicht. Genau die stille Sorte Fehler, die dieses Projekt
+// nicht haben will.
+// Der kanonische Name raeumt den Zeitraum in BEIDEN Schreibweisen ab, sodass
+// "GDP Growth QoQ" und "GDP Growth q/q" auf dieselbe Reihe zeigen.
+// ⚠ Nur als RUECKFALL nach dem exakten Treffer und nur, wenn genau EIN
+// Kandidat passt: gegen alle 109 Feed-Eintraege aller acht Waehrungen
+// gemessen sind das 0 Kollisionen, aber eine kuenftige Quelle koennte
+// "CPI y/y" und "CPI m/m" nebeneinander stellen - dann darf hier NICHTS
+// zugeordnet werden statt der falschen Reihe.
+function kanonIndName(name){
+  return String(name||'').replace(NAME_PERIOD_SUFFIX_RE,'').replace(NAME_PERIOD_LANG_RE,'')
+    .toLowerCase().replace(/\s+/g,' ').trim();
+}
+const _kanonFeedCache=new WeakMap();
+function feedEntryFor(feed,name){
+  if(!feed)return null;
+  const base=stripPeriodSuffix(name).base;
+  if(feed[base])return feed[base];                 // exakt - der Normalfall
+  let map=_kanonFeedCache.get(feed);
+  if(!map){
+    map={};
+    Object.keys(feed).forEach(k=>{
+      if(k.startsWith('_'))return;
+      const kk=kanonIndName(k);
+      if(!kk)return;
+      (map[kk]=map[kk]||[]).push(k);
+    });
+    _kanonFeedCache.set(feed,map);
+  }
+  const treffer=map[kanonIndName(name)];
+  return (treffer&&treffer.length===1)?feed[treffer[0]]:null;
+}
+function indName(ind){
+  if(!ind)return'';
+  // ⚠ Hier steht bewusst der ROHE Zugriff und NICHT indName(ind) - das waere
+  // eine Endlosschleife. Beim Einbau 2026-09-07 genau so passiert: die
+  // Massenersetzung der 19 Anzeigestellen hat auch diesen Rumpf erwischt, die
+  // Funktion rief sich selbst auf und der erste Messlauf endete mit
+  // "Maximum call stack size exceeded".
+  const roh=ind.displayName||ind.name||'';
+  // Nur entfernen, wenn der Zeitraum auch in Kurzform dasteht - sonst hiesse
+  // "GDP Growth QoQ" ploetzlich nur noch "GDP Growth" und die Information,
+  // welcher Zeitraum gemeint ist, waere weg.
+  return NAME_PERIOD_SUFFIX_RE.test(roh)?roh.replace(NAME_PERIOD_LANG_RE,''):roh;
 }
 // Trennt einen Recherche-Wert wie "53.9 (S&P Global/CIPS)" in den reinen
 // Wert ("53.9") und die Zusatzinfo aus den Klammern ("S&P Global/CIPS").
@@ -5244,7 +5312,7 @@ function searchEntries(q){
   // Indikatoren (einmal pro Basisname, springt zum ersten Asset das ihn trackt)
   const seenInd=new Set();
   (syms||[]).forEach(s=>(s.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(ind=>{
-    const nm=ind.displayName||ind.name;
+    const nm=indName(ind);
     if(!nm.toLowerCase().includes(q))return;
     const key=nm+'|'+s.id;
     if(seenInd.has(nm))return;seenInd.add(nm);
@@ -6368,7 +6436,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
   const awaitBadge=awEv?`<span class="ir-await" title="${escH(awEv.name)} was due on ${escH(awEv.date)}, but no source has delivered a value yet. Nothing is estimated - the figures shown are still the last confirmed ones${(ind.research&&ind.research.date)?` from ${escH(ind.research.date)}`:''}.">AWAITING VALUE</span>`:'';
   const pairCls=pairPos?` ind-pair-row ind-pair-${pairPos}`:'';
   const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}${pairCls}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
-    <td class="ir-name"><span class="ir-name-txt" title="${escH(ind.displayName||ind.name)}">${escH(ind.displayName||ind.name)}</span>${lockIc}${staleBadge}${awaitBadge}
+    <td class="ir-name"><span class="ir-name-txt" title="${escH(indName(ind))}">${escH(indName(ind))}</span>${lockIc}${staleBadge}${awaitBadge}
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -6517,7 +6585,7 @@ function openBiasPicker(kind,ri,ii,x,y){
     const r0=getRub(ri);
     if(r0&&rubAutoDerived(c,r0))lockMsg='This indicator\'s bias is mirrored automatically from '+macroCcyFor(c.id)+'. Change or disable the rule via the asset settings (gear button).';
     else if(obj.name==='Risk Correlation')lockMsg='This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.';
-    label=obj.displayName||obj.name;
+    label=indName(obj);
     _biasPickerApply=b=>setIndBias(ri,ii,b);
   }else return;
   if(lockMsg){alert(lockMsg);return;}
@@ -6569,7 +6637,7 @@ function logRiskCorrChanges(){
     const before=indScore(ind,rub),oldBias=ind.bias;
     ind.bias=riskCorrBiasFor(sym.id);
     const after=indScore(ind,rub);
-    if(oldBias!==ind.bias)logScoreChange(sym.id,{kind:'bias',ind:ind.displayName||ind.name,rub:rub.name,from:oldBias,to:ind.bias,delta:Math.round((after-before)*100)/100});
+    if(oldBias!==ind.bias)logScoreChange(sym.id,{kind:'bias',ind:indName(ind),rub:rub.name,from:oldBias,to:ind.bias,delta:Math.round((after-before)*100)/100});
   });
 }
 function setRiskEnvLevel(lv){
@@ -6663,7 +6731,7 @@ function openInfoM(ri,ii){
   _infoRi=ri;_infoIi=(ii===undefined?-1:ii);
   const obj=_infoIi>=0?getInd(ri,ii):getRub(ri);
   if(!obj)return;
-  document.getElementById('mInfoTitle').textContent='ℹ️ '+(obj.displayName||obj.name||'Info');
+  document.getElementById('mInfoTitle').textContent='ℹ️ '+(indName(obj)||'Info');
   // Wenn ein länderspezifischer Anzeigename gesetzt ist, zusätzlich den
   // allgemeinen (kanonischen) Indikatornamen einblenden, damit klar ist,
   // welche Kennzahl gemeint ist (z.B. "Claimant Count Change" → "allg.:
@@ -6700,7 +6768,7 @@ function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAut
   // in Ruhe; sobald sich Actual/Forecast/Previous wirklich aendern (neuer
   // Wert), verfaellt die manuelle Wahl von selbst (Nutzer-Wunsch 2026-07-22).
   const _r=ind.research||{};ind._manualPin=indBiasInputSig(_r.actual,_r.forecast,_r.previous,_r.date);
-  const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:ind.displayName||ind.name,rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);_flipCauseTag='manual';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
+  const _after=indScore(ind,_r0);if(_c&&_old!==b)logScoreChange(_c.id,{kind:'bias',ind:indName(ind),rub:_r0.name,from:_old,to:b,delta:Math.round((_after-_before)*100)/100});syncMacroRub(ri);_flipCauseTag='manual';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 // ── INDIKATOR-SYNC ZWISCHEN SYMBOLEN ─────────────────────────────────
 // 1) Reihenfolge: egal auf welcher Symbol-Karte die Indikatoren einer
 //    Rubrik umsortiert werden, wird dieselbe Reihenfolge (per Name
@@ -7227,7 +7295,7 @@ const SUM_PHRASE={
 };
 function sumPhrase(ind){
   const base=stripPeriodSuffix(ind.name).base;
-  return SUM_PHRASE[base]||(ind.displayName||ind.name).toLowerCase();
+  return SUM_PHRASE[base]||(indName(ind)).toLowerCase();
 }
 // Gruppiert verwandte Indikatoren (Headline+Core, NFP+ADP, ...) unter EINEM
 // Familiennamen, damit die Zusammenfassung nicht jede Variante einzeln
@@ -14098,7 +14166,7 @@ function btCellHtml(sym,rubName,datum){
   const ind=btAnchorInd(sym,rubName);
   if(!ind)return`<td class="bt-cell"><span class="bt-none" title="This asset has no ${escH(RUB_ANCHOR_IND[rubName]||rubName)} indicator">–</span></td>`;
   const pts=btValuesBefore(ind,datum,BT_LOOKBACK);
-  if(!pts.length)return`<td class="bt-cell"><span class="bt-none" title="No ${escH(ind.displayName||ind.name)} release on file before ${escH(datum)} — the series does not reach back that far. Nothing is estimated.">no data yet</span></td>`;
+  if(!pts.length)return`<td class="bt-cell"><span class="bt-none" title="No ${escH(indName(ind))} release on file before ${escH(datum)} — the series does not reach back that far. Nothing is estimated.">no data yet</span></td>`;
   const t=btTrend(ind,pts);
   const vals=pts.map((p,i)=>`<span class="bt-v${i===pts.length-1?' bt-v-now':''}" title="${escH(fmtDayHdr(p[0]))}">${escH(fmtIndVal(p[1]))}</span>`).join('<span class="bt-sep">›</span>');
   const fehlt=pts.length<BT_LOOKBACK?`<span class="bt-short" title="Only ${pts.length} of ${BT_LOOKBACK} releases available before this meeting — the series starts later. The missing ones are left out rather than filled in.">${pts.length}/${BT_LOOKBACK}</span>`:'';
@@ -14181,7 +14249,7 @@ function openBacktester(symId){
   const spiegel=isNonFx(sym.id)?`<div class="bt-note">Macro data mirrored from <b>${escH(ccy)}</b>, the currency this asset is linked to — the same series its macro card uses.</div>`:'';
   const kopf=BT_AREAS.map(([rubName,label])=>{
     const ind=btAnchorInd(sym,rubName);
-    return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(ind.displayName||ind.name):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
+    return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(indName(ind)):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
   }).join('')+`<th class="bt-th bt-th-why"><span class="bt-th-l">Decisive factor</span><span class="bt-th-s">yours to fill in</span></th>`;
   // Kopfzeile "wo stehen wir jetzt" (Nutzer-Wunsch 2026-09-06: "mach ganz oben
   // eine Zeile wo die aktuellen Daten stehen also alles ausser halt ob es ein
@@ -14284,7 +14352,7 @@ function priceEventsByDay(symId){
     const hist=Array.isArray(ind.chartHist)?ind.chartHist:[];
     if(hist.length<1)return;
     const fmt=v=>fmtIndVal(v,'');
-    const nm=ind.displayName||ind.name;
+    const nm=indName(ind);
     hist.forEach((p,i)=>{
       if(!p||!p[0])return;
       const evLike={name:ind.name,actual:fmt(p[1]),forecast:fmt(p[2]),previous:i>0?fmt(hist[i-1][1]):''};
@@ -14517,7 +14585,7 @@ function dataIndGroupsOf(sym){
     const items=[];
     (r.indicators||[]).forEach(i=>{
       const b=stripPeriodSuffix(i.name).base;
-      if(b&&!items.some(x=>x.b===b))items.push({b,n:i.displayName||i.name});
+      if(b&&!items.some(x=>x.b===b))items.push({b,n:indName(i)});
     });
     return items.length?{name:r.name,items}:null;
   }).filter(Boolean);
@@ -14708,7 +14776,7 @@ function renderDataTab(){
       if(!g){g={name:rub.name,items:[]};groups.push(g);}
       (rub.indicators||[]).forEach(ind=>{
         const base=stripPeriodSuffix(ind.name).base;
-        if(base&&!g.items.some(it=>it.base===base))g.items.push({base,name:ind.displayName||ind.name});
+        if(base&&!g.items.some(it=>it.base===base))g.items.push({base,name:indName(ind)});
       });
     }));
     const allBases=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.base)),[]);
@@ -15176,7 +15244,7 @@ function edgeIndicatorStats(sym){
     return{name:ind_kurz(r.ind),n,quote:n?treffer/n*100:null,schnitt:n?summe/n:null};
   }).filter(x=>x.n>=EDGE_MIN_N).sort((a,b)=>b.quote-a.quote);
 }
-function ind_kurz(ind){return ind.displayName||stripPeriodSuffix(ind.name).base;}
+function ind_kurz(ind){return indName({displayName:ind.displayName,name:stripPeriodSuffix(ind.name).base});}
 // ── Edge-Tab: Darstellung ────────────────────────────────────────────────
 let edgeAsset='USD';
 function setEdgeAsset(v){edgeAsset=v||'USD';renderEdge();}
@@ -18583,6 +18651,7 @@ Object.assign(window,{
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
   biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,TIME_RANGES_TIEF,IND_HIST_MAX_FROM,indHistStartNote,timeRangeBarHtml,timeRangeCustomHtml,
+  indName,kanonIndName,feedEntryFor,
   filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
   setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
   resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,

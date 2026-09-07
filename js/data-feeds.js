@@ -10,7 +10,7 @@
 // das allgemeine Muster) - dieses Modul exportiert deshalb weiter unten
 // die Namen, die main.js zurueck braucht.
 import {BC,FX} from './constants.js';
-import {DATA_BASE,DATA_LIVE_OK,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
+import {DATA_BASE,DATA_LIVE_OK,feedEntryFor,kanonIndName,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
 
 // ── INDIKATOR-WERTE AUS ECHTER API-QUELLE (ind_data.json) ──
 // ind_data.json wird stündlich per GitHub Action aus TradingViews
@@ -54,7 +54,12 @@ function applyIndDataFeed(){
       if(!rub.indicators)return;
       rub.indicators.forEach(ind=>{
         const base=stripPeriodSuffix(ind.name).base;
-        const f=feed[base];
+        // ⚠ Nicht mehr feed[base] direkt: ein gespeicherter Name, der den
+        // Zeitraum in der anderen Schreibweise traegt ("GDP Growth q/q" statt
+        // "GDP Growth QoQ"), fand die Reihe sonst nie - ohne jede Meldung.
+        // feedEntryFor() versucht erst exakt, dann kanonisch und nur bei
+        // Eindeutigkeit (siehe kanonIndName in js/main.js).
+        const f=feedEntryFor(feed,ind.name);
         if(!f||f.actual==null)return;
         const r=ind.research||{};
         const na=f.actual;let nf=(f.forecast==null?null:f.forecast);const np=(f.previous==null?null:f.previous);
@@ -537,4 +542,34 @@ export {
 // onchange=/... im generierten HTML aufgerufen; applyIndDataFeed/
 // applyBondDataFeed werden zusaetzlich von check/score.js direkt per
 // page.evaluate() als globaler Name aufgerufen (siehe docs/module-split.md).
-if(typeof window!=='undefined')Object.assign(window,{openCcyCfgM,toggleCcyAsset,applyIndDataFeed,applyBondDataFeed});
+// ⚠ indFeedSicht() ist eine reine PRUEF-Sicht fuer check/display.js: sie
+// beantwortet die Frage "welcher Indikator findet im Feed KEINE Reihe?".
+// IND_DATA_FEED selbst bleibt bewusst modul-intern (ein `let`, das die
+// Bruecke ohnehin nur einmal einfrieren wuerde). Anlass: der Nutzer hat
+// dreimal denselben Indikator gemeldet (AUD GDP), weil ein Namensunterschied
+// den Feed-Abgleich still ins Leere laufen liess - ohne Waechter faellt so
+// etwas erst dem Nutzer auf.
+function indFeedSicht(){
+  const out=[];
+  if(!IND_DATA_FEED)return out;
+  syms.forEach(c=>{
+    const feed=IND_DATA_FEED[macroCcyFor(c.id)];
+    if(!feed)return;
+    (c.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+      const f=feedEntryFor(feed,ind.name);
+      // kand = wie viele Feed-Reihen tragen denselben kanonischen Namen?
+      // 0 -> die Quelle fuehrt diesen Indikator fuer diese Waehrung gar nicht
+      //      (z.B. NZD PPI) - eine ehrliche Luecke, kein Fehler.
+      // 1 -> muss treffen, sonst ist eine Reihe still verlorengegangen.
+      // >1 -> mehrdeutig; feedEntryFor ordnet dann BEWUSST nichts zu, aber
+      //      genau das muss auffallen statt lautlos zu passieren.
+      const kn=kanonIndName(ind.name);
+      const kand=Object.keys(feed).filter(k=>!k.startsWith('_')&&kanonIndName(k)===kn).length;
+      out.push({sym:c.id,name:ind.name,treffer:!!f,kand,
+        wert:f?(f.actual!=null):null,
+        hist:(ind.chartHist&&ind.chartHist.length)||0});
+    }));
+  });
+  return out;
+}
+if(typeof window!=='undefined')Object.assign(window,{openCcyCfgM,toggleCcyAsset,applyIndDataFeed,applyBondDataFeed,indFeedSicht});

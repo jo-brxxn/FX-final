@@ -11553,3 +11553,91 @@ Namen; wieder raus → grün.
 
 ⚠ Merksatz: ein nicht-gieriges `[\s\S]*?` in einem Wächter ist eine Falle —
 findet es sein Ende nicht, hört es nicht auf, sondern nimmt das nächste.
+
+## 2026-09-07 — AUD GDP: der Name war der Fehler (VERSION-CHECK-488)
+
+**Nutzer, dritte Meldung zu diesem Indikator:** *„Aud gdp hat immernoch keine
+Daten oder Historie"* — und auf die Rückfrage nach dem Namen: *„da steht halt
+nur mit einmal q/q aber ich will auch nicht das das da doppelt steht bei
+anderen Indikatoren ist das so prüf das und mach das das immer nur einmal da
+steht"*.
+
+Die zweite Hälfte dieser Antwort war die Lösung der ersten.
+
+### Was gemessen wurde, bevor etwas geändert wurde
+
+| Ort | Befund |
+|---|---|
+| `ind_data.json` AUD GDP | vollständig: 0,4 % vom 2026-09-02, **54 Punkte ab 2013-03-06** |
+| Asset-Seite AUD (Standardzustand) | Wert da: `0.4% / 0.3% / 0.3%`, Karte „Economic Growth" +1.5 |
+| Insights › Data, AUD + GDP | Chart da |
+| Backtester AUD | GDP-Spalte gefüllt (`0.8 › 0.3 › 0.4`) |
+| Data quality AUD | `N=54`, **0 out of date** |
+| Alle 591 Indikatoren | **0 ohne Wert**, 38 mit nur einem Punkt (alle aus der Trading-Economics-Abfrage, die nur den aktuellen Stand liefert) |
+
+Im Standardzustand also nichts zu finden — der Fehler steckte im
+**gespeicherten Zustand des Nutzers**.
+
+### Die Ursache
+
+Der Feed-Abgleich war ein reiner Schlüsselzugriff `feed[base]`, und `base`
+entsteht durch Abschneiden **nur der Kurzform** des Zeitraums:
+
+| Name des Indikators | daraus `base` | Feed-Treffer |
+|---|---|---|
+| `GDP Growth QoQ q/q` (Standard) | `GDP Growth QoQ` | ✅ 0.4 %, 54 Punkte |
+| `GDP Growth QoQ` | `GDP Growth QoQ` | ✅ 0.4 %, 54 Punkte |
+| **`GDP Growth q/q`** (Zustand des Nutzers) | `GDP Growth` | ❌ **nichts** |
+| `GDP Growth Rate QoQ q/q` | `GDP Growth Rate QoQ` | ❌ nichts |
+
+Kein Wert, keine Historie, **keine Meldung** — der Indikator sah aus, als
+gäbe es ihn nicht. Und weil `ind.chartHist` seit VERSION-CHECK-487 nicht mehr
+gespeichert wird, fiel auch die letzte aus dem Speicher gerettete Kurve weg.
+Beide früheren Korrekturen (472, 476) betrafen das *Nachladen* der Feeds, nie
+den *Namensabgleich* — deshalb „immer noch".
+
+### Der Fix
+
+`feedEntryFor()`: erst exakt, dann **kanonisch** — der Zeitraum wird in
+*beiden* Schreibweisen abgeräumt (`QoQ`/`q/q`, `YoY`/`y/y`, `MoM`/`m/m`), und
+zwar **nur, wenn genau ein Kandidat passt**. Gegen alle 109 Feed-Einträge
+aller acht Währungen gemessen: **0 Kollisionen**. Bei Mehrdeutigkeit wird
+bewusst *nichts* zugeordnet — eine falsche Reihe wäre schlimmer als eine
+leere. Verifiziert: `GDP Growth q/q` liefert jetzt 0,4 % und 54 Punkte,
+`GDP QoQ q/q` / `GDP q/q` / `BIP q/q` weiterhin nichts (das wäre Raten).
+
+### Der Zeitraum steht nur noch einmal da
+
+Gemessen war **genau ein** Name betroffen: `GDP Growth QoQ q/q`. Die anderen
+42 tragen das Kürzel längst einmal (`PPI y/y`, `Retail Sales m/m`). Ursache:
+der Basisname aus den Recherchedaten trägt den Zeitraum schon in Langform,
+`applyIndResearch` hängt die Kurzform an.
+
+`indName()` normalisiert das an **einer** Stelle, 19 Anzeigestellen laufen
+jetzt darüber. ⚠ Der **gespeicherte** Name bleibt unangetastet — er ist der
+Schlüssel, mit dem Feed, Kalender und Recherche zusammenfinden; normalisiert
+wird nur, was angezeigt wird. Gemessen: 0 Doppelungen über alle 17 Tabs und
+alle 24 Asset-Seiten.
+
+⚠ Dabei selbst hereingefallen: die Massenersetzung der 19 Stellen hat auch
+den *Rumpf* von `indName` erwischt — die Funktion rief sich selbst auf, der
+erste Messlauf endete mit `Maximum call stack size exceeded`. Steht jetzt als
+Warnung im Code.
+
+### Zwei neue Wächter
+
+1. **Kein doppelter Zeitraum** in einem angezeigten Indikatornamen
+   (`check/display.js` 2c, über alle 24 Assets und 591 Namen). Gegenprobe:
+   `indName` zurückgebaut → **22 Treffer**, wieder aktiv → 0.
+2. **Kein stiller Verlust einer Feed-Reihe** (2d). Gemeldet wird nur, wenn es
+   die Reihe **gibt** und der Indikator sie trotzdem nicht bekommt. Ein
+   Indikator, den die Quelle für diese Währung gar nicht führt — der Wächter
+   fand beim ersten Lauf NZD PPI, das es im Feed wirklich nicht gibt —
+   färbt den Lauf **nicht** rot, sondern wird gezählt (243 solcher Fälle).
+   Ein dauerhaft roter Wächter wird weggeklickt und ist damit wertlos.
+   Gegenprobe: eine vorhandene Reihe gezielt verlieren lassen → **10
+   Treffer**, zurück → 0.
+
+⚠ Merksatz: wenn derselbe Indikator dreimal gemeldet wird und die Rohdaten
+jedes Mal vollständig sind, liegt es nicht an den Daten und nicht am
+Nachladen — sondern daran, worüber Daten und Anzeige einander finden.

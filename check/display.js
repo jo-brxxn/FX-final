@@ -79,6 +79,49 @@ const MODE=process.argv[2]||'normalized';
     n2b++;
   });
   ok.evtSektion=n2b;
+  // 2c) Der Zeitraum steht im Namen NUR EINMAL.
+  // ⚠ Nutzer-Wunsch 2026-09-07: "ich will auch nicht das das da doppelt steht
+  // bei anderen Indikatoren ist das so". Gemessen war genau ein Name
+  // betroffen ("GDP Growth QoQ q/q"), 42 andere trugen das Kuerzel einmal -
+  // die Doppelung entsteht, wenn der Basisname den Zeitraum schon in
+  // Langform traegt und applyIndResearch die Kurzform anhaengt. Geprueft wird
+  // die ANZEIGE, nicht der gespeicherte Name: der bleibt als Schluessel fuer
+  // Feed/Kalender/Recherche absichtlich unveraendert.
+  // Gegenprobe beim Einbau: indName() auf den rohen Namen zurueckgebaut
+  // -> 24 Treffer (auf jeder Asset-Seite die GDP-Zeile), mit indName -> 0.
+  const DOPPEL=/(qoq|yoy|mom)\s+(q\/q|y\/y|m\/m)|(q\/q|y\/y|m\/m)\s+(qoq|yoy|mom)/i;
+  let n2c=0;
+  Object.keys(soll).forEach(id=>{
+    selSym(id);
+    document.querySelectorAll('#detail .ir-name-txt').forEach(el=>{
+      n2c++;
+      const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(DOPPEL.test(t))F.push({ort:'Zeitraum doppelt im Namen',id,name:t});
+    });
+  });
+  ok.indNamen=n2c;
+  // 2d) Kein Indikator darf den Feed STILL verfehlen.
+  // ⚠ Die teuerste Fehlerklasse dieser Sitzung: AUD GDP wurde DREIMAL
+  // gemeldet ("hat immernoch keine Daten oder Historie"), obwohl die Rohdaten
+  // vollstaendig waren (0,4 % vom 2026-09-02, 54 Punkte ab 2013). Der
+  // Abgleich lief ueber feed[base] und base entsteht durch Abschneiden nur
+  // der KURZform: "GDP Growth q/q" -> "GDP Growth" -> kein Treffer, kein
+  // Wert, keine Historie, keine Meldung. Ein Indikator, der eine Reihe haben
+  // KOENNTE und keine bekommt, muss auffallen - hier statt beim Nutzer.
+  // Gegenprobe beim Einbau: feedEntryFor auf den alten feed[base]-Zugriff
+  // zurueckgebaut und ein Indikator umbenannt -> Treffer; zurueck -> 0.
+  if(typeof indFeedSicht==='function'){
+    const sicht=indFeedSicht();
+    // Gemeldet wird NUR der stille Verlust: es GIBT eine passende Reihe
+    // (kand>=1), der Indikator bekommt sie aber nicht. Ein Indikator, den die
+    // Quelle fuer diese Waehrung gar nicht fuehrt (kand===0, z.B. NZD PPI),
+    // ist eine ehrliche Luecke und faerbt den Lauf nicht rot - er wird nur
+    // gezaehlt. Sonst waere der Waechter dauerhaft rot und damit wertlos.
+    const verloren=sicht.filter(x=>!x.treffer&&x.kand>0);
+    verloren.slice(0,10).forEach(x=>F.push({ort:'Indikator verliert seine Feed-Reihe',id:x.sym,name:x.name,kandidaten:x.kand}));
+    ok.feedTreffer=sicht.filter(x=>x.treffer).length;
+    ok.feedQuelleFuehrtNicht=sicht.filter(x=>!x.treffer&&x.kand===0).length;
+  }
   // 3) Score-Fenster: Summe der Zeilen == angezeigter Gesamtwert
   let n3=0;
   Object.keys(soll).forEach(id=>{
