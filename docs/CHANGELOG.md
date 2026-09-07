@@ -11445,3 +11445,111 @@ oben wäre unbemerkt geblieben. Der Wächter befüllt die Liste jetzt selbst
 (vier FX-Paare + zwei Non-FX-Assets) und `.wt-card` steht im Karten-Selektor.
 Gegenprobe: mit `minmax(520px,1fr)` meldet er **6 Treffer** („steht 200px über
 den rechten Rand des Inhaltsbereichs hinaus"), mit der jetzigen Regel 0.
+
+## 2026-09-07 — Zeitfilter der Daten bis 2007 (VERSION-CHECK-487)
+
+**Nutzer:** *„Füg auch bei den Zeitfilter für die Daten 5y und 8y und 12y
+hinzu und dann max und max ist 2007"*.
+
+### Zuerst gemessen, was überhaupt da ist
+
+| Messung | Ergebnis |
+|---|---|
+| Früheste Beobachtung in `ind_data.json` | **2023-09-12** |
+| Punkte vor 2023-09 | **0** von 2 884 |
+| `_histChunksFetched` | 18 von 18 — der Abruf war fertig, nicht unterbrochen |
+| Kappung beim Zusammenbauen | `HIST_FULL_DAYS=1095`, rollend |
+
+Vier neue Knöpfe auf diese Datenlage gesetzt hätten viermal dasselbe Bild
+ergeben. Deshalb hängen drei Dinge zusammen und wurden zusammen geändert.
+
+### 1. Die Leiste
+
+`TIME_RANGES_TIEF` mit 12Y/8Y/5Y ergänzt die bestehenden Stufen — **nur** für
+die Indikator-Daten (Asset-Detailseite und Insights › Data). News, AAII,
+Fear&Greed und die Kursreihen behalten die kurze Leiste: dort gibt es keine so
+tiefe Quelle, drei weitere Knöpfe wären drei Knöpfe ohne Wirkung. `Max` ist
+jetzt ein benannter Zeitraum (`IND_HIST_MAX_FROM='2007-01-01'`) statt „alles,
+was zufällig da ist". Gegenprobe mit einer künstlichen Reihe
+2005/2006/2008/2020/2026: `Max` zeigt drei Punkte, 2005 und 2006 bleiben
+draußen.
+
+### 2. Die Rohdaten
+
+`TARGET_CHUNKS` 18 → **119** (Häppchen *i* deckt die Tage 95+60·*i* bis
+95+60·(*i*+1) ab; 119 reichen 7 235 Tage zurück, also über 2007-01-01 hinaus)
+und die rollende 3-Jahres-Kappung wird eine **feste** Untergrenze
+`HIST_FULL_FROM="2007-01-01"`. Rollend wäre hier falsch: das hätte 2007 im
+Jahr 2027 stillschweigend wieder weggeworfen, während die Leiste den Zeitraum
+weiter anbietet. Der Fortschritt bleibt wie bisher in `_histChunksFetched`
+gemerkt — bricht ein Lauf wegen Rate-Limiting ab, holt der nächste nur die
+fehlenden Häppchen nach.
+
+⚠ **Offen und ehrlich gesagt:** ob die Quelle wirklich bis 2007 liefert, ist
+von hier aus nicht prüfbar — der Egress-Proxy dieser Umgebung blockiert
+`economic-calendar.tradingview.com` (viermal HTTP 000). Das entscheidet erst
+der erste Lauf auf dem Runner. Deshalb ist die Anzeige so gebaut, dass sie in
+jedem Fall die Wahrheit sagt (siehe 4.).
+
+### 3. Speicher: die Chart-Historie fliegt aus dem Schnappschuss
+
+`ind.chartHist` ist reine Feed-Ableitung — `adoptChartHist()` baut sie bei
+jedem Start neu auf, nach `applySnap()` sorgt `reapplyLiveFeeds()` dafür.
+Gespeichert wurde sie trotzdem:
+
+| | vorher | nachher |
+|---|---|---|
+| Schnappschuss gesamt | 748 KB | **485 KB** |
+| davon Chart-Historie | 258 KB (35 %, 10 746 Punkte) | **0 KB** |
+
+Mit 19 Jahren statt 3 wäre dieselbe Reihe rund siebenmal so lang gewesen
+(~1,7 MB allein für die Charts) — der Speicher wäre sofort wieder voll
+gewesen, ohne einen einzigen neuen Nutzer-Inhalt. Verifiziert: nach
+`applySnap(snap())` sind alle **346 Reihen mit 10 746 Punkten** wieder da und
+**kein einziger Score** ändert sich.
+
+### 4. Die Anzeige bleibt ehrlich
+
+Reicht der gewählte Zeitraum weiter zurück als die Reihe, steht neben der
+Leiste `series starts 2023-09-28` (das echte Anfangsdatum aus den Punkten,
+keine Annahme über die Quelle). Auf der Data-Seite tragen die Panels keine
+eigene Leiste — dort steht der Hinweis an jedem Panel einzeln, weil jede Reihe
+ein anderes Anfangsdatum hat.
+
+⚠ Beim Einbau zwei Anläufe: der Hinweis stand zuerst nur an `toolbar`, die
+gezeichnete Karte gibt aber `toolbar2` aus. Die Funktion lieferte den Hinweis
+nachweislich (197 Zeichen), im Chart stand er nie — erst eine Instrumentierung
+direkt in `indHistChart()` hat gezeigt, dass die Zeichenkette gar nicht
+verwendet wird. Merksatz: wenn eine Funktion nachweislich liefert und die
+Ausgabe es trotzdem nicht enthält, ist nicht die Funktion falsch, sondern der
+Ort des Einbaus.
+
+### Wächter
+
+`rules.js` Regel 8 (neu): `IND_HIST_MAX_FROM`, `HIST_FULL_FROM` und
+`TARGET_CHUNKS` müssen zusammenpassen. Der Häppchen-Test rechnet gegen das
+**heutige** Datum — wächst der Abstand zu 2007 mit den Jahren, meldet der
+Wächter von selbst, dass die Zahl steigen muss, statt still eine Lücke am
+älteren Rand entstehen zu lassen. Gegenproben: `TARGET_CHUNKS=18` → „nötig
+wären 119"; `HIST_FULL_FROM="2015-01-01"` → „Untergrenze läuft auseinander";
+beide Werte zurück → grün.
+
+### Nachtrag: ein Wächter, der sich ein Feld ausgedacht hat
+
+Der volle Lauf meldete `structure` rot: *„in snap(), aber nicht in loadState()
+geladen: **text**"* — ein Feld, das es nirgends gibt.
+
+**Ursache:** der Wächter, nicht der Code. Das sechste Netz sucht das
+Objektliteral mit `/function snap\(\)\{return JSON\.stringify\(\{([\s\S]*?)\}\);\}/`.
+Durch den neuen `SNAP_REPLACER` endet `snap()` jetzt auf `},SNAP_REPLACER);}`
+— das Muster passte nicht mehr und lief mit `[\s\S]*?` bis zum nächsten
+`});}` irgendwo weiter unten in der Datei. Herausgekommen ist kein ehrliches
+„nicht gefunden", sondern ein **erfundenes** Feld aus fremdem Code.
+
+**Behoben:** optionales zweites Argument im Muster **und** `[^{}]*?` statt
+`[\s\S]*?`, damit die Suche das Objektliteral gar nicht mehr verlassen kann.
+Gegenprobe: ein künstliches `testFeldXy` in `snap()` → rot mit genau diesem
+Namen; wieder raus → grün.
+
+⚠ Merksatz: ein nicht-gieriges `[\s\S]*?` in einem Wächter ist eine Falle —
+findet es sein Ende nicht, hört es nicht auf, sondern nimmt das nächste.

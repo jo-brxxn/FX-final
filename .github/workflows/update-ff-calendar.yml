@@ -1272,10 +1272,20 @@ jobs:
           # nachholt statt wieder bei 0 anzufangen; sind einmal alle 18
           # Haeppchen (3 Jahre) da, werden fuer diesen Teil keine weiteren
           # Requests mehr gestellt.
+          # ⚠ 18 Haeppchen (3 Jahre) bis 2026-09-07. Der Nutzer hat den
+          # Zeitfilter der Daten-Seite dann auf "max = 2007" gesetzt und 5Y/8Y/
+          # 12Y ergaenzt - ohne tiefere Rohdaten waeren das vier Knoepfe mit
+          # demselben Bild. Haeppchen i deckt die Tage 95+60*i bis 95+60*(i+1)
+          # ab; 119 Haeppchen reichen bis 7235 Tage zurueck (rund 2006-11),
+          # also sicher ueber die Untergrenze 2007-01-01 hinaus.
+          # Der Fortschritt bleibt wie bisher in _histChunksFetched: bricht ein
+          # Lauf wegen Rate-Limiting mittendrin ab, holt der naechste nur die
+          # noch fehlenden nach, statt wieder bei 0 anzufangen.
+          export TARGET_CHUNKS=119   # export, damit das node -e darunter ihn sieht
           CHUNKS_DONE=$(node -e '
-            try{const d=JSON.parse(require("fs").readFileSync("ind_data.json","utf8"));console.log(Math.max(5,Math.min(18,+d._histChunksFetched||5)));}catch(e){console.log(5);}
+            const T=+process.env.TARGET_CHUNKS||119;
+            try{const d=JSON.parse(require("fs").readFileSync("ind_data.json","utf8"));console.log(Math.max(5,Math.min(T,+d._histChunksFetched||5)));}catch(e){console.log(5);}
           ')
-          TARGET_CHUNKS=18
           rm -f tv_hist_deep_*.json
           i=$CHUNKS_DONE
           while [ "$i" -lt "$TARGET_CHUNKS" ]; do
@@ -1429,7 +1439,7 @@ jobs:
             // z.B. Rate-Limit), damit der naechste Lauf genau dort statt bei
             // 0 weitermacht (siehe _histChunksFetched unten).
             const CHUNKS_DONE_ENV=+process.env.CHUNKS_DONE||5;
-            const TARGET_CHUNKS_ENV=+process.env.TARGET_CHUNKS||18;
+            const TARGET_CHUNKS_ENV=+process.env.TARGET_CHUNKS||119;   // Rueckfall muss zum Schritt oben passen
             let firstFailedChunk=null;
             for(let i=CHUNKS_DONE_ENV;i<TARGET_CHUNKS_ENV;i++){
               const h=readEvts(`tv_hist_deep_${i}.json`);
@@ -1615,7 +1625,15 @@ jobs:
             // mitgefuehrten Historie gemergt (neuere Werte gewinnen bei
             // Ueberlappung/Revisionen), auf 3 Jahre gekappt, chronologisch
             // sortiert.
-            const HIST_FULL_DAYS=1095;
+            // ⚠ War 1095 (3 Jahre) und damit ein ROLLENDES Fenster: was aelter
+            // wurde, flog bei jedem Lauf wieder raus. Seit 2026-09-07 gilt
+            // stattdessen eine FESTE Untergrenze - der Nutzer hat den
+            // Zeitfilter der Daten-Seite ausdruecklich auf "max = 2007"
+            // gesetzt (IND_HIST_MAX_FROM in js/main.js, derselbe Wert). Ein
+            // rollendes Fenster waere hier falsch: es wuerde 2007 im Jahr
+            // 2027 stillschweigend wieder wegwerfen, obwohl die Leiste den
+            // Zeitraum weiter anbietet.
+            const HIST_FULL_FROM="2007-01-01";
             Object.keys(out).forEach(ccy=>{
               Object.keys(out[ccy]).forEach(indName=>{
                 const v=out[ccy][indName];
@@ -1625,12 +1643,11 @@ jobs:
                 const byDate={};
                 prevHist.forEach(h=>{if(h&&h[0])byDate[h[0]]=h;});
                 newHist.forEach(h=>{if(h&&h[0])byDate[h[0]]=h;});
-                const cutoff=Date.now()-HIST_FULL_DAYS*86400e3;
-                v.historyFull=Object.values(byDate).filter(h=>new Date(h[0]).getTime()>=cutoff).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+                v.historyFull=Object.values(byDate).filter(h=>String(h[0]).slice(0,10)>=HIST_FULL_FROM).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
                 delete v._newHistFull;
               });
             });
-            out._histChunksFetched=Math.max(5,Math.min(18,nextChunksDone));
+            out._histChunksFetched=Math.max(5,Math.min(TARGET_CHUNKS_ENV,nextChunksDone));
             let invEvts=[];
             try{
               const alt=JSON.parse(fs.readFileSync("alt_actuals.json","utf8"));

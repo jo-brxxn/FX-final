@@ -1891,6 +1891,10 @@ body.res-return-active #resBackBar{display:flex}
 .ind-hist-range-bar{display:flex;gap:4px;flex-wrap:wrap}
 .ind-hist-range-btn{padding:3px 9px;border-radius:6px;border:1px solid var(--bd2);background:transparent;color:var(--t3);cursor:pointer;font-size:10.5px;font-weight:700;transition:all .12s}
 .ind-hist-range-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.15);color:var(--blue)}
+/* "series starts 2023-09-12" - steht nur da, wenn der gewaehlte Zeitraum
+   weiter zurueckreicht als die Reihe selbst (siehe indHistStartNote). Bewusst
+   gedaempft: es ist eine Randbedingung, keine Warnung. */
+.ind-hist-start{font-size:9.5px;font-weight:700;color:var(--t3);white-space:nowrap;font-family:var(--ff-num)}
 .ind-hist-legend{display:flex;gap:10px;font-size:9.5px;font-weight:700;white-space:nowrap}
 /* ⚠ Bugreport 2026-09-06 (Screenshot, EUR Employment Change): das Quadrat
    vor "Actual" war ROT, obwohl die Balken im Chart blau sind. Ursache war
@@ -4414,11 +4418,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-486 - Watchlist: zwei Karten je Zeile statt einer ueber die volle Breite (Nutzer-Wunsch 2026-09-07: die Eintraege waren von rechts nach links zu lang gezogen, zwei sollen in eine Zeile passen, ohne dass sich etwas ueberlappt). Die Karten stehen jetzt in einem Raster - dort kann sich grundsaetzlich nichts ueberlappen, jede Karte hat ihre eigene Zelle. Gemessen und verworfen wurde ein erster Versuch mit auto-fill: der ergab bei 1920px DREI Karten je Zeile und zwang die Karte im 390px-Fenster auf 520px Breite, also 200px aus dem Inhaltsbereich heraus. Jetzt hoechstens zwei Spalten, und umgeschaltet wird nach der Breite der LISTE statt der des Fensters (Container-Abfrage), weil sich die Navigationsleiste ein- und ausklappen laesst, ohne dass das Fenster schmaler wird. Der Karteninhalt richtet sich aus demselben Grund nach der KARTENbreite: vier Zahlenkacheln nebeneinander und Next event darueber die volle Zeile - der laengste Termintext war vorher an jeder Breite abgeschnitten (289px Text gegen 262px Kachel) und ist jetzt vollstaendig lesbar; Quicklinks als gleichmaessiges Raster, damit keine Beschriftung mehr abgeschnitten wird. An sieben Fensterbreiten von 1920 bis 390 nachgemessen: keine Ueberlappung, nichts ragt aus einer Karte heraus. check/cards.js befuellt die Watchlist jetzt selbst - vorher war sie im Waechter immer leer und keine einzige Watchlist-Karte wurde je geprueft."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-487 - Zeitfilter der Daten: 5Y, 8Y und 12Y ergaenzt, Max heisst jetzt ausdruecklich zurueck bis 2007 (Nutzer-Vorgabe 2026-09-07). Die laengeren Stufen stehen nur bei den Indikator-Daten, nicht bei News/AAII/Fear-Greed - dort gibt es gar keine so tiefe Quelle. Damit die Knoepfe nicht vier Mal dasselbe Bild zeigen, wurde die Rohdaten-Sammlung mitgezogen: der Workflow holte bisher 18 Haeppchen (3 Jahre, gemessen reichte die Historie nur bis 2023-09-12, null Punkte davor) und kappte beim Zusammenbauen zusaetzlich rollend auf 3 Jahre. Jetzt 119 Haeppchen und eine FESTE Untergrenze 2007-01-01, damit nicht spaeter wieder wegfaellt, was die Leiste anbietet. Gefuellt wird das ueber die stuendlichen Laeufe, der Fortschritt bleibt wie bisher gemerkt. Solange eine Reihe nicht so weit zurueckreicht, steht neben der Leiste ehrlich, ab wann sie wirklich beginnt - geraten oder aufgefuellt wird nichts. Damit die tiefere Historie den Speicher nicht erneut sprengt, wird die Chart-Historie nicht mehr im Schnappschuss gespeichert: sie wird beim Start ohnehin aus dem Feed neu aufgebaut, kostete aber 258 von 748 KB (35 Prozent, 10.746 Punkte) in localStorage, Cloud-Sync, jeder Sicherung und 60 Undo-Schritten. Der Zustand ist dadurch von 748 auf 485 KB gefallen, ohne dass ein einziger Nutzer-Inhalt verloren geht - nach einem Schnappschuss-Umlauf sind alle 346 Reihen mit 10.746 Punkten wieder da und kein Score aendert sich."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-486</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-487</span>
     </span>
   </div>
   <div class="hdr-r">

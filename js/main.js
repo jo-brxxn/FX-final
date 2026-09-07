@@ -4305,8 +4305,14 @@ function storageRows(){
     let ch=0,rest=0;
     (snapObj.syms||[]).forEach(sy=>(sy.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{ch+=JSON.stringify(i.chartHist||[]).length;})));
     rest=JSON.stringify(snapObj.syms||[]).length-ch;
+    // Steht seit 2026-09-07 dauerhaft auf 0 - die Reihe wird nicht mehr
+    // gespeichert (siehe SNAP_REPLACER). Die Zeile bleibt trotzdem stehen:
+    // sie war der zweitgroesste Posten und die Frage "wo ist der Platz
+    // geblieben?" beantwortet sich besser mit einer Null als mit einer
+    // fehlenden Zeile.
     rows.push({n:'Indicator chart history',kb:kb(ch),
-      hint:'Redrawn from the live feed on every start anyway, and stored once per asset — so the same series sits here several times over.',tilg:true});
+      hint:ch?'Redrawn from the live feed on every start anyway, and stored once per asset — so the same series sits here several times over.'
+             :'No longer stored on your device — it is rebuilt from the live feed on every start. Used to take 258 KB.',tilg:!!ch});
     rows.push({n:'Assets, categories, indicator values',kb:kb(rest),hint:'The actual state of your assets.'});
     ['calEvts','researchFolders','scoreLog','eventAlerts','priceAlerts'].forEach(k=>{
       if(snapObj[k]!=null){const v=kb(JSON.stringify(snapObj[k]).length);if(v>=1)rows.push({n:k,kb:v});}
@@ -4362,7 +4368,21 @@ function researchForSnap(){
   o.notes=research.notes.filter(n=>!(n&&n.seed));
   return o;
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+// ⚠ ind.chartHist wird NICHT mitgespeichert (seit 2026-09-07). Sie ist reine
+// Feed-Ableitung: adoptChartHist() baut sie bei jedem Start neu aus
+// ind_data.json auf, und nach applySnap() sorgt reapplyLiveFeeds() dafuer.
+// Gespeichert war sie trotzdem - gemessen 258 KB von 748 KB, also 35% des
+// gesamten Zustands (10.746 Punkte), kopiert in localStorage, in jeden
+// Cloud-Push, in jede Sicherungskopie UND in bis zu 60 Undo-Schritte.
+// Ausschlaggebend wurde das mit der Ausweitung der Historie auf 2007
+// (Nutzer-Wunsch 2026-09-07): dieselbe Reihe waere dann rund siebenmal so
+// lang, ~1,7 MB allein fuer die Charts - der Speicher waere sofort wieder
+// voll gewesen, und zwar ohne dass ein einziger Nutzer-Inhalt dazugekommen
+// ist. Dieselbe Ueberlegung wie bei den mitgelieferten Notizen
+// (VERSION-CHECK-484): was ohnehin im Code oder im Feed steht, gehoert nicht
+// zusaetzlich auf das Geraet.
+const SNAP_REPLACER=(k,v)=>k==='chartHist'?undefined:v;
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists},SNAP_REPLACER);}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -12469,8 +12489,37 @@ function groupedAssetOptions(ids,selected){
 // volle verfuegbare Historie (Standard, "maximale Historie" Nutzer-Wunsch),
 // 'Custom' schaltet zwei Datums-Felder frei.
 const TIME_RANGES=[['MAX','Max'],[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M'],['CUSTOM','Custom']];
-function timeRangeBarHtml(current,setFnName){
-  return `<div class="ind-hist-range-bar">${TIME_RANGES.map(([v,lbl])=>`<button class="ind-hist-range-btn${String(current)===String(v)?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
+// Laengere Stufen NUR fuer die Indikator-Daten (Nutzer-Wunsch 2026-09-07:
+// "Fueg auch bei den Zeitfilter fuer die Daten 5y und 8y und 12y hinzu und
+// dann max und max ist 2007"). Bewusst nicht ueberall: News, AAII, Fear&Greed
+// und die Kursreihen haben gar keine so tiefe Quelle - dort waeren drei
+// zusaetzliche Knoepfe drei Knoepfe ohne Wirkung.
+const TIME_RANGES_TIEF=[['MAX','Max'],[144,'12Y'],[96,'8Y'],[60,'5Y'],[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M'],['CUSTOM','Custom']];
+// Untergrenze von 'Max' fuer die Indikator-Historie: der Nutzer hat sie
+// ausdruecklich auf 2007 gesetzt. Derselbe Wert steuert den Daten-Workflow
+// (TARGET_CHUNKS in .github/workflows/update-ff-calendar.yml) - wer ihn hier
+// aendert, muss ihn dort mitziehen, sonst zeigt die Leiste einen Zeitraum an,
+// den niemand einsammelt.
+const IND_HIST_MAX_FROM='2007-01-01';
+function timeRangeBarHtml(current,setFnName,ranges){
+  return `<div class="ind-hist-range-bar">${(ranges||TIME_RANGES).map(([v,lbl])=>`<button class="ind-hist-range-btn${String(current)===String(v)?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
+}
+// Ab wann liegen fuer diese Reihe wirklich Daten vor? Wird neben der Leiste
+// gezeigt, sobald der gewaehlte Zeitraum weiter zurueckreicht als die Quelle
+// selbst. Grund (CLAUDE.md Regel 4, "nie schaetzen/raten"): 12Y und Max sehen
+// sonst genauso aus wie 3Y, und der Nutzer haelt das fuer die Wahrheit -
+// dabei ist es schlicht alles, was da ist. Der Satz nennt das echte
+// Anfangsdatum aus den Punkten, nicht eine Annahme ueber die Quelle.
+function indHistStartNote(pts,range){
+  if(!Array.isArray(pts)||!pts.length)return'';
+  const ab=String(pts[0][0]||'').slice(0,10);
+  if(!ab)return'';
+  let grenze;
+  if(range==='MAX')grenze=IND_HIST_MAX_FROM;
+  else if(range==='CUSTOM')return'';
+  else{const c=new Date();c.setMonth(c.getMonth()-range);try{grenze=c.toISOString().slice(0,10);}catch(e){return'';}}
+  if(ab<=grenze)return'';   // die Reihe deckt den Zeitraum ab, nichts zu sagen
+  return`<span class="ind-hist-start" title="The selected range reaches further back than this series goes. Nothing is filled in — the chart shows every release that exists.">series starts ${escH(ab)}</span>`;
 }
 function timeRangeCustomHtml(current,from,to,setFnName){
   if(current!=='CUSTOM')return'';
@@ -13767,10 +13816,10 @@ function indHistChart(ind,symId,opts){
   opts=opts||{};
   const _cs=indChartSeries(ind,symId);
   const all=_cs.pts;
-  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange');
+  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange',TIME_RANGES_TIEF);
   const legend=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span></div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
-  const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
+  const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${indHistStartNote(all,indHistRange)}${legend}</div>`;
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -13800,7 +13849,11 @@ function indHistChart(ind,symId,opts){
   }
   let use;
   if(indHistRange==='MAX'){
-    use=all;
+    // 'Max' ist seit 2026-09-07 kein "alles was da ist" mehr, sondern ein
+    // benannter Zeitraum: zurueck bis 2007 (Nutzer-Vorgabe). Praktisch
+    // aendert der Filter am Ergebnis nichts, solange die Quelle nicht weiter
+    // zurueckreicht - er sagt aber, WAS gemeint ist, statt es offen zu lassen.
+    use=all.filter(p=>p[0]>=IND_HIST_MAX_FROM);
   }else if(indHistRange==='CUSTOM'){
     use=all.filter(p=>(!indHistCustomFrom||p[0]>=indHistCustomFrom)&&(!indHistCustomTo||p[0]<=indHistCustomTo));
   }else{
@@ -13923,7 +13976,16 @@ function indHistChart(ind,symId,opts){
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
   const hasFc=use.some(p=>p[2]!=null);
   const legend2=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</div>`;
-  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend2}</div>`;
+  // ⚠ Der Hinweis muss HIER stehen, nicht nur an `toolbar` weiter oben: diese
+  // zweite Leiste ist die, die der gezeichnete Chart wirklich ausgibt (die
+  // erste bekommt nur der Leerzustand zu sehen). Beim Einbau 2026-09-07 war
+  // der Hinweis zuerst nur oben - die Funktion lieferte ihn nachweislich
+  // (197 Zeichen), im Chart stand er trotzdem nie.
+  const startNote=indHistStartNote(all,indHistRange);
+  // Auf der Insights>Data-Seite tragen die Panels keine eigene Zeitraum-Leiste
+  // (eine gemeinsame steht darueber) - der Hinweis gehoert dort trotzdem an
+  // JEDES Panel, weil jede Reihe ein anderes Anfangsdatum hat.
+  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}${startNote}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${startNote}${legend2}</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
@@ -14603,7 +14665,7 @@ function renderDataTab(){
     <button class="ind-hist-range-btn${dataMode==='assets'?' on':''}" onclick="setDataMode('assets')" title="One indicator, up to four assets side by side">By asset</button>
     <button class="ind-hist-range-btn${dataMode==='inds'?' on':''}" onclick="setDataMode('inds')" title="One asset, up to four of its indicators side by side">By indicator</button>
   </div>`;
-  const rangeBarHtml=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange')}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`;
+  const rangeBarHtml=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange',TIME_RANGES_TIEF)}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`;
   // Panel-Bausteine sind in beiden Modi identisch - nur woher Asset und
   // Indikator kommen, unterscheidet sich.
   const panelHtml=(sym,base,title,ctrls)=>{
@@ -18520,7 +18582,7 @@ Object.assign(window,{
   recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
-  biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,timeRangeBarHtml,timeRangeCustomHtml,
+  biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,TIME_RANGES_TIEF,IND_HIST_MAX_FROM,indHistStartNote,timeRangeBarHtml,timeRangeCustomHtml,
   filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
   setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
   resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,

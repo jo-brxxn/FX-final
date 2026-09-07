@@ -351,6 +351,40 @@ try {
   });
 } catch (e) {}
 
+// ── Regel 8: der angebotene Zeitraum muss auch eingesammelt werden ──────
+// ⚠ Nutzer-Wunsch 2026-09-07: der Zeitfilter der Daten-Seite bekam 5Y/8Y/12Y
+// und "max = 2007". Gemessen reichte die Rohhistorie zu dem Zeitpunkt nur bis
+// 2023-09-12 (18 von 18 Haeppchen, 0 Punkte davor) - die vier laengsten
+// Stufen haetten also alle dasselbe Bild gezeigt. Damit das nicht wieder
+// auseinanderlaeuft, haengen drei Werte zusammen und werden hier zusammen
+// geprueft:
+//   IND_HIST_MAX_FROM (js/main.js)  - was die Leiste als "Max" ANBIETET
+//   HIST_FULL_FROM    (Workflow)    - was beim Zusammenbauen BEHALTEN wird
+//   TARGET_CHUNKS     (Workflow)    - wie weit ueberhaupt GEHOLT wird
+// Der Chunk-Test rechnet gegen das HEUTIGE Datum: waechst der Abstand zu 2007
+// mit den Jahren, meldet der Waechter von selbst, dass die Zahl steigen muss
+// - statt still eine Luecke am aelteren Rand entstehen zu lassen.
+try {
+  const js = aktuellerCode();
+  const wf = fs.readFileSync('.github/workflows/update-ff-calendar.yml', 'utf8');
+  const ab = (js.match(/IND_HIST_MAX_FROM\s*=\s*'(\d{4}-\d{2}-\d{2})'/) || [])[1];
+  const wfAb = (wf.match(/HIST_FULL_FROM\s*=\s*"(\d{4}-\d{2}-\d{2})"/) || [])[1];
+  const ziel = +(wf.match(/export TARGET_CHUNKS=(\d+)/) || [])[1];
+  if (ab && wfAb && ab !== wfAb)
+    fail('Zeitraum-Untergrenze laeuft auseinander',
+      `Die Leiste bietet "Max" ab ${ab} an (IND_HIST_MAX_FROM), der Workflow behaelt aber erst ab ${wfAb} ` +
+      `(HIST_FULL_FROM). Der frueheste angebotene Zeitraum waere damit dauerhaft leer.`);
+  if (ab && ziel) {
+    const tage = Math.ceil((Date.now() - new Date(ab + 'T00:00:00Z').getTime()) / 86400000);
+    const noetig = Math.ceil((tage - 95) / 60);
+    if (ziel < noetig)
+      fail('Zeitfilter reicht weiter zurueck als der Abruf',
+        `"Max" bietet ${ab} an, das sind heute ${tage} Tage. Ein Haeppchen deckt 60 Tage ab 95 Tagen ` +
+        `Rueckstand ab, noetig waeren also ${noetig} - TARGET_CHUNKS steht auf ${ziel}. Der aelteste Teil ` +
+        `des angebotenen Zeitraums wird nie geholt.`);
+  }
+} catch (e) {}
+
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');
   F.forEach(x => console.error(`  [${x.regel}] ${x.text}\n`));

@@ -428,3 +428,37 @@ Ein echtes Suffix gibt es nur bei abgeleiteten Reihen; das liefert
 `fmtIndVal(v, unit)`: ab 10.000 mit Tausendertrennzeichen, sonst auf zwei
 Nachkommastellen gerundet — **keine** K/M-Abkürzung, die würde Stellen
 verschlucken.
+
+## Indikator-Historie: wie tief und warum (seit 2026-09-07)
+
+Der Kalender-Abruf (`update-ff-calendar.yml`) holt die Tiefen-Historie in
+**60-Tage-Häppchen**: Häppchen *i* deckt die Tage 95+60·*i* bis 95+60·(*i*+1)
+ab. Drei Werte hängen zusammen und dürfen nie auseinanderlaufen:
+
+| Wert | Ort | Bedeutung |
+|---|---|---|
+| `IND_HIST_MAX_FROM` | `js/main.js` | was die Zeitraum-Leiste als `Max` **anbietet** — heute `2007-01-01` |
+| `HIST_FULL_FROM` | Workflow | ab wann beim Zusammenbauen **behalten** wird |
+| `TARGET_CHUNKS` | Workflow | wie weit überhaupt **geholt** wird — heute 119 |
+
+`check/rules.js` Regel 8 prüft die drei gegeneinander und rechnet den
+Häppchen-Bedarf gegen das **heutige** Datum, meldet sich also von selbst,
+wenn 119 mit den Jahren nicht mehr reicht.
+
+**Feste statt rollende Untergrenze.** Bis 2026-09-07 kappte der Workflow
+rollend auf 3 Jahre (`HIST_FULL_DAYS=1095`). Das ist falsch, sobald die
+Oberfläche einen festen Zeitraum anbietet: 2007 wäre im Jahr 2027 still wieder
+weggeworfen worden, während die Leiste ihn weiter anbietet.
+
+**Was NICHT behauptet wird.** Wie weit die Quelle
+(`economic-calendar.tradingview.com`) tatsächlich zurückreicht, ist
+projektseitig nicht belegt — die Sandbox-Umgebung erreicht den Host nicht, das
+entscheidet erst der Lauf auf dem Runner. Deshalb steht neben der Leiste das
+**echte** Anfangsdatum der jeweiligen Reihe (`series starts …`), sobald der
+gewählte Zeitraum weiter zurückreicht als die Daten. Aufgefüllt oder
+hochgerechnet wird nichts (Grundsatz „nie schätzen/raten").
+
+**Chart-Historie wird nicht gespeichert.** `ind.chartHist` ist reine
+Feed-Ableitung und steht seit 2026-09-07 nicht mehr im Schnappschuss (siehe
+`SNAP_REPLACER`, `docs/state-sync.md`) — sonst hätte die tiefere Historie den
+localStorage sofort wieder gesprengt.

@@ -188,3 +188,25 @@ Drei Fallstricke, die beim Bau je einen echten Datenverlust erzeugt haben:
    wer nur eine der beiden Stellen ergänzt, merkt beim Speichern nichts und
    verliert den Wert beim nächsten Start. Geprüft vom sechsten Netz in
    `check/structure.js`.
+
+## Was NICHT in den Schnappschuss gehört
+
+Zwei Dinge werden bewusst **nicht** gespeichert, obwohl sie im Zustand stehen:
+
+| Feld | Warum nicht | Gemessen |
+|---|---|---|
+| mitgelieferte Notizen (`n.seed`) | stehen ohnehin im Code, siehe `researchForSnap()` | −679 KB (2026-09-05) |
+| `ind.chartHist` | reine Feed-Ableitung, `adoptChartHist()` baut sie bei jedem Start neu auf | −258 KB von 748 KB, 35 % (2026-09-07) |
+
+Beides läuft über `snap()`: die Notizen über `researchForSnap()`, die
+Chart-Historie über `SNAP_REPLACER` (ein JSON-Replacer, der den Schlüssel
+`chartHist` überall verwirft — kein Kopieren des Baums nötig).
+
+**Regel daraus:** ein Feld, das bei jedem Start ohnehin aus einer Quelle neu
+entsteht, gehört nicht zusätzlich in localStorage, in jeden Cloud-Push, in
+jede Sicherungskopie und in 60 Undo-Schritte. Prüfen lässt sich das an einer
+Frage: *Ginge etwas verloren, das der Nutzer selbst getan hat?* Bei
+`chartHist` lautet die Antwort nein — nach `applySnap(snap())` sind alle 346
+Reihen mit 10 746 Punkten wieder da (`reapplyLiveFeeds()`), und kein Score
+ändert sich. Was der Nutzer an mitgelieferten Notizen getan hat, steht dagegen
+in `seedNoteFlags` — winzig, aber gespeichert.

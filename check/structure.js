@@ -165,7 +165,16 @@ if(!reapplyBody){
 // Stellen ergaenzt, merkt davon beim Speichern nichts. Der Wert steht in
 // localStorage, kommt beim naechsten Start aber nie an: still verlorene
 // Nutzereingaben, der unangenehmste Fehler ueberhaupt.
-const snapM=jsAlle.match(/function snap\(\)\{return JSON\.stringify\(\{([\s\S]*?)\}\);\}/);
+// ⚠ Zwei Haerten am Muster, beide 2026-09-07 durch einen echten Fehlgriff
+// erzwungen: snap() bekam ein zweites Argument (den SNAP_REPLACER, der
+// chartHist verwirft). Das alte Muster verlangte `});}` direkt hinter der
+// Klammer, fand die Stelle also nicht mehr - und lief mit [\s\S]*? bis zu
+// einem ganz anderen `});}` weiter unten in der Datei. Ergebnis war kein
+// ehrliches "nicht gefunden", sondern ein FREI ERFUNDENES Feld ("text") aus
+// fremdem Code. Deshalb jetzt (a) ein optionales zweites Argument und (b)
+// [^{}]*? statt [\s\S]*?, damit die Suche das Objektliteral gar nicht mehr
+// verlassen KANN.
+const snapM=jsAlle.match(/function snap\(\)\{return JSON\.stringify\(\{([^{}]*?)\}(?:\s*,\s*[A-Za-z_$][\w$]*)?\);\}/);
 const loadM=jsAlle.match(/function loadState\(\)\{[\s\S]*?\n\}/);
 const snapFehlt=[];
 if(snapM&&loadM){
