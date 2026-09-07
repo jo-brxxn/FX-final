@@ -11125,3 +11125,53 @@ Vom Sandkasten aus ist der Endpunkt durch den Netz-Proxy blockiert; GitHubs
 Runner sind es nicht. Deshalb ein von Hand startbarer Workflow, der je Jahr
 ein Januar-Fenster abfragt und Events sowie Events *mit Actual* zählt.
 Schreibt nichts in die Daten, kann den stündlichen Job nicht beschädigen.
+
+---
+
+## 2026-09-07 — Speicher-Diagnose: was den Platz wirklich belegt (VERSION-CHECK-483)
+
+**Nutzer:** Screenshot der Warnleiste vom iPad — *„Local storage is full … about
+2582 KB"* — plus *„Was gibt es da für Lösungen wie bekommt man das kleiner?"*
+
+### Die Warnleiste hat sich selbst verharmlost
+
+Sie nannte nur die **Zeichenzahl**. Browser legen `localStorage` als UTF-16 ab
+und rechnen rund **2 Byte je Zeichen** gegen ihr Kontingent: 2 582 KB sind
+damit rund **5,0 MB** — exakt das klassische Safari-Limit von 5 MB je Herkunft.
+Die Rechnung geht auf und erklärt, warum genau dort Schluss war. „About 2582
+KB" liest sich dagegen harmlos, obwohl das Gerät an der Decke stand. Jetzt
+stehen beide Zahlen und die Erklärung in der Leiste.
+
+### Neue Ansicht: „What is using storage on this device"
+
+Direkt aus der Warnleiste erreichbar. Misst auf dem **eigenen** Gerät und
+listet jeden Posten mit Größe, Stückzahl und einer Zeile, was er ist.
+Doppelungen sind bernsteinfarben unterlegt; für Sicherungskopien und Caches
+gibt es Löschknöpfe.
+
+Gemessen am Referenzstand (1 491 KB):
+
+| | Größe | |
+|---|---|---|
+| **Mitgelieferte Notizen** | **679 KB** | 1 440 Stück — stehen bereits in `js/asset-notes-seed.js` (437 KB Code) |
+| Assets, Kategorien, Indikatorwerte | 401 KB | der echte Zustand |
+| **Indikator-Verlaufscharts** | **258 KB** | werden bei jedem Start aus dem Feed neu gezeichnet, liegen je Asset mehrfach |
+| `fxpro_scorehist` | 45 KB | Cache |
+| **Eigene Notizen** | **32 KB** | 105 Stück |
+| Rest (Ordner, Kalender, Alarme) | ~70 KB | |
+
+**Die beiden markierten Posten sind zusammen 937 KB = 66 % des Snapshots** —
+und beides ist Inhalt, den die App aus ihrem eigenen Code bzw. aus dem
+Live-Feed jederzeit wiederherstellen kann. Selbst geschrieben sind **32 KB**,
+also gut 2 %.
+
+Damit ist die Antwort auf die Ausgangsfrage („reicht der Platz für Historie bis
+2006?") eine andere als gedacht: nicht die Historie ist zu groß, sondern es
+liegt fast das Doppelte an vermeidbarem Ballast daneben.
+
+### Warum der Umbau nicht einfach mitgemacht wurde
+
+Die Notizen sind die riskantesten Daten der App — an ihrer Speicherung etwas zu
+ändern, ohne dass der Nutzer es weiß, kann eigene Arbeit kosten. Die Ansicht
+zeigt deshalb erst einmal nur, **wo** es liegt, und benennt die beiden
+Doppelungen ausdrücklich als solche; der Umbau wird getrennt entschieden.

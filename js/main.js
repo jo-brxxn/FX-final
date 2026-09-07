@@ -4068,10 +4068,77 @@ function saveQuotaFail(e){
     document.body.appendChild(bar);
   }
   const kb=saveQuotaKB();
+  // ⚠ Die Zahl zaehlt ZEICHEN. Browser, die localStorage als UTF-16 ablegen -
+  // Safari auf iPad/iPhone tut das - rechnen rund 2 Byte je Zeichen gegen ihr
+  // Kontingent. Nutzer-Screenshot 2026-09-07: die Leiste meldete 2582 KB, und
+  // 2582 x 2 = rund 5 MB, also exakt das klassische 5-MB-Limit. Nur die
+  // Zeichenzahl zu nennen liesse das harmlos aussehen, obwohl das Geraet
+  // bereits an der Decke steht - deshalb steht beides da.
+  const mb=kb!=null?(kb*2/1024).toFixed(1):null;
   bar.innerHTML=istQuota
-    ?`<b>Local storage is full — your last changes were NOT saved.</b> This device is holding about ${kb!=null?kb+' KB':'the maximum'} for this app, and the browser refused to write more. Your data is still on screen and still in the cloud if sync is on. Free some room: Settings → Backups (delete old ones), or open Settings → Cloud and sync, then reload.`
-    :`<b>Saving failed — your last changes were NOT stored on this device.</b> ${escH((e&&e.message)||'Unknown error')}. Your data is still on screen; copy anything important before reloading.`;
+    ?`<b>Local storage is full — your last changes were NOT saved.</b> This app is holding ${kb!=null?kb+' KB of text on this device, which is about '+mb+' MB against the browser\'s limit (most browsers store text as UTF-16, so roughly two bytes per character; Safari caps an origin at about 5 MB)':'the maximum'}. Your data is still on screen, and still in the cloud if sync is on. <button class="sq-btn" onclick="openStorageInfo()">Show what is using the space</button>`
+    :`<b>Saving failed — your last changes were NOT stored on this device.</b> ${escH((e&&e.message)||'Unknown error')}. Your data is still on screen; copy anything important before reloading. <button class="sq-btn" onclick="openStorageInfo()">Show storage details</button>`;
   const b=document.getElementById('saveBadge');if(b)b.textContent='⚠ Not saved';
+}
+// ── Was belegt den Platz? ───────────────────────────────────────────────
+// Nutzer-Frage 2026-09-07 ("Was gibt es da für Lösungen wie bekommt man das
+// kleiner?") - beantwortet die App jetzt selbst, mit gemessenen Zahlen vom
+// EIGENEN Geraet statt einer allgemeinen Empfehlung. Zeigt zusaetzlich, wie
+// viel davon mitgelieferte Inhalte sind, die auch ohne Speicherung im Code
+// stehen; genau dort liegt der groesste Hebel.
+function storageRows(){
+  const kb=n=>Math.round(n/1024*10)/10;
+  const rows=[];
+  let snapObj=null;
+  try{snapObj=JSON.parse(snap());}catch(e){}
+  if(snapObj){
+    const ns=(snapObj.research&&snapObj.research.notes)||[];
+    const seed=ns.filter(n=>n&&n.seed),eigen=ns.filter(n=>n&&!n.seed);
+    rows.push({n:'Notes that ship with the app',kb:kb(JSON.stringify(seed).length),cnt:seed.length,
+      hint:'These are the built-in behaviour notes. They already exist in the app\'s own code, so storing them again on your device is pure duplication.',tilg:true});
+    rows.push({n:'Your own notes',kb:kb(JSON.stringify(eigen).length),cnt:eigen.length,hint:'Written by you. Never touched.'});
+    let ch=0,rest=0;
+    (snapObj.syms||[]).forEach(sy=>(sy.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{ch+=JSON.stringify(i.chartHist||[]).length;})));
+    rest=JSON.stringify(snapObj.syms||[]).length-ch;
+    rows.push({n:'Indicator chart history',kb:kb(ch),
+      hint:'Redrawn from the live feed on every start anyway, and stored once per asset — so the same series sits here several times over.',tilg:true});
+    rows.push({n:'Assets, categories, indicator values',kb:kb(rest),hint:'The actual state of your assets.'});
+    ['calEvts','researchFolders','scoreLog','eventAlerts','priceAlerts'].forEach(k=>{
+      if(snapObj[k]!=null){const v=kb(JSON.stringify(snapObj[k]).length);if(v>=1)rows.push({n:k,kb:v});}
+    });
+  }
+  try{
+    const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+    if(bs.length)rows.push({n:'Local backups',kb:kb((localStorage.getItem(BACKUP_KEY)||'').length),cnt:bs.length,
+      hint:'Up to five complete copies of everything above. The cloud copy is unaffected by deleting them.',loesch:'backups'});
+  }catch(e){}
+  ['fxpro_scorehist','fxpro_cot_hist_cache'].forEach(k=>{
+    const v=localStorage.getItem(k);if(v&&v.length>1024)rows.push({n:k,kb:kb(v.length),hint:'Cache, rebuilds itself.',loesch:k});
+  });
+  return rows.sort((a,b)=>b.kb-a.kb);
+}
+function openStorageInfo(){
+  const rows=storageRows(),ges=saveQuotaKB();
+  const el=document.getElementById('mStoreBody');
+  if(el)el.innerHTML=`<div class="st-sum">This device is holding <b>${ges} KB</b> of text for this app — roughly <b>${(ges*2/1024).toFixed(1)} MB</b> against the browser's limit, because text is stored as UTF-16 (about two bytes per character). Safari caps one origin at about 5 MB.</div>
+    <table class="st-tbl"><thead><tr><th>What</th><th>Size</th><th></th></tr></thead><tbody>${rows.map(r=>`<tr${r.tilg?' class="st-dup"':''}>
+      <td><span class="st-n">${escH(r.n)}</span>${r.cnt!=null?`<span class="st-c">${r.cnt} items</span>`:''}${r.hint?`<span class="st-h">${escH(r.hint)}</span>`:''}</td>
+      <td class="st-kb">${r.kb} KB</td>
+      <td>${r.loesch?`<button class="btn sm" onclick="clearStorageItem('${escJH(r.loesch)}')">Delete</button>`:''}</td>
+    </tr>`).join('')}</tbody></table>
+    <div class="st-note">Rows marked in amber are <b>duplicates</b>: content that the app can rebuild from its own code or from the live feed, and that does not need to sit on your device at all. Removing them is a change to how the app stores things — say the word and I will do it.</div>`;
+  openM('mStore');
+}
+function clearStorageItem(was){
+  try{
+    if(was==='backups'){localStorage.removeItem(BACKUP_KEY);}
+    else localStorage.removeItem(was);
+    openStorageInfo();
+    try{save();}catch(e){}
+  }catch(e){
+    const el=document.getElementById('mStoreBody');
+    if(el)el.insertAdjacentHTML('afterbegin',`<div class="st-err">Could not delete: ${escH(e&&e.message||'unknown error')}</div>`);
+  }
 }
 function saveQuotaOk(){
   if(!_saveQuotaBad)return;
@@ -18230,7 +18297,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
-  saveQuotaFail,saveQuotaOk,saveQuotaKB,
+  saveQuotaFail,saveQuotaOk,saveQuotaKB,storageRows,openStorageInfo,clearStorageItem,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,

@@ -3883,6 +3883,21 @@ a.rpl-card:hover{background:var(--bg3)}
    Kein Modal - save() laeuft auch aus Timern und beim Verlassen der Seite. */
 .save-quota-bar{position:fixed;top:0;left:0;right:0;z-index:99999;padding:11px 16px;background:var(--red);color:#fff;font:500 13px/1.55 var(--ff-num);box-shadow:0 2px 14px rgba(0,0,0,.28)}
 .save-quota-bar b{font-weight:800}
+.sq-btn{margin-left:8px;background:#fff;color:var(--red);border:none;border-radius:6px;padding:4px 10px;font:700 12px/1 var(--ff-num);cursor:pointer}
+.st-sum{font:500 var(--fs-sm)/1.65 var(--ff-num);color:var(--t1);margin-bottom:12px}
+.st-sum b{color:var(--t0)}
+.st-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}
+.st-tbl th{text-align:left;font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.4px;text-transform:uppercase;color:var(--t3);padding:7px 9px;background:var(--bg2);border-bottom:1px solid var(--bd)}
+.st-tbl th:nth-child(2){text-align:right}
+.st-tbl td{padding:9px;border-bottom:1px solid var(--bd2);vertical-align:top}
+.st-tbl tr.st-dup td{background:rgba(180,83,9,.07)}
+.st-n{display:block;font:600 var(--fs-sm)/1.35 var(--ff-text);color:var(--t0)}
+.st-c{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:1px}
+.st-h{display:block;font:400 var(--fs-2xs)/1.5 var(--ff-text);color:var(--t2);margin-top:3px;max-width:52ch}
+.st-kb{text-align:right;font:800 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0);white-space:nowrap}
+.st-note{margin-top:12px;font:400 var(--fs-xs)/1.65 var(--ff-text);color:var(--t2);background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:11px 13px}
+.st-note b{color:var(--t0)}
+.st-err{margin-bottom:10px;padding:8px 11px;border-radius:6px;background:rgba(var(--red-rgb),.1);color:var(--red);font:600 var(--fs-xs)/1.5 var(--ff-num)}
 .rw-none-txt{font-size:var(--fs-sm);line-height:1.65;color:var(--t1)}
 .rw-none-txt b{color:var(--t0)}
 .rw-none-txt a{color:var(--blue);word-break:break-all}
@@ -4346,11 +4361,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-482 - Stiller Datenverlust behoben. Die Zeile, die den Snapshot nach localStorage schreibt, endete auf einem LEEREN catch(e){}. Reisst das Kontingent (typisch 5 MB je Herkunft, auf iOS/Safari am strengsten), wirft setItem einen QuotaExceededError, der Snapshot wird nicht geschrieben - und der Nutzer sah NICHTS: das Abzeichen blieb einfach auf der alten Uhrzeit stehen. Damit war der ernsteste Fehlerfall der App komplett stumm. Jetzt erscheint eine feste rote Leiste am oberen Rand, die sagt, dass nicht gespeichert wurde, wie viel dieses Geraet belegt und was man dagegen tun kann; sie verschwindet automatisch, sobald ein Speichern wieder klappt. Bewusst keine Dialogbox: save() laeuft auch aus Hintergrund-Timern und beim Verlassen der Seite. Gegenprobe per Playwright: Kontingent kuenstlich erschoepft, Leiste erscheint mit der gemessenen Belegung und dem Abzeichen &quot;Not saved&quot;; Kontingent wieder frei, Leiste verschwindet. Ausserdem neuer, von Hand startbarer Workflow &quot;Probe indicator history depth&quot;: misst, bis zu welchem Jahr die Indikator-Quelle ueberhaupt Daten liefert - das ist nirgends dokumentiert, und der aktuelle Bestand zeigt nur den Deckel des Abruf-Workflows (3 Jahre), nicht die Grenze der Quelle. Der Lauf schreibt nichts in die Daten und kann den stuendlichen Job nicht beschaedigen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-483 - Speicher-Diagnose direkt in der App (Nutzer-Frage 2026-09-07: &quot;Was gibt es da fuer Loesungen wie bekommt man das kleiner?&quot;, Screenshot zeigte die Warnleiste mit 2582 KB auf dem iPad). Zwei Korrekturen: (1) Die Warnleiste nannte nur die ZEICHENZAHL. Browser legen localStorage als UTF-16 ab, rechnen also rund 2 Byte je Zeichen gegen ihr Kontingent - 2582 KB sind damit rund 5 MB und exakt das klassische Safari-Limit. Die Zahl liess das Geraet harmlos aussehen, obwohl es an der Decke stand; jetzt stehen beide Werte und die Erklaerung da. (2) Neue Ansicht &quot;What is using storage on this device&quot;, direkt aus der Warnleiste erreichbar: zeigt jeden Posten in KB mit gemessenen Zahlen vom eigenen Geraet, markiert die Doppelungen in Bernstein und bietet Loeschknoepfe fuer Sicherungskopien und Caches. Gemessen am Referenzstand: 679 KB mitgelieferte Notizen (1440 Stueck, stehen ohnehin im Code), 258 KB Indikator-Verlaufscharts (werden bei jedem Start ohnehin aus dem Feed neu gezeichnet und liegen je Asset mehrfach) - zusammen 66 Prozent des Snapshots, die auf dem Geraet nichts zu suchen haben. Selbst geschriebene Notizen: 32 KB."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-482</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-483</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4995,6 +5010,14 @@ function introLogin(){
     <h3 id="dqTitle">Data quality &amp; weighting</h3>
     <div id="dqBody"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mDataQuality')">Close</button></div>
+  </div>
+</div>
+<!-- MODAL: Was belegt den lokalen Speicher? (Nutzer-Frage 2026-09-07) -->
+<div class="ov" id="mStore" style="display:none" onclick="if(event.target===this)closeM('mStore')">
+  <div class="modal modal-wide">
+    <h3>What is using storage on this device</h3>
+    <div id="mStoreBody"></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mStore')">Close</button></div>
   </div>
 </div>
 <!-- MODAL: keine Zinserwartungs-Quelle fuer diese Waehrung (Nutzer-Wunsch 2026-09-06) -->
