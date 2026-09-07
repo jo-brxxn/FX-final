@@ -11641,3 +11641,64 @@ Warnung im Code.
 ⚠ Merksatz: wenn derselbe Indikator dreimal gemeldet wird und die Rohdaten
 jedes Mal vollständig sind, liegt es nicht an den Daten und nicht am
 Nachladen — sondern daran, worüber Daten und Anzeige einander finden.
+
+## 2026-09-07 — Die fehlenden fünf Jahre gibt es nicht (Datenmessung, kein UI-Bump)
+
+**Nutzer:** *„5 Jahre fehlen immernoch"* — mit Screenshot: `Max` gewählt, der
+Chart beginnt bei `series starts 2013-04-24`.
+
+Die Anzeige war also korrekt und ehrlich; die Frage war, warum die Sammlung
+nicht weiter zurückkommt. Beide Läufe waren bei **exakt** Häppchen 82 von 119
+stehengeblieben — zweimal dieselbe Stelle spricht gegen Zufall.
+
+### Gemessen statt vermutet
+
+Workflow `Probe indicator history depth`, Lauf 1 (fragt je Jahr das
+Januar-Fenster ab, schreibt nichts in die Daten):
+
+| Jahr | HTTP | Events | davon mit Actual |
+|---|---|---|---|
+| 2006 | 200 | **0** | 0 |
+| 2008 | 200 | **0** | 0 |
+| 2010 | 200 | **0** | 0 |
+| 2011 | 200 | **0** | 0 |
+| 2012 | 200 | **0** | 0 |
+| 2013 | 200 | 40 | 2 |
+| 2014 | 200 | 584 | 527 |
+| 2016 | 200 | 700 | 589 |
+
+**HTTP 200 und trotzdem null Events.** Kein Fehler, keine Drosselung, kein
+Rate-Limit: der Kalender von `economic-calendar.tradingview.com` **beginnt
+2013**. Die fünf fehlenden Jahre sind bei dieser Quelle nicht vorhanden —
+kein Abruf der Welt holt sie.
+
+Damit war auch VERSION-CHECK-487s `TARGET_CHUNKS=119` falsch dimensioniert:
+37 der 119 Häppchen fragen ein Fenster ab, in dem nachweislich nichts liegt —
+**stündlich, dauerhaft**. Jetzt 82, das reicht 5 015 Tage zurück (rund
+2012-12) und damit genau an die Wand der Quelle. `HIST_FULL_FROM` bleibt
+bewusst auf 2007: fällt später eine tiefere Quelle dazu, geht nichts
+verloren, was schon eingesammelt wurde.
+
+### Wächter mitgezogen
+
+`rules.js` Regel 8 prüfte bisher `TARGET_CHUNKS` gegen das, was die Leiste
+**anbietet** (2007). Das ist jetzt die falsche Bezugsgröße — sie verlangte
+119 und hätte den Leerlauf damit sogar erzwungen. Geprüft wird jetzt gegen
+die **bindende** Grenze, also die spätere aus Angebot und gemessener
+Quellgrenze (`HIST_SOURCE_FROM`), und zwar in **beide** Richtungen:
+
+- zu wenig → *„Abruf reicht nicht bis an die abrufbare Grenze"*
+- zu viel → *„Abruf läuft ins Leere"*, mit der Zahl der überzähligen Häppchen
+
+Gegenproben: `TARGET_CHUNKS=40` → erste Meldung („nötig wären 82"),
+`TARGET_CHUNKS=119` → zweite Meldung („37 überzählige"), `82` → grün.
+
+### Was das für die App bedeutet
+
+Die Leiste bietet `Max = 2007` weiter an (Nutzer-Vorgabe), und das bleibt
+ehrlich: reicht eine Reihe nicht so weit, steht daneben ihr **echtes**
+Anfangsdatum. Wer die Jahre 2007–2012 wirklich braucht, braucht eine zweite
+Quelle — mit der Einschränkung, dass Statistikämter und FRED nur **Actuals**
+liefern, keine Forecasts. Ohne Forecast gibt es keine Überraschung, und ohne
+Überraschung fließt ein Wert nicht in den Score: die Balken würden länger,
+die rote Linie und die Score-Historie blieben bei 2013.

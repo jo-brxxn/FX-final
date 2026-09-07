@@ -1276,14 +1276,30 @@ jobs:
           # Zeitfilter der Daten-Seite dann auf "max = 2007" gesetzt und 5Y/8Y/
           # 12Y ergaenzt - ohne tiefere Rohdaten waeren das vier Knoepfe mit
           # demselben Bild. Haeppchen i deckt die Tage 95+60*i bis 95+60*(i+1)
-          # ab; 119 Haeppchen reichen bis 7235 Tage zurueck (rund 2006-11),
-          # also sicher ueber die Untergrenze 2007-01-01 hinaus.
+          # ab.
+          # ⚠ Erst 119 (bis 2007). GEMESSEN am 2026-09-07 mit dem Workflow
+          # "Probe indicator history depth" (Lauf 1):
+          #
+          #   Jahr | HTTP | Events im Januar-Fenster | davon mit Actual
+          #   2006 |  200 |   0 |   0        2013 |  200 |  40 |   2
+          #   2008 |  200 |   0 |   0        2014 |  200 | 584 | 527
+          #   2010 |  200 |   0 |   0        2016 |  200 | 700 | 589
+          #   2011 |  200 |   0 |   0
+          #   2012 |  200 |   0 |   0
+          #
+          # HTTP 200 und trotzdem NULL Events: der Kalender dieser Quelle
+          # beginnt 2013. Alles davor ist nicht abrufbar - nicht gedrosselt,
+          # sondern nicht vorhanden. 119 Haeppchen bedeuteten damit 37 sichere
+          # Leerabrufe pro Lauf, jede Stunde, dauerhaft. 82 Haeppchen reichen
+          # 5015 Tage zurueck (rund 2012-12) und damit genau an die Wand.
+          # ⚠ Wer eine tiefere Quelle ergaenzt, hebt HIER die Zahl - und traegt
+          # die neue Messung darueber ein, statt sie zu raten.
           # Der Fortschritt bleibt wie bisher in _histChunksFetched: bricht ein
           # Lauf wegen Rate-Limiting mittendrin ab, holt der naechste nur die
           # noch fehlenden nach, statt wieder bei 0 anzufangen.
-          export TARGET_CHUNKS=119   # export, damit das node -e darunter ihn sieht
+          export TARGET_CHUNKS=82   # export, damit das node -e darunter ihn sieht
           CHUNKS_DONE=$(node -e '
-            const T=+process.env.TARGET_CHUNKS||119;
+            const T=+process.env.TARGET_CHUNKS||82;
             try{const d=JSON.parse(require("fs").readFileSync("ind_data.json","utf8"));console.log(Math.max(5,Math.min(T,+d._histChunksFetched||5)));}catch(e){console.log(5);}
           ')
           rm -f tv_hist_deep_*.json
@@ -1439,7 +1455,7 @@ jobs:
             // z.B. Rate-Limit), damit der naechste Lauf genau dort statt bei
             // 0 weitermacht (siehe _histChunksFetched unten).
             const CHUNKS_DONE_ENV=+process.env.CHUNKS_DONE||5;
-            const TARGET_CHUNKS_ENV=+process.env.TARGET_CHUNKS||119;   // Rueckfall muss zum Schritt oben passen
+            const TARGET_CHUNKS_ENV=+process.env.TARGET_CHUNKS||82;   // Rueckfall muss zum Schritt oben passen
             let firstFailedChunk=null;
             for(let i=CHUNKS_DONE_ENV;i<TARGET_CHUNKS_ENV;i++){
               const h=readEvts(`tv_hist_deep_${i}.json`);
@@ -1633,7 +1649,11 @@ jobs:
             // rollendes Fenster waere hier falsch: es wuerde 2007 im Jahr
             // 2027 stillschweigend wieder wegwerfen, obwohl die Leiste den
             // Zeitraum weiter anbietet.
+            // Behalten wird weiter ab 2007 - faellt spaeter eine tiefere
+            // Quelle dazu, geht dadurch nichts verloren. Abgerufen wird nur
+            // bis zur gemessenen Wand der Quelle (2013, siehe TARGET_CHUNKS).
             const HIST_FULL_FROM="2007-01-01";
+            const HIST_SOURCE_FROM="2013-01-01";   // gemessen, siehe oben
             Object.keys(out).forEach(ccy=>{
               Object.keys(out[ccy]).forEach(indName=>{
                 const v=out[ccy][indName];

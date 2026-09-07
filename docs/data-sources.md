@@ -450,10 +450,30 @@ rollend auf 3 Jahre (`HIST_FULL_DAYS=1095`). Das ist falsch, sobald die
 Oberfläche einen festen Zeitraum anbietet: 2007 wäre im Jahr 2027 still wieder
 weggeworfen worden, während die Leiste ihn weiter anbietet.
 
-**Was NICHT behauptet wird.** Wie weit die Quelle
-(`economic-calendar.tradingview.com`) tatsächlich zurückreicht, ist
-projektseitig nicht belegt — die Sandbox-Umgebung erreicht den Host nicht, das
-entscheidet erst der Lauf auf dem Runner. Deshalb steht neben der Leiste das
+**Wie weit die Quelle reicht — gemessen am 2026-09-07** (Workflow
+`Probe indicator history depth`, Lauf 1):
+
+| Jahr | HTTP | Events im Januar-Fenster | davon mit Actual |
+|---|---|---|---|
+| 2006–2012 | 200 | **0** | 0 |
+| 2013 | 200 | 40 | 2 |
+| 2014 | 200 | 584 | 527 |
+| 2016 | 200 | 700 | 589 |
+
+HTTP 200 und trotzdem null Events: der Kalender von
+`economic-calendar.tradingview.com` **beginnt 2013**. Das ist keine Drosselung
+und kein Fehler, sondern die Grenze der Quelle. `TARGET_CHUNKS` steht deshalb
+auf **82** (rund 2012-12) — jedes weitere Häppchen wäre ein garantierter
+Leerabruf, stündlich. `HIST_FULL_FROM` bleibt auf 2007, damit eine später
+ergänzte, tiefere Quelle nichts verliert.
+
+⚠ Wer die Jahre davor will, braucht eine **zweite Quelle** — und muss wissen:
+Statistikämter und FRED liefern nur **Actuals**, keine Forecasts. Ohne
+Forecast gibt es keine Überraschung, und ohne Überraschung fließt ein Wert
+nicht in den Score. Solche Jahre würden die Balken verlängern, aber weder die
+Forecast-Linie noch die Score-Historie.
+
+Deshalb steht neben der Leiste das
 **echte** Anfangsdatum der jeweiligen Reihe (`series starts …`), sobald der
 gewählte Zeitraum weiter zurückreicht als die Daten. Aufgefüllt oder
 hochgerechnet wird nichts (Grundsatz „nie schätzen/raten").

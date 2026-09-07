@@ -374,14 +374,31 @@ try {
     fail('Zeitraum-Untergrenze laeuft auseinander',
       `Die Leiste bietet "Max" ab ${ab} an (IND_HIST_MAX_FROM), der Workflow behaelt aber erst ab ${wfAb} ` +
       `(HIST_FULL_FROM). Der frueheste angebotene Zeitraum waere damit dauerhaft leer.`);
-  if (ab && ziel) {
-    const tage = Math.ceil((Date.now() - new Date(ab + 'T00:00:00Z').getTime()) / 86400000);
+  // ⚠ Nicht gegen IND_HIST_MAX_FROM pruefen, sondern gegen das, was WIRKLICH
+  // abrufbar ist. Gemessen am 2026-09-07 (Workflow "Probe indicator history
+  // depth"): die Quelle antwortet fuer 2006-2012 mit HTTP 200 und NULL
+  // Events, ihr Kalender beginnt 2013. Die Leiste darf 2007 anbieten - die
+  // App sagt daneben ehrlich, ab wann die Reihe wirklich beginnt -, aber
+  // Haeppchen fuer 2007-2012 zu holen waere Stunde fuer Stunde ein
+  // Leerabruf. Der Waechter verlangt deshalb: TARGET_CHUNKS deckt die
+  // SPAETERE der beiden Grenzen ab (die bindende), nicht mehr und nicht
+  // weniger als noetig.
+  const quelleAb = (wf.match(/HIST_SOURCE_FROM\s*=\s*"(\d{4}-\d{2}-\d{2})"/) || [])[1];
+  const bindend = (ab && quelleAb) ? (ab > quelleAb ? ab : quelleAb) : (ab || quelleAb);
+  if (bindend && ziel) {
+    const tage = Math.ceil((Date.now() - new Date(bindend + 'T00:00:00Z').getTime()) / 86400000);
     const noetig = Math.ceil((tage - 95) / 60);
     if (ziel < noetig)
-      fail('Zeitfilter reicht weiter zurueck als der Abruf',
-        `"Max" bietet ${ab} an, das sind heute ${tage} Tage. Ein Haeppchen deckt 60 Tage ab 95 Tagen ` +
-        `Rueckstand ab, noetig waeren also ${noetig} - TARGET_CHUNKS steht auf ${ziel}. Der aelteste Teil ` +
-        `des angebotenen Zeitraums wird nie geholt.`);
+      fail('Abruf reicht nicht bis an die abrufbare Grenze',
+        `Bindend ist ${bindend} (Leiste "Max" ${ab || '-'}, gemessene Quellgrenze ${quelleAb || '-'}), ` +
+        `das sind heute ${tage} Tage. Ein Haeppchen deckt 60 Tage ab 95 Tagen Rueckstand ab, noetig waeren ` +
+        `also ${noetig} - TARGET_CHUNKS steht auf ${ziel}. Der aelteste abrufbare Teil wird nie geholt.`);
+    if (quelleAb && ziel > noetig + 1)
+      fail('Abruf laeuft ins Leere',
+        `TARGET_CHUNKS steht auf ${ziel}, noetig sind ${noetig} bis zur gemessenen Quellgrenze ${quelleAb}. ` +
+        `Die ${ziel - noetig} ueberzaehligen Haeppchen liefern nachweislich nichts und werden trotzdem ` +
+        `bei JEDEM stuendlichen Lauf angefragt. Entweder die Zahl senken oder eine tiefere Quelle ` +
+        `anbinden und HIST_SOURCE_FROM mit einer neuen Messung belegen.`);
   }
 } catch (e) {}
 
