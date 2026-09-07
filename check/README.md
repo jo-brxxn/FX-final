@@ -246,3 +246,23 @@ damit knapp ausserhalb des Fensters.
 Das Netz prüft die Sektion auf **allen 24 Assets**, nicht nur auf dem einen,
 das aufgefallen ist. Gegenprobe: Fehler zurückgebaut → 2 Treffer (CAD und
 sein Yield-Spiegel), Fix zurück → 0.
+
+## `structure.js`, sechstes Netz: snap()-Feld ohne Gegenstück in loadState() (seit 2026-09-07)
+
+**Anlass:** zweimal am selben Tag dieselbe Falle. `btReasons` (Backtester-
+Begründungen) und `seedNoteFlags` standen in `snap()` und in `applySnap()`,
+aber **nicht** in `loadState()`. Der Wert wird gespeichert — und beim nächsten
+Start kommentarlos verworfen. Still verlorene Nutzereingaben, der
+unangenehmste Fehler überhaupt, und beim Speichern merkt man nichts davon.
+
+Das Netz zieht die Feldnamen aus `snap()` und verlangt für jedes ein Lesen aus
+dem gespeicherten Stand (`d.<feld>`) innerhalb von `loadState()`.
+
+⚠ Beim ersten Wurf zu schwach: er suchte nach *irgendeiner* Zuweisung, und
+`loadState()` hat einen zweiten Zweig für neue Nutzer, der jedes Feld auf den
+Leerwert setzt (`seedNoteFlags={};`). Der hat die Gegenprobe verschluckt — der
+Wächter war grün, obwohl das Laden fehlte. Deshalb wird jetzt ausdrücklich
+`d.<feld>` verlangt.
+
+Gegenprobe: Ladezeile entfernt → `STRUKTURFEHLER: … seedNoteFlags`; wieder
+eingesetzt → grün.

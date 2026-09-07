@@ -157,7 +157,35 @@ if(!reapplyBody){
     if(!new RegExp('\\b'+n+'\\b').test(reapplyBody)) feedFehlt.push(n);
   }
 }
+// Sechstes Netz: jedes Feld aus snap() muss auch von loadState() geladen werden.
+// ⚠ 2026-09-07 zweimal an derselben Klasse gescheitert: btReasons (Backtester-
+// Begruendungen) und seedNoteFlags standen in snap() und in applySnap(), aber
+// NICHT in loadState(). loadState() weist die Felder einzeln zu, applySnap()
+// uebernimmt denselben Zustand aus einem Snapshot - wer nur an einer der beiden
+// Stellen ergaenzt, merkt davon beim Speichern nichts. Der Wert steht in
+// localStorage, kommt beim naechsten Start aber nie an: still verlorene
+// Nutzereingaben, der unangenehmste Fehler ueberhaupt.
+const snapM=jsAlle.match(/function snap\(\)\{return JSON\.stringify\(\{([\s\S]*?)\}\);\}/);
+const loadM=jsAlle.match(/function loadState\(\)\{[\s\S]*?\n\}/);
+const snapFehlt=[];
+if(snapM&&loadM){
+  const felder=snapM[1].split(',').map(x=>x.split(':')[0].trim()).filter(x=>/^[A-Za-z_$][\w$]*$/.test(x));
+  // Diese traegt loadState bewusst nicht einzeln - sie haengen an anderen
+  // Migrationen bzw. werden aus dem DEF-Stand neu aufgebaut.
+  const AUSNAHMEN=new Set(['research','researchFolders','researchAnalysis','noteCats','pairCats','widgets','rubOrder','customIds','calEvts','scoreLog','syms','pairs']);
+  felder.forEach(f=>{
+    if(AUSNAHMEN.has(f))return;
+    // ⚠ Es reicht NICHT, irgendeine Zuweisung zu finden: loadState hat einen
+    // zweiten Zweig fuer neue Nutzer, der jedes Feld auf den Leerwert setzt
+    // (btReasons={};seedNoteFlags={};...). Beim ersten Wurf dieses Netzes hat
+    // genau der die Gegenprobe verschluckt - der Waechter war gruen, obwohl
+    // das Laden aus dem Speicher fehlte. Verlangt wird deshalb ein LESEN aus
+    // dem gespeicherten Stand, also ein Vorkommen von d.<feld>.
+    if(!new RegExp('d\\.'+f+'\\b').test(loadM[0]))snapFehlt.push(f);
+  });
+}
 const befunde=[];
+if(snapFehlt.length) befunde.push('in snap(), aber nicht in loadState() geladen (Wert wird gespeichert und beim Start verworfen): '+snapFehlt.join(', '));
 if(feedFehlt.length) befunde.push('Feed fehlt in reapplyLiveFeeds() (Cloud-Sync/Undo setzt die App still auf alte Werte zurueck, siehe docs/state-sync.md): '+feedFehlt.join(', '));
 if(doppelt.length) befunde.push('doppelte ids: '+doppelt.map(([k,v])=>k+' x'+v).join(', '));
 if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeileA+' und '+blockDup.zeileB);

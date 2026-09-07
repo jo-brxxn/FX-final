@@ -157,3 +157,34 @@ Zwei Feinheiten, die beim Anfassen leicht kaputtgehen:
 - Setzt der Nutzer den Text exakt auf den Seed-Text, **löscht**
   `setBtReason()` den Eintrag. Sonst friert eine spätere Korrektur der
   Recherche für diesen Nutzer für immer ein.
+
+## Seed-Notizen stehen NICHT im gespeicherten Zustand (seit 2026-09-07)
+
+Die 1.440 mitgelieferten Verhaltensnotizen (`js/asset-notes-seed.js`) werden
+bei jedem Start neu erzeugt und von `researchForSnap()` aus `snap()`
+herausgefiltert. Grund: gemessen 679 KB von 1.421 KB — 48 % des Zustands, der
+sonst in `localStorage`, jeden Cloud-Push, jede Sicherungskopie und bis zu 60
+Undo-Schritte kopiert wurde.
+
+Was der Nutzer an einer Seed-Notiz tut, überlebt über **drei** Wege — alle drei
+müssen halten, sonst geht eigene Arbeit verloren:
+
+| Aktion | wo es landet |
+|---|---|
+| **bearbeiten** | `saveResNote` macht `delete n.seed` → normale eigene Notiz, voll gespeichert. `replacesSeed` merkt die Id des Originals, damit die Seed-Fassung nicht zusätzlich erscheint. |
+| **anpinnen / favorisieren** | `seedNoteFlags[id] = {pin,fav}` — löscht das seed-Flag nicht, braucht also einen eigenen Platz |
+| **löschen** | `seedNoteFlags[id] = {del:true}` — sonst ist sie beim nächsten Start wieder da |
+
+Drei Fallstricke, die beim Bau je einen echten Datenverlust erzeugt haben:
+
+1. **Die Id muss aus dem Seed kommen, nicht aus dem Zustand.**
+   `seedNoteId()` benutzt den Index **innerhalb der Bias-Gruppe**. Der erste
+   Wurf nahm `r.notes.length` — sobald der Nutzer eine eigene Notiz hatte,
+   verschoben sich alle folgenden Ids, Pins zeigten ins Leere.
+2. **`applySeedNoteFlags()` läuft NACH dem Laden**, weil `seedNoteFlags` in
+   `applySnap()` später zugewiesen wird als `research` erzeugt wird.
+3. **Neue Felder in `snap()` müssen auch in `loadState()` gelesen werden.**
+   `loadState()` weist einzeln zu, `applySnap()` übernimmt einen Snapshot —
+   wer nur eine der beiden Stellen ergänzt, merkt beim Speichern nichts und
+   verliert den Wert beim nächsten Start. Geprüft vom sechsten Netz in
+   `check/structure.js`.

@@ -11175,3 +11175,100 @@ Die Notizen sind die riskantesten Daten der App — an ihrer Speicherung etwas z
 ändern, ohne dass der Nutzer es weiß, kann eigene Arbeit kosten. Die Ansicht
 zeigt deshalb erst einmal nur, **wo** es liegt, und benennt die beiden
 Doppelungen ausdrücklich als solche; der Umbau wird getrennt entschieden.
+
+---
+
+## 2026-09-07 — Mitgelieferte Notizen belegen keinen Speicher mehr (VERSION-CHECK-484)
+
+**Nutzer:** *„Was sind seed Notizen und mach so das es einfach klappt ohne das
+meine Notizen verloren gehen"*
+
+### Was Seed-Notizen sind
+
+Die 1.440 Verhaltensnotizen, die mit der App kommen (`js/asset-notes-seed.js`,
+437 KB Code) — „Strong US jobs pull USD up first", „Services PMI is ~80 % of UK
+GDP" und so weiter. Sie wurden beim ersten Start in den gespeicherten Zustand
+**kopiert** und trugen ein `seed:true`.
+
+Gemessen: 1.545 Notizen im Zustand, davon **1.440 mitgeliefert (679 KB)**,
+selbst geschrieben **105 (32 KB)**. Diese 679 KB wanderten in `localStorage`,
+in jeden Cloud-Push, in jede Sicherungskopie und in bis zu 60 Undo-Schritte —
+obwohl sie unverändert im Code stehen.
+
+### Jetzt
+
+Sie entstehen bei jedem Start neu aus dem Code und werden von
+`researchForSnap()` aus `snap()` herausgefiltert.
+
+**Snapshot: 1.421 KB → 746 KB (−46 %).**
+
+### Der schwierige Teil: nichts darf verloren gehen
+
+Eine Seed-Notiz lässt sich auf drei Arten verändern, und **alle drei** mussten
+überleben:
+
+| Aktion | Lösung |
+|---|---|
+| bearbeiten | `saveResNote` machte schon immer `delete n.seed` → wird zur eigenen Notiz und voll gespeichert. Neu: `replacesSeed` merkt die Original-Id, damit die Seed-Fassung nicht zusätzlich erscheint |
+| anpinnen / favorisieren | löscht das seed-Flag **nicht** → eigene Mini-Tabelle `seedNoteFlags` |
+| löschen | ebenfalls `seedNoteFlags`, sonst wäre sie beim nächsten Start wieder da |
+
+Dazu eine einmalige Übernahme (`migrateSeedNotesOut`) für Geräte, die die
+1.440 Notizen noch gespeichert haben: sie werden entfernt, aber vorher werden
+Pins und Favoriten über den Titel auf die neuen festen Ids übertragen.
+
+### Drei echte Fehler, die der Test gefunden hat
+
+Ohne den Test wären alle drei ausgeliefert worden:
+
+1. **Die „feste" Id war nicht fest.** `seedNoteId()` bekam
+   `r.notes.length` als Index — die Länge des *gesamten* Notiz-Arrays. Sobald
+   der Nutzer **eine** eigene Notiz hatte, verschoben sich alle folgenden Ids.
+   Ergebnis im Test: angepinnte Notiz nach dem Neuladen ohne Pin, bearbeitete
+   komplett verschwunden. Jetzt ist es der Index **innerhalb der Bias-Gruppe**,
+   der allein am Code hängt.
+2. **Die Schalter-Tabelle kam zu spät.** In `applySnap()` wird `research`
+   früher zugewiesen als `seedNoteFlags` — beim Erzeugen war die Tabelle noch
+   leer. Statt die lange Zuweisungszeile umzustellen (fragil) werden die
+   Schalter jetzt nachträglich über `applySeedNoteFlags()` angewandt,
+   idempotent und reihenfolge-unabhängig.
+3. **`btReasons` fehlte im Boot-Pfad.** Die Backtester-Begründungen von
+   VERSION-CHECK-481 standen in `snap()` und `applySnap()`, aber **nicht** in
+   `loadState()` — sie hätten einen Neustart nicht überlebt. Reiner Zufallsfund
+   beim Testen dieser Sache.
+
+### Verifiziert (Playwright, über einen echten Neustart)
+
+Eigene Notiz vorhanden ✓ · bearbeitete Seed-Notiz vorhanden und **genau
+einmal** ✓ · Pin überlebt ✓ · gelöschte Seed-Notiz bleibt weg und liegt im
+Papierkorb ✓ · aus dem Papierkorb wiederhergestellt kommt sie zurück und das
+Lösch-Merkmal ist weg ✓ · 0 Seed-Notizen im Snapshot bei 1.440 im Speicher ✓
+
+### Ein vierter Fehler, den erst der Wächter fand
+
+Der `runtime`-Wächter meldete nach dem Umbau **„snap/applySnap roundtrip is
+NOT idempotent"**. Nachgemessen: bei jedem `applySnap()` bekamen **alle 288
+Themen- und Unterordner neue Zufalls-Ids**.
+
+Ursache: der Aufräum-Block in `seedAssetBehaviorNotes()` behält einen Ordner
+nur, wenn noch eine Notiz auf ihn zeigt — und seit die Seed-Notizen nicht mehr
+gespeichert werden, zeigt beim Laden zunächst **keine** auf sie. Er löschte
+also alle Ordner und legte sie neu an. Die Folge wäre schlimmer gewesen als
+unschön: eigene Notizen verweisen über `fids` auf genau diese Ids, und das bei
+jedem Cloud-Sync und jedem Undo.
+
+Behoben: der Block läuft nur noch bei einem echten Inhalts-Versionssprung
+(`have && have!==BEHAVIOR_NOTES_CONTENT_V`) — also genau dann, wofür er gedacht
+war. Nachgemessen: 0 von 288 Ordnern ändern sich noch.
+
+Die beiden verbleibenden Roundtrip-Unterschiede (`research._noteSchemaV` 1→2,
+`dashV` 1→2) sind **älter als dieser Umbau** — auf dem vorherigen Stand
+nachgeprüft, dort treten sie genauso auf und der Wächter toleriert sie.
+
+### Neues Netz (`check/structure.js`, sechstes)
+
+Jedes Feld aus `snap()` muss in `loadState()` aus dem gespeicherten Stand
+gelesen werden (`d.<feld>`). Der erste Wurf war zu schwach — er akzeptierte
+jede Zuweisung, und `loadState()` hat einen Zweig für neue Nutzer, der jedes
+Feld auf den Leerwert setzt; der verschluckte die Gegenprobe. Jetzt scharf:
+Ladezeile entfernt → rot, wieder eingesetzt → grün.

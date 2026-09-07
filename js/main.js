@@ -3453,6 +3453,9 @@ function mkResearch(){return{folders:mkResearchFolders(),notes:[],trash:[],_fold
 const TRASH_TTL_MS=30*86400000;
 function trashResNote(n){
   if(!n)return;
+  // ⚠ Eine geloeschte SEED-Notiz muss sich das merken (2026-09-07), sonst
+  // steht sie beim naechsten Start wieder da - sie wird ja neu erzeugt.
+  if(n.seed)setSeedNoteFlag(n.id,'del',true);
   if(!Array.isArray(research.trash))research.trash=[];
   research.trash.push({id:uid(),kind:'note',data:{...n},delAt:new Date().toISOString()});
 }
@@ -3905,17 +3908,119 @@ function migrateLegacyAssetNotesIntoResearch(r){
 // oder editiert, bleibt unberuehrt - saveResNote loescht das Flag beim
 // Speichern), und nur Ordner ohne eigene, nicht-geseedete Notizen werden
 // mit aufgeraeumt.
+// ══ SEED-NOTIZEN WERDEN NICHT MEHR GESPEICHERT ══════════════════════════
+// Nutzer-Auftrag 2026-09-07, nachdem die Speicher-Warnung auf dem iPad kam:
+// "mach so das es einfach klappt ohne das meine Notizen verloren gehen".
+//
+// Gemessen war der Befund eindeutig: von 1.545 Notizen im gespeicherten
+// Zustand waren 1.440 mitgelieferte Seed-Notizen (679 KB), selbst
+// geschrieben nur 105 (32 KB). Diese 679 KB stehen ohnehin als Code in
+// js/asset-notes-seed.js und wurden trotzdem in jeden Snapshot, jeden
+// Cloud-Push, jede Sicherungskopie und bis zu 60 Undo-Schritte kopiert.
+//
+// Ab jetzt: Seed-Notizen entstehen bei jedem Start neu aus dem Code und
+// werden aus snap() herausgefiltert. Was der NUTZER an ihnen getan hat,
+// ueberlebt trotzdem - dafuer gibt es drei Wege, und alle drei muessen
+// halten, sonst geht eigene Arbeit verloren:
+//
+//   1. BEARBEITET  -> saveResNote macht `delete n.seed`. Die Notiz ist damit
+//      eine ganz normale eigene Notiz und wird vollstaendig gespeichert.
+//      Damit sie nicht doppelt erscheint (einmal gespeichert, einmal frisch
+//      erzeugt), merkt sie sich in `replacesSeed` die Id des Originals.
+//   2. ANGEPINNT / FAVORIT -> loescht das seed-Flag NICHT. Diese beiden
+//      Schalter landen deshalb in `seedNoteFlags`, einer winzigen Tabelle
+//      Id -> {pin,fav}. Nur beruehrte Notizen stehen dort drin.
+//   3. GELOESCHT -> ebenfalls in `seedNoteFlags` als {del:true}, sonst waere
+//      die Notiz beim naechsten Start wieder da.
+//
+// `seedNoteFlags` laeuft ueber snap() und ist damit automatisch
+// geraeteuebergreifend (CLAUDE.md Regel 1).
+function seedNoteId(assetId,themeKey,bias,i){return'sd_'+assetId+'_'+themeKey+'_'+bias+'_'+i;}
+// ⚠ Reihenfolge-unabhaengig: seedNoteFlags wird beim Laden SPAETER gesetzt als
+// research seedAssetBehaviorNotes() durchlaeuft (in applySnap steht research
+// vor rateWatchCustom & Co.). Beim ersten Wurf griffen die Schalter deshalb
+// nicht - der Test zeigte eine angepinnte Seed-Notiz nach dem Neuladen ohne
+// Pin. Statt die Zuweisungs-Reihenfolge umzustellen (fragil, die Zeile ist
+// lang und wird oft angefasst) werden die Schalter hier NACHTRAEGLICH
+// angewandt. Idempotent, darf beliebig oft laufen.
+function applySeedNoteFlags(){
+  if(!research||!Array.isArray(research.notes))return;
+  const weg=[];
+  research.notes.forEach(n=>{
+    if(!n||!n.seed)return;
+    const f=seedNoteFlags[n.id];
+    if(!f){n.pin=false;n.fav=false;return;}
+    if(f.del){weg.push(n.id);return;}
+    n.pin=!!f.pin;n.fav=!!f.fav;
+  });
+  if(weg.length)research.notes=research.notes.filter(n=>!(n&&n.seed&&weg.includes(n.id)));
+}
+// Schalter einer Seed-Notiz merken (oder wieder vergessen, wenn beide
+// Standard sind - die Tabelle soll nicht unnoetig wachsen).
+function setSeedNoteFlag(id,feld,wert){
+  if(!seedNoteFlags[id])seedNoteFlags[id]={};
+  seedNoteFlags[id][feld]=wert;
+  const f=seedNoteFlags[id];
+  if(!f.pin&&!f.fav&&!f.del)delete seedNoteFlags[id];
+}
+// ⚠ EINMALIGE UEBERNAHME fuer Geraete, die die 1.440 Seed-Notizen noch
+// gespeichert haben. Sie werden entfernt (sie entstehen ja neu) - aber
+// VORHER wird gerettet, was der Nutzer an ihnen gemacht hat. Zuordnung ueber
+// den Titel, weil die alten Notizen noch Zufalls-Ids tragen.
+// Ohne diesen Schritt waeren angepinnte Seed-Notizen nach dem Update
+// stillschweigend nicht mehr angepinnt - genau die Sorte Verlust, die der
+// Nutzer ausgeschlossen haben wollte.
+function migrateSeedNotesOut(r){
+  if(!r||!Array.isArray(r.notes))return r;
+  if(r._seedNotesExternal)return r;
+  const nachTitel={};
+  (r.notes||[]).forEach(n=>{if(n&&n.seed&&n.title)nachTitel[n.title]=n;});
+  const alt=(r.notes||[]).filter(n=>n&&n.seed);
+  if(alt.length){
+    // Erst die frischen Seed-Notizen bauen, damit wir ihre festen Ids kennen.
+    const merk=r.notes;
+    r.notes=merk.filter(n=>!(n&&n.seed));
+    const vorher=r._behaviorNotesSeeded;r._behaviorNotesSeeded={};
+    seedAssetBehaviorNotes(r);
+    r._behaviorNotesSeeded=vorher;
+    r.notes.forEach(n=>{
+      if(!n||!n.seed)return;
+      const a=nachTitel[n.title];
+      if(!a)return;
+      if(a.pin)setSeedNoteFlag(n.id,'pin',true);
+      if(a.fav)setSeedNoteFlag(n.id,'fav',true);
+      n.pin=!!a.pin;n.fav=!!a.fav;
+    });
+  }
+  r._seedNotesExternal=1;
+  return r;
+}
 const BEHAVIOR_NOTES_CONTENT_V=3;
 function seedAssetBehaviorNotes(r){
   if(!r._behaviorNotesSeeded)r._behaviorNotesSeeded={};
   const now=new Date().toISOString();
   Object.keys(ASSET_BEHAVIOR_NOTES).forEach(assetId=>{
     const have=r._behaviorNotesSeeded[assetId];
-    if(have===BEHAVIOR_NOTES_CONTENT_V)return;
+    // ⚠ Der Versions-Gate darf das Erzeugen NICHT mehr verhindern: seit
+    // 2026-09-07 stehen Seed-Notizen nicht mehr im gespeicherten Zustand,
+    // also muessen sie bei JEDEM Start neu entstehen. Der Gate steuert nur
+    // noch das Aufraeumen alter Seed-Staende (Block `if(have)` unten).
+    // Idempotent: liegen sie schon im Speicher, wird nichts angehaengt.
     if(!(syms||[]).some(s=>s.id===assetId))return;
+    if(r.notes.some(n=>n&&n.seed&&String(n.id||'').startsWith('sd_'+assetId+'_')))return;
     const root=researchGenFidFor(assetId);
     if(!root)return;
-    if(have){
+    // ⚠ Der Aufraeum-Block darf NUR bei einem echten Inhalts-Versionssprung
+    // laufen. Er behaelt einen Themen-/Unterordner naemlich nur dann, wenn
+    // noch eine Notiz auf ihn zeigt - und seit die Seed-Notizen nicht mehr
+    // gespeichert werden, zeigt beim Laden zunaechst KEINE auf sie.
+    // Ohne diese Bedingung loeschte applySnap() deshalb alle 288 Ordner und
+    // legte sie mit neuen Zufalls-Ids wieder an: bei jedem Cloud-Sync und
+    // jedem Undo. Der runtime-Waechter hat genau das als "snap/applySnap
+    // roundtrip is NOT idempotent" gemeldet - und die Folge waere schlimmer
+    // als unschoen gewesen, denn eigene Notizen verweisen ueber fids auf
+    // diese Ordner-Ids.
+    if(have&&have!==BEHAVIOR_NOTES_CONTENT_V){
       const staleIds=new Set(r.notes.filter(n=>n.seed&&n.asset===''&&(n.fids||[]).some(f=>{
         const folder=researchFolders.find(x=>x.id===f);
         return folder&&(folder.parentId===root||researchFolders.find(t=>t.id===folder.parentId&&t.parentId===root));
@@ -3939,10 +4044,31 @@ function seedAssetBehaviorNotes(r){
         return f;
       });
       ['bull','bear','neu'].forEach(bias=>{
-        (data[bias]||[]).forEach(entry=>{
+        (data[bias]||[]).forEach((entry,idx)=>{
           const subFolder=subFolders[entry.sub]||themeFolder;
-          r.notes.push({id:uid(),fids:[subFolder.id],title:entry.t,
-            body:entry.b,tags:(entry.tags||[]).slice(),fav:false,pin:false,ts:now,up:now,
+          // ⚠ Feste, aus dem Inhalt abgeleitete Id statt uid() (2026-09-07).
+          // Seed-Notizen werden nicht mehr gespeichert, sondern bei jedem
+          // Start neu erzeugt - mit einer Zufalls-Id koennte man ihnen dann
+          // nichts mehr zuordnen, was der Nutzer an ihnen getan hat
+          // (Anpinnen, Favorit, Loeschen). Die feste Id ist der Anker dafuer.
+          //
+          // ⚠⚠ Der Index MUSS der Platz innerhalb dieser Bias-Gruppe im Seed
+          // sein - NICHT r.notes.length. Der erste Wurf benutzte die Laenge
+          // des gesamten Notiz-Arrays; sobald der Nutzer EINE eigene Notiz
+          // hatte, verschoben sich damit alle folgenden Ids. Der Test hat
+          // das sofort gezeigt: eine angepinnte Seed-Notiz war nach dem
+          // Neuladen nicht mehr angepinnt, eine bearbeitete komplett weg.
+          // Der Gruppen-Index haengt allein am Seed im Code und ist damit
+          // ueber Geraete und Sitzungen hinweg derselbe.
+          const sid=seedNoteId(assetId,key,bias,idx);
+          if(seedNoteFlags[sid]&&seedNoteFlags[sid].del)return;   // vom Nutzer geloescht
+          // Vom Nutzer ueberschrieben: die eigene Fassung ist gespeichert und
+          // liegt bereits in r.notes - dann darf die Seed-Fassung NICHT
+          // zusaetzlich erscheinen, sonst stuenden beide nebeneinander.
+          if(r.notes.some(n=>n&&!n.seed&&(n.replacesSeed===sid||n.id===sid)))return;
+          const fl=seedNoteFlags[sid]||{};
+          r.notes.push({id:sid,fids:[subFolder.id],title:entry.t,
+            body:entry.b,tags:(entry.tags||[]).slice(),fav:!!fl.fav,pin:!!fl.pin,ts:now,up:now,
             bias:bias,evt:null,asset:'',seed:true});
         });
       });
@@ -4145,7 +4271,19 @@ function saveQuotaOk(){
   _saveQuotaBad=false;
   const bar=document.getElementById('saveQuotaBar');if(bar)bar.remove();
 }
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research,researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
+// ⚠ research wird fuer den Snapshot OHNE die Seed-Notizen serialisiert
+// (2026-09-07): sie entstehen bei jedem Start neu aus js/asset-notes-seed.js.
+// Gemessen sparte das 679 KB von 1.421 KB - 48% des gesamten Zustands, der
+// sonst in localStorage, in jeden Cloud-Push, in jede Sicherungskopie und in
+// bis zu 60 Undo-Schritte kopiert wurde. Was der Nutzer an ihnen getan hat,
+// steht in seedNoteFlags (winzig) bzw. ist als eigene Notiz gespeichert.
+function researchForSnap(){
+  if(!research||!Array.isArray(research.notes))return research;
+  const o={};for(const k in research)o[k]=research[k];
+  o.notes=research.notes.filter(n=>!(n&&n.seed));
+  return o;
+}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists});}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -4279,7 +4417,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();reapplyLiveFeeds();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);research=migrateSeedNotesOut(research);research=seedAssetBehaviorNotes(research);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};seedNoteFlags=(d.seedNoteFlags&&typeof d.seedNoteFlags==='object')?d.seedNoteFlags:{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();applySeedNoteFlags();reapplyLiveFeeds();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -4374,6 +4512,10 @@ function restoreTrashItem(id){
     if(!researchFolders.some(x=>x.id===f.id))researchFolders.push(f);
   }else{
     const n={...t.data};
+    // Gegenstueck zu trashResNote: eine wiederhergestellte Seed-Notiz darf
+    // nicht weiter als geloescht gemerkt sein, sonst verschwindet sie beim
+    // naechsten Start sofort wieder.
+    if(n.seed&&seedNoteFlags[n.id]&&seedNoteFlags[n.id].del)setSeedNoteFlag(n.id,'del',false);
     if(!research.notes.some(x=>x.id===n.id))research.notes.push(n);
   }
   research.trash=(research.trash||[]).filter(x=>x.id!==id);
@@ -4387,7 +4529,7 @@ function permaDeleteTrashItem(id){
 }
 
 // ══ STATE ═══════════════════════════════════════════════════════════
-let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},btReasons={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
+let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={},calEvts,widgets,customIds=[],rubOrder=[],sbOrder={},catOrder=[],rateWatchCustom={},indLinkCustom={},btReasons={},seedNoteFlags={},dashV=0,eventAlerts=[],priceAlerts=[],dashRemovedTypes=[];
 // Risk-Sentiment-Regler im Dashboard (Nutzer-Wunsch 2026-07-13): riskEnvLevel
 // 0=keine/1=halbe/2=volle Risiko-Umgebung, riskEnvCfg={assetId:'bullish'|
 // 'bearish'|'neutral'} legt pro Asset die Reaktionsrichtung fest (Zahnrad-
@@ -4616,7 +4758,7 @@ function loadState(){
       migrateMarkedToWatchlist();
       noteCats=d.noteCats||mkNCs();
       researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];
-      research=migrateResearch(d.research,noteCats);
+      research=migrateResearch(d.research,noteCats);research=migrateSeedNotesOut(research);research=seedAssetBehaviorNotes(research);
       researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};
       calEvts=d.calEvts||mkCalEvts();
       widgets=d.widgets||mkWidgets();
@@ -4653,15 +4795,24 @@ function loadState(){
       catOrder=d.catOrder||[];
       rateWatchCustom=d.rateWatchCustom||{};
       indLinkCustom=d.indLinkCustom||{};
+      // ⚠ Diese beiden fehlten im Boot-Pfad. loadState() weist die Felder
+      // EINZELN zu (anders als applySnap, das denselben Zustand aus einem
+      // Snapshot uebernimmt) - wer hier ein neues Feld vergisst, bekommt den
+      // Fehler nicht beim Speichern, sondern erst beim naechsten Start: der
+      // Wert ist gespeichert, kommt aber nie an. Genau so ging der Test
+      // 2026-09-07 aus (angepinnte Seed-Notiz nach dem Neuladen ohne Pin).
+      btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};
+      seedNoteFlags=(d.seedNoteFlags&&typeof d.seedNoteFlags==='object')?d.seedNoteFlags:{};
       eventAlerts=pruneEventAlerts(d.eventAlerts||[]);
       priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];
       riskEnvLevel=d.riskEnvLevel||0;
       riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});
       riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];
+      applySeedNoteFlags();
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};btReasons={};seedNoteFlags={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
   syms.forEach(addMacroRub);applyRubOrder();
   // Ein brandneuer Nutzer (kein gespeicherter Zustand) durchlaeuft
   // migrateResearch() nie (mkResearch() liefert bereits einen frischen,
@@ -4670,7 +4821,9 @@ function loadState(){
   // Befuellung deshalb hier separat angestossen, sonst bekaeme genau
   // dieser Fall sie nie bzw. erst nach dem naechsten Reload.
   research=migrateLegacyAssetNotesIntoResearch(research);
+  research=migrateSeedNotesOut(research);
   research=seedAssetBehaviorNotes(research);
+  applySeedNoteFlags();
   localStorage.setItem('fxpro_ruborder_v3','1');
   recomputeAuto();
 }
@@ -5868,7 +6021,7 @@ function togResPin(id){
   if(!n.pin&&resNoteAssetIds(n).some(a=>assetPinnedNotes(a).length>=ASSET_PIN_MAX)){
     alert('At most '+ASSET_PIN_MAX+' notes can be pinned per asset — unpin one first.');return;
   }
-  pushU();n.pin=!n.pin;n.up=new Date().toISOString();save();rerenderNotesHost();
+  pushU();n.pin=!n.pin;n.up=new Date().toISOString();if(n.seed)setSeedNoteFlag(n.id,'pin',n.pin);save();rerenderNotesHost();
 }
 // Die Notes-Karte: laenglich nach unten, zeigt die angepinnten Notizen direkt.
 // Ohne Pins steht dort ein Platzhalter statt einer leeren Flaeche.
@@ -10192,7 +10345,7 @@ function resSetQuery(v){
 }
 function togResFav(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
-  pushU();n.fav=!n.fav;n.up=new Date().toISOString();save();rerenderNotesHost();
+  pushU();n.fav=!n.fav;n.up=new Date().toISOString();if(n.seed)setSeedNoteFlag(n.id,'fav',n.fav);save();rerenderNotesHost();
 }
 // ── Notiz-Editor (Modal) ──
 let _resEditId=null;
@@ -10304,7 +10457,7 @@ function saveResNote(){
   pushU();
   if(_resEditId){
     const n=resNotes().find(x=>x.id===_resEditId);
-    if(n){n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
+    if(n){if(n.seed&&!n.replacesSeed)n.replacesSeed=n.id;n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
   }else{
     if(_resAutoPin&&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
     research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
@@ -18298,6 +18451,7 @@ Object.assign(window,{
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
   saveQuotaFail,saveQuotaOk,saveQuotaKB,storageRows,openStorageInfo,clearStorageItem,
+  seedNoteId,setSeedNoteFlag,migrateSeedNotesOut,researchForSnap,applySeedNoteFlags,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
@@ -18522,6 +18676,7 @@ Object.defineProperty(window,'aaiiView',{get:()=>aaiiView,set:v=>{aaiiView=v;},c
 Object.defineProperty(window,'SEASONALITY_DATA',{get:()=>SEASONALITY_DATA,set:v=>{SEASONALITY_DATA=v;},configurable:true});
 Object.defineProperty(window,'seasAsset',{get:()=>seasAsset,set:v=>{seasAsset=v;},configurable:true});
 Object.defineProperty(window,'RATE_PROB_DATA',{get:()=>RATE_PROB_DATA,set:v=>{RATE_PROB_DATA=v;},configurable:true});
+Object.defineProperty(window,'seedNoteFlags',{get:()=>seedNoteFlags,set:v=>{seedNoteFlags=v;},configurable:true});
 Object.defineProperty(window,'rateProbFocus',{get:()=>rateProbFocus,set:v=>{rateProbFocus=v;},configurable:true});
 Object.defineProperty(window,'rateProbCcy',{get:()=>rateProbCcy,set:v=>{rateProbCcy=v;},configurable:true});
 Object.defineProperty(window,'rateProbSlot',{get:()=>rateProbSlot,set:v=>{rateProbSlot=v;},configurable:true});
