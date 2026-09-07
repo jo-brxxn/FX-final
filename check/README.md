@@ -49,6 +49,7 @@ das ist mehrfach passiert:
 | Reparaturen kamen beim Nutzer nicht an ("es ist wie davor"): `sw.js` lieferte `js/rezept/*.js` aus dem Cache, der neue Code wirkte erst beim uebernaechsten Oeffnen | nichts - kein Waechter sah die Auslieferung an. `rezept.js` prueft seither statisch, dass Skripte im Netz-zuerst-Zweig liegen |
 | Im Waechter kamen Testdaten nie an: der Service Worker beantwortete die Anfragen selbst, `page.route()` griff nicht | nichts - der Lauf las stillschweigend die echte Datei und meldete "ok". Der Browser startet jetzt mit `serviceWorkers: 'block'` |
 | Zweite App im Repo (2026-09-01, Perfect Rezept): `rezept.html` + `js/rezept/*` waeren von jedem Waechter unbemerkt geblieben, und `#appChoiceOv` haette jeden Browser-Lauf blockiert | nichts - `syntax.js` prueft seither beide Seiten, `rules.js` erzwingt die REZEPT-CHECK-Nummer (Regel 1b), alle Browser-Pruefungen setzen `dmfx_app_choice='fx'` |
+| `display.js` meldete im vollen Lauf EINEN Treffer (`NAS dom=+0.2 soll=+0.1`), war allein und wiederholt aber gruen - ein roter Lauf ohne echten Fund | nichts - der Waechter wartete stur 5s. Gemessen im 250-ms-Raster: die Nav-Leiste wird beim Start einmal VOR den Live-Feeds gezeichnet (t=645ms: alle 24 Assets weichen ab; t=1349ms: keines mehr; alle acht Feeds beantwortet nach 2383ms im Leerlauf). Unter Last rutscht das Ende der Feeds ueber die feste Frist. Seither wartet `check/warten.js` auf das echte Fertig-Signal, `rules.js` Regel 7 erzwingt das fuer jeden Waechter, der Score-Zahlen liest. ⚠ Merksatz: ein Waechter, der ohne Fund rot wird, wird irgendwann weggeklickt - das ist so schaedlich wie einer, der nichts findet |
 | Modul-Aufteilung (2026-08-25, `docs/module-split.md`): `scoreSurface.js`/`rules.js`/`structure.js`/`scorediff.js` lasen bisher fest nur `index.html` - nach dem Auslagern des Hauptskripts nach `js/main.js` fanden sie fast nichts mehr, `rules.js` meldete "ok" sogar bei einem absichtlich kaputt gemachten `biasScore()` | nichts - erst ein gezielter Regressionstest (Score-Bug einbauen, `check/rules.js` muss ihn melden) deckte es auf, nicht der normale Lauf |
 
 Jede Pruefung hier existiert, weil der zugehoerige Fehler schon einmal beim
@@ -58,6 +59,7 @@ Nutzer angekommen ist.
 
 | Datei | Prueft | Browser |
 |---|---|---|
+| `warten.js` | kein eigener Waechter, sondern das gemeinsame Warte-Signal: `wartenBisDatenDa(page)` wartet, bis alle acht Live-Feeds in `DATA_LIVE_OK` geantwortet haben (mit Daten ODER mit einem Fehlschlag) und danach neu gezeichnet wurde. Wird von `display.js`, `score.js`, `scorediff.js` und `summarydiff.js` benutzt | - |
 | `scoreSurface.js` | leitet die score-relevanten Funktionen und Konstanten bei jedem Lauf aus dem Code ab (Wurzeln: Rechenkette + fuenf Bias-Pfade, zwei Ebenen tief) - dadurch waechst die Abdeckung automatisch mit | nein |
 | `syntax.js` | JS aller `<script>`-Bloecke **beider Seiten** (`index.html` UND `rezept.html`) plus `js/rezept/*.js`, jede Workflow-YAML, jeder `run`-Block per `bash -n` | nein |
 | `rules.js` | Versions-Bumps und Workflow-Ausgaben (siehe unten) | nein |
@@ -82,6 +84,7 @@ Sie uebersetzen Konventionen, die bisher nur Prosa waren, in ein Abbruch-Kriteri
 2. **SCORE_MODEL_VERSION** - wird die Score-Formel angefasst, muss die Modell-Version steigen. Sonst vergleichen History, Trends und die Staerke-Note still zwei verschiedene Rechnungen.
 3. **SUMMARY_ENGINE_VERSION** - wird die Formulierungs-Logik angefasst, muss sie steigen. `rubSummarySig()` haengt nur an den Rohdaten und erkennt eine reine Text-Aenderung nie.
 4. **Workflow-Ausgaben** - erzeugt ein Workflow eine `.json`, muss sie in einem `git add` desselben Workflows stehen (ausser er loescht sie selbst wieder als Zwischendatei).
+5. **Warten auf ein Signal, nicht auf die Uhr** - wer im Browser Score-Zahlen liest (`symScoreCmp`/`rubScore`/`pairScore`), darf davor nicht bloss eine feste Zeit warten, sondern muss `wartenBisDatenDa()` aus `check/warten.js` aufrufen. Sonst misst der Waechter unter Last in den Startvorgang hinein und wird rot, ohne dass etwas kaputt ist.
 
 ## Warum sich der Waechter selbst verbessert
 

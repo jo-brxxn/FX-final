@@ -11272,3 +11272,103 @@ gelesen werden (`d.<feld>`). Der erste Wurf war zu schwach — er akzeptierte
 jede Zuweisung, und `loadState()` hat einen Zweig für neue Nutzer, der jedes
 Feld auf den Leerwert setzt; der verschluckte die Gegenprobe. Jetzt scharf:
 Ladezeile entfernt → rot, wieder eingesetzt → grün.
+
+---
+
+## 2026-09-07 — Der Speicher-Teufelskreis (VERSION-CHECK-485)
+
+**Nutzer:** zweiter Screenshot derselben roten Leiste — **weiterhin exakt
+2 582 KB**, obwohl VERSION-CHECK-484 den Snapshot um 46 % verkleinert hatte.
+*„Find eine Lösung"*.
+
+### Warum Verkleinern allein nichts gebracht hat
+
+Es war kein Rechenfehler, sondern eine Sackgasse:
+
+> Der kleinere Stand kann nicht geschrieben werden, **weil** der Speicher voll
+> ist — und er bleibt voll, **weil** der grosse alte Eintrag noch drinsteht.
+
+`setItem(SK, kleiner)` ersetzt zwar einen bestehenden Schlüssel, aber Browser
+rechnen die Kontingentsprüfung dabei nicht zwingend gegen den *freiwerdenden*
+Platz: der alte Wert steht beim Prüfen noch da, der neue käme oben drauf.
+Deshalb scheitert selbst ein deutlich kleinerer Schreibvorgang. Ein Gerät, das
+einmal am Anschlag ist, kommt aus eigener Kraft nie wieder heraus — egal wie
+schlank die App wird.
+
+### Die Rettungs-Leiter
+
+`schreibeSnapshot()` versucht der Reihe nach und prüft nach jedem Schritt:
+
+1. **Alten Eintrag ausdrücklich entfernen**, dann schreiben — damit ist sein
+   Platz sicher frei. Das allein löst den gemeldeten Fall.
+2. **Entbehrliches wegwerfen**, in dieser Reihenfolge: lokale Sicherungen,
+   COT-Cache, Score-Historien-Cache. Alles drei baut die App wieder auf.
+3. Erst wenn das alles nicht reicht, die rote Leiste.
+
+An die eigentlichen Daten geht sie **nie**. Schlägt ein Zwischenschritt fehl,
+wird der alte Eintrag sofort zurückgelegt.
+
+Gelingt die Rettung, erscheint eine kurze blaue Meldung, die sagt **womit**
+Platz geschaffen wurde („by clearing the previous snapshot first" / „by
+dropping local backups"), und das Abzeichen steht auf gespeichert.
+
+### Der Fall, den der Test noch aufgedeckt hat
+
+Im Durchgang „nichts hilft" war der alte Eintrag ausgeräumt und liess sich
+nicht zurücklegen — auf dem Gerät lag dann **gar kein gespeicherter Stand
+mehr**, und die Leiste sagte das nicht. Genau die Sorte stiller Verlust, die
+hier eigentlich abgestellt wird. Jetzt trägt der Fehler ein Merkmal
+(`ohneLokaleKopie`), und die Leiste wird deutlich: *„there is now NO saved copy
+on this device … do not close this tab yet"* mit dem Weg über Cloud-Sync oder
+Export.
+
+### Verifiziert (Playwright, iPad-Lage nachgebaut)
+
+| Fall | Ergebnis |
+|---|---|
+| Kontingent voll, alter Eintrag im Weg | gerettet über Stufe 1, 766 KB geschrieben, Sicherungen unangetastet |
+| Schreiben klappt erst ohne Sicherungen | gerettet über Stufe 2, Meldung nennt sie |
+| Nichts hilft | rote Leiste mit der Warnung, dass keine lokale Kopie mehr da ist |
+
+### Nachtrag: ein Waechter, der ohne Fund rot wurde
+
+Der volle `check/all.js`-Lauf zu dieser Version meldete `display` rot — mit
+**einem** Treffer: `NAS dom=+0.2 soll=+0.1`. Allein und wiederholt lief
+derselbe Waechter gruen, auch auf dem Stand ohne diese Aenderung. Nach
+Dauerregel 8 also erst messen, nicht raten.
+
+**Messung** (Startverlauf im 250-ms-Raster, Nav-Leiste gegen `symScoreCmp`):
+
+| Zeitpunkt | Abweichungen in der Nav-Leiste |
+|---|---|
+| t = 645 ms | **alle 24 Assets** (z. B. USD dom −1,1 / soll +0,6; SP500 dom −0,2 / soll +0,9) |
+| t = 1 349 ms | 0 — und ab da dauerhaft 0 |
+| alle acht Feeds in `DATA_LIVE_OK` beantwortet | nach 2 383 ms (Leerlauf) |
+
+**Ursache:** kein App-Fehler. Die Leiste wird beim Start einmal *vor* den
+Live-Feeds gezeichnet und danach neu — richtig so. Falsch war der Waechter: er
+wartete eine **feste Zeit** (`display` 5 000 ms, `score` 4 500 ms,
+`scorediff`/`summarydiff` je 5 000 ms). Laufen alle Waechter nacheinander auf
+derselben CPU, rutscht das Ende der Feeds ueber diese Frist, und gemessen wird
+mitten in den Startvorgang hinein. Ausgeschlossen wurde vorher, dass
+`showTab()`/`selSym()` die Scores veraendern (0 von 24 Symbolen aendern sich
+durch beide Aufrufe).
+
+**Behoben an der Wurzel:** neues `check/warten.js` mit
+`wartenBisDatenDa(page)` — es wartet, bis jeder der acht Feeds geantwortet hat
+(mit Daten *oder* mit einem Fehlschlag), und laesst danach kurz neu zeichnen.
+Die Frist zu erhoehen waere das Symptom gewesen: das verschiebt den Fall nur
+und macht jeden Lauf langsamer. Umgestellt sind alle vier betroffenen
+Waechter. Faellt das Signal aus (alte Vergleichsbasis, kaputter Boot), geht es
+nach 30 s mit der alten festen Frist weiter, damit kein Lauf haengt.
+
+**Fehlerklasse + Waechter:** `rules.js` Regel 7 — wer im Browser
+`symScoreCmp`/`rubScore`/`pairScore` liest und davor nur eine feste Zeit
+wartet, faellt durch. Gegenprobe: in `display.js` die feste Frist
+wiederhergestellt → 1 Treffer; `wartenBisDatenDa` zurueck → 0. Beim ersten
+Anlauf war die Regel zu schwach (sie akzeptierte schon die `require`-Zeile) —
+sie prueft jetzt auf den **Aufruf**.
+
+⚠ Merksatz fuer die Sammlung in `check/README.md`: ein Waechter, der ohne
+echten Fund rot wird, ist genauso schaedlich wie einer, der nichts findet —
+man klickt ihn irgendwann weg.

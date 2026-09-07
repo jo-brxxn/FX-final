@@ -319,6 +319,38 @@ if (neueKeys.length) {
       `Gehoert der Schluessel bewusst nur auf dieses Geraet, den Namen in LOKAL_ERLAUBT aufnehmen.`);
 }
 
+// ── Regel 7: kein Waechter liest Zahlen nach blosser Wartezeit ──────────
+// ⚠ Messung 2026-09-07 (VERSION-CHECK-485): check/display.js fiel im vollen
+// Lauf mit EINEM Treffer aus (NAS dom=+0.2 soll=+0.1) und war allein
+// wiederholt gruen. Ursache war kein App-Fehler, sondern die feste Wartezeit
+// im Waechter: die Navigationsleiste wird beim Start einmal VOR den
+// Live-Feeds gezeichnet (bei t=645ms weichen alle 24 Assets ab, ab t=1349ms
+// keines mehr; alle acht Feeds beantwortet nach 2383ms im Leerlauf). Unter
+// Last rutscht dieses Fenster ueber die feste Frist hinaus - der Waechter
+// misst dann mitten in den Startvorgang und meldet rot ohne echten Fund.
+// Rote Laeufe ohne Fund sind das Gefaehrlichste, was einem Waechter
+// passieren kann, weil man sie irgendwann wegklickt. Deshalb: wer im Browser
+// Score-Zahlen liest, MUSS auf das echte Fertig-Signal warten
+// (check/warten.js, wartenBisDatenDa) statt auf eine Uhr.
+// Gegenprobe beim Einbau: in display.js wieder waitForTimeout(5000) gesetzt
+// -> 1 Treffer; wartenBisDatenDa zurueck -> 0.
+const ZAHLEN_WAECHTER = /\b(symScoreCmp|rubScore|pairScore)\s*\(/;
+try {
+  fs.readdirSync(__dirname).filter(f => f.endsWith('.js')).forEach(f => {
+    if (f === 'warten.js') return;
+    const q = fs.readFileSync(__dirname + '/' + f, 'utf8');
+    if (!ZAHLEN_WAECHTER.test(q)) return;              // liest keine Score-Zahlen
+    if (!/waitForTimeout\s*\(\s*\d{4,}/.test(q)) return; // wartet nicht stur lange
+    // ⚠ Auf den AUFRUF pruefen, nicht auf den Namen: die require-Zeile allein
+    // wartet auf nichts (beim Gegenprobe-Einbau genau daran vorbeigelaufen).
+    if (/wartenBisDatenDa\s*\(/.test(q)) return;       // wartet auf das Signal
+    fail('Waechter misst nach Uhr statt nach Signal',
+      `check/${f} liest Score-Zahlen aus der Seite, wartet davor aber nur eine feste Zeit. ` +
+      `Unter Last sind die Live-Feeds dann noch nicht angewandt und der Lauf wird rot, ohne dass ` +
+      `etwas kaputt ist. Stattdessen wartenBisDatenDa(p) aus check/warten.js benutzen.`);
+  });
+} catch (e) {}
+
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');
   F.forEach(x => console.error(`  [${x.regel}] ${x.text}\n`));

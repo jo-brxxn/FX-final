@@ -26,6 +26,7 @@ const path = require('path');
 const http = require('http');
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const { chromium } = require(PW);
+const { wartenBisDatenDa } = require('./warten.js');
 
 const BASE = process.argv[2] || process.env.CHECK_BASE || 'origin/main';
 const URL_NEU = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
@@ -100,7 +101,7 @@ const ERFASSEN = () => {
   const laden = async (url) => {
     await p.goto(url, { waitUntil: 'networkidle' });
     await p.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
-    await p.waitForTimeout(5000);
+    await wartenBisDatenDa(p);   // statt fester Frist - siehe check/warten.js
     return p.evaluate(ERFASSEN);
   };
   let alt, neu, fehler = null;

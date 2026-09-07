@@ -4175,6 +4175,81 @@ function logScoreChange(symId,e){
   scoreLog.push(Object.assign({t:new Date().toISOString(),sym:symId},e));
   scoreLog=pruneScoreLog(scoreLog);
 }
+// ── Snapshot schreiben, notfalls Platz schaffen ────────────────────────
+// ⚠ Nutzer-Screenshot 2026-09-07, ZWEITES Mal: die Warnleiste stand weiter
+// bei exakt 2582 KB, obwohl der Snapshot durch VERSION-CHECK-484 um 46%
+// kleiner geworden war. Der Grund ist ein Teufelskreis, den blosses
+// Verkleinern nicht loest:
+//
+//   Der kleinere Stand kann nicht geschrieben werden, WEIL der Speicher voll
+//   ist - und er bleibt voll, weil der grosse alte Eintrag noch drinsteht.
+//
+// setItem(SK, kleiner) ersetzt zwar einen bestehenden Schluessel, aber
+// Browser rechnen die Kontingentspruefung dabei nicht zwingend gegen den
+// FREIWERDENDEN Platz: der alte Wert steht beim Pruefen noch da, der neue
+// kaeme oben drauf. Genau deshalb schlaegt selbst ein deutlich kleinerer
+// Schreibvorgang fehl.
+//
+// Die Rettung ist eine LEITER: erst den alten Eintrag ausdruecklich
+// entfernen (damit ist sein Platz sicher frei), dann - falls noetig -
+// Entbehrliches wegwerfen. Sicherungskopien und Caches zuerst, denn die baut
+// die App wieder auf; an die eigentlichen Daten geht sie nie.
+// Die rote Leiste kommt nur noch, wenn ALLE Stufen scheitern.
+const SNAP_ENTBEHRLICH=[
+  ['fxpro_backups','local backups'],
+  ['fxpro_cot_hist_cache','the COT history cache'],
+  ['fxpro_scorehist','the score history cache'],
+];
+function schreibeSnapshot(s){
+  try{localStorage.setItem(SK,s);saveQuotaOk();return;}catch(e){if(!istQuotaFehler(e))throw e;}
+  // Stufe 1: den alten, groesseren Eintrag zuerst freigeben.
+  try{
+    const alt=localStorage.getItem(SK);
+    localStorage.removeItem(SK);
+    try{localStorage.setItem(SK,s);saveQuotaRettung('by clearing the previous snapshot first');return;}
+    catch(e2){
+      if(alt!=null){try{localStorage.setItem(SK,alt);}catch(e3){}}   // nichts verlieren
+      if(!istQuotaFehler(e2))throw e2;
+    }
+  }catch(e){if(!istQuotaFehler(e))throw e;}
+  // Stufe 2: Entbehrliches wegwerfen, nach jedem Schritt neu versuchen.
+  for(const[schluessel,name]of SNAP_ENTBEHRLICH){
+    let hatte=false;
+    try{hatte=localStorage.getItem(schluessel)!=null;localStorage.removeItem(schluessel);}catch(e){}
+    if(!hatte)continue;
+    try{
+      const alt=localStorage.getItem(SK);
+      localStorage.removeItem(SK);
+      try{localStorage.setItem(SK,s);saveQuotaRettung('by dropping '+name);return;}
+      catch(e2){if(alt!=null){try{localStorage.setItem(SK,alt);}catch(e3){}}}
+    }catch(e){}
+  }
+  // Alle Stufen durch - jetzt ist es eine echte Meldung wert.
+  // ⚠ Und eine wichtige Zusatzangabe: die Leiter hat den ALTEN Eintrag
+  // ausgeraeumt, um Platz zu schaffen. Konnte er danach nicht zurueckgelegt
+  // werden, liegt auf diesem Geraet gerade GAR KEIN gespeicherter Stand mehr -
+  // die Daten existieren dann nur noch im Arbeitsspeicher dieses Tabs. Das
+  // muss die Meldung sagen, sonst schliesst jemand ahnungslos den Tab.
+  const e=new Error('quota exceeded after freeing everything expendable');
+  e.name='QuotaExceededError';
+  e.ohneLokaleKopie=localStorage.getItem(SK)==null;
+  throw e;
+}
+function istQuotaFehler(e){
+  return !!(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||/quota|exceeded/i.test(e.message||'')));
+}
+// Kurze, selbst verschwindende Meldung, wenn die App sich selbst geholfen hat.
+// Wichtig, dass sie NICHT wie ein Fehler aussieht: es ist ja gutgegangen.
+function saveQuotaRettung(wie){
+  saveQuotaOk();
+  const b=document.getElementById('saveBadge');
+  if(b)b.textContent='✓ Saved (freed space)';
+  let n=document.getElementById('saveFreedNote');
+  if(!n){n=document.createElement('div');n.id='saveFreedNote';n.className='save-freed-note';document.body.appendChild(n);}
+  n.textContent='Storage was full — the app made room '+wie+' and saved your changes. Nothing of yours was removed.';
+  clearTimeout(saveQuotaRettung._t);
+  saveQuotaRettung._t=setTimeout(()=>{const x=document.getElementById('saveFreedNote');if(x)x.remove();},9000);
+}
 // ── Sichtbare Meldung, wenn der lokale Speicher voll ist ────────────────
 // Absichtlich KEIN Modal: save() laeuft auch aus Hintergrund-Timern und beim
 // Verlassen der Seite: ein Fenster, das sich ungefragt aufdraengt, waere dort
@@ -4201,7 +4276,11 @@ function saveQuotaFail(e){
   // Zeichenzahl zu nennen liesse das harmlos aussehen, obwohl das Geraet
   // bereits an der Decke steht - deshalb steht beides da.
   const mb=kb!=null?(kb*2/1024).toFixed(1):null;
-  bar.innerHTML=istQuota
+  // Schlimmster Fall zuerst: kein gespeicherter Stand mehr auf dem Geraet.
+  const nackt=istQuota&&e&&e.ohneLokaleKopie;
+  bar.innerHTML=nackt
+    ?`<b>Storage is full and there is now NO saved copy on this device.</b> The app tried to make room and could not put the previous copy back. Your data is complete on screen — <b>do not close this tab yet</b>. Open Settings → Cloud and sync and upload now, or use Settings → Backups → Export. <button class="sq-btn" onclick="openStorageInfo()">Show what is using the space</button>`
+    :istQuota
     ?`<b>Local storage is full — your last changes were NOT saved.</b> This app is holding ${kb!=null?kb+' KB of text on this device, which is about '+mb+' MB against the browser\'s limit (most browsers store text as UTF-16, so roughly two bytes per character; Safari caps an origin at about 5 MB)':'the maximum'}. Your data is still on screen, and still in the cloud if sync is on. <button class="sq-btn" onclick="openStorageInfo()">Show what is using the space</button>`
     :`<b>Saving failed — your last changes were NOT stored on this device.</b> ${escH((e&&e.message)||'Unknown error')}. Your data is still on screen; copy anything important before reloading. <button class="sq-btn" onclick="openStorageInfo()">Show storage details</button>`;
   const b=document.getElementById('saveBadge');if(b)b.textContent='⚠ Not saved';
@@ -4952,7 +5031,7 @@ function save(){
       // unten (Push-vor-Pull bei pendenter Änderung) unbrauchbar machen, weil er
       // dann so gut wie immer anschlägt, auch ganz ohne echten Edit.
       changed=s!==localStorage.getItem(SK);
-      localStorage.setItem(SK,s);
+      schreibeSnapshot(s);
       if(changed)localStorage.setItem('fxpro_updated',new Date().toISOString());
       _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
       const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Saved '+new Date().toLocaleTimeString();
@@ -18451,6 +18530,7 @@ Object.assign(window,{
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
   saveQuotaFail,saveQuotaOk,saveQuotaKB,storageRows,openStorageInfo,clearStorageItem,
+  schreibeSnapshot,istQuotaFehler,saveQuotaRettung,SNAP_ENTBEHRLICH,
   seedNoteId,setSeedNoteFlag,migrateSeedNotesOut,researchForSnap,applySeedNoteFlags,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,

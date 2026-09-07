@@ -1,6 +1,7 @@
 const PW=process.env.PW_PATH||'/opt/node22/lib/node_modules/playwright';
 const URL=process.env.CHECK_URL||'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
+const { wartenBisDatenDa } = require('./warten.js');
 const MODE=process.argv[2]||'normalized';
 (async()=>{
  const b=await chromium.launch();
@@ -9,7 +10,9 @@ const MODE=process.argv[2]||'normalized';
  const perr=[];p.on('pageerror',e=>perr.push(String(e)));
  await p.goto(URL,{waitUntil:'networkidle'});
  await p.evaluate(()=>{['introOv','lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});});
- await p.waitForTimeout(5000);
+ // ⚠ Keine feste Frist mehr - siehe check/warten.js (Messung 2026-09-07:
+ // die Leiste wird bei t=645ms noch mit den Werten VOR den Feeds gezeichnet).
+ await wartenBisDatenDa(p);
  const r=await p.evaluate(()=>{
   const F=[],ok={};
   const soll={};syms.forEach(s=>soll[s.id]=Math.round(symScoreCmp(s)*10)/10);
