@@ -11739,24 +11739,6 @@
    "date": "2026-09-01",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage",
-   "history": [
-    [
-     "2013-11-04",
-     "51.3"
-    ],
-    [
-     "2013-11-21",
-     "51.5"
-    ],
-    [
-     "2013-12-02",
-     "51.6"
-    ],
-    [
-     "2013-12-16",
-     "52.7"
-    ]
-   ],
    "historyFull": [
     [
      "2026-09-01",
@@ -11772,24 +11754,6 @@
    "date": "2026-09-03",
    "event": "Services PMI (Trading Economics)",
    "source": "tepage",
-   "history": [
-    [
-     "2013-11-21",
-     "50.9"
-    ],
-    [
-     "2013-12-04",
-     "51.2"
-    ],
-    [
-     "2013-12-16",
-     "51"
-    ],
-    [
-     "2014-01-06",
-     "51"
-    ]
-   ],
    "historyFull": [
     [
      "2026-09-03",
@@ -11797,55 +11761,6 @@
      null
     ]
    ]
-  },
-  "Sentix Investor Confidence": {
-   "actual": "9.3",
-   "forecast": "6",
-   "previous": "-15.6",
-   "date": "2013-11-04",
-   "event": "Sentix Investors Sentiment",
-   "period": null,
-   "history": [
-    [
-     "2013-03-04",
-     "-10.6"
-    ],
-    [
-     "2013-04-08",
-     "-17.3"
-    ],
-    [
-     "2013-05-06",
-     "-15.6"
-    ],
-    [
-     "2013-11-04",
-     "9.3"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2013-03-04",
-     "-10.6",
-     "-5.2"
-    ],
-    [
-     "2013-04-08",
-     "-17.3",
-     "-13.1"
-    ],
-    [
-     "2013-05-06",
-     "-15.6",
-     "-15.2"
-    ],
-    [
-     "2013-11-04",
-     "9.3",
-     "6"
-    ]
-   ],
-   "source": "tv"
   }
  },
  "USD": {
@@ -34887,21 +34802,6 @@
    ],
    "source": "tv"
   },
-  "Retail Sales": {
-   "actual": "7.0%",
-   "forecast": null,
-   "previous": "6.1%",
-   "date": "2026-08-27",
-   "event": "Household Spending (Trading Economics)",
-   "source": "tepage",
-   "historyFull": [
-    [
-     "2026-08-27",
-     "7.0%",
-     null
-    ]
-   ]
-  },
   "Core CPI": {
    "actual": "3.6%",
    "forecast": "3.5%",
@@ -34914,6 +34814,21 @@
      "2026-08-26",
      "3.6%",
      "3.5%"
+    ]
+   ]
+  },
+  "Retail Sales": {
+   "actual": "7.0%",
+   "forecast": null,
+   "previous": "6.1%",
+   "date": "2026-08-27",
+   "event": "Household Spending (Trading Economics)",
+   "source": "tepage",
+   "historyFull": [
+    [
+     "2026-08-27",
+     "7.0%",
+     null
     ]
    ]
   },
@@ -41738,39 +41653,6 @@
    ],
    "source": "tv"
   },
-  "Manufacturing PMI": {
-   "actual": "54.90",
-   "forecast": null,
-   "previous": "54.50",
-   "date": "2026-09-01",
-   "event": "Manufacturing PMI (Trading Economics)",
-   "source": "tepage",
-   "history": [
-    [
-     "2013-08-30",
-     "52.2"
-    ],
-    [
-     "2013-09-30",
-     "52.5"
-    ],
-    [
-     "2013-10-30",
-     "54.2"
-    ],
-    [
-     "2013-11-28",
-     "55.1"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2026-09-01",
-     "54.90",
-     null
-    ]
-   ]
-  },
   "Services Inflation": {
    "actual": "1.20%",
    "forecast": null,
@@ -41812,6 +41694,21 @@
     [
      "2026-07-31",
      "800K",
+     null
+    ]
+   ]
+  },
+  "Manufacturing PMI": {
+   "actual": "54.90",
+   "forecast": null,
+   "previous": "54.50",
+   "date": "2026-09-01",
+   "event": "Manufacturing PMI (Trading Economics)",
+   "source": "tepage",
+   "historyFull": [
+    [
+     "2026-09-01",
+     "54.90",
      null
     ]
    ]
@@ -50911,39 +50808,6 @@
    ],
    "source": "tv"
   },
-  "Services PMI": {
-   "actual": "52.50",
-   "forecast": null,
-   "previous": "52.10",
-   "date": "2026-09-03",
-   "event": "Services PMI (Trading Economics)",
-   "source": "tepage",
-   "history": [
-    [
-     "2013-11-05",
-     "62.5"
-    ],
-    [
-     "2013-12-04",
-     "60"
-    ],
-    [
-     "2014-01-06",
-     "58.8"
-    ],
-    [
-     "2014-02-05",
-     "58.3"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2026-09-03",
-     "52.50",
-     null
-    ]
-   ]
-  },
   "Manufacturing PMI": {
    "actual": "51.70",
    "forecast": null,
@@ -50951,28 +50815,25 @@
    "date": "2026-09-01",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage",
-   "history": [
-    [
-     "2013-09-02",
-     "57.2"
-    ],
-    [
-     "2013-10-01",
-     "56.7"
-    ],
-    [
-     "2013-11-01",
-     "56"
-    ],
-    [
-     "2013-12-02",
-     "58.4"
-    ]
-   ],
    "historyFull": [
     [
      "2026-09-01",
      "51.70",
+     null
+    ]
+   ]
+  },
+  "Services PMI": {
+   "actual": "52.50",
+   "forecast": null,
+   "previous": "52.10",
+   "date": "2026-09-03",
+   "event": "Services PMI (Trading Economics)",
+   "source": "tepage",
+   "historyFull": [
+    [
+     "2026-09-03",
+     "52.50",
      null
     ]
    ]
@@ -56052,39 +55913,6 @@
    ],
    "source": "tv"
   },
-  "PPI": {
-   "actual": "2.10%",
-   "forecast": null,
-   "previous": null,
-   "date": "2026-08-13",
-   "event": "PPI (Trading Economics)",
-   "source": "tepage",
-   "history": [
-    [
-     "2015-06-15",
-     "-6%"
-    ],
-    [
-     "2015-07-14",
-     "-6.1%"
-    ],
-    [
-     "2015-08-13",
-     "-6.4%"
-    ],
-    [
-     "2015-09-14",
-     "-6.8%"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2026-08-13",
-     "2.10%",
-     null
-    ]
-   ]
-  },
   "Core CPI": {
    "actual": "0.40%",
    "forecast": null,
@@ -56096,6 +55924,21 @@
     [
      "2026-08-31",
      "0.40%",
+     null
+    ]
+   ]
+  },
+  "PPI": {
+   "actual": "2.10%",
+   "forecast": null,
+   "previous": null,
+   "date": "2026-08-13",
+   "event": "PPI (Trading Economics)",
+   "source": "tepage",
+   "historyFull": [
+    [
+     "2026-08-13",
+     "2.10%",
      null
     ]
    ]
@@ -59520,46 +59363,6 @@
      "2026-07-20",
      "4.1%",
      "4%"
-    ]
-   ],
-   "source": "tv"
-  },
-  "Avg Hourly Earnings": {
-   "actual": "0.3%",
-   "forecast": "0.5%",
-   "previous": "0.6%",
-   "date": "2014-05-06",
-   "event": "Labour Cost Index QoQ",
-   "period": "q/q",
-   "history": [
-    [
-     "2013-05-06",
-     "0.4%"
-    ],
-    [
-     "2014-02-04",
-     "0.6%"
-    ],
-    [
-     "2014-05-06",
-     "0.3%"
-    ]
-   ],
-   "historyFull": [
-    [
-     "2013-05-06",
-     "0.4%",
-     "0.5%"
-    ],
-    [
-     "2014-02-04",
-     "0.6%",
-     "0.6%"
-    ],
-    [
-     "2014-05-06",
-     "0.3%",
-     "0.5%"
     ]
    ],
    "source": "tv"
@@ -67283,24 +67086,6 @@
    "date": "2026-09-01",
    "event": "Manufacturing PMI (Trading Economics)",
    "source": "tepage",
-   "history": [
-    [
-     "2013-10-01",
-     "54.2"
-    ],
-    [
-     "2013-11-01",
-     "55.6"
-    ],
-    [
-     "2013-12-02",
-     "55.3"
-    ],
-    [
-     "2014-01-02",
-     "53.5"
-    ]
-   ],
    "historyFull": [
     [
      "2026-09-01",
