@@ -511,6 +511,46 @@ erreichbaren Seite; fremde Server erlauben der Seite die Abfrage meist nicht
 (CORS — dieselbe Wand wie beim Instagram-Import); und ein Lauf pro Tag
 verbraucht **eine** Abfrage statt einer pro Gerät und Seitenaufruf.
 
+### ⚠ Nur deutsche Küche (seit 2026-09-08)
+
+Nutzer-Anweisung 2026-09-08: *„entfern die ganzen Filter für die Quellen und
+mach das nur deutsche Gerichte vorgeschlagen werden"*.
+
+`"nurLand": "de"` in `tools/rezept-quellen.json` schaltet den Lauf um: er
+sammelt **ausschließlich** Quellen mit genau diesem `land`, schaltet TheMealDB
+und Spoonacular ab (internationale Sammel-Datenbanken ohne Herkunft je Gericht)
+und wirft auch den **Altbestand** aus fremden Küchen aus dem Vorrat. Die
+fremden Quellen bleiben mit Absicht in der Datei stehen — ein leeres
+`nurLand` dreht alles zurück, ohne 25 Einträge neu zu tippen.
+
+⚠ **Die Herkunft hängt an der QUELLE, nicht am Gericht** — am Gericht wäre die
+Regel nicht zu erfüllen. Gemessen am Vorrat vom 2026-09-08: das Thema `german`
+(Schnitzel, Spätzle, Rouladen) traf auf **7 von 270** Einträge zu; danach zu
+filtern hätte den Bereich praktisch geleert. „Deutsch" heißt hier deshalb: aus
+einer deutschen Küche — einschließlich der Nudeln und Currys, die dort genauso
+gekocht werden.
+
+**Folge, gemessen:** 270 → **104 Einträge** aus 16 deutschsprachigen Quellen,
+141 Bilder gelöscht (15 MB → 7,6 MB). Jeder Tageslauf füllt aus diesen Quellen
+rund 96 Einträge nach. Die Themenverteilung ist dadurch schief und das ist
+ein echter Nachteil: veggie 78, sweet 29, bread 19, aber **chicken 2 und fish
+2** — die deutschsprachige Quellenliste besteht überwiegend aus Back- und
+Vegetarier-Blogs. Wer Fleisch- und Fischgerichte will, muss deutsche Quellen
+mit dieser Ausrichtung nachtragen (Prüfweg: `--pruefe`, siehe unten).
+
+**Zweite Sperre in der App** (`istDeutsch()` in `js/rezept/app.js`): angezeigt
+wird nur, was `land === 'de'` trägt. Der Tageslauf sammelt zwar ohnehin nichts
+anderes mehr, aber ein alter Vorrat aus dem Zwischenspeicher darf nichts
+Fremdes hereinlassen. Bleibt danach nichts übrig, sagt die Oberfläche das —
+statt einer leeren Reihe, die wie ein Defekt aussieht.
+
+**Kein Filter nach Quelle mehr.** Die Chipreihe „Source" ist entfernt; der
+Quellenname steht weiter auf jeder Karte, nur nicht mehr anklickbar. Die
+Chipreihe „Kind" (Themen) bleibt. Wer den Filter zurückholt: der Quellenname
+muss als **Index** übergeben werden, nicht als Text — „Malte's Kitchen" wurde
+über `escH()` zu `&#39;`, der Browser machte daraus wieder ein `'`, und der
+Handler war kaputtes JavaScript.
+
 ### Die vier Quellen
 
 | Quelle | Was sie liefert | Grenze |
@@ -757,9 +797,16 @@ verworfen — eine stille Rejection sähe wieder aus wie „die App macht nichts
 
 ⚠ **Der Knopf kann den Workflow nicht auslösen.** Dafür bräuchte der Browser
 einen GitHub-Token mit Schreibrecht, der dann im Quelltext dieser Seite
-stände. Ist der Vorrat leer, holt der Knopf deshalb **live bei TheMealDB**
-nach — die einzige der vier Quellen, die eine Browser-Abfrage erlaubt.
-Klappt auch das nicht, sagt die Oberfläche warum.
+stände. Ist der Vorrat leer, **holt der Knopf `rezept_feed.json` neu** (mit
+Zeitstempel und `cache:'no-store'`, sonst liefert der Service Worker die
+Datei von vorhin) und meldet, wie viele Einträge dazugekommen sind. Klappt
+das nicht, sagt die Oberfläche warum.
+
+⚠ **Bis 2026-09-08 holte dieser Knopf drei Zufallsgerichte live bei
+TheMealDB** — der einzigen Quelle, die eine Browser-Abfrage erlaubt. Unter der
+Regel „nur deutsche Gerichte" wären die alle weggefiltert worden: der Knopf
+hätte sichtbar nichts mehr getan. Eine deutschsprachige Quelle, die eine
+Live-Abfrage aus dem Browser erlaubt, gibt es nicht.
 
 ⚠ **Merge-Regel für „gesehen"**: Vereinigung beider Geräte — **außer** nach
 einem Zurücksetzen („show them all again"). Eine reine Vereinigung würde die
