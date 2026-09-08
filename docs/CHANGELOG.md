@@ -11702,3 +11702,67 @@ Quelle — mit der Einschränkung, dass Statistikämter und FRED nur **Actuals**
 liefern, keine Forecasts. Ohne Forecast gibt es keine Überraschung, und ohne
 Überraschung fließt ein Wert nicht in den Score: die Balken würden länger,
 die rote Linie und die Score-Historie blieben bei 2013.
+
+## 2026-09-08 — Alters-Faktor raus, wo Alter nichts heißt · Typo-Hierarchie (VERSION-CHECK-489)
+
+**Nutzer:** *„Im Score entfern bei cot und bei risk Environment und bei den
+yields den Multiplikator Age das brauchen die nicht. Und achte nochmal auf
+allen Fenstern die man öffnen kann und generell allen Seiten darauf das die
+Schriften hierachie stimmt …"*
+
+### 1. Der Alters-Multiplikator
+
+Er bildet ab, dass eine **Veröffentlichung** mit der Zeit an Aussagekraft
+verliert. Die drei genannten Gruppen sind aber keine Veröffentlichungen,
+sondern **Zustände**, die laufend neu gemessen werden — COT-Positionierung,
+Risikoumfeld, Anleiherenditen. Ein Zustand kann nicht „alt" sein; der Faktor
+hat dort nur Gewicht abgezogen, ohne etwas abzubilden.
+
+Umgesetzt über die **Rubrik**, nicht über eine Namensliste (`COT Data`,
+`Risk Environment`) — plus die drei Renditen, die in der Inflations-Karte
+stehen und deshalb zusätzlich über den Namen erkannt werden.
+
+| Bereich | ohne Alters-Faktor | noch mit |
+|---|---|---|
+| COT Data | **77** | 0 |
+| Risk Environment | **32** | 0 |
+| 2Y / 10Y / Spread | **72** | 0 |
+| echte Veröffentlichungen | – | **362** (unverändert) |
+
+`SCORE_MODEL_VERSION` 9 → **10**: der normalisierte Score ändert sich an **65
+Stellen**, der klassische an keiner — dort ist `indNormFactor` ohnehin 1.
+
+### 2. Ein Wächter, der die halbe Rechnung nicht ansah
+
+`scorediff` meldete zunächst *„an keiner Stelle verändert"*. Grund: er setzte
+den Score-Modus **gar nicht** und maß damit nur den Standard — der
+normalisierte Modus, in dem Surprise-, Alters- und Marktgewicht überhaupt
+erst wirken, war komplett blind. Ein Diff-Wächter, der die Hälfte des Modells
+nicht ansieht, beantwortet die Frage nicht, für die es ihn gibt. Er erfasst
+jetzt **beide Modi** (Werte mit `classic:`/`normalized:`-Präfix, damit ein
+Treffer sofort sagt, wo er steckt) — und meldet die 65 Änderungen prompt.
+
+### 3. Schrift-Hierarchie
+
+Gemessen wurde je Seite, welche Schriftgrößen wirklich im DOM ankommen und
+wie weit benachbarte Stufen auseinanderliegen:
+
+| Seite | vorher | Stufen < 1 px | nachher | Stufen < 1 px |
+|---|---|---|---|---|
+| Dashboard | 12 Größen | **8 Paare** | 7 | **0** |
+| Asset-Seite | 11 | 5 | 7 | 0 |
+| Matrix | 9 | 2 | 7 | 0 |
+| Calendar | 8 | 1 | 7 | 0 |
+| **alle 18 Seiten** | – | – | – | **0** |
+
+Eine 8-stufige Skala (`--fs-hero/xl/lg/md/base/sm/xs/2xs`) gab es längst —
+daneben liefen aber **631 freie Pixelwerte**, darunter Halbschritte
+(12,5 / 11,5 / 10,5 / 9,5 / 13,5 px) und Mikrogrößen (8 / 8,5 / 9 px). Ein
+Unterschied von einem halben Pixel ist keine Stufe, sondern ein Verlauf: er
+sagt dem Auge nichts, macht aber jede Zeile ein bisschen anders.
+
+Ersetzt wurden alle Größen **bis 13 px** plus die exakten Treffer
+(15/17/24/30) — dort ändert sich entweder nichts oder höchstens ein halber
+Pixel. **Bewusst unangetastet: 14, 16, 18 px.** Dort entscheidet die Rolle
+des Elements (Seitentitel? Kennzahl? Icon?) und nicht die Zahl — das wäre
+geraten.

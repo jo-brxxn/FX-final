@@ -429,8 +429,34 @@ function indSurpriseMag(ind){
   // von 2387 Releases, also 29%) - z=0, Faktor SCORE_NORM_MIN.
   return Math.sqrt(Math.max(0.05,z));
 }
+// ── Wo das Alter NICHTS bedeutet ───────────────────────────────────────
+// Nutzer-Vorgabe 2026-09-08: "Im Score entfern bei cot und bei risk
+// Environment und bei den yields den Multiplikator Age das brauchen die
+// nicht."
+//
+// Der Grund traegt: der Alters-Multiplikator bildet ab, dass eine
+// VEROEFFENTLICHUNG mit der Zeit an Aussagekraft verliert - ein CPI-Wert von
+// vor drei Monaten sagt weniger ueber heute als der von gestern. Diese drei
+// Gruppen sind aber keine Veroeffentlichungen, sondern ZUSTAENDE:
+//   • COT Data        - die Positionierung IST der aktuelle Stand, wochen-
+//                       weise fortgeschrieben (dazu VIX/AAII/Fear&Greed,
+//                       die in derselben Karte stehen)
+//   • Risk Environment - das Risikoumfeld gilt jetzt, es altert nicht
+//   • Anleiherenditen  - eine Tagesreihe; der letzte Kurs ist der Kurs
+// Ein Zustand, der taeglich neu gemessen wird, kann nicht "alt" sein - der
+// Faktor hat dort nur Gewicht abgezogen, ohne etwas abzubilden.
+const DECAY_EXEMPT_RUBS=new Set(['COT Data','Risk Environment']);
+// Die Renditen stehen in der Inflations-Karte, nicht in einer eigenen -
+// deshalb hier zusaetzlich ueber den Namen. BOND_INDS deckt 2Y/10Y ab, der
+// Spread ist eine abgeleitete Groesse derselben Reihen.
+const DECAY_EXEMPT_INDS=new Set(['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']);
+function indDecayExempt(ind,rub){
+  if(rub&&DECAY_EXEMPT_RUBS.has(rub.name))return true;
+  return DECAY_EXEMPT_INDS.has(stripPeriodSuffix(ind.name).base);
+}
 // Zyklus-relativer Zeit-Decay: 0,5^(Alter / (1,5 * eigener Zyklus)).
-function indDecayWeight(ind){
+function indDecayWeight(ind,rub){
+  if(indDecayExempt(ind,rub))return 1;
   const r=ind.research||{};
   const d=r.date||ind.date;
   if(!d)return 1;
@@ -477,16 +503,16 @@ function indMarketWeight(ind,symId){
 let _mktWeightCache={};
 function invalidateNormCache(){_mktWeightCache={};}
 // Gesamtfaktor, um 1,0 zentriert und geklemmt (siehe Kommentar oben).
-function indNormFactor(ind,symId){
+function indNormFactor(ind,symId,rub){
   if(scoreMode!=='normalized')return 1;
-  const f=indSurpriseMag(ind)*indDecayWeight(ind)*indMarketWeight(ind,symId);
+  const f=indSurpriseMag(ind)*indDecayWeight(ind,rub)*indMarketWeight(ind,symId);
   if(!isFinite(f))return 1;
   return Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,f));
 }
 // Aufschluesselung fuer das Score-Modal - damit die Ebene NICHT als Blackbox
 // wirkt, sondern jeder Teilfaktor einzeln nachvollziehbar bleibt.
-function indNormBreakdown(ind,symId){
-  const mag=indSurpriseMag(ind),dec=indDecayWeight(ind),mkt=indMarketWeight(ind,symId);
+function indNormBreakdown(ind,symId,rub){
+  const mag=indSurpriseMag(ind),dec=indDecayWeight(ind,rub),mkt=indMarketWeight(ind,symId);
   const sd=indSurpriseScale(ind);
   const r=ind.research||{};
   const a=parseNumLike(r.actual),f=parseNumLike(r.forecast);
@@ -660,7 +686,7 @@ function indScoreParts(ind,rub,symId){
   // Zugehoerigkeit der Karte, und erst zuletzt das gewaehlte Asset. Der
   // letzte Fall greift nur noch fuer Karten, die (noch) keinen Stempel
   // haben - z.B. eine gerade neu angelegte, bevor recomputeAuto lief.
-  const norm=indNormFactor(ind,symId||(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null));
+  const norm=indNormFactor(ind,symId||(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null),rub);
   const base=biasScore(ind.bias)*w*norm;
   // Revisions-Anteil (Nutzer-Wunsch 2026-07-21): wurde das Previous dieses
   // Release gegenueber dem urspruenglich gemeldeten Vor-Actual revidiert
@@ -791,7 +817,7 @@ function scoreInfoIndRow(ind,rub){
   // ── Formel-Kette ──
   const chips=[`<span class="si-chip">Base <span class="v">${biasScore(ind.bias)>0?'+':''}${biasScore(ind.bias)}</span></span>`,
                `<span class="si-chip">Weight <span class="v">${p.w}</span></span>`];
-  const nb=(scoreMode==='normalized')?indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null)):null;
+  const nb=(scoreMode==='normalized')?indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null),rub):null;
   let factorPanels='';
   if(nb){
     if(nb.z!=null&&Math.abs(nb.mag-1)>0.005){
@@ -920,7 +946,7 @@ function openDataQuality(symId){
       const cyc=indCycleDays(ind);
       const hl=indHalfLifeDays(ind);
       const mkt=indMarketWeight(ind,symId);
-      const nb=indNormBreakdown(ind,symId);
+      const nb=indNormBreakdown(ind,symId,rub);
       rows.push({rub:rub.name,name:ind.displayName||ind.name,
         n:st.n,median:st.median,medianAbs:st.medianAbs,scale:st.scale,
         cyc,hl,mkt,z:nb.z,norm:nb.total,
@@ -990,7 +1016,7 @@ function openScoreInfoRub(symId,rubId){
   const zero=inds.length-active.length;
   let html=active.map(i=>scoreInfoIndRow(i,rub)).join('');
   if(!active.length)html+='<div style="color:var(--t3)">No indicator currently contributes to this card\'s score.</div>';
-  if(zero>0)html+=`<div style="color:var(--t3);font-size:11px;margin-top:3px">${zero} more indicator${zero===1?'':'s'} at 0 (neutral / no signal).</div>`;
+  if(zero>0)html+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:3px">${zero} more indicator${zero===1?'':'s'} at 0 (neutral / no signal).</div>`;
   html+=scoreInfoTotalRow('Card score',rubScore(rub));
   document.getElementById('scoreInfoTitle').textContent='Score – '+(rub.name)+' ('+sym.id+')';
   document.getElementById('scoreInfoBody').innerHTML=html;
@@ -1006,7 +1032,7 @@ function openScoreInfoSym(symId){
     const sc=rubScore(rub);
     html+=`<div style="display:flex;justify-content:space-between;gap:10px;margin:9px 0 4px;font-weight:700;color:var(--t2)"><span>${escH(rub.name)}</span><span style="color:${scoreColor(sc)}">${fmtScNum(sc)}</span></div>`;
     if(active.length)html+=active.map(i=>scoreInfoIndRow(i,rub)).join('');
-    else html+=`<div style="color:var(--t3);font-size:11px">all indicators at 0</div>`;
+    else html+=`<div style="color:var(--t3);font-size:var(--fs-xs)">all indicators at 0</div>`;
   });
   html+=scoreInfoTotalRow('Raw sum of all indicators',symScore(sym));
   // Der ANGEZEIGTE Symbol-Score ist seit 2026-07-07 ueberall der
@@ -1015,7 +1041,7 @@ function openScoreInfoSym(symId){
   const cnt=countActiveInds(sym);
   const f=symCmpFactor(sym);
   html+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 8px;margin-top:2px;border-top:1px solid var(--bd);font-weight:700;color:var(--t1)"><span>Displayed score: raw ${fmtScNum(symScore(sym))} × ${f}</span><span style="color:${scoreColor(symScoreCmp(sym))}">${fmtScNum(symScoreCmp(sym))}</span></div>`;
-  html+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">${cnt.active} of ${cnt.total} indicators currently contribute (${symTrackedCount(sym)} scoreable, Ø ${Math.round(fxRefCount()*10)/10} across FX). The displayed score is normalised to this common indicator base: raw sum × (Ø FX indicator count / own tracked count). Assets tracking fewer indicators (e.g. CHF) can therefore reach the same score heights as heavily tracked ones (e.g. USD) - the factor updates automatically whenever indicators are added or removed. The automatic ▲/▼ bias threshold (±3) still evaluates the raw sum.</div>`;
+  html+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:4px">${cnt.active} of ${cnt.total} indicators currently contribute (${symTrackedCount(sym)} scoreable, Ø ${Math.round(fxRefCount()*10)/10} across FX). The displayed score is normalised to this common indicator base: raw sum × (Ø FX indicator count / own tracked count). Assets tracking fewer indicators (e.g. CHF) can therefore reach the same score heights as heavily tracked ones (e.g. USD) - the factor updates automatically whenever indicators are added or removed. The automatic ▲/▼ bias threshold (±3) still evaluates the raw sum.</div>`;
   html+=symStrengthSectionHtml(sym);
   document.getElementById('scoreInfoTitle').textContent='Score – '+sym.id+(sym.full?' ('+sym.full+')':'');
   document.getElementById('scoreInfoBody').innerHTML=html;
@@ -1027,7 +1053,7 @@ function openScoreInfoSym(symId){
 // nicht die Note allein.
 function symStrengthSectionHtml(sym){
   if(scoreMode!=='normalized')
-    return`<div style="color:var(--t3);font-size:11px;margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">Strength 1–10 (score measured against this asset's <b>own</b> history) is shown in <b>normalised</b> mode. Switch the weighting in the header to activate it.</div>`;
+    return`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">Strength 1–10 (score measured against this asset's <b>own</b> history) is shown in <b>normalised</b> mode. Switch the weighting in the header to activate it.</div>`;
   const past=symOwnHistory(sym.id);
   const avg=symScoreAvg(sym);
   const row=(l,v,c)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 8px"><span style="color:var(--t2)">${l}</span><span style="font-family:var(--ff-num)${c?';color:'+c:''}">${v}</span></div>`;
@@ -1038,16 +1064,16 @@ function symStrengthSectionHtml(sym){
     const miss=symStrengthMissing(sym);
     const raw=((typeof scoreHist!=='undefined'&&scoreHist&&scoreHist[sym.id])||[]).length;
     h+=row('Comparable history',past.length+' day'+(past.length===1?'':'s')+(raw>past.length?' (of '+raw+' recorded)':''));
-    h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">No grade yet. It needs ${STRENGTH_MIN_OBS} days recorded under the <b>current</b> score model and weighting mode${miss>0?` (${miss} more to go)`:''} — below that the average and the spread would be guessed rather than measured, and a guessed grade is worse than none. ${past.length>=STRENGTH_MIN_OBS?'The series so far shows no variation at all, so there is nothing to measure against.':''}</div>`;
-    if(raw>past.length)h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px"><b>Why the older days do not count:</b> the score formula itself changed (revisions and the trend bonus were removed, the staleness cut-off was added), and the two weighting modes produce different magnitudes. Measured on this asset, the old series averaged a different level from what the same situation yields today — comparing across that break would not have produced a weak grade, it would have produced a meaningless one. Those days are still kept and still show in Trends; they are only excluded from this one calculation.</div>`;
+    h+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:4px">No grade yet. It needs ${STRENGTH_MIN_OBS} days recorded under the <b>current</b> score model and weighting mode${miss>0?` (${miss} more to go)`:''} — below that the average and the spread would be guessed rather than measured, and a guessed grade is worse than none. ${past.length>=STRENGTH_MIN_OBS?'The series so far shows no variation at all, so there is nothing to measure against.':''}</div>`;
+    if(raw>past.length)h+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:4px"><b>Why the older days do not count:</b> the score formula itself changed (revisions and the trend bonus were removed, the staleness cut-off was added), and the two weighting modes produce different magnitudes. Measured on this asset, the old series averaged a different level from what the same situation yields today — comparing across that break would not have produced a weak grade, it would have produced a meaningless one. Those days are still kept and still show in Trends; they are only excluded from this one calculation.</div>`;
   }else{
     const m=past.reduce((a,b)=>a+b,0)/past.length;
     h+=row('Own average / spread',fmtScNum(Math.round(m*10)/10)+' ± '+fmtScNum(Math.round(Math.sqrt(past.reduce((a,b)=>a+(b-m)*(b-m),0)/past.length)*10)/10)+' ('+past.length+'d)');
     h+=row('Today in own std deviations',(z>0?'+':'')+z+' σ');
     h+=row('<b>Strength</b>','<b>'+s+' / 10</b>',scoreColor(symScoreCmp(sym)));
-    h+=`<div style="color:var(--t3);font-size:11px;margin-top:4px">Read as: how unusual today's reading is <b>for this asset itself</b> — 1 = weakest it has been, 10 = strongest. Fixed σ bands, not a percentile rank.</div>`;
+    h+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:4px">Read as: how unusual today's reading is <b>for this asset itself</b> — 1 = weakest it has been, 10 = strongest. Fixed σ bands, not a percentile rank.</div>`;
   }
-  h+=`<div style="color:var(--t3);font-size:11px;margin-top:6px"><b>Its limit, deliberately not hidden:</b> a grade built on an asset's own history says nothing about absolute size. A currency that barely moves can reach a 9 on a small swing while a genuinely strong one sits at 5. Measured on the real history of 2026-08-08, a plain percentile rank put JPY at +7.3, CAD at −1.0 and NZD at −1.4 in the <b>same</b> decile — which is why the grade uses fixed σ bands and, more importantly, why it stands <b>next to</b> the points score instead of replacing it. For cross-asset comparison keep using the points; use the grade to judge whether that number is normal or extreme for this particular asset.</div></div>`;
+  h+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px"><b>Its limit, deliberately not hidden:</b> a grade built on an asset's own history says nothing about absolute size. A currency that barely moves can reach a 9 on a small swing while a genuinely strong one sits at 5. Measured on the real history of 2026-08-08, a plain percentile rank put JPY at +7.3, CAD at −1.0 and NZD at −1.4 in the <b>same</b> decile — which is why the grade uses fixed σ bands and, more importantly, why it stands <b>next to</b> the points score instead of replacing it. For cross-asset comparison keep using the points; use the grade to judge whether that number is normal or extreme for this particular asset.</div></div>`;
   return h;
 }
 // Zaehlt beitragende (total != 0) und insgesamt vorhandene Indikatoren eines
@@ -1062,7 +1088,7 @@ function openScoreInfoPair(pairName){
   const codeToId={XAU:'GOLD',XAG:'SILVER',WTI:'OIL',BTC:'BTC',ETH:'ETH'};
   const bSym=syms.find(s=>s.id===(codeToId[parts[0]]||parts[0]));
   const qSym=syms.find(s=>s.id===(codeToId[parts[1]]||parts[1]));
-  const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span><span style="font-weight:600">${escH(l)}</span>${sub?`<br><span style="color:var(--t3);font-size:11px">${escH(sub)}</span>`:''}</span><span style="font-weight:700">${fmtScNum(v)}</span></div>`;
+  const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span><span style="font-weight:600">${escH(l)}</span>${sub?`<br><span style="color:var(--t3);font-size:var(--fs-xs)">${escH(sub)}</span>`:''}</span><span style="font-weight:700">${fmtScNum(v)}</span></div>`;
   let html='';
   const sideSub=(s,neg)=>{
     const f=symCmpFactor(s),n=symTrackedCount(s);
@@ -1073,7 +1099,7 @@ function openScoreInfoPair(pairName){
   const carry=typeof pairCarryAdj==='function'?pairCarryAdj(pairName):0;
   if(carry)html+=row('Carry adjustment',carry,'policy-rate differential: ±0.5 from 0.5%, ±1 from 1.5%');
   html+=scoreInfoTotalRow('Pair score',pairScore(pairName));
-  html+=`<div style="color:var(--t3);font-size:11px;margin-top:6px">Both sides are scaled to a common indicator base before subtracting, so a symbol that simply tracks more releases (e.g. USD) does not dominate the pair score structurally.</div>`;
+  html+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Both sides are scaled to a common indicator base before subtracting, so a symbol that simply tracks more releases (e.g. USD) does not dominate the pair score structurally.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+pairName;
   document.getElementById('scoreInfoBody').innerHTML=html;
   openM('mScoreInfo');
@@ -1436,7 +1462,7 @@ function symScoreCmp(sym){
 // "classic" ist indNormFactor() ohnehin 1 - und ausserdem den Surprise-Index
 // (esiForCcy/esiSeries), der denselben Massstab benutzt. Aufgezeichnete Tage
 // davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=9;
+const SCORE_MODEL_VERSION=10;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -1531,4 +1557,7 @@ export {
 // check/display.js/check/runtime.js/check/scorediff.js direkt per
 // page.evaluate() als globalen Bezeichner aufrufen (docs/module-split.md,
 // Abschnitt "check/*.js selbst durchsuchen").
-if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,scoreMode,setScoreMode,symScore,symScoreCmp,pairCarryAdj,symStrength10});
+// ⚠ indDecayWeight/indDecayExempt stehen hier fuer check/score.js: der
+// Waechter muss pruefen koennen, WELCHE Indikatoren einen Alters-Faktor
+// tragen - sonst faellt eine falsch gezogene Ausnahme erst dem Nutzer auf.
+if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,scoreMode,setScoreMode,symScore,symScoreCmp,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});

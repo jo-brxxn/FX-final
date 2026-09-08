@@ -503,7 +503,7 @@ function renderCcyCfgBody(){
   const sel=new Set(w.ccyAssets&&w.ccyAssets.length?w.ccyAssets:FX);
   const groups=ccyAllOptions();
   const cnt=sel.size;
-  body.innerHTML=`<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px">${cnt}/${CCY_MAX_ASSETS} selected</div>`+groups.map(g=>`
+  body.innerHTML=`<div style="font-size:var(--fs-xs);color:var(--t3);margin-bottom:8px">${cnt}/${CCY_MAX_ASSETS} selected</div>`+groups.map(g=>`
     <div class="dw-notes-sub" style="margin-top:10px">${escH(g.l)}</div>
     <div class="mw-cfg-grid">${g.opts.map(o=>`<button class="btn mw-cfg-opt${sel.has(o.key)?' on':''}" onclick="toggleCcyAsset('${o.key}')" ${(!sel.has(o.key)&&cnt>=CCY_MAX_ASSETS)?'disabled title="Maximum 9 assets - remove one first"':''}>${sel.has(o.key)?'✓ ':''}${escH(o.label)}</button>`).join('')}</div>`).join('');
 }

@@ -4612,10 +4612,10 @@ function openBackupM(){
   try{
     const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
     const el=document.getElementById('mBackupList');
-    if(bs.length===0){el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">No backups yet. Backups are created automatically before every cloud download and every 10 minutes.</div>';}
+    if(bs.length===0){el.innerHTML='<div style="color:var(--t3);font-size:var(--fs-base);padding:8px 0">No backups yet. Backups are created automatically before every cloud download and every 10 minutes.</div>';}
     else{el.innerHTML=bs.map((b,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
-      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:13px">${escH(b.label)}</div><div style="color:var(--t3);font-size:11px;font-family:'SF Mono',monospace">${new Date(b.ts).toLocaleString('en-GB')}</div></div>
-      <button class="btn g" onclick="restoreLocalBackup(${i})" style="font-size:11px;flex-shrink:0">↩ Wiederherstellen</button>
+      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:var(--fs-base)">${escH(b.label)}</div><div style="color:var(--t3);font-size:var(--fs-xs);font-family:'SF Mono',monospace">${new Date(b.ts).toLocaleString('en-GB')}</div></div>
+      <button class="btn g" onclick="restoreLocalBackup(${i})" style="font-size:var(--fs-xs);flex-shrink:0">↩ Wiederherstellen</button>
     </div>`).join('');}
   }catch(e){}
   openM('mBackup');
@@ -4648,17 +4648,17 @@ function openTrashM(){
     const items=(research.trash||[]).slice().sort((a,b)=>String(b.delAt).localeCompare(String(a.delAt)));
     const el=document.getElementById('mTrashList');
     if(!items.length){
-      el.innerHTML='<div style="color:var(--t3);font-size:13px;padding:8px 0">Trash is empty. Deleted notes and folders stay here for 30 days.</div>';
+      el.innerHTML='<div style="color:var(--t3);font-size:var(--fs-base);padding:8px 0">Trash is empty. Deleted notes and folders stay here for 30 days.</div>';
     }else{
       el.innerHTML=items.map(t=>{
         const daysLeft=Math.max(0,Math.ceil((new Date(t.delAt).getTime()+TRASH_TTL_MS-Date.now())/86400000));
         return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
           <div style="flex:1;min-width:0">
-            <div style="font-weight:700;color:var(--t0);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(trashEntryLabel(t))}</div>
-            <div style="color:var(--t3);font-size:11px">${t.kind==='folder'?'Folder':'Note'} · ${daysLeft} day${daysLeft===1?'':'s'} left · deleted ${new Date(t.delAt).toLocaleDateString('en-GB')}</div>
+            <div style="font-weight:700;color:var(--t0);font-size:var(--fs-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(trashEntryLabel(t))}</div>
+            <div style="color:var(--t3);font-size:var(--fs-xs)">${t.kind==='folder'?'Folder':'Note'} · ${daysLeft} day${daysLeft===1?'':'s'} left · deleted ${new Date(t.delAt).toLocaleDateString('en-GB')}</div>
           </div>
-          <button class="btn g" onclick="restoreTrashItem('${t.id}')" style="font-size:11px;flex-shrink:0" title="Restore">↩</button>
-          <button class="btn" onclick="permaDeleteTrashItem('${t.id}')" style="font-size:11px;flex-shrink:0" title="Delete permanently">✕</button>
+          <button class="btn g" onclick="restoreTrashItem('${t.id}')" style="font-size:var(--fs-xs);flex-shrink:0" title="Restore">↩</button>
+          <button class="btn" onclick="permaDeleteTrashItem('${t.id}')" style="font-size:var(--fs-xs);flex-shrink:0" title="Delete permanently">✕</button>
         </div>`;
       }).join('');
     }
@@ -8186,7 +8186,7 @@ function openCarryDetail(pairName){
   const body=document.getElementById('carryDetailBody');
   document.getElementById('carryDetailTitle').textContent='📈 Carry: '+pairName;
   if(!rb||!rq){
-    body.innerHTML=`<div style="font-size:12.5px;color:var(--t3)">Policy rate not known for both currencies yet.</div>`;
+    body.innerHTML=`<div style="font-size:var(--fs-sm);color:var(--t3)">Policy rate not known for both currencies yet.</div>`;
     openM('mCarryDetail');return;
   }
   const d=Math.round((rb.rate-rq.rate)*100)/100;
@@ -8195,16 +8195,16 @@ function openCarryDetail(pairName){
   const col=d>0?'var(--green)':d<0?'var(--red)':'var(--t3)';
   body.innerHTML=`
     <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px">
-      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rb.rate}%</div></div>
+      <div style="text-align:center"><div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rb.rate}%</div></div>
       <div style="font-size:16px;color:var(--t3)">−</div>
-      <div style="text-align:center"><div style="font-size:11px;color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rq.rate}%</div></div>
+      <div style="text-align:center"><div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rq.rate}%</div></div>
     </div>
     <div style="text-align:center;margin-bottom:10px">
-      <div style="font-size:11px;color:var(--t3);font-weight:700;text-transform:uppercase">Differential</div>
+      <div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700;text-transform:uppercase">Differential</div>
       <div style="font-size:24px;font-weight:800;color:${col};font-family:var(--ff-num)">${d>0?'+':''}${d}%</div>
-      <div style="font-size:12px;color:var(--t2);margin-top:2px">${d===0?'No carry edge either way.':(long?`Favours going long ${escH(b)} / short ${escH(q)}`:`Favours going long ${escH(q)} / short ${escH(b)}`)}</div>
+      <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:2px">${d===0?'No carry edge either way.':(long?`Favours going long ${escH(b)} / short ${escH(q)}`:`Favours going long ${escH(q)} / short ${escH(b)}`)}</div>
     </div>
-    <div style="font-size:12.5px;color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px">
+    <div style="font-size:var(--fs-sm);color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px">
       <b>Score effect: ${adj>0?'+':''}${adj}</b> toward the ${escH(pairName)} pair score.<br>
       Staged from the |differential|: ≥1.5% → ±1, ≥0.5% → ±0.5, otherwise 0 — sign follows which side has the higher rate.
     </div>`;
@@ -8870,7 +8870,7 @@ function renderPairs(){
     </div>
   </div>`;
   if(items.length===0){
-    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:var(--ff-num)">No pairs yet. Click "＋ Add Pair" above.</div>`;
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:var(--fs-sm);padding:8px 4px;font-family:var(--ff-num)">No pairs yet. Click "＋ Add Pair" above.</div>`;
     return;
   }
   // Bei aktivem Waehrungsfilter NUR Paare mit einer der gewaehlten Waehrungen;
@@ -8913,11 +8913,11 @@ function renderPairs(){
   </div>`;};
   const col=(label,color,list)=>`<div style="--colb:${color};--colb-bg:${color}0c">
     <div class="setups-col-hdr" style="background:${color}18;color:${color}">${label}</div>
-    ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}
+    ${list.length?`<div class="setups-col-rows">${list.map(row).join('')}</div>`:`<div class="dw-empty" style="font-size:var(--fs-xs);padding:6px 0">–</div>`}
   </div>`;
   if(shown.length===0){
     const why=[active?setupCcyFilter.join(', '):'',setupFxOnly?'FX-only':'',setupNonFxOnly?'Non-FX-only':'',setupYieldsOnly?'Yields-only':''].filter(Boolean).join(' · ');
-    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:12px;padding:8px 4px;font-family:var(--ff-num)">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
+    el.innerHTML=filterBar+`<div style="color:var(--t3);font-size:var(--fs-sm);padding:8px 4px;font-family:var(--ff-num)">No pairs with ${escH(why)}. Add one via "＋ Add Pair" or adjust the filter.</div>`;
     return;
   }
   const bull=shown.filter(it=>it.bias==='bull').sort((a,b)=>b.score-a.score);
@@ -8951,7 +8951,7 @@ function renderCalendar(){
   if(calCcyFilter!=='ALL')list=list.filter(ev=>evtMatchesSym(ev,calCcyFilter));
   const sorted=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
   const empty=calCcyFilter!=='ALL'?`No events for ${calCcyFilter} in this range.`:(calHighOnly?'Keine High-Impact-Events im Zeitraum.':'No events yet.');
-  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:12px;padding:14px 0;font-family:var(--ff-num)">${empty}</div>`;return;}
+  if(sorted.length===0){el.innerHTML=`<div style="color:var(--t3);font-size:var(--fs-sm);padding:14px 0;font-family:var(--ff-num)">${empty}</div>`;return;}
   // Lückenloses Tagesfenster: von erstem bis letztem Event-Tag (mind. inkl.
   // heute), damit auch Tage ohne News als leere Tage sichtbar bleiben.
   el.innerHTML=calTableHtml(sorted,{delAction:ev=>`delCalEv('${ev.id}')`,collapsePast:true,allDates:calWindowDatesFor(sorted),showNowLine:true});}
@@ -9006,7 +9006,7 @@ function renderEvtAlertList(){
   const calAlerts=eventAlerts.filter(a=>a.evKey).sort(byTime);
   const customAlerts=eventAlerts.filter(a=>!a.evKey).sort(byTime);
   if(!calAlerts.length&&!customAlerts.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
-  const section=(title,list)=>list.length?`<div style="font-size:11px;color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:var(--ff-num)">${title}</div>${evtAlertRowsHtml(list)}`:'';
+  const section=(title,list)=>list.length?`<div style="font-size:var(--fs-xs);color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:var(--ff-num)">${title}</div>${evtAlertRowsHtml(list)}`:'';
   wrap.innerHTML=section('📅 CALENDAR ALERTS',calAlerts)+section('✏️ CUSTOM ALERTS',customAlerts);
 }
 function deleteEvtAlertById(id){
@@ -11474,7 +11474,7 @@ function renderDash(){
       // in der Asset-Heatmap-Karte, daher hier nicht mehr doppelt (Nutzer-
       // Wunsch 2026-07-11). Eine einzige, volle Spalte; Subgrid haelt weiterhin
       // Name/Chip/Score/Badge/Stern exakt untereinander.
-      content=`<div class="ba-col-rows">${fxSorted.length?fxSorted.map(symRow).join(''):`<div class="dw-empty" style="font-size:11px;padding:6px 0">–</div>`}</div>`;
+      content=`<div class="ba-col-rows">${fxSorted.length?fxSorted.map(symRow).join(''):`<div class="dw-empty" style="font-size:var(--fs-xs);padding:6px 0">–</div>`}</div>`;
     }else if(w.type==='perf_ranking'){
       content=perfRankingHtml();
     }else if(w.type==='carry_ranking'){
@@ -12591,7 +12591,7 @@ function indHistStartNote(pts,range){
 }
 function timeRangeCustomHtml(current,from,to,setFnName){
   if(current!=='CUSTOM')return'';
-  return`<span class="time-range-custom"><input type="date" class="btn" value="${from||''}" onchange="${setFnName}Custom(this.value,${to?`'${to}'`:'null'})" style="padding:3px 7px;font-size:10.5px"> &ndash; <input type="date" class="btn" value="${to||''}" onchange="${setFnName}Custom(${from?`'${from}'`:'null'},this.value)" style="padding:3px 7px;font-size:10.5px"></span>`;
+  return`<span class="time-range-custom"><input type="date" class="btn" value="${from||''}" onchange="${setFnName}Custom(this.value,${to?`'${to}'`:'null'})" style="padding:3px 7px;font-size:var(--fs-2xs)"> &ndash; <input type="date" class="btn" value="${to||''}" onchange="${setFnName}Custom(${from?`'${from}'`:'null'},this.value)" style="padding:3px 7px;font-size:var(--fs-2xs)"></span>`;
 }
 function filterDatesByRange(dates,range,customFrom,customTo){
   if(range==null||range==='MAX')return dates;
@@ -12666,7 +12666,7 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
     const y=yOf(t),mid=t===0;
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
-    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
   // Bias-eingefaerbte Linie nur bei GENAU EINER Linie sinnvoll ("All assets"/
   // "FX only" brauchen unterscheidbare Farben je Asset) UND nur beim Gesamt-
@@ -12689,7 +12689,7 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   });
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
+    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(lbl)}</text>`;
   });
   // Fit-to-width (kein horizontales Wischen) + Hover-Tooltip: pro Datum ein
   // Punkt; das Fenster listet ALLE Linien-Werte dieses Tages, der Punkt sitzt
@@ -12748,7 +12748,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
     const y=yOfScore(t),mid=t===0;
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
-    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:11px;fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
   });
   const col=colorOverride||'#888';
   const useBiasColor=!!colorOverride&&!!biasMap;
@@ -12768,7 +12768,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
     const yOfPrice=v=>topPad+chartH-((v-pMin)/(pMax-pMin))*chartH;
     [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
       const y=yOfPrice(t);
-      svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
+      svg+=`<text x="${(w-rightPad+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
     const pricePts=[];dates.forEach((d,i)=>{const v=priceMap[d];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
     if(pricePts.length>1){
@@ -12790,7 +12790,7 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   }
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
-    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:10px;fill:var(--t3)">${escH(lbl)}</text>`;
+    svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(lbl)}</text>`;
   });
   svg+=priceLineSvg;
   // Fit-to-width + Hover: das Fenster zeigt Score und (falls vorhanden) Kurs
@@ -12811,7 +12811,7 @@ function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,bi
   return`<div class="tr-card">
     <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
     ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
-    ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:11.5px">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
+    ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:var(--fs-xs)">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
 }
 function renderTrends(){
@@ -12867,10 +12867,10 @@ function renderTrends(){
   const dset=new Set();
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const allDates=[...dset].sort();
-  if(!allDates.length){el.innerHTML=trendsMultiBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No history data yet for the current selection. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow, or adjust the filter above.</div>';return;}
+  if(!allDates.length){el.innerHTML=trendsMultiBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No history data yet for the current selection. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow, or adjust the filter above.</div>';return;}
   const rangeBar=trendsMultiBar+`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
   const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
-  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
+  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   // Hinweis, wenn im gewaehlten Zeitraum Punkte aus einem FRUEHEREN
   // Score-Modell stecken. Die Punkte bleiben stehen (jeder ist der Wert, der
   // an dem Tag galt), aber ein Sprung an der Modellgrenze ist sonst nicht
@@ -12893,7 +12893,7 @@ function renderTrends(){
           scoreTrendCard(macroIds,dates,3,7,'Labour Market',colorOverride)+
           scoreTrendCard(macroIds,dates,4,7,'Economic Growth',colorOverride);
   }else{
-    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currencies &ndash; these macro scores aren\'t derived from data for this asset.</div>';
+    html+='<div style="padding:12px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currencies &ndash; these macro scores aren\'t derived from data for this asset.</div>';
   }
   el.innerHTML=html;
   attachChartHovers(el);
@@ -12907,7 +12907,7 @@ function renderTrendsPair(el){
   const pairKey=trendsPairSel;
   const parts=pairKey.split('/');
   const base=PAIR_CODE_TO_ID[parts[0]]||parts[0],quote=PAIR_CODE_TO_ID[parts[1]]||parts[1];
-  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">Please choose a pair with two different assets.</div>';return;}
+  if(base===quote){el.innerHTML='<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">Please choose a pair with two different assets.</div>';return;}
   const baseArr=scoreHist[base]||[],quoteMap={};(scoreHist[quote]||[]).forEach(e=>quoteMap[e[0]]=e);
   // Der Paar-Score ist ueberall in der App Basis minus Kurswaehrung PLUS
   // Carry (pairScore()). Die Trends-Linie liess den Carry frueher weg und
@@ -12921,14 +12921,14 @@ function renderTrendsPair(el){
     if(FX.includes(base)&&FX.includes(quote)){if(ca==null)ohneCarry++;else mitCarry++;}
     diffArr.push([be[0],Math.round((be[1]-qe[1]+(ca||0))*10)/10,Math.round((be[2]-qe[2])*10)/10,Math.round((be[3]-qe[3])*10)/10,Math.round((be[4]-qe[4])*10)/10,ca]);
   });
-  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No shared history data for ${escH(pairKey)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
+  if(!diffArr.length){el.innerHTML=`<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No shared history data for ${escH(pairKey)} yet &ndash; once both assets have a score snapshot on the same day, the pair line will grow daily from then on.</div>`;return;}
   trendsEphemeral={};trendsEphemeral[pairKey]=diffArr;
   // Color the pair's line by its current overall bias (same bull/bear/neutral
   // colors used everywhere else in the app), not a fixed identity color.
   const colorOverride=BC[scoreBias(pairScore(pairKey))];
   const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
   const dates=filterDatesByRange(diffArr.map(e=>e[0]),trendsRange,trendsCustomFrom,trendsCustomTo);
-  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:13px;line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
+  if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   let html=rangeBar;
   // Was der Carry an diesem Paar GERADE beitraegt, offen ausweisen - sonst
   // ist der Unterschied zwischen "Basis minus Kurswaehrung" und der
@@ -12950,7 +12950,7 @@ function renderTrendsPair(el){
           scoreTrendCard([pairKey],dates,3,7,'Labour Market Difference',colorOverride)+
           scoreTrendCard([pairKey],dates,4,7,'Growth Difference',colorOverride);
   }else{
-    html+='<div style="padding:12px;color:var(--t3);font-size:12px;line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currency pairs &ndash; these macro scores aren\'t derived from data for non-FX assets.</div>';
+    html+='<div style="padding:12px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)">The Inflation / Labour Market / Economic Growth cards are only available for currency pairs &ndash; these macro scores aren\'t derived from data for non-FX assets.</div>';
   }
   el.innerHTML=html;
   attachChartHovers(el);
@@ -13275,7 +13275,7 @@ function cotHistChart(history,availWidth,meta){
   for(let p=0;p<=100;p+=25){
     const y=yPct(p);
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(leftPad-4).toFixed(1)}" y2="${y.toFixed(1)}" style="stroke:var(--t3)" stroke-width="1"/>`;
-    svg+=`<text x="${leftPad-7}" y="${(y+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${p}%</text>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${p}%</text>`;
   }
   // Graue 50%-Referenzlinie ueber die gesamte Breite
   const y50=yPct(50);
@@ -13285,7 +13285,7 @@ function cotHistChart(history,availWidth,meta){
     const y=yVal(v);
     const xR=leftPad+n*perBar;
     svg+=`<line x1="${xR}" y1="${y.toFixed(1)}" x2="${(xR+4).toFixed(1)}" y2="${y.toFixed(1)}" style="stroke:var(--t3)" stroke-width="1"/>`;
-    svg+=`<text x="${xR+7}" y="${(y+3).toFixed(1)}" text-anchor="start" style="font-size:9px;fill:var(--t3)">${cotNum(v)}</text>`;
+    svg+=`<text x="${xR+7}" y="${(y+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${cotNum(v)}</text>`;
   }
   // Balken + Datumsbeschriftung
   const linePts=[];
@@ -13299,7 +13299,7 @@ function cotHistChart(history,availWidth,meta){
     const tot=L+S,lp=tot>0?L/tot*100:50;
     linePts.push((x+barW/2).toFixed(1)+','+yPct(lp).toFixed(1));
     let d;try{const dt=new Date(e.date+'T00:00:00');d=(dt.getMonth()+1)+'/'+dt.getDate();}catch(err){d=e.date;}
-    svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y0+14).toFixed(1)}" text-anchor="middle" style="font-size:8px;fill:var(--t3)">${escH(d)}</text>`;
+    svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y0+14).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(d)}</text>`;
   });
   const linePtsStr=linePts.join(' ');
   svg+=`<polyline points="${linePtsStr}" fill="none" stroke="#fff" stroke-width="3.4" opacity="0.55"/>`;
@@ -13688,7 +13688,7 @@ function attachChartHovers(root){
 }
 function sentSpark(series,lo,hi,loTh,hiTh){
   const pts=(series||[]).filter(e=>e&&isFinite(+e[1]));
-  if(pts.length<2)return`<div style="color:var(--t3);font-size:11px;padding:8px 0">Not enough history yet (builds up daily).</div>`;
+  if(pts.length<2)return`<div style="color:var(--t3);font-size:var(--fs-xs);padding:8px 0">Not enough history yet (builds up daily).</div>`;
   const W=520,H=120,pad=6,n=pts.length;
   const yOf=v=>H-pad-((v-lo)/((hi-lo)||1))*(H-2*pad);
   const xOf=i=>pad+(i/(n-1))*(W-2*pad);
@@ -14003,7 +14003,7 @@ function indHistChart(ind,symId,opts){
         // Punkten schraeg durchs Label laeuft.
         const fcTop=p[2]!=null?yOf(p[2])-fcR-2:Infinity;
         const lblY=Math.max(10,Math.min(top,fcTop)-5);
-        bars+=`<text x="${x.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:var(--t0);paint-order:stroke;stroke:var(--bg1);stroke-width:3px;stroke-linejoin:round">${escH(fmtV(p[1]))}</text>`;
+        bars+=`<text x="${x.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);font-weight:700;fill:var(--t0);paint-order:stroke;stroke:var(--bg1);stroke-width:3px;stroke-linejoin:round">${escH(fmtV(p[1]))}</text>`;
       }
     });
   }
@@ -14038,7 +14038,7 @@ function indHistChart(ind,symId,opts){
     const isLast=i===n-1;
     if(i%lblEvery!==0&&!isLast)return;
     if(isLast&&i%lblEvery!==0&&(i%lblEvery)<lblEvery*0.6)return;
-    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
+    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
   });
   // Legende erst jetzt endgueltig: eine Reihe ohne Forecast (Anleihen, COT,
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
@@ -14476,7 +14476,7 @@ function renderPriceChart(){
     const isLast=i===n-1;
     if(i%every!==0&&!isLast)return;
     if(isLast&&i%every!==0&&(i%every)<every*0.6)return;
-    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" style="font-size:9.5px;fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
+    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
   });
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${(H-padB).toFixed(1)}" x2="${W-padR}" y2="${(H-padB).toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
@@ -14805,13 +14805,13 @@ function renderDataTab(){
   renderDataAssetPicker();renderDataIndPicker();
 }
 function sentReadBadge(ev){
-  if(!ev)return`<span style="color:var(--t3);font-size:12px">no data</span>`;
+  if(!ev)return`<span style="color:var(--t3);font-size:var(--fs-sm)">no data</span>`;
   // Veralteter Stand: sichtbar bleiben, aber ausdruecklich nicht gezaehlt.
-  if(ev.stale)return`<span style="color:var(--amber);font-weight:700;font-size:12.5px">◆ Reading is ${ev.alter} days old</span><span style="color:var(--t3);font-size:11px"> · a weekly survey this old is not counted, 0 to score</span>`;
+  if(ev.stale)return`<span style="color:var(--amber);font-weight:700;font-size:var(--fs-sm)">◆ Reading is ${ev.alter} days old</span><span style="color:var(--t3);font-size:var(--fs-xs)"> · a weekly survey this old is not counted, 0 to score</span>`;
   const col=ev.bias==='bull'?BC.bull:ev.bias==='bear'?BC.bear:BC.neu;
   const lbl=ev.bias==='bull'?'▲ Contrarian bullish':ev.bias==='bear'?'▼ Contrarian bearish':'◆ Neutral (mid-range)';
   const eff=ev.extreme?(ev.bias==='bull'?' · +0.5 to score':ev.bias==='bear'?' · −0.5 to score':''):' · not at an extreme, 0';
-  return`<span style="color:${col};font-weight:700;font-size:12.5px">${lbl}</span><span style="color:var(--t3);font-size:11px">${eff}</span>`;
+  return`<span style="color:${col};font-weight:700;font-size:var(--fs-sm)">${lbl}</span><span style="color:var(--t3);font-size:var(--fs-xs)">${eff}</span>`;
 }
 // ── Info-Texte fuer die "i"-Buttons (ausfuehrlich, einfach verstaendlich) ──
 const SENT_INFO={
@@ -15305,7 +15305,7 @@ function renderEdge(){
   el.innerHTML=kopf+`
   <div class="cot-card">
     <div class="cot-card-title">Signal test — ${escH(COT_NAME[sym.id]||sym.id)}${iBtn('edge')}
-      <small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">Reconstructed from ${serie.length} days of recorded releases · classic weighting · ${rows.length} days with a measurable forward return</small></div>
+      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Reconstructed from ${serie.length} days of recorded releases · classic weighting · ${rows.length} days with a measurable forward return</small></div>
     ${urteil}
     <table class="edge-tbl"><thead><tr><th>Score</th><th>days</th>${EDGE_HORIZONTE.map(h=>`<th>Ø ${h}d</th>`).join('')}<th>Hit 5d</th></tr></thead>
       <tbody>${st.map(zeile).join('')}</tbody></table>
@@ -15648,16 +15648,16 @@ function renderRetailBars(D){
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
   const filt=sentFilterBar();
   const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
   if(sentSym)return renderRetailHistory(D,sentSym,hdr);
   let list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
-    return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:12.5px;line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
+    return`<div class="cot-card">${hdr}<div style="padding:14px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6">No retail-positioning data yet. The hourly job fetches the broker long/short split from Myfxbook; if the source blocks datacenter IPs (like CNN does) this stays empty and fills in automatically on any run that gets through. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
   const multiBar=sentMultiFilterBarHtml(list.map(r=>r.sym));
   if(sentCcyFilter.length||sentScope)list=list.filter(r=>sentItemMatchesMulti(r.sym));
   if(!list.length){
-    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${multiBar}<div style="color:var(--t3);font-size:12.5px;padding:8px 0">No symbols match this filter. Adjust or clear it above.</div></div></div>`;
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${multiBar}<div style="color:var(--t3);font-size:var(--fs-sm);padding:8px 0">No symbols match this filter. Adjust or clear it above.</div></div></div>`;
   }
   const rows=list.map(r=>{
     const L=Math.round(r.long),S=100-L;
@@ -15672,16 +15672,16 @@ function renderRetailBars(D){
     // lesbar, egal wie schmal ein Segment wird. Klick auf die Zeile waehlt das
     // Symbol im Filter (setSentSym), genau wie die Dropdown-Auswahl.
     return`<div class="sent-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSentSym('${escJH(r.sym)}')" title="Open ${escH(r.sym)} history">
-      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:12px;color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
-      <span style="flex:none;width:30px;text-align:right;font-size:11px;font-weight:700;color:${BC.bull}">${L}%</span>
+      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:var(--fs-sm);color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
+      <span style="flex:none;width:30px;text-align:right;font-size:var(--fs-xs);font-weight:700;color:${BC.bull}">${L}%</span>
       <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
         <div style="width:${L}%;background:${BC.bull};min-width:0" title="${L}% of retail traders are long"></div>
         <div style="width:${S}%;background:${BC.bear};min-width:0" title="${S}% of retail traders are short"></div>
       </div>
-      <span style="flex:none;width:30px;text-align:left;font-size:11px;font-weight:700;color:${BC.bear}">${S}%</span>
+      <span style="flex:none;width:30px;text-align:left;font-size:var(--fs-xs);font-weight:700;color:${BC.bear}">${S}%</span>
     </div>`;
   }).join('');
-  const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
+  const legend=`<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:var(--fs-xs);color:var(--t3);margin:2px 0 10px"><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bull};vertical-align:middle"></i> % long (crowd bullish)</span><span><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${BC.bear};vertical-align:middle"></i> % short (crowd bearish)</span><span>Tag = <b>contrarian</b> signal</span></div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${multiBar}${legend}${rows}</div></div>`;
 }
 // ── Retail Sentiment History: Net Positioning (Long%-Short%) vs. Preis +
@@ -15698,12 +15698,12 @@ function renderRetailHistory(D,sym,hdr){
   raw.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(sentimentRange,'setSentimentRange')}${timeRangeCustomHtml(sentimentRange,sentimentCustomFrom,sentimentCustomTo,'setSentimentRange')}</div>`;
   if(raw.length<2){
-    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">Not enough retail-positioning history for ${escH(sentSymLabel(sym))} yet — this builds up one real point per day as the hourly job runs (no backfill possible beyond what was already recorded). Tap the <b>i</b> to learn what this shows.</div></div></div>`;
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;padding:8px 0">Not enough retail-positioning history for ${escH(sentSymLabel(sym))} yet — this builds up one real point per day as the hourly job runs (no backfill possible beyond what was already recorded). Tap the <b>i</b> to learn what this shows.</div></div></div>`;
   }
   const keepDates=new Set(filterDatesByRange(raw.map(e=>e[0]),sentimentRange,sentimentCustomFrom,sentimentCustomTo));
   const series=raw.filter(e=>keepDates.has(e[0]));
   if(series.length<2){
-    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:8px 0">No data in this range — pick a wider range above.</div></div></div>`;
+    return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;padding:8px 0">No data in this range — pick a wider range above.</div></div></div>`;
   }
   const priceSeries=sentSymPriceSeries(sym);
   const last=series[series.length-1],lastNet=last[1]-last[2];
@@ -15713,14 +15713,14 @@ function renderRetailHistory(D,sym,hdr){
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">
     ${rangeBar}
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 4px">
-      <span style="font-size:12px;color:var(--t3)">Net Retail Positioning (Long% − Short%)${hasPrice?' vs. price':''}</span>
+      <span style="font-size:var(--fs-sm);color:var(--t3)">Net Retail Positioning (Long% − Short%)${hasPrice?' vs. price':''}</span>
       <div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>Net long</span><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bear}"></span>Net short</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>
     </div>
     ${netChart}
-    <div style="text-align:center;font-size:12.5px;color:var(--t2);margin:6px 0 16px">Latest: <b style="color:${lastNet>=0?BC.bull:BC.bear}">${lastNet>0?'+':''}${lastNet.toFixed(0)}%</b> net ${lastNet>=0?'long':'short'} (${last[1].toFixed(0)}% long / ${last[2].toFixed(0)}% short) — ${fmtDayHdr(last[0])}</div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:4px">Long % / Short % split</div>
+    <div style="text-align:center;font-size:var(--fs-sm);color:var(--t2);margin:6px 0 16px">Latest: <b style="color:${lastNet>=0?BC.bull:BC.bear}">${lastNet>0?'+':''}${lastNet.toFixed(0)}%</b> net ${lastNet>=0?'long':'short'} (${last[1].toFixed(0)}% long / ${last[2].toFixed(0)}% short) — ${fmtDayHdr(last[0])}</div>
+    <div style="font-size:var(--fs-sm);color:var(--t3);margin-bottom:4px">Long % / Short % split</div>
     ${stackChart}
-    ${hasPrice?'':'<div style="padding:6px 0 0;color:var(--t3);font-size:11.5px">No price history yet for this market &ndash; it grows once price_data.json has a matching date.</div>'}
+    ${hasPrice?'':'<div style="padding:6px 0 0;color:var(--t3);font-size:var(--fs-xs)">No price history yet for this market &ndash; it grows once price_data.json has a matching date.</div>'}
   </div></div>`;
 }
 // Net-Positioning-Balken (Long%-Short%, symmetrisch um 0) + Preis als
@@ -15748,7 +15748,7 @@ function retailNetChart(series,priceSeries){
     const yOfPrice=v=>padT+(1-(v-pMin)/(pMax-pMin))*(H-padT-padB);
     [pMax,(pMax+pMin)/2,pMin].forEach(t=>{
       const y=yOfPrice(t);
-      svgPriceLabels+=`<text x="${(W-padR+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:10.5px;fill:var(--t3)">${fmtPriceTick(t)}</text>`;
+      svgPriceLabels+=`<text x="${(W-padR+8).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${fmtPriceTick(t)}</text>`;
     });
     const pricePts=[];series.forEach((e,i)=>{const v=priceMap[e[0]];if(v!=null&&isFinite(v))pricePts.push({x:xOf(i),y:yOfPrice(v)});});
     if(pricePts.length>1){
@@ -15756,9 +15756,9 @@ function retailNetChart(series,priceSeries){
       priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="1.75" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
-  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
+  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
   const bars=net.map((v,i)=>{const y=yOf(v),up=v>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y-y0),1).toFixed(1)}" fill="${up?BC.bull:BC.bear}"/>`;}).join('');
-  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
   // Preis-Linie GANZ AM ENDE angehaengt (Nutzer-Wunsch 2026-07-27: "soll
   // immer ganz oben liegen") - liegt dadurch ueber den Balken.
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${svgPriceLabels}${gy}${bars}${xlab}${priceLineSvg}</svg>`;
@@ -15776,13 +15776,13 @@ function retailStackChart(series){
   const bw=Math.max(2,(W-padL-padR)/n*0.72);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const yOf=v=>padT+(1-v/100)*(H-padT-padB);
-  const gy=[0,20,40,60,80,100].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.5"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${t}%</text>`).join('');
+  const gy=[0,20,40,60,80,100].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.5"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t}%</text>`).join('');
   const bars=series.map((e,i)=>{
     const L=e[1],x=xOf(i)-bw/2;
     const yLong=yOf(L),yZero=yOf(0),yTop=yOf(100);
     return`<rect x="${x.toFixed(1)}" y="${yLong.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yZero-yLong,0).toFixed(1)}" fill="${BC.bull}"/><rect x="${x.toFixed(1)}" y="${yTop.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(yLong-yTop,0).toFixed(1)}" fill="${BC.bear}"/>`;
   }).join('');
-  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${gy}${bars}${xlab}</svg>`;
   const hpts=series.map((e,i)=>({fx:xOf(i)/W,fy:yOf(e[1])/H,col:BC.bull,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${e[1].toFixed(0)}%</b> long / <b>${e[2].toFixed(0)}%</b> short`}));
   return chartHoverWrap(svg,hpts);
@@ -15800,7 +15800,7 @@ function pcThinNote(perAsset){
   if(!perAsset)return'';
   const tot=(+perAsset.callVol||0)+(+perAsset.putVol||0);
   if(tot>=PC_THIN_VOL)return'';
-  return`<span style="display:block;color:var(--amber);font-size:11.5px;margin-top:4px">⚠ Low options volume today (${tot} contracts total) — this reading can be noisy, treat as a rough signal only.</span>`;
+  return`<span style="display:block;color:var(--amber);font-size:var(--fs-xs);margin-top:4px">⚠ Low options volume today (${tot} contracts total) — this reading can be noisy, treat as a rough signal only.</span>`;
 }
 // PCR-Schwellen + Achsen-Basis je Asset-Kategorie (Nutzer-Wunsch 2026-07-22):
 // Index-ETFs (SPY/QQQ) und die marktweite OCC-Zahl handeln eng um 1.0 herum
@@ -15826,7 +15826,7 @@ function renderPutCallChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
   const HI=th.HI,LO=th.LO;
   const W=760,H=360,padL=44,padR=54,padT=24,padB=46;
@@ -15849,22 +15849,22 @@ function renderPutCallChart(D){
   const span=yMax-yMin;
   const gStep=span<=1?0.2:span<=2.5?0.5:span<=6?1:2;
   const gyVals=[];for(let t=Math.ceil(yMin/gStep)*gStep;t<=yMax+1e-6;t+=gStep)gyVals.push(+t.toFixed(4));
-  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:10px;fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
+  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(1)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
   // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr
   // ("16 Jul 26"); Rand-Labels linksbuendig/rechtsbuendig, damit sie nicht
   // in die Y-Achsen-Beschriftung laufen.
   let xlab='';
-  if(series.length){const idxs=pcXTickIdx(series.length,7);idxs.forEach(i=>{const anch=i===0?'start':i===series.length-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});}
+  if(series.length){const idxs=pcXTickIdx(series.length,7);idxs.forEach(i=>{const anch=i===0?'start':i===series.length-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});}
   let chart;
   if(series.length===1){
     const v=vals[0];
     chart=`<div style="text-align:center;padding:10px 6px 4px">
         <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${v>=HI?BC.bull:v<=LO?BC.bear:'var(--t1)'}">${v.toFixed(2)}</div>
-        <div style="font-size:13px;color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
-        <div style="color:var(--t3);font-size:12px;line-height:1.6;margin-top:12px">Chart builds up one point per trading day (weekends/holidays carry the last value forward) — check back tomorrow for a trend line.</div>
+        <div style="font-size:var(--fs-base);color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
+        <div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;margin-top:12px">Chart builds up one point per trading day (weekends/holidays carry the last value forward) — check back tomorrow for a trend line.</div>
       </div>`;
   }else if(series.length<2){
-    chart=`<div style="color:var(--t3);font-size:12.5px;line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
+    chart=`<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
   }else{
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
         <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(79,155,255,.08)"/>
@@ -15872,16 +15872,16 @@ function renderPutCallChart(D){
         ${gy}
         <line x1="${padL}" y1="${yOf(HI).toFixed(1)}" x2="${W-padR}" y2="${yOf(HI).toFixed(1)}" stroke="${BC.bull}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <line x1="${padL}" y1="${yOf(LO).toFixed(1)}" x2="${W-padR}" y2="${yOf(LO).toFixed(1)}" stroke="${BC.bear}" stroke-width="1.2" stroke-dasharray="5,4"/>
-        <text x="${padL+6}" y="${(yOf(HI)-5).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${BC.bull}">High Put Volume</text>
-        <text x="${padL+6}" y="${(yOf(LO)-5).toFixed(1)}" style="font-size:10px;font-weight:700;fill:${BC.bear}">High Call Volume</text>
-        <text x="${W-padR-4}" y="${padT+13}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bull}">CONTRARIAN BULLISH ▲</text>
-        <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>
+        <text x="${padL+6}" y="${(yOf(HI)-5).toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:${BC.bull}">High Put Volume</text>
+        <text x="${padL+6}" y="${(yOf(LO)-5).toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:${BC.bear}">High Call Volume</text>
+        <text x="${W-padR-4}" y="${padT+13}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">CONTRARIAN BULLISH ▲</text>
+        <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>
         <path d="${step}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
         ${xlab}
       </svg>`;
     const hpts=series.map((e,i)=>{const v=vals[i];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b> · ${zone}`};});
     const latestVal=vals[vals.length-1];
-    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b> — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b> — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
   }
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
@@ -15900,7 +15900,7 @@ function renderNetFlowChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">(Call−Put)/(Call+Put) · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put) · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const s=rawSeries.filter(e=>filteredDates.has(e[0]));
@@ -15914,7 +15914,7 @@ function renderNetFlowChart(D){
   const ma=(arr,i,n)=>{const a=arr.slice(Math.max(0,i-n+1),i+1);return a.reduce((x,y)=>x+y.v,0)/a.length;};
   const net=raw.map((e,i)=>[e.d, ma(raw,i,SMOOTH)]);
   if(net.length<2){
-    return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:12.5px;line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
+    return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
   const W=760,H=360,padL=48,padR=48,padT=22,padB=48;
   const vals=net.map(e=>e[1]),maxA=Math.max(0.05,...vals.map(Math.abs))*1.15; // 15% Kopf-/Fussraum
@@ -15924,17 +15924,17 @@ function renderNetFlowChart(D){
   const y0=yOf(0);
   const bars=net.map((e,i)=>{const y=yOf(e[1]),up=e[1]>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.abs(y-y0).toFixed(1)}" fill="${up?BC.bull:BC.bear}" opacity="0.9"/>`;}).join('');
   // Gridlines mit Labels LINKS und RECHTS (beidseitige Y-Achse).
-  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:9px;fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
+  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
   // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr.
-  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:10px;fill:var(--t3)">${escH(pcXLabel(net[i][0]))}</text>`;});
+  let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(net[i][0]))}</text>`;});
   const last=vals[vals.length-1];
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-    <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bull}">Bullish options flow</text>
-    <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:10px;font-weight:800;fill:${BC.bear}">Bearish options flow</text>
+    <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">Bullish options flow</text>
+    <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">Bearish options flow</text>
     ${gy}${bars}${xlab}
   </svg>`;
   const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> · ${up?'bullish flow':'bearish flow'}`};});
-  const chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
+  const chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
@@ -15995,7 +15995,7 @@ function renderAaiiCard(D){
     const anker=i===0?'start':i===n-1?'end':'middle';
     return`<text x="${xOf(i,n).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="${anker}">${pcXLabel(reihe[i][0])}</text>`;
   }).join('');
-  const zuWenig=`<div style="color:var(--t3);font-size:12px;padding:14px 0">Not enough weeks in this range yet — the survey publishes once a week.</div>`;
+  const zuWenig=`<div style="color:var(--t3);font-size:var(--fs-sm);padding:14px 0">Not enough weeks in this range yet — the survey publishes once a week.</div>`;
 
   // ── Ansicht 1: Spread (roh + Glaettung) mit Extremzonen ──────────────
   function ansichtSpread(){
@@ -16056,7 +16056,7 @@ function renderAaiiCard(D){
         +`<br><span style="color:var(--t3)">Neutral</span> ${(+e[2]).toFixed(1)}%`
         +`<br><span style="color:${BC.bear}">Bearish</span> ${(+e[3]).toFixed(1)}%`}));
     return legende([['Bullish',BC.bull],['Neutral','var(--t3)'],['Bearish',BC.bear]])
-      +`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">The dashed line marks 50% — above it the bullish camp alone holds the majority.</div>`
+      +`<div style="color:var(--t3);font-size:var(--fs-xs);margin-bottom:4px">The dashed line marks 50% — above it the bullish camp alone holds the majority.</div>`
       +chartHoverWrap(svg,pts);
   }
 
@@ -16153,7 +16153,7 @@ function renderAaiiCard(D){
 
   // ── Ansicht 4: Verteilung des Spreads, heutiger Wert markiert ────────
   function ansichtVerteilung(){
-    if(spAll.length<8)return`<div style="color:var(--t3);font-size:12px;padding:14px 0">Needs at least 8 recorded weeks to show a distribution — ${spAll.length} so far.</div>`;
+    if(spAll.length<8)return`<div style="color:var(--t3);font-size:var(--fs-sm);padding:14px 0">Needs at least 8 recorded weeks to show a distribution — ${spAll.length} so far.</div>`;
     const lo=Math.floor(Math.min(...spAll,-40)/10)*10,hi=Math.ceil(Math.max(...spAll,40)/10)*10;
     const nB=Math.max(6,Math.min(20,Math.round((hi-lo)/5)));
     const breite=(hi-lo)/nB,eimer=new Array(nB).fill(0);
@@ -16176,7 +16176,7 @@ function renderAaiiCard(D){
     </svg>`;
     const pts=eimer.map((c,k)=>({fx:(padL+k*bw+bw/2)/W,fy:y(c)/H,
       tip:`<b>${(lo+breite*k>0?'+':'')+(lo+breite*k).toFixed(0)} to ${(lo+breite*(k+1)>0?'+':'')+(lo+breite*(k+1)).toFixed(0)}pp</b><br>${c} of ${spAll.length} weeks (${(c/spAll.length*100).toFixed(1)}%)`}));
-    return`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">How often each spread level occurred across all ${spAll.length} recorded weeks. The current reading sits at the <b style="color:var(--t0)">${rang.toFixed(0)}th percentile</b> of its own history — coloured bars are the two extreme zones.</div>`
+    return`<div style="color:var(--t3);font-size:var(--fs-xs);margin-bottom:4px">How often each spread level occurred across all ${spAll.length} recorded weeks. The current reading sits at the <b style="color:var(--t0)">${rang.toFixed(0)}th percentile</b> of its own history — coloured bars are the two extreme zones.</div>`
       +chartHoverWrap(svg,pts);
   }
 
@@ -16190,7 +16190,7 @@ function renderAaiiCard(D){
     const kursZu=d=>{let v=null;for(let i=0;i<daten.length;i++){if(daten[i]<=d)v=kurs[daten[i]];else break;}return v;};
     const kw=reihe.map(e=>kursZu(e[0]));
     if(kw.filter(v=>v!=null).length<2)
-      return`<div style="color:var(--t3);font-size:12px;padding:14px 0">No overlapping S&amp;P 500 price history for this range yet. The price series is built up daily by the workflow.</div>`;
+      return`<div style="color:var(--t3);font-size:var(--fs-sm);padding:14px 0">No overlapping S&amp;P 500 price history for this range yet. The price series is built up daily by the workflow.</div>`;
     const gute=kw.filter(v=>v!=null);
     const pLo=Math.min(...gute),pHi=Math.max(...gute);
     const sLo=Math.min(...sp,-25),sHi=Math.max(...sp,25);
@@ -16208,7 +16208,7 @@ function renderAaiiCard(D){
       tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
         +(kw[i]!=null?`<br><span style="color:var(--t3)">S&amp;P 500</span> ${kw[i].toFixed(2)}`:'')}));
     return`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${BC.bull}"></span>AAII spread</span><span class="tr-leg-item"><span class="tr-leg-dash"></span>S&amp;P 500 price</span></div>`
-      +`<div style="color:var(--t3);font-size:11px;margin-bottom:4px">Read it for divergences: a market grinding higher while the spread collapses means the crowd does not believe the move — historically the more durable kind of rally.</div>`
+      +`<div style="color:var(--t3);font-size:var(--fs-xs);margin-bottom:4px">Read it for divergences: a market grinding higher while the spread collapses means the crowd does not believe the move — historically the more durable kind of rally.</div>`
       +chartHoverWrap(svg,pts);
   }
 
@@ -16241,10 +16241,10 @@ function renderAaiiCard(D){
   </div>`;
 
   // ── Aufteilung als 100%-Balken ──────────────────────────────────────
-  const seg=(w,c,t)=>w>0.5?`<div style="width:${w}%;background:${c};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff">${t}</div>`:'';
+  const seg=(w,c,t)=>w>0.5?`<div style="width:${w}%;background:${c};display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;color:#fff">${t}</div>`:'';
   const balken=`<div style="display:flex;height:26px;border-radius:var(--rss);overflow:hidden;border:1px solid var(--bd)">
       ${seg(bull,BC.bull,bull.toFixed(1)+'%')}${seg(neu,'var(--t3)',neu.toFixed(1)+'%')}${seg(bear,BC.bear,bear.toFixed(1)+'%')}
-    </div><div style="display:flex;justify-content:space-between;color:var(--t3);font-size:10.5px;margin-top:3px">
+    </div><div style="display:flex;justify-content:space-between;color:var(--t3);font-size:var(--fs-2xs);margin-top:3px">
       <span>Bullish</span><span>Neutral</span><span>Bearish</span></div>`;
 
   // ── Auswirkung je Asset - vollstaendig, damit nichts offen bleibt ────
@@ -16269,13 +16269,13 @@ function renderAaiiCard(D){
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
   const anzahl=a.responses!=null?` · ${a.responses} responses`:'';
   return`<div class="cot-card">
-    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
+    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
     <div style="padding:12px 14px">
       ${kopf}${kpis}
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 12px">
         <div style="flex:2;min-width:260px">${balken}</div>
-        <div style="flex:1;min-width:200px">${sentReadBadge(ev)}${ev&&ev.stale?`<div style="color:var(--amber);font-size:11px;margin-top:5px;line-height:1.45">The latest week AAII has published here is <b>${escH(a.date)}</b>. Newer weeks will appear automatically as they are published — nothing is filled in for the gap.</div>`:''}
-          <div style="color:var(--t3);font-size:11px;margin-top:5px">Thresholds <b>±20pp</b>, symmetric around zero. Measured on the ${spAll.length} weeks recorded here the spread averages <b>${mittel!=null?(mittel>0?'+':'')+mittel.toFixed(1):'–'}pp</b> and stays inside ±20 about <b>${innerhalb!=null?innerhalb.toFixed(0):'–'}%</b> of the time.</div></div>
+        <div style="flex:1;min-width:200px">${sentReadBadge(ev)}${ev&&ev.stale?`<div style="color:var(--amber);font-size:var(--fs-xs);margin-top:5px;line-height:1.45">The latest week AAII has published here is <b>${escH(a.date)}</b>. Newer weeks will appear automatically as they are published — nothing is filled in for the gap.</div>`:''}
+          <div style="color:var(--t3);font-size:var(--fs-xs);margin-top:5px">Thresholds <b>±20pp</b>, symmetric around zero. Measured on the ${spAll.length} weeks recorded here the spread averages <b>${mittel!=null?(mittel>0?'+':'')+mittel.toFixed(1):'–'}pp</b> and stays inside ±20 about <b>${innerhalb!=null?innerhalb.toFixed(0):'–'}%</b> of the time.</div></div>
       </div>
       ${umschalter}${rangeBar}${inhalt}${wirkung}
     </div></div>`;
@@ -16285,7 +16285,7 @@ function legende(paare){
 }
 function absAaiiH(){return 220;}
 function renderFearGreedCards(D){
-  const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
+  const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange')}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange')}</div>`;
   let html=rangeBar+`<div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
   const cf=D.cryptoFng,cfEv=sentEval('cryptoFng',cf);
@@ -16294,8 +16294,8 @@ function renderFearGreedCards(D){
   const cfFilteredSeries=cf&&cf.series?cf.series.filter(e=>cfFilteredSet.has(e[0])):null;
   html+=card('🪙 Crypto Fear &amp; Greed','feargreed',cf?escH(cf.label||''):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,'','','sentCryptoFG'):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
-      <div style="flex:1;min-width:150px">${sentReadBadge(cfEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">Applies to: BTC${syms.find(s=>s.id==='ETH')?', ETH':''}. Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" style="color:var(--blue)">alternative.me ↗</a></div></div>
+      <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,'','','sentCryptoFG'):'<div style=\"color:var(--t3);font-size:var(--fs-sm)\">no data</div>'}</div>
+      <div style="flex:1;min-width:150px">${sentReadBadge(cfEv)}<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Applies to: BTC${syms.find(s=>s.id==='ETH')?', ETH':''}. Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" style="color:var(--blue)">alternative.me ↗</a></div></div>
     </div><div style="margin-top:8px">${sentSpark(cfFilteredSeries,0,100,25,75)}</div>`);
   const vx=D.vix,vxEv=sentEval('vix',vx);
   const vxFiltered=vx&&vx.series?filterDatesByRange(vx.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
@@ -16303,16 +16303,16 @@ function renderFearGreedCards(D){
   const vxFilteredSeries=vx&&vx.series?vx.series.filter(e=>vxFilteredSet.has(e[0])):null;
   html+=card('🌪️ VIX (Volatility)','feargreed',vx?('now '+(+vx.value).toFixed(1)):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,'','','sentVix'):'<div style=\"color:var(--t3);font-size:12px\">no data</div>'}</div>
-      <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:11px;margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). S&amp;P 500, Nasdaq. Source: <a href="https://www.tradingview.com/symbols/CBOE-VIX/" target="_blank" rel="noopener" style="color:var(--blue)">TradingView ↗</a></div></div>
+      <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,'','','sentVix'):'<div style=\"color:var(--t3);font-size:var(--fs-sm)\">no data</div>'}</div>
+      <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). S&amp;P 500, Nasdaq. Source: <a href="https://www.tradingview.com/symbols/CBOE-VIX/" target="_blank" rel="noopener" style="color:var(--blue)">TradingView ↗</a></div></div>
     </div><div style="margin-top:8px">${sentSpark(vxFilteredSeries,8,45,13,28)}</div>`);
   const sf=D.stockFng;
   const sfFiltered=sf&&sf.series?filterDatesByRange(sf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
   const sfFilteredSet=new Set(sfFiltered);
   const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
   html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
-    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:12px">Context only — VIX already scores index sentiment.</span><div style="color:var(--t3);font-size:11px;margin-top:6px">Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
-    :`<div style="color:var(--t3);font-size:12px;line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score. Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div>`);
+    sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:var(--fs-sm)">Context only — VIX already scores index sentiment.</span><div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
+    :`<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score. Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div>`);
   html+=`</div>`;
   return html;
 }
@@ -16599,7 +16599,7 @@ function renderSeasonality(){
   const upd=D.updated?new Date(D.updated).toLocaleDateString():'–';
   const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
   const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
-  const curLine=cur?`<div style="text-align:center;font-size:13px;color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
+  const curLine=cur?`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
   // "vs Price" (Nutzer-Wunsch 2026-08-12): dauerhaft aktive Ueberlagerung mit
   // dem tatsaechlichen Kursverlauf des laufenden Jahres, kein Toggle/keine
   // sichtbare Option - siehe seasCurYearReturns()-Kommentar oben.
@@ -16610,7 +16610,7 @@ function renderSeasonality(){
   // sollen ueberall einheitlich sein... immer oben rechts") - vorher stand
   // er als eigene Zeile UEBER der Karte, keins der anderen Tabs macht das so.
   const chartCard=`<div class="cot-card">
-    <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="margin-left:auto">${filt}</span><small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">15y stats · proxy: ${proxyLink} · ${escH(upd)}</small></div>
+    <div class="cot-card-title">Monthly Seasonality — ${escH(COT_NAME[seasAsset]||seasAsset)}${iBtn('seas')}<span style="margin-left:auto">${filt}</span><small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">15y stats · proxy: ${proxyLink} · ${escH(upd)}</small></div>
     <div style="padding:12px 14px;overflow-x:auto">${seasBarChart(A.months,curMon,curYear)}${curLine}${cyLegend}</div>
   </div>`;
   // Kompakte Uebersicht: der AKTUELLE Monat quer ueber alle Assets,
@@ -16620,14 +16620,14 @@ function renderSeasonality(){
   const ovRows=rows.map(r=>{
     const col=r.avg>=0?BC.bull:BC.bear,w=(Math.abs(r.avg)/maxA*100).toFixed(0);
     return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSeasAsset('${r.id}')" title="Show the full 12-month profile of ${escH(COT_NAME[r.id]||r.id)}">
-      <div style="flex:none;width:64px;font-weight:700;font-size:12px;color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${escH(r.id)}</div>
+      <div style="flex:none;width:64px;font-weight:700;font-size:var(--fs-sm);color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${escH(r.id)}</div>
       <div style="flex:1;height:16px;border-radius:4px;background:var(--bg3);overflow:hidden"><div style="width:${w}%;height:100%;background:${col};opacity:.85"></div></div>
-      <div style="flex:none;width:64px;text-align:right;font-size:12px;font-weight:700;color:${col}">${r.avg>0?'+':''}${r.avg.toFixed(2)}%</div>
-      <div style="flex:none;width:56px;text-align:right;font-size:11px;color:${r.hit>=60?BC.bull:r.hit<=40?BC.bear:'var(--t3)'}">${r.hit}% up</div>
+      <div style="flex:none;width:64px;text-align:right;font-size:var(--fs-sm);font-weight:700;color:${col}">${r.avg>0?'+':''}${r.avg.toFixed(2)}%</div>
+      <div style="flex:none;width:56px;text-align:right;font-size:var(--fs-xs);color:${r.hit>=60?BC.bull:r.hit<=40?BC.bear:'var(--t3)'}">${r.hit}% up</div>
     </div>`;
   }).join('');
   const ovCard=`<div class="cot-card" style="margin-top:12px">
-    <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:500;color:var(--t2);font-size:11px;margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span></div>
+    <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span></div>
     <div style="padding:12px 14px">${ovRows}</div>
   </div>`;
   el.innerHTML=chartCard+ovCard;
@@ -16880,7 +16880,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
   // (rateProbYAxis), die beim Verschieben stehen bleibt (Nutzer-Wunsch
   // 2026-07-25: "die y-Achse mit den Prozenten muss immer zu sehen sein").
   const gy=[0,50,100].map(t=>`<line x1="${(RATEPROB_PADL-8).toFixed(1)}" y1="${yOf(t).toFixed(1)}" x2="${(W-RATEPROB_PADR+8).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/>`).join('');
-  const yAxisLabels=[0,50,100].map(t=>`<text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:10px;fill:var(--t3)">${t}%</text>`).join('');
+  const yAxisLabels=[0,50,100].map(t=>`<text x="${(RATEPROB_PADL-14).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t}%</text>`).join('');
   // X-Achsen-Labels: Today fett/weiss, kommende Zentralbank-Meetings ROT
   // (Nutzer-Wunsch 2026-07-25, damit man die Termine klar von Historie/Today
   // unterscheidet), Historie/vergangenes Meeting gedaempft. Meetings/vergangene
@@ -16935,7 +16935,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
     const col=rateProbLineColor(p.realizedBucket);
     const lbl=p.realizedBucket===0?'Hold':(p.realizedBucket>0?'+':'')+p.realizedBucket+'bp';
     const x=xOf(i),y=yOf(100);
-    pastMarkup+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--bg1)" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${(y-11).toFixed(1)}" text-anchor="middle" style="font-size:9.5px;font-weight:700;fill:${col}">✓ ${escH(lbl)}</text>`;
+    pastMarkup+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5" fill="${col}" stroke="var(--bg1)" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${(y-11).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);font-weight:700;fill:${col}">✓ ${escH(lbl)}</text>`;
   }
   let paths='',dots='';
   const lblItems=[];
@@ -17007,7 +17007,7 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
       if(group[k].y-group[k-1].y<MIN_GAP)group[k].y=group[k-1].y+MIN_GAP;
     }
   });
-  const labels=lblItems.map(it=>`<text x="${it.x.toFixed(1)}" y="${it.y.toFixed(1)}" style="font-size:10px;font-weight:700;fill:${it.col}">${escH(it.lbl)}</text>`).join('');
+  const labels=lblItems.map(it=>`<text x="${it.x.toFixed(1)}" y="${it.y.toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:${it.col}">${escH(it.lbl)}</text>`).join('');
   const svg=`<svg id="rateProbSvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block">
       ${gy}
       ${divider}
@@ -17151,7 +17151,7 @@ function termStructureCardHtml(){
   const yLabels=[hi,(hi+lo)/2,lo].map(v=>`<text x="4" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${v.toFixed(2)}%</text>`).join('');
   return`<div class="cot-card" style="margin-top:12px">
     <div class="cot-card-title">Implied policy path${iBtn('termstruct')}
-      <small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">What the futures market prices for each central bank over its next meetings &mdash; the same numbers shown per currency above, laid side by side</small></div>
+      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">What the futures market prices for each central bank over its next meetings &mdash; the same numbers shown per currency above, laid side by side</small></div>
     <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:360px;height:auto">
       ${yLabels}${achse}${linien}
     </svg></div>
@@ -17756,7 +17756,7 @@ function realRateTableHtml(){
       <span style="margin-left:auto;display:flex;gap:5px">
         <button class="hl-tab${realRateSort==='real'?' on':''}" onclick="setRealRateSort('real')">by real</button>
         <button class="hl-tab${realRateSort==='nominal'?' on':''}" onclick="setRealRateSort('nominal')">by nominal</button></span>
-      <small style="width:100%;font-weight:500;color:var(--t2);font-size:11px">Policy rate minus headline CPI &mdash; both values are the ones already shown on the asset pages, nothing recomputed</small></div>
+      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Policy rate minus headline CPI &mdash; both values are the ones already shown on the asset pages, nothing recomputed</small></div>
     <table class="edge-tbl"><thead><tr><th>Currency</th><th>Policy</th><th>CPI</th><th>Real</th></tr></thead><tbody>
     ${rows.map(r=>`<tr><td class="edge-b">${escH(COT_NAME[r.id]||r.id)}</td>
       <td>${r.nominal.toFixed(2)}%</td><td>${r.cpi.toFixed(1)}%</td>
@@ -17827,7 +17827,7 @@ function renderCarry(){
   const lookEl=document.getElementById('carryLookup');
   const qEl=document.getElementById('carrySearch');
   const term=qEl?qEl.value.trim().toUpperCase().replace(/\s+/g,''):'';
-  if(!all.length){el.innerHTML='<div style="font-size:13px;color:var(--t3);padding:10px">No policy-rate data available.</div>';if(lookEl)lookEl.innerHTML='';return;}
+  if(!all.length){el.innerHTML='<div style="font-size:var(--fs-base);color:var(--t3);padding:10px">No policy-rate data available.</div>';if(lookEl)lookEl.innerHTML='';return;}
   const max=all[0].carry||1;
   // Lookup-Panel: getipptes Paar -> aktuelle Zinsen beider Waehrungen + Differenz
   if(lookEl){
@@ -17855,7 +17855,7 @@ function renderCarry(){
   const list=all.map((r,i)=>({r,rank:i+1}))
     .filter(({r})=>!term||r.pair.toUpperCase().includes(term)||r.pair.toUpperCase().replace('/','').includes(term.replace('/',''))||r.base===term||r.quote===term)
     .map(({r,rank})=>carryRowHTML(r,rank,max)).join('');
-  el.innerHTML=(list?`<div class="carry-list">${list}</div>`:'<div style="font-size:13px;color:var(--t3);padding:10px">No matching pair.</div>')
+  el.innerHTML=(list?`<div class="carry-list">${list}</div>`:'<div style="font-size:var(--fs-base);color:var(--t3);padding:10px">No matching pair.</div>')
     +realRateTableHtml()+spreadCardHtml();
 }
 

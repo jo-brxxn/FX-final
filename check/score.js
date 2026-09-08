@@ -83,6 +83,42 @@ const MODE = process.argv[2] || 'normalized';
     if(isNonFx(sym.id))return;                            // ueber deriveRules gespiegelt
     if(rub.bias!==soll)add('Karten-Badge != rubScore/Schwelle',{sym:sym.id,rub:rub.name,score:+sc.toFixed(3),thr,ist:rub.bias,soll});
   }));
+  // ── E1b) Kein Alters-Faktor, wo Alter nichts bedeutet ──────────
+  // Nutzer-Vorgabe 2026-09-08: "Im Score entfern bei cot und bei risk
+  // Environment und bei den yields den Multiplikator Age das brauchen die
+  // nicht." Der Faktor bildet ab, dass eine VEROEFFENTLICHUNG an
+  // Aussagekraft verliert. COT-Positionierung, Risikoumfeld und
+  // Anleiherenditen sind aber ZUSTAENDE, die laufend neu gemessen werden -
+  // sie koennen nicht altern, der Faktor hat dort nur Gewicht abgezogen.
+  // Geprueft wird die WIRKUNG (indDecayWeight === 1), nicht das Vorhandensein
+  // einer Liste: eine Ausnahme, die falsch greift, faellt damit auf.
+  // Gegenprobe beim Einbau: die Ausnahme abgeschaltet -> 181 Treffer
+  // (77 COT + 32 Risk Environment + 72 Renditen), wieder an -> 0.
+  ok.ohneAlter={cot:0,risk:0,renditen:0};
+  const RENDITEN=new Set(['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']);
+  syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+    const base=stripPeriodSuffix(ind.name).base;
+    const istCot=rub.name==='COT Data', istRisk=rub.name==='Risk Environment', istY=RENDITEN.has(base);
+    if(!istCot&&!istRisk&&!istY)return;
+    let d=null;try{d=indDecayWeight(ind,rub);}catch(e){return;}
+    if(Math.abs(d-1)>1e-9)add('Alters-Faktor wirkt, wo er nicht soll',
+      {sym:sym.id,rub:rub.name,ind:ind.name,faktor:Math.round(d*1000)/1000});
+    else if(istCot)ok.ohneAlter.cot++;else if(istRisk)ok.ohneAlter.risk++;else ok.ohneAlter.renditen++;
+  })));
+  // Gegenstueck: bei den echten Veroeffentlichungen MUSS er weiter wirken -
+  // sonst haette eine zu weit gefasste Ausnahme den Faktor still ueberall
+  // abgeschaltet und niemand haette es gemerkt.
+  let mitAlter=0;
+  syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+    if(rub.name==='COT Data'||rub.name==='Risk Environment')return;
+    if(RENDITEN.has(stripPeriodSuffix(ind.name).base))return;
+    let d=null;try{d=indDecayWeight(ind,rub);}catch(e){return;}
+    if(Math.abs(d-1)>1e-9)mitAlter++;
+  })));
+  ok.mitAlter=mitAlter;
+  if(mitAlter<50)add('Alters-Faktor wirkt nirgends mehr',
+    {mitAlter,hinweis:'Die Ausnahme greift zu weit - erwartet werden mehrere hundert echte Veroeffentlichungen mit Alters-Gewicht.'});
+
   // ── E2) OUT OF DATE nur bei BEKANNTEM Zyklus ───────────────────
   // Nutzer-Bugreport 2026-09-06 (AUD GDP, zweite Runde): ohne Historie UND
   // ohne ind.interval faellt indCycleDaysCalc auf pauschale 30 Tage zurueck.

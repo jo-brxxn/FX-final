@@ -126,16 +126,36 @@ const ERFASSEN = () => {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
   await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1');localStorage.setItem('dmfx_app_choice', 'fx'); } catch (e) {} });
-  const laden = async (url) => {
+  // ⚠ BEIDE Modi erfassen. Bis 2026-09-08 setzte dieser Waechter den Modus
+  // gar nicht und mass damit nur den Standard - der normalisierte Modus
+  // (indNormFactor mit Surprise/Age/Markt-Gewicht) war komplett blind.
+  // Aufgefallen, als die Age-Ausnahme fuer COT/Risk/Renditen eingebaut wurde:
+  // scorediff meldete "an keiner Stelle veraendert", obwohl die Rechnung fuer
+  // 181 Indikator-Instanzen nachweislich eine andere ist - sie wirkt eben nur
+  // im normalisierten Modus. Ein Diff-Waechter, der die Haelfte des Modells
+  // nicht ansieht, beantwortet die Frage nicht, fuer die es ihn gibt.
+  const ladenModus = async (url, modus) => {
+    await p.evaluate(m => { try { localStorage.setItem('fxpro_score_mode', m); } catch (e) {} }, modus);
     await p.goto(url, { waitUntil: 'networkidle' });
     await p.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
     await wartenBisDatenDa(p);   // statt fester Frist - siehe check/warten.js
     return p.evaluate(ERFASSEN);
   };
+  // Beide Staende in beiden Modi: die Werte werden mit einem Praefix in EIN
+  // Objekt gelegt, damit der bestehende Vergleich unveraendert weiterlaeuft
+  // und ein Treffer sofort sagt, in WELCHEM Modus er steckt.
+  const beideModi = async (url) => {
+    const out = { sym:{}, symRaw:{}, rub:{}, staerke:{}, pair:{}, carry:{} };
+    for (const m of ['classic', 'normalized']) {
+      const r = await ladenModus(url, m);
+      Object.keys(out).forEach(k => Object.keys(r[k] || {}).forEach(id => { out[k][m + ':' + id] = r[k][id]; }));
+    }
+    return out;
+  };
   let alt, neu, fehler = null;
   try {
-    alt = await laden(`http://127.0.0.1:${PORT_ALT}/index.html`);
-    neu = await laden(URL_NEU);
+    alt = await beideModi(`http://127.0.0.1:${PORT_ALT}/index.html`);
+    neu = await beideModi(URL_NEU);
   } catch (e) { fehler = String(e); }
   await b.close();
   srv.close();
