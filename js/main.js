@@ -4472,7 +4472,26 @@ const SAFE_ID_RE=/^[A-Z0-9._-]{1,15}$/;
 // Sync/Import-Umgehung wie bei Symbol-IDs gilt hier genauso - eine
 // manipulierte id in einem dieser Felder landet ebenso ungefiltert in
 // onclick="fn('${x.id}')"-Handlern (delPair/toggleWatch/toggleMwSym/...).
-const SAFE_UID_RE=/^[a-z0-9]{1,24}$/i;
+// ⚠ NUTZER-BUGREPORT 2026-09-08 ("es loeschen sich immer noch automatisch
+// Notizen, die in mehreren Ordnern gleichzeitig gespeichert sind") - hier lag
+// er, und er hat Daten gekostet. Reproduziert und gemessen:
+//   1440 von 1545 Notiz-Ids fielen durch dieses Muster, weil die
+//   mitgelieferten Verhaltensnotizen "sd_USD_macro_bull_0" heissen - MIT
+//   Unterstrichen, die [a-z0-9] nicht zulaesst.
+//   Bearbeitet der Nutzer so eine Notiz, BEHAELT sie ihre Id (saveResNote
+//   setzt nur replacesSeed und entfernt das seed-Merkmal). Beim naechsten
+//   applySnap - also bei JEDEM Cloud-Sync, jedem Undo, jeder
+//   Backup-Wiederherstellung und jedem Import - warf der Filter sie
+//   stillschweigend weg, und seedAssetBehaviorNotes legte sie danach mit dem
+//   ORIGINALTEXT neu an. Gemessen nach einem einzigen Umlauf: eigener Text
+//   weg, Notiz wieder als "mitgeliefert" markiert, der zweite Ordner weg,
+//   nichts im Papierkorb.
+// Unterstrich und Bindestrich sind hier gefahrlos: die Id wird in
+// onclick="fn('${id}')" interpoliert, und weder _ noch - koennen aus einem
+// einfachen Anfuehrungszeichen oder einem HTML-Attribut ausbrechen. Die
+// Laenge steigt auf 64, weil die laengste erzeugte Id
+// "sd_GER100_seasonality_neu_11" bereits 28 Zeichen hat.
+const SAFE_UID_RE=/^[A-Za-z0-9_-]{1,64}$/;
 function sanitizeSnapIds(d){
   if(Array.isArray(d.syms)){
     d.syms=d.syms.filter(sy=>sy&&typeof sy.id==='string'&&SAFE_ID_RE.test(sy.id));
@@ -4506,7 +4525,21 @@ function sanitizeSnapIds(d){
   }
   if(d.research&&typeof d.research==='object'){
     if(Array.isArray(d.research.folders))d.research.folders=d.research.folders.filter(f=>f&&typeof f.id==='string'&&SAFE_UID_RE.test(f.id));
-    if(Array.isArray(d.research.notes))d.research.notes=d.research.notes.filter(n=>n&&typeof n.id==='string'&&SAFE_UID_RE.test(n.id));
+    // ⚠ Aussortierte Notizen gehen in den PAPIERKORB, nicht ins Nichts.
+    // Der Filter muss bleiben (er schuetzt vor manipulierten Ids aus Cloud
+    // oder Import), aber "stillschweigend loeschen" ist bei Nutzerinhalten
+    // nie die richtige Antwort - siehe den Bugreport oben. Ist eine Id
+    // wirklich unbrauchbar, sieht der Nutzer die Notiz wenigstens im
+    // Papierkorb wieder und kann den Text herausholen.
+    if(Array.isArray(d.research.notes)){
+      const raus=d.research.notes.filter(n=>!(n&&typeof n.id==='string'&&SAFE_UID_RE.test(n.id)));
+      d.research.notes=d.research.notes.filter(n=>n&&typeof n.id==='string'&&SAFE_UID_RE.test(n.id));
+      if(raus.length){
+        if(!Array.isArray(d.research.trash))d.research.trash=[];
+        const jetzt=new Date().toISOString();
+        raus.forEach(n=>{try{d.research.trash.push({id:uid(),kind:'note',data:{...n,id:uid()},delAt:jetzt,grund:'unsichere id'});}catch(e){}});
+      }
+    }
   }
   return d;
 }

@@ -11766,3 +11766,69 @@ Ersetzt wurden alle Größen **bis 13 px** plus die exakten Treffer
 Pixel. **Bewusst unangetastet: 14, 16, 18 px.** Dort entscheidet die Rolle
 des Elements (Seitentitel? Kennzahl? Icon?) und nicht die Zahl — das wäre
 geraten.
+
+## 2026-09-08 — Notizen löschten sich beim Sync selbst (VERSION-CHECK-490)
+
+**Nutzer:** *„Außerdem löschen sich immer noch automatisch Notizen, die in
+mehreren Ordnern gleichzeitig gespeichert sind. Das musst du auf jeden Fall
+überprüfen."*
+
+Reproduziert — und es hat wirklich Daten gekostet.
+
+### Die Ursache
+
+`SAFE_UID_RE` war `/^[a-z0-9]{1,24}$/i` — **ohne Unterstrich**. Die
+mitgelieferten Verhaltensnotizen heißen aber `sd_USD_macro_bull_0`:
+
+| Messung | Wert |
+|---|---|
+| Notizen gesamt | 1 545 |
+| Ids, die durch den eigenen Filter fallen | **1 440** |
+| längste erzeugte Id | `sd_GER100_seasonality_neu_11` (28 Zeichen) |
+
+Bearbeitet man so eine Notiz, **behält sie ihre Id** (`saveResNote` setzt nur
+`replacesSeed` und entfernt das seed-Merkmal). Beim nächsten `applySnap` —
+also bei **jedem Cloud-Sync**, jedem Undo, jeder Backup-Wiederherstellung und
+jedem Import — warf der Sanitizer sie stillschweigend weg, und
+`seedAssetBehaviorNotes` legte sie danach mit dem **Originaltext** neu an.
+
+Gemessen nach **einem einzigen** Umlauf:
+
+| | vorher | nachher |
+|---|---|---|
+| Titel | „Von mir überschrieben" | *Originaltext der App* |
+| eigener Text | vorhanden | **weg** |
+| als „mitgeliefert" markiert | nein | **ja** |
+| Ordner | 2 | **1** |
+| im Papierkorb | – | **nein** |
+
+Genau die gemeldete Beobachtung: die Notiz „löscht sich selbst", und
+betroffen sind besonders die, die in mehreren Ordnern liegen — denn wer eine
+Notiz erweitert, ist auch der, der ihr einen zweiten Ordner gibt.
+
+### Der Fix
+
+1. Der Filter erlaubt jetzt `_` und `-` und bis zu 64 Zeichen. Beide Zeichen
+   sind an der Verwendungsstelle gefahrlos: die Id landet in
+   `onclick="fn('${id}')"`, und weder `_` noch `-` können aus einem einfachen
+   Anführungszeichen oder einem HTML-Attribut ausbrechen. Der Filter bleibt
+   also ein Schutz — er sortiert nur nicht mehr die eigenen Daten aus.
+2. Was er **doch** aussortiert, geht in den **Papierkorb** statt ins Nichts.
+   Bei Nutzerinhalten ist „stillschweigend löschen" nie die richtige Antwort.
+
+### Neuer Wächter: `check/notizen.js`
+
+Notiz-Datenverlust ist in diesem Projekt dreimal beim Nutzer angekommen.
+Notizen sind der einzige Inhalt, den niemand wiederherstellen kann — Kurse
+und Scores kommen aus dem Feed zurück, ein selbst geschriebener Gedanke
+nicht. Deshalb ein eigener Wächter:
+
+1. Jede Id, die die App **selbst** erzeugt, muss ihren eigenen
+   Sicherheitsfilter passieren. Ein Filter, der eigene Daten aussortiert, ist
+   kein Schutz, sondern ein Löschwerkzeug.
+2. Regressionstest: bearbeitete Notiz in zwei Ordnern → `applySnap` → Text,
+   seed-Freiheit **und beide Ordner** müssen erhalten sein.
+
+Gegenprobe mit dem alten Filter: **1 440 abgelehnte Ids**, Text
+überschrieben, Notiz wieder als mitgeliefert markiert, zweiter Ordner
+verloren. Mit dem Fix: 0.

@@ -30,6 +30,7 @@ const PRUEFUNGEN = [
   { n: 'score-cl',  d: 'dasselbe im Modus classic',                              f: 'check/score.js',     args: ['classic'],    browser: true },
   { n: 'display',   d: 'angezeigte Scores im DOM gegen den Sollwert',            f: 'check/display.js',   args: ['normalized'], browser: true },
   { n: 'runtime',   d: 'alle Tabs, Modals und Zustaende ohne JS-Fehler',         f: 'check/runtime.js',   args: [],           browser: true },
+  { n: 'notizen',   d: 'Notizen ueberleben Sync/Undo/Import mit Text und Ordnern', f: 'check/notizen.js',  args: [],           browser: true },
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
