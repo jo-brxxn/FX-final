@@ -1,0 +1,141 @@
+# Welche Quelle liefert die Jahre VOR 2013 - und wie weit zurueck?
+#
+# Anlass (Nutzer 2026-09-08): "Ok dann mach das weil ich will die Sachen
+# einfach nur so sehen mir geht es nicht um den forecast. Ich brauche sie
+# auch im backtester". Gemessen am 2026-09-07 beginnt der bisherige Kalender
+# (economic-calendar.tradingview.com) 2013 - HTTP 200, aber null Events fuer
+# 2006-2012. Fuer die Jahre davor braucht es eine zweite Quelle.
+#
+# Gebraucht werden VIER Reihen je Waehrung:
+#   1. Leitzins  -> die ZEILEN des Backtesters (rateSteps liest die
+#      Beschluss-Historie; ohne sie gibt es keine neue Zeile, an der die
+#      Indikatorwerte haengen koennten)
+#   2. CPI (Headline) y/y   -> Spalte Inflation
+#   3. Unemployment Rate    -> Spalte Labour
+#   4. GDP Growth QoQ       -> Spalte Growth
+#
+# ⚠ Dieser Lauf RAET NICHTS und schreibt NICHTS in die Daten: er fragt jede
+# Kandidaten-Adresse einmal ab und meldet HTTP-Code, Zeilenzahl und den
+# aeltesten/juengsten Datenpunkt. Erst danach wird gebaut. Genau so ist am
+# 2026-09-07 die Frage "wie tief reicht TradingView" beantwortet worden -
+# eine geratene Serien-ID haette am Ende still eine falsche Reihe geliefert.
+name: Probe backfill sources (pre-2013)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: BIS-Leitzinsen (alle Notenbanken, eine Datei)
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "## 1. Leitzinsen (BIS)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Adresse | HTTP | Bytes | Inhalt |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          for U in \
+            "https://data.bis.org/static/bulk/WS_CBPOL_csv_flat.zip" \
+            "https://www.bis.org/statistics/full_cbpol_d_csv.zip" \
+            "https://www.bis.org/statistics/full_cbpol_m_csv.zip" ; do
+            CODE=$(curl -sL -o bis.bin -w "%{http_code}" --max-time 120 -A "$UA" "$U" || echo "000")
+            SZ=$(stat -c%s bis.bin 2>/dev/null || echo 0)
+            TYP=$(file -b bis.bin 2>/dev/null | cut -c1-40)
+            echo "| \`${U##*/}\` | $CODE | $SZ | $TYP |" >> $GITHUB_STEP_SUMMARY
+            echo "[probe] $U -> HTTP $CODE, $SZ Bytes, $TYP"
+            if [ "$CODE" = "200" ] && [ "$SZ" -gt 10000 ]; then
+              rm -rf bisx && mkdir bisx
+              if unzip -o -q bis.bin -d bisx 2>/dev/null; then
+                for F in bisx/*; do
+                  echo "[probe]   entpackt: $F ($(stat -c%s "$F") Bytes)"
+                  echo "[probe]   Kopfzeile: $(head -c 400 "$F" | tr '\n' ' ')"
+                  # Welche Notenbanken und welcher Zeitraum?
+                  node -e '
+                    const fs=require("fs");
+                    const t=fs.readFileSync(process.argv[1],"utf8").split("\n");
+                    const kopf=(t[0]||"").split(",").map(s=>s.replace(/^"|"$/g,""));
+                    const iRef=kopf.findIndex(c=>/REF_AREA/i.test(c));
+                    const iPer=kopf.findIndex(c=>/^TIME_PERIOD$|^Period$/i.test(c));
+                    const iVal=kopf.findIndex(c=>/^OBS_VALUE$|^Value$/i.test(c));
+                    console.log("[probe]   Spalten: REF_AREA="+iRef+" TIME="+iPer+" VALUE="+iVal+" von "+kopf.length);
+                    if(iRef<0||iPer<0)return;
+                    const ziel=new Set(["US","XM","GB","JP","CA","AU","NZ","CH"]);
+                    const m={};
+                    for(let i=1;i<t.length;i++){
+                      const z=t[i].split(",").map(s=>s.replace(/^"|"$/g,""));
+                      const a=z[iRef]; if(!ziel.has(a))continue;
+                      const p=z[iPer], v=z[iVal];
+                      if(!p||v==null||v==="")continue;
+                      (m[a]=m[a]||{n:0,min:p,max:p}).n++;
+                      if(p<m[a].min)m[a].min=p;
+                      if(p>m[a].max)m[a].max=p;
+                    }
+                    Object.keys(m).sort().forEach(a=>console.log("[probe]   "+a+": "+m[a].n+" Werte, "+m[a].min+" .. "+m[a].max));
+                  ' "$F" || true
+                done
+              else
+                echo "[probe]   kein ZIP (vermutlich Fehlerseite)"
+              fi
+              break
+            fi
+            sleep 2
+          done
+
+      - name: FRED ohne Schluessel - Kandidaten je Reihe
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 2. FRED (ohne API-Schluessel, fredgraph.csv)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Zweck | Serie | HTTP | Werte | von | bis |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          # Format: Zweck|SerienId
+          LISTE="
+          CPI-Index USD|CPIAUCSL
+          CPI-Index EUR|CP0000EZ19M086NEST
+          CPI-Index GBP|GBRCPIALLMINMEI
+          CPI-Index JPY|JPNCPIALLMINMEI
+          CPI-Index CAD|CANCPIALLMINMEI
+          CPI-Index AUD|AUSCPIALLQINMEI
+          CPI-Index NZD|NZLCPIALLQINMEI
+          CPI-Index CHF|CHECPIALLMINMEI
+          Unemp USD|UNRATE
+          Unemp EUR|LRHUTTTTEZM156S
+          Unemp GBP|LRHUTTTTGBM156S
+          Unemp JPY|LRHUTTTTJPM156S
+          Unemp CAD|LRHUTTTTCAM156S
+          Unemp AUD|LRHUTTTTAUM156S
+          Unemp NZD|LRHUTTTTNZQ156S
+          Unemp CHF|LRHUTTTTCHM156S
+          GDP-Level USD|GDPC1
+          GDP-Level EUR|CLVMNACSCAB1GQEA19
+          GDP-Level GBP|NGDPRSAXDCGBQ
+          GDP-Level JPY|JPNRGDPEXP
+          GDP-Level CAD|NGDPRSAXDCCAQ
+          GDP-Level AUD|NGDPRSAXDCAUQ
+          GDP-Level NZD|NGDPRSAXDCNZQ
+          GDP-Level CHF|CHEGDPRQDSMEI
+          "
+          echo "$LISTE" | while IFS='|' read -r ZWECK ID; do
+            ZWECK=$(echo "$ZWECK" | sed 's/^ *//;s/ *$//'); ID=$(echo "$ID" | tr -d ' \r')
+            [ -z "$ID" ] && continue
+            CODE=$(curl -sL -o "fred.csv" -w "%{http_code}" --max-time 60 -A "$UA" \
+              "https://fred.stlouisfed.org/graph/fredgraph.csv?id=${ID}" || echo "000")
+            read N VON BIS < <(node -e '
+              const fs=require("fs");
+              try{
+                const t=fs.readFileSync("fred.csv","utf8").trim().split("\n");
+                if(t.length<2||!/^(DATE|observation_date)/i.test(t[0])){console.log("0 - -");process.exit(0);}
+                const zeilen=t.slice(1).map(z=>z.split(",")).filter(z=>z[1]&&z[1]!=="."&&z[1].trim()!=="");
+                if(!zeilen.length){console.log("0 - -");process.exit(0);}
+                console.log(zeilen.length+" "+zeilen[0][0]+" "+zeilen[zeilen.length-1][0]);
+              }catch(e){console.log("0 - -");}
+            ')
+            echo "| $ZWECK | \`$ID\` | $CODE | $N | $VON | $BIS |" >> $GITHUB_STEP_SUMMARY
+            echo "[probe] $ZWECK $ID: HTTP $CODE, $N Werte, $VON .. $BIS"
+            sleep 1
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Brauchbar ist eine Reihe, die **HTTP 200**, viele Werte und ein **von** deutlich vor 2013 zeigt." >> $GITHUB_STEP_SUMMARY
+          echo "Eine Reihe mit 0 Werten existiert unter dieser Id nicht (oder wurde zurueckgezogen) - dann wird sie ERSETZT, nicht geraten." >> $GITHUB_STEP_SUMMARY
