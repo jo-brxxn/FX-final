@@ -13,7 +13,6 @@
 import * as S from './store.js';
 import {detectLink,parseCaption,captionToRecipe,creatorFromUrl,creatorFromText,previewUrl,frameUrls} from './import.js';
 import {THEMEN,THEMA_BY_ID} from './themen.js';
-import {mealDbToItem} from './feed.js';
 import {CATS,CAT_BY_ID,categorize,splitQty,suggest} from './groceries.js';
 import * as CK from './cook.js';
 
@@ -1472,7 +1471,7 @@ const FEED_PRO_ZUG=3;
 // kam - genau deshalb war der Waechter lokal gruen und auf dem Runner rot.
 let feedLaedt=false;
 let feed={items:[],updated:'',geladen:false,fehler:''};
-let feedQuelle='',feedThema='';
+let feedThema='';
 export async function ladeFeed(){
   if(feed.geladen)return feed;
   feed.geladen=true;
@@ -1496,22 +1495,29 @@ export async function ladeFeed(){
   return feed;
 }
 function feedGesehen(){return new Set(((S.state.index.feed||{}).seen)||[]);}
-function feedQuellen(){
-  const z=new Map();
-  feed.items.forEach(i=>{if(i.srcName)z.set(i.srcName,(z.get(i.srcName)||0)+1);});
-  return [...z.entries()].sort((a,b)=>b[1]-a[1]);
-}
+// ⚠ NUR DEUTSCHE KUECHE (Nutzer-Anweisung 2026-09-08: "entfern die ganzen
+// Filter fuer die Quellen und mach das nur deutsche Gerichte vorgeschlagen
+// werden"). Gemessen wurde die Herkunft AN DER QUELLE, nicht am Gericht:
+// jeder Eintrag traegt seit dem Herkunfts-Lauf ein land ('de'/'it'/'int'),
+// das aus tools/rezept-quellen.json stammt. Am GERICHT waere die Regel nicht
+// zu erfuellen - das Thema "german" (Schnitzel, Spaetzle, Rouladen) trifft im
+// gemessenen Vorrat auf 7 von 270 Eintraege zu, der Bereich waere praktisch
+// leer. Deutschsprachige Quelle heisst: was in deutschen Kuechen gekocht wird.
+// Zweite Sperre mit Absicht: der Tageslauf sammelt seit 2026-09-08 ohnehin
+// nur noch deutsche Quellen (nurLand in tools/rezept-quellen.json), aber ein
+// alter Vorrat im Cache darf nichts Fremdes hereinlassen.
+function istDeutsch(i){return (i&&i.land)==='de';}
+function feedDeutsch(){return feed.items.filter(istDeutsch);}
 function feedThemen(){
   const z=new Map();
-  feed.items.forEach(i=>(i.themes||[]).forEach(t=>z.set(t,(z.get(t)||0)+1)));
+  feedDeutsch().forEach(i=>(i.themes||[]).forEach(t=>z.set(t,(z.get(t)||0)+1)));
   return THEMEN.filter(t=>z.has(t.id)).map(t=>[t,z.get(t.id)]);
 }
 // Die Liste, die gerade dran ist: Filter an, Gesehenes raus, Neuestes zuerst.
 function feedListe(){
   const gesehen=feedGesehen();
-  return feed.items.filter(i=>
+  return feedDeutsch().filter(i=>
     !gesehen.has(i.id)
-    &&(!feedQuelle||i.srcName===feedQuelle)
     &&(!feedThema||(i.themes||[]).includes(feedThema)));
 }
 function feedKarte(i){
@@ -1540,24 +1546,28 @@ export function feedAbschnitt(){
     return`<div class="fd-wrap"><div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span></div>`
       +`<div class="fd-note">No suggestions yet — the daily run fills this list. You can start it by hand from the repository (workflow “Rezept-Vorschlaege”).</div></div>`;
   }
+  // ⚠ Kein stilles Leerbleiben: liegt ein Vorrat vor, ist aber nichts davon
+  // aus einer deutschen Kueche, sagt die Oberflaeche das - statt eine leere
+  // Reihe zu zeigen, die aussieht, als waere die App kaputt.
+  if(!feedDeutsch().length){
+    return`<div class="fd-wrap"><div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span></div>`
+      +`<div class="fd-note">The current batch has no German dishes in it (${feed.items.length} entr${feed.items.length===1?'y':'ies'} from other kitchens were skipped). The next daily run fills this list again.</div></div>`;
+  }
   const liste=feedListe();
   const zeige=liste.slice(0,FEED_PRO_ZUG);
-  const quellen=feedQuellen(),themen=feedThemen();
+  const themen=feedThemen();
   const alter=feed.updated?new Date(feed.updated):null;
   const wann=alter&&!isNaN(alter)?alter.toLocaleDateString(undefined,{day:'numeric',month:'short'}):'';
   return`<div class="fd-wrap">`
     +`<div class="fd-hd"><span class="fd-hd-t">Daily suggestions</span>`
       +`<span class="fd-hd-s">${liste.length} waiting${wann?' · updated '+escH(wann):''}</span></div>`
-    +`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Source</span>`
-      +`<button class="tag-chip${feedQuelle?'':' on'}" onclick="rezFeedSource(-1)">All</button>`
-      // ⚠ Der Quellenname wird als INDEX uebergeben, nicht als Text. Beim
-      // ersten scharfen Lauf kam "Malte's Kitchen" herein: escH() macht aus
-      // dem Apostroph &#39;, der Browser macht daraus beim Auswerten wieder
-      // ein ' - und der Handler stand als rezFeedSource('Malte's Kitchen')
-      // da, also kaputtes JavaScript. Der Waechter hat es als "missing )
-      // after argument list" gemeldet. Ein Index kann das nicht.
-      +quellen.map(([n,c],i)=>`<button class="tag-chip${feedQuelle===n?' on':''}" onclick="rezFeedSource(${i})">${escH(n)} <span class="chip-n">${c}</span></button>`).join('')
-    +`</div>`
+    // ⚠ HIER STAND EINE CHIPREIHE "Source" (Filter nach Quelle). Entfernt auf
+    // Anweisung 2026-09-08 ("entfern die ganzen Filter fuer die Quellen"). Der
+    // Quellenname steht weiter auf jeder Karte (.fd-src), er ist nur nicht
+    // mehr anklickbar. Wer sie zurueckholt, muss den Namen wieder als INDEX
+    // uebergeben, nicht als Text: "Malte's Kitchen" wurde ueber escH() zu
+    // &#39;, der Browser machte daraus wieder ein ' - und der Handler war
+    // kaputtes JavaScript ("missing ) after argument list").
     +(themen.length?`<div class="rez-tags fd-tags"><span class="shop-quick-lbl">Kind</span>`
       +`<button class="tag-chip${feedThema?'':' on'}" onclick="rezFeedTheme('')">All</button>`
       +themen.map(([t,c])=>`<button class="tag-chip${feedThema===t.id?' on':''}" onclick="rezFeedTheme('${t.id}')">${t.icon} ${escH(t.label)} <span class="chip-n">${c}</span></button>`).join('')
@@ -1569,16 +1579,10 @@ export function feedAbschnitt(){
         +`<span class="fd-count">${Math.min(FEED_PRO_ZUG,liste.length)} of ${liste.length}</span></div>`
       :feedLaedt
       ?`<div class="fd-note">Loading new suggestions…</div>`
-      :`<div class="fd-note">You have been through everything${feedQuelle||feedThema?' in this filter':''}. `
+      :`<div class="fd-note">You have been through everything${feedThema?' in this filter':''}. `
        +`<button class="fd-lnk" onclick="rezFeedMore()">Load new ones</button> or `
        +`<button class="fd-lnk" onclick="rezFeedReset()">show them all again</button>.</div>`)
   +`</div>`;
-}
-export function rezFeedSource(i){
-  const liste=feedQuellen();
-  const n=(i>=0&&liste[i])?liste[i][0]:'';
-  feedQuelle=(feedQuelle===n)?'':n;
-  renderInspo();
 }
 export function rezFeedTheme(id){feedThema=(feedThema===id)?'':id;renderInspo();}
 // Weiterblaettern: die gezeigten drei gelten als gesehen - geraeteuebergreifend,
@@ -1608,9 +1612,16 @@ export async function rezFeedReset(){
   renderInspo();
   toast('Showing all suggestions again');
 }
-// ⚠ LIVE NACHLADEN geht NUR bei TheMealDB: deren Server erlaubt die Abfrage
-// aus dem Browser (CORS). Spoonacular braucht einen Schluessel, Blogs und
-// YouTube antworten dem Browser nicht - deshalb steht dort der Tageslauf.
+// NACHLADEN HEISST: DEN VORRAT NEU HOLEN.
+// ⚠ Bis 2026-09-08 holte dieser Knopf drei Zufallsgerichte LIVE bei
+// TheMealDB - der einzigen Quelle, die eine Browser-Abfrage erlaubt (CORS).
+// Das widerspricht der Anweisung "nur deutsche Gerichte": TheMealDB ist eine
+// internationale Zufallsdatenbank, ihre Gerichte waeren hier alle
+// weggefiltert worden - der Knopf haette sichtbar nichts mehr bewirkt.
+// Jetzt laedt er rezept_feed.json neu. Das ist kein Ersatzverhalten, sondern
+// hat einen echten Nutzen: der Tageslauf schreibt neue Eintraege in die
+// Datei, waehrend die Seite offen ist. Eine deutschsprachige Quelle, die
+// eine Live-Abfrage aus dem Browser erlaubt, gibt es nicht.
 // Kein stilles Scheitern: klappt es nicht, sagt die Oberflaeche warum.
 async function feedNachladen(){
   // ⚠ SOFORT sichtbar machen, dass etwas passiert - und zwar am Abschnitt,
@@ -1620,14 +1631,21 @@ async function feedNachladen(){
   renderInspo();
   let neu=0;
   try{
-    for(let i=0;i<FEED_PRO_ZUG;i++){
-      const res=await fetch('https://www.themealdb.com/api/json/v1/1/random.php',{cache:'no-store'});
-      if(!res.ok)throw new Error('HTTP '+res.status);
-      const d=await res.json();
-      const e=mealDbToItem(d&&d.meals&&d.meals[0]);
-      if(e&&!feed.items.some(x=>x.id===e.id)){feed.items.unshift(e);neu++;}
-    }
-    toast(neu?`Loaded ${neu} new suggestion${neu===1?'':'s'}`:'No new dishes came back — try again');
+    // ⚠ cache:'no-store' UND ein Zeitstempel: der Service Worker liefert
+    // JSON aus dem Cache, sonst kaeme genau die Datei zurueck, die schon da
+    // ist - und der Knopf saehe wieder tot aus.
+    const res=await fetch('rezept_feed.json?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const d=await res.json();
+    const da=new Set(feed.items.map(i=>i.id));
+    (Array.isArray(d.items)?d.items:[]).forEach(e=>{
+      if(e&&e.id&&!da.has(e.id)){feed.items.unshift(e);da.add(e.id);neu++;}
+    });
+    if(d.updated)feed.updated=d.updated;
+    const deutsch=feed.items.filter(istDeutsch).length;
+    toast(neu
+      ?`Loaded ${neu} new suggestion${neu===1?'':'s'}`
+      :`Nothing new yet — ${deutsch} German dish${deutsch===1?'':'es'} in this batch. The daily run adds more each morning.`);
   }catch(e){
     toast('Could not load new suggestions: '+((e&&e.message)||'no connection'));
   }
@@ -3347,7 +3365,7 @@ Object.assign(window,{
   // Rezept-Auswahl
   rezPickQuery,rezPickChoose,
   // Taegliche Vorschlaege
-  rezFeedSource,rezFeedTheme,rezFeedMore,rezFeedReset,rezFeedToRecipe,rezFeedToInspo,rezOpenFeed,
+  rezFeedTheme,rezFeedMore,rezFeedReset,rezFeedToRecipe,rezFeedToInspo,rezOpenFeed,
   // Inspiration
   renderInspo,rezInspoQuery,rezInspoClear,rezInspoCreator,rezInspoTag,rezInspoSort,rezOpenBulk,rezRunBulk,rezOpenInspoForm,rezInspoField,rezInspoTags,rezInspoUrl,
   rezInspoPaste,rezPickInspoImage,rezSaveInspo,rezOpenInspo,rezTrashInspo,rezInspoToRecipe,

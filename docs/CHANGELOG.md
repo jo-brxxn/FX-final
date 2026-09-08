@@ -11832,3 +11832,59 @@ nicht. Deshalb ein eigener Wächter:
 Gegenprobe mit dem alten Filter: **1 440 abgelehnte Ids**, Text
 überschrieben, Notiz wieder als mitgeliefert markiert, zweiter Ordner
 verloren. Mit dem Fix: 0.
+---
+
+## 2026-09-08 — Nur deutsche Küche, Quellen-Filter entfernt (REZEPT-CHECK-20)
+
+Nutzer-Anweisung: *„Ok entfern die ganzen Filter für die Quellen und mach das
+nur deutsche Gerichte vorgeschlagen werden"* — nach dem Befund vom Vortag
+(*„Immernoch fast alles ausländisches Essen"*).
+
+**Was gemacht wurde**
+- Chipreihe „Source" aus den Vorschlägen entfernt (`feedQuelle`,
+  `feedQuellen()`, `rezFeedSource()`, window-Brücke). Der Quellenname steht
+  weiter auf jeder Karte, nur nicht mehr anklickbar. „Kind" (Themen) bleibt.
+- `"nurLand": "de"` in `tools/rezept-quellen.json`: der Tageslauf sammelt nur
+  noch Quellen mit `land: "de"`, schaltet TheMealDB und Spoonacular ab und
+  filtert den Altbestand mit. Die 25 fremden Quellen bleiben als Eintrag
+  stehen — ein leeres `nurLand` dreht die Regel zurück.
+- Zweite Sperre in der App (`istDeutsch()`): angezeigt wird nur `land === 'de'`.
+  Ein alter Vorrat aus dem Zwischenspeicher soll nichts Fremdes hereinlassen.
+- `rezept_feed.json` sofort mitgefiltert statt auf den nächsten Lauf zu warten:
+  **270 → 104 Einträge**, 141 verwaiste Bilder gelöscht (15 MB → 7,6 MB).
+- „Load new ones" holt jetzt den Vorrat neu, statt drei Zufallsgerichte bei
+  TheMealDB zu ziehen.
+
+**Warum die Herkunft an der Quelle hängt und nicht am Gericht**
+Am Gericht wäre die Anweisung nicht zu erfüllen: das Thema `german`
+(Schnitzel, Spätzle, Rouladen) traf im Vorrat vom 2026-09-08 auf **7 von 270**
+Einträge zu — danach gefiltert wäre der Bereich leer gewesen. Gewählt wurde
+deshalb die messbare Lesart: aus einer deutschen Küche, einschließlich der
+Nudeln, die dort genauso gekocht werden. Das ist eine Auslegung, keine
+Ableitung — sie steht hier, damit sie sich zurücknehmen lässt.
+
+**Was dabei sichtbar wurde (offener Nachteil)**
+Die deutschsprachige Quellenliste ist einseitig: veggie 78, protein 39,
+sweet 29, bread 19 — aber **chicken 2, fish 2, seafood 1**. Back- und
+Vegetarier-Blogs überwiegen. Deutsche Fleisch-/Fisch-/Grillquellen fehlen und
+müssen erst über `--pruefe` auf dem Runner belegt werden, bevor sie eingetragen
+werden dürfen (Regel: nichts raten).
+
+**Warum der Nachlade-Knopf umgebaut wurde**
+TheMealDB ist eine internationale Zufallsdatenbank. Unter der neuen Regel wäre
+jedes live geholte Gericht sofort weggefiltert worden — der Knopf hätte
+sichtbar nichts mehr getan (Regel 6: jedes Bedienelement muss etwas tun). Er
+lädt jetzt `rezept_feed.json` neu; das hat einen echten Nutzen, weil der
+Tageslauf schreibt, während die Seite offen ist. Eine deutschsprachige Quelle
+mit Browser-Abfrage (CORS) existiert nicht.
+
+**Wächter**
+- Gegenprobe im Prüfvorrat: ein Eintrag mit `land: 'int'` darf in keiner Reihe
+  auftauchen; der Zähler zählt nur deutsche Einträge.
+- „Source"-Chipreihe und `window.rezFeedSource` dürfen nicht wieder existieren.
+- „Load new ones" muss nicht nur sofort reagieren, sondern den neuen Eintrag
+  danach auch wirklich zeigen (langsame Antwort mit einem Eintrag mehr).
+- Statisch: steht `nurLand` in der Quellen-Datei, muss das Werkzeug es
+  auswerten, jede Quelle ein `land` tragen und `rezept_feed.json` darf keinen
+  fremden Eintrag enthalten. Mutationsprobe: ein eingeschmuggeltes „Pad Thai"
+  wurde gemeldet.

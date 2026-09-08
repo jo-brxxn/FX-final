@@ -208,6 +208,32 @@ function pruefeFeedAufbau() {
           fail('FEED', `"pro" bei "${x.name}" ist keine ganze Zahl ab 1`);
       });
     }
+    // ⚠ NUR DEUTSCHE KUECHE (Nutzer-Anweisung 2026-09-08). Steht "nurLand" in
+    // der Quellen-Datei, muss das Werkzeug es AUCH AUSWERTEN - sonst sieht
+    // die Datei richtig aus und der Lauf sammelt weiter alles. Und der
+    // ausgelieferte Vorrat muss dazu passen: ein einziger fremder Eintrag
+    // waere fuer den Nutzer genau der Befund, der zu dieser Regel gefuehrt
+    // hat ("Immernoch fast alles auslaendisches Essen").
+    if (q.nurLand) {
+      if (!/cfg\.nurLand/.test(werkzeug))
+        fail('FEED', `In tools/rezept-quellen.json steht nurLand="${q.nurLand}", aber das Werkzeug wertet es nicht aus`);
+      // Jede Quelle braucht eine Herkunft - ohne sie waere sie unter dieser
+      // Regel still nie wieder dabei, ohne dass es jemandem auffaellt.
+      const ohneHerkunft = []
+        .concat((q.jsonld && q.jsonld.seiten) || [], (q.youtube && q.youtube.kanaele) || [])
+        .filter(x => x && !x.land).map(x => x.name);
+      if (ohneHerkunft.length)
+        fail('FEED', `Quelle(n) ohne "land": ${ohneHerkunft.join(', ')} - unter nurLand="${q.nurLand}" werden sie still uebersprungen`);
+      try {
+        const vorrat = JSON.parse(fs.readFileSync('rezept_feed.json', 'utf8'));
+        const fremd = (vorrat.items || []).filter(i => (i && i.land) !== q.nurLand);
+        if (fremd.length)
+          fail('FEED', `rezept_feed.json enthaelt ${fremd.length} Eintraege aus fremden Kuechen (z.B. "${(fremd[0] || {}).title}" von ${(fremd[0] || {}).srcName}), obwohl nurLand="${q.nurLand}" gilt`);
+        const ohneLand = (vorrat.items || []).filter(i => !i || !i.land).length;
+        if (ohneLand)
+          fail('FEED', `${ohneLand} Eintraege in rezept_feed.json haben keine Herkunft - die App kann sie nicht zuordnen und zeigt sie nie an`);
+      } catch (e) { if (e && e.code !== 'ENOENT') fail('FEED', 'rezept_feed.json ist kein gueltiges JSON: ' + e.message); }
+    }
   } catch (e) { fail('FEED', 'tools/rezept-quellen.json ist kein gueltiges JSON: ' + e.message); }
   // ⚠ Die Bilder muessen NEBEN dem Vorrat liegen. Ein Bild von einer fremden
   // Adresse laesst sich im Browser nicht einbetten, wenn der fremde Server
@@ -1892,9 +1918,19 @@ function pruefeKontrast() {
    // onclick-Text, der Browser machte daraus wieder ein ' und der Handler
    // war kaputtes JavaScript ("missing ) after argument list").
    ['Apfelkuchen', "Malte's Kitchen", ['veggie', 'sweet'], ['500 g Aepfel', '200 g Mehl'], ['Ruehren.', 'Backen.']],
-  ].forEach((r, i) => FIX.items.push({ id: 'fx' + i, src: 'x', srcName: r[1], title: r[0],
+  ].forEach((r, i) => FIX.items.push({ id: 'fx' + i, src: 'x', srcName: r[1], title: r[0], land: 'de',
     url: 'https://beispiel.invalid/' + i, image: 'https://bild.invalid/' + i + '.jpg', video: '', creator: '',
     min: 20 + i * 5, servings: 2, ingredients: r[3], steps: r[4], themes: r[2], tags: [], added: new Date().toISOString() }));
+  // ⚠ GEGENPROBE ZUR REGEL "nur deutsche Gerichte" (Nutzer-Anweisung
+  // 2026-09-08). Dieser Eintrag kommt aus einer fremden Kueche und darf
+  // NIRGENDS auftauchen - weder in der Reihe, noch im Zaehler, noch als
+  // Filter-Chip. Der Tageslauf sammelt zwar nur noch deutsche Quellen
+  // (nurLand), aber ein alter Vorrat aus dem Cache kann Fremdes enthalten;
+  // ohne diese Sperre in der App saehe der Nutzer es wieder.
+  FIX.items.push({ id: 'fxint', src: 'x', srcName: 'World Kitchen', title: 'Pad Thai', land: 'int',
+    url: 'https://beispiel.invalid/int', image: 'https://bild.invalid/int.jpg', video: '', creator: '',
+    min: 25, servings: 2, ingredients: ['200 g Reisnudeln', '2 Eier'], steps: ['Braten.', 'Servieren.'],
+    themes: ['pasta'], tags: [], added: new Date().toISOString() });
 
   // Testbild in eindeutiger Groesse (7x7): daran laesst sich ein echtes
   // Titelbild von einem ERZEUGTEN (800x600) unterscheiden.
@@ -1902,7 +1938,7 @@ function pruefeKontrast() {
   // ⚠ Ein Eintrag GANZ OHNE Bildadresse. Nur fuer den darf ein erzeugtes
   // Titelbild entstehen - fuer alle anderen gilt: das Bild des Vorschlags
   // IST das Bild des Rezepts (siehe unten).
-  FIX.items.push({ id: 'fxleer', src: 'x', srcName: 'Chef TV', title: 'Gericht ohne Bild',
+  FIX.items.push({ id: 'fxleer', src: 'x', srcName: 'Chef TV', title: 'Gericht ohne Bild', land: 'de',
     url: 'https://beispiel.invalid/leer', image: '', video: '', creator: '',
     min: 15, servings: 2, ingredients: ['1 kg Reis', '2 Eier'], steps: ['Kochen.', 'Servieren.'],
     themes: ['veggie'], tags: [], added: new Date().toISOString() });
@@ -1931,9 +1967,21 @@ function pruefeKontrast() {
     return Math.abs(k[0].top - k[1].top) < 4 && Math.abs(k[1].top - k[2].top) < 4 && k[0].left < k[1].left && k[1].left < k[2].left;
   });
   if (!nebeneinander) fail('N', 'Die drei Vorschlaege stehen nicht nebeneinander');
+  // ⚠ Der Zaehler darf NUR deutsche Gerichte zaehlen - der internationale
+  // Eintrag im Vorrat zaehlt nicht mit.
+  const FIX_DE = FIX.items.filter(i => i.land === 'de').length;
   const zaehler1 = await p.evaluate(() => (document.querySelector('.fd-count') || {}).textContent || '');
-  if (!new RegExp('3 of ' + FIX.items.length).test(zaehler1))
-    fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of ${FIX.items.length}"`);
+  if (!new RegExp('3 of ' + FIX_DE + '$').test(zaehler1.trim()))
+    fail('N', `Der Zaehler zeigt "${zaehler1}" statt "3 of ${FIX_DE}" - zaehlt er ${FIX.items.length}, rutschen fremde Kuechen mit hinein`);
+  // ⚠ KEINE CHIPREIHE "Source" MEHR (Nutzer-Anweisung 2026-09-08: "entfern
+  // die ganzen Filter fuer die Quellen"). Geprueft wird die Beschriftung,
+  // nicht die Klasse - die Reihe "Kind" benutzt dieselbe.
+  const quellenReihe = await p.evaluate(() =>
+    [...document.querySelectorAll('.fd-tags .shop-quick-lbl')].map(e => e.textContent.trim()));
+  if (quellenReihe.includes('Source'))
+    fail('N', `Die Chipreihe "Source" steht wieder da (${JSON.stringify(quellenReihe)}) - der Quellen-Filter ist entfernt worden`);
+  if (typeof (await p.evaluate(() => typeof window.rezFeedSource)) === 'function')
+    fail('N', 'window.rezFeedSource() gibt es wieder - der Quellen-Filter ist entfernt worden');
 
   // "Show 3 more" muss DREI ANDERE zeigen
   await klick(p, '#fdMore', '#fdMore');
@@ -1987,17 +2035,38 @@ function pruefeKontrast() {
   if (!veggie.length) fail('N', 'Der Filter "No meat" zeigt gar nichts mehr');
   if (veggie.some(t => /Bolognese|Gulasch|Handi|Lachs/.test(t)))
     fail('N', `Der Filter "No meat" laesst Fleisch/Fisch durch: ${JSON.stringify(veggie)}`);
-  // Filter nach Quelle zusaetzlich
-  await klick(p, '.fd-tags .tag-chip:has-text("Kitchen Blog")', '.fd-tags .tag-chip:has-text("Kitchen Blog")');
-  await p.waitForTimeout(600);
-  const gefiltert = await p.evaluate(() => [...document.querySelectorAll('.fd-card')].map(c => ({
-    titel: (c.querySelector('.fd-title') || {}).textContent || '',
-    quelle: (c.querySelector('.fd-src') || {}).textContent || '',
-  })));
-  if (gefiltert.some(x => x.quelle !== 'Kitchen Blog'))
-    fail('N', `Der Quellen-Filter greift nicht: ${JSON.stringify(gefiltert)}`);
-  await p.evaluate(() => { window.rezFeedSource(-1); window.rezFeedTheme(''); });
+  await p.evaluate(() => window.rezFeedTheme(''));
   await p.waitForTimeout(500);
+
+  // ⚠ NUR DEUTSCHE GERICHTE. Einmal durch den GANZEN Vorrat blaettern: der
+  // internationale Eintrag darf in keiner Reihe auftauchen - und der Vorrat
+  // muss vorher aufgebraucht sein, sonst beweist der Durchlauf nichts.
+  // ⚠ ZUERST das Gesehene leeren: die Klicks weiter oben haben schon 6 der 9
+  // deutschen Gerichte weggeblaettert. Ohne das zeigte der Durchlauf 3 von 9
+  // und die Zusicherung schlug an, obwohl die Sperre richtig arbeitet.
+  await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
+  await p.evaluate(() => window.rezShowPage('recipes'));
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(700);
+  const durchlauf = await p.evaluate(async () => {
+    const gesehen = [];
+    for (let i = 0; i < 12; i++) {
+      [...document.querySelectorAll('.fd-card')].forEach(c => gesehen.push(
+        ((c.querySelector('.fd-title') || {}).textContent || '') + ' | ' + ((c.querySelector('.fd-src') || {}).textContent || '')));
+      if (!document.querySelector('.fd-card')) break;
+      await window.rezFeedMore();
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return gesehen;
+  });
+  const fremd = durchlauf.filter(t => /Pad Thai|World Kitchen/.test(t));
+  if (fremd.length) fail('N', `Ein Gericht aus fremder Kueche wird vorgeschlagen: ${JSON.stringify(fremd)}`);
+  if (durchlauf.length < FIX_DE)
+    fail('N', `Der Durchlauf hat nur ${durchlauf.length} von ${FIX_DE} deutschen Gerichten gezeigt - die Sperre filtert zu viel weg`);
+  await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
+  await p.evaluate(() => window.rezShowPage('recipes'));
+  await p.evaluate(() => window.rezShowPage('inspo'));
+  await p.waitForTimeout(900);
 
   // "Add as recipe" muss ein FERTIG AUSGEFUELLTES Formular ergeben.
   // ⚠ Regressionstest: die erste Fassung schloss das Fenster NACH dem Bauen
@@ -2088,19 +2157,28 @@ function pruefeKontrast() {
   // ⚠ Genau hier war der Waechter auf dem Runner rot und lokal gruen: das
   // Nachladen setzte seine Anzeige auf #fdMore - den es in diesem Zustand
   // gar nicht gibt. Ohne Netz kam sofort ein Fehler-Toast und verdeckte das;
-  // mit Netz passierte sekundenlang sichtbar nichts. Deshalb antwortet
-  // TheMealDB hier LANGSAM, statt zu scheitern.
-  await p.route(/themealdb\.com/, async r => {
-    await new Promise(res => setTimeout(res, 1500));
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ meals: [{
-      idMeal: 'lang1', strMeal: 'Frisch geladen', strMealThumb: 'https://bild.invalid/neu.jpg',
-      strInstructions: 'Kochen. Servieren.', strIngredient1: 'Reis', strMeasure1: '200 g',
-      strIngredient2: 'Ei', strMeasure2: '2' }] }) });
-  });
+  // mit Netz passierte sekundenlang sichtbar nichts. Deshalb antwortet die
+  // Gegenstelle hier LANGSAM, statt zu scheitern.
+  // ⚠ NACHLADEN HEISST SEIT 2026-09-08: DEN VORRAT NEU HOLEN. Vorher holte
+  // der Knopf drei Zufallsgerichte live bei TheMealDB - unter der Regel "nur
+  // deutsche Gerichte" waeren die alle weggefiltert worden, der Knopf haette
+  // sichtbar nichts mehr getan. Hier antwortet rezept_feed.json deshalb
+  // LANGSAM und mit einem Eintrag mehr: das prueft beides auf einmal - die
+  // sofortige Rueckmeldung und dass wirklich etwas dazukommt.
   await p.evaluate(async () => {
     const S2 = await import('./js/rezept/store.js');
     const d = await (await fetch('rezept_feed.json')).json();
     await S2.markFeedSeen((d.items || []).map(i => i.id));
+  });
+  const FIX2 = JSON.parse(JSON.stringify(FIX));
+  FIX2.items.unshift({ id: 'fxneu', src: 'x', srcName: 'Chef TV', title: 'Frisch geladen', land: 'de',
+    url: 'https://beispiel.invalid/neu', image: 'https://bild.invalid/neu.jpg', video: '', creator: '',
+    min: 20, servings: 2, ingredients: ['200 g Reis', '2 Eier'], steps: ['Kochen.', 'Servieren.'],
+    themes: ['veggie'], tags: [], added: new Date().toISOString() });
+  FIX2.count = FIX2.items.length;
+  await p.route(/rezept_feed\.json/, async r => {
+    await new Promise(res => setTimeout(res, 1500));
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(FIX2) });
   });
   await p.evaluate(() => window.rezShowPage('recipes'));
   await p.evaluate(() => window.rezShowPage('inspo'));
@@ -2119,8 +2197,12 @@ function pruefeKontrast() {
     if (nachLaden.gleich)
       fail('N', `"Load new ones" gibt keine sofortige Rueckmeldung - mit Netz sieht der Knopf tot aus (${nachLaden.text})`);
     await p.waitForTimeout(5000);
+    // ⚠ Und danach muss der neue Eintrag wirklich dastehen: ein Knopf, der
+    // nur "Loading…" anzeigt und nichts nachlaedt, ist genauso kaputt.
+    const nachher = await p.evaluate(() => [...document.querySelectorAll('.fd-card .fd-title')].map(e => e.textContent));
+    if (!nachher.includes('Frisch geladen'))
+      fail('N', `"Load new ones" holt den Vorrat nicht neu - nach dem Laden steht da ${JSON.stringify(nachher)}`);
   }
-  await p.unroute(/themealdb\.com/);
   await p.evaluate(async () => { const S2 = await import('./js/rezept/store.js'); await S2.clearFeedSeen(); });
 
   // N5: fehlt die Datei, darf die Kategorie NICHT kaputtgehen
