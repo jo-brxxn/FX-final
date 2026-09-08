@@ -470,6 +470,34 @@ export async function lauf() {
   try { cfg = JSON.parse(fs.readFileSync(cfgPfad, 'utf8')); }
   catch (e) { console.error('[feed] tools/rezept-quellen.json ist nicht lesbar:', e.message); process.exit(1); }
 
+  // ⚠ NUR EIN HERKUNFTSLAND SAMMELN (Nutzer-Anweisung 2026-09-08: "mach das
+  // nur deutsche Gerichte vorgeschlagen werden"). Steht "nurLand" in der
+  // Quellen-Datei, wird alles andere GAR NICHT ERST GEHOLT - kein Netz, kein
+  // Bild, kein Platz im Repo. Die fremden Quellen bleiben in der Datei
+  // stehen: die Regel ist ein Schalter, kein Loeschen, und laesst sich mit
+  // einem leeren "nurLand" zurueckdrehen.
+  // ⚠ Das Land steht an der QUELLE, nicht am Gericht - am Gericht waere es
+  // nicht zu messen: das Thema "german" (Schnitzel, Spaetzle, Rouladen) trifft
+  // im Vorrat vom 2026-09-08 auf 7 von 270 Eintraege zu. "Deutsch" heisst hier
+  // also: aus einer deutschen Kueche, einschliesslich der Nudeln, die dort
+  // genauso gekocht werden.
+  const NUR = String(cfg.nurLand || '').trim();
+  if (NUR) {
+    const raus = [];
+    for (const k of ['jsonld', 'youtube']) {
+      const feld = k === 'jsonld' ? 'seiten' : 'kanaele';
+      const liste = (cfg[k] && cfg[k][feld]) || [];
+      const bleibt = liste.filter(x => (x && x.land) === NUR);
+      liste.filter(x => (x && x.land) !== NUR).forEach(x => raus.push(x && x.name));
+      if (cfg[k]) cfg[k][feld] = bleibt;
+    }
+    // TheMealDB und Spoonacular sind internationale Sammel-Datenbanken ohne
+    // Herkunftsangabe je Gericht - unter "nurLand" haben sie nichts zu suchen.
+    for (const k of ['themealdb', 'spoonacular']) if (cfg[k]) cfg[k].an = false;
+    log(`nurLand="${NUR}": ${raus.length} Quelle(n) uebersprungen (${raus.filter(Boolean).slice(0, 6).join(', ')}${raus.length > 6 ? ', …' : ''}), `
+      + `TheMealDB und Spoonacular aus.`);
+  }
+
   const an = (k) => cfg[k] && cfg[k].an !== false;
   const teile = [];
   const bericht = [];
@@ -553,6 +581,18 @@ export async function lauf() {
   };
   zusammen.forEach(e => { if (!e.land) e.land = landJeQuelle.get(e.srcName) || 'int'; });
 
+  // ⚠ Unter "nurLand" gilt die Quote nicht mehr, sondern eine Sperre: der
+  // ALTBESTAND wird mitgefiltert. Ohne das haette der Vorrat noch monatelang
+  // die 162 internationalen Eintraege vom Vortag getragen - genau der Fehler,
+  // den die Quote unten schon einmal beheben musste.
+  let items;
+  if (NUR) {
+    const vorher = zusammen.length;
+    const nurLand = zusammen.filter(e => e.land === NUR);
+    items = nurLand.slice(0, MAX);
+    log(`nurLand="${NUR}": ${items.length} von ${vorher} Eintraegen bleiben, ${vorher - nurLand.length} aus fremden Kuechen entfernt.`);
+  } else {
+
   const nah = zusammen.filter(istNah);
   const weit = zusammen.filter(e => !istNah(e));
   // Zielanteil: zwei von drei Karten aus dem naeheren Kulturkreis. Bewusst
@@ -562,7 +602,7 @@ export async function lauf() {
   const sollWeit = Math.min(weit.length, MAX - sollNah);
   const nahListe = nah.slice(0, sollNah), weitListe = weit.slice(0, sollWeit);
   // Verschraenken im Verhaeltnis 2:1, damit auch die ERSTEN Karten stimmen.
-  const items = [];
+  items = [];
   let iN = 0, iW = 0;
   while (iN < nahListe.length || iW < weitListe.length) {
     if (iN < nahListe.length) items.push(nahListe[iN++]);
@@ -571,6 +611,7 @@ export async function lauf() {
   }
   log(`Herkunft: ${nahListe.length} aus deutschen/italienischen Quellen, ${weitListe.length} andere `
     + `(von ${nah.length}/${weit.length} verfuegbar, Ziel ${Math.round(ANTEIL * 100)}%)`);
+  }
 
   // ⚠ ERST die Bilder holen, DANN vergleichen. Andersherum haette ein Lauf,
   // der "nur" Bilder lokal gemacht hat, als "nichts Neues" gegolten und
