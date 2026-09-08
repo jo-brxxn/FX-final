@@ -122,6 +122,35 @@ const MODE=process.argv[2]||'normalized';
     ok.feedTreffer=sicht.filter(x=>x.treffer).length;
     ok.feedQuelleFuehrtNicht=sicht.filter(x=>!x.treffer&&x.kand===0).length;
   }
+  // 2e) Die KI-Einordnung der Nachrichten muss ankommen UND sauber sein.
+  // ⚠ Sie wird von einer geplanten Claude-Sitzung geschrieben (Routine, 2x
+  // taeglich) - also von einem Lauf, den niemand ansieht. Genau deshalb
+  // gehoert sein Ergebnis geprueft, BEVOR es beim Nutzer landet: eine
+  // erfundene Asset-Id wuerde die Meldung unter der falschen Waehrung
+  // einsortieren, ein zu langer Satz die Zeile sprengen.
+  if(typeof newsAiSicht==='function'){
+    const na=newsAiSicht();
+    ok.newsAi={geladen:na.aiGeladen,eintraege:na.aiEintraege,mitEinordnung:na.mitEinordnung,
+               durchKiZugeordnet:na.durchKiZugeordnet,laengsteEinordnung:na.maxSumLen};
+    if(na.aiGeladen){
+      if(!na.mitEinordnung)F.push({ort:'KI-Einordnung kommt nicht an',
+        hinweis:'news_ai.json ist geladen, aber keine Meldung traegt eine Einordnung - der Abgleich ueber die Adresse greift nicht.'});
+      // Erfundene Asset-Id: die Meldung landete unter einer Waehrung, die es
+      // in der App gar nicht gibt - oder schlimmer, unter der falschen.
+      const gueltig=new Set(syms.map(s=>s.id));
+      (na.aiAssetIds||[]).filter(id=>!gueltig.has(id)).slice(0,5)
+        .forEach(id=>F.push({ort:'KI-Einordnung nennt ein Asset, das es nicht gibt',id}));
+      // Laenge und Markup an dem pruefen, was wirklich im DOM steht.
+      const zuLang=[],mitMarkup=[];
+      document.querySelectorAll('.hl-sum').forEach(el=>{
+        const t=(el.textContent||'').trim();
+        if(t.length>160)zuLang.push(t.slice(0,60));
+        if(/[<>]/.test(t))mitMarkup.push(t.slice(0,60));
+      });
+      zuLang.slice(0,3).forEach(t=>F.push({ort:'KI-Einordnung zu lang',text:t}));
+      mitMarkup.slice(0,3).forEach(t=>F.push({ort:'KI-Einordnung enthaelt Markup',text:t}));
+    }
+  }
   // 3) Score-Fenster: Summe der Zeilen == angezeigter Gesamtwert
   let n3=0;
   Object.keys(soll).forEach(id=>{

@@ -2916,6 +2916,22 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   padding:5px 6px 5px 7px;border-left:3px solid transparent;border-bottom:1px solid var(--bd);
   text-decoration:none;color:inherit}
 .hl-row:last-child{border-bottom:none}
+/* ── KI-Einordnung unter der Schlagzeile (Nutzer-Wunsch 2026-09-08) ──
+   Sie ist eine andere Art Information als die Meldung selbst - Bewertung
+   statt Nachricht - und muss sich deshalb sichtbar absetzen, sonst liest
+   sie sich wie ein zweiter Titel. Mittel dafuer: eigene Zeile, kleinere
+   Stufe der Skala, gedaempfte Farbe und ein senkrechter Strich als
+   Zugehoerigkeits-Anker zur Meldung darueber.
+   Die Trennlinie der Meldung wandert dabei an die Einordnung: sonst liefe
+   sie ZWISCHEN Schlagzeile und ihrer eigenen Bewertung durch und trennte
+   genau das, was zusammengehoert. */
+.hl-row.hl-has-sum{border-bottom:none;padding-bottom:2px}
+.hl-sum{padding:0 6px 7px 22px;border-bottom:1px solid var(--bd);
+  font:400 var(--fs-xs)/1.45 var(--ff-text);color:var(--t2);position:relative}
+.hl-sum::before{content:"";position:absolute;left:11px;top:1px;bottom:9px;width:2px;
+  border-radius:1px;background:var(--bd2)}
+.hl-sum[data-ai="1"]::before{background:rgba(var(--blue-rgb),.45)}
+.hl-row.hl-has-sum+.hl-sum:last-child{border-bottom:none}
 .hl-row.lv-hi{border-left-color:var(--blue)}
 .hl-row.lv-mid{border-left-color:var(--bd2)}
 /* ⚠ Der Titel darf zwei Zeilen brauchen. Einzeilig mit Auslassung war in der
@@ -4418,11 +4434,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-490 - Notizen loeschen sich nicht mehr selbst (Nutzer-Bugreport: Notizen, die in mehreren Ordnern liegen, verschwinden automatisch). Ursache gefunden und reproduziert: der Sicherheitsfilter beim Einspielen eines Standes liess nur Buchstaben und Ziffern in Ids zu - die mitgelieferten Verhaltensnotizen heissen aber sd_USD_macro_bull_0, mit Unterstrichen. 1440 von 1545 Notiz-Ids fielen dadurch durch. Wer so eine Notiz bearbeitet, behaelt ihre Id; beim naechsten Cloud-Sync, Undo, Backup oder Import wurde sie deshalb stillschweigend weggeworfen und danach mit dem Originaltext neu angelegt. Gemessen nach EINEM Umlauf: eigener Text weg, Notiz wieder als mitgeliefert markiert, der zweite Ordner weg, nichts im Papierkorb. Der Filter erlaubt jetzt Unterstrich und Bindestrich (beides kann in onclick-Handlern nicht ausbrechen) und was er doch aussortiert, landet im Papierkorb statt im Nichts. Neuer eigener Waechter check/notizen.js: jede selbst erzeugte Id muss den eigenen Filter passieren, und eine bearbeitete Notiz in zwei Ordnern muss einen Sync mit Text UND beiden Ordnern ueberleben. Gegenprobe mit dem alten Filter: 1440 abgelehnte Ids, Text ueberschrieben, Ordner verloren."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-491 - Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-490</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-491</span>
     </span>
   </div>
   <div class="hdr-r">

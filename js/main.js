@@ -15089,13 +15089,19 @@ function newsRowHtml(h){
     +' · importance '+(+h.w||0));
   const srcs=(mehr&&newsOpenSrc[h.u])
     ? `<div class="hl-srcs">${andere.map(o=>`<a href="${safeUrl(o.u)}" target="_blank" rel="noopener">${escH(o.s||'')}</a>`).join('')}</div>`:'';
-  return`<a class="hl-row ${cls}" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${tip}">
+  // Die KI-Einordnung steht als eigene Zeile UNTER der Schlagzeile, nicht
+  // dahinter: sie ist eine andere Art Information (Bewertung statt Meldung)
+  // und muss sich davon absetzen (Nutzer-Wunsch 2026-09-08 zur Uebersicht).
+  // Ohne Einordnung bleibt die Zeile exakt wie bisher - kein Platzhalter.
+  const einordnung=h.sum
+    ? `<div class="hl-sum"${h.aiA?' data-ai="1"':''}>${escH(h.sum)}</div>`:'';
+  return`<a class="hl-row ${cls}${h.sum?' hl-has-sum':''}" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${tip}">
     <span class="hl-title">${escH(h.t||'')}</span>
     <span class="hl-side">
       <span class="hl-side-r">${ass}${mehr}${neu}</span>
       <span class="hl-side-r"><span class="hl-src">${escH(h.s||'')}</span>${h.d?`<span class="hl-time">${escH(relTime(h.d))}</span>`:''}</span>
     </span>
-  </a>${srcs}`;
+  </a>${einordnung}${srcs}`;
 }
 // Tages-Trenner nur im Wochen-/Monatsfenster - im Tagesfenster waere er
 // eine einzige Ueberschrift ueber allem und damit nutzlos.

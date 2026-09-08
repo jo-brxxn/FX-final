@@ -1,0 +1,313 @@
+{
+ "updated": "2026-09-08T20:45:53.990Z",
+ "quelle": "geplante Claude-Sitzung (Routine) - kein API-Schluessel, laeuft ueber das Abo",
+ "modell": "claude-opus-5",
+ "items": {
+  "https://www.cnbc.com/2026/09/08/canada-retaliatory-tariffs.html": {
+   "a": [
+    "CAD",
+    "USD"
+   ],
+   "sum": "Retaliation is live, not threatened — CAD now carries the tariff risk directly.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://www.bloomberg.com/news/articles/2026-09-02/fed-s-williams-says-inflation-continuing-to-trending-down": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Dovish counterweight to Warsh — the committee is not speaking with one voice.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMihAFBVV95cUxPam41ZkdnUnFrMkhkNFF3Tkd3YjBDM0h4NnJLRzVmeWEtNTJYTjUyVFNtR3JVMldxMS1rYW4tdEgta3NyeU5iejEzT1kwVVU0V1Yyd1BlX09IczUycGdnWHYzVU40VW9QNkJNTnh0TGk1b3Y2djZxbXRXY0FkUGJCaHh2S3LSAYoBQVVfeXFMT2s2bDhSSVNkbHBFZHR1Z1hVQzJUUHR0ZEQzc0x6ZGN2cVlGc3pHdDR2UjJWUFdnR0V0RnFvelVFam1ONk42ZHV1X2FfT3Z4ekNoeTAzT254dFJJQVROd3dRMDFWZXhnZ0hqMC05T0VFWlhqZFBpdkRyU2lBY1huc2p4RGwyZU9YNWF3?oc=5": {
+   "a": [
+    "CAD",
+    "USD"
+   ],
+   "sum": "Confirms the start date the market had hoped would slip.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://www.bloomberg.com/news/articles/2026-08-21/carney-bets-canada-can-live-with-tariffs-to-unlock-investment": {
+   "a": [
+    "CAD"
+   ],
+   "sum": "Ottawa signals it will absorb the hit rather than fold — a quick deal looks less likely.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://www.marketwatch.com/story/trump-holds-off-on-new-50-tariffs-for-canadian-goods-71f75005?mod=mw_rss_topstories": {
+   "a": [
+    "CAD",
+    "USD"
+   ],
+   "sum": "A pause, not a withdrawal — the threat stays on the table.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMiswFBVV95cUxQYXBKeWlYQXR4RFJNRkt6MXgwclVGbkZ1MFRjbFE1bUN4TU1PeW1nWUxEaVlqOUpkbHlSWkpVb2pFLUxaT25wbUdpYURzZ3o0dWlybWdGWmkwU1hpSU9wTl9CZnBzRTZjTG5CY1piRkRjajhyUUR3aVpJei14eE80c0MzbTFhVEtzZVYwMGFJY1hEaGtnbHU5bGI4MWEyTG4tTTNNY2RQaktoRVk2UzlhMnlEOA?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Washington pushing tariffs as a global norm — widens the trade risk well beyond Canada.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMiygFBVV95cUxNZEk5bW9fQVcyRzdpTkljNVNweDFybUplRHk5ZXdrQy1tSHRaeHoxTldJZk9fNVRtWldsX2IyTFNXNGVLdWFIX1ByaENybi1FekRGUnM2YzM3SXJfdkUxVmRrczAtQ3ZvRzczN0Z6M0V6OEV3MzlHMjVqT09lTjNZRmJaYzVXNnkwZ0daYl82VDlpWTBSVEdhY3VvblAwSU9tdVpxOXVtWm8teEFGNUdtY2JKX1ZCNXRiRzl5NmVRRFJGNjlmRTZsSXN30gHKAUFVX3lxTFB1Z1kwWjJQYjgtczVhN1hOSVhEVGJsUW9hMTRDNXJJVTFQYVp1d2Uybk95X1R4dDluckpzVUxDeUhoSVh2OHpsOEVMMXVDME93czNUVlNCRGRsWWtoNjY0cEhUVm1qQnIwOVJkYjkyQjYxZEFCTmMwaV96ZXZtMFRQUV9KQTJpQmpFSVFYQmVDMDhaT0xXMXJtWHlWZVRRbnlqN2JZODNYaXNYX1hNQTdGUU1td1N5T2JQQ2FocjB3T3ZNWklxdVl5enc?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "A second tariff front opens — watch for retaliation from further afield.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMi3gFBVV95cUxQbHFXUXBlZXJ4UC1WQWlCemktYW1ESlNqMmp5Z1NUaUQ0N0lReTh6OTl0eXlQc3NFVXhHbjY4SFhac1VzMUxHelBLTW9nakFXcVVvTG8wdmNYOTRfeEJtWHlTcGJrMm8tdmFhMXg3UDBZNWw3TlgzTEF0VHd1VjRnekdSdExxWmVSUmhVTDdzWllIajZndk1ESHNqVzVEcjYxTV9hOEFpbUFMdFU0MUlyc3FiYjkwaV9HeWlzb3o2RFYxM0YydDRtcVZxVG4yYlprcWZ0dlNTOGJXWDJmaFE?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "A major bank pushing cuts out to 2027 — supports the dollar at the front end.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://www.bloomberg.com/news/articles/2026-08-23/canada-sees-long-trade-war-with-us-that-may-last-beyond-midterms": {
+   "a": [
+    "CAD"
+   ],
+   "sum": "Ottawa is planning in years, not weeks — a structural CAD headwind.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMivwFBVV95cUxNZUJwc3dYY0YxQnZmb2lJQzZ0bUtLVkN4c0tZZTRzNm5KSjFNYXZNRjNCT05pRm95c25uUXVNUVFFM3FxUGVuQm9QaU11YUNFY0ZpVWcxWldHb3JxMjBST0dhLTc0UWI1cndIYXhJN040a21Wb3BFMTI2UTBnSTZWN3pfRUdJTUp2bXh3MmJNSC1oS1BTbkhjLVBpLW5ZbGJNTzhOd0xlWWtrMkk5VWNnMUdCSHROdnhEQnZQZUlnRQ?oc=5": {
+   "a": [
+    "GOLD"
+   ],
+   "sum": "Reserve managers positioning for stress — a quiet institutional vote for gold.",
+   "tg": [
+    "centralbank"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMiugFBVV95cUxQUDFRWVlpcC1YOGxVYmJKcW5HT19tRWl0aGxoa2pPclQyV2NLMjA0MFV5S3I3NndETk82VDBXMkd3UWdtS2E3X2l4MG5oaFhQOU5aMV9KLWlfUjJNTngyZ2RTc2FKcVZUcnMzQ1Qza2hZRGR6TlBfSE90d1FPa1F3emRLUEF0YW1rYzh6WVZ1SjNoZTJuNlF6Q3NDZWJsLU1YR3FKby1oYWlMQ0xkOVQ4MEJibE1hczRkQkE?oc=5": {
+   "a": [
+    "CAD"
+   ],
+   "sum": "US domestic politics on Canadian trade — noise for now, not policy.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/barclays-forecasts-two-fed-rate-130416339.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "A hike call, not a cut call — the single biggest repricing in this batch.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/warsh-says-fed-fight-inflation-223426538.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "The new chair is preparing the ground for tightening.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/fed-chair-kevin-warsh-says-163911326.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Explicit hike signal from the chair — the front end should reprice.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMihAFBVV95cUxOWnVySVBBcWdQSEo2cUV5YVJBTDBrbklxRE5vWXJCS0d0czkwNUNQNGdjMWQ3bDZIMC1mUWRRek9FLXl3TFAxM3dsRjV6bndmeGpLNUMzbnh5Y1gtaV9mLTh6ZWcxZXFlU1ZNaXN5SHN0UHhFVjRhcXpVMG8wODR6ZUtJb3M?oc=5": {
+   "a": [
+    "CAD",
+    "USD"
+   ],
+   "sum": "Talks have collapsed; the escalation ladder has no obvious step down.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMihAFBVV95cUxPMG4xS2RTa0FyWENERFh0NGlySXRhUi1SelpnNmhYQmhzeEdpbjg4U05zMWh1VFl2amlqWFFJZnhZSWJoRFZpT1M4dEpONkN4VTVQbGR0NG1JaFVQTDR1Wjktb0d4ODliU1JUY0ZodzRXN053QWpTYUFOTVJfdi1ySnNlLTDSAYoBQVVfeXFMUFhjX1UtTk1vaWRTY2tpTWV2SWltVG8yeGYzbW5mYXpNajVWOEtWQ0c4aEJsbkNkVU1CYzlDUnhhV181N2ZPcFFNQ2lJdzNCSnQ1SnRNY0NlWEJ1a201OS1CUE83cHl2Y2NUUVg2MDVvQjJBZ0JDRkg4NHR5NVdHSDNsNzB0ZUtSNUpR?oc=5": {
+   "a": [
+    "CAD",
+    "USD"
+   ],
+   "sum": "Three-day pause plus a claimed deal — headline risk in both directions this week.",
+   "tg": [
+    "tariffs"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/fed-chair-kevin-warsh-just-162601041.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Framing shift from labour to inflation — that favours a stronger dollar.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://www.bloomberg.com/news/articles/2026-09-04/fed-rate-decision-still-hangs-on-inflation-after-jobs-report": {
+   "a": [
+    "USD"
+   ],
+   "sum": "The next CPI decides it, not the jobs print.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMijgFBVV95cUxNbllLcFV5Q0hoYk5aWHo1dnZJLUMzSU5yVnhiR0UtSldFTUN4Q3Z0VGg2SVEzd0JINmFndkU2dkxQZWhWRDlRcGZpd3hSUEVpcmRaU2syOTlwbFlfaHRVMFRZazdHWFVSaDZmaUJnXzFuRy1ULTAtZ0NRMUxPdDZ1eU9OZzFUdDZOc0RMMkV30gGTAUFVX3lxTFA2aVc2bHd1dTRxVnpEQVlUNDRCWXZqTnRtYVRNaVFsLTBpdXh4YThqT2czZDhHeUs1d3J3OHdsOVptQnhld3VfVnhPZk5Mdi1IU0dQaW94QTZzMU0tQ0F2Qm43ZXgtYUdlWGZXSFdfdjNQQmFWTldndGFaVjAzNFhrREFfaV9adVJ3b1lubVVNeG5VSQ?oc=5": {
+   "a": [
+    "GOLD",
+    "USD"
+   ],
+   "sum": "Gold is trading as a rates asset again — strong data, weaker gold.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/feds-barr-open-rate-hike-130644777.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "A second official opens the door — hikes are no longer a fringe view.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMisgFBVV95cUxNbnRhX0JuR0tfX0pTaC1vRGlQVFF1X3B3YkN6T19KLWEzaEV2LThJTEh5b0hkNjg5LTd1MER6ZkE0X253RG1tNDliNHVTXzcyNWZpU1BTV1R5ZTRzeHJHOERCWVZiSGVSNmUyNGhMcEFyMWE2STF4VjB3TU1DRFRQcDdKanhGQ2l3dS1Yb3dXNC1pN3BidVFFVDM3UXVNeHI3OTdlUVd0bTQxMTRBSnRoQS1n?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "The message is being repeated deliberately, not improvised.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMingFBVV95cUxOcUcwZVlnODhjUXdFVU9BcTdacHBnUEJKNWc5QU96SFFwcTFTM3AxTkNtZS0taU01SFVBZmRnVUxjQndpVWxnNGw5UG5LdUtPX0VUVjJTbUVaY3c0YUpNX0lGRU5lVDFSZm1QZkhkT054aHhpZ0pCS2xwNUJFd2ZzbmxUUkt1OS1yOGVXWGExeF8xd1g4SEE0WUF0aHdnQdIBowFBVV95cUxNVTRIRTJLejhkd2kzc2lINU1hVGhHU0M1QUlEQ3gzSHVlZERHMlZrSjRWaWd4cUFSSUZWYTBnUkl6Ym1YYjYxS1VMeWs1ZlkzS1dzemNwd0hmRy1sb1hRT3lhRE92aVdOSldJNXZ0aDdwYUdUd0QtUGZCbEV4a3NockhSRnFaMWVWc2lzN3Y1aHREV2kySVRPaHJlWmt5dHN4VVNz?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Uncertainty about the reaction function itself — raises volatility, not direction.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/article/sticky-pce-inflation-leaves-a-divided-central-bank-ahead-of-feds-jackson-hole-retreat-125248345.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "The split inside the committee is the real story — the outcome is less predictable.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-august-19-dow-sp-500-nasdaq-081116064.html": {
+   "a": [
+    "SP500",
+    "NAS"
+   ],
+   "sum": "Relief rally carried by a bond bid — fragile while hike odds are rising.",
+   "tg": [
+    "equities"
+   ]
+  },
+  "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260819~98ddf24b7b.en.html": {
+   "a": [
+    "EUR"
+   ],
+   "sum": "Any hint on the ECB path matters more while the Fed turns hawkish.",
+   "tg": [
+    "ecb"
+   ]
+  },
+  "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260817~1f9f7149c9.en.pdf": {
+   "a": [
+    "EUR"
+   ],
+   "sum": "Fiscal expansion argument — medium-term support for euro yields.",
+   "tg": [
+    "ecb"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMinwFBVV95cUxQdXlZZEtEZVJsTjE4ZDRFaGFTMWF0VjFoa0hjMjYyZlo1VkpiOUdOZDhqMU1lQnUxRVF2NEpWODRMSGZPVlBUaTdHZVNhb2tYcV90RVpnT3pVeXpDSWd0bU9tT1k4QzRwNlZ0YU9xLWx0Z0FraFpxT3cxd08wa0JwMjFrNndLWVBDQTlQUTU5VWhtVVdzMUQ1dWt5QkxaMW8?oc=5": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Counterpoint to the hike calls — the disagreement is genuine.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/economy/policy/articles/warshs-jackson-hole-encore-may-100556398.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Political pressure on the Fed enters the story.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://www.investors.com/news/pce-inflation-july-federal-reserve-warsh-jackson-hole/?src=A00220&yptr=yahoo": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Sets up Jackson Hole as the week's decisive event.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://finance.yahoo.com/markets/live/stock-market-today-wednesday-august-26-dow-sp-500-nasdaq-081834782.html": {
+   "a": [
+    "SP500",
+    "NAS"
+   ],
+   "sum": "Equities squeezed between sticky inflation and earnings risk.",
+   "tg": [
+    "equities"
+   ]
+  },
+  "https://news.google.com/rss/articles/CBMisAFBVV95cUxQTFUzNXBldnVZT2ZFWGJIRFExajVuME9DY1hMRXhMdVBEeXRISU93ME1rSFVjZTVaM3JHSkgyQkFLUm55ODdfVmdXQzRhenV3dE1fZHBFR1UySXRhcXRtdzh2QzhXeU5hN1FxYmpLNnFEYzJjM2xnZkFRWTdZdHNva0UzcVFRX1dTSmJkZlFZWTJ1Y1RBOUZjWHpqOVRnQnZScmZsZjNKRlVoMUtleGhJYg?oc=5": {
+   "a": [
+    "GOLD",
+    "USD"
+   ],
+   "sum": "The mirror image of the payrolls day — gold is trading the Fed and nothing else.",
+   "tg": [
+    "fed"
+   ]
+  },
+  "https://www.cnbc.com/2026/09/04/jobs-report-august-2026.html": {
+   "a": [
+    "USD"
+   ],
+   "sum": "Stronger than expected, but unemployment up — mixed, and it keeps hikes alive.",
+   "tg": [
+    "labour"
+   ]
+  },
+  "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp260901~bb28f33f54.en.html": {
+   "a": [
+    "EUR"
+   ],
+   "sum": "ECB speaker on expectations — background, no immediate signal.",
+   "tg": [
+    "ecb"
+   ]
+  }
+ }
+}

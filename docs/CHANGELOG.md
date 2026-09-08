@@ -11888,3 +11888,79 @@ mit Browser-Abfrage (CORS) existiert nicht.
   auswerten, jede Quelle ein `land` tragen und `rezept_feed.json` darf keinen
   fremden Eintrag enthalten. Mutationsprobe: ein eingeschmuggeltes „Pad Thai"
   wurde gemeldet.
+
+## 2026-09-08 — News mit KI-Einordnung, ohne API-Kosten (VERSION-CHECK-491)
+
+**Nutzer:** *„Ich will eine kostenlose Lösung die aber über ki läuft. Kann ich
+nicht mit cowork ein Tool bauen wo er sich alle Nachrichten zieht und das
+automatisch zusammenfasst und auswertet"* — und vorher: *„welche Währung, und
+das dann alles zusammenfasst … zum Beispiel bei ‚Kanada: Wäre jetzt wichtig
+gewesen, die Zölle mit den USA'"*.
+
+Ja — und es landet sogar auf der Webseite, was der Nutzer für ausgeschlossen
+hielt.
+
+### Ausgangslage, gemessen
+
+| | |
+|---|---|
+| Schlagzeilen im Bestand | 774 |
+| davon einer Währung zugeordnet | **378 (49 %)** |
+| mit einer Bewertung | **0** |
+
+Die Zuordnung kommt aus Stichwort-Regeln im Workflow. Sie trifft *„Canadian
+tariffs on US goods"* → CAD, aber *„Trump's next trade weapon"* fällt durch —
+und eine Einschätzung kann sie grundsätzlich nicht liefern.
+
+### Warum kein API-Schlüssel
+
+Ein Claude-Pro-Abo deckt die **API nicht** ab (das musste erst richtiggestellt
+werden). Statt eines Schlüssels mit Guthaben läuft die Einordnung über eine
+**geplante Claude-Sitzung** — eine Routine, die 2× täglich (06:30 / 18:30 DE)
+in dieser Umgebung startet, die Meldungen liest, einordnet, `news_ai.json`
+schreibt und pusht. Das läuft über das Abo: **keine Token-Abrechnung, kein
+Schlüssel, kein Guthaben.**
+
+Grenzen, ehrlich benannt: es zählt gegen die Abo-Nutzung, es ist nicht
+echtzeitnah (2× täglich), und wenn ein Lauf ausfällt, bleibt der letzte Stand
+stehen — die Datei trägt ihren Zeitstempel, erfunden wird nichts.
+
+### Warum eine zweite Datei
+
+`news_data.json` wird **stündlich komplett neu geschrieben**. Jede Einordnung
+darin wäre eine Stunde später weg. `news_ai.json` läuft deshalb getrennt und
+wird beim Laden über die **Adresse** der Meldung zusammengeführt (stabil,
+während Titel und Reihenfolge wechseln). Eine bereits vorhandene Zuordnung aus
+den Regeln wird **nie überschrieben** — ergänzt wird nur, was leer war, plus
+die Bewertung, die es vorher gar nicht gab.
+
+### Darstellung
+
+Die Einordnung steht als **eigene Zeile unter** der Schlagzeile — nicht
+dahinter: sie ist eine andere Art Information (Bewertung statt Meldung).
+Abgesetzt durch kleinere Stufe der Typo-Skala, gedämpfte Farbe und einen
+senkrechten Anker. ⚠ Die Trennlinie der Meldung wandert dabei an die
+Einordnung, sonst liefe sie **zwischen** Schlagzeile und deren eigener
+Bewertung durch und trennte genau das, was zusammengehört.
+
+### Erster Durchgang
+
+33 der wichtigsten Meldungen von Hand eingeordnet, damit das Ergebnis sofort
+sichtbar ist; 6 bekamen dadurch eine Währung, die die Regeln nicht gefunden
+hatten. Beispiel:
+
+> **Canada's retaliatory tariffs worth CA$27.6 billion take effect…**
+> │ *Retaliation is live, not threatened — CAD now carries the tariff risk directly.*
+
+### Wächter
+
+Die Routine läuft **unbeaufsichtigt** — genau deshalb wird ihr Ergebnis
+geprüft, bevor es beim Nutzer ankommt (`check/display.js` 2e):
+
+- kein Asset, das es nicht gibt (eine erfundene Id sortierte die Meldung unter
+  eine falsche Währung),
+- keine Einordnung über 160 Zeichen, kein Markup,
+- und die Einordnung muss die Meldungen wirklich **erreichen** (der Abgleich
+  über die Adresse kann brechen, ohne dass jemand es sieht).
+
+Gegenprobe: eine erfundene Id `XYZ` eingeschleust → Treffer; zurückgesetzt → 0.

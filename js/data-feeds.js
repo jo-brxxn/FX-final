@@ -337,7 +337,52 @@ function fetchNewsData(){
       else DATA_LIVE_OK.news=false;
     }).catch(()=>{DATA_LIVE_OK.news=false;});
 }
-function autoFetchNewsData(){fetchNewsData().then(()=>{if(curPage==='dash')renderDash();});}
+// ── KI-EINORDNUNG DER NACHRICHTEN (news_ai.json) ──────────────────
+// Nutzer-Wunsch 2026-09-08: "eine kostenlose Loesung die aber ueber ki
+// laeuft ... alle Nachrichten zieht und das automatisch zusammenfasst und
+// auswertet".
+//
+// ⚠ WARUM EINE ZWEITE DATEI und nicht news_data.json selbst: der stuendliche
+// Workflow schreibt news_data.json komplett neu. Jede Einordnung, die dort
+// hineingeschrieben wuerde, waere eine Stunde spaeter weg. news_ai.json wird
+// deshalb GETRENNT gefuehrt und beim Laden ueber die Adresse der Meldung
+// zusammengefuehrt - beide Seiten koennen unabhaengig voneinander erneuert
+// werden, ohne sich zu ueberschreiben.
+//
+// Gefuellt wird sie von einer GEPLANTEN CLAUDE-SITZUNG (Routine), nicht von
+// der API: die laeuft ueber das Abo des Nutzers und kostet damit nichts pro
+// Meldung. Faellt ein Lauf aus, bleibt der letzte Stand stehen und die App
+// zeigt an, von wann er ist - erfunden wird nichts.
+let NEWS_AI=null;
+function fetchNewsAi(){
+  return fetch(DATA_BASE+'news_ai.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&d.items&&typeof d.items==='object'){NEWS_AI=d;mergeNewsAi();return true;}
+      return false;
+    }).catch(()=>false);
+}
+// Die Einordnung an die Meldungen heften. Schluessel ist die Adresse (u) -
+// sie ist stabil, waehrend sich Titel und Reihenfolge zwischen zwei Laeufen
+// aendern koennen.
+// ⚠ Eine vorhandene Zuordnung aus dem Workflow wird NICHT ueberschrieben:
+// die Stichwort-Regeln sind bei explizit genannten Laendern zuverlaessig, und
+// zwei Quellen fuer dasselbe Feld duerfen sich nicht gegenseitig verdraengen.
+// Ergaenzt wird nur, was leer war - plus die Bewertung, die es vorher gar
+// nicht gab.
+function mergeNewsAi(){
+  if(!NEWS_AI||!NEWS_DATA||!Array.isArray(NEWS_DATA.headlines))return 0;
+  let n=0;
+  NEWS_DATA.headlines.forEach(h=>{
+    const e=h&&h.u&&NEWS_AI.items[h.u];
+    if(!e)return;
+    if(Array.isArray(e.a)&&e.a.length&&!(Array.isArray(h.a)&&h.a.length)){h.a=e.a.slice();h.aiA=true;}
+    if(e.sum){h.sum=String(e.sum);n++;}
+    if(Array.isArray(e.tg)&&e.tg.length&&!(Array.isArray(h.tg)&&h.tg.length))h.tg=e.tg.slice();
+  });
+  return n;
+}
+function autoFetchNewsData(){fetchNewsData().then(()=>fetchNewsAi()).then(()=>{if(curPage==='dash')renderDash();});}
 // Risk-On/Risk-Off-Index aus echten Marktpreisen (VIX, Gold, AUD/USD,
 // USD/JPY - Workflow-Schritt "Build Risk-On/Risk-Off index from market data",
 // dort steht die volle Methodik samt Begruendung). Nutzer-Wunsch
@@ -533,7 +578,7 @@ function updFFLastUpd(){
 export {
   IND_DATA_FEED,fetchIndData,indResearchEntry,indResearchSource,applyIndDataFeed,BOND_INDS,BOND_DATA_FEED,fetchBondData,
   isoMinusDays,BOND_SMA_FAST,BOND_SMA_SLOW,BOND_DEAD_BAND,bondSma,bondPick,fmtYield,applyBondDataFeed,
-  PRICE_DATA_FEED,priceDataLastFetch,fetchPriceData,autoFetchPriceData,NEWS_DATA,fetchNewsData,autoFetchNewsData,RISK_INDEX_DATA,
+  PRICE_DATA_FEED,priceDataLastFetch,fetchPriceData,autoFetchPriceData,NEWS_DATA,fetchNewsData,autoFetchNewsData,NEWS_AI,fetchNewsAi,mergeNewsAi,RISK_INDEX_DATA,
   fetchRiskIndexData,autoFetchRiskIndex,relTime,priceChangeInfo,assetTickerInfo,pairTickerInfo,FX_PAIR_PRIORITY,canonicalFxPairs,
   tickerInfoForItem,tickerChipHtml,computeFxMovers,priceSeriesFor,pairPriceSeries,fmtPriceTick,CCY_MAX_ASSETS,ccyAllOptions,
   _ccyEditWidgetId,openCcyCfgM,renderCcyCfgBody,toggleCcyAsset,updFFLastUpd,
@@ -572,4 +617,28 @@ function indFeedSicht(){
   });
   return out;
 }
-if(typeof window!=='undefined')Object.assign(window,{openCcyCfgM,toggleCcyAsset,applyIndDataFeed,applyBondDataFeed,indFeedSicht});
+// Pruef-Sicht fuer check/news.js: hat die KI-Einordnung die Meldungen
+// wirklich erreicht? NEWS_DATA/NEWS_AI bleiben modul-intern (mutable let).
+function newsAiSicht(){
+  const h=(NEWS_DATA&&NEWS_DATA.headlines)||[];
+  const bsp=h.find(x=>x&&x.sum);
+  return {
+    aiGeladen:!!NEWS_AI,
+    aiEintraege:NEWS_AI?Object.keys(NEWS_AI.items||{}).length:0,
+    aiStand:NEWS_AI?(NEWS_AI.updated||null):null,
+    meldungen:h.length,
+    mitEinordnung:h.filter(x=>x&&x.sum).length,
+    mitAsset:h.filter(x=>x&&Array.isArray(x.a)&&x.a.length).length,
+    durchKiZugeordnet:h.filter(x=>x&&x.aiA).length,
+    // Alle Asset-Ids, die die Routine vergeben hat - der Waechter prueft sie
+    // gegen die echten Assets. Eine erfundene Id wuerde die Meldung unter
+    // einer Waehrung einsortieren, die es nicht gibt.
+    aiAssetIds:NEWS_AI?[...new Set(Object.values(NEWS_AI.items||{})
+      .flatMap(e=>Array.isArray(e&&e.a)?e.a:[]))]:[],
+    // Laengste Einordnung - eine zu lange Zeile sprengt die Meldung.
+    maxSumLen:NEWS_AI?Object.values(NEWS_AI.items||{})
+      .reduce((m,e)=>Math.max(m,String((e&&e.sum)||'').length),0):0,
+    beispiel:bsp?{t:String(bsp.t||'').slice(0,70),a:bsp.a,sum:bsp.sum}:null
+  };
+}
+if(typeof window!=='undefined')Object.assign(window,{openCcyCfgM,toggleCcyAsset,applyIndDataFeed,applyBondDataFeed,indFeedSicht,newsAiSicht});
