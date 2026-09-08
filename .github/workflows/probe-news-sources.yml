@@ -1,0 +1,60 @@
+# Welche Nachrichten-Quellen liefern wirklich einen Feed?
+#
+# Anlass (Nutzer 2026-09-08): "sprech die Quellen mit mir ab also Quellen fuer
+# Live News und zu berichten also Financial juice und reuters waere perfekt
+# sag ich mal aber am besten noch 2 mehr und denk dran mach das maximal
+# effizient."
+#
+# ⚠ Eine Feed-Adresse wird hier NICHT geraten und dann eingebaut. Genau daran
+# sind am 2026-08-19 schon zwei Quellen still gescheitert (BoE-Adresse
+# antwortete mit 404-HTML, CNBCs Such-Endpunkt mit 20 Byte) - beides ohne
+# Fehler, beides 0 Eintraege. Dieser Lauf fragt jede Kandidaten-Adresse einmal
+# ab und meldet, ob wirklich ein Feed zurueckkommt und wie viele Eintraege er
+# hat. Er schreibt NICHTS in die Daten.
+name: Probe news sources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kandidaten abfragen und zaehlen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+          echo "## Kandidaten fuer Nachrichten-Quellen" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Kandidat | HTTP | Bytes | Feed? | Eintraege | juengster Eintrag |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          pruef(){
+            local name="$1"; local u="$2"
+            CODE=$(curl -sSL --http1.1 --compressed --connect-timeout 12 --max-time 30 -A "$UA" \
+              -o probe.xml -w "%{http_code}" "$u" 2>/dev/null || echo "000")
+            SZ=$(stat -c%s probe.xml 2>/dev/null || echo 0)
+            if grep -qE "<item|<entry" probe.xml 2>/dev/null; then FEED="ja"; else FEED="**nein**"; fi
+            N=$(grep -oE "<item|<entry" probe.xml 2>/dev/null | wc -l)
+            TITEL=$(grep -oE "<title[^>]*>[^<]{5,90}" probe.xml 2>/dev/null | sed -n '2p' | sed 's/<title[^>]*>//' | tr -d '|')
+            echo "| $name | $CODE | $SZ | $FEED | $N | ${TITEL:0:70} |" >> $GITHUB_STEP_SUMMARY
+            echo "[probe] $name: HTTP $CODE, $SZ Bytes, Feed=$FEED, $N Eintraege"
+            sleep 2
+          }
+          # ── Die fuenf fehlenden Notenbanken (Primaerquelle, kaum Rauschen) ──
+          pruef "BoJ (Bank of Japan)"        "https://www.boj.or.jp/en/rss/whatsnew.xml"
+          pruef "BoC (Bank of Canada)"       "https://www.bankofcanada.ca/content_type/press-releases/feed/"
+          pruef "RBA (Australien)"           "https://www.rba.gov.au/rss/rss-cb-media-releases.xml"
+          pruef "RBNZ (Neuseeland)"          "https://www.rbnz.govt.nz/rss/news"
+          pruef "SNB (Schweiz)"              "https://www.snb.ch/public/en/rss/press-releases"
+          # ── Vom Nutzer genannt ──
+          pruef "Financial Juice"            "https://www.financialjuice.com/feed"
+          pruef "Financial Juice (rss)"      "https://www.financialjuice.com/rss"
+          # ── FX-naher Live-Ticker (freies Gegenstueck zum Squawk) ──
+          pruef "ForexLive"                  "https://www.forexlive.com/feed/news"
+          pruef "FXStreet News"              "https://www.fxstreet.com/rss/news"
+          # ── Rohstoffe (Gold/Oel haben bisher keine eigene Quelle) ──
+          pruef "OilPrice"                   "https://oilprice.com/rss/main"
+          pruef "Kitco (Metalle)"            "https://www.kitco.com/rss/news.xml"
+          # ── Rueckfall-Suchen ueber Google News, falls ein Direktfeed fehlt ──
+          pruef "GN: BoJ/BoC/RBA/RBNZ/SNB"   "https://news.google.com/rss/search?q=%28%22Bank+of+Japan%22+OR+%22Bank+of+Canada%22+OR+%22Reserve+Bank+of+Australia%22+OR+%22Reserve+Bank+of+New+Zealand%22+OR+%22Swiss+National+Bank%22%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Feed = nein** bedeutet: die Adresse antwortet, liefert aber kein RSS/Atom (meist eine HTML-Fehlerseite). Solche Kandidaten werden NICHT eingebaut." >> $GITHUB_STEP_SUMMARY
