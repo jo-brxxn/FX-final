@@ -973,7 +973,7 @@
      ],
      [
       "2026-12-09",
-      15
+      14
      ]
     ]
    ]
@@ -999,8 +999,8 @@
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
     "rateBefore": 3.85,
-    "rateAfter": 4,
-    "deltaBp": 15
+    "rateAfter": 3.99,
+    "deltaBp": 14
    }
   ],
   "pastMeeting": {
@@ -1854,11 +1854,11 @@
      ],
      [
       "2026-10-29",
-      12
+      13
      ],
      [
       "2026-12-17",
-      10
+      13
      ]
     ]
    ]
@@ -1878,16 +1878,16 @@
     "date": "2026-10-29",
     "label": "Oct 29, 2026",
     "rateBefore": 2.69,
-    "rateAfter": 2.81,
-    "deltaBp": 12,
+    "rateAfter": 2.82,
+    "deltaBp": 13,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 2.81,
-    "rateAfter": 2.91,
-    "deltaBp": 10,
+    "rateBefore": 2.82,
+    "rateAfter": 2.94,
+    "deltaBp": 13,
     "approx": true
    }
   ],
@@ -2759,7 +2759,7 @@
      ],
      [
       "2026-11-05",
-      4
+      5
      ],
      [
       "2026-12-17",
@@ -2783,15 +2783,15 @@
     "date": "2026-11-05",
     "label": "Nov 5, 2026",
     "rateBefore": 4.09,
-    "rateAfter": 4.13,
-    "deltaBp": 4,
+    "rateAfter": 4.14,
+    "deltaBp": 5,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 4.13,
-    "rateAfter": 4.31,
+    "rateBefore": 4.14,
+    "rateAfter": 4.32,
     "deltaBp": 18,
     "approx": true
    }
@@ -3615,11 +3615,11 @@
    ],
    [
     "2026-09-09",
-    2.27,
+    2.29,
     [
      [
       "2026-10-28",
-      29
+      27
      ],
      [
       "2026-12-09",
@@ -3629,21 +3629,21 @@
    ]
   ],
   "asOf": "2026-09-09",
-  "currentRate": 2.27,
+  "currentRate": 2.29,
   "meetings": [
    {
     "date": "2026-10-28",
     "label": "Oct 28, 2026",
-    "rateBefore": 2.27,
+    "rateBefore": 2.29,
     "rateAfter": 2.56,
-    "deltaBp": 29,
+    "deltaBp": 27,
     "approx": true
    },
    {
     "date": "2026-12-09",
     "label": "Dec 9, 2026",
     "rateBefore": 2.56,
-    "rateAfter": 2.71,
+    "rateAfter": 2.7,
     "deltaBp": 15,
     "approx": true
    }
