@@ -4571,11 +4571,11 @@
      ],
      [
       "2026-11-03",
-      10
+      11
      ],
      [
       "2026-12-08",
-      5
+      4
      ]
     ]
    ]
@@ -4594,15 +4594,15 @@
     "date": "2026-11-03",
     "label": "Nov 2-3, 2026",
     "rateBefore": 4.53,
-    "rateAfter": 4.64,
-    "deltaBp": 10
+    "rateAfter": 4.65,
+    "deltaBp": 11
    },
    {
     "date": "2026-12-08",
     "label": "Dec 7-8, 2026",
-    "rateBefore": 4.64,
+    "rateBefore": 4.65,
     "rateAfter": 4.69,
-    "deltaBp": 5
+    "deltaBp": 4
    }
   ],
   "method": "precise",
