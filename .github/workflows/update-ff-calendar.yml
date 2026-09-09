@@ -4487,6 +4487,29 @@ jobs:
           hole news_rss_reuters.xml "https://news.google.com/rss/search?q=site%3Areuters.com+%28economy+OR+inflation+OR+%22central+bank%22+OR+rates+OR+markets%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
           hole news_rss_banks.xml "https://news.google.com/rss/search?q=%28JPMorgan+OR+%22Goldman+Sachs%22+OR+%22Morgan+Stanley%22+OR+%22Bank+of+America%22+OR+Citigroup%29+%28outlook+OR+forecast+OR+economy+OR+rates+OR+recession%29+when%3A14d&hl=en-US&gl=US&ceid=US%3Aen"
           hole news_rss_macro.xml "https://news.google.com/rss/search?q=%28inflation+OR+%22interest+rates%22+OR+%22central+bank%22+OR+payrolls+OR+GDP+OR+tariffs%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
+          # ── Die fuenf fehlenden Notenbanken (Nutzer-Absprache 2026-09-08) ──
+          # Bis dahin hatten nur Fed, EZB und BoE einen Direktfeed - fuer JPY,
+          # CAD, AUD, NZD und CHF kamen Zinsentscheidungen nur zufaellig ueber
+          # Bloomberg/Reuters herein. Primaerquellen haben praktisch kein
+          # Rauschen und sind damit die effizienteste Ergaenzung.
+          # ⚠ Alle Adressen sind mit dem Workflow "Probe news sources" (Lauf 1,
+          # 2026-09-08) einzeln geprueft, nicht geraten:
+          #   BoJ 200/42 Eintraege · BoC 200/11 · RBA 200/2
+          #   RBNZ 403 (sperrt Bots) · SNB 404 (Adresse geaendert) · Kitco 404
+          #   Financial Juice 404 auf BEIDEN Adressen - es gibt keinen freien
+          #   Feed, der Live-Squawk ist ein Bezahlprodukt.
+          # Fuer RBNZ und SNB deckt deshalb die Google-News-Suche ab (100
+          # Eintraege im Test), die zugleich Berichte ueber die anderen drei
+          # mitnimmt.
+          hole news_rss_boj.xml   "https://www.boj.or.jp/en/rss/whatsnew.xml"
+          hole news_rss_boc.xml   "https://www.bankofcanada.ca/content_type/press-releases/feed/"
+          hole news_rss_rba.xml   "https://www.rba.gov.au/rss/rss-cb-media-releases.xml"
+          hole news_rss_cb5.xml   "https://news.google.com/rss/search?q=%28%22Bank+of+Japan%22+OR+%22Bank+of+Canada%22+OR+%22Reserve+Bank+of+Australia%22+OR+%22Reserve+Bank+of+New+Zealand%22+OR+%22Swiss+National+Bank%22%29+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen"
+          # ── FX-naher Live-Ticker: das freie Gegenstueck zum Squawk ──
+          hole news_rss_fxlive.xml "https://www.forexlive.com/feed/news"
+          hole news_rss_fxstr.xml  "https://www.fxstreet.com/rss/news"
+          # ── Oel: WTI ist ein Asset der App, hatte aber keine eigene Quelle ──
+          hole news_rss_oil.xml    "https://oilprice.com/rss/main"
           cat > news_parse.js <<'NEWSJS'
           const fs=require("fs");
           // Datei -> [Anzeigename der Quelle, Klasse]
@@ -4504,12 +4527,19 @@ jobs:
             "news_rss_bbg.xml":["Bloomberg",2],
             "news_rss_reuters.xml":["Reuters",1],
             "news_rss_banks.xml":["Bank research",1],
-            "news_rss_macro.xml":["Macro wire",1]
+            "news_rss_macro.xml":["Macro wire",1],
+            "news_rss_boj.xml":["Bank of Japan",3],
+            "news_rss_boc.xml":["Bank of Canada",3],
+            "news_rss_rba.xml":["Reserve Bank of Australia",3],
+            "news_rss_cb5.xml":["Central banks wire",1],
+            "news_rss_fxlive.xml":["ForexLive",2],
+            "news_rss_fxstr.xml":["FXStreet",2],
+            "news_rss_oil.xml":["OilPrice",2]
           };
           // Sammelnamen der Suchtreffer - nur bei diesen darf der Verlag aus dem
           // Titelanhang gezogen werden (bei einem Direktfeed IST der Name schon der
           // Verlag und der Titel enthaelt keinen Anhang).
-          const SAMMEL=new Set(["Bank research","Macro wire","Reuters"]);
+          const SAMMEL=new Set(["Bank research","Macro wire","Reuters","Central banks wire"]);
 
           // Themen, die den Assets dieser App entsprechen. Feste, nachlesbare Liste
           // statt einer freien Bewertung.
@@ -4541,6 +4571,31 @@ jobs:
             /\bshould (i|we)\b/i,/\bdear [a-z]/i,/\bmy \$[\d.]/i,/\binheritance\b/i,/\bmedicare\b/i,
             /\bhoroscope\b/i,/\brecipe\b/i,/\bdating\b/i,/\bcelebrity\b/i,/\bmy (401|ira|pension)\b/i,
             /\bi'?m \d\d\b/i,/\bretire(ment)? (at|in) \d/i,/\bwedding\b/i,/\bdivorce\b/i];
+
+          // ── VERLAGS-SPERRE (Nutzer-Absprache 2026-09-08) ──────────────────────
+          // Gemessen am Bestand vom 2026-09-08 (774 Meldungen):
+          //   Quelle           Meldungen   davon relevant (Gewicht >= 2,5)
+          //   Motley Fool             78    5   ( 6%)
+          //   Insider Monkey          77    2   ( 3%)
+          //   24/7 Wall St.           32    0   ( 0%)
+          //   Moneywise               24    2
+          //   TheStreet               20    1
+          //   Barchart                25    2
+          //   ------------------------------------------------------------
+          //   zusammen               256   12   ( 5%)
+          // Zum Vergleich: Bloomberg 80/42, Reuters 63/35, WSJ 13/10, CNBC ~75%.
+          // Diese sechs sind Anlagetipp-Seiten, die ueber die Yahoo- und
+          // Google-News-Sammelfeeds hereinrutschen - ein Drittel des Feeds fuer
+          // 5% des Nutzens. Der Nutzer hat dem Rauswerfen ausdruecklich
+          // zugestimmt ("Ja, alle sechs sperren"), und es macht auch die
+          // KI-Einordnung guenstiger: was hier nicht ankommt, muss sie nicht
+          // lesen.
+          // ⚠ Gesperrt wird der VERLAG, nicht der Feed: diese Namen kommen aus
+          // dem <source>-Tag der Sammelfeeds, ein eigener Feed existiert fuer
+          // sie gar nicht. Deshalb greift die Sperre NACH titelUndQuelle().
+          const VERLAG_SPERRE=[/^motley fool/i,/^insider monkey/i,/^24\/7 wall/i,
+            /^moneywise/i,/^thestreet/i,/^barchart/i];
+          const verlagGesperrt=v=>VERLAG_SPERRE.some(r=>r.test(String(v||"").trim()));
 
           // Notenbank-Verwaltungskram vs. echte geldpolitische Meldung. Ohne diese
           // Trennung dominierten Meldungen wie "Fed bittet um Kommentare zu einem
@@ -4681,7 +4736,7 @@ jobs:
               let xml="";try{xml=fs.readFileSync(f,"utf8");}catch(e){return;}
               const [name,klasse]=QUELLEN[f];
               const bloecke=[...xml.matchAll(/<(item|entry)[\s>][\s\S]*?<\/\1>/g)].map(m=>m[0]);
-              let n=0,raus=0;
+              let n=0,raus=0,gesperrt=0;
               bloecke.forEach(b=>{
                 const roh=ent((b.match(/<title[^>]*>([\s\S]*?)<\/title>/)||[])[1]||"");
                 let u=(b.match(/<link[^>]*>([\s\S]*?)<\/link>/)||[])[1]||"";
@@ -4693,10 +4748,11 @@ jobs:
                 const srcTag=ent((b.match(/<source[^>]*>([\s\S]*?)<\/source>/)||[])[1]||"");
                 const {t,s}=titelUndQuelle(roh,name,srcTag);
                 if(RAUS.some(r=>r.test(t))){raus++;return;}
+                if(verlagGesperrt(s)){gesperrt++;return;}
                 alle.push({t,u,s,k:klasse,d:new Date(ts).toISOString()});
                 n++;
               });
-              console.log("[debug] news: "+f+" -> "+n+" Eintraege ("+name+")"+(raus?", "+raus+" als Lebenshilfe verworfen":""));
+              console.log("[debug] news: "+f+" -> "+n+" Eintraege ("+name+")"+(raus?", "+raus+" als Lebenshilfe verworfen":"")+(gesperrt?", "+gesperrt+" von gesperrten Verlagen":""));
             });
             return alle;
           }
@@ -4709,7 +4765,10 @@ jobs:
               const {t,s}=titelUndQuelle(h.t,h.s,null);
               h.t=ent(t); h.s=s; h._nAlt=h.n||1;
             });
-            const rein=liste.filter(h=>!RAUS.some(r=>r.test(h.t)));
+            // ⚠ Die Sperre muss AUCH auf den Altbestand wirken: news_data.json
+            // haelt rund 35 Tage, ohne das blieben die 256 bereits gespeicherten
+            // Meldungen der gesperrten Verlage bis Mitte Oktober stehen.
+            const rein=liste.filter(h=>!RAUS.some(r=>r.test(h.t))&&!verlagGesperrt(h.s));
             clustern(rein);
             // Nur der Repraesentant bleibt in der Liste - die uebrigen Haeuser stecken
             // als o[] daran. Sonst stuenden vier Fassungen derselben Meldung mit

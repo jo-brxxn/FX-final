@@ -379,6 +379,10 @@ function mergeNewsAi(){
     if(Array.isArray(e.a)&&e.a.length&&!(Array.isArray(h.a)&&h.a.length)){h.a=e.a.slice();h.aiA=true;}
     if(e.sum){h.sum=String(e.sum);n++;}
     if(Array.isArray(e.tg)&&e.tg.length&&!(Array.isArray(h.tg)&&h.tg.length))h.tg=e.tg.slice();
+    // Notiz-Vorschlag der Routine (Nutzer-Wunsch 2026-09-08). Wird nur
+    // durchgereicht, nicht ausgewertet - die Entscheidung trifft der Nutzer
+    // mit einem Klick (newsNoteAnnehmen).
+    if(e.note&&typeof e.note==='object')h.note=e.note;
   });
   return n;
 }

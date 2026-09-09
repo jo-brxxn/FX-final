@@ -12602,6 +12602,13 @@ const TIME_RANGES_TIEF=[['MAX','Max'],[144,'12Y'],[96,'8Y'],[60,'5Y'],[36,'3Y'],
 // aendert, muss ihn dort mitziehen, sonst zeigt die Leiste einen Zeitraum an,
 // den niemand einsammelt.
 const IND_HIST_MAX_FROM='2007-01-01';
+// ── Zeitfilter der News-Seite: TAGE, nicht Monate ─────────────────────
+// Nutzer-Vorgabe 2026-09-08: "es sollen einen Zeitfilter geben fuer 7 5 3 und
+// 1 Tag". Die Monatsstufen der uebrigen Diagramme (1M/3M/6M...) sind hier
+// falsch: Nachrichten sind nach zwei Tagen kalt, und der Feed haelt ohnehin
+// nur rund 35 Tage. 'D<n>' heisst: die letzten n Tage EINSCHLIESSLICH heute -
+// 'D1' ist also genau der heutige Tag.
+const NEWS_RANGES=[['D1','Today'],['D3','3 days'],['D5','5 days'],['D7','7 days'],['MAX','All'],['CUSTOM','Custom']];
 function timeRangeBarHtml(current,setFnName,ranges){
   return `<div class="ind-hist-range-bar">${(ranges||TIME_RANGES).map(([v,lbl])=>`<button class="ind-hist-range-btn${String(current)===String(v)?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
 }
@@ -12629,6 +12636,15 @@ function timeRangeCustomHtml(current,from,to,setFnName){
 function filterDatesByRange(dates,range,customFrom,customTo){
   if(range==null||range==='MAX')return dates;
   if(range==='CUSTOM')return dates.filter(d=>(!customFrom||d>=customFrom)&&(!customTo||d<=customTo));
+  // 'D<n>' = die letzten n Tage einschliesslich heute (News-Seite, s.o.).
+  // ⚠ Ueber todayStr() rechnen, nicht ueber new Date()-Arithmetik: die App
+  // rechnet ihre Tagesgrenzen an EINER Stelle, und ein zweiter Weg wuerde
+  // sich am Monatsende oder ueber die Zeitzone hinweg unterscheiden.
+  if(typeof range==='string'&&/^D\d+$/.test(range)){
+    const n=Math.max(1,parseInt(range.slice(1),10));
+    const ab=dateAddStr(todayStr(),-(n-1));
+    return dates.filter(d=>d>=ab);
+  }
   const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-range);
   const cutoffStr=cutoff.toISOString().slice(0,10);
   return dates.filter(d=>d>=cutoffStr);
@@ -15093,8 +15109,25 @@ function newsRowHtml(h){
   // dahinter: sie ist eine andere Art Information (Bewertung statt Meldung)
   // und muss sich davon absetzen (Nutzer-Wunsch 2026-09-08 zur Uebersicht).
   // Ohne Einordnung bleibt die Zeile exakt wie bisher - kein Platzhalter.
+  // ── Notiz-Vorschlag ────────────────────────────────────────────────
+  // Nutzer-Vorgabe 2026-09-08: "schlag mir Nachrichten vor die du zu Notiz
+  // machen wuerdest dann bestaetige ich das". Der Vorschlag kommt aus
+  // news_ai.json (Feld `note`, von der Routine geschrieben); bestaetigt wird
+  // mit EINEM Klick, und damit ist die Notiz auch schon angelegt - eine
+  // Bestaetigung, die erst der naechste Lauf umsetzt, waere ein Umweg ohne
+  // Gewinn. Ist der Vorschlag schon angenommen, steht dort der Weg zur Notiz
+  // statt eines zweiten Knopfes.
+  const schonDa=h.noteId&&resNotes().some(n=>n&&n.id===h.noteId);
+  const vorschlag=h.note?`<div class="hl-note">
+      <span class="hl-note-ic">${icn('note',12)}</span>
+      <span class="hl-note-t">${escH(h.note.title||'')}</span>
+      ${schonDa
+        ? `<button class="hl-note-btn hl-note-done" onclick="event.preventDefault();event.stopPropagation();openResNote('${escJH(h.noteId)}')" title="Open the note this created">Saved &middot; open</button>`
+        : `<button class="hl-note-btn" onclick="event.preventDefault();event.stopPropagation();newsNoteAnnehmen('${escJH(h.u)}')" title="Create this note on the assets it names">Save as note</button>`}
+    </div>`:'';
   const einordnung=h.sum
-    ? `<div class="hl-sum"${h.aiA?' data-ai="1"':''}>${escH(h.sum)}</div>`:'';
+    ? `<div class="hl-sum"${h.aiA?' data-ai="1"':''}>${escH(h.sum)}${vorschlag}</div>`
+    : (vorschlag?`<div class="hl-sum">${vorschlag}</div>`:'');
   return`<a class="hl-row ${cls}${h.sum?' hl-has-sum':''}" href="${safeUrl(h.u)}" target="_blank" rel="noopener" title="${tip}">
     <span class="hl-title">${escH(h.t||'')}</span>
     <span class="hl-side">
@@ -15102,6 +15135,61 @@ function newsRowHtml(h){
       <span class="hl-side-r"><span class="hl-src">${escH(h.s||'')}</span>${h.d?`<span class="hl-time">${escH(relTime(h.d))}</span>`:''}</span>
     </span>
   </a>${einordnung}${srcs}`;
+}
+// Kurze, selbst verschwindende Bestaetigung. Bewusst dasselbe Muster wie
+// saveQuotaRettung() (eine Leiste, die sich nach ein paar Sekunden selbst
+// zurueckzieht) statt eines Dialogs: ein geglueckter Klick soll den Nutzer
+// nicht aufhalten.
+function newsNoteHinweis(txt){
+  let el=document.getElementById('newsNoteHint');
+  if(!el){el=document.createElement('div');el.id='newsNoteHint';el.className='save-freed-note';document.body.appendChild(el);}
+  el.textContent=txt;el.style.display='block';
+  clearTimeout(newsNoteHinweis._t);
+  newsNoteHinweis._t=setTimeout(()=>{el.style.display='none';},3200);
+}
+// ── Einen Notiz-Vorschlag annehmen ────────────────────────────────────
+// Legt die Notiz in den Ordnern der Assets an, die die Meldung betrifft -
+// derselbe Weg, den auch eine von Hand geschriebene Notiz nimmt (kein
+// zweiter Speicherort, keine Kopie). Quelle und Datum stehen im Text, damit
+// spaeter nachvollziehbar bleibt, woher der Gedanke kam.
+// ⚠ pushU() VOR der Aenderung: ein Fehlklick muss sich zurueckholen lassen.
+function newsNoteAnnehmen(u){
+  const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
+  const h=alle.find(x=>x&&x.u===u);
+  if(!h||!h.note){alert('This suggestion is no longer available.');return;}
+  try{
+    const ids=(Array.isArray(h.note.assets)&&h.note.assets.length?h.note.assets:(h.a||[]))
+      .filter(id=>syms.some(s=>s.id===id));
+    // Ordner: der ALLGEMEINE Notizordner des jeweiligen Assets. Ein Themen-
+    // ordner waere geraten - die Meldung sagt nicht, ob sie zu "Structural"
+    // oder "Cyclical" gehoert.
+    // researchGenFidFor: der "General Notes"-Ordner des Assets - dieselbe
+    // Wurzel, die newResNoteIn() beim Anlegen von der Asset-Seite benutzt.
+    // Ein Themenordner waere geraten: die Meldung sagt nicht, ob sie zu
+    // "Structural" oder "Cyclical" gehoert.
+    const fids=ids.map(id=>researchGenFidFor(id)).filter(Boolean);
+    const now=new Date().toISOString();
+    const quelle=(h.s?h.s+' &middot; ':'')+String(h.d||'').slice(0,10);
+    const id=uid();
+    pushU();
+    research.notes.push({id,fids,
+      title:String(h.note.title||h.t||'').slice(0,120),
+      body:String(h.note.body||'')+'\n\n---\nSource: '+(h.s||'?')+' ('+String(h.d||'').slice(0,10)+')\n'+String(h.u||''),
+      tags:Array.isArray(h.note.tags)?h.note.tags.slice(0,6):[],
+      fav:false,pin:false,ts:now,up:now,bias:h.note.bias||'neu',
+      asset:fids.length?'':(ids[0]||'')});
+    h.noteId=id;
+    save();
+    if(curPage==='news')renderNewsTab();else if(curPage==='dash')renderDash();
+    // Kurze Bestaetigung an derselben Stelle, an der die App auch sonst
+    // knapp Rueckmeldung gibt (dieselbe Leiste wie saveQuotaRettung) - eine
+    // Dialogbox fuer einen geglueckten Klick waere zu viel.
+    newsNoteHinweis('Note saved'+(ids.length?' on '+ids.join(', '):''));
+  }catch(e){
+    // ⚠ Kein stiller Fehlschlag auf einem Schreibpfad (CLAUDE.md Regel 6):
+    // der Nutzer muss sehen, dass die Notiz NICHT angelegt wurde.
+    alert('The note could not be saved: '+(e&&e.message||e));
+  }
 }
 // Tages-Trenner nur im Wochen-/Monatsfenster - im Tagesfenster waere er
 // eine einzige Ueberschrift ueber allem und damit nutzlos.
@@ -15364,7 +15452,7 @@ function renderEdge(){
 // Volle Historie (bis 35 Tage), Volltextsuche, Asset- und Quellenfilter.
 // Zeitraum ueber den app-weiten TIME_RANGES-Helfer, kein eigener Filter
 // (CLAUDE.md: wiederkehrende UI-Bausteine muessen einheitlich sein).
-let newsTabQuery='',newsTabAsset='ALL',newsTabSrc='ALL',newsTabRange=1,newsTabFrom='',newsTabTo='';
+let newsTabQuery='',newsTabAsset='ALL',newsTabSrc='ALL',newsTabRange='D1',newsTabFrom='',newsTabTo='';
 let newsTabLimit=60;
 function setNewsTabRange(v){newsTabRange=v;newsTabLimit=60;renderNewsTab();}
 function setNewsTabRangeCustom(a,b){newsTabFrom=a;newsTabTo=b;newsTabLimit=60;renderNewsTab();}
@@ -15415,7 +15503,7 @@ function renderNewsTab(){
     <select onchange="setNewsTabAsset(this.value)">${opt('ALL','All assets',newsTabAsset)}${assetIds.map(id=>opt(id,(COT_NAME[id]||id),newsTabAsset)).join('')}</select>
     <select onchange="setNewsTabSrc(this.value)">${opt('ALL','All sources',newsTabSrc)}${quellen.map(x=>opt(x,x,newsTabSrc)).join('')}</select>
   </div>
-  ${timeRangeBarHtml(newsTabRange,'setNewsTabRange')}
+  ${timeRangeBarHtml(newsTabRange,'setNewsTabRange',NEWS_RANGES)}
   ${newsTabRange==='CUSTOM'?timeRangeCustomHtml(newsTabFrom,newsTabTo,'setNewsTabRangeCustom'):''}`;
   if(!l.length){
     el.innerHTML=kopf+`<div class="cot-card" style="margin-top:10px"><div class="dw-empty" style="text-align:left">${
@@ -15423,15 +15511,40 @@ function renderNewsTab(){
     return;
   }
   const sichtbar=l.slice(0,newsTabLimit);
-  let rows='',tag='';
-  sichtbar.forEach(h=>{
-    const d=String(h.d||'').slice(0,10);
-    if(d!==tag){tag=d;rows+=`<div class="hl-day">${escH(newsDayLabel(h.d))}</div>`;}
-    rows+=newsRowHtml(h);
+  // ── Nach Tagen gegliedert, jeder Tag mit eigener Kopfzeile ──────────
+  // Nutzer-Wunsch 2026-09-08: "Dann will ich in der News Kategorie
+  // aufgelistet haben was heute war ... Design das schoen und uebersichtlich".
+  // Die Kopfzeile traegt deshalb nicht nur das Datum, sondern auch, WORUM es
+  // an dem Tag ging: Zahl der Meldungen, die drei haeufigsten Assets und wie
+  // viele davon als wichtig eingestuft sind. Damit sieht man den Tag, ohne
+  // ihn zu lesen.
+  const proTag={};
+  sichtbar.forEach(h=>{const d=String(h.d||'').slice(0,10);(proTag[d]=proTag[d]||[]).push(h);});
+  const tagKopf=(d,liste)=>{
+    const z={};liste.forEach(h=>(Array.isArray(h.a)?h.a:[]).forEach(id=>{z[id]=(z[id]||0)+1;}));
+    const top=Object.keys(z).sort((a,b)=>z[b]-z[a]).slice(0,3);
+    const hoch=liste.filter(h=>(+h.w||0)>=5).length;
+    return`<div class="hl-day">
+      <span class="hl-day-d">${escH(newsDayLabel(liste[0].d))}</span>
+      <span class="hl-day-m">
+        <span class="hl-day-n">${liste.length}</span>
+        ${hoch?`<span class="hl-day-hi" title="${hoch} headline${hoch===1?'':'s'} rated high importance">${hoch} high</span>`:''}
+        ${top.map(id=>`<span class="hl-ass">${escH(id)}</span>`).join('')}
+      </span></div>`;
+  };
+  let rows='';
+  Object.keys(proTag).sort((a,b)=>b.localeCompare(a)).forEach(d=>{
+    rows+=tagKopf(d,proTag[d])+proTag[d].map(newsRowHtml).join('');
   });
   const rest=l.length-sichtbar.length;
+  // Zeitraum im Kartentitel benennen - sonst weiss man bei "12 headlines"
+  // nicht, ob das ein ruhiger Tag oder ein leerer Filter ist.
+  const zeitraum=newsTabRange==='MAX'?'all stored'
+    :newsTabRange==='CUSTOM'?'selected range'
+    :newsTabRange==='D1'?'today'
+    :'last '+String(newsTabRange).slice(1)+' days';
   el.innerHTML=kopf+`<div class="cot-card" style="margin-top:10px">
-    <div class="cot-card-title">${l.length} headline${l.length===1?'':'s'}${iBtn('news')}</div>
+    <div class="cot-card-title"><span>${l.length} headline${l.length===1?'':'s'} &middot; ${escH(zeitraum)}</span>${iBtn('news')}</div>
     ${rows}
     ${rest>0?`<button class="hl-expand" onclick="newsTabMore()">Show ${Math.min(rest,60)} more</button>`:''}
   </div>`;
@@ -18689,8 +18802,8 @@ Object.assign(window,{
   recordScoreHist,RISK_ON_IDS,RISK_OFF_IDS,riskOnOffState,riskSentimentWidgetHtml,globeHudLonTxt,globeHudHtml,bMark,
   startScanBroadcast,scanFlyParticle,surpriseIndex,mxHeatColor,assetReturnMap,pearsonR,corrHeatColor,setCorrA,
   setCorrB,setCorrWin,logReturns,pearson,corrRegimeSeries,corrRegimeCardHtml,renderCorrCard,renderMatrix,TREND_COLORS,
-  biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,TIME_RANGES_TIEF,IND_HIST_MAX_FROM,indHistStartNote,timeRangeBarHtml,timeRangeCustomHtml,
-  indName,kanonIndName,feedEntryFor,
+  biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,TIME_RANGES_TIEF,NEWS_RANGES,IND_HIST_MAX_FROM,indHistStartNote,timeRangeBarHtml,timeRangeCustomHtml,
+  indName,kanonIndName,feedEntryFor,newsNoteAnnehmen,newsNoteHinweis,
   filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
   setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
   resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
