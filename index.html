@@ -2910,7 +2910,21 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hl-tab.hl-new .hl-cnt{color:var(--blue)}
 
 .hl-day{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.05em;color:var(--t3);text-transform:uppercase;
-  padding:9px 0 3px;border-bottom:1px solid var(--bd);margin-bottom:2px}
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  /* ⚠ Der Tages-Kopf ist der TRENNER zwischen zwei Tagen und muss deshalb
+     staerker abgesetzt sein als eine Meldungszeile - sonst liest sich die
+     Liste als ein durchgehender Block (Nutzer-Wunsch 2026-09-08:
+     "uebersichtlich ... klaren Abtrennungen von anderen Objekten").
+     Mittel: eigener Grund, oben eine kraeftigere Linie, klebt beim Scrollen
+     oben fest, damit man immer weiss, welcher Tag gerade laeuft. */
+  position:sticky;top:0;z-index:2;background:var(--bg3);
+  padding:6px 8px;margin:0;border-top:2px solid var(--bd2);border-bottom:1px solid var(--bd)}
+.hl-day:first-child{border-top:none}
+.hl-day-d{color:var(--t1)}
+.hl-day-m{display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0}
+.hl-day-n{font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--t2)}
+.hl-day-hi{font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--blue);
+  border:1px solid rgba(var(--blue-rgb),.35);border-radius:999px;padding:2px 6px}
 .hl-day:first-child{padding-top:0}
 .hl-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;
   padding:5px 6px 5px 7px;border-left:3px solid transparent;border-bottom:1px solid var(--bd);
@@ -2932,6 +2946,21 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
   border-radius:1px;background:var(--bd2)}
 .hl-sum[data-ai="1"]::before{background:rgba(var(--blue-rgb),.45)}
 .hl-row.hl-has-sum+.hl-sum:last-child{border-bottom:none}
+/* ── Notiz-Vorschlag (Nutzer-Wunsch 2026-09-08) ─────────────────────
+   Sitzt UNTER der Einordnung und ist eine Handlungsaufforderung, keine
+   Information - deshalb eigene Flaeche mit Rahmen statt nur Text, damit man
+   ihn nicht mit der Bewertung verwechselt. Bewusst schmal: er soll die
+   Liste nicht dominieren, sondern auffallen, wenn man ihn sucht. */
+.hl-note{display:flex;align-items:center;gap:8px;margin:6px 0 2px;padding:5px 8px;
+  border:1px solid var(--bd2);border-radius:var(--rs);background:var(--bg1)}
+.hl-note-ic{display:flex;align-items:center;color:var(--t3);flex:0 0 auto}
+.hl-note-t{font:600 var(--fs-xs)/1.35 var(--ff-text);color:var(--t1);flex:1 1 auto;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hl-note-btn{flex:0 0 auto;border:1px solid rgba(var(--blue-rgb),.45);
+  background:rgba(var(--blue-rgb),.12);color:var(--blue);border-radius:999px;
+  font:700 var(--fs-2xs)/1 var(--ff-text);padding:5px 10px;cursor:pointer}
+@media(hover:hover){.hl-note-btn:hover{background:rgba(var(--blue-rgb),.22);border-color:var(--blue)}}
+.hl-note-btn.hl-note-done{border-color:var(--bd2);background:none;color:var(--t3)}
 .hl-row.lv-hi{border-left-color:var(--blue)}
 .hl-row.lv-mid{border-left-color:var(--bd2)}
 /* ⚠ Der Titel darf zwei Zeilen brauchen. Einzeilig mit Auslassung war in der
@@ -4434,11 +4463,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-491 - Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-492 - Die Nachrichten-Seite zeigt jetzt WAS HEUTE WAR, und die Quellen wurden vorher gemessen statt geraten. Gemessen wurde jede Kandidaten-Adresse einzeln: BoJ, BoC und RBA antworten mit echtem RSS und kommen direkt rein, dazu eine Google-News-Suche ueber alle fuenf Notenbanken, ForexLive, FXStreet und OilPrice fuer Gold/Oel. NICHT eingebaut wurden Financial Juice (beide Adressen 404, es gibt dort keinen freien Feed - der Nutzer hatte danach gefragt), RBNZ (403) und Kitco (404); eine Adresse zu raten und stumm 0 Eintraege zu holen ist genau der Fehler vom 2026-08-19. Gegen Rauschen sperrt VERLAG_SPERRE sechs Verlage (Motley Fool, Insider Monkey, 24/7 Wall St, Moneywise, TheStreet, Barchart) - das entfernt 257 Schlagzeilen und kostet nur 13 relevante, die Trefferquote steigt von 38 auf 55 Prozent. Der Zeitfilter der News-Seite hat jetzt 1/3/5/7 Tage und Alle (gemessen 154/524/586/667/774 Meldungen), Voreinstellung ist Heute; die Tages-Ueberschrift bleibt beim Scrollen stehen und nennt Anzahl, Wichtiges und die drei haeufigsten Assets. Neu ist ausserdem der Notiz-Vorschlag: die geplante Sitzung darf pro Lauf hoechstens drei Meldungen als Notiz-Entwurf vorschlagen, der Nutzer bestaetigt mit einem Klick und die Notiz landet mit Quellenzeile, Bias und Tags in den Ordnern der genannten Assets. Die Routine laeuft 08:00 und 17:00 deutscher Zeit und arbeitet ab Wasserzeichen: nur Meldungen, die neuer sind als news_ai.json und dort noch nicht stehen. Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-491</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-492</span>
     </span>
   </div>
   <div class="hdr-r">

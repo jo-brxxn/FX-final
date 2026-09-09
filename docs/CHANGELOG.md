@@ -11964,3 +11964,109 @@ geprüft, bevor es beim Nutzer ankommt (`check/display.js` 2e):
   über die Adresse kann brechen, ohne dass jemand es sieht).
 
 Gegenprobe: eine erfundene Id `XYZ` eingeschleust → Treffer; zurückgesetzt → 0.
+
+---
+
+## 2026-09-09 — Nachrichten-Quellen abgesprochen, Tagesfilter, Notiz-Vorschläge (VERSION-CHECK-492)
+
+Nutzer-Auftrag (wörtlich): *„Ok aber das wichtigste ist was deine Quellen sind.
+Financial juice? … sprech die Quellen mit mir ab … mach die Routine einmal auf
+8 Uhr und dann auf 17:00 … Dann will ich in der News Kategorie aufgelistet
+haben was heute war und es sollen einen Zeitfilter geben für 7 5 3 und 1 Tag …
+Design das schön und übersichtlich und wir machen es so schlag mir Nachrichten
+vor die du zu Notiz machen würdest dann bestätige ich das und mit dem nächsten
+Workflow setzt du das um."*
+
+### 1. Quellen — gemessen, nicht geraten
+
+Am 2026-08-19 sind zwei Quellen **still** gescheitert (BoE-Adresse → 404-HTML,
+CNBC-Such-Endpunkt → 20 Byte): kein Fehler, 0 Einträge, monatelang unbemerkt.
+Deshalb zuerst `probe-news-sources.yml` — jede Kandidaten-Adresse einmal
+abgefragt, ohne irgendetwas zu schreiben:
+
+| Kandidat | HTTP | Feed? | Einträge | Entscheidung |
+|---|---|---|---|---|
+| BoJ (Bank of Japan) | 200 | ja | 20 | **eingebaut** |
+| BoC (Bank of Canada) | 200 | ja | 10 | **eingebaut** |
+| RBA (Australien) | 200 | ja | 20 | **eingebaut** |
+| Google News, alle 5 Notenbanken | 200 | ja | 100 | **eingebaut** |
+| ForexLive | 200 | ja | 25 | **eingebaut** |
+| FXStreet News | 200 | ja | 30 | **eingebaut** |
+| OilPrice (WTI/Brent) | 200 | ja | 25 | **eingebaut** |
+| **Financial Juice** `/feed` | **404** | nein | 0 | **nicht eingebaut** |
+| **Financial Juice** `/rss` | **404** | nein | 0 | **nicht eingebaut** |
+| RBNZ (Neuseeland) | **403** | nein | 0 | nicht eingebaut |
+| SNB (Schweiz) | **404** | nein | 0 | über Google News abgedeckt |
+| Kitco (Metalle) | **404** | nein | 0 | nicht eingebaut |
+
+⚠ **Financial Juice hat keinen freien Feed** — beide plausiblen Adressen
+antworten mit 404. Der Nutzer hatte ausdrücklich danach gefragt; eine Adresse
+zu raten und dann stumm 0 Einträge zu holen wäre exakt der Fehler von oben.
+Reuters läuft bereits seit 2026-08-19 über die vorhandene Google-News-Suche
+(ein direkter Reuters-RSS existiert seit 2020 nicht mehr).
+
+Ersatz für die drei Ausfälle: die Google-News-Suche über alle fünf Notenbanken
+deckt RBNZ und SNB mit ab, Gold/Öl hängen jetzt an OilPrice statt an Kitco.
+
+### 2. Rauschen sperren (maximale Effizienz)
+
+Der Bestand war voll mit Aktien-Clickbait derselben sechs Verlage.
+`VERLAG_SPERRE` (Motley Fool, Insider Monkey, 24/7 Wall St, Moneywise,
+TheStreet, Barchart) greift an **beiden** Stellen — im Aufnahme-Lauf nach
+`titelUndQuelle()` und in `anreichern()` auf dem Altbestand, sonst überlebt
+das Alte die Sperre.
+
+| | vorher | nachher |
+|---|---|---|
+| Schlagzeilen im Bestand | 774 | **517** |
+| davon einer Währung zugeordnet | 38 % | **55 %** |
+| dabei verlorene relevante Meldungen | — | **13** |
+
+257 entfernt, 13 davon relevant — der Preis ist bewusst gezahlt.
+
+### 3. „Was war heute" — Tagesfilter auf der News-Seite
+
+`NEWS_RANGES = D1/D3/D5/D7/MAX/CUSTOM`, Voreinstellung **Today**.
+`filterDatesByRange` versteht jetzt `D<n>` (ab heute minus n−1 Tage).
+Gemessen im Browser:
+
+| Filter | Meldungen |
+|---|---|
+| Today | 154 |
+| 3 days | 524 |
+| 5 days | 586 |
+| 7 days | 667 |
+| All | 774 |
+
+(Gemessen auf dem aktuellen `news_data.json`, also **vor** der Verlagssperre —
+die greift erst beim nächsten stündlichen Lauf, danach sind es 517 statt 774.)
+
+Die Liste ist nach Tagen gruppiert. Die Tages-Überschrift ist **sticky** und
+trägt Datum, Anzahl, Anzahl wichtiger Meldungen und die drei häufigsten
+Assets — gemessen z. B. `TODAY · 60 · 1 high · CAD OIL USD`. So bleibt beim
+Scrollen immer sichtbar, welcher Tag gerade läuft.
+
+### 4. Notiz-Vorschläge statt Handarbeit
+
+Der Ablauf ist der vom Nutzer vorgegebene: **ich schlage vor, er bestätigt.**
+Die geplante Sitzung darf pro Lauf höchstens **3** Meldungen einen
+`note`-Entwurf mitgeben (`title`, `body`, `assets`, `tags`, `bias`). In der
+Liste erscheint darunter ein Vorschlagsbalken mit *„Save as note"*.
+
+`newsNoteAnnehmen(u)` legt die Notiz über `researchGenFidFor(assetId)` in den
+Ordnern **aller** genannten Assets an, hängt Quelle, Datum und Adresse an den
+Text und schaltet den Knopf auf *„Saved · open"*. Kompletter Test im Browser:
+ein Klick → Notiz 1546, `fids:["asset:CAD:gen","asset:USD:gen"]`,
+`bias:"bear"`, `tags:["tariffs","boc"]`, Quellenzeile vorhanden, 0 Seitenfehler.
+
+⚠ Zwei erfundene Funktionen auf dem Weg dahin: `researchAssetRootFolder` und
+`toast` gibt es beide nicht (Regel 6 — ein Bedienelement, dessen Handler ins
+Leere zeigt, wirft still ein `ReferenceError`). Ersetzt durch das echte
+`researchGenFidFor` und ein neues `newsNoteHinweis()`.
+
+### 5. Routine auf 08:00 / 17:00 und auf Wasserzeichen umgestellt
+
+`trig_01TmUxc81VAhGuLbHn1feHQR` → `0 6,15 * * *` UTC = **08:00 / 17:00 DE**.
+Der Auftragstext arbeitet jetzt inkrementell: nur Meldungen, die **neuer sind
+als `news_ai.json.updated`** und dort **noch nicht** stehen, höchstens 60 pro
+Lauf. Nichts wird doppelt gelesen — das war die Vorgabe „komplett effizient".
