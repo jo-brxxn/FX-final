@@ -402,6 +402,76 @@ try {
   }
 } catch (e) {}
 
+// ── Regel 9: ein Hintergrundlauf, der nichts liefert, muss auffallen ────
+// ⚠ Messung 2026-09-10: die Routine "News-Einordnung" feuerte am 09.09. um
+// 15:15 UTC, lief sechs Minuten, verbrauchte 25 500 Ausgabe-Tokens und
+// meldete SUCCEEDED - auf main kam KEIN Commit an. Ursache: eine per Routine
+// frisch gefeuerte Sitzung startet mit leerem `sources` und bekommt keine
+// autorisierte Arbeitskopie ("Repo nicht in Session-Sources autorisiert,
+// Push blockiert"). Aufgefallen ist das nicht dem Waechter, sondern dem
+// Nutzer - zwei Tage spaeter, weil die Seite einfach nichts Neues zeigte.
+// Genau das ist die gefaehrliche Klasse: ein Zulieferer, der still
+// ausbleibt, sieht exakt aus wie "es gab halt nichts Neues".
+// Der Waechter misst deshalb das ERGEBNIS statt der Absicht: `updated` in
+// news_ai.json muss sich bewegen. Bei zwei Laeufen taeglich sind 40 Stunden
+// grosszuegig - ein einzelner ausgefallener Lauf faellt noch nicht auf, zwei
+// hintereinander schon.
+// ⚠ Kein `fail` bei einer fehlenden Datei: sie liegt im Repo, und wenn
+// jemand die Einordnung bewusst ausbaut, ist das kein Regelverstoss.
+// Gegenprobe beim Einbau: `updated` auf 2026-09-01 gesetzt -> Treffer;
+// zurueckgesetzt -> 0.
+// ⚠⚠ NACHTRAG GLEICHEN TAGES - der Waechter hatte selbst einen Konstruktions-
+// fehler. In der ersten Fassung war die Veralterung ein hartes `fail`. Damit
+// haengt ein CODE-Push an der DATEN-Aktualitaet: solange die Routine nicht
+// liefert, kommt niemand mehr an `node check/all.js` vorbei - auch nicht mit
+// einer voellig unbeteiligten CSS-Korrektur, und nicht einmal mit dem Push
+// der Reparatur dieses Wächters selbst. Genau das ist beim Einbau passiert.
+// Ein kaputter Zulieferer darf laut sein, aber er darf nicht die Werkstatt
+// abschliessen.
+// Deshalb: eine BEKANNTE, offene Stoerung darf quittiert werden - aber nur
+// befristet. Bis AI_STOERUNG_BIS meldet der Waechter die Veralterung laut auf
+// stderr und laesst den Lauf durch; danach ist er wieder hart rot, egal was
+// hier steht. Das Datum zu verlaengern ist eine bewusste Handlung, die im
+// Diff sichtbar ist - im Gegensatz zu einem Waechter, den man irgendwann
+// entnervt ganz herausnimmt.
+// Unbekanntes Ausbleiben bleibt hart rot: ohne Quittung faellt der Lauf.
+const AI_MAX_STUNDEN = 40;
+const AI_STOERUNG_BIS = '2026-09-17';   // Routine liefert nicht (siehe CHANGELOG 2026-09-10)
+const heuteStr = new Date().toISOString().slice(0, 10);
+const stoerungQuittiert = heuteStr <= AI_STOERUNG_BIS;
+try {
+  const roh = fs.readFileSync('news_ai.json', 'utf8');
+  const ai = JSON.parse(roh);
+  const t = Date.parse(ai && ai.updated);
+  if (!ai || !ai.updated || Number.isNaN(t)) {
+    fail('Einordnung ohne brauchbaren Zeitstempel',
+      `news_ai.json hat kein lesbares Feld "updated" (gefunden: ${JSON.stringify(ai && ai.updated)}). ` +
+      `Ohne Zeitstempel laesst sich nicht mehr sagen, ob die Routine noch laeuft - und ein Ausfall ` +
+      `sieht dann aus wie ein ruhiger Nachrichtentag.`);
+  } else {
+    const alt = (Date.now() - t) / 3600000;
+    const text =
+      `news_ai.json wurde zuletzt vor ${alt.toFixed(1)} Stunden geschrieben (${ai.updated}), erlaubt sind ` +
+      `${AI_MAX_STUNDEN}. Die Routine laeuft zweimal taeglich; bleiben zwei Laeufe hintereinander aus, ` +
+      `zeigt die News-Seite alte Einordnungen, ohne dass es jemandem auffaellt. Erst pruefen, ob die ` +
+      `Routine ueberhaupt gefeuert hat UND ob ihr Commit auf origin/main angekommen ist - "SUCCEEDED" ` +
+      `allein ist kein Beleg (siehe Messung oben).`;
+    if (alt > AI_MAX_STUNDEN) {
+      if (stoerungQuittiert)
+        console.error(`\n  [WARNUNG] Einordnung kommt nicht mehr nach\n  ${text}\n` +
+          `  Quittiert bis ${AI_STOERUNG_BIS} - danach faellt der Lauf hart. Nicht einfach verlaengern.\n`);
+      else
+        fail('Einordnung kommt nicht mehr nach',
+          `${text} Die Quittung lief am ${AI_STOERUNG_BIS} ab.`);
+    }
+  }
+} catch (e) {
+  if (e instanceof SyntaxError)
+    fail('Einordnung ist kein gueltiges JSON',
+      `news_ai.json laesst sich nicht parsen (${e.message}). Die App faellt dann stumm auf die ` +
+      `Stichwort-Regeln zurueck - sichtbar nur daran, dass die Bewertungen fehlen.`);
+}
+
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');
   F.forEach(x => console.error(`  [${x.regel}] ${x.text}\n`));

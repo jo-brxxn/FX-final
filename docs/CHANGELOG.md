@@ -12070,3 +12070,117 @@ Leere zeigt, wirft still ein `ReferenceError`). Ersetzt durch das echte
 Der Auftragstext arbeitet jetzt inkrementell: nur Meldungen, die **neuer sind
 als `news_ai.json.updated`** und dort **noch nicht** stehen, höchstens 60 pro
 Lauf. Nichts wird doppelt gelesen — das war die Vorgabe „komplett effizient".
+
+---
+
+## 2026-09-10 — Die News-Routine lief zwei Tage ins Leere (Regel 9)
+
+Nutzer-Meldung: *„Also das klappt nicht es ist nichts passiert. Kann dann
+Claude überhaupt pushen?"*, dazu ein Screenshot der Push-Meldung:
+**„FX-final News-Routine gescheitert: Repo nicht in Session-Sources
+autorisiert, Push blockiert."**
+
+### Was gemessen wurde
+
+Die Routine war nicht kaputt — sie **feuerte** und arbeitete, nur kam nichts an:
+
+| | |
+|---|---|
+| gefeuert | 09.09. 15:15 UTC (= 17:00 DE) |
+| Status | `SUCCEEDED`, 6 Min Laufzeit, 25 500 Ausgabe-Tokens |
+| Commit auf `main` | **keiner** |
+| `config.sources` der Sitzung | **`[]`** |
+
+Der 08:00-Lauf am 09.09. fiel zusätzlich aus, weil die Uhrzeit genau in
+dieser Minute (06:03 UTC, next_run 06:06) umgestellt wurde.
+
+### Ursache
+
+`create_trigger` kennt — anders als `create_session` — **keinen Parameter für
+die Quelle**. Eine Sitzung, die eine Routine frisch startet, hat immer
+`sources: []` und damit keine autorisierte Arbeitskopie. Ein erster
+Reparaturversuch (die Sitzung holt sich das Repo per `add_repo` selbst)
+scheiterte ebenfalls: die Autorisierung hängt an der **Sitzung**, nicht am
+Werkzeug. Zweiter Lauf, 2 Minuten, wieder kein Commit.
+
+Gegenprobe, die den Unterschied isoliert — eine Sitzung mit `source_url`
+angelegt und einen leeren Commit gepusht:
+
+| Sitzung | `sources` | Push |
+|---|---|---|
+| von Routine gefeuert (2×) | `[]` | blockiert |
+| mit `source_url` angelegt | `[FX-final@main]` | **`55b8826` angekommen** |
+
+### Behebung an der Wurzel
+
+Nicht am Auftragstext geschraubt, sondern die Bauform geändert: es gibt jetzt
+eine **feste Arbeitssitzung** (`session_011LBGj53E2C84GuCeLbZY67`) mit
+dauerhaft eingehängtem Repo. Die Routine startet keine neue Sitzung mehr,
+sondern **weckt diese** (`persistent_session_id`). Alte Routine gelöscht, neue
+auf denselben Zeiten (`0 6,15 * * *` UTC = 08:00/17:00 DE).
+
+Zwei Ergänzungen im Auftragstext: `git pull --rebase origin main` zuerst (die
+Datendateien werden stündlich überschrieben), und ein **beweispflichtiger**
+Abschluss — nach dem Push muss der Lauf seinen eigenen Commit auf
+`origin/main` wiederfinden und sonst ausdrücklich Fehlschlag melden. Genau
+diese Rückmeldung fehlte: *„SUCCEEDED"* war zweimal schlicht falsch.
+
+⚠ Die Zeiten stehen in UTC. Im Winter (CET, UTC+1) werden aus 08:00/17:00
+automatisch 07:00/16:00 — bei Bedarf im Oktober auf `0 7,16 * * *` ändern.
+
+### Fehlerklasse und Wächter
+
+Das eigentliche Problem war nicht der blockierte Push, sondern dass **zwei
+Tage niemand etwas merkte**. Ein Zulieferer, der still ausbleibt, sieht auf
+der Seite exakt aus wie ein ruhiger Nachrichtentag. Dieselbe Klasse hatte
+2026-08-19 schon zugeschlagen (BoE-Feed 404, CNBC 20 Byte — beides 0 Einträge,
+kein Fehler).
+
+`check/rules.js` **Regel 9** misst deshalb das Ergebnis statt der Absicht: ist
+`updated` in `news_ai.json` älter als **40 Stunden** (= zwei ausgefallene
+Läufe bei zweimal täglich), wird der Lauf rot. Ebenso bei unlesbarem
+Zeitstempel oder kaputtem JSON.
+
+Gegenprobe beim Einbau: echter Stand 43,0 h → Treffer; `updated` auf
+2026-09-01 → Treffer (223,8 h); `updated: "irgendwann"` → Treffer
+(„ohne brauchbaren Zeitstempel"); gültiger frischer Stand → 0.
+
+### Nachtrag gleichen Tages: der Wächter hatte selbst einen Konstruktionsfehler
+
+Regel 9 war zuerst ein hartes `fail`. Damit hing ein **Code**-Push an der
+**Daten**-Aktualität: solange die Routine nicht liefert, kommt niemand mehr
+an `node check/all.js` vorbei — auch nicht mit einer unbeteiligten
+CSS-Korrektur, und nicht einmal mit dem Push der Reparatur des Wächters
+selbst. Genau das ist beim Einbau passiert und hat den Fix blockiert.
+
+Ein kaputter Zulieferer darf laut sein, aber er darf nicht die Werkstatt
+abschließen. Deshalb darf eine **bekannte, offene** Störung quittiert werden —
+befristet über `AI_STOERUNG_BIS` in `check/rules.js`. Bis dahin: laute Warnung
+auf stderr, Lauf geht durch. Danach: wieder hart rot, egal was dort steht.
+Das Datum zu verlängern ist eine bewusste Handlung, die im Diff sichtbar
+ist — im Gegensatz zu einem Wächter, den man irgendwann entnervt ganz
+herausnimmt. **Unbekanntes** Ausbleiben bleibt ohne Quittung hart rot.
+
+Gegenprobe: heute (Quittung bis 17.09.) → Warnung, `rc=0`; Quittung auf
+01.09. zurückgesetzt → hart rot, `rc=1`; `updated` auf jetzt → gar keine
+Meldung; Datei zurückgesetzt → voller Lauf grün.
+
+### Was bis hierhin NICHT funktioniert hat
+
+Drei Bauformen, drei Messungen:
+
+| Bauform | Repo? | Push | weckbar |
+|---|---|---|---|
+| Routine startet neue Sitzung | nein (`sources: []`) | **blockiert** | ja |
+| feste Sitzung mit `source_url` | ja | **funktioniert** (`55b8826`) | **nein** |
+| Routine weckt feste Sitzung | — | — | **Weckruf nie zugestellt** |
+
+Der dritte Fall ist daran erkennbar, dass der Trigger zwar `last_fired_at`
+trägt, aber **gar kein `last_run`** — und die Sitzung nach zwei Feuerbefehlen
+(15:44, 15:46) unverändert bei 15:21 stand, `disconnected`.
+
+Beide nötigen Eigenschaften existieren also, nur nie zusammen. Aktueller
+Ansatz: die Routine startet eine **dünne Sitzung**, deren einzige Aufgabe
+`create_session` mit `source_url` ist — die so erzeugte Arbeitssitzung ist
+frisch (also nicht schlafend) und hat ein autorisiertes Repo. Ergebnis dieses
+Versuchs steht noch aus.
