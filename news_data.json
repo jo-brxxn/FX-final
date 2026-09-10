@@ -1,17 +1,708 @@
 {
- "updated": "2026-09-10T07:11:49.605Z",
+ "updated": "2026-09-10T12:34:29.080Z",
  "headlines": [
   {
-   "t": "Equities: Stagflation pattern weighs on stocks – Danske Bank",
-   "u": "https://www.fxstreet.com/news/equities-stagflation-pattern-weighs-on-stocks-danske-bank-202609100711",
+   "t": "Jobless claims show steady US employment picture. Initial claims 206K vs 205k estimate",
+   "u": "https://investinglive.com/news/jobless-claims-show-steady-us-employment-picture-initial-claims-206k-vs-205k-estimate/",
+   "s": "ForexLive",
+   "k": 2,
+   "d": "2026-09-10T12:30:58.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "US August PPI 5.4% vs 5.3% expected",
+   "u": "https://investinglive.com/news/us-august-ppi-5-4-vs-5-3-expected/",
+   "s": "ForexLive",
+   "k": 2,
+   "d": "2026-09-10T12:30:10.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "TotalEnergies to Bring New Angola Discovery Online in Just Three Months",
+   "u": "https://oilprice.com/Latest-Energy-News/World-News/TotalEnergies-to-Bring-New-Angola-Discovery-Online-in-Just-Three-Months.html",
+   "s": "OilPrice",
+   "k": 2,
+   "d": "2026-09-10T12:30:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The AI investment boom won't last forever, Goldman Sachs chief economist Jan Hatzius warns",
+   "u": "https://finance.yahoo.com/markets/article/the-ai-investment-boom-wont-last-forever-goldman-sachs-chief-economist-jan-hatzius-warns-122546159.html",
+   "s": "Yahoo Finance",
+   "k": 2,
+   "d": "2026-09-10T12:25:46.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Vince Reports Q2 Gains, Raises Outlook",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/vince-reports-q2-gains-raises-121742262.html",
+   "s": "WWD",
+   "k": 2,
+   "d": "2026-09-10T12:17:42.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "ECB Lifts Rates for Second Time as Iran War Drives Inflation",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/ecb-lifts-rates-for-second-time-as-iran-war-drives-inflation",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T12:15:20.000Z",
+   "w": 2.5,
+   "a": [
+    "EUR"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Monetary policy decisions",
+   "u": "https://www.ecb.europa.eu//press/pr/date/2026/html/ecb.mp260910~314e508016.en.html",
+   "s": "ECB",
+   "k": 3,
+   "d": "2026-09-10T12:15:00.000Z",
+   "w": 5,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Norwegian Krone: Softer inflation trims hike odds – BBH",
+   "u": "https://www.fxstreet.com/news/norwegian-krone-softer-inflation-trims-hike-odds-bbh-202609101214",
    "s": "FXStreet",
    "k": 2,
-   "d": "2026-09-10T07:11:31.000Z",
+   "d": "2026-09-10T12:14:03.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Nike memo reassures executives it remains in S&P 500",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/nike-memo-reassures-executives-remains-121259213.html",
+   "s": "Quartz",
+   "k": 2,
+   "d": "2026-09-10T12:12:59.000Z",
    "w": 1,
    "a": [
     "SP500"
    ],
    "tg": []
+  },
+  {
+   "t": "Five Months After the Kelp Hack, Aave Is Still Down $8 Billion",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/five-months-kelp-hack-aave-120756821.html",
+   "s": "BeInCrypto",
+   "k": 2,
+   "d": "2026-09-10T12:07:56.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Stock Market Today: Dow Barely Up Ahead Of Inflation Data; Nvidia Chipmaker Falls On Sales (Live Coverage)",
+   "u": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-inflation-data-nvidia-chipmaker-tsmc/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-09-10T12:07:23.000Z",
+   "w": 2.5,
+   "a": [
+    "SP500"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Dow Jones Futures Rise, Techs Fall As Oil Prices, Yields Keep Climbing. Inflation Data Due.",
+   "u": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-oil-prices-yields-meta-spacex-apple-iphone-inflation-data/?src=A00220&yptr=yahoo",
+   "s": "Investor's Business Daily",
+   "k": 2,
+   "d": "2026-09-10T12:07:13.000Z",
+   "w": 2.5,
+   "a": [
+    "OIL"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Health Care Roundup: Market Talk",
+   "u": "https://www.wsj.com/business/health-care-roundup-market-talk-b98107c7?siteid=yhoof2&yptr=yahoo",
+   "s": "The Wall Street Journal",
+   "k": 2,
+   "d": "2026-09-10T12:06:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "investingLive European markets wrap: Oil and bond yields push higher as ECB decision looms",
+   "u": "https://investinglive.com/news/investinglive-european-markets-wrap-oil-and-bond-yields-push-higher-as-ecb-decision-looms/",
+   "s": "ForexLive",
+   "k": 2,
+   "d": "2026-09-10T12:05:13.000Z",
+   "w": 2,
+   "a": [
+    "EUR",
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "How Stocks Perform After Fed Rate Decisions",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/stocks-perform-fed-rate-decisions-120011505.html",
+   "s": "Schaeffer's Investment Re…",
+   "k": 2,
+   "d": "2026-09-10T12:00:11.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "rate decision"
+   ]
+  },
+  {
+   "t": "Euro: Upside bias within defined band against US Dollar – UOB",
+   "u": "https://www.fxstreet.com/news/euro-upside-bias-within-defined-band-against-us-dollar-uob-202609101154",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:54:03.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Polish Zloty: Scope for weakness against Euro as NBP underwhelms – ING",
+   "u": "https://www.fxstreet.com/news/polish-zloty-scope-for-weakness-against-euro-as-nbp-underwhelms-ing-202609101151",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:51:09.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "United States Dollar Index turns positive ahead of US PPI data",
+   "u": "https://www.fxstreet.com/news/united-states-dollar-index-turns-positive-ahead-of-us-ppi-data-202609101144",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:44:56.000Z",
+   "w": 1,
+   "a": [
+    "USD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "US Dollar: CPI and Fed path guide Greenback – BBH",
+   "u": "https://www.fxstreet.com/news/us-dollar-cpi-and-fed-path-guide-greenback-bbh-202609101138",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:38:04.000Z",
+   "w": 2.5,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "cpi"
+   ]
+  },
+  {
+   "t": "Clean Hydrogen Investment Tops $130 Billion",
+   "u": "https://oilprice.com/Latest-Energy-News/World-News/Clean-Hydrogen-Investment-Tops-130-Billion.html",
+   "s": "OilPrice",
+   "k": 2,
+   "d": "2026-09-10T11:30:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "US Treasury yields hit fresh long-term highs amid surging Oil prices, bond buybacks",
+   "u": "https://www.fxstreet.com/news/us-treasury-yields-hit-fresh-long-term-highs-amid-surging-oil-prices-us-treasurys-buybacks-202609101124",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:24:10.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "What is giving the Japanese Yen room to appreciate across Asia-Pacific currencies?",
+   "u": "https://www.fxstreet.com/news/what-is-giving-the-japanese-yen-room-to-appreciate-across-asia-pacific-currencies-202609101119",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:19:37.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Canadian Dollar weakens against US Dollar ahead of key US inflation data",
+   "u": "https://www.fxstreet.com/news/canadian-dollar-weakens-against-us-dollar-ahead-of-key-us-inflation-data-202609101119",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:19:31.000Z",
+   "w": 3.5,
+   "a": [
+    "USD",
+    "CAD"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Euro: Yield support into ECB decision – MUFG",
+   "u": "https://www.fxstreet.com/news/euro-yield-support-into-ecb-decision-mufg-202609101109",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:09:27.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Gold comes under pressure ahead of US PPI as Fed rate hike risks linger",
+   "u": "https://www.fxstreet.com/news/gold-comes-under-pressure-ahead-of-us-ppi-as-fed-rate-hike-risks-linger-202609101107",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T11:07:50.000Z",
+   "w": 3.5,
+   "a": [
+    "USD",
+    "GOLD"
+   ],
+   "tg": [
+    "rate hike"
+   ]
+  },
+  {
+   "t": "Oil is driving the rise in long-term yields; Everything else is just noise",
+   "u": "https://investinglive.com/news/oil-is-driving-the-rise-in-long-term-yields-everything-else-is-just-noise/",
+   "s": "ForexLive",
+   "k": 2,
+   "d": "2026-09-10T11:01:56.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Turkey Holds Rates on Oil Risks, Opens Door for October Cut",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/turkey-holds-rates-steady-in-face-of-oil-price-inflation-risks",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T11:00:57.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Silver Price Forecast: XAG/USD tumbles below $66 as US Dollar recovers ahead of US PPI data",
+   "u": "https://www.fxstreet.com/news/silver-price-forecast-xag-usd-tumbles-below-66-as-us-dollar-recovers-ahead-of-us-ppi-data-202609101059",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T10:59:43.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "SILVER"
+   ],
+   "tg": []
+  },
+  {
+   "t": "The Bank of Japan Is in the Middle of a ‘Generational Shift’ That Could Have Big Implications for Foreign Borrowers",
+   "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOeUczcHpKeFAwU2oyTGdVNDA5OVlHQmNQYUhRd1JWa09PQ0N3VFJhMmlndWZJZ0JjTW1adk5TSVA0Mm5xWk9YaFZ6SnpYSXFlRDh6Rjh0T2xyZnd1elc0ZVpYeXJydG83QkR0R1NlWWV6aC04NVgzSVpwTk1RTjYzTTVtbU9xQU95VDRMN1dKTkxzVmNxbllqblhSc3psVjRvM2xHb1YwZks2VTVmZ3pydGpkWFhwZnBtaFYzYUFn?oc=5",
+   "s": "Barron's",
+   "k": 1,
+   "d": "2026-09-10T10:55:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "ECB Rate Decision Live Updates, Christine Lagarde Briefing",
+   "u": "https://www.bloomberg.com/news/live-blog/2026-09-10/ecb-interest-rate-decision-euro-lagarde-press-conference-live-updates",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T10:52:38.000Z",
+   "w": 2.5,
+   "a": [
+    "EUR"
+   ],
+   "tg": [
+    "rate decision"
+   ]
+  },
+  {
+   "t": "Oil Tanker Rates Hit Record Highs as Middle East Shipping Risks Soar",
+   "u": "https://oilprice.com/Latest-Energy-News/World-News/Oil-Tanker-Rates-Hit-Record-Highs-as-Middle-East-Shipping-Risks-Soar.html",
+   "s": "OilPrice",
+   "k": 2,
+   "d": "2026-09-10T10:30:00.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "White House copper tariff plan stalls amid affordability concerns, sources say",
+   "u": "https://news.google.com/rss/articles/CBMivwFBVV95cUxNNURGbmRQdjJaanFqS0VBQUVyTjZCNkZyeTBrV2NVcWtGLVRQdk5jaG9pYU5FejR3REpqdHJSQWM0NlRUSVdnclJOR0RiWEpUNlV1ZXRUU1RPSTFlNF90elZIZWFxbFhDYm1nUlFjQ3l0UjRMbGstTmItU3BiOVZDYi0tRUxPelM0V1J6TmhVTnJJQkdxdUFBemtkdWxTdUNScndiZlNiQm1rQXRsMlh6ZFhxNnRmemFLN2ZfMnk2UQ?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-10T10:18:42.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "Australian Dollar: Gradual upside within capped range against US Dollar – UOB",
+   "u": "https://www.fxstreet.com/news/australian-dollar-gradual-upside-within-capped-range-against-us-dollar-uob-202609101002",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T10:02:32.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "AUD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Gold Price Forecast: XAU/USD holds below $4,400 with Oil, yields surging",
+   "u": "https://www.fxstreet.com/news/gold-price-forecast-xau-usd-holds-below-4-400-with-oil-yields-surging-202609100956",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:56:43.000Z",
+   "w": 2,
+   "a": [
+    "GOLD",
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "S&P 500, Dow futures attempt recovery ahead of inflation report",
+   "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPVUNZS2ZwczJmM0x1aEM5ZFJMbUhWckRSOE54a1NyTFZjb1NaNFNCZDFwOFJiMk40b1RJelZsVnhKOVNObGNGenNkZzVhUWtZRlktVzhTWk9Qc1EybkRweDk4RFRRUjh2bk1TU0lJazBncUFnUlcwcTlPVWY3NjBzdWVUd3JGTDlLeF9EMU1aTnEzSDctTVcxZVdzT1RZclZjanRhbkl3?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-10T09:51:44.000Z",
+   "w": 2.5,
+   "a": [
+    "SP500"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Czech Koruna: CNB stance leaves room for weakness against Euro – ING",
+   "u": "https://www.fxstreet.com/news/czech-koruna-cnb-stance-leaves-room-for-weakness-against-euro-ing-202609100942",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:42:24.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "US Dollar: Bond buybacks reshape yield dynamics – MUFG",
+   "u": "https://www.fxstreet.com/news/us-dollar-bond-buybacks-reshape-yield-dynamics-mufg-202609100932",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:32:43.000Z",
+   "w": 1,
+   "a": [
+    "USD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Silver price today: Silver falls, according to FXStreet data",
+   "u": "https://www.fxstreet.com/news/silver-price-today-silver-falls-according-to-fxstreet-data-202609100930",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:30:42.000Z",
+   "w": 1,
+   "a": [
+    "SILVER"
+   ],
+   "tg": []
+  },
+  {
+   "t": "India Calls for Bigger Biofuel Push as Oil Prices Soar",
+   "u": "https://oilprice.com/Latest-Energy-News/World-News/India-Calls-for-Bigger-Biofuel-Push-as-Oil-Prices-Soar.html",
+   "s": "OilPrice",
+   "k": 2,
+   "d": "2026-09-10T09:30:00.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Kevin Warsh should raise interest rates",
+   "u": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNc3ZFRFd4b0VHR21Xa2JkQVEtS29WYXk4U2JoSk9mcG4yRlczMTZWWWhNQ2x1MHNMUlgzTHdQY1VVY2tUOEhHSXA0ZjRoQzhYQnBFbmpUZ3ZBZ1MwWHNqcFFDMUhHNlFVdTdQTXc3V2tvODBDbWNlZGdkS29pUkoyUWxHWE9EVTY2Y0FmMA?oc=5",
+   "s": "The Economist",
+   "k": 1,
+   "d": "2026-09-10T09:25:16.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "interest rate"
+   ]
+  },
+  {
+   "t": "Brent: Geopolitical risk drives price surge – Deutsche Bank",
+   "u": "https://www.fxstreet.com/news/brent-geopolitical-risk-drives-price-surge-deutsche-bank-202609100918",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:18:02.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Gold Reclaims US$4,400 as Goldman Sachs Sees US$4,900 Ahead",
+   "u": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQM0dqVUtrYXNHTi1EMHM1My0wN1JwRU5GWk1Hcy16VmgzR3VoOFlicXA2US0weUJrWEJFbXlvMXRVSEJFZnc0NHhEcWJERFBCUEpXWkN4N3VReFhxdXMzaWRiZnVxeWdsZmFmNXRCZTdKSjRQbThKNjN4Mm14TVN5akw1Ti03YTRmR1djWDg5VTZvanFOY1dheFZnUUlTa0JDei01d2VrMmgyMlRubV95Y2MwbUwyT0Ex?oc=5",
+   "s": "Streetwise Reports",
+   "k": 1,
+   "d": "2026-09-10T09:11:15.000Z",
+   "w": 1,
+   "a": [
+    "GOLD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "European stocks tread water as ECB decision looms",
+   "u": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPXzVPR1RxVzdqb0FKVHRJTW1SSXpyME5FTzRoV2JJVUt0SFBqZDlwdWgxb0JQaDl0MGJkcWlVOU5Pa2hVTWF2cEtuQUctZ0ZDeGJYMkNWb3hsMEVFRF95cVBXOS1sR1p3YllPQ0lQT3I5bzV2MnpHMG4yVWdGSk5ldXVLcVFpdTZsU2F3YkJkNmtsWjhEWVM0NGpyUUFWOGtxNW9zejVaZE8?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-10T09:10:23.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Euro: Second hike seen as energy clouds outlook – Societe Generale",
+   "u": "https://www.fxstreet.com/news/euro-second-hike-seen-as-energy-clouds-outlook-societe-generale-202609100909",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:09:14.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Euro remains steady vs Canadian Dollar ahead of key ECB decision",
+   "u": "https://www.fxstreet.com/news/euro-remains-steady-vs-canadian-dollar-ahead-of-key-ecb-decision-202609100905",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:05:18.000Z",
+   "w": 2,
+   "a": [
+    "USD",
+    "EUR",
+    "CAD"
+   ],
+   "tg": []
+  },
+  {
+   "t": "USD/JPY Price Forecast: Trades above 153.50 ahead of US inflation; bearish bias remains",
+   "u": "https://www.fxstreet.com/news/usd-jpy-price-forecast-trades-above-15350-ahead-of-us-inflation-bearish-bias-remains-202609100903",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T09:03:54.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Swiss Firms May See $2 Billion in US Tariff Refunds, UBS Says",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/swiss-firms-may-see-2-billion-in-us-tariff-refunds-ubs-says",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T09:02:57.000Z",
+   "w": 2.5,
+   "a": [
+    "CHF"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "Announcement of the publication of the Governor's interview transcript",
+   "u": "https://www.bankofengland.co.uk/news/2026/september/statement-announcing-governors-interview",
+   "s": "Bank of England",
+   "k": 3,
+   "d": "2026-09-10T09:00:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Swiss Franc gives back gains, but US Dollar struggles with Inflation data on tap",
+   "u": "https://www.fxstreet.com/news/swiss-franc-gives-back-gains-but-us-dollar-struggles-with-inflation-data-on-tap-202609100854",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T08:54:19.000Z",
+   "w": 3.5,
+   "a": [
+    "USD",
+    "CHF"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Mélenchon’s Plan to Cancel France’s Debt Would Backfire, BE Says",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/melenchon-s-plan-to-cancel-france-s-debt-would-backfire-be-says",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T08:39:22.000Z",
+   "w": 1,
+   "a": [
+    "EUR"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Week Ahead for FX, Bonds: U.S. Inflation Data in Focus; ECB Expected to Raise Rates",
+   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPYUg3NndUYW1HNGpfSzJxNUVyU3A1ZzFVbXhGMjBhVndjbFpZaHM4c0N4NTdsczFkS19XUkFEbHAyazFvbXA4T1RmY2thTUpYZHdMTXZGLTk5d1NuNmJGeGhZWnp4RFdGXzNtakUzWVpBVXhxUDZxOGFPamVmZFRQUkJ4el9ETUgxbTByc25JRGVwcGo4RlhtMTZBeUJfMGFjeC0yb212QXNPZk9wZEU3T0hZU0NSSWM?oc=5",
+   "s": "WSJ",
+   "k": 1,
+   "d": "2026-09-10T08:26:49.000Z",
+   "w": 2.5,
+   "a": [
+    "EUR"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
+   "t": "Global Clean Investment Falls 17% as China Pullback Takes Its Toll",
+   "u": "https://oilprice.com/Latest-Energy-News/World-News/Global-Clean-Investment-Falls-17-as-China-Pullback-Takes-Its-Toll.html",
+   "s": "OilPrice",
+   "k": 2,
+   "d": "2026-09-10T08:15:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Breaking: European Central Bank raises key rates by 25 bps as expected",
+   "u": "https://www.fxstreet.com/news/european-central-bank-to-resume-interest-rate-hikes-in-september-as-inflation-energy-risks-rise-202609100800",
+   "s": "FXStreet",
+   "k": 2,
+   "d": "2026-09-10T08:00:00.000Z",
+   "w": 2.5,
+   "a": [
+    "EUR"
+   ],
+   "tg": [
+    "central bank"
+   ]
+  },
+  {
+   "t": "GS Stock Quote Price and Forecast",
+   "u": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE95bGF6YU10Vlk5ZGxkZEx6QWJvQXN0bmF0N1pxNWl2WDdHWFNWb0dKNThPeGF5d216NVNvOU9jQ21kNy1yTW16TGl2ckZrdw?oc=5",
+   "s": "CNN",
+   "k": 1,
+   "d": "2026-09-10T07:34:59.000Z",
+   "o": [
+    {
+     "s": "CNN",
+     "u": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFA0WWJfTzZHaUktUS1IZVlNZDlMYjcxdmZCLXE3TDBPc1JUVHNuSkRZbmNLVTRhWjM4al91MHNSaFdydzVVOXRUc0E1VDU?oc=5"
+    }
+   ],
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Basic Figures on Fails (Aug.)",
+   "u": "http://www.boj.or.jp/en/statistics/set/bffail/sjgb2608.pdf",
+   "s": "Bank of Japan",
+   "k": 3,
+   "d": "2026-09-10T07:30:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Thai Central Bank Targets Money Flows Behind Scam Networks",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/thai-central-bank-targets-money-flows-behind-scam-networks",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T07:19:16.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "central bank"
+   ]
+  },
+  {
+   "t": "Bloomberg AI Model Predicts Bank of England Rate Hike in February",
+   "u": "https://www.bloomberg.com/news/articles/2026-09-10/ai-model-built-by-bloomberg-predicts-bank-of-england-rate-rise-in-february",
+   "s": "Bloomberg",
+   "k": 2,
+   "d": "2026-09-10T07:00:00.000Z",
+   "w": 2.5,
+   "a": [
+    "GBP"
+   ],
+   "tg": [
+    "rate hike"
+   ]
   },
   {
    "t": "Australia Softens Gas Reservation Rule for LNG Exporters",
@@ -61,31 +752,6 @@
    "a": [
     "USD",
     "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Brent: Geopolitics keep rally supported – ING",
-   "u": "https://www.fxstreet.com/news/brent-geopolitics-keep-rally-supported-ing-202609100629",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T06:29:32.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Euro holds recent gains despite high Oil prices with ECB decision in focus",
-   "u": "https://www.fxstreet.com/news/euro-holds-recent-gains-despite-high-oil-prices-with-ecb-decision-on-focus-202609100627",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T06:27:27.000Z",
-   "w": 2,
-   "a": [
-    "EUR",
-    "OIL"
    ],
    "tg": []
   },
@@ -142,6 +808,18 @@
    ]
   },
   {
+   "t": "EXCLUSIVE: How a billion-dollar sanctions dodge kept Chinese goods flowing to Iran",
+   "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPQXdBWlltZS1pUU8wZnFqc21wUDExNGZub0prbEtxYTNwS2J3UU91eTQ4aXZTUGNwWjdGZGxVZUNiY2dHbXVNbl9tNE4zSlVqVDJaZFlmMkZ6Slo3RndJczlqMTlsYlVGOEEteGNreDFjR0JabWhJaTNCTHNtUUozWDFVSm56QldwaXFjbnBQZWlxdGtsVFdmcDFDTHNjMzBaN2NkNlNzUGV0MXhZR3hBdmFUMV9LLU9ZYWxBTW5n?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-10T06:05:00.000Z",
+   "w": 1,
+   "a": [
+    "USD"
+   ],
+   "tg": []
+  },
+  {
    "t": "BoJ’s Masu: Underlying inflation gradually approaching 2% but don't see it overshooting",
    "u": "https://www.fxstreet.com/news/bojs-masu-underlying-inflation-gradually-approaching-2-but-dont-see-it-overshooting-202609100550",
    "s": "FXStreet",
@@ -156,14 +834,14 @@
    ]
   },
   {
-   "t": "Oil Holds Above $100 as U.S.-Iran Tanker War Escalates",
-   "u": "https://oilprice.com/Latest-Energy-News/World-News/Oil-Holds-Above-100-as-US-Iran-Tanker-War-Escalates.html",
-   "s": "OilPrice",
-   "k": 2,
-   "d": "2026-09-10T05:35:00.000Z",
+   "t": "Japan must raise rates, central banker says",
+   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQcWlMYTl2YXBoM1d5Z2JzNVBvWGF1U205NktqRVJFSjBPbUk3UGVEN3ZmS2w2c2FpLXBfeEZOaDV3dm5yamtsMDU4cmRweHJhR04yQ0tQTlJYeDBnTnpVTW1FZms0ekJKX1dWZm1zOHd4azlaV3VhV0dxaEdVcWZXMDZMb0E?oc=5",
+   "s": "Financial Times",
+   "k": 1,
+   "d": "2026-09-10T05:34:56.000Z",
    "w": 1,
    "a": [
-    "OIL"
+    "JPY"
    ],
    "tg": []
   },
@@ -180,18 +858,6 @@
    "tg": []
   },
   {
-   "t": "Indian Rupee continues to feel heat from boiling oil prices",
-   "u": "https://www.fxstreet.com/news/indian-rupee-extends-its-downward-streak-as-oil-prices-keep-rising-202609100524",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T05:24:41.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "Bank of Japan Tightening Bets, U.S. Pressure Spark Yen Recovery",
    "u": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQdW9ZS0psc21iR3I3WTRfNU9hRkg4aEdLVmJEdVY4cUxyRE53bVFkTTFtYzg4eU94N3d0Y21PVi01S2FvcFRNQ1YydFJUVWFXQkowbm5OVE5YQkFiV2RVMmQ4bG9hNkVsalFPcnBsSm52V2x4eHFuSEVwUDR2cjZNR2tkU3VkVjcwV0ExYVA0WDBqNUtWRjlLeFc5LU9oelRLOFlmNVEySXRuNzJnTmc?oc=5",
    "s": "WSJ",
@@ -200,6 +866,18 @@
    "w": 1,
    "a": [
     "JPY"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Goldman Sachs Cuts 2026 Gold Forecast to $4,900",
+   "u": "https://news.google.com/rss/articles/CBMikAFBVV95cUxONHdiY3MtVGVRd3d1RDh0bFFxLUNjc3FLYzVVd1pLVU1CNEFtZG9zaVdUaGhFcXRiV19sNDlCdGpDTm9ZNmdGbC1waEtmdXozZVVZOVlDc3U3REF1cHZkRFkxX3ZMN3hPYVNBLVRUTkcyRzBsblFJOFVVYWNHcnYxM3J4SXZGa3RqZG5xamJkMHI?oc=5",
+   "s": "CoinMarketCap",
+   "k": 1,
+   "d": "2026-09-10T04:49:59.000Z",
+   "w": 1,
+   "a": [
+    "GOLD"
    ],
    "tg": []
   },
@@ -290,31 +968,7 @@
    ]
   },
   {
-   "t": "Japan must raise rates, central banker says",
-   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQcWlMYTl2YXBoM1d5Z2JzNVBvWGF1U205NktqRVJFSjBPbUk3UGVEN3ZmS2w2c2FpLXBfeEZOaDV3dm5yamtsMDU4cmRweHJhR04yQ0tQTlJYeDBnTnpVTW1FZms0ekJKX1dWZm1zOHd4azlaV3VhV0dxaEdVcWZXMDZMb0E?oc=5",
-   "s": "Financial Times",
-   "k": 1,
-   "d": "2026-09-10T04:07:25.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "EUR/USD Price Forecast: Sticks to gains above 1.1600 as bulls await ECB, US PPI",
-   "u": "https://www.fxstreet.com/news/eur-usd-price-forecast-sticks-to-gains-above-11600-as-bulls-await-ecb-us-ppi-202609100407",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T04:07:11.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Britain Faces Winter With Soaring Gas Prices and Thin Reserves",
+   "t": "Britain Faces Winter With High Gas Prices and Thin Reserves",
    "u": "https://www.bloomberg.com/news/articles/2026-09-10/britain-faces-winter-with-soaring-gas-prices-and-thin-reserves",
    "s": "Bloomberg",
    "k": 2,
@@ -406,6 +1060,18 @@
    ]
   },
   {
+   "t": "Goldman Lowers Oil Price Forecasts on Deal to Reopen Strait of Hormuz",
+   "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQYjhVM2FKUElUMkRPM2ZESFZ6ZTFrMnYxSy1Qc3VyU2Y2VmcydXF2NDM4Vk11RjNJVnpqVGNDYzdJWVR0VjM0REQ2eWF3ZkJSZXpwMTcyOHN4VDdLMlJuUVdJbElRZXlFRmlWSEZDMjdmdmp1andOMFl2ekE3U2ZuUVFOM0JBbjhDRlB2b2dtMkhFMUVSVVNFdzFGSWY5c1YwdHc?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-09-10T03:05:45.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
+   ],
+   "tg": []
+  },
+  {
    "t": "Bank of Japan's Rate Hike Anticipated Amid Inflation Concerns",
    "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOWmZySklNaXc0cTJoRmlGSVJidzFnY0E4cVc3R09oWUREZ3gtOUdBVXBEaURWcXZOMjdzS2xhT1ltMmNZaWthWFNBWFY2UUNwTGZPZl9Ud2hlQzlsWmhXdHhlNGFwMDNqYmI5LWo3UnhXT2lkUE1paGNjNVhVeGxhc2RmbnZrYjZ5dkNZQ0JmSkZ2RXNVeUF2RldfU1A3OFpD?oc=5",
    "s": "GuruFocus",
@@ -430,21 +1096,6 @@
    "a": [
     "USD",
     "NZD"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
-   "t": "Gold edges higher on weaker dollar, US inflation data in focus",
-   "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQU00zRjlwdjRLNzNsRDluVS1Rc0hCVmhNSTc0TThXMVUtMVgyYU1Mc3FVY1p4YlVIX0p2NzhYbEFCSkVUMEhHR2MtTlFRUHZlbXVGNkxINUVSc1FZNVB5S2hGOXdIUzMydEhHSllEcVVqbWM0VHlOajEzeHBQMlY4UW5nUnRNMm5NS1lvR3RYN2E5M1dIV3NMd3VuZDJOZDg2U0cxa1JR?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-10T02:56:00.000Z",
-   "w": 3.5,
-   "a": [
-    "USD",
-    "GOLD"
    ],
    "tg": [
     "inflation"
@@ -530,13 +1181,14 @@
    ]
   },
   {
-   "t": "Currency markets subdued as oil shock lifts global yields; ECB, US inflation eyed",
+   "t": "Dollar crawls higher ahead of ECB, US inflation data; $100 oil spooks investors",
    "u": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOYU50UmRVNmIyeFBOSmd6azlDeDMxNlh1S0cycHpnYjU4NERYWjhoN2diSmthTngzdWZScmFTdldrTGtUcTh3SDFKbVIySmU2TUx3cnMtOEdKMnFkV3J1d3pYRmdvZDVWb2VPSXNjcG52cEVPTGtLNF9UT1BFSnJ3WlUzOXNuU1FwZmNSdGVTdV9Na1h6M3dPVGVtU0ttYlBlRWc0S1Q0Rl9HSmVCNlZaZXhjMVc0OUduMk1mOGRqVkxjY0d2SGhRbWJsUQ?oc=5",
    "s": "Reuters",
    "k": 1,
    "d": "2026-09-10T02:07:00.000Z",
    "w": 3.5,
    "a": [
+    "USD",
     "EUR",
     "OIL"
    ],
@@ -545,16 +1197,34 @@
    ]
   },
   {
-   "t": "Asian stocks dip as Brent holds above $100, yields near 2023 peak",
+   "t": "Nervy markets await ECB rate hike, US inflation data",
    "u": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9ydjJlYXlTVHhNV0k4Z3ZMb19VVFdUR2taM2lOVHhOUTN6enJSZVVhODdiSm04TnhTNGFJMDVOUjN4eVhsdGZtcFQ2RVloaFNFZzh4TkpvaUtfQTRFUXFkRmctMjFiRHFnWFE2VlBvQm4yZk5NMmdUZkNOdw?oc=5",
    "s": "Reuters",
    "k": 1,
    "d": "2026-09-10T02:06:00.000Z",
-   "w": 1,
+   "w": 4,
    "a": [
-    "OIL"
+    "EUR"
    ],
-   "tg": []
+   "tg": [
+    "rate hike",
+    "inflation"
+   ]
+  },
+  {
+   "t": "Bank of Japan Board Member Urges Early End to Negative Real Interest Rates, Signals Support for Continued Rate Hikes",
+   "u": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9kSE9rZzM4SnZDQjB3OU5TeWE0YXgwemE3VkN4cTY4cFZOdTg1QVpNZ2twZ2x5MThBWDAwX2F3MHVTbU9WUExOQUpOcnZ2Qnh3dzBNYmp1ZkhSc1N6MV9OTkV1NERDeEw5bXRwYWd3Uk53OURJYkE?oc=5",
+   "s": "finance.biggo.com",
+   "k": 1,
+   "d": "2026-09-10T02:05:00.000Z",
+   "w": 4,
+   "a": [
+    "JPY"
+   ],
+   "tg": [
+    "interest rate",
+    "rate hike"
+   ]
   },
   {
    "t": "Ant International partners with Visa, Mastercard on developing AI payments",
@@ -577,18 +1247,6 @@
     "USD",
     "CAD",
     "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "BoJ’s Masu says expect to continue raising rates given current accommodative financial conditions",
-   "u": "https://www.fxstreet.com/news/bojs-masu-says-expect-to-continue-raising-rates-given-current-accommodative-financial-conditions-202609100139",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T01:39:55.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
    ],
    "tg": []
   },
@@ -646,18 +1304,6 @@
    ]
   },
   {
-   "t": "WTI declines despite rising US-Iran tensions threaten",
-   "u": "https://www.fxstreet.com/news/wti-declines-despite-rising-us-iran-tensions-threaten-202609100108",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-10T01:08:22.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "A Tiny Shift in the Inflation Rate Could Decide the Fed’s Next Move",
    "u": "https://news.google.com/rss/articles/CBMinAFBVV95cUxQU2VrRkdPcXF6U3ZvMTdqQ1pLT2Jua0N1MHlyQXM4c2hNN1M0SEY4bHZMakxwZm9jRjRKUHpsdnFuemtxSjFLZUhSVFJSTE41NzJQajl5M09PSlZNbkczMlZHTGN4U2wyalN2SnJiZG1JT3Roem00c0hmRXlRX3gtZzRNM2RBaS05VkRabUVSenVyUUV1ODQwUUNyTlE?oc=5",
    "s": "WSJ",
@@ -670,6 +1316,18 @@
    "tg": [
     "inflation"
    ]
+  },
+  {
+   "t": "PGIM: How fast and how high could the Bank of Japan hike rates?",
+   "u": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNaExIRmZ0UnNCSnhrZ3N2LWUwRlYxSU5kbDdiU0ZlT2xJSUpSVzVQV3ZPdjVtN0lTcm54MFVHdVVvWHh2M0tMZklmRWJoTG9lV1Q4V2g5cU5HRThHX1R3RFVlblJRcDNIVFZZOWRScGVwdkVhcnlKVWlFS1hrMmQ1OXNfRkJZSC1DR3BrS3AxUW9hZU0tbVE?oc=5",
+   "s": "Fund Selector Asia",
+   "k": 1,
+   "d": "2026-09-10T00:47:00.000Z",
+   "w": 1,
+   "a": [
+    "JPY"
+   ],
+   "tg": []
   },
   {
    "t": "BoJ to raise rates to 1.25% this month — Reuters poll",
@@ -753,18 +1411,6 @@
    "tg": []
   },
   {
-   "t": "COMMENTARY: With yen surging, what will fund FX carry trades now?: McGeever​",
-   "u": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPNE53NjhwUHUtUDByaWRncE9kM1F2WWpPcFNpNTMyWll5Yi13OFpmT0ZkTnN3TXRzWkZRU1lhdUdjVC1DOThWSHdBWnpTSWZrYlV2U2c3M2FOekxCVkxnYlVkV18tbFJGb1BVZmxIYzZEdklYRDJmQVg2dHpBTWdBV3R0U2J2X3JNRkFCQ2tVU3k2UXNRbkFoVFAyUl9LQ2RMWEZQMWtJMnZHQ252SFhBTi1VeU1mX25Sb3NHQWJLbmUwcE1ZbkdiaQ?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-09T23:30:32.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
    "t": "Gold rebounds above $4,400 on weaker Dollar, US PPI inflation data looms",
    "u": "https://www.fxstreet.com/news/gold-rebounds-above-4-400-on-weaker-dollar-us-ppi-inflation-data-looms-202609092322",
    "s": "FXStreet",
@@ -789,6 +1435,18 @@
    "a": [
     "OIL",
     "SP500"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Goldman Sachs Flags Demand Weakness as Key Risk to Oil Price Outlook",
+   "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNNXEzSFRqQ0hoTmdTMTk0WWF1V1ZIQ09la0kyV000VTdNUEVOVVY5S1lSU25SYVZvaXM2WjM1M3g0SlZjTVJ2Zm5LZXZ2NWhZc1A0Y0lPb1NybXF4OEl1RHNtOWJRaDduV0Y4Mk1YR19oU1Q3WFlZOXdsY2s4OERqeExNOUNZbHdxYm5kdnlKc0NNZmN4OGRCTVQ0QjY3OEU0?oc=5",
+   "s": "EnergyNow.com",
+   "k": 1,
+   "d": "2026-09-09T23:04:04.000Z",
+   "w": 1,
+   "a": [
+    "OIL"
    ],
    "tg": []
   },
@@ -838,22 +1496,6 @@
    "w": 0,
    "a": [],
    "tg": []
-  },
-  {
-   "t": "Fed's interest rate decision may come down to hair-splitting inflation data",
-   "u": "https://news.google.com/rss/articles/CBMib0FVX3lxTFB1Zk9ZOFJXWEpFRVhVMENrSFVkam5jdGtkVzE3Q1hPcXlRMkJwNDJCZkpucVc3SXQ4VjBiTjZpWC1sMTFzWHRUeGRZWGIwaC1iNDAyYjIzckgyM19nSURkWEk2cC1OSkEzZEFROWJsTQ?oc=5",
-   "s": "Axios",
-   "k": 1,
-   "d": "2026-09-09T21:47:53.000Z",
-   "w": 4,
-   "a": [
-    "USD"
-   ],
-   "tg": [
-    "rate decision",
-    "interest rate",
-    "inflation"
-   ]
   },
   {
    "t": "Australian Dollar flatlines as US yield ripples meet RBA hawks",
@@ -942,20 +1584,6 @@
    "tg": []
   },
   {
-   "t": "Trump’s Midterm Pitch Clouded by Iran War and Canada Tariffs",
-   "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOQW5SZG5jQ3Z2STdOUDVUMXh1Vm9pWTNtM0gzTmE5eUNjMkxESklVUlpsejZ1WEtSTTBzcWE4YkZuck84RlBIelVWSnlQMHJQNHoxaTB6cS1YRkdvM1dOTmFMamkzME45UUdpQUk4MTUyTmFqWG1uZFF1eTc2WUdXbEtVSGp2Zw?oc=5",
-   "s": "The New York Times",
-   "k": 1,
-   "d": "2026-09-09T20:29:50.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
    "t": "DBS Sees Bank of Japan Set for 25bp September Rate Rise as Wages and Inflation Firm",
    "u": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQbWNUbUF2ZFZoVWFUcGY1SEZqUE1scmE4RGdLZnRMWUJIV2JXZlpzVFUyOFN0aVVabUxtckJsWTB1bFRLQVlMQUxoaEVGTHc1b1JQWk1WS1JvUEg4d0xOVEUzalZ3N05FNmFQMkxnQWFLcGhKLTVNOUVzLTZHV1g4LTZJMW0zMWV6aFlFUkpHWnVJTVlVM0haZllmTVhZUFo3RlhnM1ljcm9LaThTb0dRNEE3bmlIaUJ3RXktNmpCUUx2dHV0Y0tIb3FrYw?oc=5",
    "s": "VT Markets",
@@ -1030,18 +1658,6 @@
    ]
   },
   {
-   "t": "Gold Reclaims US$4,400 as Goldman Sachs Sees US$4,900 Ahead",
-   "u": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQM0dqVUtrYXNHTi1EMHM1My0wN1JwRU5GWk1Hcy16VmgzR3VoOFlicXA2US0weUJrWEJFbXlvMXRVSEJFZnc0NHhEcWJERFBCUEpXWkN4N3VReFhxdXMzaWRiZnVxeWdsZmFmNXRCZTdKSjRQbThKNjN4Mm14TVN5akw1Ti03YTRmR1djWDg5VTZvanFOY1dheFZnUUlTa0JDei01d2VrMmgyMlRubV95Y2MwbUwyT0Ex?oc=5",
-   "s": "Streetwise Reports",
-   "k": 1,
-   "d": "2026-09-09T19:38:50.000Z",
-   "w": 1,
-   "a": [
-    "GOLD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Royal Bank Of Canada Announces Admission to Trading Of NOK 500,000,000 5.085% Callable Senior Notes Due June 24, 2037",
    "u": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNUjJQdzR2TXpJa29jU1VIRWh3OWczcXlUSzN3dms2OF9naWloWHRocU5nWFRhcUJmdTVPTFR3Z2lybVpIR0k4VVZ3YWVySVluSEpoR1Exa2NQcm5VQXJMeldFanBreW9kdFlkbDBCTU5DYmtzZWx1YXoxRy00YWlCSXdSb1VOWno0cFh0QWxVRjVvejlYcExfbDZiU3RsRHE0Y01RMmFDaGxCM0xKVFFkb3lPWFhueWhCVlZaczFOMkRYNWlfQUV3bnZiQ0pvb3FCNFNTRXJxRS1RcW8zNXlLeWoxQnktUQ?oc=5",
    "s": "marketscreener.com",
@@ -1050,18 +1666,6 @@
    "w": 1,
    "a": [
     "CAD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Crude Oil rallies into 14-week highs as US and Iran spend the week attacking tankers",
-   "u": "https://www.fxstreet.com/news/crude-oil-rallies-into-14-week-highs-as-us-and-iran-spend-the-week-attacking-tankers-202609091917",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T19:17:17.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
    ],
    "tg": []
   },
@@ -1082,7 +1686,7 @@
   {
    "t": "How Will Less Fed Transparency Affect Markets and the Economy?",
    "u": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQVHF3d0ljdVJYd3VlaFZZZTBuRWxORXIxWktEbXpmbnhGSHQtNUViWFdzVXVDRElyUHBXVHpUYnVRYXBXYl9DQ01hcGhMcFprMENqcW9Sb2k2eUxPb2hzYXlraVZGMTRFeEtSRGJnVl9KQmcxdTV0MzM3Zk1zMVZnR1dLdlowODd0bTdpbWlQcFRJdDlGbDYwLUR0Zjd2cmRBSHcwTk5Uc29vek9RUGNMbGxDcWxoZUhtWjRRaDcwRWI?oc=5",
-   "s": "goldmansachs.com",
+   "s": "Goldman Sachs",
    "k": 1,
    "d": "2026-09-09T19:01:05.000Z",
    "w": 1,
@@ -1094,7 +1698,7 @@
   {
    "t": "Why Global Bond Yields Are Expected to Stay Elevated",
    "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNS25GWl9WZ1p1S3VJekwtZWRyT0ZCa09sdXVxaUJaMXZURjd0U2xZbndjSmtaRC1Kc2IzMVZmb2l2aDNGTVZOTEhsYWljX2xySF9oTUozTWdmdld4UEpSR0t3Z2J1MmFqZDYwRzlqWmt0akZ3Yk5hTFFXa290d2ZPMjRhazZrYXk1MTlaZkk0clhXLVdGcHRSSjdrQjEzbi1i?oc=5",
-   "s": "goldmansachs.com",
+   "s": "Goldman Sachs",
    "k": 1,
    "d": "2026-09-09T19:01:05.000Z",
    "w": 0,
@@ -1126,18 +1730,6 @@
    ]
   },
   {
-   "t": "Citigroup Issues Pessimistic Forecast for lululemon athletica (NASDAQ:LULU) Stock Price",
-   "u": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPLTNzTEw2MW1rSGw0RjhFRnNhTFViM05ZZnpQTlE0Y2RzdEFSYnR3Z0lMbGxPRkRKMDB2dlZURUdPNHVfTWhnVUlEQkozbjdzM0MyajVhcmRvbWU5WjlxN3k5NmJYZTBZLURxTEdxb1VudWk1bV9nY0Yxc0hBcGluOEJYTGlvWnVKTkdnbkp1WmZKZzJ2SHZLc055VjhxWXAxUDZtbUc0QU82UHJLdDlhYVVSdkFiSXNUenVpdjhqSXlwZkpEcHJXZ0o4ZzU5ejhpY2lseFlXYkQycno4TFNnZw?oc=5",
-   "s": "MarketBeat",
-   "k": 1,
-   "d": "2026-09-09T18:43:23.000Z",
-   "w": 1,
-   "a": [
-    "NAS"
-   ],
-   "tg": []
-  },
-  {
    "t": "Belarus Refineries Post Decade-High Profits Amid Russia's Fuel Crisis",
    "u": "https://oilprice.com/Latest-Energy-News/World-News/Belarus-Refineries-Post-Decade-High-Profits-Amid-Russias-Fuel-Crisis.html",
    "s": "OilPrice",
@@ -1158,13 +1750,7 @@
     "CAD"
    ],
    "tg": [],
-   "n": 2,
-   "o": [
-    {
-     "s": "Investing.com Nigeria",
-     "u": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNb2N1eDR1R0FGUXZoNlJRcHFuWWRmUDZ2N2FybGJlUFRkZVF6UzJGYzE4aXpvc3FHR0pQSTlXMVNYSVBiRVBmOVVnRUNITkcxbGNURHJwWWJjLUlremIyM3EtX1MwVUkzQ0llMzFlMGduUlRPNmg3VDA2Y2xVQmtzVG9fWDJqYUxqWnAzWnhMajI4YXBWYWJxU1daZ1FrdXA5WjJfay1COUxjTnVPdWVPdnl5b1ZfMHhYWDJfdUU4Wm1PcDQ?oc=5"
-    }
-   ]
+   "n": 2
   },
   {
    "t": "‘Nothing worse’: Energy prices are closing in on GOP’s midterm chances",
@@ -1195,27 +1781,11 @@
    "o": [
     {
      "s": "Investing.com",
-     "u": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPSHRyLVNqZXBnZHlZWGpVWGJZMWhDQXZyUENOMkpJTjJUaG5DM3lhWWhsNEZyQU1xdldnSENTVnNXeFQyZ0QxbXlzMU0wYmJrdmtMYjdaeDVzTXZ5WTdaNHBRS3dkb01fZV8xaG1UM0ZjcjNMZE9fZVJRRDMzY2VXRV9SRC1wNzlHSnQyTWVxUHlrZmVIWkRWdDJRVXgzbUZoMFlFT19oUjR5N3R2cnBfeVZlM2I4TGlhQnlCNjRHd1dOWTg?oc=5"
-    },
-    {
-     "s": "Investing.com",
      "u": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOQU80Z0s3X3EtVER1Y0dZdnZLSS1qSmZwOHRveC1yYVhZb21nMHNXUU9DbkFsQVRqN0M0NEIwUEhnTG44a29OWlRWNENSa2RHT1M3cmFHRHdUU3ZrQURuZEI5WlhyNWRLd0hUdzloMEtzVlJOMWlacEUxVVJaRUMxWWx1eEhwcGdKR1piU2FOeUVSQ1JRMng3QmthVGtsR0g4Y0RBU2RTbzZwRjhtR0NnV0E0dWV4TnVBTWww?oc=5"
     }
    ],
    "w": 0,
    "a": [],
-   "tg": []
-  },
-  {
-   "t": "Silver Price Forecast: Rally puts head-and-shoulders pattern on ice",
-   "u": "https://www.fxstreet.com/news/silver-price-forecast-rally-puts-head-and-shoulders-pattern-on-ice-202609091756",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T17:56:44.000Z",
-   "w": 1,
-   "a": [
-    "SILVER"
-   ],
    "tg": []
   },
   {
@@ -1256,6 +1826,20 @@
    "tg": []
   },
   {
+   "t": "Trump’s Midterm Pitch Clouded by Iran War and Canada Tariffs",
+   "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOQW5SZG5jQ3Z2STdOUDVUMXh1Vm9pWTNtM0gzTmE5eUNjMkxESklVUlpsejZ1WEtSTTBzcWE4YkZuck84RlBIelVWSnlQMHJQNHoxaTB6cS1YRkdvM1dOTmFMamkzME45UUdpQUk4MTUyTmFqWG1uZFF1eTc2WUdXbEtVSGp2Zw?oc=5",
+   "s": "The New York Times",
+   "k": 1,
+   "d": "2026-09-09T17:23:22.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
    "t": "‘The bull trend will resume’ and ‘you want to scale into a long position’ as gold price nears $4,000 pre-FOMC – Goldman Sachs’ Kim",
    "u": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOOXNJb1h3bVpiSzR2OHpOMURhdW52RVE4Y1ZWbHg1aVlaV1BJZkptTWxqamxNcENnXzNwbGhkcnlvMzRxb3lKTGo2TTFCUXNKZFgxdTI5NWhkVDJ6aDZTR21IcExxNVJjSVZXVXJLRlBHTENhVmR2RjdpVmxfeDVKcXFwbHRNeE5TTG93QjJLd3ZMQ2tuTzAzVUg1UG9BSGI1Tm1KV1ItSzRhN1E0anNRTnlydXVNYXV3ZWc?oc=5",
    "s": "KITCO",
@@ -1269,18 +1853,6 @@
    "tg": [
     "fomc"
    ]
-  },
-  {
-   "t": "Forex Today: Attention shifts to the ECB and US PPI",
-   "u": "https://www.fxstreet.com/news/forex-today-attention-shifts-to-the-ecb-and-us-ppi-202609091712",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T17:12:16.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
   },
   {
    "t": "Gold bulls defy US yield spike as Treasury buyback nears",
@@ -1330,6 +1902,22 @@
     "OIL"
    ],
    "tg": []
+  },
+  {
+   "t": "Fed's interest rate decision may come down to hair-splitting inflation data",
+   "u": "https://news.google.com/rss/articles/CBMib0FVX3lxTFB1Zk9ZOFJXWEpFRVhVMENrSFVkam5jdGtkVzE3Q1hPcXlRMkJwNDJCZkpucVc3SXQ4VjBiTjZpWC1sMTFzWHRUeGRZWGIwaC1iNDAyYjIzckgyM19nSURkWEk2cC1OSkEzZEFROWJsTQ?oc=5",
+   "s": "axios.com",
+   "k": 1,
+   "d": "2026-09-09T16:51:02.000Z",
+   "w": 4,
+   "a": [
+    "USD"
+   ],
+   "tg": [
+    "rate decision",
+    "interest rate",
+    "inflation"
+   ]
   },
   {
    "t": "Canadian dollar edges lower as trade war with US intensifies",
@@ -1407,18 +1995,6 @@
    "tg": []
   },
   {
-   "t": "Dow Jones Industrial Average slides all session as the Treasury bid falls short",
-   "u": "https://www.fxstreet.com/news/dow-jones-industrial-average-slides-all-session-as-the-treasury-bid-falls-short-202609091616",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T16:16:01.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Australian Dollar stabilizes as rebound in US yields supports USD",
    "u": "https://www.fxstreet.com/news/australian-dollar-stabilizes-as-rebound-in-us-yields-supports-the-usd-202609091606",
    "s": "FXStreet",
@@ -1481,7 +2057,13 @@
     "USD",
     "JPY"
    ],
-   "tg": []
+   "tg": [],
+   "o": [
+    {
+     "s": "FXStreet",
+     "u": "https://www.fxstreet.com/news/japanese-yen-strength-stabilising-against-us-dollar-uob-202609101124"
+    }
+   ]
   },
   {
    "t": "Amazon raises almost $6 billion in first sterling bond sale, lead manager says",
@@ -1510,18 +2092,6 @@
    "tg": [
     "rate hike"
    ]
-  },
-  {
-   "t": "US Treasury yields rise after buyback announcement, 30-year yield reaches 5.30%",
-   "u": "https://www.fxstreet.com/news/us-treasury-yields-rise-after-buyback-announcement-30-year-yield-reaches-530-202609091531",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T15:31:29.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
   },
   {
    "t": "ExxonMobil, ANPG Notch 20th Discovery in Angola's Block 15",
@@ -1558,18 +2128,6 @@
    ]
   },
   {
-   "t": "WTI: Upside path persists – TD Securities",
-   "u": "https://www.fxstreet.com/news/wti-upside-path-persists-td-securities-202609091520",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T15:20:47.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "British Pound catches bid as Oil-USD link breaks ahead US CPI",
    "u": "https://www.fxstreet.com/news/british-pound-catches-bid-as-oil-usd-link-breaks-ahead-us-cpi-202609091515",
    "s": "FXStreet",
@@ -1583,18 +2141,6 @@
    "tg": [
     "cpi"
    ]
-  },
-  {
-   "t": "Brazilian Real: Rate gap points to weakness against US Dollar – Rabobank",
-   "u": "https://www.fxstreet.com/news/brazilian-real-rate-gap-points-to-weakness-against-us-dollar-rabobank-202609091512",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T15:12:34.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
   },
   {
    "t": "Do you need to be a millionaire to retire? Experts weigh in on the 15% rule.",
@@ -1628,6 +2174,18 @@
     "GBP"
    ],
    "tg": []
+  },
+  {
+   "t": "Mexico's headline inflation accelerates in August, core pressures ease",
+   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOWkRySUhwQ09iNnVUN3Bob2lSZFkyZTlYTmV5WW16SFhsYnpyVms4a3RTNGcwVUNTaFVoMnM2OG1PaDRiSmV1cGNjNnpzNUI1Y2lMR3JUSkVqR0tRZWRzZ0g0ZHMxVXloNTZFMjFSbkxXNUktc1BueU9Ma1BXT1hlRG02ZmRFOXJYY1lOaTF1MFJHTEVyRHN6MHpPUUd2WmtwRTdzVVJ1SDdmTzBYUUw4dTQwVVc3Z00?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-09T14:43:40.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "inflation"
+   ]
   },
   {
    "t": "Swiss Franc gains ground as Japanese Yen-led weakness grips US Dollar",
@@ -1878,18 +2436,6 @@
    "tg": []
   },
   {
-   "t": "Brazilian Real: Narrowing polls support BRL against US Dollar– ING",
-   "u": "https://www.fxstreet.com/news/brazilian-real-narrowing-polls-support-brl-against-us-dollar-ing-202609091351",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T13:51:26.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
    "t": "Oil Prices Jump, Treasury Yields Firm With Bessent Set To Calm 'Fever'",
    "u": "https://www.investors.com/news/treasury-yields-bessent-buyback-sp-500-gold-oil-prices/?src=A00220&yptr=yahoo",
    "s": "Investor's Business Daily",
@@ -2016,18 +2562,6 @@
    "tg": []
   },
   {
-   "t": "Why is the Japanese Yen surging when no one is intervening this time?",
-   "u": "https://www.fxstreet.com/news/why-is-the-japanese-yen-surging-when-no-one-is-intervening-this-time-202609091322",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T13:22:53.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
    "t": "Fearless US stock market vulnerable to shocks as midterms loom",
    "u": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQOTRiSTVzTlAwaTR4T2ItUGVHUDBTSDJvT2ZJZERDZ25sQVhlaWFhbFhIdkk0Mzh0RVJhTnpRQkhvUmkxOER5NHlQbGhTZDUyR0VQa0FkcWpvOWRDMzRRekFJQTZnSnpYdnRNY2NzcWFhaTFnLVRZYzNKZHhfVGFabmxiMkZzdzloc3RKRmM3ME9FbW5TN1RkOGdIRmdGUU1ablVTQTFGbTQ1N2tUZ1E?oc=5",
    "s": "Reuters",
@@ -2038,18 +2572,6 @@
     "SP500"
    ],
    "tg": []
-  },
-  {
-   "t": "Bessent: We can grow our way out of debt with 3% GDP growth",
-   "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPNHphRFNWcW13cldTX0JCOGhwX0N5MmYyQkZmQ09VN0VqT3RZc0lKem9LWjloNzFBYU15ZUxvZ29RczU5SlBDRkNSZFhidXMtRi1lYW56Sl9XRE1OYXZhdllKMEo5NW85ZC0zYWlMbXo4SW9BSDV4SDhXMUFINXhkQjVjczJ2b2ZQWlo4NGd3Nzdybm5HazRlQ19QUkQ5akN4V01oRlhyT2RSLUsxa1pacllTVVJpMUE3SHFVbVdB?oc=5",
-   "s": "Yahoo Finance",
-   "k": 1,
-   "d": "2026-09-09T13:20:22.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "gdp"
-   ]
   },
   {
    "t": "Goldman Sachs Flags Two‑Way Risks to Their 2026 Oil Price Outlook",
@@ -2076,16 +2598,25 @@
    ]
   },
   {
-   "t": "Goldman Lowers Oil Price Forecasts on Deal to Reopen Strait of Hormuz",
-   "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQYjhVM2FKUElUMkRPM2ZESFZ6ZTFrMnYxSy1Qc3VyU2Y2VmcydXF2NDM4Vk11RjNJVnpqVGNDYzdJWVR0VjM0REQ2eWF3ZkJSZXpwMTcyOHN4VDdLMlJuUVdJbElRZXlFRmlWSEZDMjdmdmp1andOMFl2ekE3U2ZuUVFOM0JBbjhDRlB2b2dtMkhFMUVSVVNFdzFGSWY5c1YwdHc?oc=5",
-   "s": "EnergyNow.com",
+   "t": "Trump hits Canada with import bans, 50% tariffs",
+   "u": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPZEFoN3RoTE9HR1JaUzQtTlJ3RFdoQ2FvRVJlM1lHWnFKNXlYVXNsenZBSmdrdGhjWXFZbFhFSmQ1czMzRm1id2MwLXU4ZE9hdlpOTUo4OHZBTXhRUTkzZlZfWFF3UVVOYW5BNWFBYWZYZzVOZmUzZDFNdGdlcTZzNHlhbTY2VGtHakNneHNabHJmTy1KS2tHRXV5RWpLX2vSAZ8BQVVfeXFMTzFpWEU4UlFLSm14YzlvNUV2b2llcHNFbjhMcFhpcE5FOHpjWUVSNEpjdldRa2t3ZmFfVmhJWmVZV2pTZ2lfakd0RnBlUUhhRks2NEtrZXN5bWxnVjUxU3IzaWxOM1lOUFF0SzBRWXNFc05jeGNRclJEZTJadDJCOTJmOTE5eWR1RlR6UjdjUFlCTUpRbzRBaTVxaFpST3lv?oc=5",
+   "s": "DW.com",
    "k": 1,
-   "d": "2026-09-09T13:06:35.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
+   "d": "2026-09-09T13:13:08.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "Supply Chain Dive",
+     "u": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQa21Yd3lXZTlqMHVmS0hia19jcVFIa1NxZHktdU5fYWF3a0R0ZzYyVzBnWU5hd1MycXIwTGdfRHdqM3pHdG9LQ0VSWEcwR25GVlNubUdkcFZSRlVJS3l2X3RSRHM0TXMzazdvLWVkbXBLNmZtQ2V4OWF6S2V0SVQ0VVlFSDlrZDlvNTNING5fYjJlQVB2TV81NEFrRS0yaDdEUGVtajNiMkRvdw?oc=5"
+    }
    ],
-   "tg": []
+   "w": 4.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
   },
   {
    "t": "What tariffs will really cost Canadians and Americans",
@@ -2102,11 +2633,11 @@
    ]
   },
   {
-   "t": "Japanese Yen: Intervention risk and JGB appeal – BNY",
-   "u": "https://www.fxstreet.com/news/japanese-yen-intervention-risk-and-jgb-appeal-bny-202609091259",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T12:59:10.000Z",
+   "t": "COMMENTARY: With yen surging, what will fund FX carry trades now?: McGeever​",
+   "u": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPNE53NjhwUHUtUDByaWRncE9kM1F2WWpPcFNpNTMyWll5Yi13OFpmT0ZkTnN3TXRzWkZRU1lhdUdjVC1DOThWSHdBWnpTSWZrYlV2U2c3M2FOekxCVkxnYlVkV18tbFJGb1BVZmxIYzZEdklYRDJmQVg2dHpBTWdBV3R0U2J2X3JNRkFCQ2tVU3k2UXNRbkFoVFAyUl9LQ2RMWEZQMWtJMnZHQ252SFhBTi1VeU1mX25Sb3NHQWJLbmUwcE1ZbkdiaQ?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-09T13:00:00.000Z",
    "w": 1,
    "a": [
     "JPY"
@@ -2122,18 +2653,6 @@
    "w": 1,
    "a": [
     "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "US Dollar: Soft despite supportive fundamentals – ING",
-   "u": "https://www.fxstreet.com/news/us-dollar-soft-despite-supportive-fundamentals-ing-202609091240",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T12:40:47.000Z",
-   "w": 1,
-   "a": [
-    "USD"
    ],
    "tg": []
   },
@@ -2194,28 +2713,16 @@
    ]
   },
   {
-   "t": "Japanese Yen: Peak view holds as policy shifts loom – DBS",
-   "u": "https://www.fxstreet.com/news/japanese-yen-peak-view-holds-as-policy-shifts-loom-dbs-202609091209",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T12:09:16.000Z",
-   "w": 1,
-   "a": [
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "EUR/GBP Price Forecast: Upside remains capped near 0.8600 as ECB decision looms",
-   "u": "https://www.fxstreet.com/news/eur-gbp-price-forecast-upside-remains-capped-near-08600-as-ecb-decision-looms-202609091201",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T12:01:23.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
+   "t": "US ETF investors favour shorter tenor bonds as interest rate risks rise",
+   "u": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNY0dPakFYU0VnTnBPQ2xCTVR4VTRBN21Rbk00S1VfSmxGS29hZTRTeVF4dlhIX0ZPMncybV9FamhXNTZJam91OVFIUkJMWEVIM2stZ2Rxd1JhbExLeHZaNEw5dFNGazM3dWhXN080OHNpcTRKeHRabHQwZXFfZDl5OV9sa3RMTDA0NEhJRlJKQUJuWVl5aEtnLVFYampLOGJRc0NidVhhakxhTzAxRl9tM2t4SQ?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-09T12:08:09.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "interest rate"
+   ]
   },
   {
    "t": "Goldman Sachs AM: Higher-for-longer rates good for private credit",
@@ -2254,18 +2761,6 @@
    ]
   },
   {
-   "t": "Polish Zloty: Hawkish pricing seen at risk of correction against Euro – ING",
-   "u": "https://www.fxstreet.com/news/polish-zloty-hawkish-pricing-seen-at-risk-of-correction-against-euro-ing-202609091156",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T11:56:24.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
    "t": "New Zealand Dollar extends losses below 0.5850 as Oil prices approach the $100 level",
    "u": "https://www.fxstreet.com/news/new-zealand-dollar-extends-losses-below-05850-as-oil-prices-approach-the-100-level-202609091155",
    "s": "FXStreet",
@@ -2275,18 +2770,6 @@
    "a": [
     "USD",
     "NZD",
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Brent: Supply stress drives cautious flows – BNY",
-   "u": "https://www.fxstreet.com/news/brent-supply-stress-drives-cautious-flows-bny-202609091147",
-   "s": "FXStreet",
-   "k": 2,
-   "d": "2026-09-09T11:47:42.000Z",
-   "w": 1,
-   "a": [
     "OIL"
    ],
    "tg": []
@@ -2312,13 +2795,7 @@
     "GBP",
     "JPY"
    ],
-   "tg": [],
-   "o": [
-    {
-     "s": "FXStreet",
-     "u": "https://www.fxstreet.com/news/japanese-yen-remains-firm-against-us-dollar-amid-hawkish-boj-bets-us-ppi-data-eyed-202609100554"
-    }
-   ]
+   "tg": []
   },
   {
    "t": "Barclays lifts S&P 500 index's year-end target to 7,950 on strong earnings",
@@ -2503,16 +2980,6 @@
      "u": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQZWt5YVZ3cnZzRnRQZHNKUkdiTnRJN3VJd3hYbHVfenZQVC1BY2Zoc1p1WVk2Z2cwN3J1cHFOZmo0NVFxUEtZZzFsRGJURGNZUExGSTRON0p0T01DaWVpOFBiOUlhVGdURWF3cWRhVjVMblpRaGFWWEp5TXF2Y2thX3NwRjdKeTNCNS1Rb2JFS0IzQzhYZzVIWlFxUmtGRTVCY2dJb21LdFhCSmFSLTNQQk9EX1p4UC1TamlrWXExd09NVWc?oc=5"
     }
    ]
-  },
-  {
-   "t": "One of Bank of America's biggest rates traders just quit in Singapore. For a fund",
-   "u": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOZUxjRE5GSVF1TTllNEYzeEVwclJBNXVrZG54THZrQjR0WEROcnFtMFlONW1MTjg0aTNZZFEtWEwwOTFqRXBPN2tET0d6U1hzOXNoSkNQRVpRZHZLTW01dUh6VVU5OVl6OC05dkFCUW9xV3lJWlE1OUxteWJqNlhBOWcyUHZ5R0cwQXlsMXc5djQyMTJ4cUdLTkRZWkJ2OWxITkdJWEVoTGtwWUxDaUdGWnBxeThTN0NtMVhZ?oc=5",
-   "s": "eFinancialCareers",
-   "k": 1,
-   "d": "2026-09-09T10:42:37.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Gold price today, Wednesday, September 9, 2026: Gold prices drop following U.S. strikes on five Iranian oil tankers",
@@ -2767,6 +3234,16 @@
    ]
   },
   {
+   "t": "One of Bank of America's biggest rates traders just quit in Singapore. For a fund",
+   "u": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOZUxjRE5GSVF1TTllNEYzeEVwclJBNXVrZG54THZrQjR0WEROcnFtMFlONW1MTjg0aTNZZFEtWEwwOTFqRXBPN2tET0d6U1hzOXNoSkNQRVpRZHZLTW01dUh6VVU5OVl6OC05dkFCUW9xV3lJWlE1OUxteWJqNlhBOWcyUHZ5R0cwQXlsMXc5djQyMTJ4cUdLTkRZWkJ2OWxITkdJWEVoTGtwWUxDaUdGWnBxeThTN0NtMVhZ?oc=5",
+   "s": "eFinancialCareers",
+   "k": 1,
+   "d": "2026-09-09T09:20:58.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
    "t": "India August consumer inflation likely hit 20-month high on food, fuel prices: Reuters poll",
    "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOVGlYbmVJUlVxS2VVZndGMVotTmMzQ2JOcnFGV01IaWFlRlE1Uk0xSkdWWW5kVnBFM09uRW5uWXl1eEdjRExGY1RpMHFrMC12bnBYRXRUS0llb0dLcXJ6dVRWYmdjOXB1ZHVCM054ZTZLaVdYeUJaSmVWU28zZGRvaWQ0WUtfbGRQV0VEWFVzZW9sbnpkSFFCSUZ3a0xhVTdEOS1lS25VRnE4cDlpQ0R0QVVfSThhR1EtRmw2NkFR?oc=5",
    "s": "Reuters",
@@ -2971,18 +3448,6 @@
    "tg": []
   },
   {
-   "t": "Brent settles at over $100 a barrel as Middle East conflict intensifies",
-   "u": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxNcV81aHB4Z3dteWpsZGxOM01KRFFXZ3hhZlBUUlJUb3Y0QXVXaWpfSXJxRGx0R2Z2LXRrb25jYWJBTUNxc3llTFNVdmRoQzkxRjlLc0czRUxKczdyYU8temtJbXJRUXNOUGpuRkdXenNZTFVLX3ZhUkFQZ191cjV3amlwZ0RocHBoUHNZYzVfZy1pSlFNNGlma0NMMFVvRFIxSXNUOTRyYnNDWU1qc0JxWmpDRHMyTmVj?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-09T07:37:00.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "Polish Zloty: Rate cuts seen off table through year-end – Commerzbank",
    "u": "https://www.fxstreet.com/news/polish-zloty-rate-cuts-seen-off-table-through-year-end-commerzbank-202609090736",
    "s": "FXStreet",
@@ -3134,11 +3599,83 @@
    "tg": []
   },
   {
+   "t": "Stocks fall on Wall Street as oil prices jump back above $100 a barrel after Iran war escalates",
+   "u": "https://finance.yahoo.com/markets/world-indices/articles/asian-shares-mixed-brent-crude-041827775.html",
+   "s": "Associated Press",
+   "k": 2,
+   "d": "2026-09-09T04:18:27.000Z",
+   "n": 2,
+   "o": [
+    {
+     "s": "OilPrice",
+     "u": "https://oilprice.com/Latest-Energy-News/World-News/Oil-Holds-Above-100-as-US-Iran-Tanker-War-Escalates.html"
+    }
+   ],
+   "w": 4,
+   "a": [
+    "OIL",
+    "SP500"
+   ],
+   "tg": []
+  },
+  {
    "t": "China's EV makers shift gears to focus on humanoids as car market slows",
    "u": "https://www.cnbc.com/2026/09/09/chinas-ev-makers-shift-gears-to-focus-on-humanoids-as-car-market-slows.html",
    "s": "CNBC Finance",
    "k": 2,
    "d": "2026-09-09T04:12:51.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "The Anthropic IPO is Almost Here. What Can Investors Learn from SpaceX?",
+   "u": "https://finance.yahoo.com/technology/ai/articles/anthropic-ipo-almost-investors-learn-040300118.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-09-09T04:03:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "Should Spot Bitcoin Products Be Called ETFs? Some Say No",
+   "u": "https://finance.yahoo.com/markets/crypto/articles/spot-bitcoin-products-called-etfs-040200446.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-09-09T04:02:00.000Z",
+   "w": 1,
+   "a": [
+    "BTC"
+   ],
+   "tg": []
+  },
+  {
+   "t": "Lockheed Poised to Benefit as EU Approves Ukraine’s Purchase of Patriot Missiles",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/lockheed-poised-benefit-eu-approves-040100424.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-09-09T04:01:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "ASML Inks Advanced EUV Lithography Deals With Chip Titans TSMC, Samsung",
+   "u": "https://finance.yahoo.com/technology/articles/asml-inks-advanced-euv-lithography-040100681.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-09-09T04:01:00.000Z",
+   "w": 0,
+   "a": [],
+   "tg": []
+  },
+  {
+   "t": "GE Aerospace Makes $12B Play in Clogged Market for Cast Metal Parts",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/ge-aerospace-makes-12b-play-040100912.html",
+   "s": "The Daily Upside",
+   "k": 2,
+   "d": "2026-09-09T04:01:00.000Z",
    "w": 0,
    "a": [],
    "tg": []
@@ -3222,14 +3759,7 @@
    "s": "Politico",
    "k": 1,
    "d": "2026-09-09T03:29:00.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "dw.com",
-     "u": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPZEFoN3RoTE9HR1JaUzQtTlJ3RFdoQ2FvRVJlM1lHWnFKNXlYVXNsenZBSmdrdGhjWXFZbFhFSmQ1czMzRm1id2MwLXU4ZE9hdlpOTUo4OHZBTXhRUTkzZlZfWFF3UVVOYW5BNWFBYWZYZzVOZmUzZDFNdGdlcTZzNHlhbTY2VGtHakNneHNabHJmTy1KS2tHRXV5RWpLX2vSAZ8BQVVfeXFMTzFpWEU4UlFLSm14YzlvNUV2b2llcHNFbjhMcFhpcE5FOHpjWUVSNEpjdldRa2t3ZmFfVmhJWmVZV2pTZ2lfakd0RnBlUUhhRks2NEtrZXN5bWxnVjUxU3IzaWxOM1lOUFF0SzBRWXNFc05jeGNRclJEZTJadDJCOTJmOTE5eWR1RlR6UjdjUFlCTUpRbzRBaTVxaFpST3lv?oc=5"
-    }
-   ],
-   "w": 4.5,
+   "w": 2.5,
    "a": [
     "CAD"
    ],
@@ -3293,18 +3823,6 @@
    ]
   },
   {
-   "t": "Rupee falls past 95/USD as oil climbs, RBI taps swaps to drain excess cash",
-   "u": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQaGZoOW9hYjFNUzRKaHNXWjFESG9IX0tqU2JUcUpjeThENDd2Y0REbjY2VWdCY1lfM0laQkp0WUY1MjhFS21YcWlXU0NRd3pyYmFyX3lCMU1MaUVDcUxQa0l3anRZRVhqcWk5aHVKSGZpRmhUNTJLUmY4ZWc5eVlNRGJYcmlWMkxIRFM4SXROZDNmc1QzWVNTaG1ralhZN1c5NmZDS1NWOXQ4MHJlYjV2MTUtVnNyZw?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-09T02:24:00.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
    "t": "Bank of Canada Expected to Remain On Hold as Trade Conflict With U.S. Escalates",
    "u": "https://news.google.com/rss/articles/CBMiywFBVV95cUxNS3VER2NfZTlFWl80bk1Hekpxd3F1b1JxeVFPRVBVN0dUU2NNRElhbkFWazlkRW9DZXlzaHFnLW1aemJwS0NXeTBURVRKYnZjckZNREs0MlpiTmVaMGp6ZDFQMnpUZVRfY1FHdGxGQWlzQmthQ2RBVldiR0tHOTlZLUVnQ05OZ0NheU9QSFZVYWZzYXpqVGsyZ1dnRlFyTHFQRVVkdDJ3bmtUTmkwT3ZicTlBQnRjaXhPQ1JiYk51WU9RUUtxeFNJdjVldw?oc=5",
    "s": "WSJ",
@@ -3317,14 +3835,14 @@
    "tg": []
   },
   {
-   "t": "Indian stocks fall to three-month low as Brent oil surges past $100",
-   "u": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQUTJ5YTBDcXdScFdqQUJJNmpuSC1YYmZtQUJEbDdlV3dEazhPNWtIb3MwV2lqQTdqakNBZDhlZ21uMHMzNWp4ZFF2djRtZ3hnQnlnRnhzel9CbzJsXzJnSHg3aUlCUGZzZDc1RnpENVBQMEtUUXVYcThYUG1pU1dPdVpqR1BPWjlJSWYwRW02MU9nOVNxV3h5UTFRTHVaSnVPQmU1QW5mZGRWci1oZ2FqUG1TYU9fSGhzS1E?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-09T02:20:00.000Z",
+   "t": "Holtec Nuclear Targets $10.2 Billion Valuation in Nasdaq IPO",
+   "u": "https://finance.yahoo.com/markets/stocks/articles/holtec-nuclear-targets-10-2-020830785.html",
+   "s": "Oilprice.com",
+   "k": 2,
+   "d": "2026-09-09T02:08:30.000Z",
    "w": 1,
    "a": [
-    "OIL"
+    "NAS"
    ],
    "tg": []
   },
@@ -3404,32 +3922,6 @@
    "a": [],
    "tg": [
     "cpi"
-   ]
-  },
-  {
-   "t": "Goldman Sachs Flags Demand Weakness as Key Risk to Oil Price Outlook",
-   "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNNXEzSFRqQ0hoTmdTMTk0WWF1V1ZIQ09la0kyV000VTdNUEVOVVY5S1lSU25SYVZvaXM2WjM1M3g0SlZjTVJ2Zm5LZXZ2NWhZc1A0Y0lPb1NybXF4OEl1RHNtOWJRaDduV0Y4Mk1YR19oU1Q3WFlZOXdsY2s4OERqeExNOUNZbHdxYm5kdnlKc0NNZmN4OGRCTVQ0QjY3OEU0?oc=5",
-   "s": "EnergyNow.com",
-   "k": 1,
-   "d": "2026-09-09T01:17:56.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "As Canada’s retaliatory tariffs on US goods take effect, tensions soar",
-   "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNU2phM3hPekhiRHo2akRRdU1UZ3RyMkhmX0hBYS1PMVJ6R0Nucy03bi1vMGs4c0JzR29TNENaMms2b2p2UVFMSDFwTzlMcmZEQTJKTGwzUkc5T0h2eTFFTnBPSF95S29LTFRZTFhWMFgyQ2hvQ21Rdy1jVmVxWHh5elAyb1ZPQUlMc1VvTmlDZ3MwUW93elU0RHF2anVoN25F0gGmAUFVX3lxTE9DUnVDUUNxNWxaallNU01pSDkzT2dab2QtQkp0bFhwRHNOakg2NlJHcUUyWE9WWHlwTjhUalRNSTZvUVhyTWdYTXBadWpVcERaaDRvOGFNVGpFR0pfRjJxcFAyUnVRMnNiWHJmcUw4c0staW1ObkZvZVBMQWhLQzZ4aDFGcHpBZmhkRm9NNGxMZ2Z2b014RUdjZDR0LTBzWGVKalg2Unc?oc=5",
-   "s": "Al Jazeera",
-   "k": 1,
-   "d": "2026-09-09T01:00:15.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
    ]
   },
   {
@@ -3518,21 +4010,6 @@
    "tg": []
   },
   {
-   "t": "Yen surges to seven-month peak as speculation swirls over a possible Bank of Japan interest rate hike",
-   "u": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPSUNCOTdJc19hTUtjRTRtLWJxeDlwY21YYmtJSUxkNVJIM3FkZGJMeHlZS0Y0WU1fQnRaanR3SFJFZmR3a2xISXd3aElvbFVMcGg4ZS1zX3JxX1Z4eXd2YjZaekNacFJIZVZiVDYwRmNST2JhZHlHRERBa3NrdEJiajRhN3YzazJ6aG9ZWFBCVGRNZm5OU0ltd0ZaVWdrVUROSThLSmY5VjBUQXRMQVJ6S010QkNyaVhjX1FjZlFVWEF1VjlaSlhaTmg4ZXRKLVJ3LXVpQ3dpckhtQkZI?oc=5",
-   "s": "アラブニュース",
-   "k": 1,
-   "d": "2026-09-08T23:40:01.000Z",
-   "w": 4,
-   "a": [
-    "JPY"
-   ],
-   "tg": [
-    "interest rate",
-    "rate hike"
-   ]
-  },
-  {
    "t": "Susan Collins says the White House has ‘underestimated’ impact of Canada tariffs",
    "u": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQUmhSeEs1SDZUbzlwX3VlMmJHNnU3V1lPZE55ZUI2X1hyNUV6enRWZnE0VWJLeEgtTDFZd2tFa3hZZGlSQ2RzUVd4dWcwTDlDdDAySktDcFNQZHpoUjVEdmZXbzhkRkc0S21rRUlmTDNUcHltMVZfS2UtckdJT0VENlNvZmxjUy05cHJTbnFUXzlVZw?oc=5",
    "s": "Politico",
@@ -3568,6 +4045,18 @@
    "a": [],
    "tg": [
     "inflation"
+   ]
+  },
+  {
+   "t": "Bessent: We can grow our way out of debt with 3% GDP growth",
+   "u": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPNHphRFNWcW13cldTX0JCOGhwX0N5MmYyQkZmQ09VN0VqT3RZc0lKem9LWjloNzFBYU15ZUxvZ29RczU5SlBDRkNSZFhidXMtRi1lYW56Sl9XRE1OYXZhdllKMEo5NW85ZC0zYWlMbXo4SW9BSDV4SDhXMUFINXhkQjVjczJ2b2ZQWlo4NGd3Nzdybm5HazRlQ19QUkQ5akN4V01oRlhyT2RSLUsxa1pacllTVVJpMUE3SHFVbVdB?oc=5",
+   "s": "Yahoo Finance",
+   "k": 1,
+   "d": "2026-09-08T23:00:32.000Z",
+   "w": 1.5,
+   "a": [],
+   "tg": [
+    "gdp"
    ]
   },
   {
@@ -3617,6 +4106,22 @@
     "USD",
     "JPY"
    ],
+   "tg": []
+  },
+  {
+   "t": "Top CD rates from major banks Sept. 8, 2026: Chase CDs, Bank of America CDs, Citibank CDs, and more",
+   "u": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1PcGNLMWVPZk5OQVhpbmk2cURYSVFSakNfMEVjTkN4bmxqXzJWVHVON21TXzVaYlJpTTJNZWFzZHVVcG1vNkl5SEJ4eVM2eVBhNXlqeFdwR2V2UHQ0WTA2bnUwak5fN2V0QXI0?oc=5",
+   "s": "Fortune",
+   "k": 1,
+   "d": "2026-09-08T22:05:53.000Z",
+   "o": [
+    {
+     "s": "Fortune",
+     "u": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5CNjd0Z0wyQ0V6RHl3SklRYksyWURKSF83Yjk2QXNXT1hLS2FtVHZuajJxaTRtekJhTWFUcVA3bmRSeDNOdEZsSjFDYlF3QlNDTFFiM3FXMG9rNTJSOVQzb3FoWGNmWkRzSC1r?oc=5"
+    }
+   ],
+   "w": 0,
+   "a": [],
    "tg": []
   },
   {
@@ -3744,6 +4249,20 @@
    ]
   },
   {
+   "t": "How Canada decided to hurt its own economy, raise its inflation—and most Canadians approved because they’re so angry at Trump",
+   "u": "https://news.google.com/rss/articles/CBMinAFBVV95cUxQVmRvdko5cjNNT1lrQnFaYzROcjVrdjZCZUhwdlB1VWNqcTFzeXR6Rk5GRFVvZDFaLVN1NG84U2t6VkdJRjNoM1IzaTU4MnFBX05ieHZJOW04Vmh2dlM0SGthZFdXUnUzMnFTTmZTbU9kRnNFQkRQczFjT2pTM2lDd25EdzRQVFhGXzNqZ0VhQnhvVHhXYk9iTGFxbnE?oc=5",
+   "s": "Yahoo Finance",
+   "k": 1,
+   "d": "2026-09-08T20:36:19.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "inflation"
+   ]
+  },
+  {
    "t": "Canada's retaliatory tariffs may hurt its economy, but most still approve because they hate Trump",
    "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQQWZCVTQ4MXQwZEpWV2kzQV9Zb0IwdTJzVUh3aEltT2pydEtzc1JoTG8xNVUyOTdxaEQwVUU0QkFNMnlQb256YmV0ZE5OZWdWaW1mVl9aTjdEelQ4ckN0UTZZVlNjZWhwU3VhczQxbWl4dkRIM0QwS2czVDdCWmpmYWF6bjRoaG1Rcl96SHAzaS1hckhnR0hZN04xeHdTeFJaclE?oc=5",
    "s": "Fortune",
@@ -3794,8 +4313,8 @@
    "n": 2,
    "o": [
     {
-     "s": "PBS",
-     "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxORkIwZUJfaGppbUp2VGJNcUtWbmlNUGVjcFdKYThSNjJxZHo0eERydzM0VjJKS19oQV9NSHBrV2xnaE5tWHlrdGZrU3VFT09xc1VmSVZjby00bTVqY3V6OVdEUjRva1VmSG02Zi1xeG1TTEh2V0hoMXJyRUxidnk2SHJkVjlUTHM0NkxBVGFGOWctMkZkQnlZT01rQ2gySzQwLXhoaU9qajE3RGRNa1ZN?oc=5"
+     "s": "Al Jazeera",
+     "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNU2phM3hPekhiRHo2akRRdU1UZ3RyMkhmX0hBYS1PMVJ6R0Nucy03bi1vMGs4c0JzR29TNENaMms2b2p2UVFMSDFwTzlMcmZEQTJKTGwzUkc5T0h2eTFFTnBPSF95S29LTFRZTFhWMFgyQ2hvQ21Rdy1jVmVxWHh5elAyb1ZPQUlMc1VvTmlDZ3MwUW93elU0RHF2anVoN25F0gGmAUFVX3lxTE9DUnVDUUNxNWxaallNU01pSDkzT2dab2QtQkp0bFhwRHNOakg2NlJHcUUyWE9WWHlwTjhUalRNSTZvUVhyTWdYTXBadWpVcERaaDRvOGFNVGpFR0pfRjJxcFAyUnVRMnNiWHJmcUw4c0staW1ObkZvZVBMQWhLQzZ4aDFGcHpBZmhkRm9NNGxMZ2Z2b014RUdjZDR0LTBzWGVKalg2Unc?oc=5"
     }
    ],
    "w": 4.5,
@@ -3931,13 +4450,7 @@
    "w": 2,
    "a": [],
    "tg": [],
-   "n": 2,
-   "o": [
-    {
-     "s": "Oilprice.com",
-     "u": "https://finance.yahoo.com/energy/articles/labor-day-gasoline-just-hit-200000363.html"
-    }
-   ]
+   "n": 2
   },
   {
    "t": "Travere Therapeutics' Outlook Brightens As Turnaround Looms",
@@ -4016,12 +4529,6 @@
    "k": 2,
    "d": "2026-09-08T19:14:00.000Z",
    "n": 2,
-   "o": [
-    {
-     "s": "FXStreet",
-     "u": "https://www.fxstreet.com/news/wti-oil-rises-as-middle-east-escalation-threatens-global-supply-202609091501"
-    }
-   ],
    "w": 3,
    "a": [
     "OIL"
@@ -4195,7 +4702,7 @@
   {
    "t": "Canadian tariffs on US goods take effect. Which products are impacted?",
    "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNTC00M2t2SEVqcWRMdDJKc2pybV9aZHpzZ3kzSnQ1dUJoQXpoZVpJUHJFYXgxa3ZBXzJydnZWUmg1cFR6Z2lGWlcxTmd2c3RzemxRMUlfVEI5V1lRV0NDbUU1al82Y1d4aGlyYWJuZk0wbmhXdkJ5X2RlQzEtNTZ1SE9obGNmNGtQa25KRmJCcWo5WlVCclY4b1F1aEhtSlFCRms2MDRJeDA3alJoeE5iag?oc=5",
-   "s": "usatoday.com",
+   "s": "USA Today",
    "k": 1,
    "d": "2026-09-08T18:36:00.000Z",
    "w": 2.5,
@@ -4230,6 +4737,27 @@
    "tg": [
     "rate decision",
     "interest rate"
+   ]
+  },
+  {
+   "t": "Gold lackluster ahead of inflation data as oil prices rise",
+   "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPZVFOMG93MEp4ZjJ0VUtRcWQxVTRKYTJOb3RwbTZpMnNyZlJ5eFdCRGhNTXF4b2MyRGpXWTh0T1N1d28tUGRfSW80bmFNT1RNelFYMTlLU2ctZEZpYmsyNjZRb2ROTnVqMkVuX2Z3UU12UDlCV2cxSmd1MzR2dktuNUtOR3ZXdjR2YnAyUlJDYjFtWmwybURmNEdLMHk3SFBQNVE?oc=5",
+   "s": "Reuters",
+   "k": 1,
+   "d": "2026-09-08T18:06:38.000Z",
+   "o": [
+    {
+     "s": "Reuters",
+     "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQU00zRjlwdjRLNzNsRDluVS1Rc0hCVmhNSTc0TThXMVUtMVgyYU1Mc3FVY1p4YlVIX0p2NzhYbEFCSkVUMEhHR2MtTlFRUHZlbXVGNkxINUVSc1FZNVB5S2hGOXdIUzMydEhHSllEcVVqbWM0VHlOajEzeHBQMlY4UW5nUnRNMm5NS1lvR3RYN2E5M1dIV3NMd3VuZDJOZDg2U0cxa1JR?oc=5"
+    }
+   ],
+   "w": 3.5,
+   "a": [
+    "GOLD",
+    "OIL"
+   ],
+   "tg": [
+    "inflation"
    ]
   },
   {
@@ -4321,7 +4849,7 @@
    "n": 5,
    "o": [
     {
-     "s": "The Guardian",
+     "s": "theguardian.com",
      "u": "https://news.google.com/rss/articles/CBMieEFVX3lxTFAtNjZOQTFoRndOY2JRMEExSXlnRG9kbzRMTlpXdkQ4cXBuQ1Z5S291WW1NdklfNFVIVVBBY1QtQlp4Sl9uT2d0amhoRHZSQ1I0X1BfQmloZXN4blVYV2hKWkdNTDE0VnBpYVdQdkFLUktkMmViRVlPOA?oc=5"
     },
     {
@@ -4333,7 +4861,7 @@
      "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNd3hiVDNOaURnYVpudzhHclZCeXNNcUJBeDlDNy1KZWozVXVUaDc4bHNRRGlFamFTRUZreUZtQ1o0NzRfUVltenBfRXZyUHZnN2JRSXY1OHhmaEppV195YU5Ea3hkMW5WWGV2eU04TzFDVEZ3STRtbk5kcS0yaUZUVjlNTWplZw?oc=5"
     },
     {
-     "s": "The Hill",
+     "s": "thehill.com",
      "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPSVpvUzU2aEZqemdpNHRCQ3lOTFNuUGVibXpnakpGajBFbDJRcnYyVFdDdEtwOXBDb3ItdXBzb09qMWxESnBVSmVnd0ZEOHhSLWQzcGkxVTVSN0dTdWNCTUdSTmM5amxFd0dSUnh1WHlQRk55Wm83bzVuQWMtWUVPTWVHdjnSAYoBQVVfeXFMTS1PN0NEZWhEM2ZPT1JEWnIxaTJHTV9neFp3NDRqc3dSa1d4SGlpaTBuRldNeUhFOWo3cjlTMkU0VzNaRUZVQXl1OXZ4SFVtQjNQdE8yNGhRMVN6MlRwNC1GWVZ5Qzhtenc4dnZRam9SS3VBcnZhenBQemw4TG9ERGtUajJ0VTluaGV3?oc=5"
     },
     {
@@ -4379,18 +4907,6 @@
    "d": "2026-09-08T16:20:09.000Z",
    "w": 0,
    "a": [],
-   "tg": []
-  },
-  {
-   "t": "Why the US-Canada Trade War Is Escalating",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/why-the-us-canada-trade-war-is-escalating",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T16:12:32.000Z",
-   "w": 1,
-   "a": [
-    "CAD"
-   ],
    "tg": []
   },
   {
@@ -4593,6 +5109,27 @@
    "tg": []
   },
   {
+   "t": "Yen surges to seven-month peak as speculation swirls over a possible Bank of Japan interest rate hike",
+   "u": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1lV2ZCdFFRdTBZX1lRR1RWMWFYTFl5VEREQUczMnJtNkpEQ3Q4cTNTajQ0cEVsQkMybXhXMU55TGQtX0ZHNHVTSXBOMnkwUTdNbEl2Y3pLUXpQQS1veVFHNg?oc=5",
+   "s": "アラブニュース",
+   "k": 1,
+   "d": "2026-09-08T15:11:20.000Z",
+   "o": [
+    {
+     "s": "アラブニュース",
+     "u": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPSUNCOTdJc19hTUtjRTRtLWJxeDlwY21YYmtJSUxkNVJIM3FkZGJMeHlZS0Y0WU1fQnRaanR3SFJFZmR3a2xISXd3aElvbFVMcGg4ZS1zX3JxX1Z4eXd2YjZaekNacFJIZVZiVDYwRmNST2JhZHlHRERBa3NrdEJiajRhN3YzazJ6aG9ZWFBCVGRNZm5OU0ltd0ZaVWdrVUROSThLSmY5VjBUQXRMQVJ6S010QkNyaVhjX1FjZlFVWEF1VjlaSlhaTmg4ZXRKLVJ3LXVpQ3dpckhtQkZI?oc=5"
+    }
+   ],
+   "w": 4,
+   "a": [
+    "JPY"
+   ],
+   "tg": [
+    "interest rate",
+    "rate hike"
+   ]
+  },
+  {
    "t": "Rubis Turns Expensive Oil Into a Guidance Upgrade",
    "u": "https://finance.yahoo.com/energy/articles/rubis-turns-expensive-oil-guidance-150910219.html",
    "s": "Moby",
@@ -4629,18 +5166,6 @@
    "tg": [
     "unemployment"
    ]
-  },
-  {
-   "t": "NY Fed Survey: Americans Feeling Worse About Finances in August",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/americans-feeling-worse-about-finances-in-august-ny-fed-survey",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T15:00:00.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
-   "tg": []
   },
   {
    "t": "Frank Elderson: Fireside chat",
@@ -4837,18 +5362,6 @@
    "tg": []
   },
   {
-   "t": "Bank of England Warns Holidaymakers to Expect Higher Airfares",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/bank-of-england-warns-holidaymakers-to-expect-higher-airfares",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T14:18:56.000Z",
-   "w": 1,
-   "a": [
-    "GBP"
-   ],
-   "tg": []
-  },
-  {
    "t": "Breaking down the U.S.-Canada trade war in 4 charts",
    "u": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQb0RPTHR2SjEwMElBUDF1Q0tOX1VZREdVSGNKVllkNUV3SFU0UVd1ZXRNaVBmVWdiZGZ2aHpkTEpPaVdhak1mQTZIWEhxZGlBbVo3VFU5N3hSS3V5OENFLW1CWFIxdmtLVHozeEotUDRTQ1hYQm5JLXh4ZDlnT2NlRENPNnE0d3NleXJ4RXBKdzQ?oc=5",
    "s": "NBC News",
@@ -4932,6 +5445,20 @@
    "s": "ABC11 News",
    "k": 1,
    "d": "2026-09-08T13:43:56.000Z",
+   "w": 2.5,
+   "a": [
+    "CAD"
+   ],
+   "tg": [
+    "tariff"
+   ]
+  },
+  {
+   "t": "Donald Trump calls for Bombardier boycott as Canada hits US with tariffs",
+   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNSVlDckdjTkw3aGs2djE5VXpaNnY1WG9vTHJXcTVzSjE1SDhzS3IyZ1JUMlJhTWVfVXlPNk9NVkFiNGV4bjJNNUF2emhxcDVyNEJUd2doZVd1dDlwdHA4TE9nV1I2VEVScXpEMmxDRllRYms2UWI3VmlFelZ4NWVJVDJUMk0?oc=5",
+   "s": "Financial Times",
+   "k": 1,
+   "d": "2026-09-08T13:38:43.000Z",
    "w": 2.5,
    "a": [
     "CAD"
@@ -5050,12 +5577,8 @@
    "n": 2,
    "o": [
     {
-     "s": "CNN",
-     "u": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE95bGF6YU10Vlk5ZGxkZEx6QWJvQXN0bmF0N1pxNWl2WDdHWFNWb0dKNThPeGF5d216NVNvOU9jQ21kNy1yTW16TGl2ckZrdw?oc=5"
-    },
-    {
-     "s": "CNN",
-     "u": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFA0WWJfTzZHaUktUS1IZVlNZDlMYjcxdmZCLXE3TDBPc1JUVHNuSkRZbmNLVTRhWjM4al91MHNSaFdydzVVOXRUc0E1VDU?oc=5"
+     "s": "MarketBeat",
+     "u": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPLTNzTEw2MW1rSGw0RjhFRnNhTFViM05ZZnpQTlE0Y2RzdEFSYnR3Z0lMbGxPRkRKMDB2dlZURUdPNHVfTWhnVUlEQkozbjdzM0MyajVhcmRvbWU5WjlxN3k5NmJYZTBZLURxTEdxb1VudWk1bV9nY0Yxc0hBcGluOEJYTGlvWnVKTkdnbkp1WmZKZzJ2SHZLc055VjhxWXAxUDZtbUc0QU82UHJLdDlhYVVSdkFiSXNUenVpdjhqSXlwZkpEcHJXZ0o4ZzU5ejhpY2lseFlXYkQycno4TFNnZw?oc=5"
     }
    ],
    "w": 2,
@@ -5087,22 +5610,6 @@
    "tg": [
     "inflation"
    ]
-  },
-  {
-   "t": "Top CD rates from major banks Sept. 8, 2026: Chase CDs, Bank of America CDs, Citibank CDs, and more",
-   "u": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1PcGNLMWVPZk5OQVhpbmk2cURYSVFSakNfMEVjTkN4bmxqXzJWVHVON21TXzVaYlJpTTJNZWFzZHVVcG1vNkl5SEJ4eVM2eVBhNXlqeFdwR2V2UHQ0WTA2bnUwak5fN2V0QXI0?oc=5",
-   "s": "Fortune",
-   "k": 1,
-   "d": "2026-09-08T13:00:00.000Z",
-   "o": [
-    {
-     "s": "Fortune",
-     "u": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5CNjd0Z0wyQ0V6RHl3SklRYksyWURKSF83Yjk2QXNXT1hLS2FtVHZuajJxaTRtekJhTWFUcVA3bmRSeDNOdEZsSjFDYlF3QlNDTFFiM3FXMG9rNTJSOVQzb3FoWGNmWkRzSC1r?oc=5"
-    }
-   ],
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Japanese media: The Bank of Japan is expected to raise interest rates by 25 basis points next week, with the pace of hikes potentially accelerating to \"once per quarter.\"",
@@ -5373,7 +5880,14 @@
    "s": "Reuters",
    "k": 1,
    "d": "2026-09-08T11:20:36.000Z",
-   "w": 2.5,
+   "n": 2,
+   "o": [
+    {
+     "s": "marketscreener.com",
+     "u": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOZ1g5Rl9XeTR0aXNyYk4xMnZlZUppQ3pvWEsxVEt0N3oyS1l3bG5ybERna0NUbENmdW05TWpuVERDd1N1QkswMW02enpjNk1NQkc3WjhXbnRWWnlnRllsY1lUck1FSGtqU3pyaHhaYkZoZ1RzTUhjdnpNRC01UDJBY2ZsdkJMUTR5OFlCbkhIdmxmaWo3VExRYTE0SUFwMUJiWTFUMkhHQQ?oc=5"
+    }
+   ],
+   "w": 4.5,
    "a": [
     "JPY"
    ],
@@ -5453,7 +5967,7 @@
    "n": 2,
    "o": [
     {
-     "s": "intellinews.com",
+     "s": "IntelliNews",
      "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOQkdIa0hrWTAxb0VjaVppazFtdVN2MUNrU3ZRWnVuaFdtLS0wUWtCYmtTR2tIakNBU1dRellvVFZBWVFfNUVMRGtkRXRmb3VFQXkzSnpIVWlmMHdPU05FNWtsNFBJVXpaN09pMUhUNC10bUhVNDFlMzJydFVmSlRpamJwdjIzdlhQemZsUTBmUzJTc0F2NnFGOHJJS0ZReUdL?oc=5"
     }
    ],
@@ -5502,18 +6016,6 @@
    "d": "2026-09-08T10:36:00.000Z",
    "w": 0,
    "a": [],
-   "tg": []
-  },
-  {
-   "t": "Chile Set to Hold Rates as Fed Risk Overshadows Growth Slump",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/chile-set-to-hold-rates-as-fed-risk-overshadows-slumping-economy",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T10:30:00.000Z",
-   "w": 1,
-   "a": [
-    "USD"
-   ],
    "tg": []
   },
   {
@@ -5581,26 +6083,14 @@
    ]
   },
   {
-   "t": "Lagarde to Release Memoir in January as ECB Exit Talk Swirls",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/lagarde-to-release-memoir-in-january-as-ecb-exit-talk-swirls",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T09:40:19.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
    "t": "Yen Climbs to Seven-Month High as Markets Expect Bank of Japan Rate Hike",
    "u": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE90OEdWTGxscl9ocGwyMk1wTWdvMHZzakpsbW93cFExQndUZkRJdGRXcnY1Rl96MDgxTUdJWWRqX09lYlBQakwtdmVaT1FGZV9BMVpmdU81TEJ3TzlDaUZz?oc=5",
-   "s": "Межа. Новини України.",
+   "s": "mezha.net",
    "k": 1,
    "d": "2026-09-08T09:37:36.000Z",
    "o": [
     {
-     "s": "Межа. Новини України.",
+     "s": "mezha.net",
      "u": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1VMDF3d1MxQlh2a2lpQkN5amFtOGh6VnhCbTBDeVNxMi1SWEdBNTdsdERJYXVJZEtRSzg2QnhaSzlPMHVRVkJlWjNaSjFiUl9aQTBkeW1rX2p0UDJOM0VJVC1tU1VWN1Y2?oc=5"
     }
    ],
@@ -5651,12 +6141,6 @@
    "k": 2,
    "d": "2026-09-08T09:10:13.000Z",
    "n": 2,
-   "o": [
-    {
-     "s": "Yahoo Finance",
-     "u": "https://news.google.com/rss/articles/CBMikAFBVV95cUxOSThvNHdkVnQ4VWVwbGNtX2JkcnJsNHR6RElyR0haUzhBRDdwRHZPTWVUSkZFUnVxWlpDUmlIbmRCT3ZNVlhsMWdOd1ZkdlNzNGx3QzREb1ZMaVBYR0FDQXgyQU10SkgwdG1Cd0NDYk03OHVOcXAxcHZMeGlNRmVKbXlBLURXU0ptN19MY1ZfY2s?oc=5"
-    }
-   ],
    "w": 3,
    "a": [
     "OIL"
@@ -5797,18 +6281,6 @@
    "tg": []
   },
   {
-   "t": "UK Pays Most Since 1998 to Borrow After Gilt Selloff",
-   "u": "https://www.bloomberg.com/news/articles/2026-09-08/uk-set-to-pay-most-since-1998-for-borrowing-after-gilt-selloff",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-09-08T07:42:16.000Z",
-   "w": 1,
-   "a": [
-    "GBP"
-   ],
-   "tg": []
-  },
-  {
    "t": "Royal Bank Of Canada $RY Shares Sold by Amundi",
    "u": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQN19aeUpwUy1NQ3F0cUlSV1FpbDhQV0V1dGMwaXNYWDRUdGtJM0tuS2l3aWlSSEdjTHlyaHAwSkQwSUMzNUFfUEZHWUdyTnJlR1ZRTzFLRVBRZDJVZm03SnBfTmFoSnBQcWdGa182S3czc3RVV25fTVZWaGF5dFNHYTRrZ3lDcWU4dlk4ZU9YUDRaa19sUUZCZnZ4VTFhOFVDWWNvMHE3VWVhZw?oc=5",
    "s": "MarketBeat",
@@ -5856,6 +6328,19 @@
    ],
    "tg": [
     "tariff"
+   ]
+  },
+  {
+   "t": "Can Central Banks Rescue Us From High Interest Rates And Rising Debt?",
+   "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPNTVyRjM4Qnh3aWt3cjhtVUQxdFNTdTFESE1SUXRxUldkVzBsMjZhdEgxLTkyUmNmdUthSEs1SUFBM0dZV28zS1pYVTNodGhobFVXQmZmZ2JOUHF1TXdnOEw1VDNKN1B1TnZkVHFjVVJBSUd5Smtfd2IwTGdXdUNFQWp3QlVFNk1XUmhTdGdBU2gzX09RU1hxQ2RobE5WTE1UZWc?oc=5",
+   "s": "Hoover Institution",
+   "k": 1,
+   "d": "2026-09-08T07:00:00.000Z",
+   "w": 3,
+   "a": [],
+   "tg": [
+    "interest rate",
+    "central bank"
    ]
   },
   {
@@ -6054,27 +6539,18 @@
    "s": "Moomoo",
    "k": 1,
    "d": "2026-09-08T02:32:19.000Z",
+   "o": [
+    {
+     "s": "Moomoo",
+     "u": "https://news.google.com/rss/articles/CBMilAFBVV95cUxORVI0SGhaOWo1bGdSdFlVbnRlODJhdW1SLUVETTNJcFhBOElHMVNIeDFYaUlaWkNkTFZwR2ZVbUduRktJUHRxYUtxeFBELW9QVzV4MURacDQtV1pqcTNrMmJUZ3J5THh5ZFNHX3hkX2oyY3hIazctTHFSbm1SS2l1NmtRWGRWenlQaHVCVjFLU0lpU0ZN?oc=5"
+    }
+   ],
    "w": 2.5,
    "a": [
     "JPY"
    ],
    "tg": [
     "rate hike"
-   ]
-  },
-  {
-   "t": "Gold lackluster ahead of inflation data as oil prices rise",
-   "u": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPZVFOMG93MEp4ZjJ0VUtRcWQxVTRKYTJOb3RwbTZpMnNyZlJ5eFdCRGhNTXF4b2MyRGpXWTh0T1N1d28tUGRfSW80bmFNT1RNelFYMTlLU2ctZEZpYmsyNjZRb2ROTnVqMkVuX2Z3UU12UDlCV2cxSmd1MzR2dktuNUtOR3ZXdjR2YnAyUlJDYjFtWmwybURmNEdLMHk3SFBQNVE?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-08T02:28:00.000Z",
-   "w": 3.5,
-   "a": [
-    "GOLD",
-    "OIL"
-   ],
-   "tg": [
-    "inflation"
    ]
   },
   {
@@ -6348,20 +6824,6 @@
    "w": 0,
    "a": [],
    "tg": []
-  },
-  {
-   "t": "Donald Trump calls for Bombardier boycott as Canada hits US with tariffs",
-   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNSVlDckdjTkw3aGs2djE5VXpaNnY1WG9vTHJXcTVzSjE1SDhzS3IyZ1JUMlJhTWVfVXlPNk9NVkFiNGV4bjJNNUF2emhxcDVyNEJUd2doZVd1dDlwdHA4TE9nV1I2VEVScXpEMmxDRllRYms2UWI3VmlFelZ4NWVJVDJUMk0?oc=5",
-   "s": "Financial Times",
-   "k": 1,
-   "d": "2026-09-07T19:09:54.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
   },
   {
    "t": "Sudan Could Become the Red Sea’s Next Energy Security Flashpoint",
@@ -6859,31 +7321,6 @@
    ]
   },
   {
-   "t": "Federal Focus: As tourism declines after tariffs, Walla Walla's wine pays the price",
-   "u": "https://news.google.com/rss/articles/CBMiggJBVV95cUxQNEtMa3UzSldyWWtDZlcwRkhhMExYWXI5dk5JWUVMVWpXWVBrdEF4dml2TE0tNTFHYURrY3ZLcUhxQTg2Q0p6aXNHOW42emdOVlhBLUhEYmJ0Q2ltZHBFWHpWNVZlY19rWlRaemExWVBPcE9na0tKUUxpN3NoOThJc2w5QXFORldNc1ctcmh3WlVkYnUzdzJQbmRFSXVkWnVBUW1HSlNkaWVMM0dUSWMtYUM2UFh6M0p1cjdKS3lJVW9jWFVhUFNfZkhwdG9PWVZaMExHTjNPYS1JRE9nWXJsbVBxdG9jckNKWjNMWlNuby1RN0NfcjlFc252SXlzWXRZMUE?oc=5",
-   "s": "Union-Bulletin",
-   "k": 1,
-   "d": "2026-09-07T12:30:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Gold eases as strong US jobs data boosts Fed rate-hike bets",
-   "u": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPRGNES0hoVGlPMVZfR041a2MwVUNQOUI5dzBweW04UlNvWjNJUnJYUEdGMkkyb1I1MWdRcUp5SDJybUV4YlRTWEZ5aFd4M3NaTnE5clF1Y200Tk9oNFoxd3lncVkzbjFNdTVKazRLNVpSSloteGRvakNZWmxwLW5uUWo5V0U2dDc2TFE0Nkg4VWVOU1dpdE5tNUhzOWtXcUNjTUZQMmF3T2ZOQkpWRURmX20wSFlvam9UV1Yw?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-07T12:24:51.000Z",
-   "w": 2,
-   "a": [
-    "USD",
-    "GOLD"
-   ],
-   "tg": []
-  },
-  {
    "t": "GDP up by 0.6% and employment up by 0.1% in the euro area",
    "u": "https://news.google.com/rss/articles/CBMif0FVX3lxTE45YmRVSEdPbTBmbWxEcGJTVV9HcnVRRE84QW80UURhdHhUTGhtMjFnaTVxM3N3cWxRWDNEaFlZMmJkZXRBR0tjQkRta3owRGVtaWdmb0lycDhhYXEzejdkeW9PZmpUbEZfMmNtWDhPWG1veFBHOHZJd3Zlc1ZTVGc?oc=5",
    "s": "European Commission",
@@ -6896,76 +7333,6 @@
    "tg": [
     "gdp"
    ]
-  },
-  {
-   "t": "Global Research Highlights | Goldman Sachs Significantly Raises Optical Transceiver Market Forecast: Market Size Could Reach $148.5 Billion by 2028",
-   "u": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQeUZaeUZZZ0pQeHZ4M3FyOHMybW8yWlRvcmNNLTVKMDZxak9NWktud0NRcjF1eFZNazZ3OXlVWmNnaV9QWEZ2bnhVMnJVZWdmc1FsTFB6eG02bmV5bmxnb3YySVRzcl9HWHAtSjlrUkQzRlVaRVNDYVNLQlRlSHN0dHZGQm90bDRWR3I3enQ0YzhuR2RHUHFsREFTa3hNZVdTRmRQdEtCZ3R2UnU4QWtvRDBzZGJ0NTIzSmdScWRRREczNVpTcVQta0dB?oc=5",
-   "s": "Moomoo",
-   "k": 1,
-   "d": "2026-09-07T12:18:05.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Sterling steadies on dollar as traders digest Healey speech, tumbles on yen",
-   "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNQ0ZuMXVWcmtpdWdBQnBqMHN5bXNzMjU0TXJEZW1CUVRWQ19kMnRjRkMtNFFEXzJHdkhGWTNhcTVWcjFSbFNLbE9YM3pTRUgwcDVQSjBSdmtGQnRkSnJsMHk1Y0lLSFRSSWhvdXN3YlNvRlZsb05iM0dLbWpOQzlVWmt6VnQtSUpBMVBGVVFTWnZ0eHRjYTMyVlo0WWc1UmhKWERDR2gwVnNtSXMwQjhJ?oc=5",
-   "s": "reuters.com",
-   "k": 1,
-   "d": "2026-09-07T12:06:37.000Z",
-   "w": 2,
-   "a": [
-    "USD",
-    "GBP",
-    "JPY"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Range Rover Maker to Cut 4,000 Jobs as Trump’s Tariffs Bite",
-   "u": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOMDg0RVNBdGpUakJuRjZGN2NKU0JwXzJncDk4QmpGMHFhcG1XX3VxM2Y0NHN1TW0yNXRhQ3NxMnBrV2JSMlZIYVNRaVY2SUhRNS04M3EzSUZCd2ZPLWZ3WUV6YlJZNzhmUHdPYXVfRzdoWWVaWmwtd3duN3VSQmVNUE1SRW4wbWJ6eER1T1g0TTdkYmFlekd5ejhpNmFMaVA5SUlvT0dTblM2U0N4dGxEVDVEWU1lWDFTTUR5QXhobEU?oc=5",
-   "s": "WSJ",
-   "k": 1,
-   "d": "2026-09-07T12:02:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Trump’s tariffs are deterring the investment needed for reshoring",
-   "u": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQWUdYNnJRRXRIWHUxYW1xZk1YZ2I1Q1hLMWM1RlNSTkFjNFVIcndlbTdhLU1FODFGYTdyS1NIR0dXYkxRUTVheHNjN01DRHZpUmVIaXUxdXViN3pNMW5KYkFsMTlSRWNnak9GZThvUGxvc1N5TnNCNWJPLXNuVWZPTmVyRm9mcnc4QjZUZ1lYdTl0YlRuMkFGajAwQmtzYlRuMDBvMg?oc=5",
-   "s": "East Asia Forum",
-   "k": 1,
-   "d": "2026-09-07T12:00:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Turkey's 2026 Inflation Forecast Revised Upward to 28.4% | Medium-Term Programme 2027-2029 - News and Statistics",
-   "u": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOVm84X1MtNW85Z29KZGNpWHo0Z2NSNXYtMVljdEw0TDA3VGxGcUR4NGlqVkh0U3I1SEphWWtVaXRKcUZObURnMmlvMjk5ZzZsTWxuVHdiN283UzhtSGsxb21hNVRuM1h3T2owbGpGYWJTXzlnQnB6UTdNVXhDbkhnQm5KMDU?oc=5",
-   "s": "IndexBox",
-   "k": 1,
-   "d": "2026-09-07T11:40:44.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
-   "t": "Chicken, seafood, honey: Three Georgia companies chase growth amid trends, challenges",
-   "u": "https://news.google.com/rss/articles/CBMipAFBVV95cUxON3Q0ZHZuZlJiX2VCRGFuZjZTUTFLNDFXWEJEWUU5Snc1MFZjSkpWaEpFTUFSbUw4THd1ZHh4RnNwT01mc0N2WlVycUZoVjhUNC12ZzFrVUxkU3JRRW9yLVVPRk1YTjF1UVBaZ3BYem9oODVNRkltaG1fN0l5OTdVeWJlVHRSUGxSYXRiNWFjVXZaQlJzNjVXT0h0dEdvcEFLZ2RBQw?oc=5",
-   "s": "The Business Journals",
-   "k": 1,
-   "d": "2026-09-07T11:35:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "China Central Bank Adds Most Gold Since 2023 Even as Prices Jump",
@@ -6982,29 +7349,6 @@
    ]
   },
   {
-   "t": "In a stalled exit market, sponsors are consolidating their way out",
-   "u": "https://finance.yahoo.com/small-business/articles/stalled-exit-market-sponsors-consolidating-112415745.html",
-   "s": "Pitchbook",
-   "k": 2,
-   "d": "2026-09-07T11:24:15.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "White House ups pressure on Kevin Warsh's Fed as Wall Street expects hike",
-   "u": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxQa1ZYZkI5azJEanM2elFUMDFVbFdUVmcwd0ducFRZT2c5SlEwZnhBcVpkZlo5bl80ZS1xVUlmYjdLSlRIQXBCMVBwbW5lQzhPN2E3dllKRkZ1eVVVeGxKMDVFUEY5VUp2QVFWNWY1ODUyVFRvMGRVU25BZVptQjNGeW12bVZrV3RVMVFz?oc=5",
-   "s": "Fortune",
-   "k": 1,
-   "d": "2026-09-07T11:17:00.000Z",
-   "w": 2,
-   "a": [
-    "USD",
-    "SP500"
-   ],
-   "tg": []
-  },
-  {
    "t": "Can China bring in more bullion as central banks shift gold reserves from US?",
    "u": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPa0ttdWgtLVIyMndrTFJJbEMyYmMwaUthUkYxZ1Y2VmZvc3RpeGhHS2Rydm5waGM5QjNjLVI2VFMwbXhPNWxudVVlUVhsODRXQ0Z3ZkVIWUk4Z2hFekdwa3RzMmc2RlRQTDBSMXdmNWhrb3A4Q3djbkRJdHVFV3llSVJFZDRwVVVSelo0d3p5X1VUM2lCTmE4UHE0dWJGOVF5bjlaV0FrcjB6OGdiVUFNT0lJam5mV2c0VVhqU0pYMmJyMFBNMzB1aW5DRUbSAcwBQVVfeXFMTzNPbl92OHV0c1JndkNGaW84YlBCVkhtdmtLS1BhWFNoc2RhTHhOV05wcWdjNUl4MDJTNlJFX3AybUF6Rm44Z1JzMG9wRG1odk01ZlpHZW1EcjFLU1Y3VFJLbXJqcXYzMHFTOF9HTmtIM3lvWkFYekhXVTVBb0NUWHZyRld1U29CNXNxb0d3OVE3SDBVN0RWbVN2U0RlVnFTcE42a1U2LTZOenBET1pvX2NWbHNReEwzMWdMNTl4eTRwaFVVTlZMX2d4V1Nl?oc=5",
    "s": "SCMP",
@@ -7017,38 +7361,6 @@
    "tg": [
     "central bank"
    ]
-  },
-  {
-   "t": "India’s Crude Oil Benchmark Tops $100 as Middle East War Escalates",
-   "u": "https://finance.yahoo.com/energy/articles/india-crude-oil-benchmark-tops-110000096.html",
-   "s": "Oilprice.com",
-   "k": 2,
-   "d": "2026-09-07T11:00:00.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Dorian LPG orders three dual-fuel Panamax VLGCs from Hanwha Ocean",
-   "u": "https://finance.yahoo.com/energy/articles/dorian-lpg-orders-three-dual-104828892.html",
-   "s": "Offshore Technology",
-   "k": 2,
-   "d": "2026-09-07T10:48:28.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Shein targets acquisitions to expand brand platform – report",
-   "u": "https://finance.yahoo.com/small-business/articles/shein-targets-acquisitions-expand-brand-104219763.html",
-   "s": "Retail Insight Network",
-   "k": 2,
-   "d": "2026-09-07T10:42:19.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Five Market Events to Watch This Week: U.S. Inflation, ECB Rates, Iran and Earnings",
@@ -7065,167 +7377,22 @@
    ]
   },
   {
-   "t": "The Real Risk to Markets of Trump’s Frustration at High Interest Rates",
-   "u": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQMUhGcmdSV3huVjZ1dnVxNFgtTEtFWE1kcW9qM0VRa3I4NE1lMnE2c1VlNnlWZDhiaG14V0pOb2VpaGpSWDZ6Z3JCUGZ3UXpaV01BNjVRaXl5M24xbmNGeFR5aFN4ajlwbk5BQU1kdkJQTFg1VW9SRlFXRFdFejc4bHRR?oc=5",
-   "s": "Barron's",
-   "k": 1,
-   "d": "2026-09-07T10:32:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
-   "t": "Acciona wins environmental approval for two Peruvian transmission lines",
-   "u": "https://finance.yahoo.com/energy/articles/acciona-wins-environmental-approval-two-103000827.html",
-   "s": "World Construction Network",
-   "k": 2,
-   "d": "2026-09-07T10:30:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Supreme Court invalidates most of Trump's tariffs",
-   "u": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNTTZyamI3Uks3N20wbnpWemxhQTh5NG9UODJyVHFXUE5KTGFmMWlYSVZpUW9Eb2JnUmFjU1RJMWYzOW5pX0l3UXlPdWpaaEJqOUNmU1pQa2dNQUtvUjhwQVdweno2bU9kbTVNams1SmhqY1FrZklQU3BTTnF1S0VJd2RMNTZ1VmJVamt0SUdYem9JZ9IBlwFBVV95cUxNa0dWUktjN181VDcyUThKWGIzLTU1VnBsdlhOb3p6NmJMWHpodDh0c2M1WHA2SHZKdTRSQmhNbUxXZW13RllnbS01cktCOWhYY19MZXJtR2w2WnVfZjBYVGRDQ2pnM2NLTGwtZnZOZGlpc3FNM3ZQSWdETHNMQzg3a3hWMTdnV25FQzkyMDlOVkoyR3l6SkZF?oc=5",
-   "s": "ABC News",
-   "k": 1,
-   "d": "2026-09-07T10:25:50.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Compagnia del Gusto acquires wine delivery firm Winelivery",
-   "u": "https://finance.yahoo.com/small-business/articles/compagnia-del-gusto-acquires-wine-102051122.html",
-   "s": "Just Drinks",
-   "k": 2,
-   "d": "2026-09-07T10:20:51.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Indian stocks slip to six-week low as IT slides, oil worries mount",
-   "u": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPN28wNDdORG10X2Z2Tnl0OHduV3Q4T0IwNTJOWTlqUHhWQWxMa1RQYjE1ZDFfWkZhT3I4Z25yWXhHb1pseWNIYU85Nm9oM0dfZG9IYWNBeVcySDBfMnl2Tkd4aFdGWklMNDY1aDhPMnNrNTdMVl9vMWpvQlROUGtleDNBUHpYa1k4UzZCS2VFVGlxX0dnWjEwREYwUDNJYV9qbS1JdnZfU3NGZEFjOG1Bb1l6N1V6QQ?oc=5",
-   "s": "reuters.com",
-   "k": 1,
-   "d": "2026-09-07T10:20:43.000Z",
-   "w": 1,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "CXMT Highlights Smartphone, AI Advances as Market Share Climbs",
-   "u": "https://www.wsj.com/tech/cxmt-highlights-smartphone-ai-advances-as-market-share-climbs-1d777648?siteid=yhoof2&yptr=yahoo",
-   "s": "The Wall Street Journal",
-   "k": 2,
-   "d": "2026-09-07T10:01:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "$986M Weekly Inflows Trigger Bitcoin ETF Boom and What Does it Mean?",
-   "u": "https://finance.yahoo.com/markets/crypto/articles/986m-weekly-inflows-trigger-bitcoin-100055125.html",
-   "s": "99bitcoins",
-   "k": 2,
-   "d": "2026-09-07T10:00:55.000Z",
-   "w": 1,
-   "a": [
-    "BTC"
-   ],
-   "tg": []
-  },
-  {
-   "t": "School bus driver shortage persists as districts raise pay to compete for workers",
-   "u": "https://finance.yahoo.com/economy/policy/articles/school-bus-driver-shortage-persists-100007086.html",
-   "s": "Fox Business",
-   "k": 2,
-   "d": "2026-09-07T10:00:07.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
    "t": "Best high-yield savings interest rates today, Wednesday, September 9, 2026: Earn up to 4.10% APY",
    "u": "https://finance.yahoo.com/personal-finance/banking/article/best-high-yield-savings-interest-rates-today-wednesday-september-9-2026-earn-up-to-410-apy-100000748.html",
    "s": "Yahoo Personal Finance",
    "k": 2,
    "d": "2026-09-07T10:00:00.000Z",
-   "w": 1.5,
+   "w": 3.5,
    "a": [],
    "tg": [
     "interest rate"
-   ]
-  },
-  {
-   "t": "Mortgage and refinance interest rates today, Monday, September 7, 2026: Fixed purchase rates lower than refi rates",
-   "u": "https://finance.yahoo.com/personal-finance/mortgages/article/mortgage-and-refinance-interest-rates-today-monday-september-7-2026-fixed-purchase-rates-lower-than-refi-rates-100000677.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-09-07T10:00:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
-   "t": "HELOC and home equity loan rates today, Monday, September 7, 2026: A 19-basis-point differential",
-   "u": "https://finance.yahoo.com/personal-finance/mortgages/article/heloc-and-home-equity-loan-rates-today-monday-september-7-2026-a-19-basis-point-differential-100000340.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-09-07T10:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Asiamet shares jump as miner clears KSK project sale hurdles",
-   "u": "https://finance.yahoo.com/markets/stocks/articles/asiamet-shares-jump-miner-clears-100000582.html",
-   "s": "Proactive",
-   "k": 2,
-   "d": "2026-09-07T10:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "FTSE engineering giant invests in US ‘because it’s easier to sack people’",
-   "u": "https://finance.yahoo.com/economy/policy/articles/ftse-engineering-giant-invests-us-100000819.html",
-   "s": "The Telegraph",
-   "k": 2,
-   "d": "2026-09-07T10:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "HELOC and home equity loan rates today, Wednesday, September 9, 2026: Why locking in a low rate is so important",
-   "u": "https://finance.yahoo.com/personal-finance/mortgages/article/heloc-and-home-equity-loan-rates-today-wednesday-september-9-2026-why-locking-in-a-low-rate-is-so-important-100000340.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-09-07T10:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Thousands of Atlantic City jobs are at risk as casinos struggle with inflation and New York competition",
-   "u": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPSWtjSlF2Z1dCcm00eDFXWmJHNmJwM0taeGd2SDJTa2tmVjl1RFo4SWlfN2hidnZhaVJ5NlJhZVdxME55bW90SHFDNl8zT242RGhvVHZyYndrUDRxNHkxT3JINk9pQ2l3UEJKc181ZVdYVUp5MEJhaGlMamZpaVg2QVlqeVlyV0FLYVdVdQ?oc=5",
-   "s": "WHYY",
-   "k": 1,
-   "d": "2026-09-07T09:58:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "inflation"
+   ],
+   "n": 2,
+   "o": [
+    {
+     "s": "Forbes",
+     "u": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9EUGdpYnFpdFRFcHpZVTQxRUpJVElWUThMWlhfTktUY0gtcmF3YkZYekM4aFhnVEF1VjRobGFXRk54TVVLSlVWOHFpbWR2c1oxTVVPVmpKX3JxdG5IZFREQm9leWJBRlc3?oc=5"
+    }
    ]
   },
   {
@@ -7272,116 +7439,6 @@
    ]
   },
   {
-   "t": "Ask an Advisor: Can I Use Roth Conversion Funds to Pay the Taxes on the Conversion?",
-   "u": "https://finance.yahoo.com/news/ask-advisor-im-going-roth-100000968.html",
-   "s": "SmartAsset",
-   "k": 2,
-   "d": "2026-09-07T09:00:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "Hartford Inflation Plus Fund Q2 2026 Commentary (MUTF:HIPAX)",
-   "u": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPczNQNU1hQ1FpRkw4TklzUHNEMS0yMXhkT0JoMFpLYzh6bU4zc3JQRUEzZl9xcEoxdkUzMkMzTTNLUmJ2ckN6SzRNeHA5SFMxNnF6c2hlMUF3bDdka21FMHBreDB4NW9HcWhlTHZ3X1ZfNFQ0TzVXeW9vTnJONE9mY0RhQUh4OVdpbkxWdHR5RndVQQ?oc=5",
-   "s": "Seeking Alpha",
-   "k": 1,
-   "d": "2026-09-07T08:54:00.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
-   "t": "Aviva's (AV) Outperform Rating Reiterated at Royal Bank Of Canada",
-   "u": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOa3ZhUEdEYndEc2lWcW5wOXdfOWlVNG1xMjlBejlteC1LLTFzZVVNbnl1Skd5dnhBY2diOVd4TnlGbVZqel9MeUFZSUNWM2xybDhQN05FSDJGcEVrd0hONkFLN2wxREJPY0ZWVVJUbTVmb1FGTjY4REQ4dWpXRnk3T3lkUC1Za3RGOEN2bmpmXzd5RDZIa1htT1haVVRDMG9kY1dmZVJfeXh0elQtY1pKNW9JTEdHRXlaaENXNnhVelZsdw?oc=5",
-   "s": "MarketBeat",
-   "k": 1,
-   "d": "2026-09-07T08:47:26.000Z",
-   "o": [
-    {
-     "s": "MarketBeat",
-     "u": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQbHE5eE5CZEpFamNrWWVENGg0Slp2REFhemplZU4yRmQ4UGdKZFpYa1ZqbE5QcDBZUW01eHVvazdpWWRUdEUza1QyM0pyTUpyakZIaHFlcUZDQmVtSkplN042N1VRRjhTYlFVWnZNOGpJRENEVXA1OWNNNHVMOGZUZkZpY3otRjNLclp2dmJzdnB6UWhuRFpyM1piTGhYQXA3bGNLNGdsZnM0ekpvZGl3czBhLTVGSVJpYWs0ZVhkNWMtdVlucFJtT1I2UXNkajM1QWc?oc=5"
-    }
-   ],
-   "w": 1,
-   "a": [
-    "CAD"
-   ],
-   "tg": []
-  },
-  {
-   "t": "JPMorgan: Start Accumulating The Preferred For Income, Hold The Common At 3.2x Book",
-   "u": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOcldFSWk3RG9VS3JVUi1hRkV1cUViMUZTUU5SS0hWallWbW9Ba096TlNFNE14N1duTnpoRUZKaFNpbWtVSXBrSWc5OS1GOWxkTy1KOHdiOUktV3hrVnI2c3k3bjY4bzhzMkhKakxYVTBqZlV3MHhTaXVvMUFyZDNDOG5EczJYZ0ZYcXFzSHNST0VjZ0ZMaUY3dGZNdHpSaUEtcWVOX1dBQjNtWkJIVkhQa1JGaHJHTnlmUk9HRG15RWx3Vy02dWVB?oc=5",
-   "s": "Seeking Alpha",
-   "k": 1,
-   "d": "2026-09-07T08:43:45.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
-  },
-  {
-   "t": "UK Markets Brief: Is Computacenter Britain’s Next Tech Stock Hopeful?",
-   "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPS0hiLXVsT00zdXNoYm8ybVRITzJDdzFWdFF1ZllCODlDVGJjWThwbS1WTXRka091X2tabmRlMThhZW50QmZIUHc3NFV0eEdyN3pIRGNSRjh1STR6NEU3cEhyaW93YmtJNmhySHRwd3RSVmpmaWhEdU1SemUzWjVhTzVTOTVMMTJRdHd5QnhESFpjakpPYXJXMmNKSlkxS2ZVdmVHZlZqU196LUJGRUV2Zg?oc=5",
-   "s": "global.morningstar.com",
-   "k": 1,
-   "d": "2026-09-07T08:43:42.000Z",
-   "w": 1,
-   "a": [
-    "GBP"
-   ],
-   "tg": []
-  },
-  {
-   "t": "Euro zone investor morale hits four-year-plus high in September, Sentix survey shows",
-   "u": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxQUVBLRnBSSzNMdDY2eGY1a040aFBQQ1hqSFVjNTNkTDUwOURNMk0wWDI4eDExOU9oc0d3LXR3LURta3FXRU9HX3pPeElOTUxjRWdDdFg5SkJydzhIN3B2d0F0YTJtSk5waWloVzlILXQ5T1Q5MXVmVlFBUDdYd3lnNElwd2VOSG5CYTBYYzMzTV9SY2ZfWEx1RXQ0RkdOT3NyUFZWOXVpMHJkemw1RGNpWHZmeHZjekRTZFFfZU8yc3l4dVNSRm8yXw?oc=5",
-   "s": "reuters.com",
-   "k": 1,
-   "d": "2026-09-07T08:34:09.000Z",
-   "w": 1,
-   "a": [
-    "EUR"
-   ],
-   "tg": []
-  },
-  {
-   "t": "MORNING BUSINESS REPORT: What latest jobs report means for interest rates",
-   "u": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOZjRFMVRpRWpicUd2QjNodHhSM0xrTzlFY3NvZFd4NzRnX21JaWdIc0xfT3BZWTRrS1pRYTlPOU1hZzNGQ0cycFdiN19kbGZoS0U0OS1DVVlMMnlXSUVtVFotRmw3RFEwbjZ4aDZOc202b3dpTW8yNlBWQnZETlc1WFFleDc4UlJzNXhlQTNDU0pXdTNoRk4tejczYXFUSUZtQkh5VWtxUGVRaVk?oc=5",
-   "s": "WFSB",
-   "k": 1,
-   "d": "2026-09-07T08:33:53.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
-   "t": "Tech firms rally but Asian markets mixed, with eyes on US inflation",
-   "u": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNNkY5VDM0Qk5YaDIyMVVkS1Z4SlI0Yi0yS05ESTdVYXJKRm5XeWNVeUNPaEYzR0ROS3Y5eGd2bjFLempKa0tLT2FYZTYyQXBGanB5YUs4UjVmUm1iczVqVjlTR3hoV2xPVklneWxSc093MUJkMUlXRDUzeWY5SXdsYU9JQ214dUpUalBFM203ZzE0NGhIWGRhUEFaMkg0dXc?oc=5",
-   "s": "Yahoo Finance",
-   "k": 1,
-   "d": "2026-09-07T08:25:28.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
-   "t": "Indian central bank unloaded at least $8 billion last week to anchor rupee, bankers say",
-   "u": "https://news.google.com/rss/articles/CBMixgFBVV95cUxONEJ5MFFyZkNReHhmbnNfZmpwQzExb0cxY0Y4dHpBRXkxZE5XSVdFNjhpLUhxUUFmMGs1YkJxMW9GSG5PYmpIVl9IQnlUSnVhWWQxSUdsVUdKQnMxc1FfSk05U0ZvbmRSOWNrSVM3VVg2eFhhZk9QN2h6bXBMYV9vSkRkdllxQXBQTVFOZ3U5TDZwaTZjSUliYy1kOE9BN3VQZkFQM1N6Ylh0YVQwVTdjWHVwMnVPb1hUU0o5Y2pETy1wMk1ZN1E?oc=5",
-   "s": "Reuters",
-   "k": 1,
-   "d": "2026-09-07T08:24:56.000Z",
-   "w": 1.5,
-   "a": [],
-   "tg": [
-    "central bank"
-   ]
-  },
-  {
    "t": "Hot Payrolls Reload the September Hike Bet and Push Wall Street Into a Quiet Labor Day on the Back Foot",
    "u": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxNdEtjRmVfTEtXS1RKYlMtczJkcTVMYmJUVVVhaTk3N1c2cUpabS03OXo5eU8tMkhjX2h6dEtfV0c0dklCaHhldmQ5MURYQXVCYTZwcklnbGtnQTIzZFRrTmd4dTN2VmVYa2kyQkd1Z2FlamZaaThNcnRXUkpXdllrY0J6ZjQwXzV0N2pFZVVVZHNLaGVVZ3ZqRnByT1Z0ancwMm54Zm0yOFJpYXdEV2JkVVZhY0hKeWJIZGZoNVlGNk1MMkgyYWtTVGo1Vmk1QzRTSFhPUDFPM3RrN0RJX003MGJUenRqb1QzZUZZ?oc=5",
    "s": "ChartMill",
@@ -7394,16 +7451,6 @@
    "tg": [
     "payrolls"
    ]
-  },
-  {
-   "t": "Santos Boosts Papua LNG Stake as ExxonMobil Takes Operatorship",
-   "u": "https://finance.yahoo.com/energy/articles/santos-boosts-papua-lng-stake-082000701.html",
-   "s": "Oilprice.com",
-   "k": 2,
-   "d": "2026-09-07T08:20:00.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "Money Market Interest Rates Today: September 7, 2026 – Rates At 5.00%",
@@ -7423,16 +7470,6 @@
      "u": "https://news.google.com/rss/articles/CBMib0FVX3lxTE9KMEdjQUdsUmJtNWdoa0ZPYnZkYVJnOXJRa0RqM0xuT0lWZkZ4NlpVcC1aeGU3NjY0RmpZYmh4am1OelZGcHFnYVFIcmRLTXFBZV9YZ28wNHNHUWJKNXBPZ01MMmQxOHRuVmtydnhNWQ?oc=5"
     }
    ]
-  },
-  {
-   "t": "BlackRock to JPMorgan Bet on EM as Turmoil Seizes Global Bonds",
-   "u": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOU2dpZzhqREpocFdYSkllU1d5RTNkTC1XbGpPOWZKN0ktN180OXA3RS1fdDlqTFNtRmZnbVVLRDltZVVFWGJ1TGFkWlFDZ1ZjR25qR2ZQaWYyTEZFSHRjc0hhbG9SX2xaTDBKTV9VVG1KNnVjT1prSUJRRzBKQk9LNmRNeUVtTG1iSzJCR1lISEVOQTNRQjlkRnMzVEdQZ1oxT19VZ1p2cFhhbmF2dk42ZEVKMA?oc=5",
-   "s": "Bloomberg.com",
-   "k": 1,
-   "d": "2026-09-07T07:20:07.000Z",
-   "w": 0,
-   "a": [],
-   "tg": []
   },
   {
    "t": "SPX: S&P 500 Braces for Inflation Double Act After Jobs Surprise Revives Fed-Hike Bets",
@@ -7952,7 +7989,7 @@
   {
    "t": "The 50 percent problem with Trump’s Canada tariffs",
    "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOTFlLT0wzRUMxeHpYclFGZGVia3RrSXhQdnJzWFNWUTV2Z3hBVFBSbHFzYmNBeWg0YlAwVWZhZkktbHlTaFUzZE5vT1dFdGdOX0V4T0N6WGpzd3dnQnVpVDMxeHFtenltN1JQQ25mWWdkUnhEV0tfSklqQVJ4OWVLWlpSTG5kd9IBiwFBVV95cUxPWGpIcmoxWXNXTjVWTEtEWDBvdXlQWEMzVWdHQzk1QUYyVUJ6ZDgzOWVxNTJwd2lUU1ZhU3RHeDI0V0VxOXphdU1XdTUyR1NvUTAyZDlraDhWc2IwcUFyNV83UXFKOG5tNjdhZ0tJVm9TWTRoZ2I4SVRrOHFydGdaTTFUWjNhWFpaa3V3?oc=5",
-   "s": "The Hill",
+   "s": "thehill.com",
    "k": 1,
    "d": "2026-09-04T15:30:00.000Z",
    "w": 2.5,
@@ -8016,20 +8053,6 @@
      "s": "Bloomberg.com",
      "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQSkVlLUY1UV9peGhYZ3dPLWJRZU1neUlmY1VZWW5ONjlHaml0SnRRTWRNMGNTS1NMalppYnItRDJKUWUtN25lN1p5MEpsWWRLa21JNzcyWnpWdnB4M0R5ZldsRjFRSnFPWEViU3R0aU9yd0d6Qkswb1ZLbVI3cmJaN25BRmxRQW1mR2NxQ3doUGdiNllrWkZUYkpPM1VBajl6VmdJTHQ5YVhKTEpDZUJaVg?oc=5"
     }
-   ]
-  },
-  {
-   "t": "Week Ahead for FX, Bonds: U.S. Inflation Data in Focus; ECB Expected to Raise Rates",
-   "u": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPYUg3NndUYW1HNGpfSzJxNUVyU3A1ZzFVbXhGMjBhVndjbFpZaHM4c0N4NTdsczFkS19XUkFEbHAyazFvbXA4T1RmY2thTUpYZHdMTXZGLTk5d1NuNmJGeGhZWnp4RFdGXzNtakUzWVpBVXhxUDZxOGFPamVmZFRQUkJ4el9ETUgxbTByc25JRGVwcGo4RlhtMTZBeUJfMGFjeC0yb212QXNPZk9wZEU3T0hZU0NSSWM?oc=5",
-   "s": "WSJ",
-   "k": 1,
-   "d": "2026-09-04T15:09:00.000Z",
-   "w": 2.5,
-   "a": [
-    "EUR"
-   ],
-   "tg": [
-    "inflation"
    ]
   },
   {
@@ -8268,25 +8291,6 @@
    ]
   },
   {
-   "t": "Will Federal Reserve hike rates later this month? Waller muddies the outlook",
-   "u": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNVGNqanQzNkZWQXM4U1Q5SlhOR1pxckVDSXd5TDI2OWxndXlocno2WEpMalYtWjFROWJEU1duNmRmQk9qbUdBVEpjck5mSEJuRmt6Rlh1d3JwME5IVFJRczd2aVRpZUJuZWJXQ2FaeTl1UTJzQ0NUVHYyS2JOaE9nQzM5bklqdmlxU0d5RnpFZXJwckhPbnRJ?oc=5",
-   "s": "AP News",
-   "k": 1,
-   "d": "2026-09-03T19:41:00.000Z",
-   "w": 3,
-   "a": [
-    "USD"
-   ],
-   "tg": [],
-   "n": 2,
-   "o": [
-    {
-     "s": "PBS",
-     "u": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNYkprM1h1WDVtVjB0dDlscGZNeUxuUkw3TWhYZFhDYkZyYl93UmJSM3NYcXdRN2tfQzRuS2V4WTBBb2VtVmE2VTlGcnU2Nk9KeUVfYjBIbkswX2pMUHNfSk5xT2FDVXBaaHllX2lUZEgyVjdzR1F3REJIN284SnF6WUtha0Vtb0NSVmNCSm1FTUFPYXJzYW9fcERTNHFYYXY4TGg4a1FhM0VmdFJoWnhlTdIBtgFBVV95cUxPY1VTZzBtaXdkUll5UEFzY0daeWtWUGM0U05nTk96SHNveVdEd3RtdG9fMjNuSjB4bHdSSmtTdmlJYUlVZmotQWs1Qk9sMFdwcDNhelJ5NElBM2tRaDFxU2d5LW9sVzQzMGhyd0t4a3ZrNS1kVElnaGNfR0xLYl9yU3FwOU1EenpWeUhZTHh6bDRYMVR2RjZIMnUxODBBNWJEcE5aQ0NsSklQU0xZdE9aZ1F6MXpWZw?oc=5"
-    }
-   ]
-  },
-  {
    "t": "Vance says Fed should lower interest rates: 'Would be nice to have some help'",
    "u": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQX3ZGQmxraTBxUFRDaUFUVVZlM3NIM0JsbHVCY1VTVzRnVHBORFRXbldFbXRjYTVyZDRyRFpNV3o3TDgyU2lLVnJCdUxSNl9nY3FRbnRzd25nQkExcUZJb1hrWHUtUFp2amtrdW9BbTJTdlAxSDNLMmxlYk40VEtaaUY5aDR3Z9IBiwFBVV95cUxQb1VUX2p4NlhOSEN2X2tTMmE0M3hJS2QwMmZ5Y3VOeVhnbGMxRUMzbG5saTdGWFc5TTMyNlMwekg4WHVjTkNYT2xmZk80WE1DRWptSmFzVTJiR2hKQVA1X3F3OWowUWtsbDVhVUEtLWRpbHFFWGJZbV9WTGg1UVRmMWs4M1pLbWNpNFdv?oc=5",
    "s": "CNBC",
@@ -8485,25 +8489,6 @@
    ]
   },
   {
-   "t": "Fed Governor Waller indicates he will support holding rates steady at September meeting",
-   "u": "https://www.cnbc.com/2026/09/03/fed-governor-waller-indicates-he-will-support-holding-rates-steady-at-september-meeting.html",
-   "s": "CNBC Economy",
-   "k": 2,
-   "d": "2026-09-03T14:06:52.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "CNBC",
-     "u": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxON2J1REZ3U04tQUUxbFk2SjB5b1lHLU5kXzhaZi1GUmdaa0c3SVJuTldqZ3ppWEc1STBsMzBKMlVLQ2oycUF5SVh0WXh4X1ZMbDRRaDZRYlB3TFVmNV9CUDkzbjFtT2Jka2UycVF6N0pfQzMwU21mdDNxUFA3RlRxTU1nUFJVUU1IQnFrS1FabER0N3ZBX2ZJRXNKbGU4U19CZUdBeEpuX1VsZUhWdVBFOXZUUE1Ubl9SejIwQnhjS0ppZ9IBxwFBVV95cUxPRHlvbVBOcHFJVm40TGtsUWFBbmZUWjBIXzdGMHAwU2VXSmlHS1FhVnJlYmxFX1hHNEFsNUg4VmFFZUp1SzAydzllc3BBaEVrMFdzQ0hlV2oxVDJBd2dpNldpLWUybjJsX3hRdGdmdWtWUGEwOEI2MGFBYlBiRjZYSUEzeHhHcnpNQ002QjdYUGNueWZrcHJTU0RBNUlEYVRtTHV6WFZTN2hTeUl2MHJyOFJ5ejZqSkU4VEtrWG5xVjNhWWExZGZR?oc=5"
-    }
-   ],
-   "w": 3,
-   "a": [
-    "USD"
-   ],
-   "tg": []
-  },
-  {
    "t": "US Fed official joins growing group open to rate hike if inflation rises",
    "u": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOdlhYZTE5dzBYVXZMaTRzRkZOQ0RaRFN2aU1uM1lkUC1FT2VKY2ltdDlNNXZnYVNvdmxWZVY4a0NyTTZWTVZDTm9Vc21sU2VvQmd2Y1ZuOWxsNHI0akVNaU54a2xfeTVqYVNVUEJMblFGX21GRDZFak1HRzFBSnRmQWp2MXlXWS05RG0tUTYxTGlZUkFwZGI0WWFB?oc=5",
    "s": "Yahoo Finance",
@@ -8556,11 +8541,11 @@
    "n": 2,
    "o": [
     {
-     "s": "cbc.ca",
+     "s": "CBC",
      "u": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQanh5RUtPUHVGMFdBMnNlWlNXdU81X0RzWWhIUDRoZkZYRGZfSGdUSE9ybEZkQjN2R0x4eUl5OS13SnBsZUFhZkpHYXlBVDJQSnM5bFVZMjRtandHOHhNTTk3Y09fY0Zfcmc2cktFeXg1ZmhBM0VrQjFqVkU2cmR2bW9JZw?oc=5"
     },
     {
-     "s": "cbc.ca",
+     "s": "CBC",
      "u": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9GeEJBUDQ3TU9qQ1hxRDk2WWZra0trTFVpUHFzN3l5OEpaZkMtVUVvRmZFWVc4YWNjWEZ6eGZLamVqdUhQUGhHcjREUDRuMjc2UHlRY1ZhM1dkZw?oc=5"
     }
    ],
@@ -8755,7 +8740,7 @@
    "n": 6,
    "o": [
     {
-     "s": "cbc.ca",
+     "s": "CBC",
      "u": "https://news.google.com/rss/articles/CBMibEFVX3lxTE1LZjM0TTkzM0RxeFkxZS13dVoxR1VLemJaZ3BpVUJHTHVCYnlJck0zZjhZUjdkMHdPQS1PUmwyY1B3eHlIQTZfTm1lR3E1bU1YYUc5TV9CWlpwa1dWN2VhQ3hMR2doQXlLeG9Oaw?oc=5"
     },
     {
@@ -8767,7 +8752,7 @@
      "u": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOellpaUxRaUhSS25YS2VoeU5PV0w1WmU0ZEc3cVBfQlRkRVgzX2lnYUU5TmxwSTdlN3oyb0xhRnM0YWI5QzJmaGNQMHcwLTVfcDhRbVdmZXlPWk1iNFV5SVpjTnpuSklwTEt0cjh5TExGQ0xQVVpwTGhERzRpbDhWeDN6bFFJckw2ajRZYzdlRjR2Zw?oc=5"
     },
     {
-     "s": "theglobeandmail.com",
+     "s": "The Globe and Mail",
      "u": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPN3REalpYc1NRWExyS0xZdklUODBrM3c1RlV3M2lrbjVfQUlJcEptaG01R21tN1cwaEREY25KSmY5bkg3RllGUnlKXy1hSWxyUkNPWS1qLV9MR2V4eGF2SndzNFJ4RG9Db2xBM1JyREpWWUZDVlJhUG5LVzRyMDBiOEtONHhJWVZ6NnBmbFEwS2FMeHBpYnJxaWRVMVFndC1kbmsyNnNKOHVyU00zdElR?oc=5"
     },
     {
@@ -9353,14 +9338,7 @@
    "s": "Bank of Canada",
    "k": 3,
    "d": "2026-09-02T09:47:53.000Z",
-   "n": 2,
-   "o": [
-    {
-     "s": "wtaq.com",
-     "u": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQRC1vbW0xZl8tV1BsUjhfLTVZcDAtYVktTFgzLTQ1cXh5MHd6a1RfVEE1amlQU1NkVUhaemZIYXdscS04MHRLeHJ4bzBEcHoyTF80NG1KdXVxT1NOeXRVdUVYb0p3dXBMRWpnNVRBSGwybDFyUE9Ec3dBRkFNc3EtVk5KVEljVXU3NmdBSlZRR2Z5MW12SWkxelZuQUhsOU5ROWhhNXlFYw?oc=5"
-    }
-   ],
-   "w": 8,
+   "w": 6,
    "a": [
     "CAD"
    ],
@@ -9715,12 +9693,6 @@
    "k": 1,
    "d": "2026-09-01T17:40:12.000Z",
    "n": 2,
-   "o": [
-    {
-     "s": "CoinMarketCap",
-     "u": "https://news.google.com/rss/articles/CBMikAFBVV95cUxONHdiY3MtVGVRd3d1RDh0bFFxLUNjc3FLYzVVd1pLVU1CNEFtZG9zaVdUaGhFcXRiV19sNDlCdGpDTm9ZNmdGbC1waEtmdXozZVVZOVlDc3U3REF1cHZkRFkxX3ZMN3hPYVNBLVRUTkcyRzBsblFJOFVVYWNHcnYxM3J4SXZGa3RqZG5xamJkMHI?oc=5"
-    }
-   ],
    "w": 3,
    "a": [
     "GOLD"
@@ -10454,62 +10426,6 @@
    ]
   },
   {
-   "t": "German Inflation Edges Higher, Adding to Case for ECB Hike",
-   "u": "https://www.bloomberg.com/news/articles/2026-08-31/german-inflation-edges-higher-adding-to-case-for-ecb-hike",
-   "s": "Bloomberg",
-   "k": 2,
-   "d": "2026-08-31T12:06:49.000Z",
-   "w": 4.5,
-   "a": [
-    "EUR"
-   ],
-   "tg": [
-    "inflation"
-   ],
-   "n": 2
-  },
-  {
-   "t": "Impact of tariffs on Walla Walla wine goes beyond US, Canada",
-   "u": "https://news.google.com/rss/articles/CBMi8gFBVV95cUxNYm1uT2dTeExvaFZzMkJRd1Bsc3BILWlkRGI4TURPMUl1OVlIZGEzaDF6c2d6YXZrMlNoeml1bmdyOHpuUzdSVkN0Ry1sM24zZjRTcHpSVDFudTNEUlpfVzA5NnYxWHFRMVBrVmMzVjh6eWROa1FoRlJwTjVtNmNIN2tXN05TX1ZCdWpHRy1JczItRlZSbW5IbmpkQ1JXVDByc0pkNlFkWUpaUm11M3otOGs5blpKWEE0aDN4QXVMZTd1RXNwNENoQTZWb2ZOTkZTOUt0TGNJNkhwM0tSay1qM0M0Z3JoR0l0TV9TZ1p2ZVFadw?oc=5",
-   "s": "Union-Bulletin",
-   "k": 1,
-   "d": "2026-08-31T12:00:00.000Z",
-   "w": 2.5,
-   "a": [
-    "CAD"
-   ],
-   "tg": [
-    "tariff"
-   ]
-  },
-  {
-   "t": "Morgan Stanley Lowers Brent Oil Price Forecasts After US-Iran Peace Deal",
-   "u": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNdlp3OXJhb0xFaloyTTM5RXBpaWxYbThiWW93LTVFUDBwREJ3eW5FZEpicURyQmZaaUNUQVBoOU1nN0dYZnNnQUJxd2E5aFdQelNNSFJtYUlScnlJMDh6MjlRTXlFMmp4c3pjZHdETW9ScWJYa1NOM1BhTm42Ql9ybDNSZlpFdXRnWG9IMi1yRkpxN0t3OHNLZ3BQa0kzM1ZDbWtPQw?oc=5",
-   "s": "EnergyNow",
-   "k": 1,
-   "d": "2026-08-31T11:21:05.000Z",
-   "n": 2,
-   "w": 3,
-   "a": [
-    "OIL"
-   ],
-   "tg": []
-  },
-  {
-   "t": "I'm working with Venezuela to kill its inflation. Trump’s secret oil deal with Delcy Rodriguez is illegitimate — and unhelpful",
-   "u": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNRVJ5dTRYVlpDdGJPclh5QUFrZDNkZk45blluRGVKdGZ2cjJOTnlEbmxKVlFRNVBtbmI0V3FMcVZZb3VsZ0FpcHFaMFBfMnE5a1NCRnh0WC14UFFIakVKYW1CMUlDQ1Q4U19kcU5vT2xKR1VFMUVYVEZrN0tDbk4zeVFPOFAxT2M2X1p0UjhaMjc5Q0g0QlFwWWM3bnNKOE5IZE9pQ3pR?oc=5",
-   "s": "Fortune",
-   "k": 1,
-   "d": "2026-08-31T11:00:00.000Z",
-   "w": 2.5,
-   "a": [
-    "OIL"
-   ],
-   "tg": [
-    "inflation"
-   ]
-  },
-  {
    "t": "Kenyan Inflation Rate Rises Faster Than Expectations in August",
    "u": "https://www.bloomberg.com/news/articles/2026-08-31/kenyan-inflation-rate-rises-faster-than-expectations-in-august",
    "s": "Bloomberg",
@@ -10521,45 +10437,6 @@
     "inflation"
    ],
    "n": 3
-  },
-  {
-   "t": "Best high-yield savings interest rates today, Monday, August 31, 2026: Earn up to 4.15% APY",
-   "u": "https://finance.yahoo.com/personal-finance/banking/article/best-high-yield-savings-interest-rates-today-monday-august-31-2026-earn-up-to-415-apy-100000500.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-31T10:00:00.000Z",
-   "w": 3.5,
-   "a": [],
-   "tg": [
-    "interest rate"
-   ],
-   "n": 2
-  },
-  {
-   "t": "HELOC and home equity loan rates today, Thursday, September 3, 2026: Borrowing needs will dictate your interest rate",
-   "u": "https://finance.yahoo.com/personal-finance/mortgages/article/heloc-and-home-equity-loan-rates-today-thursday-september-3-2026-borrowing-needs-will-dictate-your-interest-rate-100000999.html",
-   "s": "Yahoo Personal Finance",
-   "k": 2,
-   "d": "2026-08-31T10:00:00.000Z",
-   "n": 2,
-   "w": 3.5,
-   "a": [],
-   "tg": [
-    "interest rate"
-   ]
-  },
-  {
-   "t": "Bessent heads to the G20 to rally allies on Iran as tariffs strain ties",
-   "u": "https://news.google.com/rss/articles/CBMioAFBVV95cUxQSUI5eTNzbW5DUkdna2pyZkljdTY1UXhMZGt1VWhUajl6VnZUYWpUNFFPZHBKd1h4SHViV3pNR25tLUlfVXVJWmJDbUo3UlE1a2E1S0hMdUxHTmQ4X1Q2d05XMUxNWllCZnpnOGFWbWZQb3FmcGgzOGd2NnNCdG9CeUk2SGdfblhvVXJZSkJqZHJtUmJvS3Y2VDV1WEdNeThU0gGmAUFVX3lxTE1oc29rUGY4LUFXNG9yVk9HT194MGlGN2hLWmg3ZDZ4b3VTc0d5VEtaSmxZY3JLb2hLa0lYcEVqVHFsQ2tHNVRDTXZwYVUzNm1XZEFUeE5BZk00WDBFOTdaMWM3M1JlUGNLMGk0b1NjczRYM21rUW9KSzZQV3lsb3YxNDFkMG5Pajg1QXpVVDluWU5qZUUzM2hQWTl1SWEzbE9UNE80U1E?oc=5",
-   "s": "ABC News",
-   "k": 1,
-   "d": "2026-08-31T08:47:42.000Z",
-   "n": 2,
-   "w": 3.5,
-   "a": [],
-   "tg": [
-    "tariff"
-   ]
   },
   {
    "t": "Warsh Says Fed Has 'Work to Do' to Fight Inflation",
@@ -10919,13 +10796,14 @@
   "ABC7 Eyewitness News",
   "AP News",
   "AgroLatam",
-  "Al Jazeera",
   "Arizona PBS",
+  "Associated Press",
   "Audacy",
   "Axios",
   "AzerNews",
   "BBC",
   "Bank of Canada",
+  "Bank of England",
   "Bank of Japan",
   "Barron's",
   "Barrons.com",
@@ -10950,6 +10828,7 @@
   "CTV News",
   "ChartMill",
   "Chilkat Valley News",
+  "CoinMarketCap",
   "Coinbase",
   "Crux Investor",
   "CryptoProwl",
@@ -10958,7 +10837,6 @@
   "Dallas Express",
   "Detroit Free Press",
   "ECB",
-  "East Asia Forum",
   "ElliotLakeToday.com",
   "EnergyNow",
   "EnergyNow.com",
@@ -10975,11 +10853,14 @@
   "Fortune",
   "Fox Business",
   "FreightWaves",
+  "Fund Selector Asia",
   "GMK Center",
   "Global Capital",
   "Global News",
+  "Goldman Sachs",
   "GuruFocus",
   "Healthcare Dive",
+  "Hoover Institution",
   "Idaho Statesman",
   "IndexBox",
   "International Accounting…",
@@ -11020,16 +10901,14 @@
   "Pitchbook",
   "Politico",
   "Private Banker Internatio…",
-  "Proactive",
   "Quartz",
   "Reading Eagle",
-  "Retail Insight Network",
   "Reuters",
   "SCMP",
+  "Schaeffer's Investment Re…",
   "Scripps News",
   "Seeking Alpha",
   "Senator Patty Murray",
-  "SmartAsset",
   "South China Morning Post",
   "Spectrum News",
   "Stamford Advocate",
@@ -11039,10 +10918,11 @@
   "Streetwise Reports",
   "The Accountant",
   "The Arkansas Democrat-Gaz…",
-  "The Business Journals",
   "The Christian Science Mon…",
   "The Clarion-Ledger",
   "The Daily Orange",
+  "The Daily Upside",
+  "The Economist",
   "The Fiscal Times",
   "The Guardian",
   "The Hill",
@@ -11052,7 +10932,6 @@
   "The News International",
   "The Pennsylvania State Un…",
   "The Real Economy Blog",
-  "The Telegraph",
   "The Times",
   "The Wall Street Journal",
   "The Washington Post",
@@ -11062,22 +10941,19 @@
   "Trefis",
   "U.S. News & World Report",
   "UA.NEWS",
-  "Union-Bulletin",
+  "USA Today",
   "Utility Dive",
   "VT Markets",
   "Verdict",
   "WABI",
   "WBAL-TV",
   "WCAX",
-  "WFSB",
   "WHQR",
-  "WHYY",
   "WPR",
   "WSJ",
   "WSLS",
   "WWD",
   "Wealth Management",
-  "World Construction Network",
   "World Gold Council",
   "Yahoo Finance",
   "Yahoo Personal Finance",
@@ -11085,6 +10961,7 @@
   "Yellow.com",
   "aa.com.tr",
   "asia.nikkei.com",
+  "axios.com",
   "cnbc.com",
   "decrypt",
   "eFinancialCareers",
@@ -11092,8 +10969,6 @@
   "euronews.com",
   "finance.biggo.com",
   "finance.yahoo.com",
-  "global.morningstar.com",
-  "goldmansachs.com",
   "investingLive",
   "kwsn.com",
   "ledgerinsights.com",
@@ -11101,6 +10976,7 @@
   "marketplace.org",
   "marketscreener.com",
   "mecep.org",
+  "mezha.net",
   "newswire.ca",
   "planadviser",
   "pro.thestreet.com",
@@ -11110,17 +10986,16 @@
   "spectrumnews1.com",
   "stonex.com",
   "thecentersquare.com",
+  "thehill.com",
   "tmgm.com",
-  "usatoday.com",
   "wsj.com",
   "wtnh.com",
-  "Межа. Новини України.",
   "アラブニュース",
   "富途牛牛"
  ],
  "topic": {
-  "label": "Dollar · Against",
-  "n": 38,
-  "total": 203
+  "label": "Inflation · Data · Ahead",
+  "n": 39,
+  "total": 172
  }
 }
