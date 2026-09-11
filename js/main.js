@@ -5242,14 +5242,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5486,7 +5486,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5612,6 +5612,7 @@ async function cloudPull(manual,forceOverwrite){
       // String. Mit einem truthy-Check kaeme "zurueck auf Terminal Pro" nie
       // auf dem anderen Geraet an - derselbe Fall wie bei designHue/null.
       if(!prefPending&&cd.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(cd.fxTheme)?cd.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}
+      if(!prefPending&&cd.appBg!==undefined){appBg=APP_BG_IDS.includes(cd.appBg)?cd.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}
       if(!prefPending&&cd.uiAnimEnabled!==undefined){uiAnimEnabled=cd.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}
       if(!prefPending&&cd.dataAnimEnabled!==undefined){dataAnimEnabled=cd.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}
       if(!prefPending&&cd.telegramEnabled!==undefined){telegramEnabled=cd.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}
@@ -18142,6 +18143,57 @@ function setFxTheme(i){
   applyFxTheme();renderFxThemeGrid();
   try{cloudAutoSync();}catch(e){}
 }
+// ══ HINTERGRUND (Nutzer-Wunsch 2026-09-11) ══════════════════════════════
+// Fuenf Moeglichkeiten; die Marmor-Bilder sind prozedural erzeugt (siehe
+// docs/CHANGELOG.md 2026-09-11) und liegen als WebP in img/ - zusammen 172 KB
+// statt 7,5 MB als PNG, weil der Hintergrund bei JEDEM Seitenaufruf mitlaedt.
+// ⚠ 'Current' hat wie bei den Design-Vorlagen die leere Id und KEIN eigenes
+// Regelwerk: ein Geraet mit unbekanntem Wert landet dadurch im vertrauten
+// Zustand statt auf einem leeren Hintergrund.
+// ⚠ Diese Liste steht doppelt - hier und in der Frueh-Weiche im <head> von
+// index.html, die den Wert setzen MUSS, bevor die erste Regel greift (sonst
+// blitzt beim Laden der helle Standard auf und springt dann auf den dunklen
+// Marmor um). check/structure.js haelt beide Listen gegeneinander.
+const APP_BGS=[
+  {id:'',             name:'Current', pv:''},
+  {id:'white',        name:'White',   pv:'#FFFFFF'},
+  {id:'marble-light', name:'Marble',  pv:'url(img/marble-light-tile.webp)'},
+  {id:'marble-vivid', name:'Vivid',   pv:'url(img/marble-vivid-tile.webp)'},
+  {id:'marble-dark',  name:'Dark',    pv:'url(img/marble-dark-tile.webp)'},
+];
+const APP_BG_IDS=APP_BGS.map(b=>b.id).filter(Boolean);
+let appBg=(()=>{try{const b=localStorage.getItem('fxpro_bg');return (b&&APP_BG_IDS.includes(b))?b:'';}catch(e){return '';}})();
+function applyAppBg(){
+  if(appBg)document.documentElement.setAttribute('data-app-bg',appBg);
+  else document.documentElement.removeAttribute('data-app-bg');
+}
+function renderAppBgGrid(){
+  const g=document.getElementById('appBgGrid');if(!g)return;
+  g.innerHTML=APP_BGS.map((b,i)=>{
+    // Die Kachel fuer 'Current' zeigt den Verlauf des heutigen Hintergrunds,
+    // damit die Auswahl nicht mit einem leeren Feld beginnt.
+    const pv=b.pv?`background-image:${b.pv.startsWith('url')?b.pv:'none'};background-color:${b.pv.startsWith('url')?'transparent':b.pv}`
+                 :'background:linear-gradient(180deg,var(--bg1),var(--bg0))';
+    return `<button class="appbg${(b.id||'')===appBg?' on':''}" onclick="setAppBg(${i})" type="button" title="${b.name}">`
+      +`<span class="appbg-pv" style="${pv}"></span><span class="appbg-n">${b.name}</span></button>`;
+  }).join('');
+}
+function setAppBg(i){
+  const b=APP_BGS[i];if(!b)return;
+  appBg=b.id||'';
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (CLAUDE.md
+  // Regel 6): localStorage wirft im privaten Modus und bei vollem Speicher.
+  // Der Hintergrund wuerde dann beim naechsten Start still zurueckspringen -
+  // fuer den Nutzer sieht das aus, als haette der Knopf nicht funktioniert.
+  try{
+    appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+  }catch(e){
+    alert('The background could not be saved: '+(e&&e.message||e)+'\nIt stays active until you reload.');
+  }
+  applyAppBg();renderAppBgGrid();
+  try{cloudAutoSync();}catch(e){}
+}
 let denseMode=localStorage.getItem('fxpro_dense')==='1';
 function applyDenseMode(){document.body.classList.toggle('dense-mode',denseMode);}
 function updDenseToggleBtn(){const b=document.getElementById('denseToggleBtn');if(b)b.checked=!!denseMode;}
@@ -18350,7 +18402,7 @@ document.addEventListener('visibilitychange',()=>{
 loadState();
 applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
-applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();applyFxTheme();renderFxThemeGrid();
+applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();applyFxTheme();renderFxThemeGrid();applyAppBg();renderAppBgGrid();
 loadTabStacks();renderTabBar();
 loadScoreHist();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
@@ -18700,6 +18752,9 @@ Object.assign(window,{
   // ohne diese Zeile wirft der Klick still ein ReferenceError und die
   // Vorlagen-Auswahl waere fuer den Nutzer einfach kaputt (CLAUDE.md Regel 6).
   setFxTheme,renderFxThemeGrid,applyFxTheme,FX_THEMES,
+  // ⚠ setAppBg haengt an einem onclick im Hintergrund-Raster - fehlt die
+  // Zeile hier, wirft der Klick still einen ReferenceError (CLAUDE.md Regel 6).
+  setAppBg,renderAppBgGrid,applyAppBg,APP_BGS,APP_BG_IDS,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,

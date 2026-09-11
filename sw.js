@@ -25,7 +25,7 @@
 // eine Sitzung zu spaet beim Nutzer an, was von aussen exakt so aussieht,
 // als waere der Fehler nicht behoben worden. Skripte laufen ab jetzt ueber
 // den Netz-zuerst-Zweig (Cache nur als Offline-Rueckfall).
-const CACHE_VERSION = 'fxpro-v11';
+const CACHE_VERSION = 'fxpro-v12';
 const APP_SHELL = [
   './',
   './index.html',
@@ -40,6 +40,17 @@ const APP_SHELL = [
   './icon-512.png',
   './apple-touch-icon.png',
   './favicon-32.png',
+  // ⚠ Die Hintergrundbilder gehoeren in die App-Huelle: ohne sie faellt der
+  // gewaehlte Marmor offline auf die leere Flaechenfarbe zurueck, und der
+  // Nutzer sieht beim naechsten Start etwas anderes als beim letzten.
+  // Zusammen 172 KB - vertretbar fuer eine Huelle, die ohnehin die
+  // Datendateien mitnimmt.
+  './img/marble-light.webp',
+  './img/marble-vivid.webp',
+  './img/marble-dark.webp',
+  './img/marble-light-tile.webp',
+  './img/marble-vivid-tile.webp',
+  './img/marble-dark-tile.webp',
   './ff_calendar.json',
   './ind_data.json',
   './bond_data.json',

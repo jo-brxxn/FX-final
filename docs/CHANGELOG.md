@@ -12305,3 +12305,98 @@ Nicht heilbar ist die Lücke in der Historie: `retailHistory` springt von
 `2026-09-04` direkt auf `2026-09-11`. Die Tage dazwischen sind nie erhoben
 worden und lassen sich nicht nachträglich beschaffen — geschätzt wird nichts
 (Regel 4).
+
+---
+
+## 2026-09-11 — Umschaltbarer Hintergrund, Marmor prozedural gezeichnet (VERSION-CHECK-493)
+
+Nutzer-Wunsch: erst *„Ne mehr einen Kunst Hintergrund wie zb Marmor artig mit
+grau tönen aber auch vlt helles leuchtendes Blau und rot"*, dann *„Nimm das als
+Hintergrund und mach in den Einstellungen das man zwischen dem neuen dem
+aktuellen und einem komplett weisen und einem Marmor Hintergrund wechseln
+kann"*.
+
+Nachgefragt wurde zweierlei (Regel 2), weil beide Antworten die Arbeit ändern:
+**fünf Einträge statt vier** (Current · White · Marble · Vivid · Dark — die
+Entscheidung fällt damit in der App statt vorab) und **Karten leicht
+durchscheinend**, damit der Stein zwischen ihnen sichtbar bleibt.
+
+### Die Bilder sind gerechnet, nicht heruntergeladen
+
+Fraktales Rauschen für die Struktur, eine verzerrte Sinuswelle für die Adern,
+mehrfache Gauß-Unschärfe für das Leuchten. Zwei Sackgassen davor, beide erst
+am fertigen Bild erkannt:
+
+| Versuch | Ergebnis | Ursache |
+|---|---|---|
+| 1 | parallele Streifen, wie gebürstetes Metall | Turbulenz zu schwach gegen die Wellenfrequenz |
+| 2 | konzentrische Ringe, wie eine Höhenlinienkarte | Turbulenz überlagerte die Grundrichtung |
+| 3 | Marmor | anisotropes Verzerrungsfeld |
+
+Gelöst hat es nicht die Stärke, sondern die **Richtung**: das Feld ist glatt
+*entlang* der Ader und fein *quer* dazu. Dadurch bleibt die Phase quer monoton,
+die Adern schließen sich nicht zu Ringen und laufen trotzdem frei.
+
+### Gewicht
+
+Als PNG wogen die drei Bilder 7,5 MB — untragbar für einen Hintergrund, der bei
+**jedem** Seitenaufruf mitlädt. Als WebP mit 1920 px Breite:
+
+| | Vollbild | Kachel fürs Auswahlraster |
+|---|---|---|
+| marble-light | 36 KB | 1,5 KB |
+| marble-vivid | 46 KB | 1,7 KB |
+| marble-dark | 72 KB | 3,6 KB |
+
+Zusammen **172 KB**. Alle sechs Dateien stehen in der App-Hülle von `sw.js`
+(`CACHE_VERSION` → `fxpro-v12`), sonst fiele der gewählte Marmor offline auf
+die leere Flächenfarbe zurück.
+
+### Lesbarkeit — gemessen, nicht angenommen
+
+Neuer Wächter `check/hintergrund.js`: drei Design-Vorlagen × fünf Hintergründe,
+**am echten Bildschirmpixel**. ⚠ `getComputedStyle` taugt dafür nicht — es
+liefert die *deklarierte* Farbe (ein `color-mix` mit Alpha 0,84), nicht das,
+was nach Transparenz, `backdrop-filter` und Bild darunter gezeichnet wird. Der
+erste Entwurf lief genau daran vorbei.
+
+Drei Fehler im Wächter selbst, alle durch Gegenproben gefunden:
+
+1. **Alle 15 Kombinationen meldeten exakt 1,01 : 1** — identische Zahlen für
+   Weiß und Carbon waren das Warnsignal. Über der Seite lag das
+   App-Auswahlfenster; gemessen wurde dessen Abdunklung.
+2. **Absoluter Kontrast als Maßstab** ließ den Wächter an der Seitenleiste der
+   dunklen Vorlagen rot werden (2,54 : 1) — **auch bei „Current" und „White"**.
+   Ein vorhandener Mangel der Vorlagen, der mit dem Hintergrund nichts zu tun
+   hat. Er steht jetzt als Hinweis da und blockiert nicht (Lehre aus Regel 7).
+   Gemessen wird der **Unterschied** zum selben Design ohne Bild.
+3. **`"total": 30`** vor `"fehler": 0` — `check/all.js` nimmt den ersten
+   Treffer von *fehler oder total* als Befundzahl und meldete deshalb 30
+   Befunde bei null Fehlern. Umbenannt in `"messungen"`.
+
+Endstand bei 84 % deckenden Karten:
+
+| Vorlage | Hintergrund | Kartentitel | Δ zu Current |
+|---|---|---|---|
+| Terminal Pro | marble-light | 9,94 : 1 | −0,41 |
+| Terminal Pro | marble-dark | 8,81 : 1 | −1,54 |
+| carbon | marble-vivid | 8,71 : 1 | −3,14 |
+| midnight | marble-dark | 11,39 : 1 | −0,42 |
+
+Alles über WCAG AAA (7 : 1). Der relative Verlust zählt deshalb nur, solange
+das Ergebnis **unter** AAA fällt — sonst wäre der Wächter Buchhaltung statt
+Befund. Gegenprobe: Karten auf 30 % Deckung → 5 Verstöße mit Zahlen; zurück auf
+84 % → 0.
+
+### Der Schleier
+
+Unter dem Bild liegt eine halbdurchsichtige Schicht in `--bg0`, also in der
+Flächenfarbe der *gewählten* Design-Vorlage. Sie hält den Kontrast unabhängig
+davon, welche Ader zufällig unter einem Text liegt, und wirkt automatisch in
+allen zehn Vorlagen.
+
+⚠ Die erste Einstellung (62/58/74 %) war zu stark: im Screenshot war vom Marmor
+**praktisch nichts zu sehen** — der Hintergrund erfüllte seinen Zweck nicht
+mehr. Zurückgenommen auf 30/26/42 %, Karten von 88 auf 84 % Deckung. Erst
+danach ist der Stein zwischen den Karten sichtbar, und der Wächter bestätigt,
+dass die Lesbarkeit hält.
