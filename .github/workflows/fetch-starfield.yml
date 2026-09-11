@@ -90,7 +90,14 @@ jobs:
           const ok=treffer.filter(t=>{
             const d=(t.data&&t.data[0])||{};
             if(d.media_type!=='image')return false;
-            if(/copyright|©/i.test((d.description||'')+' '+(d.title||'')))return false;
+            const txt=((d.description||'')+' '+(d.title||''));
+            if(/copyright|©/i.test(txt))return false;
+            // ⚠ GEMESSEN 2026-09-12: der Lauf davor waehlte "SPHEREx's
+            // Perspective From Orbit (Artist's Concept)" - eine Zeichnung
+            // eines Satelliten vor der Erde. Sterndichte allein kann eine
+            // Illustration nicht von einem Sternfeld unterscheiden. Die NASA
+            // benennt solche Bilder aber zuverlaessig im Titel.
+            if(/artist|concept|illustration|rendering|render|animation|diagram|infographic|chart|logo|patch|poster/i.test(txt))return false;
             return !!d.nasa_id;
           });
           console.log('[debug] '+treffer.length+' Treffer, '+ok.length+' davon brauchbar');
@@ -135,20 +142,37 @@ jobs:
               b,h=im.size
               if b<1400 or h<800:
                   bericht.append((kand[idx]['titel'][:40],f'{b}x{h}','-','zu klein')); continue
-              pr=im.resize((480,270),Image.LANCZOS).convert('L'); px=pr.load()
+              klein=im.resize((480,270),Image.LANCZOS)
+              pr=klein.convert('L'); px=pr.load()
               n=0
               for y in range(1,269):
                   for x in range(1,479):
                       v=px[x,y]
                       if v>70 and v>=px[x-1,y] and v>=px[x+1,y] and v>=px[x,y-1] and v>=px[x,y+1]: n+=1
               dichte=round(n*(1920*1080)/(480*270))
-              bericht.append((kand[idx]['titel'][:40],f'{b}x{h}',dichte,''))
-              # Zu leer ist auch falsch - ein schwarzes Bild hat 0 Sterne.
-              if dichte<200: continue
+
+              # ⚠ BUNTANTEIL - das Mass, das die Satelliten-Zeichnung
+              # aussortiert haette. Ein Sternenhimmel ist fast schwarzweiss:
+              # Punkte auf Schwarz. Eine Illustration (oder ein Nebel, oder
+              # die Erde im Bild) hat grosse, kraeftig farbige FLAECHEN.
+              # Gemessen wird der Anteil heller Pixel mit deutlicher
+              # Farbsaettigung; ueber ein paar Prozent ist es kein Himmel.
+              q=klein.load(); bunt=0; hell=0
+              for y in range(0,270,2):
+                  for x in range(0,480,2):
+                      r,g,bl=q[x,y]
+                      mx,mn=max(r,g,bl),min(r,g,bl)
+                      if mx>60:
+                          hell+=1
+                          if mx-mn>40: bunt+=1
+              buntanteil=round(100*bunt/max(1,(240*135)),1)
+              bericht.append((kand[idx]['titel'][:38],f'{b}x{h}',dichte,f'{buntanteil}% bunt'))
+              if dichte<200: continue            # ein schwarzes Bild ist auch kein Himmel
+              if buntanteil>3.0: continue        # farbige Flaechen -> Illustration/Nebel/Planet
               abstand=abs(dichte-ZIEL)
               if bestes is None or abstand<bestes[0]: bestes=(abstand,datei,url,idx,dichte)
           if bestes is None:
-              raise SystemExit('Kein Kandidat mit brauchbarer Sterndichte')
+              raise SystemExit('Kein Kandidat war ein echtes Sternfeld - alle zu bunt, zu leer oder zu dicht. Suchbegriff anpassen.')
           _,datei,url,idx,dichte=bestes
           os.replace(datei,'roh_bild')
           w=dict(kand[idx]); w['gemessene_dichte']=dichte
