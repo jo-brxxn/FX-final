@@ -1017,10 +1017,23 @@ function startGlobes(){
     h.addEventListener('pointercancel',globeOnPointerUp);
   });
   _globeLast=performance.now();
-  const STEP_MS=50; // ~20 FPS: glatt genug fuer langsame Rotation, billig genug fuers UI
+  // ⚠ GEMESSEN 2026-09-12, Nutzer: "die Performance muss besser werden".
+  // Die naheliegende Annahme war falsch - die Seite ist NICHT ausgelastet:
+  // Bildabstand 16,7 ms im Median, 0 Bilder ueber 20 ms, und zwar IDENTISCH
+  // mit und ohne Kugel. Gekostet hat sie messbar nichts.
+  // Das Ruckeln kam vom TAKT: mit STEP_MS=50 wurde die Geometrie nur
+  // 19,4-mal pro Sekunde neu gesetzt, waehrend der Bildschirm 60 Bilder
+  // zeichnet. Jedes dritte Bild zeigte dieselbe Stellung - die Drehung
+  // sprang sichtbar, obwohl reichlich Luft war.
+  // Deshalb: pro BILD aktualisieren. Der Rotationsschritt wird dadurch
+  // dritteln, die Bewegung gleitet. Die Kosten traegt die Seite (Nachmessung
+  // steht im CHANGELOG); der Grenzwert unten faengt nur noch Ausreisser ab,
+  // etwa wenn ein Tab im Hintergrund lag und dt auf mehrere Sekunden steht.
+  const STEP_MS=0;
+  const DT_MAX=100;   // groessere Spruenge werden gekappt, sonst schiesst die Kugel nach einem Tab-Wechsel herum
   const frame=now=>{
     if(!GLOBE_PAGES.includes(curPage)||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
-    const dt=now-_globeLast;
+    const dt=Math.min(now-_globeLast,DT_MAX);
     if(dt>=STEP_MS){
       _globeLast=now;
       let thrustI=0; // treibt globeFuelTick() unten, unabhaengig davon welcher Zweig gerade greift

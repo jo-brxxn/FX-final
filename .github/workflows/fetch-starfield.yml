@@ -130,44 +130,72 @@ jobs:
           python3 <<'PY'
           from PIL import Image, ImageEnhance
           import json, os
+
           Image.MAX_IMAGE_PIXELS = None
           im = Image.open('roh_bild').convert('RGB')
           print('[debug] Original:', im.size)
           b, h = im.size
 
-          # ⚠ Drei Eingriffe, alle aus einer Messung am ersten echten Bild
-          # (Hubble-Kugelsternhaufen, 2560x2506, 1889 KB):
+          # ⚠ NACHGESCHAERFT 2026-09-12, Nutzer: "der Himmel mit weniger
+          # Sternen und schaerfer". Die erste Fassung hat das Bild von 2506
+          # auf 1080 Pixel Hoehe HERUNTERGERECHNET - dabei verschmieren
+          # Sterne zwangslaeufig zu Flecken, sie sind ja nur wenige Pixel
+          # gross. Und ein Kugelsternhaufen ist per Definition dicht.
           #
-          # 1. AUSSCHNITT statt Skalierung. Das Bild hatte einen sehr hellen,
-          #    dichten Kern - genau dort steht auf der Seite die Weltkugel,
-          #    beide haetten sich gegenseitig erschlagen. Der 16:9-Ausschnitt
-          #    sitzt bewusst NICHT mittig, damit der Kern aus der Bildmitte
-          #    rutscht.
-          # 2. ABDUNKELN auf 45%. Ein Hintergrund soll zuruecktreten. Bei 45%
-          #    stehen die Sterne noch klar als Sterne, die Flaeche bleibt aber
-          #    Nachthimmel statt Milchglas.
-          # 3. Beides zusammen loest nebenbei das Gewicht: dichte Sternfelder
-          #    komprimieren fast gar nicht (gemessen 2560px q72 -> 1370 KB,
-          #    1600px q75 -> 765 KB, beides zu schwer fuer etwas, das bei
-          #    jedem Seitenaufruf mitlaedt). Mit Ausschnitt und Abdunklung
-          #    sind es 299 KB bei besserer Optik.
-          zh = round(b * 9 / 16)
-          if zh < h:
-              oben = round((h - zh) * 0.16)
-              im = im.crop((0, oben, b, oben + zh))
-          im = ImageEnhance.Brightness(im).enhance(0.45)
-          im = im.resize((1920, 1080), Image.LANCZOS)
+          # Beides loest derselbe Griff: einen 1920x1080-Ausschnitt in der
+          # ORIGINALAUFLOESUNG nehmen, gar nicht skalieren. Kein Resampling
+          # heisst maximale Schaerfe, und ein Ausschnitt vom Rand statt der
+          # ganzen Flaeche zeigt weniger, dafuer einzeln stehende Sterne.
+          ZB, ZH = 1920, 1080
+          if b >= ZB and h >= ZH:
+              # Vom Rand, nicht aus der Mitte: dort sitzt der dichte Kern.
+              links = 0
+              oben = max(0, h - ZH - round(h * 0.04))
+              im = im.crop((links, oben, links + ZB, oben + ZH))
+              skaliert = False
+          else:
+              im = im.resize((ZB, ZH), Image.LANCZOS)
+              skaliert = True
+
+          # ── Schwaechste Sterne wegnehmen ────────────────────────────────
+          # "Weniger Sterne" heisst nicht kleiner rechnen, sondern das
+          # Grundrauschen abschneiden: alles unter SCHWELLE wird zu
+          # Nachthimmel, der Rest behaelt seine Helligkeit und steht dadurch
+          # klarer. Eine reine Abdunklung wuerde die schwachen Sterne nur
+          # dunkler machen, nicht entfernen - sie blieben als Schleier.
+          SCHWELLE = 42      # von 255; gemessen am Hubble-Haufen
+          lut = [0 if i < SCHWELLE else min(255, round((i - SCHWELLE) * 255 / (255 - SCHWELLE))) for i in range(256)]
+          im = im.point(lut * 3)
+          # Danach leicht abdunkeln: die verbliebenen Sterne sollen Sterne
+          # bleiben, der Hintergrund aber zuruecktreten.
+          im = ImageEnhance.Brightness(im).enhance(0.72)
+
           os.makedirs('img', exist_ok=True)
-          im.save('img/starfield.webp', 'WEBP', quality=74, method=6)
+          im.save('img/starfield.webp', 'WEBP', quality=80, method=6)
           im.resize((240, 135), Image.LANCZOS).save('img/starfield-tile.webp', 'WEBP', quality=78, method=6)
+
+          # Sterne zaehlen, damit "weniger" eine Zahl ist und keine Behauptung:
+          # lokale Maxima ueber einem Schwellwert.
+          g = im.convert('L')
+          px = g.load()
+          n = 0
+          for y in range(2, ZH - 2, 2):
+              for x in range(2, ZB - 2, 2):
+                  v = px[x, y]
+                  if v > 90 and v >= px[x-2, y] and v >= px[x+2, y] and v >= px[x, y-2] and v >= px[x, y+2]:
+                      n += 1
+          print('[debug] sichtbare Sterne (Stichprobe):', n)
+
           w = json.load(open('wahl.json'))
           w['quelle'] = os.environ.get('BILD_URL', '')
           w['masse'] = list(im.size)
           w['bytes'] = os.path.getsize('img/starfield.webp')
-          w['bearbeitung'] = '16:9-Ausschnitt (Kern aus der Mitte), Helligkeit 45 Prozent, 1920x1080, WebP q74'
+          w['sterne'] = n
+          w['bearbeitung'] = (f'1920x1080 {"Ausschnitt in Originalaufloesung (kein Resampling)" if not skaliert else "skaliert"}, '
+                              f'Schwellwert {SCHWELLE}/255 schneidet schwache Sterne weg, Helligkeit 72 Prozent, WebP q80')
           w['lizenz'] = 'NASA-Bildmaterial, gemeinfrei (NASA Media Usage Guidelines)'
           json.dump(w, open('img/starfield-herkunft.json', 'w'), indent=1, ensure_ascii=False)
-          print('[debug] geschrieben:', im.size, round(w['bytes']/1024), 'KB')
+          print('[debug] geschrieben:', im.size, round(w['bytes']/1024), 'KB,', n, 'Sterne')
           PY
         env:
           BILD_URL: ${{ steps.suche.outputs.bild }}
