@@ -17360,15 +17360,18 @@ function renderRateProb(){
 }
 
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={over:'pgOver',edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
 // zusammenmachen, Non-FX unter FX anreihen") - die 'cur'-Seite zeigt jetzt
 // immer ALLE SB_CATS-Kategorien (FX zuerst, dann Crypto/Metals/Energy/
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
-const TAB_ORDER=['dash','fx','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
+// 'over' steht bewusst VOR 'dash' (Nutzer-Wunsch 2026-09-11: "eine neue
+// Kategorie ueber Dashboard").
+const TAB_ORDER=['over','dash','fx','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
 const TABS={
+  over:{label:'Overview',tab:'over'},
   dash:{label:'Dashboard',tab:'dash'},
   // Label 2026-08-03 von 'FX' auf 'Assets' umbenannt (Nutzer-Wunsch, per Foto):
   // der Tab zeigt seit "FX- und Non-FX-Tab zusammenlegen" (siehe Session-
@@ -17486,6 +17489,9 @@ function selectTab(id){const d=TABS[id];if(!d)return;showTab(d.tab,null,d.mode);
 // 2026-08-21). Feather/Lucide-Stroke-Stil, identisch zu den Icons im
 // Header (stroke-width 1.75, currentColor) - keine neue Bibliothek.
 const TAB_ICONS={
+  // Globus: Kreis plus Meridian und Aequator - dasselbe Strichgewicht wie
+  // die uebrigen Symbole, damit die Leiste ruhig bleibt.
+  over:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>',
   dash:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   fx:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.5" cy="6" r="1"/><circle cx="3.5" cy="12" r="1"/><circle cx="3.5" cy="18" r="1"/>',
   mx:'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
@@ -17678,6 +17684,18 @@ function triggerEnterAnim(){
   clearTimeout(_animEnterT);
   _animEnterT=setTimeout(()=>b.classList.remove('anim-enter'),900);
 }
+// Overview: eine Seite, eine Weltkugel. Bewusst OHNE Karten, Kennzahlen
+// oder Regler - der Nutzer hat "mach da einfach die Weltkugel" gesagt, und
+// alles, was daneben stuende, waere etwas, das er nicht verlangt hat.
+// ⚠ Die Kugel wird bei JEDEM Betreten neu aufgebaut. startGlobes() ersetzt
+// das innerHTML des Hosts und sammelt die Element-Referenzen neu ein; nach
+// einem Seitenwechsel sind die alten Referenzen tot, weil die Seite auf
+// display:none stand und ihre Masse dabei 0 meldet.
+function renderOverview(){
+  const host=document.getElementById('overGlobeHost');
+  if(!host)return;
+  startGlobes();
+}
 function showTab(tab,btn,fxMode){
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   triggerEnterAnim();
@@ -17743,7 +17761,8 @@ function showTab(tab,btn,fxMode){
   // auch per normaler Tab-Leiste statt der Pille - wieder auf 'cur' landet,
   // hat die Pille ihren Zweck erfuellt.
   if(tab==='cur'&&_resReturnActive&&_quickReturnAssetId){_resReturnActive=false;_quickReturnAssetId=null;document.body.classList.remove('res-return-active');}
-  if(tab==='dash'){resetGlobeLon();renderDash();}
+  if(tab==='over'){resetGlobeLon();renderOverview();}
+  else if(tab==='dash'){renderDash();}
   else if(tab==='cur'){renderSidebar();renderDetail();}
   else if(tab==='mx')renderMatrix();
   else if(tab==='trends'){renderTrends();autoFetchPriceData();}

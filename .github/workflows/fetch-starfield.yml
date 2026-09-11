@@ -44,10 +44,31 @@ jobs:
           echo "Suchbegriff: \`$Q\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          curl -sSL --max-time 40 -G --data-urlencode "q=$Q" \
-            --data-urlencode "media_type=image" \
-            "https://images-api.nasa.gov/search" -o suche.json
-          echo "[debug] Suchantwort: $(wc -c < suche.json) Bytes"
+          # ⚠ Die Antwort wird AUSGEGEBEN, nicht nur gezaehlt. Erster Lauf
+          # bekam 163 Bytes zurueck und meldete nur "Keine Treffer" - die
+          # eigentliche Fehlermeldung der API stand im Koerper und wurde
+          # verschluckt. Gleiche Lehre wie bei den Nachrichtenquellen.
+          hole(){
+            curl -sSL --max-time 40 -A "Mozilla/5.0" -w "%{http_code}" -o suche.json "$1" 2>/dev/null || echo 000
+          }
+          Q_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$Q")
+          for versuch in \
+            "https://images-api.nasa.gov/search?q=${Q_ENC}&media_type=image" \
+            "https://images-api.nasa.gov/search?q=${Q_ENC}" \
+            "https://images-api.nasa.gov/search?keywords=stars&media_type=image" ; do
+            CODE=$(hole "$versuch")
+            SZ=$(wc -c < suche.json)
+            echo "[debug] HTTP $CODE, $SZ Bytes <- $versuch"
+            echo "| \`$(echo "$versuch" | cut -c1-70)\` | $CODE | $SZ |" >> $GITHUB_STEP_SUMMARY
+            if [ "$CODE" = "200" ] && [ "$SZ" -gt 2000 ]; then break; fi
+            echo "[debug] Antwortanfang: $(head -c 300 suche.json 2>/dev/null || echo '(leer)')"
+          done
+          echo "[debug] genommen: $(wc -c < suche.json) Bytes"
+          if [ "$(wc -c < suche.json)" -lt 2000 ]; then
+            echo "::error::Die NASA-Bild-API liefert kein brauchbares Ergebnis. Antwort:"
+            head -c 500 suche.json
+            exit 1
+          fi
 
           node <<'JS'
           const fs=require('fs');

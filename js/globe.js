@@ -959,9 +959,15 @@ function globeOnPointerUp(ev){
     _globeMode='decel';
   }
 }
+const GLOBE_PAGES=['over'];
 function startGlobes(){
   stopGlobe();
-  if(curPage!=='dash')return;
+  // ⚠ Seit 2026-09-11 lebt die Kugel auf der Overview-Seite, nicht mehr auf
+  // dem Dashboard. Beide Stellen (hier und die Abbruchbedingung in der
+  // Frame-Schleife unten) muessen dieselbe Liste kennen - stuenden sie
+  // auseinander, liefe die Animation auf einer Seite weiter, auf der die
+  // Kugel gar nicht mehr im DOM haengt.
+  if(!GLOBE_PAGES.includes(curPage))return;
   const hosts=[...document.querySelectorAll('.globe-host')];
   if(!hosts.length)return;
   // Kugel EINMAL als statisches SVG-Geruest aufbauen, Referenzen einsammeln. Danach
@@ -980,7 +986,14 @@ function startGlobes(){
     // ein Karten-Raster eingepasst werden muss, sondern der Bildschirmmitte
     // gehoert (siehe .intro-globe-host-CSS fuer die tatsaechliche Breite).
     const isIntro=!!h.closest('#introOv');
-    const size=Math.max(140,Math.min(w||220,isIntro?900:320));
+    // ⚠ Drei verschiedene Buehnen, drei Obergrenzen: eine Dashboard-Karte
+    // muss ins Raster passen (320), der Intro-Bildschirm gehoert der Kugel
+    // fast ganz (900), und die Overview-Seite gehoert ihr GANZ - dort
+    // begrenzt bereits das CSS (.pg-over .globe-host: min(72vh,760px)),
+    // eine zweite, niedrigere Kappung hier wuerde die Kugel klein in eine
+    // grosse Flaeche setzen.
+    const isOver=!!h.closest('#pgOver');
+    const size=Math.max(140,Math.min(w||220,isIntro?900:isOver?760:320));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
     // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
@@ -1006,7 +1019,7 @@ function startGlobes(){
   _globeLast=performance.now();
   const STEP_MS=50; // ~20 FPS: glatt genug fuer langsame Rotation, billig genug fuers UI
   const frame=now=>{
-    if(curPage!=='dash'||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
+    if(!GLOBE_PAGES.includes(curPage)||!_globeHosts.length||!document.body.contains(_globeHosts[0].host)){stopGlobe();return;}
     const dt=now-_globeLast;
     if(dt>=STEP_MS){
       _globeLast=now;

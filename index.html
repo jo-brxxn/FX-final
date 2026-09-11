@@ -418,6 +418,35 @@ svg.ic{vertical-align:-2px;flex:none}
 @media(hover:hover){.appbg:hover{border-color:var(--bd2)}}
 .appbg-pv{height:44px;border-radius:var(--rss);border:1px solid var(--bd);background-size:cover;background-position:center}
 .appbg-n{font-size:var(--fs-2xs);font-weight:700;color:var(--t0)}
+/* ══ OVERVIEW-SEITE ═════════════════════════════════════════════════════
+   Der Sternenhimmel ist eine eigene Ebene INNERHALB der Seite, nicht der
+   body-Hintergrund: sonst liefe er unter allen anderen Seiten mit und
+   kollidierte mit der Hintergrund-Wahl aus den Einstellungen.
+   ⚠ position:fixed statt absolute - die Seite scrollt, der Himmel soll
+   stehenbleiben. inset:0 mit z-index:0 legt ihn unter den Inhalt, ohne ihn
+   aus dem Stapelkontext der Kopfleiste zu heben (die hat einen eigenen,
+   hoeheren z-index).
+   ⚠ Kein background-attachment:fixed - das ruckelt auf iOS bekanntermassen
+   und wird dort teils ganz ignoriert. */
+.pg-over{position:relative;padding:0;overflow:hidden}
+.over-sky{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-color:#05070F;
+  background-image:var(--over-sky-img,none);
+  background-size:cover;background-position:center center;background-repeat:no-repeat}
+/* Vignette: zieht den Blick in die Mitte, wo die Kugel steht, und daempft
+   die hellen Sternfelder am Rand, damit sie nicht mit der Kopfleiste
+   konkurrieren. */
+.over-sky::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 45%,transparent 30%,rgba(3,5,12,.45) 72%,rgba(3,5,12,.82) 100%)}
+.over-inner{position:relative;z-index:1;min-height:100%;
+  display:flex;align-items:center;justify-content:center;padding:24px}
+/* ⚠ Die Kugel bekommt hier eine eigene Groessenobergrenze. startGlobes()
+   deckelt eine Karte auf 320px und den Intro-Bildschirm auf 900px; die
+   Overview-Seite ist keins von beidem - sie gehoert der Kugel ganz, also
+   darf sie so gross werden, wie das Fenster hergibt (Kappung in
+   startGlobes(), siehe dortigen Kommentar). */
+.pg-over .globe-host{width:min(72vh,760px);max-width:100%;aspect-ratio:1;position:relative}
+.pg-over .globe-host svg{position:relative;z-index:1}
 /* ══ DESIGN-VORLAGEN (Nutzer-Wunsch 2026-09-04) ══════════════════════════
    ⚠ DAS AKTUELLE DESIGN IST DER STANDARD und steht weiter oben in :root -
    es traegt KEIN [data-fx-theme]-Regelwerk. Damit landet ein Geraet mit
@@ -4519,11 +4548,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-493 - Der Hintergrund laesst sich jetzt in den Einstellungen umschalten: Current (wie bisher), White und drei Marmor-Bilder. Die Marmor-Bilder sind nicht heruntergeladen, sondern gerechnet - fraktales Rauschen fuer die Struktur, eine anisotrop verzerrte Sinuswelle fuer die Adern, mehrfache Gauss-Unschaerfe fuer das Leuchten. Zwei Sackgassen lagen davor: zu schwache Turbulenz gab parallele Streifen wie gebuerstetes Metall, zu starke gab konzentrische Ringe wie eine Hoehenlinienkarte. Geloest hat es die RICHTUNG - das Verzerrungsfeld ist glatt entlang der Ader und fein quer dazu, dadurch bleibt die Phase quer monoton und die Adern schliessen sich nicht zu Ringen. Als WebP mit 1920 Pixeln Breite kosten alle sechs Dateien zusammen 172 KB statt 7,5 MB als PNG - der Hintergrund laedt bei JEDEM Seitenaufruf mit. Bei Marmor werden die Karten zu 88 Prozent deckend und bekommen backdrop-filter, damit der Stein zwischen ihnen durchscheint, ohne dass Zahlen auf wechselndem Untergrund flimmern; die volle Deckfarbe steht als erste Deklaration da, ein Browser ohne color-mix bekommt also die heutige Karte. Unter dem Bild liegt ein Schleier in --bg0, der Flaechenfarbe der GEWAEHLTEN Design-Vorlage - dadurch bleibt Text, der direkt auf dem Hintergrund steht, in allen zehn Vorlagen lesbar, statt vom Zufall abzuhaengen, welche Ader gerade darunter liegt. Die Wahl wird geraeteuebergreifend gesynct und die Frueh-Weiche im head setzt sie, bevor die erste Regel greift, sonst blitzt beim Laden der helle Standard auf. Die Nachrichten-Seite zeigt jetzt WAS HEUTE WAR, und die Quellen wurden vorher gemessen statt geraten. Gemessen wurde jede Kandidaten-Adresse einzeln: BoJ, BoC und RBA antworten mit echtem RSS und kommen direkt rein, dazu eine Google-News-Suche ueber alle fuenf Notenbanken, ForexLive, FXStreet und OilPrice fuer Gold/Oel. NICHT eingebaut wurden Financial Juice (beide Adressen 404, es gibt dort keinen freien Feed - der Nutzer hatte danach gefragt), RBNZ (403) und Kitco (404); eine Adresse zu raten und stumm 0 Eintraege zu holen ist genau der Fehler vom 2026-08-19. Gegen Rauschen sperrt VERLAG_SPERRE sechs Verlage (Motley Fool, Insider Monkey, 24/7 Wall St, Moneywise, TheStreet, Barchart) - das entfernt 257 Schlagzeilen und kostet nur 13 relevante, die Trefferquote steigt von 38 auf 55 Prozent. Der Zeitfilter der News-Seite hat jetzt 1/3/5/7 Tage und Alle (gemessen 154/524/586/667/774 Meldungen), Voreinstellung ist Heute; die Tages-Ueberschrift bleibt beim Scrollen stehen und nennt Anzahl, Wichtiges und die drei haeufigsten Assets. Neu ist ausserdem der Notiz-Vorschlag: die geplante Sitzung darf pro Lauf hoechstens drei Meldungen als Notiz-Entwurf vorschlagen, der Nutzer bestaetigt mit einem Klick und die Notiz landet mit Quellenzeile, Bias und Tags in den Ordnern der genannten Assets. Die Routine laeuft 08:00 und 17:00 deutscher Zeit und arbeitet ab Wasserzeichen: nur Meldungen, die neuer sind als news_ai.json und dort noch nicht stehen. Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-494 - Neue Seite Overview ueber dem Dashboard, und die Weltkugel ist zurueck. Die Zeichenmechanik des Globus lag seit dem 2026-08-04 brach - sie war nie geloescht, nur hatte kein Widget mehr type globe. Jetzt bekommt sie eine eigene Buehne statt einer Karte im Raster: die Seite gehoert ihr ganz, entsprechend darf sie bis 760 Pixel gross werden statt der 320, die in ein Karten-Raster passen. Drei Buehnen, drei Obergrenzen - Karte, Intro-Bildschirm, Overview -, alle an einer Stelle in startGlobes. Der Sternenhimmel liegt als eigene Ebene INNERHALB der Seite, nicht auf body: sonst liefe er unter allen anderen Seiten mit und kollidierte mit der Hintergrund-Wahl aus den Einstellungen. Darueber eine Vignette, die den Blick in die Mitte zieht und die hellen Sternfelder am Rand daempft, damit sie nicht mit der Kopfleiste konkurrieren. Das Bild ist nicht erfunden und nicht irgendwo abgegriffen: die Arbeitsumgebung darf nicht ins offene Netz, deshalb holt ein eigener Workflow es auf dem GitHub-Runner ueber die dokumentierte NASA-Bild-API. Gesucht wird ausschliesslich in NASA-eigenem Material - bei Astrofotos liegt das Urheberrecht sonst fast immer beim einzelnen Fotografen, und ein Hintergrundbild wird Teil des Repos. Titel, nasa_id, Zentrum und Adresse liegen als Herkunftsnachweis neben dem Bild. Der Hintergrund laesst sich jetzt in den Einstellungen umschalten: Current (wie bisher), White und drei Marmor-Bilder. Die Marmor-Bilder sind nicht heruntergeladen, sondern gerechnet - fraktales Rauschen fuer die Struktur, eine anisotrop verzerrte Sinuswelle fuer die Adern, mehrfache Gauss-Unschaerfe fuer das Leuchten. Zwei Sackgassen lagen davor: zu schwache Turbulenz gab parallele Streifen wie gebuerstetes Metall, zu starke gab konzentrische Ringe wie eine Hoehenlinienkarte. Geloest hat es die RICHTUNG - das Verzerrungsfeld ist glatt entlang der Ader und fein quer dazu, dadurch bleibt die Phase quer monoton und die Adern schliessen sich nicht zu Ringen. Als WebP mit 1920 Pixeln Breite kosten alle sechs Dateien zusammen 172 KB statt 7,5 MB als PNG - der Hintergrund laedt bei JEDEM Seitenaufruf mit. Bei Marmor werden die Karten zu 88 Prozent deckend und bekommen backdrop-filter, damit der Stein zwischen ihnen durchscheint, ohne dass Zahlen auf wechselndem Untergrund flimmern; die volle Deckfarbe steht als erste Deklaration da, ein Browser ohne color-mix bekommt also die heutige Karte. Unter dem Bild liegt ein Schleier in --bg0, der Flaechenfarbe der GEWAEHLTEN Design-Vorlage - dadurch bleibt Text, der direkt auf dem Hintergrund steht, in allen zehn Vorlagen lesbar, statt vom Zufall abzuhaengen, welche Ader gerade darunter liegt. Die Wahl wird geraeteuebergreifend gesynct und die Frueh-Weiche im head setzt sie, bevor die erste Regel greift, sonst blitzt beim Laden der helle Standard auf. Die Nachrichten-Seite zeigt jetzt WAS HEUTE WAR, und die Quellen wurden vorher gemessen statt geraten. Gemessen wurde jede Kandidaten-Adresse einzeln: BoJ, BoC und RBA antworten mit echtem RSS und kommen direkt rein, dazu eine Google-News-Suche ueber alle fuenf Notenbanken, ForexLive, FXStreet und OilPrice fuer Gold/Oel. NICHT eingebaut wurden Financial Juice (beide Adressen 404, es gibt dort keinen freien Feed - der Nutzer hatte danach gefragt), RBNZ (403) und Kitco (404); eine Adresse zu raten und stumm 0 Eintraege zu holen ist genau der Fehler vom 2026-08-19. Gegen Rauschen sperrt VERLAG_SPERRE sechs Verlage (Motley Fool, Insider Monkey, 24/7 Wall St, Moneywise, TheStreet, Barchart) - das entfernt 257 Schlagzeilen und kostet nur 13 relevante, die Trefferquote steigt von 38 auf 55 Prozent. Der Zeitfilter der News-Seite hat jetzt 1/3/5/7 Tage und Alle (gemessen 154/524/586/667/774 Meldungen), Voreinstellung ist Heute; die Tages-Ueberschrift bleibt beim Scrollen stehen und nennt Anzahl, Wichtiges und die drei haeufigsten Assets. Neu ist ausserdem der Notiz-Vorschlag: die geplante Sitzung darf pro Lauf hoechstens drei Meldungen als Notiz-Entwurf vorschlagen, der Nutzer bestaetigt mit einem Klick und die Notiz landet mit Quellenzeile, Bias und Tags in den Ordnern der genannten Assets. Die Routine laeuft 08:00 und 17:00 deutscher Zeit und arbeitet ab Wasserzeichen: nur Meldungen, die neuer sind als news_ai.json und dort noch nicht stehen. Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-493</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-494</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -4779,6 +4808,23 @@ function introLogin(){
   <div class="aurora-blob aurora-a"></div>
   <div class="aurora-blob aurora-b"></div>
   <div class="aurora-blob aurora-c"></div>
+</div>
+<!-- ══ OVERVIEW (Nutzer-Wunsch 2026-09-11) ════════════════════════════════
+     "wir bauen die Weltkugel wieder ein ich will das du eine neue Kategorie
+     ueber Dashboard machst Overview mach da einfach die Weltkugel und als
+     Hintergrund einen Nacht Sternenhimmel"
+     Die Zeichenmechanik des Globus (.globe-host, startGlobes(),
+     globeSkeleton()) lag seit 2026-08-04 brach - sie war nie geloescht,
+     nur kein Widget hatte mehr type:'globe'. Hier bekommt sie wieder eine
+     Buehne, diesmal als eigene Seite statt als Karte im Raster.
+     ⚠ Der Sternenhimmel liegt NICHT auf body: er gehoert dieser einen Seite.
+     Sonst wuerde er unter allen anderen Seiten mitlaufen und mit der
+     Hintergrund-Wahl aus den Einstellungen kollidieren. -->
+<div class="pc pg-over" id="pgOver" style="display:none">
+  <div class="over-sky" aria-hidden="true"></div>
+  <div class="over-inner">
+    <div class="globe-host" id="overGlobeHost"></div>
+  </div>
 </div>
 <div class="pc" id="pgDash" onpointerdown="dashEditPressStart(event)" onpointermove="dashEditPressMove(event)" onpointerup="dashEditPressEnd()" onpointercancel="dashEditPressEnd()" onpointerleave="dashEditPressEnd()">
   <!-- Keine eigene "Dashboard / Live overview"-Ueberschrift (Referenz-Foto,
