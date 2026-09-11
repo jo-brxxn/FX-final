@@ -2576,6 +2576,21 @@ jobs:
           MYFXBOOK_PASSWORD: ${{ secrets.MYFXBOOK_PASSWORD }}
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          # ⚠ Debug-Ausgaben duerfen den Schritt NIE beenden. GEMESSEN am
+          # 2026-09-11: `head -c 200 sent_retail.json 2>/dev/null` gibt Exit 1
+          # zurueck, sobald die Datei fehlt - und sie entsteht NUR innerhalb
+          # des Myfxbook-Login-Zweigs. Seit dem 2026-09-06 scheiterte der
+          # Login, damit starb unter `bash -e` der GANZE Schritt in der
+          # Debug-Zeile, noch vor dem Node-Block darunter. Folgen, alle
+          # unsichtbar: kein Krypto-F&G, kein CNN-F&G, kein VIX, kein
+          # Put/Call, kein Retail - und `updated` blieb auf dem 06.09. stehen,
+          # weil auch das erst der Node-Block setzt. Der Schritt war trotzdem
+          # gruen (continue-on-error) und `2>/dev/null` verschluckte zusaetzlich
+          # die Fehlermeldung. Das ist exakt der Fall, den der Kommentar oben
+          # ausschliessen soll: EINE fehlende Quelle kippte alle anderen.
+          # Deshalb geht jede Roh-Ausgabe ab jetzt durch diese Funktion, die
+          # immer 0 zurueckgibt und das Fehlen ausdruecklich benennt.
+          zeig(){ echo "=== $1 ==="; if [ -s "$2" ]; then head -c "${3:-200}" "$2"; else echo "(keine Datei/leer - diese Quelle hat nichts geliefert)"; fi; echo; }
           curl -sL "https://api.alternative.me/fng/?limit=90&format=json" -o sent_cfng.json || true
           # CNN blockt Datacenter-IPs teils per HTTP 418 ("teapot"); bessere
           # Browser-Header (Accept/Referer/Origin) sind ein guenstiger Versuch,
@@ -2646,15 +2661,15 @@ jobs:
               done
               curl -sL -A "$UA" -b mfx_cookies.txt "https://www.myfxbook.com/api/logout.json?session=${SESS_ENC}" -o /dev/null || true
             else
-              echo "[debug] Myfxbook login failed (check MYFXBOOK_EMAIL/PASSWORD)"; head -c 200 sent_mfxlogin.json 2>/dev/null; echo
+              echo "[debug] Myfxbook login failed (check MYFXBOOK_EMAIL/PASSWORD)"; zeig "login-Antwort" sent_mfxlogin.json 200
             fi
           else
             echo "[debug] Myfxbook secrets not set - retail stays empty (see the workflow env comment to enable)"
           fi
-          echo "=== crypto F&G (first 200) ==="; head -c 200 sent_cfng.json 2>/dev/null; echo
-          echo "=== stock F&G (first 200) ==="; head -c 200 sent_sfng.json 2>/dev/null; echo
-          echo "=== TV VIX/PC (first 300) ==="; head -c 300 sent_tv.json 2>/dev/null; echo
-          echo "=== retail json (first 200) ==="; head -c 200 sent_retail.json 2>/dev/null; echo
+          zeig "crypto F&G" sent_cfng.json 200
+          zeig "stock F&G" sent_sfng.json 200
+          zeig "TV VIX/PC" sent_tv.json 300
+          zeig "retail json" sent_retail.json 200
           node -e '
             const fs=require("fs");
             const today=new Date().toISOString().slice(0,10);

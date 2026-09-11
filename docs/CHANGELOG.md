@@ -12184,3 +12184,99 @@ Ansatz: die Routine startet eine **dünne Sitzung**, deren einzige Aufgabe
 `create_session` mit `source_url` ist — die so erzeugte Arbeitssitzung ist
 frisch (also nicht schlafend) und hat ein autorisiertes Repo. Ergebnis dieses
 Versuchs steht noch aus.
+
+---
+
+## 2026-09-11 — Sentiment stand fünf Tage still, bei grünem Workflow
+
+Nutzer-Meldung mit Screenshot: *„Guck mal das ist veraltet der stündliche
+Workflow gibt keine Daten mehr das ist über 6 Tage alt"* — Retail Sentiment
+CADJPY, letzter Balken **Fr 4. Sep**, Quellenzeile **6.9.2026, 22:57:34**.
+
+### Gemessen, bevor irgendetwas geändert wurde
+
+Der Workflow lief einwandfrei — er hatte 27 Minuten vor der Meldung
+geschrieben. Nur eben nicht alles:
+
+| Datei | `updated` | Alter |
+|---|---|---|
+| `news_data.json` | 11.09. 00:45 | 4,5 h |
+| `seasonality_data.json` | 11.09. 00:45 | 4,5 h |
+| **`sentiment_data.json`** | **06.09. 20:57** | **104,3 h** |
+| `cot_data.json` | 04.09. 21:16 | 152 h — **korrekt**, COT erscheint freitags |
+
+Also kein Workflow-Ausfall, sondern **ein einzelner Schritt**. Im Lauf-Protokoll
+(Run 1110, Job 103102869985): Schritt 17 „Fetch market sentiment" lief
+**eine Sekunde** — 00:40:40 bis 00:40:41. Für ein halbes Dutzend `curl`-Aufrufe
+mit Zeitlimits unmöglich. Der Schritt war trotzdem grün.
+
+### Ursache
+
+Zeile 2657, eine reine Diagnose-Ausgabe:
+
+```bash
+echo "=== retail json (first 200) ==="; head -c 200 sent_retail.json 2>/dev/null; echo
+```
+
+`sent_retail.json` entsteht **nur innerhalb** des Myfxbook-Login-Zweigs. Seit
+dem 06.09. scheitert dieser Login, die Datei fehlt — und `head` auf eine
+fehlende Datei gibt **Exit 1**. GitHub startet jeden `run`-Block mit
+`bash -e`, also war der Schritt genau dort zu Ende. Nachgestellt:
+
+```
+$ bash -e t.sh   # head -c 200 gibtsnicht.json 2>/dev/null
+=== retail json (first 200) ===
+Exit-Code des Schritts: 1      # die Zeile danach lief nie
+```
+
+Der Node-Block *darunter* schreibt **alle** Sentiment-Quellen und setzt
+`out.updated`. Er lief seit fünf Tagen nicht mehr. Ausgefallen sind damit
+nicht nur Retail, sondern auch Crypto Fear & Greed, CNN Fear & Greed, VIX und
+das OCC-Put/Call — der Kommentar über dem Schritt verspricht wörtlich
+*„EINE fehlende Quelle darf die anderen NICHT kippen"*, und genau das ist
+passiert.
+
+**Drei Dinge machten es unsichtbar:**
+1. `2>/dev/null` verschluckte die Fehlermeldung — im Protokoll stand nichts.
+2. `continue-on-error: true` hielt den Lauf grün.
+3. Spätere Schritte (AAII, Put/Call-Backfill) schrieben `sentiment_data.json`
+   weiter, die Datei sah also frisch aus. Nur ihr *Inhalt* war eingefroren.
+
+### Reparatur an der Wurzel
+
+Jede Roh-Ausgabe des Schritts geht jetzt durch eine Hilfsfunktion, die immer 0
+zurückgibt und das Fehlen ausdrücklich benennt, statt es zu verschlucken:
+
+```bash
+zeig(){ echo "=== $1 ==="; if [ -s "$2" ]; then head -c "${3:-200}" "$2"; \
+        else echo "(keine Datei/leer - diese Quelle hat nichts geliefert)"; fi; echo; }
+```
+
+### Fehlerklasse
+
+Alle Workflows nach derselben Bauform durchsucht. Vier weitere Fundstellen
+(2396, 2482, 3847, 3894) hatten bereits `|| echo "(missing)"`, Zeile 554 steht
+in einem `if [ -s ... ]`. Der Sentiment-Schritt war die **einzige**
+ungeschützte Stelle.
+
+### Wächter
+
+**Regel 9 erweitert** — überwachte bisher nur `news_ai.json` und hätte diesen
+Ausfall deshalb nicht gesehen. Jetzt wird jede Datei mit `updated`-Feld gegen
+ihren eigenen Takt geprüft: Sentiment/News/Seasonality 30 h, COT 9 Tage,
+KI-Einordnung 40 h. Grenzen bewusst bei *zwei* ausgefallenen Läufen, nicht bei
+einem.
+
+**Regel 10 neu** — ein nacktes `head`/`tail`/`cat`/`wc`/`stat` auf eine Datei,
+die nicht garantiert existiert, ist ein Regelverstoß.
+
+⚠ Beide Gegenproben deckten Fehler **im Wächter selbst** auf:
+- Bei `head -c 200 datei` steht die Zählung als eigenes Argument. Das erste
+  Muster fing `200` als Dateinamen, fand keine Endung und ließ die Zeile
+  durch — der Wächter hätte genau den Fehler übersehen, für den er gebaut
+  wurde. Nur die Gegenprobe zeigte es.
+- Danach meldete er Zeile 554 als Verstoß, obwohl die Existenzprüfung eine
+  Zeile höher steht. Jetzt schaut er sechs Zeilen zurück.
+
+Endstand: 0 Fehlalarme; echte Zeile zurückgebaut → Treffer (`yml:2672`);
+zurückgesetzt → grün.

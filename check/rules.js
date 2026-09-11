@@ -435,42 +435,125 @@ try {
 // Diff sichtbar ist - im Gegensatz zu einem Waechter, den man irgendwann
 // entnervt ganz herausnimmt.
 // Unbekanntes Ausbleiben bleibt hart rot: ohne Quittung faellt der Lauf.
-const AI_MAX_STUNDEN = 40;
-const AI_STOERUNG_BIS = '2026-09-17';   // Routine liefert nicht (siehe CHANGELOG 2026-09-10)
+// ⚠⚠⚠ ERWEITERT 2026-09-11 auf ALLE Zulieferer, und zwar nach einem echten
+// Ausfall, den der Waechter in seiner alten Fassung NICHT gesehen haette.
+// Nutzer-Meldung: "der stuendliche Workflow gibt keine Daten mehr, das ist
+// ueber 6 Tage alt" (Retail-Sentiment, letzter Balken Fr 04.09.). Gemessen:
+//   news_data.json        4,5 h alt   <- Workflow lief also einwandfrei
+//   sentiment_data.json 104,3 h alt   <- ein einzelner SCHRITT lieferte nicht
+// Nur news_ai.json zu ueberwachen hat die Klasse also bloss zur Haelfte
+// abgedeckt. Ueberwacht wird ab jetzt jede Datei mit `updated`-Feld gegen
+// ihren eigenen Takt.
+// ⚠ Grenzen bewusst grosszuegig (Lehre aus Regel 7): ein Waechter, der ohne
+// echten Fund rot wird, wird weggeklickt. Die Schwelle liegt jeweils bei rund
+// ZWEI ausgefallenen Laeufen, nicht bei einem.
 const heuteStr = new Date().toISOString().slice(0, 10);
-const stoerungQuittiert = heuteStr <= AI_STOERUNG_BIS;
-try {
-  const roh = fs.readFileSync('news_ai.json', 'utf8');
-  const ai = JSON.parse(roh);
-  const t = Date.parse(ai && ai.updated);
-  if (!ai || !ai.updated || Number.isNaN(t)) {
-    fail('Einordnung ohne brauchbaren Zeitstempel',
-      `news_ai.json hat kein lesbares Feld "updated" (gefunden: ${JSON.stringify(ai && ai.updated)}). ` +
-      `Ohne Zeitstempel laesst sich nicht mehr sagen, ob die Routine noch laeuft - und ein Ausfall ` +
-      `sieht dann aus wie ein ruhiger Nachrichtentag.`);
-  } else {
-    const alt = (Date.now() - t) / 3600000;
-    const text =
-      `news_ai.json wurde zuletzt vor ${alt.toFixed(1)} Stunden geschrieben (${ai.updated}), erlaubt sind ` +
-      `${AI_MAX_STUNDEN}. Die Routine laeuft zweimal taeglich; bleiben zwei Laeufe hintereinander aus, ` +
-      `zeigt die News-Seite alte Einordnungen, ohne dass es jemandem auffaellt. Erst pruefen, ob die ` +
-      `Routine ueberhaupt gefeuert hat UND ob ihr Commit auf origin/main angekommen ist - "SUCCEEDED" ` +
-      `allein ist kein Beleg (siehe Messung oben).`;
-    if (alt > AI_MAX_STUNDEN) {
-      if (stoerungQuittiert)
-        console.error(`\n  [WARNUNG] Einordnung kommt nicht mehr nach\n  ${text}\n` +
-          `  Quittiert bis ${AI_STOERUNG_BIS} - danach faellt der Lauf hart. Nicht einfach verlaengern.\n`);
-      else
-        fail('Einordnung kommt nicht mehr nach',
-          `${text} Die Quittung lief am ${AI_STOERUNG_BIS} ab.`);
-    }
+const FRISCHE = [
+  // Datei,                Stunden, Takt,                                   quittiert bis
+  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-17'],
+  ['sentiment_data.json',       30, 'stuendlicher Workflow',                '2026-09-13'],
+  ['news_data.json',            30, 'stuendlicher Workflow',                null],
+  ['seasonality_data.json',     30, 'stuendlicher Workflow',                null],
+  // COT erscheint freitags ~21:30 UTC fuer den Dienstag davor. Neun Tage
+  // lassen einen ausgefallenen Freitag durchgehen, zwei nicht.
+  ['cot_data.json',           9*24, 'woechentlich (CFTC, freitags)',        null],
+];
+FRISCHE.forEach(([datei, maxStd, takt, quittungBis]) => {
+  let roh;
+  try { roh = fs.readFileSync(datei, 'utf8'); } catch (e) { return; }  // bewusst ausgebaut: kein Verstoss
+  let d;
+  try { d = JSON.parse(roh); } catch (e) {
+    fail('Datenfeed ist kein gueltiges JSON',
+      `${datei} laesst sich nicht parsen (${e.message}). Die App faellt dann stumm auf einen ` +
+      `Ersatzpfad zurueck - sichtbar nur daran, dass Werte fehlen.`);
+    return;
   }
-} catch (e) {
-  if (e instanceof SyntaxError)
-    fail('Einordnung ist kein gueltiges JSON',
-      `news_ai.json laesst sich nicht parsen (${e.message}). Die App faellt dann stumm auf die ` +
-      `Stichwort-Regeln zurueck - sichtbar nur daran, dass die Bewertungen fehlen.`);
-}
+  const t = Date.parse(d && d.updated);
+  if (!d || !d.updated || Number.isNaN(t)) {
+    fail('Datenfeed ohne brauchbaren Zeitstempel',
+      `${datei} hat kein lesbares Feld "updated" (gefunden: ${JSON.stringify(d && d.updated)}). ` +
+      `Ohne Zeitstempel laesst sich nicht sagen, ob der Zulieferer noch laeuft - und ein Ausfall ` +
+      `sieht dann aus wie "es gab halt nichts Neues".`);
+    return;
+  }
+  const alt = (Date.now() - t) / 3600000;
+  if (alt <= maxStd) return;
+  const text =
+    `${datei} wurde zuletzt vor ${alt.toFixed(1)} Stunden geschrieben (${d.updated}), erlaubt sind ` +
+    `${maxStd} - Takt: ${takt}. ⚠ Ein GRUENER Workflow-Lauf ist KEIN Beleg: am 2026-09-11 war der ` +
+    `Sentiment-Schritt fuenf Tage lang gruen und lieferte nichts, weil er unter "bash -e" in einer ` +
+    `Debug-Zeile starb und continue-on-error das verdeckte. Im Protokoll die LAUFZEIT des Schritts ` +
+    `ansehen: eine Sekunde fuer mehrere Abrufe heisst, er ist vorzeitig gestorben.`;
+  // Eine BEKANNTE, offene Stoerung darf befristet quittiert werden - sonst
+  // haengt jeder Code-Push an der Daten-Aktualitaet, und nicht einmal die
+  // Reparatur selbst kaeme durch (genau das ist am 2026-09-10 passiert).
+  // Ein kaputter Zulieferer darf laut sein, aber nicht die Werkstatt
+  // abschliessen. Das Datum zu verlaengern ist eine bewusste Handlung und im
+  // Diff sichtbar - anders als ein Waechter, den man entnervt ganz ausbaut.
+  if (quittungBis && heuteStr <= quittungBis)
+    console.error(`\n  [WARNUNG] Datenfeed kommt nicht mehr nach\n  ${text}\n` +
+      `  Quittiert bis ${quittungBis} - danach faellt der Lauf hart. Nicht einfach verlaengern.\n`);
+  else
+    fail('Datenfeed kommt nicht mehr nach',
+      text + (quittungBis ? ` Die Quittung lief am ${quittungBis} ab.` : ''));
+});
+
+// ── Regel 10: eine Debug-Zeile darf einen Workflow-Schritt nie beenden ──
+// ⚠ GEMESSEN 2026-09-11 - das ist die URSACHE des Ausfalls oben, nicht bloss
+// eine Vorsichtsmassnahme. Im Sentiment-Schritt stand als reine Diagnose:
+//     head -c 200 sent_retail.json 2>/dev/null
+// Die Datei entsteht NUR innerhalb des Myfxbook-Login-Zweigs. Ab dem
+// 2026-09-06 scheiterte der Login, die Datei fehlte, `head` gab Exit 1 - und
+// weil GitHub jeden run-Block mit `bash -e` startet, war der Schritt genau
+// dort zu Ende. Der Node-Block darunter, der ALLE Sentiment-Quellen schreibt
+// und `updated` setzt, lief nie wieder.
+// Drei Dinge machten es unsichtbar: `2>/dev/null` verschluckte die Meldung,
+// `continue-on-error` hielt den Lauf gruen, und spaetere Schritte fassten die
+// Datei weiter an, sie sah also frisch aus. Der Schritt lief eine Sekunde.
+// Regel: ein nacktes head/tail/cat/wc/stat auf eine Datei, die nicht
+// garantiert existiert, MUSS abgesichert sein - per `|| ...`, per
+// `if [ -s ... ]` oder ueber die Hilfsfunktion `zeig`.
+// Gegenprobe beim Einbau: die alte Zeile wieder eingesetzt -> Treffer;
+// zurueck auf zeig() -> 0.
+// ⚠ Die Zaehlung steht bei `head -c 200 datei` als EIGENES Argument hinter
+// dem Schalter. Die erste Fassung dieses Musters fing deshalb "200" als
+// Dateinamen, fand keine Endung und liess die Zeile durch - der Waechter
+// haette den Fehler, fuer den er gebaut wurde, nicht gemeldet. Aufgefallen
+// nur durch die Gegenprobe. Deshalb sind reine Zahlen hier ausdruecklich
+// Teil der Schalter-Gruppe.
+const NACKT_RE = /(?:^|;|&&)\s*(head|tail|cat|wc|stat)\s+(?:(?:-[^\s]+|\d+)\s+)*("[^"]+"|'[^']+'|[^\s;|&<>]+)/;
+try {
+  fs.readdirSync('.github/workflows').filter(f => /\.ya?ml$/.test(f)).forEach(f => {
+    const pfad = '.github/workflows/' + f;
+    const zeilen = fs.readFileSync(pfad, 'utf8').split('\n');
+    zeilen.forEach((z, i) => {
+      if (/<</.test(z)) return;                          // Heredoc, kein Lesen
+      if (/\|\|/.test(z)) return;                        // hat einen Auffangzweig
+      if (/^\s*(if|elif|while|until)\s/.test(z)) return; // steht selbst in einer Bedingung
+      if (/^\s*#/.test(z)) return;
+      const m = z.match(NACKT_RE);
+      if (!m) return;
+      if (!/\.(json|xml|csv|html?|txt|xls[xm]?)\b/.test(m[2])) return;  // keine Datei-Leseoperation
+      // ⚠ Die Existenzpruefung steht oft eine Zeile HOEHER:
+      //     if [ -s invcal.json ]; then
+      //       head -c 300 invcal.json; echo
+      // Zeilenweise gelesen sieht das wie der Fehler aus, ist aber sauber.
+      // Beim Einbau hat der Waechter genau hier einen Fehlalarm geworfen -
+      // und ein Waechter, der ohne echten Fund rot wird, wird irgendwann
+      // weggeklickt (Lehre aus Regel 7). Deshalb ein Blick auf die
+      // vorangehenden Zeilen: wird DIESE Datei dort auf Existenz geprueft,
+      // ist die Leseoperation abgesichert.
+      const datei = m[2].replace(/^["']|["']$/g, '');
+      const davor = zeilen.slice(Math.max(0, i - 6), i).join('\n');
+      if (new RegExp('\\[\\s*-[sfe]\\s+[^\\]]*' + datei.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(davor)) return;
+      fail('Debug-Zeile kann den Workflow-Schritt toeten',
+        `${pfad}:${i + 1} liest ${m[2]} mit ${m[1]} ohne Absicherung. Fehlt die Datei, gibt der Befehl ` +
+        `Exit 1 und beendet unter "bash -e" den GANZEN Schritt - alles darunter laeuft nie mehr. Genau so ` +
+        `fielen ab dem 2026-09-06 fuenf Tage lang saemtliche Sentiment-Quellen aus, bei gruenem Lauf. ` +
+        `Absichern mit "|| true", einem "if [ -s datei ]" oder der Funktion zeig().`);
+    });
+  });
+} catch (e) {}
 
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');
