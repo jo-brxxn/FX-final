@@ -34,7 +34,11 @@ Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch "zurück auf
 Auto" = null ankommt), `setupCcyFilter`/`setupFxOnly`
 (Set-ups-Waehrungsfilter/FX-Quick-Filter), `calHighOnly`/`calCcyFilter`
 (Kalender-Filter), `telegramEnabled`,
-`newsSeenTs`, `denseMode`, `assetAnimEnabled` (und die drei weiteren
+`newsSeenTs`, `denseMode`, `appBg` (Hintergrund-Wahl: leer = Current,
+sonst `white`/`marble-light`/`marble-vivid`/`marble-dark`; ⚠ die erlaubten
+Werte stehen doppelt — in `APP_BGS` in `js/main.js` und in der Frueh-Weiche
+im `<head>` von `index.html`, die den Wert setzen muss, BEVOR die erste
+CSS-Regel greift), `assetAnimEnabled` (und die drei weiteren
 Animations-Schalter aus demselben Vier-Schalter-Satz), `dashboards`/
 `activeDashId` (siehe `docs/navigation.md`, Mehrfach-Dashboards — laufen
 über `snap()`/`applySnap()`, kein manuelles Wiring nötig). Details/

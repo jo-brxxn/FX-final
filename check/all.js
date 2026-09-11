@@ -42,6 +42,7 @@ const PRUEFUNGEN = [
   // Bedeutung nach. ⚠ Bedeutung wird ueber den FARBTON geprueft, nicht ueber
   // Helligkeit - Blau und Rot koennen gleich hell und trotzdem eindeutig sein.
   { n: 'theme',     d: 'Design-Vorlagen: Kontrast, Bedeutungsfarben, Tokens',   f: 'check/theme.js',     args: [],           browser: true },
+  { n: 'hintergrund',d:'Kontrast unter jedem waehlbaren Hintergrund (am Pixel)', f: 'check/hintergrund.js', args: [],        browser: true },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 
