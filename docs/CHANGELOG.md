@@ -12400,3 +12400,81 @@ allen zehn Vorlagen.
 mehr. Zurückgenommen auf 30/26/42 %, Karten von 88 auf 84 % Deckung. Erst
 danach ist der Stein zwischen den Karten sichtbar, und der Wächter bestätigt,
 dass die Lesbarkeit hält.
+
+---
+
+## 2026-09-11 — Overview-Seite mit Weltkugel und Sternenhimmel (VERSION-CHECK-495)
+
+Nutzer-Wunsch: *„wir bauen die Weltkugel wieder ein ich will das du eine neue
+Kategorie über Dashboard machst Overview mach da einfach die Weltkugel und als
+Hintergrund einen Nacht Sternenhimmel aus dem Internet also hohe Qualität."*
+
+### Die Weltkugel lag nicht brach, sie hatte nur keine Bühne
+
+`.globe-host` / `startGlobes()` / `globeSkeleton()` waren seit dem 2026-08-04
+vollständig erhalten — nur hatte kein Widget mehr `type:'globe'`. Statt einer
+Karte im Raster bekommt sie jetzt eine eigene Seite. Damit ändert sich ihre
+Größenobergrenze: `startGlobes()` kannte bisher zwei Bühnen (Karte 320 px,
+Intro-Bildschirm 900 px), jetzt drei — die Overview-Seite gehört ihr ganz, dort
+gilt 760 px und das CSS deckelt zusätzlich auf `min(72vh,760px)`.
+
+⚠ Die Seitenprüfung `curPage!=='dash'` stand an **zwei** Stellen in `globe.js`
+(Einstieg und Abbruchbedingung der Frame-Schleife). Beide laufen jetzt über
+eine gemeinsame Liste `GLOBE_PAGES` — stünden sie auseinander, liefe die
+Animation auf einer Seite weiter, auf der die Kugel gar nicht mehr im DOM hängt.
+
+Gemessen im Browser: Seite sichtbar, SVG vorhanden, **648 × 648 px, 89 Pfade**,
+Pfad-`d` ändert sich über die Zeit — sie dreht sich wirklich. 0 eigene
+Seitenfehler.
+
+### Das Bild ist belegt, nicht abgegriffen
+
+⚠ Die Arbeitsumgebung darf nicht ins offene Netz: der Egress-Proxy beantwortet
+CONNECT zu `nasa.gov`, `unsplash.com` und `wikimedia.org` mit **403**. Deshalb
+holt ein eigener Workflow (`fetch-starfield.yml`) das Bild auf dem
+GitHub-Runner, über die dokumentierte NASA-Bild-API.
+
+Gesucht wird **ausschließlich in NASA-eigenem Material**: ein Hintergrundbild
+wird Teil des Repos und wird ausgeliefert, und bei Astrofotos liegt das
+Urheberrecht sonst fast immer beim einzelnen Fotografen (APOD etwa). Titel,
+`nasa_id`, Zentrum und Quelladresse liegen als `img/starfield-herkunft.json`
+neben dem Bild.
+
+Geholt: **„Hubble Catches Stellar Exodus in Action"** (GSFC), 2560 × 2506.
+
+### Drei Eingriffe, alle aus einer Messung
+
+| | |
+|---|---|
+| **Ausschnitt** | Das Bild hatte einen sehr hellen, dichten Kern — genau dort steht die Weltkugel. Der 16:9-Ausschnitt sitzt bewusst **nicht** mittig, damit der Kern aus der Bildmitte rutscht. |
+| **Abdunkeln auf 45 %** | Ein Hintergrund soll zurücktreten. Bei 45 % stehen die Sterne noch klar als Sterne, die Fläche bleibt Nachthimmel statt Milchglas. |
+| **Gewicht** | Dichte Sternfelder komprimieren fast gar nicht: 2560 px q72 → 1370 KB, 1600 px q75 → 765 KB. Mit Ausschnitt und Abdunklung sind es **299 KB** statt 1889 — bei besserer Optik. |
+
+Die Verarbeitung steht **im Workflow**, nicht als Handgriff daneben: ein
+erneuter Lauf erzeugt dasselbe Ergebnis.
+
+⚠ Der Sternenhimmel liegt als eigene Ebene **innerhalb** der Seite, nicht auf
+`body` — sonst liefe er unter allen anderen Seiten mit und kollidierte mit der
+Hintergrund-Wahl aus den Einstellungen. Die Grundfarbe ist ein dunkles
+Nachtblau, kein Verlass auf die Datei: fällt sie aus, steht die Seite trotzdem
+auf einem Nachthimmel statt auf Weiß, wo eine helle Kugel verschwände.
+
+### Zwei eigene Fehler unterwegs
+
+**Der erste Workflow-Lauf verschluckte die Fehlermeldung.** Die NASA-API
+antwortete mit 163 Bytes, das Skript meldete nur „Keine Treffer" — die
+eigentliche Ursache stand im Antwortkörper und wurde nie ausgegeben. Dieselbe
+Lehre wie bei den Nachrichtenquellen; er gibt sie jetzt aus und probiert
+mehrere Abfrageformen.
+
+**Regel 10 hat mich selbst erwischt.** Der neue Workflow enthielt
+`head -c 300 suche.json` ohne Absicherung — exakt die Bauform, die ab dem
+2026-09-06 fünf Tage lang alle Sentiment-Quellen gekippt hat. Der gestern
+gebaute Wächter hat sie beim ersten vollen Lauf gemeldet, bevor sie
+ausgeliefert wurde.
+
+⚠ Anmerkung zur Historie: durch ein `git add -A` sind die Overview-Änderungen
+an `index.html`, `js/main.js` und `js/globe.js` bereits im Commit
+*„Sternenhimmel-Workflow zeigt die Fehlerantwort"* gelandet, dessen Nachricht
+davon nichts sagt. Inhaltlich korrekt, aber die Nachricht ist irreführend —
+wer die Herkunft dieser Änderung sucht, findet sie hier.

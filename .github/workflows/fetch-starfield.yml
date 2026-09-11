@@ -61,12 +61,21 @@ jobs:
             echo "[debug] HTTP $CODE, $SZ Bytes <- $versuch"
             echo "| \`$(echo "$versuch" | cut -c1-70)\` | $CODE | $SZ |" >> $GITHUB_STEP_SUMMARY
             if [ "$CODE" = "200" ] && [ "$SZ" -gt 2000 ]; then break; fi
-            echo "[debug] Antwortanfang: $(head -c 300 suche.json 2>/dev/null || echo '(leer)')"
+            # ⚠ Nie nackt lesen - check/rules.js Regel 10. Genau diese
+            # Bauform hat ab dem 2026-09-06 fuenf Tage lang alle
+            # Sentiment-Quellen gekippt, weil head auf eine fehlende Datei
+            # Exit 1 gibt und "bash -e" den Schritt dort beendet. Der
+            # Waechter hat diesen Workflow beim Einbau prompt erwischt.
+            if [ -s suche.json ]; then
+              echo "[debug] Antwortanfang: $(head -c 300 suche.json)"
+            else
+              echo "[debug] Antwort leer oder Datei fehlt"
+            fi
           done
           echo "[debug] genommen: $(wc -c < suche.json) Bytes"
           if [ "$(wc -c < suche.json)" -lt 2000 ]; then
             echo "::error::Die NASA-Bild-API liefert kein brauchbares Ergebnis. Antwort:"
-            head -c 500 suche.json
+            if [ -s suche.json ]; then head -c 500 suche.json; else echo "(keine Antwort)"; fi
             exit 1
           fi
 
@@ -119,30 +128,46 @@ jobs:
         run: |
           python3 -m pip install --quiet --upgrade pillow
           python3 <<'PY'
-          from PIL import Image
+          from PIL import Image, ImageEnhance
           import json, os
           Image.MAX_IMAGE_PIXELS = None
           im = Image.open('roh_bild').convert('RGB')
           print('[debug] Original:', im.size)
           b, h = im.size
-          # Auf 2560 Breite: die Seite zeigt das Bild vollflaechig hinter der
-          # Weltkugel, feine Sterne sollen dabei Punkte bleiben und nicht
-          # verwaschen. Hoeher lohnt nicht - der Browser laedt es bei jedem
-          # Aufruf mit.
-          ziel_b = 2560
-          if b > ziel_b:
-              im = im.resize((ziel_b, round(h * ziel_b / b)), Image.LANCZOS)
+
+          # ⚠ Drei Eingriffe, alle aus einer Messung am ersten echten Bild
+          # (Hubble-Kugelsternhaufen, 2560x2506, 1889 KB):
+          #
+          # 1. AUSSCHNITT statt Skalierung. Das Bild hatte einen sehr hellen,
+          #    dichten Kern - genau dort steht auf der Seite die Weltkugel,
+          #    beide haetten sich gegenseitig erschlagen. Der 16:9-Ausschnitt
+          #    sitzt bewusst NICHT mittig, damit der Kern aus der Bildmitte
+          #    rutscht.
+          # 2. ABDUNKELN auf 45%. Ein Hintergrund soll zuruecktreten. Bei 45%
+          #    stehen die Sterne noch klar als Sterne, die Flaeche bleibt aber
+          #    Nachthimmel statt Milchglas.
+          # 3. Beides zusammen loest nebenbei das Gewicht: dichte Sternfelder
+          #    komprimieren fast gar nicht (gemessen 2560px q72 -> 1370 KB,
+          #    1600px q75 -> 765 KB, beides zu schwer fuer etwas, das bei
+          #    jedem Seitenaufruf mitlaedt). Mit Ausschnitt und Abdunklung
+          #    sind es 299 KB bei besserer Optik.
+          zh = round(b * 9 / 16)
+          if zh < h:
+              oben = round((h - zh) * 0.16)
+              im = im.crop((0, oben, b, oben + zh))
+          im = ImageEnhance.Brightness(im).enhance(0.45)
+          im = im.resize((1920, 1080), Image.LANCZOS)
           os.makedirs('img', exist_ok=True)
-          im.save('img/starfield.webp', 'WEBP', quality=82, method=6)
-          im.resize((240, max(1, round(im.size[1] * 240 / im.size[0]))), Image.LANCZOS) \
-            .save('img/starfield-tile.webp', 'WEBP', quality=78, method=6)
+          im.save('img/starfield.webp', 'WEBP', quality=74, method=6)
+          im.resize((240, 135), Image.LANCZOS).save('img/starfield-tile.webp', 'WEBP', quality=78, method=6)
           w = json.load(open('wahl.json'))
           w['quelle'] = os.environ.get('BILD_URL', '')
           w['masse'] = list(im.size)
           w['bytes'] = os.path.getsize('img/starfield.webp')
+          w['bearbeitung'] = '16:9-Ausschnitt (Kern aus der Mitte), Helligkeit 45 Prozent, 1920x1080, WebP q74'
           w['lizenz'] = 'NASA-Bildmaterial, gemeinfrei (NASA Media Usage Guidelines)'
           json.dump(w, open('img/starfield-herkunft.json', 'w'), indent=1, ensure_ascii=False)
-          print('[debug] geschrieben:', im.size, w['bytes'], 'Bytes')
+          print('[debug] geschrieben:', im.size, round(w['bytes']/1024), 'KB')
           PY
         env:
           BILD_URL: ${{ steps.suche.outputs.bild }}

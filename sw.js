@@ -25,7 +25,7 @@
 // eine Sitzung zu spaet beim Nutzer an, was von aussen exakt so aussieht,
 // als waere der Fehler nicht behoben worden. Skripte laufen ab jetzt ueber
 // den Netz-zuerst-Zweig (Cache nur als Offline-Rueckfall).
-const CACHE_VERSION = 'fxpro-v12';
+const CACHE_VERSION = 'fxpro-v13';
 const APP_SHELL = [
   './',
   './index.html',
@@ -51,6 +51,7 @@ const APP_SHELL = [
   './img/marble-light-tile.webp',
   './img/marble-vivid-tile.webp',
   './img/marble-dark-tile.webp',
+  './img/starfield.webp',
   './ff_calendar.json',
   './ind_data.json',
   './bond_data.json',
