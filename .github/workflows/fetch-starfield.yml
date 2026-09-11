@@ -23,7 +23,7 @@ on:
       suchbegriff:
         description: "Suchbegriff fuer die NASA-Bild-API"
         required: false
-        default: "milky way starfield night sky"
+        default: "star field night sky stars"
 
 jobs:
   holen:
@@ -84,9 +84,9 @@ jobs:
           const j=JSON.parse(fs.readFileSync('suche.json','utf8'));
           const treffer=(j.collection&&j.collection.items)||[];
           if(!treffer.length){console.error('Keine Treffer');process.exit(1);}
-          // Nur Bilder von NASA-Zentren: die sind gemeinfrei. Eintraege mit
-          // fremdem "center" oder einem Copyright-Vermerk werden verworfen -
-          // lieber kein Bild als ein rechtlich unklares im Repo.
+          // Nur NASA-eigenes Material: gemeinfrei. Eintraege mit
+          // Copyright-Vermerk fliegen raus - lieber kein Bild als ein
+          // rechtlich unklares im Repo.
           const ok=treffer.filter(t=>{
             const d=(t.data&&t.data[0])||{};
             if(d.media_type!=='image')return false;
@@ -95,34 +95,72 @@ jobs:
           });
           console.log('[debug] '+treffer.length+' Treffer, '+ok.length+' davon brauchbar');
           if(!ok.length){console.error('Nichts eindeutig Gemeinfreies dabei');process.exit(1);}
-          const zeilen=ok.slice(0,8).map(t=>{
-            const d=t.data[0];
-            return `| ${String(d.title||'').replace(/\|/g,'').slice(0,60)} | ${d.center||'-'} | ${d.nasa_id} |`;
-          });
-          fs.writeFileSync('kandidaten.md','| Titel | Zentrum | nasa_id |\n|---|---|---|\n'+zeilen.join('\n')+'\n');
-          const w=ok[0];
-          fs.writeFileSync('wahl.json',JSON.stringify({
-            titel:w.data[0].title, nasa_id:w.data[0].nasa_id, zentrum:w.data[0].center||'',
-            beschreibung:(w.data[0].description||'').slice(0,400),
-            sammlung:w.href
-          },null,1));
+          fs.writeFileSync('kandidaten.json',JSON.stringify(ok.slice(0,8).map(t=>({
+            titel:t.data[0].title, nasa_id:t.data[0].nasa_id, zentrum:t.data[0].center||'',
+            beschreibung:(t.data[0].description||'').slice(0,300), sammlung:t.href
+          })),null,1));
           JS
-          cat kandidaten.md >> $GITHUB_STEP_SUMMARY
 
-          SAMMLUNG=$(node -e "console.log(require('./wahl.json').sammlung)")
-          curl -sSL --max-time 40 "$SAMMLUNG" -o assets.json
-          # Groesstes JPG/PNG der Sammlung nehmen ("~orig" ist bei der NASA die
-          # unskalierte Fassung).
-          BILD=$(node -e "
-            const a=require('./assets.json');
-            const kand=a.filter(u=>/\.(jpg|jpeg|png)$/i.test(u));
-            const orig=kand.find(u=>/~orig\./i.test(u))||kand.find(u=>/~large\./i.test(u))||kand[0];
-            if(!orig){console.error('kein Bild in der Sammlung');process.exit(1);}
-            console.log(orig);")
-          echo "[debug] Bildadresse: $BILD"
-          curl -sSL --max-time 180 "$BILD" -o roh_bild
-          echo "[debug] geladen: $(stat -c%s roh_bild) Bytes"
-          echo "bild=$BILD" >> $GITHUB_OUTPUT
+          # ⚠ Kandidaten werden GEMESSEN, nicht nach Reihenfolge genommen.
+          # Grund (2026-09-12): der erste Lauf nahm den ersten Treffer - einen
+          # Kugelsternhaufen. Der hat in JEDEM Ausschnitt rund 10000
+          # aufloesbare Sterne; der Nutzer-Wunsch "weniger Sterne" war damit
+          # gar nicht erfuellbar, egal wie man nachbearbeitet. Gemessen wird
+          # die Sterndichte, gewaehlt wird der duennste Himmel im Zielbereich.
+          python3 -m pip install --quiet --upgrade pillow
+          for i in 0 1 2 3 4 5; do
+            SAM=$(node -e "const k=require('./kandidaten.json');if(!k[$i]){process.exit(1);}console.log(k[$i].sammlung)" 2>/dev/null) || break
+            curl -sSL --max-time 40 "$SAM" -o assets_$i.json || continue
+            B=$(node -e "
+              const a=require('./assets_$i.json');
+              const k=a.filter(u=>/\.(jpg|jpeg|png)$/i.test(u));
+              const o=k.find(u=>/~orig\./i.test(u))||k.find(u=>/~large\./i.test(u))||k[0];
+              if(!o)process.exit(1); console.log(o);" 2>/dev/null) || continue
+            curl -sSL --max-time 150 "$B" -o kand_$i || continue
+            echo "kand_$i|$B" >> kandidaten.txt
+          done
+          if [ ! -s kandidaten.txt ]; then echo "::error::Kein Kandidat ladbar"; exit 1; fi
+
+          python3 <<'PY2'
+          from PIL import Image
+          import json, os
+          Image.MAX_IMAGE_PIXELS=None
+          zeilen=[l.strip().split('|') for l in open('kandidaten.txt') if l.strip()]
+          kand=json.load(open('kandidaten.json'))
+          ZIEL=1500          # so viele Sterne hat ein normaler Nachthimmel im Bild
+          bericht=[]; bestes=None
+          for idx,(datei,url) in enumerate(zeilen):
+              try: im=Image.open(datei).convert('RGB')
+              except Exception as e: bericht.append((datei,'-','-','nicht lesbar')); continue
+              b,h=im.size
+              if b<1400 or h<800:
+                  bericht.append((kand[idx]['titel'][:40],f'{b}x{h}','-','zu klein')); continue
+              pr=im.resize((480,270),Image.LANCZOS).convert('L'); px=pr.load()
+              n=0
+              for y in range(1,269):
+                  for x in range(1,479):
+                      v=px[x,y]
+                      if v>70 and v>=px[x-1,y] and v>=px[x+1,y] and v>=px[x,y-1] and v>=px[x,y+1]: n+=1
+              dichte=round(n*(1920*1080)/(480*270))
+              bericht.append((kand[idx]['titel'][:40],f'{b}x{h}',dichte,''))
+              # Zu leer ist auch falsch - ein schwarzes Bild hat 0 Sterne.
+              if dichte<200: continue
+              abstand=abs(dichte-ZIEL)
+              if bestes is None or abstand<bestes[0]: bestes=(abstand,datei,url,idx,dichte)
+          if bestes is None:
+              raise SystemExit('Kein Kandidat mit brauchbarer Sterndichte')
+          _,datei,url,idx,dichte=bestes
+          os.replace(datei,'roh_bild')
+          w=dict(kand[idx]); w['gemessene_dichte']=dichte
+          json.dump(w,open('wahl.json','w'),indent=1,ensure_ascii=False)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('\n### Gemessene Kandidaten\n\n| Titel | Masse | Sterne je Bild | |\n|---|---|---|---|\n')
+              for t,m,d,note in bericht: f.write(f'| {t} | {m} | {d} | {note} |\n')
+              f.write(f'\nGewaehlt: **{w["titel"]}** ({dichte} Sterne, Ziel {ZIEL})\n')
+          print(f'[debug] gewaehlt: {w["titel"]} mit {dichte} Sternen')
+          open('bild_url.txt','w').write(url)
+          PY2
+          echo "bild=$(cat bild_url.txt)" >> $GITHUB_OUTPUT
 
       - name: Auf Webgroesse bringen
         run: |
@@ -228,7 +266,8 @@ jobs:
               console.log('- **Lizenz:** '+w.lizenz);
             "
           } >> $GITHUB_STEP_SUMMARY
-          rm -f roh_bild suche.json assets.json wahl.json kandidaten.md
+          # Arbeitsmaterial, kein Ergebnis - raus damit (check/rules.js Regel 4).
+          rm -f roh_bild suche.json assets.json assets_*.json wahl.json kandidaten.md kandidaten.json kandidaten.txt kand_* bild_url.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add img/starfield.webp img/starfield-tile.webp img/starfield-herkunft.json img/_starfield-vorlage.webp
