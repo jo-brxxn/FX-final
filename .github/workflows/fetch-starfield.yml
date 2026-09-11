@@ -171,6 +171,18 @@ jobs:
           im = ImageEnhance.Brightness(im).enhance(0.72)
 
           os.makedirs('img', exist_ok=True)
+          # ⚠ Das UNBEARBEITETE Bild wird mitgelegt (verlustarm, 2560 breit).
+          # Grund: die Aufbereitung liess sich nicht im ersten Anlauf richtig
+          # treffen - "weniger Sterne und schaerfer" braucht ein paar
+          # Versuche, und jeder Versuch waere sonst ein neuer Workflow-Lauf
+          # samt erneutem Herunterladen von mehreren Megabyte. Mit der
+          # Vorlage im Repo laesst sich lokal probieren, bis es sitzt.
+          vorlage = Image.open('roh_bild').convert('RGB')
+          if vorlage.size[0] > 2560:
+              vorlage = vorlage.resize((2560, round(vorlage.size[1]*2560/vorlage.size[0])), Image.LANCZOS)
+          vorlage.save('img/_starfield-vorlage.webp', 'WEBP', quality=92, method=4)
+          print('[debug] Vorlage:', vorlage.size, round(os.path.getsize('img/_starfield-vorlage.webp')/1024), 'KB')
+
           im.save('img/starfield.webp', 'WEBP', quality=80, method=6)
           im.resize((240, 135), Image.LANCZOS).save('img/starfield-tile.webp', 'WEBP', quality=78, method=6)
 
@@ -219,7 +231,7 @@ jobs:
           rm -f roh_bild suche.json assets.json wahl.json kandidaten.md
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add img/starfield.webp img/starfield-tile.webp img/starfield-herkunft.json
+          git add img/starfield.webp img/starfield-tile.webp img/starfield-herkunft.json img/_starfield-vorlage.webp
           if ! git diff --staged --quiet; then
             git commit -m "Sternenhimmel fuer die Overview-Seite (NASA, gemeinfrei)"
             for i in 1 2 3; do

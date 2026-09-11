@@ -604,7 +604,16 @@ function globeSkeleton(size,uid){
   const sqid='gSq'+uid;
   const fgid='gJetFlame'+uid; // Nachbrenner-Flammen-Verlauf (Boost, Nutzer-Wunsch 2026-07-28)
   // Pfade OHNE eigenes fill/stroke - sie erben beides vom jeweiligen <use>.
-  let land='';GLOBE_LAND.forEach(()=>{land+='<path/>';});
+  // ⚠ EIN Pfad fuer alles Land, nicht einer je Polygon. Ein SVG-Pfad darf
+  // beliebig viele Teilstuecke enthalten ("M ... M ... M ..."), und die
+  // Polygone brauchen weder eigene Farbe noch eigenen Treffertest - sie
+  // erben beides von ihrer Gruppe.
+  // GEMESSEN 2026-09-12: mit den nachgeladenen Natural-Earth-Kuesten (549
+  // Polygone, 14000 Punkte) kostete ein Element JE Polygon p95 33,4 ms und
+  // 66 von 179 Bildern ueber 20 ms - genau die Verschlechterung, die der
+  // Nutzer beheben lassen wollte. Die Rechenarbeit war es nicht; teuer sind
+  // die 549 DOM-Schreibzugriffe pro Bild. Als ein Element ist es einer.
+  let land='<path/>';
   // Jeder Marker bekommt jetzt zusaetzlich einen "Ping"-Ring (Reticle/Radar-
   // Ortungspunkt-Optik, "Global Market Surveillance"-Umbau 2026-07-27) - ein
   // zweiter <circle>, der per CSS-Keyframe kontinuierlich nach aussen
@@ -790,7 +799,15 @@ function globeUpdateOne(st){
   // (Nutzer-Wunsch 2026-07-25). Die drei <use>-Ebenen (Grundfarbe, ruhige
   // und leuchtende Vierecke) referenzieren genau diese Pfade und folgen
   // dadurch automatisch mit.
-  GLOBE_LAND.forEach((poly,i)=>{st.landPaths[i].setAttribute('d',globePathD(poly,lon0,R,cx,cy));});
+  // Alle Teilstuecke zu EINER Zeichenanweisung zusammensetzen und in einem
+  // Zug schreiben. globePathD liefert pro Polygon '' zurueck, wenn es ganz
+  // auf der Rueckseite liegt - die faellt hier von selbst weg.
+  const q=st.landPaths[0];
+  if(q){
+    let d='';
+    for(let i=0;i<LAND.length;i++){const t=globePathD(LAND[i],lon0,R,cx,cy);if(t)d+=t;}
+    q.setAttribute('d',d);
+  }
   // Marker (Waehrungspunkt + Label)
   const visMarkers=[];
   Object.keys(GLOBE_GEO).forEach(id=>{
@@ -960,6 +977,44 @@ function globeOnPointerUp(ev){
   }
 }
 const GLOBE_PAGES=['over'];
+
+// ══ KUESTENLINIEN NACHLADEN ════════════════════════════════════════════
+// Nutzer-Wunsch 2026-09-12: "die Weltkugel auch mit deutlich mehr Details
+// aus dem Internet". Die eingebaute GLOBE_LAND hat rund 2170 Punkte fuer
+// die ganze Welt; globe_land.json kommt aus Natural Earth (gemeinfrei) und
+// hat ein Vielfaches davon.
+// ⚠ Bewusst NACHGELADEN statt einkompiliert, und zwar aus demselben Grund,
+// aus dem der Nutzer "Performance muss besser werden" gesagt hat: die Datei
+// wiegt ein paar hundert Kilobyte und wuerde sonst bei JEDEM Seitenaufruf
+// mitgeladen - auch von jemandem, der Overview nie oeffnet. So zahlt sie
+// nur, wer sie sieht.
+// ⚠ Die grobe Fassung bleibt der Startwert: die Kugel steht sofort da und
+// wird nachgeschaerft, statt erst leer zu sein. Faellt der Abruf aus
+// (offline, Datei fehlt), bleibt es einfach bei der groben Fassung - kein
+// leerer Globus, keine Fehlermeldung im Gesicht.
+let LAND=GLOBE_LAND;
+let _landHdVersucht=false;
+async function ladeLandHD(){
+  if(_landHdVersucht)return;
+  _landHdVersucht=true;
+  try{
+    const r=await fetch('globe_land.json',{cache:'force-cache'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    const ringe=j&&j.ringe;
+    // Nicht blind uebernehmen: eine kaputte oder halb geschriebene Datei
+    // wuerde die Kugel sonst leeren statt sie zu verbessern.
+    if(!Array.isArray(ringe)||ringe.length<10)throw new Error('unbrauchbarer Inhalt');
+    const punkte=ringe.reduce((n,r2)=>n+(Array.isArray(r2)?r2.length:0),0);
+    if(punkte<=LAND.reduce((n,r2)=>n+r2.length,0))throw new Error('nicht detaillierter als das Eingebaute');
+    LAND=ringe;
+    console.log('[globe] Kuestenlinien nachgeladen: '+ringe.length+' Polygone, '+punkte+' Punkte');
+    if(GLOBE_PAGES.includes(curPage))startGlobes();   // mit der feineren Fassung neu aufbauen
+  }catch(e){
+    console.log('[globe] Kuestenlinien nicht nachgeladen ('+(e&&e.message||e)+') - die eingebaute Fassung bleibt.');
+  }
+}
+
 function startGlobes(){
   stopGlobe();
   // ⚠ Seit 2026-09-11 lebt die Kugel auf der Overview-Seite, nicht mehr auf
@@ -1016,6 +1071,7 @@ function startGlobes(){
     h.addEventListener('pointerup',globeOnPointerUp);
     h.addEventListener('pointercancel',globeOnPointerUp);
   });
+  ladeLandHD();          // einmalig; laeuft nebenher und baut danach neu auf
   _globeLast=performance.now();
   // ⚠ GEMESSEN 2026-09-12, Nutzer: "die Performance muss besser werden".
   // Die naheliegende Annahme war falsch - die Seite ist NICHT ausgelastet:
@@ -1100,7 +1156,7 @@ export {
   INTRO_SEQ,introRevealAndExit,runIntroBoostSequence,runIntroCurrencyReveal,skipIntro,introShatterHtml,introPilotName,parachuteFigureHtml,
   updIntroHud,_globeFuel,GLOBE_FUEL_BURN_PCT_S,GLOBE_FUEL_REGEN_PCT_S,globeFuelTick,stopGlobe,globeProject,globeHorizonPoint,
   globePathD,globeSkeleton,globeCollectRefs,globeUpdateOne,globeUpdateSweep,closeGlobeTip,globeVehicleTravel,globeMarkerClick,
-  globeHitTest,globeOnPointerDown,globeOnPointerMove,globeOnPointerUp,startGlobes,resetGlobeLon,
+  globeHitTest,globeOnPointerDown,globeOnPointerMove,globeOnPointerUp,startGlobes,resetGlobeLon,ladeLandHD,
 };
 // Kompatibilitaets-Bruecke: diese Namen werden per inline onclick=/
 // onpointerdown=/... aus generiertem HTML im GLOBALEN Scope aufgerufen
