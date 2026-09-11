@@ -482,8 +482,10 @@ FRISCHE.forEach(([datei, maxStd, takt, quittungBis]) => {
     `${datei} wurde zuletzt vor ${alt.toFixed(1)} Stunden geschrieben (${d.updated}), erlaubt sind ` +
     `${maxStd} - Takt: ${takt}. ⚠ Ein GRUENER Workflow-Lauf ist KEIN Beleg: am 2026-09-11 war der ` +
     `Sentiment-Schritt fuenf Tage lang gruen und lieferte nichts, weil er unter "bash -e" in einer ` +
-    `Debug-Zeile starb und continue-on-error das verdeckte. Im Protokoll die LAUFZEIT des Schritts ` +
-    `ansehen: eine Sekunde fuer mehrere Abrufe heisst, er ist vorzeitig gestorben.`;
+    `Debug-Zeile starb und continue-on-error das verdeckte. ⚠ Und die LAUFZEIT des Schritts taugt ` +
+    `NICHT als Merkmal: der abgestuerzte Lauf brauchte eine Sekunde - der reparierte danach ebenfalls. ` +
+    `Verlaesslich ist nur dieses Feld hier. Also im Protokoll nachsehen, ob die Ausgabe des Schritts ` +
+    `VOLLSTAENDIG ist (bis zur letzten Zeile seines Node-Blocks), nicht wie lange er lief.`;
   // Eine BEKANNTE, offene Stoerung darf befristet quittiert werden - sonst
   // haengt jeder Code-Push an der Daten-Aktualitaet, und nicht einmal die
   // Reparatur selbst kaeme durch (genau das ist am 2026-09-10 passiert).

@@ -12229,6 +12229,13 @@ $ bash -e t.sh   # head -c 200 gibtsnicht.json 2>/dev/null
 Exit-Code des Schritts: 1      # die Zeile danach lief nie
 ```
 
+⚠ **Korrektur am selben Tag, nach der Verifikation:** die *eine Sekunde*
+Laufzeit war ein Indiz, kein Beweis — der **reparierte** Lauf brauchte
+ebenfalls genau eine Sekunde (05:29:26 → 05:29:27) und schrieb dabei alles.
+Die Laufzeit taugt also nicht als Erkennungsmerkmal; belastbar war allein der
+eingefrorene `updated`-Zeitstempel. Der Wächtertext, der zuerst das Gegenteil
+behauptete, ist entsprechend korrigiert.
+
 Der Node-Block *darunter* schreibt **alle** Sentiment-Quellen und setzt
 `out.updated`. Er lief seit fünf Tagen nicht mehr. Ausgefallen sind damit
 nicht nur Retail, sondern auch Crypto Fear & Greed, CNN Fear & Greed, VIX und
@@ -12280,3 +12287,21 @@ die nicht garantiert existiert, ist ein Regelverstoß.
 
 Endstand: 0 Fehlalarme; echte Zeile zurückgebaut → Treffer (`yml:2672`);
 zurückgesetzt → grün.
+
+### Verifikation (Lauf 1112, dispatch auf e9fc244)
+
+`sentiment_data.json` `updated` = **2026-09-11T05:29:27Z**, 0,1 h alt. Zurück
+sind alle fünf Quellen: `cryptoFng` 56 (Greed), `stockFng` 33 (fear), `vix`
+17,84, `putCall` 0,87 und **`retail` mit 32 Symbolen**.
+
+⚠ **Damit ist auch die Annahme über die Ursache zu korrigieren:** der
+Myfxbook-Login funktioniert einwandfrei — er lieferte sofort wieder 32
+Symbole. Der Ausfall am 06.09. war eine *vorübergehende* Störung dieser einen
+Quelle. Zum Dauerschaden wurde sie erst durch die `head`-Zeile: ein Aussetzer
+von Minuten hat fünf Tage lang **alle** Sentiment-Quellen lahmgelegt. An den
+Zugangsdaten muss nichts erneuert werden.
+
+Nicht heilbar ist die Lücke in der Historie: `retailHistory` springt von
+`2026-09-04` direkt auf `2026-09-11`. Die Tage dazwischen sind nie erhoben
+worden und lassen sich nicht nachträglich beschaffen — geschätzt wird nichts
+(Regel 4).
