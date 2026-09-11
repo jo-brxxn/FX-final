@@ -994,9 +994,27 @@
       19
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    3.63,
+    [
+     [
+      "2026-09-16",
+      17
+     ],
+     [
+      "2026-10-28",
+      10
+     ],
+     [
+      "2026-12-09",
+      19
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": 3.63,
   "meetings": [
    {
@@ -1010,14 +1028,14 @@
     "date": "2026-10-28",
     "label": "Oct 27-28, 2026",
     "rateBefore": 3.8,
-    "rateAfter": 3.91,
+    "rateAfter": 3.9,
     "deltaBp": 10
    },
    {
     "date": "2026-12-09",
     "label": "Dec 8-9, 2026",
-    "rateBefore": 3.91,
-    "rateAfter": 4.1,
+    "rateBefore": 3.9,
+    "rateAfter": 4.09,
     "deltaBp": 19
    }
   ],
@@ -1897,39 +1915,52 @@
       17
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    2.19,
+    [
+     [
+      "2026-10-29",
+      26
+     ],
+     [
+      "2026-12-17",
+      17
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": 2.19,
   "meetings": [
    {
-    "date": "2026-09-10",
-    "label": "Sep 10, 2026",
-    "rateBefore": 2.67,
-    "rateAfter": 2.76,
-    "deltaBp": 8,
-    "approx": true
-   },
-   {
     "date": "2026-10-29",
     "label": "Oct 29, 2026",
-    "rateBefore": 2.76,
-    "rateAfter": 2.92,
-    "deltaBp": 17,
+    "rateBefore": 2.68,
+    "rateAfter": 2.94,
+    "deltaBp": 26,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 2.92,
-    "rateAfter": 3.1,
+    "rateBefore": 2.94,
+    "rateAfter": 3.11,
     "deltaBp": 17,
     "approx": true
    }
   ],
   "method": "approx",
   "refSource": "ECB (€STR) + Euribor 3M curve",
-  "pastMeeting": null
+  "pastMeeting": {
+   "date": "2026-09-10",
+   "label": "Sep 10, 2026",
+   "realizedDeltaBp": 0,
+   "realizedBucket": 0,
+   "rateBefore": 2.19,
+   "rateAfter": 2.19
+  }
  },
  "GBP": {
   "history": [
@@ -2820,9 +2851,27 @@
       26
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    3.73,
+    [
+     [
+      "2026-09-17",
+      50
+     ],
+     [
+      "2026-11-05",
+      7
+     ],
+     [
+      "2026-12-17",
+      26
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": 3.73,
   "meetings": [
    {
@@ -2837,15 +2886,15 @@
     "date": "2026-11-05",
     "label": "Nov 5, 2026",
     "rateBefore": 4.23,
-    "rateAfter": 4.28,
-    "deltaBp": 5,
+    "rateAfter": 4.3,
+    "deltaBp": 7,
     "approx": true
    },
    {
     "date": "2026-12-17",
     "label": "Dec 17, 2026",
-    "rateBefore": 4.28,
-    "rateAfter": 4.54,
+    "rateBefore": 4.3,
+    "rateAfter": 4.55,
     "deltaBp": 26,
     "approx": true
    }
@@ -3694,9 +3743,23 @@
       18
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    2.3,
+    [
+     [
+      "2026-10-28",
+      36
+     ],
+     [
+      "2026-12-09",
+      18
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": 2.3,
   "meetings": [
    {
@@ -4664,9 +4727,27 @@
       6
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    4.35,
+    [
+     [
+      "2026-09-29",
+      20
+     ],
+     [
+      "2026-11-03",
+      13
+     ],
+     [
+      "2026-12-08",
+      1
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": 4.35,
   "meetings": [
    {
@@ -4680,15 +4761,15 @@
     "date": "2026-11-03",
     "label": "Nov 2-3, 2026",
     "rateBefore": 4.55,
-    "rateAfter": 4.63,
-    "deltaBp": 9
+    "rateAfter": 4.68,
+    "deltaBp": 13
    },
    {
     "date": "2026-12-08",
     "label": "Dec 7-8, 2026",
-    "rateBefore": 4.63,
+    "rateBefore": 4.68,
     "rateAfter": 4.69,
-    "deltaBp": 6
+    "deltaBp": 1
    }
   ],
   "method": "precise",
@@ -5361,9 +5442,23 @@
       8
      ]
     ]
+   ],
+   [
+    "2026-09-11",
+    -0.04,
+    [
+     [
+      "2026-09-24",
+      4
+     ],
+     [
+      "2026-12-10",
+      8
+     ]
+    ]
    ]
   ],
-  "asOf": "2026-09-10",
+  "asOf": "2026-09-11",
   "currentRate": -0.04,
   "meetings": [
    {
