@@ -15,6 +15,16 @@
 # Deshalb wird ueber die dokumentierte NASA-Bild-API gesucht und der
 # Herkunftsnachweis (Titel, nasa_id, Adresse, Zentrum) neben dem Bild
 # abgelegt - nicht geraten, sondern belegt.
+# ⚠ STAND 2026-09-12: der ausgelieferte Himmel ist NICHT das Ergebnis dieses
+# Workflows, sondern gezeichnet (tools/sternenhimmel.py). Sechs Laeufe hier
+# haben gezeigt, dass NASAs gemeinfreie Bibliothek keinen duenn besetzten,
+# scharfen Nachthimmel hergibt: Teleskopaufnahmen haben rund 10000
+# aufloesbare Sterne je Ausschnitt und 5-10 Pixel breite Sternscheiben, die
+# duennen Treffer sind Illustrationen. Lauf 6 bricht seitdem ehrlich ab
+# ("Kein Kandidat war ein echtes Sternfeld") statt etwas Falsches zu nehmen.
+# Dieser Workflow bleibt als Werkzeug bestehen, schreibt aber bewusst nach
+# img/starfield-foto.webp und fasst den ausgelieferten Himmel NICHT an -
+# sonst wuerde ein Lauf die bessere Fassung still ersetzen.
 name: Fetch starfield background
 
 on:
@@ -233,20 +243,8 @@ jobs:
           im = ImageEnhance.Brightness(im).enhance(0.72)
 
           os.makedirs('img', exist_ok=True)
-          # ⚠ Das UNBEARBEITETE Bild wird mitgelegt (verlustarm, 2560 breit).
-          # Grund: die Aufbereitung liess sich nicht im ersten Anlauf richtig
-          # treffen - "weniger Sterne und schaerfer" braucht ein paar
-          # Versuche, und jeder Versuch waere sonst ein neuer Workflow-Lauf
-          # samt erneutem Herunterladen von mehreren Megabyte. Mit der
-          # Vorlage im Repo laesst sich lokal probieren, bis es sitzt.
-          vorlage = Image.open('roh_bild').convert('RGB')
-          if vorlage.size[0] > 2560:
-              vorlage = vorlage.resize((2560, round(vorlage.size[1]*2560/vorlage.size[0])), Image.LANCZOS)
-          vorlage.save('img/_starfield-vorlage.webp', 'WEBP', quality=92, method=4)
-          print('[debug] Vorlage:', vorlage.size, round(os.path.getsize('img/_starfield-vorlage.webp')/1024), 'KB')
-
-          im.save('img/starfield.webp', 'WEBP', quality=80, method=6)
-          im.resize((240, 135), Image.LANCZOS).save('img/starfield-tile.webp', 'WEBP', quality=78, method=6)
+          im.save('img/starfield-foto.webp', 'WEBP', quality=80, method=6)
+          im.resize((240, 135), Image.LANCZOS).save('img/starfield-foto-tile.webp', 'WEBP', quality=78, method=6)
 
           # Sterne zaehlen, damit "weniger" eine Zahl ist und keine Behauptung:
           # lokale Maxima ueber einem Schwellwert.
@@ -263,12 +261,12 @@ jobs:
           w = json.load(open('wahl.json'))
           w['quelle'] = os.environ.get('BILD_URL', '')
           w['masse'] = list(im.size)
-          w['bytes'] = os.path.getsize('img/starfield.webp')
+          w['bytes'] = os.path.getsize('img/starfield-foto.webp')
           w['sterne'] = n
           w['bearbeitung'] = (f'1920x1080 {"Ausschnitt in Originalaufloesung (kein Resampling)" if not skaliert else "skaliert"}, '
                               f'Schwellwert {SCHWELLE}/255 schneidet schwache Sterne weg, Helligkeit 72 Prozent, WebP q80')
           w['lizenz'] = 'NASA-Bildmaterial, gemeinfrei (NASA Media Usage Guidelines)'
-          json.dump(w, open('img/starfield-herkunft.json', 'w'), indent=1, ensure_ascii=False)
+          json.dump(w, open('img/starfield-foto-herkunft.json', 'w'), indent=1, ensure_ascii=False)
           print('[debug] geschrieben:', im.size, round(w['bytes']/1024), 'KB,', n, 'Sterne')
           PY
         env:
@@ -281,7 +279,7 @@ jobs:
             echo "### Ausgewaehlt"
             echo ""
             node -e "
-              const w=require('./img/starfield-herkunft.json');
+              const w=require('./img/starfield-foto-herkunft.json');
               console.log('- **Titel:** '+w.titel);
               console.log('- **nasa_id:** '+w.nasa_id+'  ');
               console.log('- **Zentrum:** '+(w.zentrum||'-'));
@@ -294,7 +292,7 @@ jobs:
           rm -f roh_bild suche.json assets.json assets_*.json wahl.json kandidaten.md kandidaten.json kandidaten.txt kand_* bild_url.txt
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add img/starfield.webp img/starfield-tile.webp img/starfield-herkunft.json img/_starfield-vorlage.webp
+          git add img/starfield-foto.webp img/starfield-foto-tile.webp img/starfield-foto-herkunft.json
           if ! git diff --staged --quiet; then
             git commit -m "Sternenhimmel fuer die Overview-Seite (NASA, gemeinfrei)"
             for i in 1 2 3; do

@@ -12478,3 +12478,85 @@ an `index.html`, `js/main.js` und `js/globe.js` bereits im Commit
 *„Sternenhimmel-Workflow zeigt die Fehlerantwort"* gelandet, dessen Nachricht
 davon nichts sagt. Inhaltlich korrekt, aber die Nachricht ist irreführend —
 wer die Herkunft dieser Änderung sucht, findet sie hier.
+
+---
+
+## 2026-09-12 — Overview: flüssiger, detaillierter, klarer Himmel (VERSION-CHECK-496)
+
+Nutzer: *„Arbeite das weiter aus die Performance muss besser werden und der
+Himmel mit weniger Sternen und schärfer und die Weltkugel auch mit deutlich
+mehr Details aus dem Internet."*
+
+### Performance — die naheliegende Annahme war falsch
+
+Erst gemessen, dann optimiert:
+
+| | Median | p95 | Bilder > 20 ms |
+|---|---|---|---|
+| Dashboard (ohne Kugel) | 16,7 ms | 16,8 ms | 0 |
+| Overview (mit Kugel) | 16,7 ms | 16,8 ms | 0 |
+
+Die Seite war **nie ausgelastet** — die Kugel kostete messbar nichts. Das
+Ruckeln kam vom **Takt**: `STEP_MS=50` setzte die Geometrie nur **19,4-mal pro
+Sekunde**, während der Bildschirm 60 Bilder zeichnet. Jedes dritte Bild zeigte
+dieselbe Stellung. Umgestellt auf pro Bild: **60,2 Aktualisierungen**, Bildzeit
+unverändert.
+
+### Mehr Details — und der Zielkonflikt, der dabei auftrat
+
+Küstenlinien aus **Natural Earth** (gemeinfrei, „no rights reserved"), geholt
+über einen eigenen Workflow, Douglas-Peucker auf ein Punktbudget vereinfacht:
+
+| | Punkte | Polygone |
+|---|---|---|
+| eingebaut | 2 170 | 22 |
+| Natural Earth roh | 51 894 | 549 |
+| ausgeliefert | **14 000** | 549 |
+
+⚠ Mit 14 000 Punkten brach die Bildrate ein: **p95 33,4 ms, 66 von 179 Bildern
+zu spät** — genau die Verschlechterung, die behoben werden sollte. Teuer war
+aber nicht die Rechnung, sondern **549 DOM-Schreibzugriffe pro Bild**, einer je
+Polygon. Als **ein** Pfad mit vielen Teilstücken: **16,7 ms, 0 verspätete
+Bilder**. Beide Ziele gleichzeitig erfüllt.
+
+Die Datei wird **erst geladen, wenn jemand Overview öffnet** — 231 KB dürfen
+niemanden kosten, der die Seite nie aufruft. Bis dahin steht die grobe Fassung;
+fällt der Abruf aus, bleibt es dabei, statt dass ein leerer Globus erscheint.
+
+### Der Himmel — bewusste Abweichung vom Wunsch
+
+⚠ **„Aus dem Internet" geht nicht, wenn zugleich „weniger Sterne und schärfer"
+gelten soll.** Sechs Workflow-Läufe gegen NASAs Bibliothek:
+
+- Teleskopaufnahmen haben in **jedem** Ausschnitt rund 10 000 auflösbare Sterne
+  — gemessen. Und ihre Sterne sind 5–10 Pixel breite Scheiben; „nicht
+  skalieren" macht sie größer, nicht schärfer.
+- Die dünn besetzten Treffer waren **Illustrationen**: Lauf 5 wählte eine
+  Zeichnung eines Satelliten vor der Erde, weil Sterndichte allein eine Grafik
+  nicht von einem Himmel unterscheidet. Seitdem filtert der Workflow auf Titel
+  (*artist/concept/illustration*) **und** auf Farbflächenanteil — ein
+  Sternenhimmel ist fast schwarzweiß.
+- Fotos, die wie ein klassischer Nachthimmel aussehen, sind fast immer
+  urheberrechtlich geschützt. Ein Hintergrundbild wird Teil des Repos.
+
+Lauf 6 bricht seitdem **ehrlich ab**: *„Kein Kandidat war ein echtes
+Sternfeld."* Deshalb gezeichnet (`tools/sternenhimmel.py`), wie der Marmor:
+
+| | Sterne | Steilheit am Stern | Größe |
+|---|---|---|---|
+| NASA-Vorlage | 32 723 | **1,02×** | 2 987 KB |
+| gezeichnet | **1 307** | **18,05×** | **20 KB** |
+
+Steilheit = Helligkeit im Kern geteilt durch die 3 Pixel daneben. 1,02 heißt
+verwaschen, 18 heißt punktförmig.
+
+⚠ Zwei eigene Fehlgriffe dabei: das erste Milchstraßenband nutzte ein
+14×24-Rauschgitter — bikubisch auf 1920 px gezogen ergab das große weiche
+Flecken, im Bild nicht von Kompressionsartefakten zu unterscheiden. Und die
+erste Fassung war zu dunkel; beurteilt hatte ich sie an einer auf 820 px
+verkleinerten Vorschau, in der 1-Pixel-Sterne zwangsläufig verschwinden. Ab da
+nur noch 1:1-Ausschnitte angesehen.
+
+`fetch-starfield.yml` bleibt als Werkzeug bestehen, schreibt aber nach
+`img/starfield-foto.webp` und fasst den ausgelieferten Himmel nicht mehr an —
+sonst ersetzte ein Lauf die bessere Fassung still.
