@@ -12703,3 +12703,43 @@ Ordner entzogen.
 | nach dem Zurückholen | Notiz wieder da (2 Ordner), Text 4 → **264 Zeichen**, GOLD-Ordner zurück (3 Ordner) |
 | verbleibende Funde | **0** |
 | Seitenfehler | **0** |
+
+---
+
+## 2026-09-12 — Schrifthierarchie auch in den Fenstern geprüft (VERSION-CHECK-500)
+
+Nutzer-Wunsch vom 2026-09-08: *„achte nochmal auf allen Fenstern die man
+öffnen kann und generell allen Seiten darauf das die Schriften hierachie
+stimmt"*. Damals wurden nur die **Seiten** gemessen.
+
+⚠ Die Fenster blieben nicht aus Nachlässigkeit außen vor: sie stehen im DOM
+auf `display:none`. `getComputedStyle` liefert dort zwar Werte, aber die
+Elemente haben keine Größe — wer sie nicht einzeln öffnet, misst nichts.
+`check/typo.js` öffnet jedes der **34 Fenster** und misst **309
+Textelemente**.
+
+Geprüft wird zweierlei: freie Schriftgrößen neben der 8-stufigen Skala, und
+**zu nahe Paare** — zwei Textblöcke direkt übereinander, deren Größen sich um
+weniger als 1 px unterscheiden, ohne gleich zu sein. Das liest sich als
+Fehler, nicht als Hierarchie.
+
+**Ergebnis: ein einziger Fund** in 34 Fenstern — der Schließen-Knopf der
+Suche mit 19 px. Auf 18 gesetzt (eine der drei bewusst stehengelassenen
+Größen); der Unterschied ist unsichtbar, die Skala dafür geschlossen. Der
+Durchgang vom 08.09. hat also gehalten.
+
+### ⚠ Zwei Fehler in der Gegenprobe, beide lehrreich
+
+1. **Der Wächter war blind für Eingabefelder.** `input`/`textarea`/`select`
+   haben keinen Textknoten — ihr Text steckt in `value` und `placeholder`.
+   Die erste Fassung prüfte nur auf Textknoten und ließ 13,4 px in `.m-inp`
+   glatt durch. Nach der Korrektur: 248 → **309** gemessene Elemente.
+2. **Danach schlug die Gegenprobe immer noch fehl — diesmal war sie selbst
+   falsch.** Eine spätere Regel setzt `.m-inp` auf `var(--fs-md)` und
+   überschrieb die eingeschleuste Größe; gemessen wurde also nie 13,4 px.
+   Erst eine Regel am Ende des Stylesheets gewinnt wirklich. Mit ihr: **2
+   Treffer**, ohne sie **0**.
+
+Ein rot gemeldeter Fehlversuch hätte hier zweimal zu der Annahme geführt, die
+Prüfung sei kaputt — tatsächlich war beim zweiten Mal der Versuchsaufbau der
+Fehler.
