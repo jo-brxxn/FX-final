@@ -58,10 +58,21 @@ jobs:
                     const daten=fs.readFileSync(process.argv[1],"latin1");
                     const t=daten.split("\n");
                     const kopf=(t[0]||"").split(",").map(s=>s.replace(/^"|"$/g,""));
-                    const iRef=kopf.findIndex(c=>/REF_AREA/i.test(c));
-                    const iPer=kopf.findIndex(c=>/^TIME_PERIOD$|^Period$/i.test(c));
-                    const iVal=kopf.findIndex(c=>/^OBS_VALUE$|^Value$/i.test(c));
-                    console.log("[probe]   Spalten: REF_AREA="+iRef+" TIME="+iPer+" VALUE="+iVal+" von "+kopf.length);
+                    // ⚠ GEMESSEN 2026-09-12: die Spaltennamen der BIS-Datei
+                    // heissen NICHT "TIME_PERIOD", sondern
+                    // "TIME_PERIOD:Time period or range" - Id und Klartext
+                    // mit Doppelpunkt verbunden. Die erste Fassung ankerte
+                    // auf $ und fand deshalb TIME=-1 und VALUE=-1, waehrend
+                    // REF_AREA (ungeankert) sass. Ergebnis: Lauf gruen,
+                    // Tabelle leer. Also auf "Id am Anfang" pruefen.
+                    const spalte=re=>kopf.findIndex(c=>re.test(String(c).trim()));
+                    const iRef=spalte(/^REF_AREA(:|$)/i);
+                    const iPer=spalte(/^TIME_PERIOD(:|$)/i);
+                    const iVal=spalte(/^OBS_VALUE(:|$)/i);
+                    const iFrq=spalte(/^FREQ(:|$)/i);
+                    console.log("[probe]   Spalten: REF_AREA="+iRef+" TIME="+iPer+" VALUE="+iVal+" FREQ="+iFrq+" von "+kopf.length);
+                    if(iRef<0||iPer<0||iVal<0)
+                      console.log("[probe]   ⚠ Spalte nicht gefunden - Kopfzeile: "+kopf.slice(0,10).join(" | "));
                     // ⚠ KEIN nacktes return: node -e fuehrt den Text auf
                     // oberster Ebene aus, dort ist return ein Syntaxfehler.
                     // Genau daran ist der Lauf vom 2026-09-08 gescheitert
@@ -69,19 +80,25 @@ jobs:
                     // "|| true" endet, lief der Workflow gruen weiter und das
                     // Ergebnis fehlte einfach. Der Fund selbst war brauchbar:
                     // HTTP 200, 4,1 MB, 470 MB entpackt.
-                    if(iRef<0||iPer<0)process.exit(0);
+                    if(iRef<0||iPer<0||iVal<0)process.exit(0);
                     const ziel=new Set(["US","XM","GB","JP","CA","AU","NZ","CH"]);
+                    // Werte stehen ebenfalls als "US:United States" drin -
+                    // vor dem Vergleich auf den Code kuerzen.
+                    const code=s=>String(s||"").split(":")[0].trim();
                     const m={};
                     for(let i=1;i<t.length;i++){
                       const z=t[i].split(",").map(s=>s.replace(/^"|"$/g,""));
-                      const a=z[iRef]; if(!ziel.has(a))continue;
+                      const a=code(z[iRef]); if(!ziel.has(a))continue;
                       const p=z[iPer], v=z[iVal];
                       if(!p||v==null||v==="")continue;
-                      (m[a]=m[a]||{n:0,min:p,max:p}).n++;
-                      if(p<m[a].min)m[a].min=p;
-                      if(p>m[a].max)m[a].max=p;
+                      const k=a+" "+code(z[iFrq]||"?");
+                      (m[k]=m[k]||{n:0,min:p,max:p}).n++;
+                      if(p<m[k].min)m[k].min=p;
+                      if(p>m[k].max)m[k].max=p;
                     }
-                    Object.keys(m).sort().forEach(a=>console.log("[probe]   "+a+": "+m[a].n+" Werte, "+m[a].min+" .. "+m[a].max));
+                    // Deckt die Quelle die Luecke 2007-2012 ueberhaupt ab?
+                    Object.keys(m).sort().forEach(a=>console.log("[probe]   "+a+": "+m[a].n+" Werte, "+m[a].min+" .. "+m[a].max
+                      +(m[a].min<="2007" ? "  ✓ deckt 2007-2012" : "  ✗ beginnt zu spaet")));
                   ' "$F" || true
                 done
               else
