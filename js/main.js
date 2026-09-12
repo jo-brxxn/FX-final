@@ -4767,6 +4767,140 @@ function saveLocalBackup(label){
     localStorage.setItem(BACKUP_KEY,JSON.stringify(bs));
   }catch(e){}
 }
+// ══ NOTIZEN AUS DEN SICHERUNGEN ZURUECKHOLEN ═══════════════════════════
+// Nutzer-Wunsch 2026-09-08: "ausserdem loeschen sich immer noch automatisch
+// Notizen, die in mehreren Ordnern gleichzeitig gespeichert sind. Das musst
+// du auf jeden Fall ueberpruefen." - und auf die Rueckfrage, wo gesucht
+// werden soll: "Ja, in den Sicherungen nachsehen."
+//
+// ⚠ Das vorhandene restoreLocalBackup() ist ALLES-ODER-NICHTS: es setzt den
+// kompletten Zustand auf einen alten Stand zurueck. Wer eine einzelne vor
+// zwei Tagen verlorene Notiz will, verliert damit zwei Tage Arbeit an allem
+// anderen. Deshalb hier der andere Schnitt: die Sicherungen werden nur
+// GELESEN, verglichen und einzelne Notizen zurueckgeholt.
+//
+// Drei Arten von Verlust, die alle anders aussehen und deshalb getrennt
+// gemeldet werden:
+//   fehlt    - die Notiz gibt es heute gar nicht mehr
+//   gekuerzt - es gibt sie, aber ihr Text ist deutlich kuerzer als frueher
+//   ordner   - es gibt sie mit vollem Text, aber sie liegt in weniger
+//              Ordnern als frueher. GENAU das ist der gemeldete Fehler.
+const RECOVER_KUERZUNG=0.6;   // unter 60% der frueheren Laenge gilt als Verlust
+
+function notizenAusSicherungen(){
+  let sicherungen=[];
+  try{ sicherungen=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]'); }catch(e){ return {fehler:'Backups not readable', treffer:[]}; }
+  const jetzt=new Map((research&&Array.isArray(research.notes)?research.notes:[]).map(n=>[n.id,n]));
+  const best=new Map();       // id -> bester Fund
+  sicherungen.forEach((b,bi)=>{
+    let d=null;
+    try{ d=JSON.parse(b.data); }catch(e){ return; }
+    const alte=(d&&d.research&&Array.isArray(d.research.notes))?d.research.notes:[];
+    alte.forEach(a=>{
+      if(!a||!a.id)return;
+      const n=jetzt.get(a.id);
+      const aBody=String(a.body||''), aFids=Array.isArray(a.fids)?a.fids:[];
+      let art=null,detail='';
+      if(!n){ art='fehlt'; detail='not in your notes any more'; }
+      else{
+        const nBody=String(n.body||'');
+        const nFids=Array.isArray(n.fids)?n.fids:[];
+        if(aBody.length>40 && nBody.length < aBody.length*RECOVER_KUERZUNG){
+          art='gekuerzt'; detail=nBody.length+' characters now, '+aBody.length+' in the backup';
+        }else{
+          const weg=aFids.filter(f=>!nFids.includes(f));
+          if(weg.length){ art='ordner'; detail='missing from '+weg.length+' folder'+(weg.length>1?'s':''); }
+        }
+      }
+      if(!art)return;
+      // Die AELTESTE Sicherung hat den vollstaendigsten Stand, die neueste
+      // ist am naechsten am Jetzt. Fuer "was ist verloren" zaehlt der
+      // vollstaendigste Fund, also der mit dem laengsten Text.
+      const vor=best.get(a.id);
+      if(!vor || aBody.length>String(vor.alt.body||'').length)
+        best.set(a.id,{alt:a,art,detail,quelle:b.label||'Backup',ts:b.ts,idx:bi});
+    });
+  });
+  const rang={fehlt:0,gekuerzt:1,ordner:2};
+  return {fehler:'',sicherungen:sicherungen.length,
+          treffer:[...best.values()].sort((x,y)=>rang[x.art]-rang[y.art]||String(y.ts).localeCompare(String(x.ts)))};
+}
+
+function openRecoverM(){
+  const r=notizenAusSicherungen();
+  const el=document.getElementById('mRecoverList');
+  if(el){
+    if(r.fehler)el.innerHTML='<div class="rec-leer">'+escH(r.fehler)+'</div>';
+    else if(!r.treffer.length)
+      el.innerHTML='<div class="rec-leer">Nothing to recover — every note in your '+r.sicherungen+
+        ' backup(s) is still here, with its full text and all its folders.</div>';
+    else el.innerHTML=r.treffer.map(t=>{
+      const L={fehlt:'Deleted',gekuerzt:'Text lost',ordner:'Folder lost'};
+      const titel=String(t.alt.title||'(untitled)');
+      const vorschau=String(t.alt.body||'').replace(/\s+/g,' ').slice(0,150);
+      return `<div class="rec-row">
+        <div class="rec-main">
+          <div class="rec-top"><span class="rec-art rec-${t.art}">${L[t.art]}</span><span class="rec-t">${escH(titel)}</span></div>
+          <div class="rec-d">${escH(t.detail)} · from ${escH(t.quelle)} (${escH(String(t.ts).slice(0,16).replace('T',' '))})</div>
+          <div class="rec-p">${escH(vorschau)}${vorschau.length>=150?'…':''}</div>
+        </div>
+        <button class="btn g rec-btn" onclick="recoverNotiz('${escJH(t.alt.id)}')">Recover</button>
+      </div>`;
+    }).join('')
+      +`<div class="rec-alle"><button class="btn" onclick="recoverAlle()">Recover all ${r.treffer.length}</button></div>`;
+  }
+  openM('mRecover');
+}
+
+function recoverNotiz(id,still){
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6).
+  try{
+    const r=notizenAusSicherungen();
+    const t=r.treffer.find(x=>x.alt.id===id);
+    if(!t){ if(!still)alert('This note is no longer in the backups.'); return false; }
+    if(!still)pushU();
+    const i=research.notes.findIndex(n=>n.id===id);
+    if(i<0){
+      research.notes.push(Object.assign({},t.alt));
+    }else{
+      const n=research.notes[i];
+      // Zusammenfuehren statt ersetzen: der heutige Stand kann Aenderungen
+      // enthalten, die es in der Sicherung nicht gab. Verloren gegangen ist
+      // immer nur etwas - also wird ergaenzt, nie ueberschrieben.
+      if(String(t.alt.body||'').length>String(n.body||'').length)n.body=t.alt.body;
+      const alt=Array.isArray(t.alt.fids)?t.alt.fids:[];
+      n.fids=[...new Set((Array.isArray(n.fids)?n.fids:[]).concat(alt))];
+      if(!n.title&&t.alt.title)n.title=t.alt.title;
+      n.up=new Date().toISOString();
+    }
+    if(!still){
+      save();
+      if(curPage==='notes')rerenderNotesHost();
+      openRecoverM();
+      newsNoteHinweis('Note recovered');
+    }
+    return true;
+  }catch(e){
+    if(!still)alert('The note could not be recovered: '+(e&&e.message||e));
+    return false;
+  }
+}
+
+function recoverAlle(){
+  try{
+    const r=notizenAusSicherungen();
+    if(!r.treffer.length)return;
+    if(!confirm('Recover '+r.treffer.length+' note(s)?\n\nNothing is overwritten — only missing text and missing folders are added back. Press ↩ Undo to revert.'))return;
+    pushU();
+    let n=0;
+    r.treffer.forEach(t=>{ if(recoverNotiz(t.alt.id,true))n++; });
+    save();
+    if(curPage==='notes')rerenderNotesHost();
+    openRecoverM();
+    newsNoteHinweis(n+' note'+(n===1?'':'s')+' recovered');
+  }catch(e){ alert('Recovery failed: '+(e&&e.message||e)); }
+}
+
 function openBackupM(){
   try{
     const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
@@ -10512,6 +10646,7 @@ function renderResearchNotes(){
       </div>
       <input class="res-search" id="resSearchInp" placeholder="Search notes, assets, topics…" value="${escH(resQuery)}" oninput="resSetQuery(this.value)">
       <button class="btn res-newbtn" onclick="openQuickNote()" title="Paste a text and let it be sorted out">⚡ Quick capture</button>
+      <button class="btn res-newbtn" onclick="openRecoverM()" title="Find notes that lost text or folders">🛟 Recover</button>
       <button class="btn g res-newbtn" onclick="newResNote()">＋ New note</button>
     </div>
     <div class="res-stats">
@@ -18905,6 +19040,7 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
+  openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,

@@ -12655,3 +12655,51 @@ Fenster schließt, 0 Seitenfehler.
 Prüfung", obwohl `check/quickcapture.js` längst danebenlag — `git diff
 --name-only` listet **untrackte** Dateien nicht. Wer einen Wächter neu anlegt,
 muss ihn erst `git add`en, sonst sieht Regel 5 ihn nicht.
+
+---
+
+## 2026-09-12 — Notizen einzeln aus den Sicherungen zurückholen (VERSION-CHECK-499)
+
+Nutzer-Wunsch vom 2026-09-08: *„außerdem löschen sich immer noch automatisch
+Notizen, die in mehreren Ordnern gleichzeitig gespeichert sind. Das musst du
+auf jeden Fall überprüfen."* — und auf die Rückfrage, wo gesucht werden soll:
+*„Ja, in den Sicherungen nachsehen."*
+
+⚠ Das vorhandene `restoreLocalBackup()` ist **alles-oder-nichts**: es setzt
+den gesamten Zustand auf einen alten Stand zurück. Wer eine vor zwei Tagen
+verlorene Notiz zurückholen will, gibt damit zwei Tage Arbeit an allem
+anderen auf. **Research › 🛟 Recover** liest die Sicherungen deshalb nur und
+vergleicht.
+
+### Drei Arten von Verlust, getrennt gemeldet
+
+| | |
+|---|---|
+| **Deleted** | die Notiz gibt es heute gar nicht mehr |
+| **Text lost** | es gibt sie, aber ihr Text ist unter 60 % der früheren Länge |
+| **Folder lost** | voller Text, aber sie liegt in weniger Ordnern als früher |
+
+Der dritte Fall ist genau der gemeldete Fehler. Sie verschieden einzufärben
+ist Absicht — eine gelöschte Notiz wiegt anders als eine, die in einem Ordner
+weniger liegt, und beides gleich zu zeigen versteckt die schweren Fälle.
+
+### Zurückgeholt wird zusammengeführt, nicht ersetzt
+
+Der heutige Stand kann Änderungen enthalten, die es in der Sicherung nicht
+gab. Verloren gegangen ist immer nur *etwas* — also wird ergänzt und nie
+überschrieben: der längere Text gewinnt, Ordner werden vereinigt, ein
+vorhandener Titel bleibt stehen. Ein `pushU()` davor macht alles per ↩ Undo
+rückgängig.
+
+### Gegenprobe mit echtem Schaden
+
+Drei Notizen bearbeitet, in zusätzliche Ordner gelegt, gesichert — dann
+absichtlich beschädigt: eine gelöscht, eine auf „kurz" gekürzt, einer ein
+Ordner entzogen.
+
+| | |
+|---|---|
+| gefunden | **3 von 3**, je einmal `fehlt` / `gekuerzt` / `ordner` |
+| nach dem Zurückholen | Notiz wieder da (2 Ordner), Text 4 → **264 Zeichen**, GOLD-Ordner zurück (3 Ordner) |
+| verbleibende Funde | **0** |
+| Seitenfehler | **0** |
