@@ -622,7 +622,7 @@
    ]
   ]
  },
- "updated": "2026-09-12T00:48:12.170Z",
+ "updated": "2026-09-12T05:15:55.124Z",
  "stockFng": {
   "value": 33,
   "label": "fear",
@@ -1273,7 +1273,7 @@
  ],
  "retailSource": "https://www.myfxbook.com/community/outlook",
  "putCall": {
-  "value": 0.87,
+  "value": 0.79,
   "source": "https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/daily-volume-statistics",
   "series": [
    [
@@ -1603,6 +1603,10 @@
    [
     "2026-09-10",
     0.87
+   ],
+   [
+    "2026-09-11",
+    0.79
    ]
   ]
  },
