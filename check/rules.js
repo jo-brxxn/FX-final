@@ -557,6 +557,51 @@ try {
   });
 } catch (e) {}
 
+// ── Regel 11: kein nacktes return in einem "node -e"-Einzeiler ─────────
+// ⚠ GEMESSEN 2026-09-12: die Backfill-Probe vom 08.09. hatte die BIS-Quelle
+// erfolgreich geholt (HTTP 200, 4,1 MB, 470 MB entpackt) - das Auswerteskript
+// starb dann an "SyntaxError: Illegal return statement". `node -e` fuehrt den
+// Text auf OBERSTER Ebene aus, und dort ist return kein gueltiges Statement.
+// Weil der Aufruf auf `|| true` endete, lief der Workflow gruen weiter und das
+// Ergebnis fehlte einfach - vier Tage lang, ohne dass es auffiel. Dieselbe
+// Familie wie Regel 10: ein Fehler, der sich als "kein Ergebnis" tarnt.
+//
+// ⚠ NICHT selbst nach "return" suchen. Zwei Versuche damit sind gescheitert:
+// erst fand das Muster nur Zeilenanfaenge (der echte Fall stand hinter einem
+// if), dann meldete die Klammer-Heuristik ein return INNERHALB einer Funktion
+// als Verstoss ("function resolveStr(cell,shared){return cell"). Ein Waechter
+// mit Fehlalarmen wird weggeklickt - das ist die Lehre aus Regel 7.
+// Deshalb urteilt hier Node selbst: ein Skript mit return auf oberster Ebene
+// laesst sich nicht einmal KOMPILIEREN. Das ist kein Schaetzwert, sondern
+// exakt dieselbe Pruefung, an der der Workflow gescheitert ist.
+try {
+  const vm = require('vm');
+  fs.readdirSync('.github/workflows').filter(f => /\.ya?ml$/.test(f)).forEach(f => {
+    const pfad = '.github/workflows/' + f;
+    const txt = fs.readFileSync(pfad, 'utf8');
+    txt.split(/node\s+-e\s+'/).slice(1).forEach(b => {
+      // ⚠ Das schliessende Hochkomma steht EINGERUECKT, nicht am
+      // Zeilenanfang ("\n                  ' \"$F\" || true"). Die erste
+      // Fassung suchte nach "\n' " und fand das Blockende nie - dadurch
+      // sprang sie immer in den Ueberspringen-Zweig und war komplett blind.
+      const m = b.match(/\n[ \t]*'/);
+      if (!m) return;                           // Blockende nicht erkennbar
+      const ende = m.index;
+      const koerper = b.slice(0, ende);
+      if (!/\breturn\b/.test(koerper)) return;  // ohne return gibt es nichts zu pruefen
+      try { new vm.Script(koerper); }
+      catch (e) {
+        if (/Illegal return/i.test(e.message))
+          fail('Nacktes return in node -e',
+            `${pfad}: ein node -e-Block laesst sich nicht kompilieren - "${e.message}". ` +
+            `Node fuehrt den Text auf oberster Ebene aus, dort ist return ungueltig. Endet der ` +
+            `Aufruf auf "|| true", laeuft der Workflow gruen weiter und das Ergebnis fehlt ` +
+            `einfach (so geschehen 08.-12.09.). process.exit(0) benutzen oder in eine Funktion legen.`);
+      }
+    });
+  });
+} catch (e) {}
+
 if (F.length) {
   console.error('REGEL-VERSTOSS:\n');
   F.forEach(x => console.error(`  [${x.regel}] ${x.text}\n`));

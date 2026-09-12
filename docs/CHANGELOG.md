@@ -12743,3 +12743,48 @@ Durchgang vom 08.09. hat also gehalten.
 Ein rot gemeldeter Fehlversuch hätte hier zweimal zu der Annahme geführt, die
 Prüfung sei kaputt — tatsächlich war beim zweiten Mal der Versuchsaufbau der
 Fehler.
+
+---
+
+## 2026-09-12 — Regel 11: nacktes `return` in einem `node -e`-Einzeiler
+
+**Anlass, gemessen:** Die Backfill-Probe vom 08.09. hatte die BIS-Quelle
+erfolgreich geholt (HTTP 200, 4,1 MB, 470 MB entpackt) — das Auswerteskript
+starb danach an `SyntaxError: Illegal return statement`. `node -e` führt den
+Text auf **oberster Ebene** aus, und dort ist `return` kein gültiges
+Statement. Weil der Aufruf auf `|| true` endete, lief der Workflow **grün**
+weiter und das Ergebnis fehlte einfach — vier Tage lang, ohne dass es
+auffiel. Dieselbe Familie wie Regel 10: ein Fehler, der sich als „kein
+Ergebnis" tarnt, statt rot zu werden.
+
+**Vier Fehlversuche, bevor der Wächter stand** — alle vier sind der Grund
+für die heutige Bauform:
+
+1. Muster suchte nur **Zeilenanfänge**; der echte Fall stand hinter einem
+   `if` und wurde nicht gefunden.
+2. Klammer-Heuristik meldete ein `return` **innerhalb** einer Funktion als
+   Verstoß (`function resolveStr(cell,shared){return cell`) — Fehlalarm.
+3. Das Muster traf ein `return` in einem **Kommentar**.
+4. Das Blockende wurde über `indexOf("\n' ")` gesucht — das schließende
+   Hochkomma steht in Wahrheit **eingerückt** (`\n                  ' "$F"`),
+   also wurde es nie gefunden und der Wächter war komplett blind.
+
+**Lösung: nicht selbst raten, Node urteilen lassen.** `new vm.Script(körper)`
+ist exakt dieselbe Kompilierung, an der der Workflow gescheitert ist — kein
+Schätzwert, keine Heuristik. Blockende über `/\n[ \t]*'/`, und geprüft wird
+nur, wenn `return` überhaupt vorkommt.
+
+**Gegenprobe beidseitig:**
+
+```
+=== Stand (soll 0) ===        0
+=== Gegenprobe (soll Treffer) ===
+  [Nacktes return in node -e] .github/workflows/probe-backfill-sources.yml:
+  ein node -e-Block laesst sich nicht kompilieren - "Illegal return statement".
+=== zurueck (soll 0) ===      0
+```
+
+**Nebenbefund zu Regel 5 (Wächter-Pflicht):** `git diff --name-only` listet
+**keine unverfolgten** Dateien — ein frisch angelegter Wächter muss erst
+`git add`ed werden, sonst meldet die Selbstprüfung fälschlich „kein Wächter
+ergänzt".
