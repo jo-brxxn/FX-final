@@ -12788,3 +12788,28 @@ nur, wenn `return` überhaupt vorkommt.
 **keine unverfolgten** Dateien — ein frisch angelegter Wächter muss erst
 `git add`ed werden, sonst meldet die Selbstprüfung fälschlich „kein Wächter
 ergänzt".
+
+### Ergebnis der reparierten Probe (Lauf 34686455233, 2026-09-12)
+
+Damit ist die Frage nach den Leitzinsen vor 2013 **beantwortet, nicht mehr
+geschätzt**. BIS `WS_CBPOL_csv_flat.zip` deckt **alle acht** Notenbanken
+lückenlos ab, täglich **und** monatlich:
+
+| Raum | täglich | ab | monatlich | ab |
+|---|---|---|---|---|
+| US | 26 367 | 1954-07-01 | 866 | 1954-07 |
+| XM (EUR) | 10 113 | 1999-01-01 | 332 | 1999-01 |
+| GB | 23 855 | 1946-01-01 | 968 | 1946-01 |
+| JP | 24 879 | 1946-01-01 | 852 | 1946-01 |
+| CH | 21 051 | 1946-01-01 | 968 | 1946-01 |
+| CA | 23 071 | 1960-07-27 | 794 | 1960-07 |
+| AU | 12 872 | 1976-04-07 | 605 | 1976-04 |
+| NZ | 15 197 | 1985-01-04 | 500 | 1985-01 |
+
+Alle Reihen laufen bis 2026-09 durch. Der Backfill 2007–2012 ist also aus
+einer öffentlichen Primärquelle machbar — **eine** Datei, 4,1 MB Download.
+
+**FRED bleibt tot:** alle 24 Reihen erneut `HTTP 000000` (CPI, Unemployment,
+GDP), auch vom GitHub-Runner aus. Das ist kein Serien-Id-Problem — die
+Verbindung kommt gar nicht zustande. Für CPI/Arbeitsmarkt/BIP braucht es
+also eine andere Quelle als FRED; der Leitzins-Backfill hängt nicht davon ab.
