@@ -2636,6 +2636,118 @@ function feedEntryFor(feed,name){
 // ueberschreiben die drei Token in index.html mit aufgehellten Fassungen.
 // Fuer Flaechen (fill, background, Chart-Striche) bleibt BC richtig - dort
 // liegt die Farbe auf hellem Grund oder ist selbst die Flaeche.
+// ══ SCHNELLERFASSUNG ═══════════════════════════════════════════════════
+// Nutzer-Wunsch 2026-09-08: "Ich will eine Nachricht reinkopieren und die ki
+// nimmt alles auseinander und traegt das dann ein."
+// Die Zerlegung steckt in js/quickcapture.js (dort auch die Begruendung,
+// warum Regeln statt KI). Hier nur Anzeige, Korrektur und Speichern.
+// ⚠ Das Ergebnis wird ANGEZEIGT, bevor es gespeichert wird, und jede Angabe
+// bleibt aenderbar. Eine Automatik, die still entscheidet, wo eine Notiz
+// landet, waere schlimmer als gar keine - man findet sie spaeter nicht
+// wieder und merkt nie, dass sie falsch einsortiert wurde.
+let _qcStand=null;
+
+function openQuickNote(vorbelegung){
+  _qcStand=null;
+  const inp=document.getElementById('qcInput');
+  if(inp)inp.value=vorbelegung||'';
+  const out=document.getElementById('qcOut'); if(out)out.hidden=true;
+  const b=document.getElementById('qcSaveBtn'); if(b)b.disabled=true;
+  openM('mQuickNote');
+  if(inp){inp.focus();if(inp.value)qcAnalyse();}
+}
+
+function qcAnalyse(){
+  const inp=document.getElementById('qcInput');
+  const out=document.getElementById('qcOut');
+  const knopf=document.getElementById('qcSaveBtn');
+  if(!inp||!out)return;
+  const roh=inp.value||'';
+  if(!roh.trim()){out.hidden=true;if(knopf)knopf.disabled=true;_qcStand=null;return;}
+  // Nur Assets vorschlagen, die es in DIESER App wirklich gibt (Regel 4).
+  _qcStand=qcZerlegen(roh,syms.map(x=>x.id));
+  out.hidden=false;
+  if(knopf)knopf.disabled=false;
+  const t=document.getElementById('qcTitle'); if(t)t.value=_qcStand.titel;
+  qcZeichnen();
+}
+
+function qcZeichnen(){
+  if(!_qcStand)return;
+  const av=document.getElementById('qcAssets');
+  if(av){
+    // Alle Assets anbieten, die erkannten vorausgewaehlt - so korrigiert man
+    // mit einem Klick, statt ein Feld zu suchen.
+    const erkannt=new Set(_qcStand.assets);
+    const liste=syms.map(x=>x.id).filter(id=>erkannt.has(id))
+      .concat(syms.map(x=>x.id).filter(id=>!erkannt.has(id)).slice(0,10));
+    av.innerHTML=liste.length
+      ? liste.map(id=>`<button type="button" class="qc-chip${erkannt.has(id)?' on':''}" onclick="qcTogAsset('${escJH(id)}')">${escH(id)}</button>`).join('')
+      : '<span class="qc-chip leer">no asset found — the note goes to the general folder</span>';
+  }
+  const bv=document.getElementById('qcBias');
+  if(bv){
+    const L={bull:'▲ Bullish',bear:'▼ Bearish',neu:'• Neutral'};
+    bv.innerHTML=['bull','bear','neu'].map(b=>
+      `<button type="button" class="qc-b${_qcStand.bias===b?' on':''}" style="${_qcStand.bias===b?'color:'+biasCss(b):''}" onclick="qcSetBias('${b}')">${L[b]}</button>`
+    ).join('')
+    // Woran die Richtung festgemacht wurde - ohne das ist sie eine Behauptung.
+    +`<span class="qc-beleg">${_qcStand.belege.bull||_qcStand.belege.bear
+        ?`${_qcStand.belege.bull} bullish / ${_qcStand.belege.bear} bearish wording`
+        :'no directional wording found'}</span>`;
+  }
+  const tv=document.getElementById('qcTags');
+  if(tv)tv.innerHTML=_qcStand.tags.length
+    ? _qcStand.tags.map(t=>`<button type="button" class="qc-chip on" onclick="qcTogTag('${escJH(t)}')">${escH(t)}</button>`).join('')
+    : '<span class="qc-chip leer">no topic found</span>';
+}
+
+function qcTogAsset(id){
+  if(!_qcStand)return;
+  const i=_qcStand.assets.indexOf(id);
+  if(i>=0)_qcStand.assets.splice(i,1); else _qcStand.assets.push(id);
+  qcZeichnen();
+}
+function qcSetBias(b){ if(_qcStand){_qcStand.bias=b;qcZeichnen();} }
+function qcTogTag(t){
+  if(!_qcStand)return;
+  const i=_qcStand.tags.indexOf(t);
+  if(i>=0)_qcStand.tags.splice(i,1);
+  qcZeichnen();
+}
+
+function qcSpeichern(){
+  if(!_qcStand){alert('Nothing to save yet.');return;}
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (CLAUDE.md
+  // Regel 6): scheitert das Speichern still, sieht es fuer den Nutzer aus,
+  // als haette der Knopf nichts getan - und der eingefuegte Text ist weg.
+  try{
+    const titel=(document.getElementById('qcTitle')||{}).value||_qcStand.titel;
+    const ids=_qcStand.assets.filter(id=>syms.some(x=>x.id===id));
+    const fids=ids.map(id=>researchGenFidFor(id)).filter(Boolean);
+    const jetzt=new Date().toISOString();
+    const id=uid();
+    pushU();
+    research.notes.push({
+      id,fids,
+      title:String(titel||'Quick note').slice(0,120),
+      body:String(_qcStand.body||''),
+      tags:_qcStand.tags.slice(0,5),
+      fav:false,pin:false,ts:jetzt,up:jetzt,
+      bias:_qcStand.bias||'neu',
+      // Ohne Ordner haengt die Notiz sonst nirgends - dasselbe Verhalten wie
+      // bei den Notiz-Vorschlaegen aus den Nachrichten.
+      asset:fids.length?'':(ids[0]||''),
+    });
+    save();
+    closeM('mQuickNote');
+    if(curPage==='notes')rerenderNotesHost();
+    newsNoteHinweis('Note saved'+(ids.length?' on '+ids.join(', '):' (no asset)'));
+  }catch(e){
+    alert('The note could not be saved: '+(e&&e.message||e)+'\nYour text is still in the box.');
+  }
+}
+
 function biasCss(b){
   return (b==='bull'||b==='bear'||b==='neu')?`var(--bias-${b})`:(BC[b]||BC.neu);
 }
@@ -10399,6 +10511,7 @@ function renderResearchNotes(){
         <div class="res-sub">Notes · Insights · Market experience</div>
       </div>
       <input class="res-search" id="resSearchInp" placeholder="Search notes, assets, topics…" value="${escH(resQuery)}" oninput="resSetQuery(this.value)">
+      <button class="btn res-newbtn" onclick="openQuickNote()" title="Paste a text and let it be sorted out">⚡ Quick capture</button>
       <button class="btn g res-newbtn" onclick="newResNote()">＋ New note</button>
     </div>
     <div class="res-stats">
@@ -11941,6 +12054,7 @@ import {
   globePathD,globeSkeleton,globeCollectRefs,globeUpdateOne,globeUpdateSweep,closeGlobeTip,globeVehicleTravel,globeMarkerClick,
   globeHitTest,globeOnPointerDown,globeOnPointerMove,globeOnPointerUp,startGlobes,resetGlobeLon,
 } from './globe.js';
+import {qcZerlegen} from './quickcapture.js';
 
 // mvWidget() ist jetzt zonen-bewusst - siehe Definition oben bei
 // dashZoneOf()/ZONE_OF_TYPE (direkt vor renderDash()).
@@ -18788,6 +18902,9 @@ Object.assign(window,{
   // ⚠ setAppBg haengt an einem onclick im Hintergrund-Raster - fehlt die
   // Zeile hier, wirft der Klick still einen ReferenceError (CLAUDE.md Regel 6).
   setAppBg,renderAppBgGrid,applyAppBg,APP_BGS,APP_BG_IDS,
+  // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
+  // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
+  openQuickNote,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,

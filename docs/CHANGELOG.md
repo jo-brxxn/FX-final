@@ -12596,3 +12596,62 @@ Nebenbei: Regel 9 meldete `seasonality_data.json` als 31,9 h alt. Ursache war
 eine **alte Arbeitskopie** (auf `main` war sie 8 h jung), nicht ein Ausfall.
 Die Meldung nennt deshalb jetzt als Erstes „zuerst `git pull`" — das ist der
 häufigere Fall und sieht identisch aus.
+
+---
+
+## 2026-09-12 — Schnellerfassung für Notizen (VERSION-CHECK-498)
+
+Nutzer-Wunsch vom 2026-09-08, bis heute offen: *„Ich brauche eine neue
+Funktion, die es einfacher macht, die Notizen zu speichern und abzulegen. Es
+ist ein viel zu großer Aufwand, das selber zu machen."* — präzisiert zu
+*„Ich will eine Nachricht reinkopieren und die ki nimmt alles auseinander und
+trägt das dann ein."*
+
+**Research › ⚡ Quick capture**: Text einfügen, fertig. Erkannt werden Asset,
+Richtung, Titel und Themen; alles steht **vor** dem Speichern da und ist mit
+einem Klick korrigierbar.
+
+### ⚠ Hier arbeitet keine KI — bewusst
+
+Der Wunsch nannte ausdrücklich KI. Der Weg dorthin ist gemessen gescheitert
+(CHANGELOG 2026-09-10: drei Bauformen, keine konnte ins Repo schreiben), und
+die API deckt das Abo nicht ab. Was aber eigentlich gewollt war, ist nicht
+„KI", sondern *einfügen und nichts mehr ausfüllen müssen* — und das leisten
+Regeln sofort, ohne Netz, ohne Wartezeit, ohne laufende Kosten.
+
+Ein Unterschied, der hier zugunsten der Regeln ausfällt: **sie können nichts
+erfinden.** Sie finden ein Asset im Text oder eben keins. Ein Modell schriebe
+im Zweifel etwas Plausibles hin — das verträgt sich schlecht mit Regel 4 und
+noch schlechter mit einer Notiz, die man Wochen später im falschen Ordner
+sucht.
+
+### Was die Zerlegung kann
+
+- **Assets** über Namen, Kürzel *und Notenbank*: „Die Fed bleibt hawkish"
+  ergibt USD, ohne dass „Dollar" vorkommt. Währungspaare schlagen auf beide
+  Seiten durch (`EURUSD` → EUR + USD).
+- **Richtung** gewichtet gezählt: `hawkish` zählt doppelt gegenüber `steigt`.
+  Bei Gleichstand bleibt sie **neutral** statt geraten zu werden — und
+  daneben steht, woran sie festgemacht wurde („4 bullish / 1 bearish
+  wording").
+- **Titel** aus der ersten Zeile, wenn sie kurz ist, sonst aus dem ersten
+  Satz; nie leer, nie über 90 Zeichen.
+- **Themen** aus Stichwörtern plus eigene `#hashtags`, die Vorrang haben.
+- Deutsch und Englisch gemischt, inklusive Umlaut-Schreibweisen.
+
+### Geprüft
+
+`check/quickcapture.js` fährt die Zerlegung ohne Browser gegen echte
+Beispiele — 14 Prüfungen, darunter die Fallstricke: Notenbank ohne
+Währungsnamen, Währungspaar, gemischte Sprache, Gleichstand bei der Richtung,
+Text ganz ohne Asset, überlanger Titel, leere Eingabe.
+
+Im Browser durchgespielt: Text eingefügt → USD/GOLD/`centralbank` erkannt,
+Richtung bull mit Beleg, Klick auf EUR korrigiert die Auswahl, Speichern legt
+Notiz 1546 mit `fids:["asset:USD:gen","asset:GOLD:gen","asset:EUR:gen"]` an,
+Fenster schließt, 0 Seitenfehler.
+
+⚠ Nebenbefund: Regel 5 meldete `qcSetBias` als „neue Score-Größe ohne
+Prüfung", obwohl `check/quickcapture.js` längst danebenlag — `git diff
+--name-only` listet **untrackte** Dateien nicht. Wer einen Wächter neu anlegt,
+muss ihn erst `git add`en, sonst sieht Regel 5 ihn nicht.
