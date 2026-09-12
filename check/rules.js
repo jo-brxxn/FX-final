@@ -480,7 +480,7 @@ FRISCHE.forEach(([datei, maxStd, takt, quittungBis]) => {
   if (alt <= maxStd) return;
   const text =
     `${datei} wurde zuletzt vor ${alt.toFixed(1)} Stunden geschrieben (${d.updated}), erlaubt sind ` +
-    `${maxStd} - Takt: ${takt}. ⚠ Ein GRUENER Workflow-Lauf ist KEIN Beleg: am 2026-09-11 war der ` +
+    `${maxStd} - Takt: ${takt}. ⚠ ZUERST "git pull" - eine alte Arbeitskopie sieht genauso aus wie ein Ausfall, und das ist der haeufigere Fall (2026-09-12 selbst erlebt: lokal 31,9 h, auf main 8 h). Bleibt es danach rot: ⚠ Ein GRUENER Workflow-Lauf ist KEIN Beleg: am 2026-09-11 war der ` +
     `Sentiment-Schritt fuenf Tage lang gruen und lieferte nichts, weil er unter "bash -e" in einer ` +
     `Debug-Zeile starb und continue-on-error das verdeckte. ⚠ Und die LAUFZEIT des Schritts taugt ` +
     `NICHT als Merkmal: der abgestuerzte Lauf brauchte eine Sekunde - der reparierte danach ebenfalls. ` +

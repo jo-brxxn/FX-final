@@ -2625,6 +2625,20 @@ function feedEntryFor(feed,name){
   const treffer=map[kanonIndName(name)];
   return (treffer&&treffer.length===1)?feed[treffer[0]]:null;
 }
+// ══ BIAS-FARBE FUER TEXT ═══════════════════════════════════════════════
+// ⚠ NICHT BC direkt in ein style="color:..." schreiben. BC ist fuer HELLE
+// Flaechen gebaut (steht so im Kommentar bei BC in js/constants.js); auf den
+// dunklen Design-Vorlagen kam derselbe Wert auf 1,69 bis 2,66:1 gegen die
+// Kartenfarbe - gemessen am 2026-09-12, alle unter WCAG AA.
+// Eine Inline-Farbe schlaegt jede CSS-Regel, deshalb half auch kein
+// Regelwerk je Vorlage. Die Loesung ist, inline eine VARIABLE zu setzen:
+// color:var(--bias-bull) loest pro Vorlage auf, und die dunklen Vorlagen
+// ueberschreiben die drei Token in index.html mit aufgehellten Fassungen.
+// Fuer Flaechen (fill, background, Chart-Striche) bleibt BC richtig - dort
+// liegt die Farbe auf hellem Grund oder ist selbst die Flaeche.
+function biasCss(b){
+  return (b==='bull'||b==='bear'||b==='neu')?`var(--bias-${b})`:(BC[b]||BC.neu);
+}
 function indName(ind){
   if(!ind)return'';
   // ⚠ Hier steht bewusst der ROHE Zugriff und NICHT indName(ind) - das waere
@@ -6329,7 +6343,7 @@ function renderRub(rub,ri,total){
         <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
         <button class="rdel" onclick="delRub(${ri})">×</button>
       </span>
-      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${BC[rub.bias]};border-color:${BC[rub.bias]}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
+      ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${biasCss(rub.bias)};border-color:${biasCss(rub.bias)}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
     </div>
     <div class="rub-body">
@@ -8373,7 +8387,7 @@ function povScoreHtml(name){
   return line(l.bc+' (base)',b,`raw ${fmtScNum(symScore(bS))} scaled to the common indicator base`)+
     line(l.qc+' (quote, subtracted)',-q,`raw ${fmtScNum(symScore(qS))} scaled to the common indicator base`)+
     (FX.includes(l.bId)&&FX.includes(l.qId)?line('Carry',c,'policy-rate differential, staged ±0.5 / ±1'):'')+
-    `<div class="pov-stot"><span>Pair score</span><span style="color:${BC[scoreBias(tot)]}">${tot>0?'+':''}${tot}</span></div>
+    `<div class="pov-stot"><span>Pair score</span><span style="color:${biasCss(scoreBias(tot))}">${tot>0?'+':''}${tot}</span></div>
      <div class="pov-note">Both sides are scaled to a common indicator base before subtracting, so a currency that simply tracks more releases does not dominate structurally. <button class="pov-link" onclick="openScoreInfoPair('${escJH(name)}')">Full breakdown</button></div>`;
 }
 
@@ -8425,7 +8439,7 @@ function povMacroHtml(name){
     if(!rb&&!rq)return'';
     const sb=rb?Math.round(rubScore(rb)*10)/10:null,sq=rq?Math.round(rubScore(rq)*10)/10:null;
     const cell=(v,bias)=>v==null?'<span class="pov-mv" style="color:var(--t3)">–</span>':
-      `<span class="pov-mv" style="color:${BC[bias||'neu']}">${v>0?'+':''}${v}</span>`;
+      `<span class="pov-mv" style="color:${biasCss(bias||'neu')}">${v>0?'+':''}${v}</span>`;
     const diff=(sb!=null&&sq!=null)?Math.round((sb-sq)*10)/10:null;
     const dcol=diff==null?'var(--t3)':diff>0?BC.bull:diff<0?BC.bear:'var(--t3)';
     return`<div class="pov-mrow">
@@ -8467,7 +8481,7 @@ function povPositioningHtml(name){
     const cb=L>=60?'bear':L<=40?'bull':'neu';
     html+=`<div class="pov-split"><span class="pov-splitbar"><span style="width:${L}%;background:${BC.bull}"></span><span style="width:${S}%;background:${BC.bear}"></span></span>
       <span class="pov-splitv">${L}% long · ${S}% short</span></div>
-      <div class="pov-note" style="color:${BC[cb]}">Crowd is ${L>=60?'heavily long → read bearish':L<=40?'heavily short → read bullish':'fairly balanced → no contrarian edge'}.</div>`;
+      <div class="pov-note" style="color:${biasCss(cb)}">Crowd is ${L>=60?'heavily long → read bearish':L<=40?'heavily short → read bullish':'fairly balanced → no contrarian edge'}.</div>`;
   }
   return html;
 }
@@ -8554,8 +8568,8 @@ function renderPairOverview(el,name){
     <div class="pov-head ${glowClass(bias)}">
       <button class="pov-back" onclick="closePairOverview()" title="Back to the set-ups list">←</button>
       <div class="pov-title"><span class="pov-name">${escH(name)}</span>${chip}</div>
-      <span class="pov-bias" style="color:${BC[bias]};border-color:${BC[bias]}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
-      <button class="pov-score" style="color:${BC[scoreBias(sc)]};border-color:${BC[scoreBias(sc)]}" onclick="openScoreInfoPair('${escJH(name)}')" title="Pair score — tap for the full breakdown">${sc>0?'+':''}${sc}</button>
+      <span class="pov-bias" style="color:${biasCss(bias)};border-color:${biasCss(bias)}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
+      <button class="pov-score" style="color:${biasCss(scoreBias(sc))};border-color:${biasCss(scoreBias(sc))}" onclick="openScoreInfoPair('${escJH(name)}')" title="Pair score — tap for the full breakdown">${sc>0?'+':''}${sc}</button>
       <button class="dw-mark${isWatched(name)?' on':''}" onclick="toggleWatch('${escJH(name)}');openPairOverview('${escJH(name)}')" title="${isWatched(name)?'Remove from the watchlist':'Add to the watchlist'}">★</button>
     </div>
     <div class="pov-grid">
@@ -8751,8 +8765,8 @@ function watchRowHtml(p){
     <div class="wt-head" onclick="gotoPairOverview('${escJH(name)}')" title="Open the full overview for this pair">
       <span class="wt-icons">${icons}</span>
       <span class="wt-name">${escH(title)}</span>
-      <span class="wt-bias" style="color:${BC[bias]};border-color:${BC[bias]}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
-      <span class="wt-score" style="color:${BC[scoreBias(sc)]}">${sc>0?'+':''}${sc}</span>
+      <span class="wt-bias" style="color:${biasCss(bias)};border-color:${biasCss(bias)}">${bias==='bull'?'▲ Bullish':bias==='bear'?'▼ Bearish':'◆ Neutral'}</span>
+      <span class="wt-score" style="color:${biasCss(scoreBias(sc))}">${sc>0?'+':''}${sc}</span>
       <span class="wt-open">${icn('chevronRight',15)}</span>
     </div>
     <div class="wt-metrics">
@@ -9704,7 +9718,7 @@ function researchTopCardsHtml(){
   const riskSc=riskRub?Math.round(rubScore(riskRub)*10)/10:0;
   const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the Risk Sentiment dial and this asset's own Risk Environment card">
     <div class="ov2-titleline"><span class="ov2-title">Risk Environment</span></div>
-    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span>${riskSc?`<span class="rterm-ownsc" style="color:${BC[scoreBias(riskSc)]}" title="This asset's own Risk Environment card contributes ${riskSc>0?'+':''}${riskSc} to its score">${riskSc>0?'+':''}${riskSc}</span>`:''}</div>
+    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span>${riskSc?`<span class="rterm-ownsc" style="color:${biasCss(scoreBias(riskSc))}" title="This asset's own Risk Environment card contributes ${riskSc>0?'+':''}${riskSc} to its score">${riskSc>0?'+':''}${riskSc}</span>`:''}</div>
   </div>`;
   return`<div class="rterm-top">${cards}${riskCard}</div>`;
 }
@@ -10056,7 +10070,7 @@ function researchSideTitleHtml(){
       ${assetIconHtml(sym.id,26)?`<span class="rterm-side-asset-flag">${assetIconHtml(sym.id,26)}</span>`:''}
       <span class="rterm-side-asset-ticker">${escH(sym.id)}</span>
       <span class="rterm-side-asset-name">${escH(sym.name)}</span>
-      <span class="rterm-side-asset-sc" style="color:${BC[sym.bias]}">${sc>0?'+':''}${sc}</span>
+      <span class="rterm-side-asset-sc" style="color:${biasCss(sym.bias)}">${sc>0?'+':''}${sc}</span>
     </div>`;
   })():'';
   return`<div class="rterm-side-title">
@@ -10309,7 +10323,7 @@ function resNoteRowHtml(n,showPlaces,q){
   const hlTitle=resSearchField!=='tag';
   const hlBody=resSearchField==='all';
   const hlTag=resSearchField!=='title';
-  return`<div class="res-note" style="border-left-color:${BC[n.bias||'neu']}" onclick="openResNote('${n.id}')">
+  return`<div class="res-note" style="border-left-color:${biasCss(n.bias||'neu')}" onclick="openResNote('${n.id}')">
       <div class="res-note-datebox"><div class="res-note-day">${dp.day}</div><div class="res-note-mon">${dp.mon}</div><div class="res-note-yr">${dp.year}</div></div>
       <div class="res-note-body">
         <div class="res-note-top"><span class="res-note-ti">${hlTitle?resHighlight(n.title||'Untitled note',q):escH(n.title||'Untitled note')}</span>${noteBiasBadge(n)}</div>
@@ -10475,8 +10489,8 @@ function renderResearchFolders(){
     const sc=symScoreCmp(s);
     return`<button class="resf-asset-row${selId===s.id?' on':''}" onclick="resPickAsset('${s.id}')">
       <span class="resf-asset-nm">${escH(s.name)}</span>
-      <span class="resf-asset-sc" style="color:${BC[s.bias]}">${sc>0?'+':''}${sc}</span>
-      <span style="color:${BC[s.bias]}">${s.bias==='bull'?'▲':s.bias==='bear'?'▼':'◆'}</span>
+      <span class="resf-asset-sc" style="color:${biasCss(s.bias)}">${sc>0?'+':''}${sc}</span>
+      <span style="color:${biasCss(s.bias)}">${s.bias==='bull'?'▲':s.bias==='bear'?'▼':'◆'}</span>
     </button>`;
   }).join(''):'<div class="dw-empty" style="padding:14px 8px">No assets in this folder yet.</div>';
   const detail=(selId&&assets.some(s=>s.id===selId))?renderResAssetDetail(selId):`<div class="resf-empty-detail">Select an asset on the left to see its details.</div>`;
@@ -10526,7 +10540,7 @@ function renderResAssetDetail(id){
       ${assetIconHtml(s.id,26)?`<span class="atitle-flag">${assetIconHtml(s.id,26)}</span>`:''}
       <span class="resf-detail-nm">${escH(s.name)}</span>
       ${scoreBadge(symScoreCmp(s),'','resfd-'+s.id,null,s.bias)}
-      <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
+      <span class="bbadge" style="background:${BC[s.bias]}18;color:${biasCss(s.bias)}">${BL[s.bias]}</span>
     </div>
     <div class="resf-detail-grid">
       <div class="resf-detail-main">${rubCards}</div>
@@ -10970,7 +10984,7 @@ function dashMajorsHtml(){
     // Erkennungsmerkmal, das es hier gibt. FX_FLAG ist dieselbe Quelle wie
     // im Asset-Kopf, in der Watchlist und im Research-Terminal.
     return`<div class="ab-wrap"><button class="ab ${glowClass(c.bias)}" onclick="gotoSym('${c.id}')">
-      <span class="an-flag">${assetIconHtml(c.id,18)}</span><div class="an" data-bv="${c.bias}" style="color:${BC[c.bias]}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${BC[c.bias]}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${BC[c.bias]}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
+      <span class="an-flag">${assetIconHtml(c.id,18)}</span><div class="an" data-bv="${c.bias}" style="color:${biasCss(c.bias)}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${biasCss(c.bias)}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${biasCss(c.bias)}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
   return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
@@ -11501,7 +11515,7 @@ function renderDash(){
           <span class="evt-flag-slot"></span>
           ${(isNonFx(s.id)&&tickerChipHtml(assetTickerInfo(s.id)))||'<span></span>'}
           ${rowScore(symScoreCmp(s),'Symbol-Score',BC[s.bias],`openScoreInfoSym('${s.id}')`)}
-          <span class="bbadge" style="background:${BC[s.bias]}18;color:${BC[s.bias]}">${BL[s.bias]}</span>
+          <span class="bbadge" style="background:${BC[s.bias]}18;color:${biasCss(s.bias)}">${BL[s.bias]}</span>
           <button class="dw-mark${isWatched(watchPairNameForAsset(s.id))?' on':''}" onclick="event.stopPropagation();togSymMark('${s.id}')" title="Add to / remove from the watchlist">★</button>
         </div>`;
       // Nur noch die FX-Majors ("FX Bias") - die anderen Assets stehen bereits
@@ -11529,7 +11543,7 @@ function renderDash(){
       const wp=pairs.filter(p=>{const c=pairCats.find(x=>x.id===p.catId);return c&&c.name==='Watchlist';});
       const wlChg=info=>{
         if(!info||info.changePct==null)return`<span class="wl-chg" style="color:var(--t3)">–</span>`;
-        return`<span class="wl-chg" style="color:${BC[info.bias]}">${info.changePct>0?'+':''}${info.changePct.toFixed(2)}%</span>`;
+        return`<span class="wl-chg" style="color:${biasCss(info.bias)}">${info.changePct>0?'+':''}${info.changePct.toFixed(2)}%</span>`;
       };
       const fxRow=p=>{
         const parts=p.name.split('/');
@@ -11622,7 +11636,7 @@ function renderDash(){
           ${tickerChipHtml(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
           <span class="dw-meta">${escH(cat?.name||'—')}</span>
-          <span class="bbadge" style="background:${BC[p.bias]}18;color:${BC[p.bias]}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
+          <span class="bbadge" style="background:${BC[p.bias]}18;color:${biasCss(p.bias)}" title="Automatically from the pair score">${p.bias==='bull'?'▲ BULL':p.bias==='bear'?'▼ BEAR':'◆ NEUT'}</span>
           <select class="dw-sel" onchange="movePair('${p.id}',this.value);renderDash()">
             ${pairCats.map(c=>`<option value="${c.id}"${p.catId===c.id?' selected':''}>${escH(c.name)}</option>`).join('')}
           </select>
@@ -11647,7 +11661,7 @@ function renderDash(){
       content=`<div class="rank-list">`+ranked.map((r,i)=>(negIdx>0&&i===negIdx?`<div class="rank-sep"></div>`:'')+`<div class="rank-row" data-flip="${r.s.id}" onclick="gotoSym('${r.s.id}')">
         <span class="rank-pos">${i+1}</span><span class="rank-name">${escH(r.s.id)}</span>
         <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
-        <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${BC[r.s.bias]}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
+        <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${biasCss(r.s.bias)}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
     }else if(w.type==='risk_sentiment'){
       content=riskSentimentWidgetHtml();
@@ -11680,10 +11694,10 @@ function renderDash(){
       // Sortiert nach symScoreCmp statt roh, damit die Reihenfolge zum
       // angezeigten Wert jeder Kachel passt (die schon symScoreCmp zeigt).
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
-      content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${BC[s.bias]}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
+      content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${biasCss(s.bias)}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
         <div class="heat-name">${escH(s.name)}</div>
-        <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${BC[s.bias]}" title="Score - tap for the breakdown">${symScoreCmp(s)>0?'+':''}${symScoreCmp(s)}</div>
-        <div class="heat-bias" style="color:${BC[s.bias]}">${BL[s.bias]}</div>
+        <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${biasCss(s.bias)}" title="Score - tap for the breakdown">${symScoreCmp(s)>0?'+':''}${symScoreCmp(s)}</div>
+        <div class="heat-bias" style="color:${biasCss(s.bias)}">${BL[s.bias]}</div>
       </div>`).join('')+`</div>`:`<div class="dw-empty">No non-FX assets.</div>`;
     }else if(w.type==='mini_calendar'){
       // Kompakte eigene Zeilen statt der grossen calTableHtml()-Tabelle
@@ -12162,7 +12176,7 @@ function riskSentimentWidgetHtml(gaugeKey){
   // "S&P 500" in der schmaleren 3-Spalten-Karte abgeschnitten wurde.
   const assetRow=id=>{const s=syms.find(x=>x.id===id);if(!s)return'';const v=symScoreCmp(s);return`<div class="risk-asset-row" onclick="gotoSym('${id}')">
     <span class="risk-asset-name">${escH(s.name||id)}</span>
-    <span class="risk-asset-sc" style="color:${BC[s.bias]}">${v>0?'+':''}${Math.round(v*10)/10}</span>
+    <span class="risk-asset-sc" style="color:${biasCss(s.bias)}">${v>0?'+':''}${Math.round(v*10)/10}</span>
   </div>`;};
   // Regler fuer den Nutzer-eigenen Risk-Environment-Read (Nutzer-Wunsch
   // 2026-07-13): 3 Stufen statt eines echten Drag-Sliders (robuster auf

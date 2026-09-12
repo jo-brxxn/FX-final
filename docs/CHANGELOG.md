@@ -12560,3 +12560,39 @@ nur noch 1:1-Ausschnitte angesehen.
 `fetch-starfield.yml` bleibt als Werkzeug bestehen, schreibt aber nach
 `img/starfield-foto.webp` und fasst den ausgelieferten Himmel nicht mehr an —
 sonst ersetzte ein Lauf die bessere Fassung still.
+
+---
+
+## 2026-09-12 — Bias-Farben als Token (VERSION-CHECK-497)
+
+Anlass war ein Befund, den `check/hintergrund.js` als **Vorbestand** gemeldet
+statt verschwiegen hatte: `.sb-score` kam in den dunklen Vorlagen auf
+2,54 : 1 — und zwar unabhängig vom Hintergrundbild.
+
+`BC` in `js/constants.js` ist ausdrücklich für **helle** Flächen gebaut (steht
+so im Kommentar dort, gemessen schon am 2026-08-23 für die Navigationsleiste).
+Nachgemessen für alle fünf dunklen Vorlagen gegen ihre Kartenfarbe:
+
+| Vorlage | vorher | nachher |
+|---|---|---|
+| carbon | 2,54 : 1 | **4,79 : 1** |
+| midnight | 2,66 : 1 | **4,63 : 1** |
+| graphite | 2,58 : 1 | **4,65 : 1** |
+| solar | 2,18 : 1 | **4,62 : 1** |
+| **nord** | **1,69 : 1** | **4,69 : 1** |
+
+⚠ Warum kein Regelwerk je Vorlage half: die Farbe wird **inline** gesetzt
+(`style="color:${BC[...]}"`), und eine Inline-Farbe schlägt jede CSS-Regel.
+Die Lösung ist, inline eine **Variable** zu setzen — `color:var(--bias-bull)`
+löst pro Vorlage auf. Die hellen Vorlagen bekommen zeichengleiche Werte und
+ändern sich damit nicht; die dunklen bekommen aufgehellte Fassungen mit
+gleichem Farbton, berechnet bis ≥ 4,6 : 1.
+
+29 Text- und 6 Rahmenfarben laufen jetzt über `biasCss()`. Für **Flächen**
+(fill, background, Chart-Striche) bleibt `BC` richtig — dort liegt die Farbe
+auf hellem Grund oder ist selbst die Fläche.
+
+Nebenbei: Regel 9 meldete `seasonality_data.json` als 31,9 h alt. Ursache war
+eine **alte Arbeitskopie** (auf `main` war sie 8 h jung), nicht ein Ausfall.
+Die Meldung nennt deshalb jetzt als Erstes „zuerst `git pull`" — das ist der
+häufigere Fall und sieht identisch aus.
