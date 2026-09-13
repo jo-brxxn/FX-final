@@ -9134,7 +9134,12 @@ function summarizeRub(sym,rub){
 // Bestandsnutzern unbemerkt auf dem alten generischen Text haengen (Bug-
 // Report per Foto). Ab jetzt IMMER diese Versionsnummer bumpen statt (nur)
 // einen neuen Substring-Check zu bauen.
-const SUMMARY_ENGINE_VERSION=11;
+// V12 (2026-09-13): summarizeRiskEnv() ist mit der Risk-Environment-Karte
+// entfernt worden. check/summarydiff.js hat nachgerechnet: der generierte
+// Kartentext aendert sich dadurch an 24 Stellen (einmal je Asset - der
+// Risk-Environment-Absatz faellt weg). Ohne diesen Bump saehen
+// Bestandsnutzer weiter den alten, gespeicherten Text.
+const SUMMARY_ENGINE_VERSION=12;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
