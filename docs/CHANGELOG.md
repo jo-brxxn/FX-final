@@ -13240,3 +13240,67 @@ Der Wächter aus dem CAD-Bug prüft jetzt **beides**: das Widget (≥28 Tage,
 Fußzeile nennt den Abdeckungszeitraum) **und** das Fenster (Termine oder
 ehrlicher Hinweis, Impact-Filter vorhanden). **Zwei Gegenproben:** Filter
 entfernt → 24 Treffer, Fußzeile entfernt → 24 Treffer, zurück → je 0.
+
+### 2026-09-13 — Kontext-Charts verdrahtet: Tageskerzen + gemeinsamer Zeitfilter (VERSION-CHECK-508)
+
+**Nutzer:** *„Leg dann mit den Funktionen los und mach bei den Charts das eine
+Kerze ein Tag ist und mach ein zeitfliter der für alle Charts gleichzeitig
+geht"*.
+
+**Echte Quellen statt Platzhalter** — die Zuordnung steht an **einer** Stelle
+(`abKontextReihe`), damit sie nicht in den Zeichner wandert:
+
+| Kachel | Quelle |
+|---|---|
+| 2Y / 10Y (eigene + US) | `bondSeriesPts()` aus `bond_data.json` |
+| Dollar · S&P · Nasdaq | `priceSeriesFor()` aus `price_data.json` |
+| Volatility | VIX-Zeitreihe aus `sentiment_data.json` |
+| Policy rate | `rateInfo()` — ohne Wert ein Strich und „no value on file" |
+
+### ⚠ Eine Kerze = ein Tag, aber close-to-close
+
+Die Feeds liefern je Tag **einen** Wert (Schluss bzw. Rendite), **kein
+OHLC**. Eine Kerze mit erfundenen Dochten wäre eine erfundene Zahl (Regel 4).
+Also: Eröffnung = Schluss des Vortags, Hoch/Tief = die beiden Werte selbst.
+Das ist eine echte, gebräuchliche Darstellung — die Preischart-Ansicht der App
+nennt sie seit Längerem genau so.
+
+**Nachgerechnet gegen die Rohreihe:** 91 Tage im Fenster → **90 Kerzen**, und
+**0 Abweichungen** zwischen Kerzen-Open und Vortagesschluss.
+
+### ⚠ Beim Einbau genau der Fehler, den der Filter verhindern soll
+
+Der Zuschnitt hing zuerst am letzten Datum **jeder** Reihe. Gemessen bei 1Y:
+
+```
+US 2Y   204 Kerzen ab Jan 5
+US 10Y  204 Kerzen ab Jan 5
+Dollar  273 Kerzen ab Sep 16 (Vorjahr)
+```
+
+Drei Charts nebeneinander mit **drei verschiedenen Zeiträumen**. Die
+Fenstergrenze kommt jetzt aus dem **Kalender** (heute − Zeitraum) und gilt für
+alle gleich; die Kerzen sitzen nach **Datum** statt nach Laufindex, damit
+derselbe Tag überall an derselben Stelle liegt. Eine Reihe, die später
+anfängt, beginnt später **im** Fenster, statt es zu verschieben.
+
+Nach der Korrektur: identischer Achsenstart in allen Kacheln; die
+unterschiedliche Kerzenzahl (204 / 204 / 273) ist die **echte**
+Feed-Abdeckung und wird genannt.
+
+**Kleinigkeit, die erst der Augenschein zeigte:** der Hinweis „feed starts …"
+stand unter *jedem* Chart, weil das Fenster dienstags und der Feed mittwochs
+beginnt — ein Tag Differenz. Jetzt erst ab mehr als sieben Tagen.
+
+### Zeitfilter
+
+1M · 3M · 6M · 1Y · MAX, **einer für alle**. Gespeichert und
+gerätübergreifend gesynct nach dem Vier-Ecken-Muster (Push, Pull, Export,
+Import) aus `docs/state-sync.md`.
+
+**Kein Chart ohne Reihe:** gibt es für das Fenster keine Daten, steht dort ein
+Hinweis statt eines leeren Kastens mit Achsen — leere Achsen sehen aus wie
+„der Markt stand still", heißen aber „wir haben keine Daten".
+
+**Noch Platzhalter:** COT, Retail und Seasonality im Grafik-Band — sichtbar
+gekennzeichnet.

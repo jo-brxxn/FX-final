@@ -5539,14 +5539,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5783,7 +5783,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5929,6 +5929,7 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupFxOnly!==undefined){setupFxOnly=cd.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}
         if(cd.setupNonFxOnly!==undefined){setupNonFxOnly=cd.setupNonFxOnly;try{localStorage.setItem('fxpro_setup_nonfxonly',setupNonFxOnly?'1':'0');}catch(e){}}
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
+        if(cd.abChartRange!==undefined){setAbChartRangeVal(cd.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
       }
@@ -6801,80 +6802,176 @@ function yieldBiasFor(art,klasse,roh){
 // Hover-Rahmen (.chv) GENAU der Zeichenflaeche entsprechen: seine
 // Trefferrechnung arbeitet mit Bruchteilen seiner eigenen Breite, jede
 // mitgerechnete Achse wuerde den Cursor verschieben.
-function abKerzenBlock(schluessel,titelFuerTip){
+// ── Gemeinsamer Zeitfilter aller Kontext-Charts ─────────────────────────
+// Nutzer 2026-09-13: "mach ein zeitfliter der fuer alle Charts gleichzeitig
+// geht". Bewusst EIN Zustand fuer alle Kacheln - vier getrennte Regler waeren
+// vier Gelegenheiten, Charts zu vergleichen, die verschiedene Zeitraeume
+// zeigen.
+const AB_RANGES=[['1M',30],['3M',90],['6M',180],['1Y',365],['MAX',null]];
+let abChartRange=(()=>{try{const v=localStorage.getItem('fxpro_ab_range');
+  return AB_RANGES.some(r=>r[0]===v)?v:'3M';}catch(e){return '3M';}})();
+function setAbChartRangeVal(v){abChartRange=AB_RANGES.some(r=>r[0]===v)?v:'3M';}
+function setAbChartRange(v){
+  // ⚠ Vier-Ecken-Muster aus docs/state-sync.md: der Filter ist eine
+  // Nutzer-Praeferenz, die erhalten bleiben soll - also nicht nur
+  // localStorage (Regel 1). fxpro_updated MUSS mitgebumpt werden, sonst
+  // propagiert die Aenderung nicht.
+  try{
+    setAbChartRangeVal(v);
+    localStorage.setItem('fxpro_ab_range',abChartRange);
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    markLsUpdatedSeen();markPrefEdit();cloudAutoSync();
+  }catch(e){alert('The time filter could not be saved: '+(e&&e.message||e));}
+  renderDetail();
+}
+/** Das Zeitfenster, das fuer ALLE Charts gilt - am Kalender verankert. */
+// ⚠ GEMESSEN 2026-09-13: zuerst hing der Zuschnitt am letzten Datum JEDER
+// Reihe. Bei 1Y zeigte der Renditen-Chart dadurch 204 Kerzen ab dem 5. Jan,
+// der Dollar-Chart 273 ab dem 16. Sep des Vorjahrs - also drei Charts
+// nebeneinander mit DREI verschiedenen Zeitraeumen. Genau das sollte der
+// gemeinsame Filter verhindern. Jetzt kommt die Fenstergrenze aus dem
+// Kalender (heute minus Zeitraum) und gilt fuer alle gleich; eine Reihe, die
+// spaeter anfaengt, beginnt eben spaeter IM Fenster statt es zu verschieben.
+function abFenster(){
+  const r=(AB_RANGES.find(x=>x[0]===abChartRange)||AB_RANGES[1])[1];
+  const bis=todayStr();
+  if(r==null)return{von:null,bis,max:true};
+  const d=new Date(bis+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-r);
+  return{von:d.toISOString().slice(0,10),bis,max:false};
+}
+/** Schneidet eine Reihe [[datum,wert],...] auf das gemeinsame Fenster zu. */
+function abImZeitraum(reihe){
+  if(!Array.isArray(reihe)||!reihe.length)return[];
+  const f=abFenster();
+  if(f.max)return reihe;
+  return reihe.filter(e=>e&&e[0]>=f.von&&e[0]<=f.bis);
+}
+
+// ── Kerzen aus einer TAGESREIHE ─────────────────────────────────────────
+// Nutzer 2026-09-13: "mach bei den Charts das eine Kerze ein Tag ist".
+// ⚠ Die Feeds liefern je Tag genau EINEN Wert (Schlusskurs bzw. Rendite),
+// kein Open/High/Low. Eine Kerze mit erfundenen Dochten waere eine erfundene
+// Zahl (Regel 4). Deshalb CLOSE-TO-CLOSE: Eroeffnung = Schluss des Vortags,
+// Hoch/Tief = die beiden Werte selbst. Das ist eine echte, gebraeuchliche
+// Darstellung - die Preischart-Ansicht der App nennt sie seit laengerem
+// genau so ("close-to-close candles") - und sie behauptet nichts, was die
+// Daten nicht hergeben. Der Chart sagt es in seinem Titel dazu.
+function abTagesKerzen(reihe){
+  const r=abImZeitraum(reihe).filter(e=>e&&isFinite(Number(e[1])));
+  const out=[];
+  for(let i=1;i<r.length;i++){
+    const o=Number(r[i-1][1]),c=Number(r[i][1]);
+    out.push({d:r[i][0],o,c,h:Math.max(o,c),l:Math.min(o,c)});
+  }
+  return out;
+}
+function abKerzenBlock(reihe,titel,einheit){
   const W=240,H=100;
-  const k=phKerzen(schluessel);
+  const k=abTagesKerzen(reihe);
+  // ⚠ Keine Reihe, kein Chart. Ein leerer Kasten mit Achsen sieht aus wie
+  // "der Markt stand still" - er heisst aber "wir haben keine Daten".
+  if(k.length<2)return{leer:true,html:`<div class="ab-nodata">No daily series for this window yet.${
+    abChartRange!=='MAX'?' Try <b>MAX</b> — the feed may start later than the selected range.':''}</div>`};
   const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
   const sp=(hi-lo)||1;
   const y=v=>3+(1-(v-lo)/sp)*(H-6);
-  const bw=Math.max(2,W/k.length-1.8);
-  // Platzhalter-Datumsreihe: Werktage rueckwaerts ab heute.
-  const tage=[];{const d=new Date();
-    while(tage.length<k.length){if(d.getDay()!==0&&d.getDay()!==6)tage.unshift(new Date(d));d.setDate(d.getDate()-1);}}
-  const fmt=d=>d.toLocaleDateString('en',{day:'numeric',month:'short'});
-  let s='';
-  // Zwei waagerechte Hilfslinien - ohne sie schwebt die Preisskala neben nichts.
-  [0.25,0.75].forEach(f=>{s+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
+  // ⚠ x nach DATUM, nicht nach Index: nur so liegt derselbe Tag in allen
+  // Charts an derselben Stelle, auch wenn eine Reihe spaeter anfaengt.
+  const f=abFenster();
+  const tag=d=>Date.parse(d+'T00:00:00Z');
+  const x0=tag(f.max?k[0].d:f.von), x1=tag(f.bis);
+  const spanne=(x1-x0)||1;
+  const xOf=d=>((tag(d)-x0)/spanne)*W;
+  const bw=Math.max(1,W/Math.max(k.length,(spanne/86400000)*0.72)-(k.length>90?0.3:1.2));
+  const fmt=d=>{try{return new Date(d+'T00:00:00Z').toLocaleDateString('en',{day:'numeric',month:'short'});}catch(e){return d;}};
+  const zahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):v.toFixed(3);
+  let sv='';
+  [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
   const pts=[];
   k.forEach((c,i)=>{
-    const x=i*(W/k.length), mx=x+bw/2;
-    const auf=c.c>=c.o, col=auf?'var(--bias-bull)':'var(--bias-bear)';
+    const x=Math.max(0,Math.min(W-bw,xOf(c.d)-bw/2)), mx=x+bw/2;
+    const col=c.c>=c.o?'var(--bias-bull)':'var(--bias-bear)';
     const yo=y(c.o),yc=y(c.c);
-    s+=`<line x1="${mx.toFixed(1)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(1)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
-    s+=`<rect x="${x.toFixed(1)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
-    const z=(v,l)=>`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">${l}</span><b>${v.toFixed(2)}</b></div>`;
+    sv+=`<rect x="${x.toFixed(2)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(2)}" height="${Math.max(0.8,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
+    const diff=c.c-c.o;
     pts.push({fx:mx/W,fy:yc/H,col,
-      tip:`<div class="chv-tip-d">${escH(titelFuerTip)} · ${escH(fmt(tage[i]))}</div>`
-        +z(c.o,'Open')+z(c.h,'High')+z(c.l,'Low')+z(c.c,'Close')});
+      tip:`<div class="chv-tip-d">${escH(titel)} · ${escH(fmt(c.d))}</div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Close</span><b>${zahl(c.c)}${escH(einheit||'')}</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Prev</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${col}">Change</span><b style="color:${col}">${diff>0?'+':''}${zahl(diff)}</b></div>`});
   });
-  const pct=((k[k.length-1].c-k[0].c)/k[0].c*100);
-  const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`;
-  const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${v.toFixed(2)}</span>`).join('');
-  const achse=[tage[0],tage[Math.floor(tage.length/2)],tage[tage.length-1]]
-    .map(d=>`<span>${escH(fmt(d))}</span>`).join('');
-  return{pct,html:`<div class="ab-plot">
+  const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
+  const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
+  const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${zahl(v)}</span>`).join('');
+  // Die Achse beschriftet das FENSTER (bei MAX die Datenspanne) - dadurch
+  // steht unter allen Charts derselbe Zeitraum.
+  const mitte=new Date((x0+x1)/2).toISOString().slice(0,10);
+  const achse=[f.max?k[0].d:f.von,mitte,f.bis].map(d=>`<span>${escH(fmt(d))}</span>`).join('');
+  // ⚠ Nur melden, wenn die Reihe SPUERBAR spaeter anfaengt. Bei einem Tag
+  // Differenz (Fenster ab Dienstag, Feed ab Mittwoch) stand der Hinweis unter
+  // jedem Chart und war reines Rauschen - gemessen bei allen drei Kacheln.
+  const spaeter=!f.max&&(Date.parse(k[0].d)-Date.parse(f.von))/86400000>7;
+  return{pct,tage:k.length,von:k[0].d,bis:k[k.length-1].d,spaeter,
+    html:`<div class="ab-plot">
       <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achse}</div></div>
       <div class="ab-yax">${skala}</div>
     </div>`};
 }
 
 // ── Kontext-Band ────────────────────────────────────────────────────────
+// ⚠ Welche ECHTE Reihe steckt hinter einer Kachel? Eine Stelle, damit die
+// Zuordnung nicht in den Zeichner wandert. Liefert null, wenn es die Reihe
+// nicht gibt - die Kachel sagt das dann offen, statt eine leere Flaeche zu
+// zeigen (Regel 4).
+function abKontextReihe(art,assetId){
+  const ccy=isNonFx(assetId)?(macroCcyFor(assetId)||'USD'):assetId;
+  const zu2=(v)=>Array.isArray(v)?v.map(e=>[e[0],e[1]]):null;
+  switch(art){
+    case 'y2':    return{reihe:zu2(bondSeriesPts(ccy,'2Y Bond Yield')),einheit:'%'};
+    case 'y10':   return{reihe:zu2(bondSeriesPts(ccy,'10Y Bond Yield')),einheit:'%'};
+    case 'y2us':  return{reihe:zu2(bondSeriesPts('USD','2Y Bond Yield')),einheit:'%'};
+    case 'y10us': return{reihe:zu2(bondSeriesPts('USD','10Y Bond Yield')),einheit:'%'};
+    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:''};
+    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:''};
+    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:''};
+    case 'ccy':   return{reihe:priceSeriesFor(YIELD_CCY[assetId]||'USD'),einheit:''};
+    case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:''};}
+    default:      return{reihe:null,einheit:''};
+  }
+}
 function abKontextHtml(c){
   const arten=assetContextFor(c.id,assetCls(c.id));
   const kacheln=arten.map(a=>{
-    const d=KONTEXT_ART[a];if(!d)return'';
-    // '#YIELD' meint die Rendite der EIGENEN Waehrung des Assets.
+    const d=KONTEXT_ART[a];if(!d||d.art==='rate')return'';
     const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
     const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
-    const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:' title="Not wired to live data yet"';
-    // ⚠ Der Leitzins ist eine ZAHL, kein Chart. Als gleich grosse Kachel im
-    // Raster stand er gemessen in rund 200px Weissraum - jetzt sitzt er
-    // kompakt in der Kopfzeile der Karte, und die drei Charts bekommen die
-    // Breite, die sie brauchen.
-    if(d.art==='rate')return'';
-    const {html:plot,pct}=abKerzenBlock(c.id+'|'+a,d.titel);
-    // Die Richtung ist aus Sicht DIESES Assets zu lesen: steigende Renditen
-    // sind fuer eine Waehrung tendenziell bullish, fuer Gold das Gegenteil.
-    const roh=pct>0.15?'bull':pct<-0.15?'bear':'neu';
+    const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:'';
+    const {reihe,einheit}=abKontextReihe(a,c.id);
+    const ch=abKerzenBlock(reihe,d.titel,einheit);
+    if(ch.leer)return`<div class="ab-k">
+      <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}</div>${ch.html}</div>`;
+    const roh=ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu';
     const dreht=abDreht(a,assetCls(c.id));
     const b=yieldBiasFor(a,assetCls(c.id),roh);
-    // ⚠ <div> statt <button>: ein Button darf keine interaktiven Kinder
-    // enthalten, und der Hover-Rahmen faengt die Zeigerereignisse ab. Der
-    // Sprung haengt deshalb an der Kopfzeile, nicht am ganzen Kasten.
     return`<div class="ab-k">
-      <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}${AB_PH}</div>
-      ${plot}
-      <div class="ab-k-s" style="color:${biasCss(roh)}">${pct>0?'+':''}${pct.toFixed(2)}%${dreht?' · inverse for this asset':''}</div>
+      <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}</div>
+      ${ch.html}
+      <div class="ab-k-s" style="color:${biasCss(roh)}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
     </div>`;
   }).join('');
-  const rate=arten.includes('cb')
-    ?`<span class="ab-rate" title="Policy rate of this asset's central bank">
+  const rate=arten.includes('cb')?(()=>{
+    const r=rateInfo?rateInfo(isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id):null;
+    const wert=r&&r.rate!=null?r.rate:null;
+    return`<span class="ab-rate" title="Policy rate of this asset's central bank">
         <span class="ab-rate-l">Policy rate</span>
-        <span class="ab-rate-v">4.25<span class="ab-k-u">%</span></span>
-        <span class="ab-rate-s">unchanged since Jul</span>${AB_PH}</span>`:'';
+        <span class="ab-rate-v">${wert!=null?escH(String(wert)):'–'}${wert!=null?'<span class="ab-k-u">%</span>':''}</span>
+        ${wert==null?'<span class="ab-rate-s">no value on file</span>':''}</span>`;
+  })():'';
+  // Der Zeitfilter gilt fuer ALLE Kacheln gleichzeitig.
+  const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart">${lbl}</button>`).join('');
   return`<div class="ab-ktile">
     <div class="ab-tile-hd"><span class="ab-tile-t">Context</span>${rate}
-      <span class="ab-tile-s">What else moves this asset — tap a tile to open it</span></div>
+      <span class="ab-rgs">${regler}</span></div>
     <div class="ab-kgrid">${kacheln}</div>
   </div>`;
 }
@@ -19638,7 +19735,8 @@ Object.assign(window,{
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
-  abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
+  abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
+  setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
@@ -19889,6 +19987,7 @@ Object.defineProperty(window,'pairOvBack',{get:()=>pairOvBack,set:v=>{pairOvBack
 Object.defineProperty(window,'pairOvRange',{get:()=>pairOvRange,set:v=>{pairOvRange=v;},configurable:true});
 Object.defineProperty(window,'pairOvFrom',{get:()=>pairOvFrom,set:v=>{pairOvFrom=v;},configurable:true});
 Object.defineProperty(window,'pairOvTo',{get:()=>pairOvTo,set:v=>{pairOvTo=v;},configurable:true});
+Object.defineProperty(window,'abChartRange',{get:()=>abChartRange,set:v=>{abChartRange=v;},configurable:true});
 Object.defineProperty(window,'_resAutoPin',{get:()=>_resAutoPin,set:v=>{_resAutoPin=v;},configurable:true});
 Object.defineProperty(window,'_evtAlertKey',{get:()=>_evtAlertKey,set:v=>{_evtAlertKey=v;},configurable:true});
 Object.defineProperty(window,'_evtAlertCustomEditId',{get:()=>_evtAlertCustomEditId,set:v=>{_evtAlertCustomEditId=v;},configurable:true});
