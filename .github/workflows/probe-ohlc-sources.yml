@@ -38,7 +38,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           node -e '
             const fs=require("fs");
-            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");};
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
             let d=null;
             try{d=JSON.parse(fs.readFileSync("tv_ohlc.json","utf8"));}catch(e){d=null;}
             const rows=d&&Array.isArray(d.data)?d.data:null;
@@ -86,7 +86,7 @@ jobs:
             node -e '
               const fs=require("fs");
               const id=process.argv[1],sym=process.argv[2],code=process.argv[3];
-              const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");};
+              const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
               let txt="";
               try{txt=fs.readFileSync("stooq_"+id+".csv","utf8");}catch(e){txt="";}
               const lines=txt.trim().split("\n").filter(Boolean);
