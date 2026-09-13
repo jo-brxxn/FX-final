@@ -13037,3 +13037,49 @@ Skala entsteht. 10 px ist der Boden.
 **Nachgemessen:** Zeilen einheitlich **25–26 px** (vorher 33–51), Karte
 **411 px** statt 565, Name einzeilig, nichts abgeschnitten, 390 px weiterhin
 eine Spalte ohne Querscrollen.
+
+### 2026-09-13 — Kalender als Monatskarte (VERSION-CHECK-504)
+
+**Nutzer-Foto** (iOS-Kalender-Widget): *„für den Kalender würde ich so eine
+Karte bevorzugen. Bekommt man da die Events auch irgendwie rein"* — mit
+ausdrücklich freier Hand bei Form und Platzierung.
+
+**Drei Karten in einer Reihe**, dasselbe Dreier-Raster wie das Board darunter:
+
+| | Inhalt |
+|---|---|
+| **Links** | Monatsraster, Montag zuerst, heute als gefüllter Kreis, bis zu 3 Punkte je Tag (rot High · gelb Medium · grau Low), ‹ › blättert Monate |
+| **Mitte** | Termine des **gewählten** Tages: Zeit, Währung, Name, Actual/Forecast/Previous (Actual in Überraschungsfarbe), Vergangenes gedämpft |
+| **Rechts** | **Next up**: die nächsten 9 Termine mit Abstand in Tagen; jede Zeile springt auf ihren Tag |
+
+Ein Monatsraster allein wäre hübsch, aber nutzlos: man sähe, **dass** etwas
+ist, und nicht **was**.
+
+### ⚠ Der Punkt, an dem die Karte sonst gelogen hätte
+
+Der Kalender-Feed reicht nur **rund eine Woche** voraus. Gemessen deckt er
+bei USD den **11.–23. September** ab — **17 von 30 Tagen überhaupt nicht**.
+Ein leerer Tag im Raster heißt also fast nie „da ist nichts", sondern „das
+weiß noch niemand".
+
+Dieser Unterschied wird deshalb sichtbar gemacht: nicht abgedeckte Tage
+stehen gedämpft, die Fußzeile nennt den tatsächlich abgedeckten Zeitraum mit
+Datum, und ein Klick auf so einen Tag sagt es im Klartext. Ohne das wäre die
+Karte eine hübsche Lüge — dieselbe Fehlerklasse wie ein geschätzter Wert
+(Regel 4).
+
+Die bisherige Sieben-Tage-Liste bleibt unverändert als aufklappbare
+**Full list** darunter, samt ihrer Bedienleiste mit dem High-Impact-Filter.
+
+### Zwei Korrekturen aus dem eigenen Augenschein
+
+1. **Rechte Karte halb so hoch wie das Raster** — an einem Tag mit zwei
+   Terminen war das die Hälfte der Reihe. `align-items:stretch`, Liste füllt.
+2. **Der Platz rechts blieb trotzdem leer.** Daraus wurde die dritte Spalte
+   „Next up" — sie beantwortet die Frage, die man beim Blick auf einen
+   Kalender wirklich hat.
+
+**Gemessen** (EUR/USD/CAD): Raster 30 Tage auf 300 px, heute genau 1×
+markiert, 9 / 8 / 2 Tage mit Punkten, 17–20 Tage als unbekannt
+gekennzeichnet, 0 Überläufe, Tageswahl und Monatswechsel wirken, 390 px eine
+Spalte ohne Querscrollen.

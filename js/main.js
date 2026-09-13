@@ -6334,9 +6334,10 @@ function renderDetail(){
       <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
+    ${assetMonthCalHtml(c)}
     ${`<div class="evt-section">
       <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
-        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span>Next Event: ${nextLbl}</span>`}
+        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span>Full list · Next Event: ${nextLbl}</span>`}
         <span class="evt-tog-arrow">▶</span>
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{
@@ -6573,6 +6574,153 @@ function assetNotesFoldersHtml(c){
     <div class="anf-main">${researchNotesPanelHtml(c.id,assetNoteFid)}</div>
   </div>`;
 }
+// ══ MONATSKALENDER DER ASSET-SEITE ═════════════════════════════════════
+//
+// Nutzer-Foto 2026-09-13 (iOS-Kalender-Widget): "fuer den Kalender wuerde
+// ich so eine Karte bevorzugen. Bekommt man da die Events auch irgendwie
+// rein" - und ausdruecklich frei in Form und Platzierung.
+//
+// Aufbau: links das Monatsraster mit Punkten an den Tagen, an denen etwas
+// ansteht, rechts die Termine des GEWAEHLTEN Tages. Das Raster allein waere
+// huebsch, aber nutzlos - man sieht, DASS etwas ist, und nicht WAS.
+//
+// ⚠ WICHTIG UND BEWUSST: der Kalender-Feed reicht nur rund eine Woche
+// voraus. Ein leerer Tag im Raster heisst also fast nie "da ist nichts",
+// sondern "das weiss noch niemand". Genau diesen Unterschied macht die
+// Karte sichtbar (abgedeckte Tage normal, Rest sichtbar gedaempft plus eine
+// Zeile, die den abgedeckten Zeitraum nennt). Ohne das waere die Karte eine
+// huebsche Luege - dieselbe Klasse wie geschaetzte Werte, siehe Regel 4.
+let abCalMonat=0;           // 0 = aktueller Monat, -1 = voriger, ...
+let abCalTag=null;          // gewaehlter Tag als 'YYYY-MM-DD'
+const AB_WOCHENTAGE=['M','T','W','T','F','S','S'];
+const AB_MONATE=['January','February','March','April','May','June',
+  'July','August','September','October','November','December'];
+
+function abCalShift(d){abCalMonat+=d;abCalTag=null;renderDetail();}
+function abCalPick(tag){abCalTag=tag;renderDetail();}
+
+/** Alle Termine dieses Assets nach Tag gebuendelt. */
+function abCalNachTag(assetId){
+  const map={};
+  getSymEventsAll(assetId).forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
+  return map;
+}
+function abTagStr(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function assetMonthCalHtml(c){
+  const proTag=abCalNachTag(c.id);
+  const tage=Object.keys(proTag).sort();
+  // Wie weit reicht der Feed wirklich? Das ist eine gemessene Groesse, keine
+  // Annahme - deshalb steht sie auch so in der Fusszeile.
+  const von=tage[0]||null, bis=tage[tage.length-1]||null;
+
+  const heute=new Date();heute.setHours(0,0,0,0);
+  const anker=new Date(heute.getFullYear(),heute.getMonth()+abCalMonat,1);
+  const jahr=anker.getFullYear(),monat=anker.getMonth();
+  const heuteStr=todayStr();
+  // Montag zuerst (wie im Vorbild). getDay() liefert 0 fuer Sonntag.
+  const ersterWochentag=(new Date(jahr,monat,1).getDay()+6)%7;
+  const tageImMonat=new Date(jahr,monat+1,0).getDate();
+
+  // Vorauswahl: der gewaehlte Tag, sonst heute, sonst der naechste Tag mit
+  // Terminen in diesem Monat - ein leeres rechtes Feld waere verschenkt.
+  let gewaehlt=abCalTag;
+  if(!gewaehlt){
+    const imMonat=tage.filter(t=>t.startsWith(`${jahr}-${String(monat+1).padStart(2,'0')}`));
+    gewaehlt=(abCalMonat===0&&proTag[heuteStr])?heuteStr
+      :(imMonat.find(t=>t>=heuteStr)||imMonat[imMonat.length-1]||(abCalMonat===0?heuteStr:null));
+  }
+
+  let zellen='';
+  for(let i=0;i<ersterWochentag;i++)zellen+='<span class="abc-d leer"></span>';
+  for(let t=1;t<=tageImMonat;t++){
+    const datum=abTagStr(new Date(jahr,monat,t));
+    const evs=proTag[datum]||[];
+    const wochenende=[5,6].includes((ersterWochentag+t-1)%7);
+    const bekannt=!!(von&&bis&&datum>=von&&datum<=bis);
+    // Hoechster Impact des Tages bestimmt die Farbe der Punkte.
+    const imps=evs.map(evtImpact);
+    const punkte=evs.length?`<span class="abc-dots">${
+      (imps.includes('high')?['high']:[]).concat(imps.includes('medium')?['medium']:[],imps.includes('low')?['low']:[])
+        .slice(0,3).map(i=>`<span class="abc-dot ${i==='high'?'ih':i==='medium'?'im':'il'}"></span>`).join('')}</span>`:'';
+    const klassen=['abc-d'];
+    if(datum===heuteStr)klassen.push('heute');
+    if(datum===gewaehlt)klassen.push('gew');
+    if(wochenende)klassen.push('we');
+    if(!bekannt)klassen.push('unbekannt');
+    const titel=evs.length?`${evs.length} event${evs.length===1?'':'s'} — ${evs.map(e=>e.name).slice(0,4).join(', ')}`
+      :bekannt?'Nothing scheduled on this day':'Not published yet — the calendar feed does not reach this far';
+    zellen+=`<button class="${klassen.join(' ')}" onclick="abCalPick('${datum}')" title="${escH(titel)}">
+      <span class="abc-n">${t}</span>${punkte}</button>`;
+  }
+
+  // ── Rechte Spalte: die Termine des gewaehlten Tages ──
+  const liste=(proTag[gewaehlt]||[]).slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+  const wert=(v,cls)=>`<span class="abc-v${cls?' '+cls:''}">${v?escH(v):'–'}</span>`;
+  const zeilen=liste.length?liste.map(ev=>{
+    const imp=evtImpact(ev);
+    return`<div class="abc-e ${imp==='high'?'ih':imp==='medium'?'im':'il'}${isEvtPast(ev)?' vorbei':''}">
+      <div class="abc-e-top"><span class="abc-e-t">${escH(ev.time||'—')}</span>
+        <span class="abc-e-c">${escH(ev.currencies||'')}</span>
+        <span class="abc-e-n" title="${escH(ev.name)}">${escH(ev.name)}</span></div>
+      <div class="abc-e-v"><span class="abc-l">A</span>${wert(ev.actual,actualColor(ev,c.id))}
+        <span class="abc-l">F</span>${wert(ev.forecast)}
+        <span class="abc-l">P</span>${wert(ev.previous)}</div>
+    </div>`;}).join('')
+    :`<div class="abc-empty">${gewaehlt&&von&&bis&&gewaehlt>=von&&gewaehlt<=bis
+        ?'Nothing scheduled for this asset on this day.'
+        :'Not published yet — the calendar feed only looks about a week ahead. This day is unknown, not empty.'}</div>`;
+
+  const kopf=gewaehlt?fmtDayHdr(gewaehlt):'—';
+  return`<div class="abc-wrap">
+    <div class="abc-cal">
+      <div class="abc-hd">
+        <button class="abc-nav" onclick="abCalShift(-1)" title="Previous month">‹</button>
+        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>
+        <button class="abc-nav" onclick="abCalShift(1)" title="Next month">›</button>
+      </div>
+      <div class="abc-grid">
+        ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
+        ${zellen}
+      </div>
+      <div class="abc-foot">${von&&bis
+        ?`Calendar covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>, not empty.`
+        :'No calendar data for this asset yet.'}</div>
+    </div>
+    <div class="abc-day">
+      <div class="abc-day-hd">${escH(kopf)}${liste.length?`<span class="abc-day-n">${liste.length} event${liste.length===1?'':'s'}</span>`:''}</div>
+      <div class="abc-day-list">${zeilen}</div>
+    </div>
+    ${abNextUpHtml(c,proTag,heuteStr,gewaehlt)}
+  </div>`;
+}
+// Dritte Spalte: was als Naechstes ansteht. Ohne sie stuende rechts eine
+// halb leere Karte - an einem Tag mit zwei Terminen war das gemessen die
+// Haelfte der Reihe. Und es beantwortet die Frage, die man beim Blick auf
+// einen Kalender wirklich hat: was kommt, nicht was war.
+function abNextUpHtml(c,proTag,heuteStr,gewaehlt){
+  const kommend=[];
+  Object.keys(proTag).filter(d=>d>=heuteStr).sort().forEach(d=>{
+    proTag[d].slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')))
+      .forEach(ev=>{if(kommend.length<9&&!isEvtPast(ev))kommend.push([d,ev]);});
+  });
+  const zeilen=kommend.length?kommend.map(([d,ev])=>{
+    const imp=evtImpact(ev);
+    const tage=daysUntil(d);
+    const wann=tage===0?'Today':tage===1?'Tomorrow':`in ${tage}d`;
+    return`<button class="abc-u ${imp==='high'?'ih':imp==='medium'?'im':'il'}${d===gewaehlt?' gew':''}" onclick="abCalPick('${d}')" title="${escH(ev.name)} — jump to this day">
+      <span class="abc-u-w">${escH(wann)}</span>
+      <span class="abc-u-n">${escH(ev.name)}</span>
+      <span class="abc-u-t">${escH(ev.time||'—')}</span>
+    </button>`;}).join('')
+    :`<div class="abc-empty">Nothing upcoming in the published window.</div>`;
+  return`<div class="abc-next">
+    <div class="abc-day-hd">Next up${kommend.length?`<span class="abc-day-n">${kommend.length}</span>`:''}</div>
+    <div class="abc-day-list">${zeilen}</div>
+  </div>`;
+}
+
 // ══ NEUE ASSET-SEITE (Layout-Umbau 2026-09-13) ═════════════════════════
 //
 // Nutzer-Wunsch: "Wir haben schon diese Quick-Links, aber irgendwie vergisst
@@ -19338,6 +19486,7 @@ Object.assign(window,{
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,toggleAbRest,abKontextHtml,abGrafikHtml,abNotesHtml,
   abBiasWort,abDreht,yieldBiasFor,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
+  assetMonthCalHtml,abCalShift,abCalPick,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
