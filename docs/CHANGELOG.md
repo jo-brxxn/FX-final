@@ -13584,3 +13584,77 @@ keine übersprungenen Blöcke, identische Achse über alle Charts) und dass 1D
 auf einem echten Handelstag landet. Gegenproben: Kerzen 1,3× ihres Fachs →
 rot mit 3,44 px Überlappung; Wochenenden als leere Fächer in der Achse → rot
 mit 17,81 px Lücke bei typisch 2,32 px.
+
+## 2026-09-13 — Score A: Risk Environment komplett entfernt (SCORE_MODEL_VERSION 10 → 11)
+
+Nutzer-Entscheid, wörtlich: *„lösch Risk Environment und alles was dazu gehört
+bitte von der kompletten Webseite."*
+
+### Erst gemessen, dann entfernt
+
+⚠ Die Karte trug bei **allen 24 Assets exakt 0 Punkte** bei — `Risk
+Correlation` und `Geopolitics` standen durchgehend auf neutral. Wirkungslos
+war sie trotzdem nicht: ihre Indikatoren zählten im **Divisor** von
+`symScoreCmp` mit und haben damit jedes echte Signal verwässert.
+
+**Vorher/Nachher** (`check/scorediff.js`, Arbeitsbaum gegen `origin/main` im
+selben Browser mit denselben Daten):
+
+| Asset | vorher | nachher | Δ |
+|---|---|---|---|
+| S&P 500 | −3,9 | −3,6 | +0,3 |
+| Nasdaq | −4,7 | −4,4 | +0,3 |
+| JP Yield | +7,7 | +7,4 | −0,3 |
+| BTC | +3,6 | +3,4 | −0,2 |
+| Gold | −2,1 | −2,0 | +0,1 |
+| Silver | +3,3 | +3,2 | −0,1 |
+| WTI Oil | +2,9 | +2,8 | −0,1 |
+| DE Yield | +1,5 | +1,4 | −0,1 |
+| GB Yield | +1,1 | +1,0 | −0,1 |
+| CH Yield | +2,3 | +2,2 | −0,1 |
+| NZ Yield | +1,7 | +1,6 | −0,1 |
+
+11 von 24 verändert; die acht FX-Majors, DAX, GER 100, US Yield und CA Yield
+bleiben gleich. Paar-Scores: 24 von 70 verändert, alle um ≤0,3.
+
+⚠ **Eine erste Schätzung sagte das Gegenteil voraus** (JPY +8,3 → +9,1, 16 von
+24 betroffen). Sie entfernte die Karte zur Laufzeit aus dem geladenen Objekt
+und rief `symScoreCmp` erneut — ohne `invalidateCmpCache()`, also mit einem
+veralteten Normierungsfaktor. Merksatz: eine Score-Änderung simuliert man
+nicht im laufenden Zustand, sondern misst sie mit `scorediff.js` gegen die
+Basis, in einem frisch geladenen Browser.
+
+### Was alles mitging
+
+Karte + beide Indikatoren, `mkMacroRub`/`migrateRiskEnvRub`, der
+Dashboard-Regler None/Half/Full (`setRiskEnvLevel`), die Reaktionsrichtung je
+Asset (`RISK_ENV_DEFAULT_DIR`, `setRiskEnvDir`, `RISK_ENV_DIRS`), die
+speicherbaren Szenarien (`createRiskEnvList`/`applyRiskEnvList`/…), das
+Konfigurationsfenster `#mRiskEnvCfg` samt CSS, die Sonntags-Erinnerung
+„CHECK YOUR RISK ENVIRONMENT" samt gesynctem Merker, `riskCorrBiasFor`/
+`recomputeRiskCorr`, `summarizeRiskEnv`, die Sync-Felder
+`riskEnvLevel`/`riskEnvCfg`/`riskEnvLists`, die Sperren in `setIndBias`/
+`openInfoM`, und der Accent-Token `--a-risk` (in 10 Vorlagen definiert,
+0× benutzt — auch aus der Pflichtliste von `check/theme.js`).
+
+**Bewusst geblieben:** der Risiko-Index aus echten Marktpreisen auf dem
+Dashboard (Gauge + Risk-on/Safe-Haven-Listen). Der hing nie am Score — nur der
+Regler darin tat das.
+
+### Migration und Wächter
+
+Die Karte wird nicht mehr angelegt, sondern **entfernt** — an zwei
+unabhängigen Stellen: `stripRiskEnvRub()` in `addMacroRub` (Standardsatz) und
+`ensureRiskEnvWeg()` beim Laden jedes gespeicherten Stands, unter **allen drei
+Namen**, die sie im Lauf der Zeit hatte. Ohne die beiden Alt-Namen bliebe sie
+bei jedem hängen, der die App vor der Umbenennung im Juli benutzt hat.
+
+⚠ **Die erste Gegenprobe des neuen Wächters meldete grün, obwohl eine Karte
+eingeschmuggelt war** — genau wegen dieser zwei Schichten: `ensureRiskEnvWeg()`
+räumte sie beim Laden wieder weg. Erst mit beiden abgeschalteten Schichten
+meldet `check/score.js` rot (2 Treffer bei EUR: Karte + Indikator). Die
+Doppelung ist gewollt, der Test musste sie kennen.
+
+Das 12. Feld der Score-History (früher der Beitrag dieser Karte) bleibt im
+Eintrag stehen und trägt jetzt 0: die Aufzeichnung ist positionsbasiert, ein
+entferntes Feld würde jeden alten Eintrag um eine Stelle verschieben.

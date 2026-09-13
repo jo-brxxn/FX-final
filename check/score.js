@@ -94,6 +94,10 @@ const MODE = process.argv[2] || 'normalized';
   // einer Liste: eine Ausnahme, die falsch greift, faellt damit auf.
   // Gegenprobe beim Einbau: die Ausnahme abgeschaltet -> 181 Treffer
   // (77 COT + 32 Risk Environment + 72 Renditen), wieder an -> 0.
+  // ⚠ Die 32 Risk-Environment-Treffer gibt es seit dem 2026-09-13 nicht mehr:
+  // die Karte ist entfernt. Der Zaehler bleibt trotzdem stehen und MUSS jetzt
+  // 0 sein - genau das ist die Probe darauf, dass die Karte wirklich weg ist
+  // und nicht bloss nicht mehr gezeichnet wird.
   ok.ohneAlter={cot:0,risk:0,renditen:0};
   const RENDITEN=new Set(['2Y Bond Yield','10Y Bond Yield']);
   syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
@@ -116,6 +120,23 @@ const MODE = process.argv[2] || 'normalized';
     if(Math.abs(d-1)>1e-9)mitAlter++;
   })));
   ok.mitAlter=mitAlter;
+  // ⚠ Risk Environment ist am 2026-09-13 entfernt worden (Nutzer: "loesch
+  // Risk Environment und alles was dazu gehoert bitte von der kompletten
+  // Webseite"). Sie darf an KEINEM Asset mehr haengen - auch nicht unter
+  // einem ihrer beiden alten Namen, und auch nicht in der gespeicherten
+  // Kartenreihenfolge, sonst sortiert applyRubOrder() weiter nach einer
+  // Karte, die es nicht gibt.
+  const reNamen=['Risk Environment','Macro & Risk Environment','Makro & Risikoumfeld'];
+  let reKarten=0,reInds=0;
+  syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>{
+    if(reNamen.includes(rub.name)){reKarten++;add('Risk-Environment-Karte lebt noch',{sym:sym.id,rub:rub.name});}
+    (rub.indicators||[]).forEach(ind=>{
+      if(ind.name==='Risk Correlation'){reInds++;add('Risk-Correlation-Indikator lebt noch',{sym:sym.id,rub:rub.name});}
+    });
+  }));
+  if(typeof rubOrder!=='undefined'&&Array.isArray(rubOrder)&&rubOrder.some(n=>reNamen.includes(n)))
+    add('Risk Environment steht noch in der Kartenreihenfolge',{rubOrder:rubOrder.join(', ')});
+  ok.riskEnvWeg={karten:reKarten,indikatoren:reInds};
   if(mitAlter<50)add('Alters-Faktor wirkt nirgends mehr',
     {mitAlter,hinweis:'Die Ausnahme greift zu weit - erwartet werden mehrere hundert echte Veroeffentlichungen mit Alters-Gewicht.'});
 

@@ -25,6 +25,7 @@ verschiedene Rechnungen.
 | Revision des Previous | 2026-08-08 | kam unzuverlaessig an (TVs previous-Feld traegt sie nur ~3 Tage; bei geblocktem Workflow fuer immer weg) UND die Bonus-Dauer hing an der Frequenz (NZD GDP 91 Tage vs. GBP NFP 28). Anzeige + Bias-Faerbung bleiben. |
 | Veraltete Releases | 2026-08-08 | siehe Altersgrenze unten |
 | 2Y/10Y Spread | laenger | `SCORE_ZERO`, bewusst display-only |
+| **Risk Environment (ganze Karte)** | 2026-09-13 | Nutzer-Entscheid: *„loesch Risk Environment und alles was dazu gehoert bitte von der kompletten Webseite"*. ⚠ Gemessen VOR dem Entfernen: die Karte trug bei **allen 24 Assets exakt 0 Punkte** bei — `Risk Correlation` und `Geopolitics` standen durchgehend auf neutral. Trotzdem aendern sich **11 von 24 Scores**, weil ihre Indikatoren im Divisor mitzaehlten: BTC +3,6→+3,4, S&P −3,9→−3,6, Nasdaq −4,7→−4,4, JP Yield +7,7→+7,4, die uebrigen ±0,1. Die acht FX-Majors, DAX, GER 100, US Yield und CA Yield bleiben unveraendert. Mit entfernt: der Dashboard-Regler None/Half/Full, die Reaktionsrichtung je Asset, die speicherbaren Szenarien, das Konfigurationsfenster, die Sonntags-Erinnerung und der Accent-Token `--a-risk`. Der **Risiko-Index aus Marktpreisen** auf dem Dashboard bleibt — er ist reine Anzeige und haengt an keinem Score. |
 
 ## Altersgrenze (`IND_STALE_CYCLES = 2`)
 

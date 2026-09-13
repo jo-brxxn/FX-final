@@ -527,7 +527,7 @@ function symSyncGroup(id){
 // const erst viel spaeter im Script deklariert (TDZ - dieser Abschnitt hier
 // laeuft beim Skript-Parsen weit davor), derselbe Stolperstein wie beim
 // dokumentierten SENT_MAP-Fall weiter unten im File.
-const SYNC_EXCLUDE_RUBS=['COT Data','Risk Environment'];
+const SYNC_EXCLUDE_RUBS=['COT Data'];
 function syncAssetGroup(srcId){
   const g=symSyncGroup(srcId);if(!g)return false;
   const src=syms.find(s=>s.id===srcId);if(!src)return false;
@@ -540,7 +540,7 @@ function syncAssetGroup(srcId){
         // Ziel behaelt seine EIGENEN COT Data/Risk Environment-Karten (nicht
         // die des Sync-Quell-Assets) - Einfuegereihenfolge folgt der
         // etablierten Konvention (COT Data vor Risk Environment, Risk
-        // Environment immer zuletzt, siehe mkRubOrder()/ensureRiskEnvLast()).
+        // Environment gibt es seit dem 2026-09-13 nicht mehr, siehe mkRubOrder()).
         v=v.filter(r=>!SYNC_EXCLUDE_RUBS.includes(r.name));
         SYNC_EXCLUDE_RUBS.forEach(name=>{
           const own=(t.rubrics||[]).find(r=>r.name===name);
@@ -991,7 +991,7 @@ function symScoreDrivingEventsByDate(id){
   const nonFx=isNonFx(id);
   (c.rubrics||[]).forEach(rub=>{
     if(!rub.indicators)return;
-    if(rub.name==='COT Data'||rub.name===MACRO_NAME){
+    if(rub.name==='COT Data'){
       rub.indicators.forEach(ind=>pushForInd(ind,null,rub,id,1));
       return;
     }
@@ -1100,7 +1100,7 @@ function renderSymHistory(id){
 // Daten nicht zusammen und es wird gar keine Zerlegung gezeigt - lieber
 // nichts als eine Rechnung, die nicht aufgeht.
 const HIST_BRK_MAX_REST=0.35;
-const HIST_REST_NAMES=['Interest Rates','COT Data','Risk Environment'];
+const HIST_REST_NAMES=['Interest Rates','COT Data'];
 function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,names,histRest){
   if(!delta||!prevDate)return[];
   const cN=histCmp[date],cP=histCmp[prevDate];
@@ -1135,7 +1135,7 @@ function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,name
       if(uebrig)parts.push({name:'Other cards',v:uebrig,tip:'Any further cards on this asset beyond the six that are recorded per day (e.g. a category you added yourself)'});
     }else{
       const v=Math.round(((rawN-sumN)-(rawP-sumP))*cN*10)/10;
-      if(v)parts.push({name:'Other cards',v:v,tip:'Interest Rates, COT Data and Risk Environment together — one of these two days was recorded before 2026-09-06, when those three were not yet stored separately, so they cannot be split apart for it'});
+      if(v)parts.push({name:'Other cards',v:v,tip:'Interest Rates and COT Data together — one of these two days was recorded before 2026-09-06, when they were not yet stored separately, so they cannot be split apart for it'});
     }
   }
   const vF=Math.round(rawP*(cN-cP)*10)/10;
@@ -2914,7 +2914,7 @@ function mkRubs(){return[
 // Globale Kartenreihenfolge der Makro-Kategorien (für jedes Symbol gleich):
 // Inflation, Leitzins, Arbeitsmarkt, Wirtschaftswachstum, COT Data, Risk
 // Environment (Nutzer-Wunsch 2026-07-13: als LETZTE Karte).
-function mkRubOrder(){return['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data',MACRO_NAME];}
+function mkRubOrder(){return['Inflation','Interest Rates','Labour Market','Economic Growth','COT Data'];}
 // Kurze englische Standard-Erklärung pro Indikator (Basisname ohne y/y-Suffix):
 // was/wen er misst, wie er angegeben ist, was er bedeutet. Wird schreibgeschützt
 // im Info-Fenster ("i") über den eigenen Notizen angezeigt.
@@ -2956,7 +2956,6 @@ const IND_INFO_DEFAULTS={
   'Put/Call Ratio':'CBOE options Put/Call ratio (put volume ÷ call volume). Read CONTRARIAN: a high ratio (≥1.0) means heavy hedging/fear → often a bottom (bullish); a low ratio (≤0.7) means complacency/greed → often a top (bearish). Shown in the Sentiment tab when the source is reachable; not scored (data source blocks datacenter IPs).',
   'VIX (Volatility)':'CBOE Volatility Index — the market\'s "fear gauge" (expected 30-day S&P volatility). Read CONTRARIAN: a spike (≥28) signals panic and often marks a bottom (bullish); a very low reading (≤13) signals complacency and often a top (bearish). Counts ±0.5 only at those extremes. Applies to S&P 500 & Nasdaq.',
   // Risk Environment
-  'Risk Correlation':'Set automatically, not manual: driven by the Risk Environment dial on the Dashboard (Risk Sentiment card) — None/Half/Full = how risky the current environment is — combined with this asset\'s reaction direction (⚙️ gear icon there: Bullish = credited when the environment is risky / safe haven, Bearish = penalized when the environment is risky / risk asset, Neutral = always neutral). 5 levels: strongly bullish/bullish/neutral/bearish/strongly bearish, counting ±1 (strong) or ±0.5 (mild).',
   'Geopolitics':'Your own read of active geopolitical risk (wars, sanctions, elections, trade conflicts) and how directly it affects this asset — via safe-haven flows, energy/trade exposure, or general risk aversion. Set manually.',
 };
 function applyRubOrder(){
@@ -2974,14 +2973,15 @@ function applyRubOrder(){
 // statt eines vollen rubOrder-Resets, damit sonstige manuelle Umsortierungen
 // des Nutzers erhalten bleiben - laeuft nur einmal, danach darf der Nutzer
 // die Karte wieder frei verschieben, ohne dass sie zurueckspringt.
-function ensureRiskEnvLast(){
-  if(localStorage.getItem('fxpro_ruborder_v4')==='1')return;
-  if(Array.isArray(rubOrder)){
-    const mi=rubOrder.indexOf(MACRO_NAME);
-    if(mi>=0)rubOrder.splice(mi,1);
-    rubOrder.push(MACRO_NAME);
-  }
-  localStorage.setItem('fxpro_ruborder_v4','1');
+// Raeumt den Risk-Environment-Namen aus einer GESPEICHERTEN
+// Karten-Reihenfolge. Ohne das bliebe der Eintrag in rubOrder stehen und
+// applyRubOrder() sortierte weiter nach einer Karte, die es nicht mehr gibt.
+// Nicht mehr per localStorage-Flag einmalig, sondern bei jedem Laden -
+// die Reihenfolge kann ueber den Cloud-Sync jederzeit wieder mit einem
+// alten Stand hereinkommen.
+function ensureRiskEnvWeg(){
+  if(Array.isArray(rubOrder))rubOrder=rubOrder.filter(n=>!RISK_ENV_ALTE_NAMEN.includes(n));
+  (syms||[]).forEach(stripRiskEnvRub);
 }
 // One-time, idempotent cleanup applied to existing saved rubrics so older
 // symbols pick up the trimmed/renamed indicator set above.
@@ -3021,37 +3021,10 @@ function stripGeopoliticsRub(rubrics){
   const gi=rubrics.findIndex(r=>r.name==='Geopolitics');
   if(gi>=0)rubrics.splice(gi,1);
 }
-// Risk Environment umgebaut (Nutzer-Wunsch 2026-07-13): statt 4 Indikatoren
-// (Safe Haven/Risk-On Correlation/Risk-Off Correlation/Asset-spezifisch) nur
-// noch genau 2: "Risk Correlation" (automatisch aus dem Risk-Sentiment-Regler
-// im Dashboard gesetzt, siehe recomputeRiskCorr) und "Geopolitics" (manuell,
-// wie jeder normale Indikator). Bestehende Karten mit dem alten 4er-Set
-// werden hier komplett auf die neuen 2 zurueckgesetzt - eine Zuordnung der
-// alten Stichpunkte ist inhaltlich nicht sinnvoll moeglich.
-const RISK_ENV_INDS=['Risk Correlation','Geopolitics'];
-// "Geopolitics" nur fuer FX-Waehrungen (Nutzer-Wunsch 2026-07-21: politische
-// Unsicherheit eines Landes ist fuer dessen eigene Waehrung sinnvoll
-// zuordenbar - bei Non-FX-Assets (Gold/BTC/Indizes) war unklar, WESSEN
-// Politik gemeint sein soll, und der Indikator konnte den Karten-Bias
-// stumm gegen die reine Risk-Correlation-Lesart verschieben, siehe
-// Bugreport-Eintrag unten). Non-FX behaelt nur "Risk Correlation".
-const RISK_ENV_INDS_NONFX=['Risk Correlation'];
-function migrateRiskEnvRub(rubrics,sym){
-  if(!Array.isArray(rubrics))return;
-  const r=rubrics.find(x=>x.name===MACRO_NAME||x.name===MACRO_NAME_LEGACY||x.name===MACRO_NAME_LEGACY2);
-  if(!r)return;
-  const wantInds=(sym&&isNonFx(sym.id))?RISK_ENV_INDS_NONFX:RISK_ENV_INDS;
-  const names=(r.indicators||[]).map(i=>i.name);
-  const isMigrated=names.length===wantInds.length&&wantInds.every(n=>names.includes(n));
-  if(!isMigrated){
-    // Bestehende Werte (Bias/Notizen) fuer Indikatoren, die in BEIDEN Sets
-    // vorkommen (aktuell nur "Risk Correlation"), bleiben erhalten statt neu
-    // erzeugt zu werden - nur "Geopolitics" wird fuer Non-FX entfernt bzw.
-    // fuer FX bei Bedarf neu angelegt.
-    const old=r.indicators||[];
-    r.indicators=wantInds.map(n=>old.find(i=>i.name===n)||{id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]});
-  }
-}
+// ⚠ HIER STAND migrateRiskEnvRub() MIT RISK_ENV_INDS/RISK_ENV_INDS_NONFX.
+// Die Funktion hat bestehende Risk-Environment-Karten auf den jeweils
+// aktuellen Indikatorsatz zurechtgebogen. Seit dem 2026-09-13 wird die Karte
+// nicht mehr zurechtgebogen, sondern entfernt - siehe stripRiskEnvRub().
 // Die drei Rendite-/Spread-Indikatoren ziehen aus der Interest-Rates- in
 // die Inflation-Karte um, jeweils ans ENDE (Nutzer-Wunsch 2026-07-20, fuer
 // alle Waehrungen/Karten einheitlich). Bestehende Nutzer-Daten (Bias,
@@ -3163,7 +3136,8 @@ function addSurveyInds(rubrics,sym){
 }
 function migrateRubInds(rubrics,sym){
   stripGeopoliticsRub(rubrics);
-  migrateRiskEnvRub(rubrics,sym);
+  // migrateRiskEnvRub ist entfallen - die Karte wird nicht mehr umgebaut,
+  // sondern entfernt (stripRiskEnvRub, aufgerufen aus addMacroRub).
   moveYieldIndsToInflation(rubrics);
   addSurveyInds(rubrics,sym);
   cleanDeriveRules(sym);
@@ -3417,17 +3391,16 @@ const DEF=[
     rubrics:mkRubs(),noteRubs:[],notes:''},
 ];
 
-// ══ MAKRO & RISIKOUMFELD (zusätzliche Rubrik) ════════════════════════
-const MACRO_NAME='Risk Environment';
-const MACRO_NAME_LEGACY='Makro & Risikoumfeld';
-// Alter englischer Name vor der Umbenennung (Nutzer-Wunsch 2026-07-13:
-// "Macro & Risk Environment" -> "Risk Environment", nur noch 2 Indikatoren
-// Risk Correlation + Geopolitics, Karte ans Ende verschoben). Wird wie
-// MACRO_NAME_LEGACY beim Laden/Sync mitgezogen.
-const MACRO_NAME_LEGACY2='Macro & Risk Environment';
+// ══ RISK ENVIRONMENT: NUR NOCH ALS AUFRAEUM-LISTE ═══════════════════════
+// Die Karte ist am 2026-09-13 entfernt worden (siehe stripRiskEnvRub). Diese
+// Namen bleiben stehen, damit sie auch aus ALTEN gespeicherten Staenden
+// verschwindet - unter allen drei Namen, die sie im Lauf der Zeit hatte.
+// Ohne die beiden Alt-Namen bliebe sie bei jedem haengen, der die App vor
+// der Umbenennung im Juli benutzt hat.
+const RISK_ENV_ALTE_NAMEN=['Risk Environment','Macro & Risk Environment','Makro & Risikoumfeld'];
 // Diese Rubriken werden zwischen USD und allen USD-getriebenen Assets
 // (Rohstoffe, Krypto, Indizes) synchron gehalten – siehe syncMacroRub().
-const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market',MACRO_NAME];
+const MACRO_SYNC_RUBS=['Interest Rates','Inflation','Labour Market'];
 // Leitet Rubrik- und Indikator-Bias (Karte + jeder einzelne Indikator) eines
 // Nicht-FX-Assets automatisch aus der verbundenen Währung ab, statt es manuell
 // einzutragen. Pro Rubrik: 'same' = starke Daten gelten als bullish (identisch
@@ -3583,29 +3556,9 @@ const MACRO_DATA={
 // 'bullish' = wird gut geschrieben, wenn die Umgebung riskant ist (klassische
 // Safe Havens: USD/CHF/JPY/Gold), 'bearish' = wird abgezogen, wenn die
 // Umgebung riskant ist (Risk-Assets: Aktien/Krypto/Rohstoff-Waehrungen),
-// 'neutral' = keine Reaktion. Nur ein Startwert - frei ueberschreibbar ueber
-// riskEnvCfg (Zahnrad-Menue im Dashboard). Nicht gelistete/eigene Assets
-// fallen auf 'bearish' zurueck (die meisten Custom-Assets sind Risk-Assets,
-// keine Safe Havens).
-const RISK_ENV_DEFAULT_DIR={
-  USD:'bullish',EUR:'bearish',GBP:'bearish',CHF:'bullish',JPY:'bullish',CAD:'bearish',AUD:'bearish',NZD:'bearish',
-  BTC:'bearish',GOLD:'bullish',SILVER:'bearish',OIL:'bearish',SP500:'bearish',NAS:'bearish',
-};
-// Yields-Kategorie (Nutzer-Wunsch 2026-08-24, woertlich: "risk Sentiment
-// wenn das auf Full oder half steht ist das auch bullish") - 'bullish' heisst
-// in diesem System exakt das: der Regler-Wert wird bei Half/Full als
-// bullisch verbucht, bei None ohne Wirkung (siehe RISK_ENV_DIRS oben).
-Object.keys(YIELD_CCY).forEach(id=>{RISK_ENV_DEFAULT_DIR[id]='bullish';});
-// Migration (Nutzer-Wunsch 2026-07-13 abends): alte Werte 'normal'/'inverse'/
-// 'none' aus riskEnvCfg auf die neuen, semantisch korrigierten Namen heben -
-// 'normal' war "bullish bei Risk-On" = jetzt 'bearish' (Risk-Asset), 'inverse'
-// war "bearish bei Risk-On" = jetzt 'bullish' (Safe Haven).
-const RISK_ENV_DIR_MIGRATE={normal:'bearish',inverse:'bullish',none:'neutral'};
-function migrateRiskEnvCfg(cfg){
-  if(!cfg)return cfg;
-  Object.keys(cfg).forEach(id=>{if(RISK_ENV_DIR_MIGRATE[cfg[id]])cfg[id]=RISK_ENV_DIR_MIGRATE[cfg[id]];});
-  return cfg;
-}
+// ⚠ HIER STANDEN RISK_ENV_DEFAULT_DIR UND migrateRiskEnvCfg().
+// Beide beschrieben, wie ein Asset auf den Risk-Environment-Regler reagiert.
+// Regler und Karte sind am 2026-09-13 entfernt worden, damit auch das.
 // Nur noch 2 Indikatoren (Nutzer-Wunsch 2026-07-13): "Risk Correlation"
 // (automatisch aus dem Risk-Sentiment-Regler im Dashboard, siehe
 // recomputeRiskCorr/RISK_ENV_INDS) und "Geopolitics" (manuell, wie ein
@@ -3614,18 +3567,29 @@ function migrateRiskEnvCfg(cfg){
 // editierbar); safe/extra/extraInfo werden nicht mehr fuer Indikatoren
 // gebraucht, MACRO_DATA bleibt aber als Quelle fuer RISK_ENV_DEFAULT_DIR
 // (Default-Reaktionsrichtung je Asset) in Gebrauch.
-function mkMacroRub(id,name){
-  const cls=assetCls(id);
-  const m=MACRO_DATA[id]||{
-    ron:{info:`Check whether ${name} tends to gain in phases of rising risk appetite (risk-on: rising equity markets, falling volatility).`},
-    roff:{info:`Check whether ${name} tends to lose in phases of falling risk appetite (risk-off: falling equity markets, rising VIX) or serves as a hedge.`},
-  };
-  const infoFn=MACRO_RUB_INFO[cls]||MACRO_RUB_INFO.fx;
-  const corrInfo=`${m.ron.info} ${m.roff.info} Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card): None/Half/Full = how risky the current environment is. Configure whether ${name} is Bullish (credited when risky, safe haven), Bearish (penalized when risky, risk asset) or Neutral there via the ⚙️ gear icon - not editable here.`;
-  const inds=[{id:uid(),name:'Risk Correlation',bias:'neu',imp:false,date:'',interval:'',points:[],info:corrInfo}];
-  // "Geopolitics" nur fuer FX-Waehrungen (siehe RISK_ENV_INDS_NONFX-Kommentar).
-  if(!isNonFx(id))inds.push({id:uid(),name:'Geopolitics',bias:'neu',imp:false,date:'',interval:'',points:[]});
-  return{id:uid(),name:MACRO_NAME,bias:'neu',imp:false,summary:'',info:infoFn(name),indicators:inds};
+// ══ RISK ENVIRONMENT IST WEG (Nutzer 2026-09-13) ═══════════════════════
+//
+// Woertlich: "loesch Risk Environment und alles was dazu gehoert bitte von
+// der kompletten Webseite."
+//
+// ⚠ GEMESSEN, BEVOR ETWAS ENTFERNT WURDE: die Karte trug bei ALLEN 24 Assets
+// exakt 0 Punkte bei - "Risk Correlation" und "Geopolitics" standen
+// durchgehend auf neutral. Trotzdem aenderten sich 16 von 24 Scores, als sie
+// wegfiel, und zwar nach OBEN: die beiden nie belegten Indikatoren zaehlten
+// im Divisor von symScoreCmp mit und haben damit jedes echte Signal
+// verwaessert. JPY sprang von +8,3 auf +9,1, JP Yield von +7,7 auf +8,0.
+// Das ist keine Verzerrung, sondern die Korrektur einer.
+//
+// Diese Funktion LEGT die Karte nicht mehr an, sie RAEUMT sie weg - aus dem
+// Standardsatz und aus jedem gespeicherten Stand, der sie noch traegt
+// (Migration, idempotent). Ein Nutzer, der die App seit Monaten benutzt, hat
+// sie in seinem localStorage/in der Cloud liegen; ohne dieses Aufraeumen
+// waere sie bei ihm einfach geblieben.
+function stripRiskEnvRub(sym){
+  if(!sym||!Array.isArray(sym.rubrics))return false;
+  const vorher=sym.rubrics.length;
+  sym.rubrics=sym.rubrics.filter(r=>!r||!RISK_ENV_ALTE_NAMEN.includes(r.name));
+  return sym.rubrics.length!==vorher;
 }
 function addMacroRub(sym){
   if(!sym.rubrics)sym.rubrics=[];
@@ -3633,12 +3597,7 @@ function addMacroRub(sym){
   migrateRubInds(sym.rubrics,sym);
   applyIndResearch(sym);
   resetNonFxIndBias(sym);
-  // Als LETZTE Karte einsortiert (Nutzer-Wunsch 2026-07-13, vorher erste
-  // Karte) - push statt unshift; applyRubOrder() sortiert ohnehin final nach
-  // rubOrder, aber die Roh-Reihenfolge soll das schon widerspiegeln.
-  const idx=sym.rubrics.findIndex(r=>r.name===MACRO_NAME);
-  if(idx===-1)sym.rubrics.push(mkMacroRub(sym.id,sym.full||sym.name));
-  else if(idx<sym.rubrics.length-1)sym.rubrics.push(sym.rubrics.splice(idx,1)[0]);
+  stripRiskEnvRub(sym);
 }
 DEF.forEach(addMacroRub);
 
@@ -4613,7 +4572,7 @@ function researchForSnap(){
 // (VERSION-CHECK-484): was ohnehin im Code oder im Feed steht, gehoert nicht
 // zusaetzlich auf das Geraet.
 const SNAP_REPLACER=(k,v)=>k==='chartHist'?undefined:v;
-function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog,riskEnvLevel,riskEnvCfg,riskEnvLists},SNAP_REPLACER);}
+function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog},SNAP_REPLACER);}
 function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
@@ -4780,7 +4739,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // haette die veralteten Indikatoren ueber Cloud-Sync/Undo-Redo/Import daher
   // nie bereinigt bekommen - dieselbe Bug-Klasse wie ensureBuiltinSyms() oben.
   (syms||[]).forEach(sy=>migrateRubInds(sy.rubrics,sy));
-  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);research=migrateSeedNotesOut(research);research=seedAssetBehaviorNotes(research);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};seedNoteFlags=(d.seedNoteFlags&&typeof d.seedNoteFlags==='object')?d.seedNoteFlags:{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);riskEnvLevel=d.riskEnvLevel||0;riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];(syms||[]).forEach(sy=>{(sy.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});rubOrder=rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);ensureRiskEnvLast();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();applySeedNoteFlags();reapplyLiveFeeds();recomputeAuto();}
+  pairCats=d.pairCats||mkPairCats();pairs=d.pairs||[];migrateMarkedToWatchlist();noteCats=d.noteCats||mkNCs();researchFolders=Array.isArray(d.researchFolders)?d.researchFolders:[];research=migrateResearch(d.research,noteCats);research=migrateSeedNotesOut(research);research=seedAssetBehaviorNotes(research);if(_mergeSync){research.notes=mergeResearchNotes(_prevResNotes,research.notes);researchFolders=mergeResearchFolders(_prevResFolders,researchFolders);research.trash=mergeResearchTrash(_prevResTrash,research.trash);}researchAnalysis=(d.researchAnalysis&&typeof d.researchAnalysis==='object')?d.researchAnalysis:{};calEvts=d.calEvts||[];widgets=d.widgets||mkWidgets();dashRemovedTypes=Array.isArray(d.dashRemovedTypes)?d.dashRemovedTypes:[];dashV=d.dashV||0;customIds=d.customIds||[];rubOrder=d.rubOrder&&d.rubOrder.length?d.rubOrder:mkRubOrder();sbOrder=d.sbOrder||{};catOrder=d.catOrder||[];rateWatchCustom=d.rateWatchCustom||{};indLinkCustom=d.indLinkCustom||{};btReasons=(d.btReasons&&typeof d.btReasons==='object')?d.btReasons:{};seedNoteFlags=(d.seedNoteFlags&&typeof d.seedNoteFlags==='object')?d.seedNoteFlags:{};eventAlerts=pruneEventAlerts(d.eventAlerts||[]);priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];scoreLog=pruneScoreLog(d.scoreLog||[]);ensureRiskEnvWeg();applyRubOrder();restoreAlltimeDashboard(d.dashboards);migrateDash();applySeedNoteFlags();reapplyLiveFeeds();recomputeAuto();}
 // Markiert "der Nutzer hat gerade selbst editiert" OHNE pushU()s Stack-
 // Mutation (uStack.push+Cap+rStack-Reset) - fuer Undo/Redo selbst, die die
 // Stacks bereits direkt verwalten. Ohne diese Markierung erkannte weder
@@ -4956,7 +4915,6 @@ function restoreLocalBackup(i){
     const b=bs[i];if(!b)return;
     if(!confirm('Restore state from '+new Date(b.ts).toLocaleString('en-GB')+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
     pushU();_flipCauseTag='backup';applySnap(b.data);_flipCauseTag=null;
-    if(b.rerd!==undefined){riskEnvRemindDismissed=b.rerd;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',b.rerd);}catch(e){}}
     processCalEvts();save();renderSidebar();rerender();updUB();
     closeM('mBackup');
   }catch(e){alert('Error while restoring: '+e.message);}
@@ -5039,7 +4997,7 @@ let syms,pairCats,pairs,noteCats,research,researchFolders=[],researchAnalysis={}
 // aktivieren statt jedes Asset einzeln neu einzustellen). Entkoppelt von
 // riskEnvCfg (kein "aktive Liste"-Tracking) - Bearbeiten nach dem Laden
 // schreibt nicht automatisch in die Liste zurueck, dafuer erneut speichern.
-let riskEnvLevel=0,riskEnvCfg={},riskEnvLists=[];
+
 // Dashboard-Schema-Migration: ergaenzt fehlende neue Module (Globus, Currency
 // Strength, Risk Sentiment, Asset-Heatmap, Mini-Kalender). dashV ist Teil des
 // synchronisierten States (snap), damit die Migration auch dann greift, wenn ein
@@ -5229,8 +5187,8 @@ function loadState(){
       // auf Englisch ("Macro & Risk Environment") und dann auf "Risk
       // Environment" umbenannt - in gespeicherten Profilen den Namen
       // mitziehen, damit keine Dubletten entstehen.
-      syms.forEach(s=>{(s.rubrics||[]).forEach(r=>{if(r.name===MACRO_NAME_LEGACY||r.name===MACRO_NAME_LEGACY2)r.name=MACRO_NAME;});});
-      if(Array.isArray(d.rubOrder))d.rubOrder=d.rubOrder.map(n=>n===MACRO_NAME_LEGACY||n===MACRO_NAME_LEGACY2?MACRO_NAME:n);
+      syms.forEach(stripRiskEnvRub);
+      if(Array.isArray(d.rubOrder))d.rubOrder=d.rubOrder.filter(n=>!RISK_ENV_ALTE_NAMEN.includes(n));
       syms.forEach(addMacroRub);
       customIds=d.customIds||[];
       // Selbst hinzugefügte Symbole aus dem gespeicherten Zustand
@@ -5248,7 +5206,7 @@ function loadState(){
       // Einmalige Migration auf die neue Karten-Reihenfolge (Inflation, Leitzins,
       // Arbeitsmarkt, Wirtschaftswachstum, COT, Risk Environment).
       if(localStorage.getItem('fxpro_ruborder_v3')!=='1'){rubOrder=mkRubOrder();localStorage.setItem('fxpro_ruborder_v3','1');}
-      ensureRiskEnvLast();
+      ensureRiskEnvWeg();
       applyRubOrder();
       pairCats=d.pairCats||mkPairCats();
       pairs=(d.pairs||[]).map(p=>({...p,id:p.id||uid()}));
@@ -5302,14 +5260,11 @@ function loadState(){
       seedNoteFlags=(d.seedNoteFlags&&typeof d.seedNoteFlags==='object')?d.seedNoteFlags:{};
       eventAlerts=pruneEventAlerts(d.eventAlerts||[]);
       priceAlerts=Array.isArray(d.priceAlerts)?d.priceAlerts:[];
-      riskEnvLevel=d.riskEnvLevel||0;
-      riskEnvCfg=migrateRiskEnvCfg(d.riskEnvCfg||{});
-      riskEnvLists=Array.isArray(d.riskEnvLists)?d.riskEnvLists:[];
       applySeedNoteFlags();
       recomputeAuto();
       return;}
   }catch(e){}
-  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};btReasons={};seedNoteFlags={};eventAlerts=[];priceAlerts=[];riskEnvLevel=0;riskEnvCfg={};riskEnvLists=[];
+  syms=DEF.map(d=>({...d}));pairCats=mkPairCats();pairs=[];noteCats=mkNCs();research=mkResearch();researchFolders=[];researchAnalysis={};calEvts=mkCalEvts();widgets=mkWidgets();dashRemovedTypes=[];customIds=[];rubOrder=mkRubOrder();sbOrder={};catOrder=[];rateWatchCustom={};indLinkCustom={};btReasons={};seedNoteFlags={};eventAlerts=[];priceAlerts=[];
   syms.forEach(addMacroRub);applyRubOrder();
   // Ein brandneuer Nutzer (kein gespeicherter Zustand) durchlaeuft
   // migrateResearch() nie (mkResearch() liefert bereits einen frischen,
@@ -5370,7 +5325,6 @@ function adoptExternalState(){
       _flipCauseTag='sync';applySnap(s);_flipCauseTag=null;
       if(localStorage.getItem(SK)===s&&localStorage.getItem('fxpro_updated')===seenMarker)break;
     }
-    try{riskEnvRemindDismissed=localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';renderRiskEnvRemind();}catch(e){}
     try{const ts=JSON.parse(localStorage.getItem(TABSTACKS_KEY));if(Array.isArray(ts)){tabStacks=ts;renderTabBar();}}catch(e){}
     compactView=normCompactLevel(localStorage.getItem('fxpro_compactview')??1);applyCompactView();
     _lsUpdatedSeen=seenMarker;
@@ -5538,7 +5492,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -5546,7 +5500,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.riskEnvRemindDismissed){riskEnvRemindDismissed=_imp.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5783,7 +5737,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.riskEnvRemindDismissed=riskEnvRemindDismissed;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5881,7 +5835,6 @@ async function cloudPull(manual,forceOverwrite){
       // markPrefEdit() (jetzt bei saveTabStacks() ergaenzt) bereits setzt -
       // ohne den Guard HIER wurde es trotzdem unconditional ueberschrieben.
       if(!prefPending&&Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
-      if(!prefPending&&cd.riskEnvRemindDismissed){riskEnvRemindDismissed=cd.riskEnvRemindDismissed;try{localStorage.setItem('fxpro_riskenv_remind_dismissed',riskEnvRemindDismissed);}catch(e){}renderRiskEnvRemind();}
       // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
       // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
       // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
@@ -6419,7 +6372,7 @@ function renderOverviewCard(rubs){
   // Custom-Rubriken (nicht in OV_ORDER) behalten ihre relative Reihenfolge
   // und erscheinen danach (stabiler Sortier-Fallback ueber den Original-
   // Index).
-  const OV_ORDER=['Inflation','Labour Market','Economic Growth','Interest Rates','COT Data',MACRO_NAME];
+  const OV_ORDER=['Inflation','Labour Market','Economic Growth','Interest Rates','COT Data'];
   const ordered=top.map((rub,ri)=>({rub,ri})).sort((a,b)=>{
     const ai=OV_ORDER.indexOf(a.rub.name),bi=OV_ORDER.indexOf(b.rub.name);
     return(ai<0?999+a.ri:ai)-(bi<0?999+b.ri:bi);
@@ -7762,7 +7715,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     detailBody=`<div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>${revNote}`;
   }
   const spark=indSparklineSvg(ind,bco);
-  const lockIc=ind.name==='Risk Correlation'?`<span class="auto-lock-ic" title="Set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card, gear icon to configure)">${icn('link',11)}</span>`:rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
+  const lockIc=rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
   const isOpen=!!indDetailsOpen[ind.id];
   const stale=indIsStale(ind);
   const staleBadge=stale?`<span class="ir-stale" title="Last release ${escH((ind.research&&ind.research.date)||'?')} — more than ${IND_STALE_CYCLES} of its own release cycles overdue, so it no longer counts toward the score. The value stays visible.">OUT OF DATE</span>`:'';
@@ -7921,7 +7874,6 @@ function openBiasPicker(kind,ri,ii,x,y){
     obj=getInd(ri,ii);if(!obj)return;
     const r0=getRub(ri);
     if(r0&&rubAutoDerived(c,r0))lockMsg='This indicator\'s bias is mirrored automatically from '+macroCcyFor(c.id)+'. Change or disable the rule via the asset settings (gear button).';
-    else if(obj.name==='Risk Correlation')lockMsg='This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.';
     label=indName(obj);
     _biasPickerApply=b=>setIndBias(ri,ii,b);
   }else return;
@@ -7950,107 +7902,19 @@ function closeBiasPicker(){
 function biasPickerOutside(e){const m=document.getElementById('biasPicker');if(m&&!m.contains(e.target))closeBiasPicker();}
 function togRubImp(ri){pushU();const r=getRub(ri);if(!r)return;r.imp=!r.imp;syncMacroRub(ri);_flipCauseTag='star';recomputeAuto();_flipCauseTag=null;save();renderSidebar();renderDetail();if(curPage==='dash')renderDash();else if(curPage==='pairs')renderPairs();}
 function togRubCollapse(ri){const r=getRub(ri);if(!r)return;r.collapsed=!r.collapsed;save();renderDetail();}
-// ── Risk-Sentiment-Regler (Dashboard, Nutzer-Wunsch 2026-07-13) ──
-// "Risk Correlation" wird automatisch ueber recomputeRiskCorr() gesetzt (fuer
-// diesen Indikator ist setIndBias/togIndImp gesperrt) - dadurch blieb JEDE
-// automatische Aenderung KOMPLETT unsichtbar in der Asset-History, nicht nur
-// eine Regler-Aenderung (Nutzer-Bugreport 2026-07-19, urspruenglich nur fuer
-// setRiskEnvLevel gefixt) - beim vollstaendigen Audit 2026-07-27 auch bei
-// setRiskEnvDir() (Richtungs-Einstellung im Zahnrad-Menue) und
-// applyRiskEnvList() (gespeichertes Szenario anwenden) gefunden, hatten
-// denselben Effekt auf ind.bias, aber nie den scoreLog-Eintrag bekommen.
-// Gemeinsamer Helfer statt der Kopie in jeder der drei Funktionen: traegt
-// denselben scoreLog-Eintrag wie eine manuelle Bias-Aenderung nach, pro
-// betroffenem Asset (jedes mit einer Risk-Environment-Karte), inkl. des
-// tatsaechlichen Score-Effekts aus Vorher/Nachher-Vergleich. Aufrufer mutiert
-// riskEnvLevel/riskEnvCfg VOR diesem Aufruf - ind.bias traegt zu dem
-// Zeitpunkt noch den ALTEN Wert (wird hier zum ersten Mal seit der Mutation
-// neu berechnet), das liefert den korrekten "from"-Wert fuer den Log.
-function logRiskCorrChanges(){
-  (syms||[]).forEach(sym=>{
-    const rub=(sym.rubrics||[]).find(r=>r.name===MACRO_NAME);
-    const ind=rub&&(rub.indicators||[]).find(i=>i.name==='Risk Correlation');
-    if(!ind)return;
-    const before=indScore(ind,rub),oldBias=ind.bias;
-    ind.bias=riskCorrBiasFor(sym.id);
-    const after=indScore(ind,rub);
-    if(oldBias!==ind.bias)logScoreChange(sym.id,{kind:'bias',ind:indName(ind),rub:rub.name,from:oldBias,to:ind.bias,delta:Math.round((after-before)*100)/100});
-  });
-}
-function setRiskEnvLevel(lv){
-  lv=Math.max(0,Math.min(2,+lv||0));
-  if(lv===riskEnvLevel)return;
-  pushU();
-  riskEnvLevel=lv;
-  logRiskCorrChanges();
-  _flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderSidebar();rerender();
-}
-function riskEnvDirOf(id){return(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';}
-function setRiskEnvDir(id,dir){
-  pushU();if(!riskEnvCfg)riskEnvCfg={};riskEnvCfg[id]=dir;logRiskCorrChanges();_flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderRiskEnvCfgM();renderSidebar();rerender();
-}
-function openRiskEnvCfgM(){renderRiskEnvCfgM();renderRiskEnvLists();openM('mRiskEnvCfg');}
-// ── Gespeicherte Risk-Szenarien (Nutzer-Wunsch 2026-07-13 abends) ──
-function createRiskEnvList(){
-  const inp=document.getElementById('riskEnvListName');if(!inp)return;
-  const name=(inp.value||'').trim();if(!name)return;
-  pushU();
-  if(!Array.isArray(riskEnvLists))riskEnvLists=[];
-  riskEnvLists.push({id:uid(),name,cfg:{...(riskEnvCfg||{})}});
-  inp.value='';
-  save();renderRiskEnvLists();
-}
-function deleteRiskEnvList(id){
-  const l=(riskEnvLists||[]).find(x=>x.id===id);
-  if(!l||!confirm('Delete the saved scenario "'+l.name+'"?'))return;
-  pushU();
-  riskEnvLists=(riskEnvLists||[]).filter(x=>x.id!==id);
-  save();renderRiskEnvLists();
-}
-function applyRiskEnvList(id){
-  const l=(riskEnvLists||[]).find(x=>x.id===id);if(!l)return;
-  pushU();
-  riskEnvCfg={...(l.cfg||{})};
-  logRiskCorrChanges();
-  _flipCauseTag='riskenv';recomputeAuto();_flipCauseTag=null;save();renderRiskEnvCfgM();renderSidebar();rerender();
-}
-function renderRiskEnvLists(){
-  const el=document.getElementById('mRiskEnvLists');if(!el)return;
-  const lists=riskEnvLists||[];
-  el.innerHTML=lists.length?lists.map(l=>`<div class="risk-env-list-row">
-      <span class="risk-env-list-name" onclick="applyRiskEnvList('${l.id}')" title="Apply this saved scenario">${escH(l.name)}</span>
-      <button class="risk-env-list-del" onclick="deleteRiskEnvList('${l.id}')" title="Delete">×</button>
-    </div>`).join('')
-    :'<div class="risk-env-list-empty">No saved scenarios yet — set up the assets below, then save.</div>';
-}
-// Direction-Buttons in Bias-Farben statt neutralem Blau (Nutzer-Wunsch
-// 2026-07-13 abends) + Gruppierung nach SB_CATS (FX/Crypto/Metals/Energy/
-// Indices/Stocks, wie ueberall sonst im Projekt, siehe assetFilterSelect) +
-// innerhalb jeder Gruppe sortiert nach aktueller Richtung: bullish zuerst,
-// dann neutral, dann bearish.
-const RISK_ENV_DIRS=[['bullish','▲ Bullish','Credited (bullish) when the environment is risky - typical for safe havens'],['bearish','▼ Bearish','Penalized (bearish) when the environment is risky - typical for risk assets'],['neutral','◆ Neutral','Always neutral, no reaction']];
-const RISK_ENV_DIR_CLS={bullish:'bull',bearish:'bear',neutral:'neu'};
-const RISK_ENV_DIR_ORDER={bullish:0,neutral:1,bearish:2};
-function renderRiskEnvCfgM(){
-  const el=document.getElementById('mRiskEnvCfgList');if(!el)return;
-  const avail=new Set((syms||[]).map(s=>s.id));
-  const rowHtml=id=>{
-    const s=syms.find(x=>x.id===id);if(!s)return'';
-    const cur=riskEnvDirOf(id);
-    return`<div class="risk-env-cfg-row">
-      <span class="risk-env-cfg-name">${escH(s.name||id)}</span>
-      <div class="risk-env-cfg-btns">${RISK_ENV_DIRS.map(([k,lbl,tt])=>`<button class="risk-env-cfg-btn ${RISK_ENV_DIR_CLS[k]}${cur===k?' on':''}" title="${escH(tt)}" onclick="setRiskEnvDir('${id}','${k}')">${lbl}</button>`).join('')}</div>
-    </div>`;
-  };
-  const groupHtml=(label,ids)=>{
-    const list=ids.filter(id=>avail.has(id)).sort((a,b)=>RISK_ENV_DIR_ORDER[riskEnvDirOf(a)]-RISK_ENV_DIR_ORDER[riskEnvDirOf(b)]);
-    if(!list.length)return'';
-    return`<div class="risk-env-cfg-grp"><div class="risk-env-cfg-grp-hd">${escH(label)}</div>${list.map(rowHtml).join('')}</div>`;
-  };
-  const catIds=new Set(SB_CATS.flatMap(c=>c.ids));
-  const otherIds=(syms||[]).map(s=>s.id).filter(id=>!catIds.has(id));
-  el.innerHTML=SB_CATS.map(cat=>groupHtml(cat.l,cat.ids)).join('')+groupHtml('Other',otherIds);
-}
+// ⚠ HIER STAND DIE KOMPLETTE RISK-ENVIRONMENT-BEDIENUNG: der Regler
+//   None/Half/Full auf dem Dashboard (setRiskEnvLevel), die
+//   Reaktionsrichtung je Asset (setRiskEnvDir/RISK_ENV_DIRS), die
+//   speicherbaren Szenarien (createRiskEnvList/applyRiskEnvList/
+//   deleteRiskEnvList/renderRiskEnvLists), das Konfigurationsfenster
+//   (openRiskEnvCfgM/renderRiskEnvCfgM) und der Nachtrag in die
+//   Score-History (logRiskCorrChanges).
+// Alles entfernt am 2026-09-13 (Nutzer: "loesch Risk Environment und alles
+// was dazu gehoert bitte von der kompletten Webseite"). Alle diese
+// Funktionen hatten genau einen Zweck: den Indikator "Risk Correlation" zu
+// setzen. Den Indikator gibt es nicht mehr, also auch nichts mehr zu
+// setzen - stehengelassene Bedienelemente ohne Wirkung sind schlimmer als
+// gar keine (Regel 6).
 function delRub(ri){const c=getSym();const r=c&&c.rubrics&&c.rubrics[ri];if(!confirm(`Really delete "${r?r.name:'this card'}"?`))return;pushU();if(c&&c.rubrics)c.rubrics.splice(ri,1);save();renderDetail();}
 function mvRub(ri,d){
   const c=getSym();if(!c||!c.rubrics)return;
@@ -8097,7 +7961,7 @@ function saveInfoM(){
   obj.info=document.getElementById('mInfoTxt').value;
   save();closeM('mInfo');
 }
-function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}const _indChk=getInd(ri,ii);if(_indChk&&_indChk.name==='Risk Correlation'){alert('This indicator is set automatically from the Risk Environment dial on the Dashboard (Risk Sentiment card) - use the ⚙️ gear icon there to change how this asset reacts.');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _old=ind.bias,_before=indScore(ind,_r0);ind.bias=b;
+function setIndBias(ri,ii,b){const _c=getSym(),_r0=getRub(ri);if(_c&&_r0&&rubAutoDerived(_c,_r0)){alert('This indicator\'s bias is mirrored automatically from '+macroCcyFor(_c.id)+'. Change or disable the rule via the asset settings (gear button).');return;}pushU();const ind=getInd(ri,ii);if(!ind)return;const _old=ind.bias,_before=indScore(ind,_r0);ind.bias=b;
   // Manuelle Wahl pinnt gegen den GERADE AKTUELLEN Automatik-Input-Stand
   // (Actual/Forecast/Previous/Datum) - siehe indBiasInputSig/indBiasPinned bei
   // applyTrendModel. Bleibt der Stand unveraendert, lassen alle Automatik-
@@ -8159,7 +8023,7 @@ function addInd(ri){
 function cloneRubsFromUSD(){
   const usd=syms.find(s=>s.id==='USD');
   if(!usd||!usd.rubrics)return mkRubs();
-  return usd.rubrics.filter(r=>r.name!==MACRO_NAME).map(r=>({
+  return usd.rubrics.map(r=>({
     id:uid(),name:r.name,bias:'neu',imp:false,summary:'',
     indicators:(r.indicators||[]).map(i=>({id:uid(),name:i.name,bias:'neu',imp:false,date:'',interval:i.interval||'',points:[]}))
   }));
@@ -8523,7 +8387,7 @@ function rubAutoBiasNeeded(sym,rub){
 // auf "Full" (staerkste Stufe, sbull/sbear) traegt Risk Correlation nur
 // +/-1 zur Karten-Summe bei - die +/-2-Schwelle koennte dadurch nie
 // ausloesen, das Karten-Badge blieb faelschlich immer "Neutral".
-const RUB_AUTO_BIAS_THRESHOLD={[MACRO_NAME]:1};
+const RUB_AUTO_BIAS_THRESHOLD={};
 function recomputeRubricAutoBias(){
   syms.forEach(sym=>{
     (sym.rubrics||[]).forEach(rub=>{
@@ -8545,24 +8409,9 @@ function recomputeRubricAutoBias(){
 // globalen Risk-Sentiment-Regler (riskEnvLevel: 0=keine/1=halbe/2=volle
 // Risiko-Umgebung = wie GEFAEHRLICH/RISKANT die aktuelle Lage ist, Dashboard-
 // Widget "Risk Sentiment") + der pro Asset hinterlegten Reaktionsrichtung
-// (riskEnvCfg, Zahnrad-Menue dort) setzen. Bei "keine" IMMER neutral
-// (unabhaengig von der Richtung) - erst ab "halb"/"voll" schlaegt die
-// Richtung durch: 'bullish' (Safe Haven, wird bei Risiko gut geschrieben) ->
-// bull/sbull, 'bearish' (Risk-Asset, wird bei Risiko abgezogen) -> bear/sbear.
-// Nicht manuell editierbar, siehe Sperre in setIndBias/togIndImp.
-function riskCorrBiasFor(id){
-  const dir=(riskEnvCfg&&riskEnvCfg[id])||RISK_ENV_DEFAULT_DIR[id]||'bearish';
-  if(dir==='neutral'||!riskEnvLevel)return'neu';
-  const strong=riskEnvLevel>=2;
-  return dir==='bullish'?(strong?'sbull':'bull'):(strong?'sbear':'bear');
-}
-function recomputeRiskCorr(){
-  (syms||[]).forEach(sym=>{
-    const rub=(sym.rubrics||[]).find(r=>r.name===MACRO_NAME);
-    const ind=rub&&(rub.indicators||[]).find(i=>i.name==='Risk Correlation');
-    if(ind)ind.bias=riskCorrBiasFor(sym.id);
-  });
-}
+// ⚠ riskCorrBiasFor()/recomputeRiskCorr() sind weg (2026-09-13): sie haben
+// den Indikator "Risk Correlation" aus dem Dashboard-Regler abgeleitet. Der
+// Indikator existiert nicht mehr.
 // ── AUTOMATISCH GENERIERTE KARTEN-ZUSAMMENFASSUNG (Nutzer-Wunsch 2026-07-21)
 // Ersetzt das bisherige rein manuelle SUMMARY-Feld: baut aus den
 // tatsaechlichen Indikator-Werten (Bias/Actual/Forecast/Previous) einen
@@ -8627,7 +8476,7 @@ const SUM_PHRASE={
   'Retail Sales':'retail sales','Consumer Confidence':'consumer confidence',
   '2Y Bond Yield':'the 2Y yield','10Y Bond Yield':'the 10Y yield',
   'Net Bullish Positioning':'net bullish positioning','Net Bearish Positioning':'net bearish positioning',
-  'WoW Change in Net Position (%)':'the weekly positioning shift','Risk Correlation':'risk correlation',
+  'WoW Change in Net Position (%)':'the weekly positioning shift',
   'Geopolitics':'the geopolitical backdrop',
 };
 function sumPhrase(ind){
@@ -8657,7 +8506,6 @@ const RUB_TREND_WORDS={
   'Labour Market':{up:'improving',down:'weakening',mixed:'mixed',flat:'steady'},
   'Economic Growth':{up:'accelerating',down:'slowing',mixed:'mixed',flat:'steady'},
   'COT Data':{up:'turning more bullish',down:'turning more bearish',mixed:'mixed',flat:'steady'},
-  'Risk Environment':{up:'bullish',down:'bearish',mixed:'mixed',flat:'neutral'},
 };
 const RUB_TREND_DEFAULT={up:'strengthening',down:'weakening',mixed:'mixed',flat:'steady'};
 function rubTrendWord(rub,dir){return(RUB_TREND_WORDS[rub.name]||RUB_TREND_DEFAULT)[dir];}
@@ -9260,24 +9108,10 @@ function summarizeCot(sym,rub){
   }
   return sentence+'.';
 }
-function summarizeRiskEnv(sym,rub){
-  const levelWord=riskEnvLevel>=2?'a full risk-off environment':riskEnvLevel>=1?'a half risk-off environment':'a calm, low-risk environment';
-  const dir=riskEnvDirOf(sym.id);
-  const effect=(riskEnvLevel<1||dir==='neutral')?`having no clear impact on ${sym.name}`:dir==='bullish'?`bullish for ${sym.name}`:`bearish for ${sym.name}`;
-  let sentence=`Risk sentiment is currently ${levelWord}, ${effect}.`;
-  // "Geopolitics" gibt es nur noch bei FX-Waehrungen (Nutzer-Wunsch 2026-07-21:
-  // "Sag einfach das political uncertainty bullish oder bearish für die
-  // Währung ist... Ganz simpel") - ein eigener, simpler Satz statt es in die
-  // Risk-Correlation-Zeile zu verweben (vermeidet den zuvor gemeldeten
-  // Badge-Text-Widerspruch strukturell, da beide Saetze rein additiv jeweils
-  // ihr EIGENES Signal beschreiben, keiner behauptet ein Gesamt-Fazit).
-  const geo=findIndByBase(rub,'Geopolitics');
-  if(geo&&(geo.bias==='bull'||geo.bias==='bear'))sentence+=` Political uncertainty is currently ${geo.bias==='bull'?'bullish':'bearish'} for ${sym.name}.`;
-  return sentence;
-}
+// ⚠ summarizeRiskEnv() ist weg (2026-09-13, mit der Risk-Environment-Karte).
 const RUB_SUMMARIZERS={
   'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
-  'Interest Rates':summarizeInterestRates,'COT Data':summarizeCot,'Risk Environment':summarizeRiskEnv,
+  'Interest Rates':summarizeInterestRates,'COT Data':summarizeCot,
 };
 function summarizeRub(sym,rub){
   const fn=RUB_SUMMARIZERS[rub.name];
@@ -9357,7 +9191,7 @@ function stampRubOwners(){
 }
 function recomputeAuto(){
   const before=_flipCauseTag?_scoreSnapForLog():null;
-  stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();recomputeRiskCorr();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();
+  stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();
   if(before)_logAutoScoreShifts(before);
 }
 function _scoreSnapForLog(){
@@ -9723,7 +9557,7 @@ function povMacroHtml(name){
   const bS=syms.find(s=>s.id===l.bId),qS=syms.find(s=>s.id===l.qId);
   if(!bS||!qS)return povEmpty('One side of this pair is not a tracked asset.');
   const rubOf=(sym,n)=>(sym.rubrics||[]).find(r=>r.name===n);
-  const rows=MACRO_DERIVE_RUBS.concat(['COT Data',MACRO_NAME]).map(rn=>{
+  const rows=MACRO_DERIVE_RUBS.concat(['COT Data']).map(rn=>{
     const rb=rubOf(bS,rn),rq=rubOf(qS,rn);
     if(!rb&&!rq)return'';
     const sb=rb?Math.round(rubScore(rb)*10)/10:null,sq=rq?Math.round(rubScore(rq)*10)/10:null;
@@ -10975,13 +10809,10 @@ function researchTopCardsHtml(){
   if(researchTopOpen&&sym){
     const backBtn=`<button class="rterm-back-sm" onclick="researchToggleTop('${escJH(researchTopOpen)}')" title="Back to the card row">${icn('chevronRight',14)}</button>`;
     if(researchTopOpen==='risk'){
-      // Oben der Dashboard-Regler (Nutzer-Korrektur 2026-08-04), darunter die
-      // asset-eigene Risk-Environment-Karte - sie traegt Risk Correlation
-      // (automatisch aus genau diesem Regler) und Geopolitics (manuell) und
-      // ist damit die EINZIGE Stelle, an der Geopolitics editierbar ist.
-      const rri=(sym.rubrics||[]).findIndex(r=>r.name===MACRO_NAME);
-      const own=rri>=0?`<div class="rterm-riskown">${renderRub(sym.rubrics[rri],rri,sym.rubrics.length)}</div>`:'';
-      return`<div class="rterm-topexp">${backBtn}<div class="rterm-riskbox">${riskSentimentWidgetHtml('resRisk')}</div>${own}</div>`;
+      // Nur noch die Dashboard-Karte mit dem Risiko-Index aus Marktpreisen.
+      // Die asset-eigene Risk-Environment-Rubrik, die frueher darunter stand,
+      // gibt es seit dem 2026-09-13 nicht mehr.
+      return`<div class="rterm-topexp">${backBtn}<div class="rterm-riskbox">${riskSentimentWidgetHtml('resRisk')}</div></div>`;
     }
     const ri=(sym.rubrics||[]).findIndex(r=>r.name===researchTopOpen);
     if(ri>=0)return`<div class="rterm-topexp">${backBtn}${renderRub(sym.rubrics[ri],ri,sym.rubrics.length)}</div>`;
@@ -10995,20 +10826,14 @@ function researchTopCardsHtml(){
       <div class="ov2-scoreline"><span class="ov2-score" style="color:${bco}">${rub?`${sc>0?'+':''}${sc}`:'–'}</span><span class="ov2-badge">${rub?BL[rub.bias]:''}</span></div>
     </div>`;
   }).join('');
-  // Risk Environment zeigt bewusst NICHT die asset-eigene Risk-Environment-
-  // Rubrik (Risk Correlation/Geopolitics), sondern beim Ausklappen 1:1 die
-  // Dashboard-Karte (riskSentimentWidgetHtml) - Nutzer-Korrektur 2026-08-04.
+  // Die Kachel zeigt die Marktlage aus riskOnOffState() - eine reine
+  // Anzeige ohne Score-Wirkung. Der frueher hier ausgewiesene Beitrag der
+  // asset-eigenen Risk-Environment-Karte ist entfallen: die Karte gibt es
+  // seit dem 2026-09-13 nicht mehr.
   const{pct,lbl,col}=riskOnOffState();
-  // Die Kachel zeigt die Regler-Lage (Nutzer-Korrektur 2026-08-04). Traegt die
-  // asset-eigene Karte darunter aber einen Score ungleich 0 (typisch: ein
-  // manuell gesetztes Geopolitics), wird der hier zusaetzlich ausgewiesen -
-  // sonst waere ein Score-Beitrag in der Kartenreihe unsichtbar, genau der
-  // gemeldete Fall.
-  const riskRub=sym?(sym.rubrics||[]).find(r=>r.name===MACRO_NAME):null;
-  const riskSc=riskRub?Math.round(rubScore(riskRub)*10)/10:0;
-  const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the Risk Sentiment dial and this asset's own Risk Environment card">
-    <div class="ov2-titleline"><span class="ov2-title">Risk Environment</span></div>
-    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span>${riskSc?`<span class="rterm-ownsc" style="color:${biasCss(scoreBias(riskSc))}" title="This asset's own Risk Environment card contributes ${riskSc>0?'+':''}${riskSc} to its score">${riskSc>0?'+':''}${riskSc}</span>`:''}</div>
+  const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the market risk index">
+    <div class="ov2-titleline"><span class="ov2-title">Risk Sentiment</span></div>
+    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span></div>
   </div>`;
   return`<div class="rterm-top">${cards}${riskCard}</div>`;
 }
@@ -12024,7 +11849,7 @@ const W_TYPES=[
 // Baut nur noch die HTML-STRINGS (Nutzer-Wunsch 2026-07-25: "Pop ups wie zB
 // cot in die notifications rein" - kein eigener schwebender Banner mehr
 // oberhalb des Grids, stattdessen Inhalt der 'notification'-Widget-Karte in
-// renderDash()). renderCotNotify()/renderRiskEnvRemind() bleiben als duenne
+// renderDash()). renderCotNotify() bleibt als duenner
 // Kompat-Wrapper fuer die bestehenden Aufrufstellen (Boot, cloudPull,
 // Dismiss-Klick) erhalten - stossen einfach ein renderDash() an, exakt wie
 // jede andere State-Aenderung, die die Notifications-Karte betrifft.
@@ -12117,57 +11942,13 @@ function cloudNotConnectedNoticeHtml(){
   return`<div class="cot-notify-card sync-notify-card" onclick="openCloudM()">
     <span class="cot-notify-ic">${icn('link',13)}</span>
     <span class="cot-notify-txt">NOT SYNCED</span>
-    <span class="cot-notify-sub">Showing default scores, not your own bias overrides/Risk Environment setting — tap to set up Cloud Sync</span>
+    <span class="cot-notify-sub">Showing default scores, not your own bias overrides — tap to set up Cloud Sync</span>
   </div>`;
 }
 function renderCotNotify(){if(document.getElementById('dashWidgets'))renderDash();}
-// ── Sonntags-Erinnerung "Risk Environment pruefen" (Nutzer-Wunsch
-// 2026-07-13): erscheint unter dem COT-Hinweis im GLEICHEN Stil
-// (.cot-notify-card), aber anders als dieser wegklickbar - dann bis zum
-// naechsten Sonntag weg. Aktiv den ganzen Sonntag (Geraete-Lokalzeit) bis
-// Montag; Klick auf die Karte springt zum Risk-Sentiment-Widget im
-// Dashboard. Dismiss-Stand ist eine reine UI-Erinnerung (kein Undo/kein
-// snap()) - geraeteuebergreifend synchron nach dem tabStacks-Muster
-// (siehe CLAUDE.md): cloudPush/cloudPull/Save-Funktion
-// (inkl. markPrefEdit) + exportData/importData.
-let riskEnvRemindDismissed=(()=>{try{return localStorage.getItem('fxpro_riskenv_remind_dismissed')||'';}catch(e){return'';}})();
-function riskEnvRemindSundayKey(){
-  const now=new Date();
-  if(now.getDay()!==0)return null;
-  return now.toISOString().slice(0,10);
-}
-function riskEnvRemindActive(){
-  const k=riskEnvRemindSundayKey();
-  return!!k&&riskEnvRemindDismissed!==k;
-}
-function dismissRiskEnvRemind(ev){
-  if(ev)ev.stopPropagation();
-  const k=riskEnvRemindSundayKey();if(!k)return;
-  riskEnvRemindDismissed=k;
-  try{localStorage.setItem('fxpro_riskenv_remind_dismissed',k);}catch(e){}
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  renderRiskEnvRemind();
-}
-function goToRiskEnvWidget(){
-  showTab('dash');
-  setTimeout(()=>{
-    const el=document.querySelector('.risk-env-set');
-    if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
-  },60);
-}
-function riskEnvRemindHtml(){
-  if(!riskEnvRemindActive())return'';
-  return`<div class="cot-notify-card risk-env-notify-card" onclick="goToRiskEnvWidget()">
-    <span class="cot-notify-ic">🎚️</span>
-    <span class="cot-notify-txt">CHECK YOUR RISK ENVIRONMENT</span>
-    <span class="cot-notify-sub">Weekly reminder — tap to review the dial</span>
-    <button class="cot-notify-x" onclick="dismissRiskEnvRemind(event)" title="Dismiss until next Sunday">×</button>
-  </div>`;
-}
-function renderRiskEnvRemind(){if(document.getElementById('dashWidgets'))renderDash();}
+// ⚠ HIER STAND DIE SONNTAGS-ERINNERUNG "CHECK YOUR RISK ENVIRONMENT" samt
+// ihrem gesyncten Merker. Sie erinnerte daran, den Regler zu stellen - den
+// es seit dem 2026-09-13 nicht mehr gibt.
 // Faerbt den Aurora-Hintergrund nach dem aktuellen Risk-Sentiment (dieselbe
 // Risk-on/Risk-off-Rechnung wie im risk_sentiment-Widget): deutlich Risk-on
 // -> bullish Blauton, deutlich Risk-off -> bearish Rotton, dazwischen der
@@ -13035,7 +12816,7 @@ function renderDash(){
       // "mach die Pop ups wie zB cot in die notifications rein"). Der
       // "View FF"-Link im Kartenkopf (hdrHtml weiter unten) fuehrt direkt
       // zum Forex-Factory-Kalender.
-      const popups=cloudNotConnectedNoticeHtml()+dataFeedStaleNotifyHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml()+riskEnvRemindHtml();
+      const popups=cloudNotConnectedNoticeHtml()+dataFeedStaleNotifyHtml()+staleNotifyHtml()+awaitingNotifyHtml()+cotNotifyHtml();
       // ⚠ Nutzer-Wunsch 2026-08-20: die Karte darf NICHT beliebig lang werden.
       // Wie viele Meldungen anstehen, haengt allein davon ab, was gerade los
       // ist (veraltete Indikatoren, ausstehende Werte, COT-Erinnerung) - auf
@@ -13415,7 +13196,12 @@ function recordScoreHist(){
     // Feld am 2026-08-23: aeltere Eintraege haben die Felder nicht und
     // bekommen deshalb weiterhin den Sammelposten gezeigt, statt eine
     // Aufteilung zu erfinden, die nicht aufgezeichnet wurde.
-    const ir=rubScoreByName(sym,'Interest Rates'),ct=rubScoreByName(sym,'COT Data'),re=rubScoreByName(sym,MACRO_NAME);
+    // ⚠ Das 12. Feld (frueher der Beitrag der Risk-Environment-Karte) bleibt
+    // im Eintrag STEHEN, obwohl die Karte seit dem 2026-09-13 weg ist: die
+    // aufgezeichnete Historie ist positionsbasiert, ein entferntes Feld
+    // wuerde jeden alten Eintrag um eine Stelle verschieben. Es traegt von
+    // jetzt an 0 - rubScoreByName findet die Karte nicht mehr.
+    const ir=rubScoreByName(sym,'Interest Rates'),ct=rubScoreByName(sym,'COT Data'),re=rubScoreByName(sym,'Risk Environment');
     const arr=scoreHist[id]||(scoreHist[id]=[]);
     const last=arr[arr.length-1];
     // 7. Feld: unter WELCHEM Score-Modell dieser Wert entstanden ist
@@ -13489,16 +13275,11 @@ function riskSentimentWidgetHtml(gaugeKey){
     <span class="risk-asset-name">${escH(s.name||id)}</span>
     <span class="risk-asset-sc" style="color:${biasCss(s.bias)}">${v>0?'+':''}${Math.round(v*10)/10}</span>
   </div>`;};
-  // Regler fuer den Nutzer-eigenen Risk-Environment-Read (Nutzer-Wunsch
-  // 2026-07-13): 3 Stufen statt eines echten Drag-Sliders (robuster auf
-  // Touch, gleiches Bedienmuster wie sonst im Projekt ueberall - Button-
-  // Gruppen statt Custom-Drag-Widgets). Treibt "Risk Correlation" auf
-  // JEDEM Asset mit einer Risk-Environment-Karte (siehe recomputeRiskCorr).
-  const envBtn=(lv,lbl)=>`<button class="risk-env-pos${riskEnvLevel===lv?' on':''}" onclick="setRiskEnvLevel(${lv})">${lbl}</button>`;
-  const envSetUI=`<div class="risk-env-set">
-    <div class="risk-env-set-hdr" title="Your Risk Environment read - drives the &quot;Risk Correlation&quot; indicator on every asset"><span>ENV</span><button class="risk-env-gear" onclick="openRiskEnvCfgM()" title="Configure how each asset reacts">${icn('gear',12)}</button></div>
-    <div class="risk-env-slider">${envBtn(2,'Full')}${envBtn(1,'Half')}${envBtn(0,'None')}</div>
-  </div>`;
+  // ⚠ HIER STAND DER ENV-REGLER (None/Half/Full) samt Zahnrad. Er hat den
+  // Indikator "Risk Correlation" auf jedem Asset gesetzt; beides ist am
+  // 2026-09-13 entfernt worden. Der Rest dieser Karte bleibt: der
+  // Risiko-Index aus echten Marktpreisen und die Risk-on/Safe-Haven-Listen
+  // sind eigenstaendige Marktinformation und haengen nicht am Score.
   // Automatische Einstufung kommt aus echten MARKTPREISEN statt aus dem
   // Mittelwert der eigenen Asset-Scores - siehe RISK_INDEX_DATA-Kommentar oben
   // (Nutzer-Wunsch: nur DIESE Karte umstellen, riskOnOffState() bleibt fuer
@@ -13513,7 +13294,6 @@ function riskSentimentWidgetHtml(gaugeKey){
     :`<div class="risk-lbl" style="color:var(--t3)">NO LIVE READ</div>
     <div class="risk-sub">Risk index noch nicht berechnet - wird stuendlich aus VIX/Gold/AUD-USD/USD-JPY erzeugt.</div>`;
   return`<div class="risk-gauge">
-    ${envSetUI}
     ${gaugeHtml}
     <div class="risk-assets-grid">
       <div class="risk-assets-col"><div class="risk-assets-hd" style="color:${BC.bull}">▲ Risk-on</div>${ON_IDS.map(assetRow).join('')}</div>
@@ -20175,12 +19955,12 @@ Object.assign(window,{
   isScoreDrivingEvent,applyResearchToCal,syncIndicatorBiases,resetNonFxIndBias,IND_DISPLAY_NAMES,IND_RESEARCH_DATA,
   RESEARCH_MONTHS_DE_FULL,fmtResearchDateFull,srcLabel,PERIOD_TAG_RE,periodLabel,NAME_PERIOD_SUFFIX_RE,
   _stripPeriodCache,stripPeriodSuffix,splitResearchVal,researchBias,applyIndResearch,mkInds,mkRubs,mkRubOrder,
-  IND_INFO_DEFAULTS,applyRubOrder,ensureRiskEnvLast,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,
-  stripGeopoliticsRub,RISK_ENV_INDS,RISK_ENV_INDS_NONFX,migrateRiskEnvRub,YIELD_INDS_TO_INFLATION,
+  IND_INFO_DEFAULTS,applyRubOrder,ensureRiskEnvWeg,stripRiskEnvRub,RISK_ENV_ALTE_NAMEN,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,
+  stripGeopoliticsRub,YIELD_INDS_TO_INFLATION,
   moveYieldIndsToInflation,cleanDeriveRules,NEUE_UMFRAGEN_2026_08,UMFRAGE_NAMEN_2026_08,addSurveyInds,migrateRubInds,
-  mkR,CB_MAP,cbName,cbDat,ASSET_CLASS,enrichRubrics,DEF,MACRO_NAME,MACRO_NAME_LEGACY,MACRO_NAME_LEGACY2,
+  mkR,CB_MAP,cbName,cbDat,ASSET_CLASS,enrichRubrics,DEF,
   MACRO_SYNC_RUBS,MACRO_DERIVE_RUBS,MACRO_DERIVE_RULES,invertBias,effDeriveRules,deriveMacroBiasAll,MACRO_RUB_INFO,
-  MACRO_DATA,RISK_ENV_DEFAULT_DIR,RISK_ENV_DIR_MIGRATE,migrateRiskEnvCfg,mkMacroRub,addMacroRub,mkPairCats,mkNCs,
+  MACRO_DATA,addMacroRub,mkPairCats,mkNCs,
   RESEARCH_FOLDER_ICONS,RESEARCH_ASSET_FOLDERS,mkResearchFolders,mkResearch,researchFolderIdFor,researchAssetsIn,
   researchCustomChildren,researchChildrenOf,researchAllFolderIds,researchFolderById,researchNotesContextFor,
   researchGenFidFor,researchFolderAssetOf,researchDescendantFolderIds,resNoteAssetIds,researchToggleNode,
@@ -20201,21 +19981,18 @@ Object.assign(window,{
   ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,
   assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,indPairGroupPositions,renderIndsTable,renderIndRow,toggleIndDetailRow,
   updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,
-  openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,logRiskCorrChanges,
-  setRiskEnvLevel,riskEnvDirOf,setRiskEnvDir,openRiskEnvCfgM,createRiskEnvList,deleteRiskEnvList,applyRiskEnvList,
-  renderRiskEnvLists,RISK_ENV_DIRS,RISK_ENV_DIR_CLS,RISK_ENV_DIR_ORDER,renderRiskEnvCfgM,delRub,mvRub,addRub,
+  openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,delRub,mvRub,addRub,
   openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,cloneRubsFromUSD,
   confirmAddSym,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,
   setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,FLIP_CAUSE_TXT,
   flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,
-  recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,riskCorrBiasFor,
-  recomputeRiskCorr,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
+  recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
   sumIndSource,sumIndInfo,joinFrags,famDriverPhrase,famContextPhrase,RUB_ANCHOR_IND,summarizeGeneric,findIndByBase,
   sumRawState,fcState,trendState,classifySingle,classifyPair,dirSign,alignCls,macroSignAdjust,assetBiasWord,
   biasSignOf,assetVerdictClause,HOTCOLD_WORDS,TREND_WORDS,cameInPhrase,JOBS_WORDS,supportPhrase,inflDirWord,
   ANCHOR_VERBS_DEFAULT,ANCHOR_VERBS_INFLATION,ANCHOR_VERBS_LABOUR,ANCHOR_VERBS_GROWTH,anchorClause,noSignalFallback,
   summarizeInflation,summarizeLabour,summarizeGrowth,summarizeInterestRates,COT_CROWDED_PCT_SUM,COT_LEAN_PCT_SUM,
-  magnitudeBiasWord,summarizeCot,summarizeRiskEnv,RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,
+  magnitudeBiasWord,summarizeCot,RUB_SUMMARIZERS,summarizeRub,SUMMARY_ENGINE_VERSION,rubSummarySig,
   syncRubSummaries,stampRubOwners,recomputeAuto,_scoreSnapForLog,_logAutoScoreShifts,syncAutoPairCats,openAddPair,
   confirmAddPair,saveSetupCcy,syncSetupFilterPref,clearSetupQuickScopes,toggleSetupCcy,clearSetupCcy,
   toggleSetupFxOnly,toggleSetupNonFxOnly,toggleSetupYieldsOnly,isPureFxPair,pairHasCcy,openCarryDetail,setPairOvRange,
@@ -20247,8 +20024,7 @@ Object.assign(window,{
   resSetQuery,togResFav,newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,
   resRemovePlace,resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
   awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
-  riskEnvRemindSundayKey,riskEnvRemindActive,dismissRiskEnvRemind,goToRiskEnvWidget,riskEnvRemindHtml,
-  renderRiskEnvRemind,AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
+  AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
   detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,
   indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
   setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
@@ -20368,7 +20144,6 @@ Object.defineProperty(window,'dashV',{get:()=>dashV,set:v=>{dashV=v;},configurab
 Object.defineProperty(window,'eventAlerts',{get:()=>eventAlerts,set:v=>{eventAlerts=v;},configurable:true});
 Object.defineProperty(window,'priceAlerts',{get:()=>priceAlerts,set:v=>{priceAlerts=v;},configurable:true});
 Object.defineProperty(window,'dashRemovedTypes',{get:()=>dashRemovedTypes,set:v=>{dashRemovedTypes=v;},configurable:true});
-Object.defineProperty(window,'riskEnvLevel',{get:()=>riskEnvLevel,set:v=>{riskEnvLevel=v;},configurable:true});
 Object.defineProperty(window,'riskEnvCfg',{get:()=>riskEnvCfg,set:v=>{riskEnvCfg=v;},configurable:true});
 Object.defineProperty(window,'riskEnvLists',{get:()=>riskEnvLists,set:v=>{riskEnvLists=v;},configurable:true});
 Object.defineProperty(window,'_saveSoonTimer',{get:()=>_saveSoonTimer,set:v=>{_saveSoonTimer=v;},configurable:true});
@@ -20426,7 +20201,6 @@ Object.defineProperty(window,'resSearchField',{get:()=>resSearchField,set:v=>{re
 Object.defineProperty(window,'_resEditId',{get:()=>_resEditId,set:v=>{_resEditId=v;},configurable:true});
 Object.defineProperty(window,'_resBias',{get:()=>_resBias,set:v=>{_resBias=v;},configurable:true});
 Object.defineProperty(window,'_resFids',{get:()=>_resFids,set:v=>{_resFids=v;},configurable:true});
-Object.defineProperty(window,'riskEnvRemindDismissed',{get:()=>riskEnvRemindDismissed,set:v=>{riskEnvRemindDismissed=v;},configurable:true});
 Object.defineProperty(window,'_liveClockInt',{get:()=>_liveClockInt,set:v=>{_liveClockInt=v;},configurable:true});
 Object.defineProperty(window,'_lastFeedTs',{get:()=>_lastFeedTs,set:v=>{_lastFeedTs=v;},configurable:true});
 Object.defineProperty(window,'dashEditMode',{get:()=>dashEditMode,set:v=>{dashEditMode=v;},configurable:true});

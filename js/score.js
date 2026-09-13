@@ -1464,7 +1464,15 @@ function symScoreCmp(sym){
 // "classic" ist indNormFactor() ohnehin 1 - und ausserdem den Surprise-Index
 // (esiForCcy/esiSeries), der denselben Massstab benutzt. Aufgezeichnete Tage
 // davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=10;
+// V11 (2026-09-13): die Karte "Risk Environment" ist entfernt (Nutzer:
+// "loesch Risk Environment und alles was dazu gehoert bitte von der
+// kompletten Webseite"). Sie trug bei ALLEN 24 Assets exakt 0 Punkte bei -
+// ihre beiden Indikatoren standen durchgehend auf neutral - aber sie zaehlte
+// im Divisor von symScoreCmp mit und hat damit jedes echte Signal
+// verwaessert. Gemessen: 16 von 24 Scores aendern sich, alle nach OBEN, am
+// staerksten JPY (+8,3 -> +9,1) und JP Yield (+7,7 -> +8,0). Aufgezeichnete
+// Tage davor sind eine andere Rechnung.
+const SCORE_MODEL_VERSION=11;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

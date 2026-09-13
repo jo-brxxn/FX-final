@@ -56,7 +56,7 @@ const PFLICHT = ['--bg0','--bg1','--bg2','--bg3','--bg4','--bg5','--bg6','--bd',
   '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
   '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
   '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
-  '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--a-risk','--success','--live','--purple'];
+  '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--success','--live','--purple'];
 
 // ⚠ PFLICHT-TOKENS STATISCH pruefen, nicht ueber getComputedStyle. Ein
 // Regelwerk, das ein Token NICHT setzt, erbt es still von :root - der
@@ -100,7 +100,7 @@ function pruefeTokensStatisch() {
         '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
         '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
         '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
-        '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--a-risk','--success','--live','--purple'];
+        '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--success','--live','--purple'];
       const o = {};
       namen.forEach(n => o[n] = g(n));
       // Kopfzeilen-Scope getrennt messen: dort werden die Textstufen gedreht.
