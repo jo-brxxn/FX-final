@@ -76,20 +76,36 @@ const MODE=process.argv[2]||'normalized';
   // NICHT entschaerft: auf jedem Asset muss ein Kalender stehen. Geprueft
   // wird zusaetzlich, dass das Raster auch wirklich Tage enthaelt - eine
   // leere Karte waere derselbe Verlust wie damals die fehlende Sektion.
+  // ⚠ ZWEITES MAL NACHGEFUEHRT (2026-09-13 abends): der Kalender ist jetzt
+  // ein Widget in der Kopfreihe (.abc-cal), die Termine stehen im
+  // Detailfenster. Die Pruefung wird dabei wieder NICHT entschaerft, sondern
+  // deckt jetzt BEIDES ab - Widget und Fenster. Sonst haette der Umbau die
+  // Lehre aus dem CAD-Bug still entwertet.
   let n2b=0;
   Object.keys(soll).forEach(id=>{
     selSym(id);
-    const kal=document.querySelector('#detail .abc-wrap');
+    const kal=document.querySelector('#detail .abc-cal');
     const tage=kal?kal.querySelectorAll('.abc-d:not(.leer)').length:0;
     if(!kal||tage<28){
       F.push({ort:'Kalender fehlt',id,tage,
-        hinweis:'Asset zeigt keinen Monatskalender (frueher: weder Kalender noch "Next Event")'});
+        hinweis:'Asset zeigt kein Monats-Widget (frueher: weder Kalender noch "Next Event")'});
       return;
     }
-    // Und die Termine des Tages bzw. der ehrliche Hinweis, dass der Feed so
-    // weit nicht reicht - eine Spalte ohne beides waere eine stumme Karte.
-    if(!kal.querySelector('.abc-e,.abc-empty'))
-      F.push({ort:'Tagesspalte stumm',id,hinweis:'weder Termine noch Hinweistext'});
+    // Die Fusszeile muss sagen, wie weit der Feed reicht - ein leerer Tag
+    // heisst fast nie "nichts los", sondern "weiss noch niemand".
+    const fuss=kal.querySelector('.abc-foot');
+    if(!fuss||!/Covers|No calendar/.test(fuss.textContent))
+      F.push({ort:'Kalender-Fusszeile fehlt',id,hinweis:'Abdeckungszeitraum wird nicht genannt'});
+    // Und das Detailfenster muss Termine ODER den ehrlichen Hinweis zeigen.
+    try{
+      openAssetCal();
+      const b=document.getElementById('assetCalBody');
+      if(!b||!b.querySelector('.abc-e,.abc-empty'))
+        F.push({ort:'Kalenderfenster stumm',id,hinweis:'weder Termine noch Hinweistext'});
+      if(!b||!b.querySelector('[onclick*="toggleCalHighOnly"]'))
+        F.push({ort:'High-Impact-Filter fehlt',id,hinweis:'das Fenster hat keinen Impact-Filter'});
+      closeAssetCal();
+    }catch(e){F.push({ort:'Kalenderfenster wirft',id,e:String(e)});}
     n2b++;
   });
   ok.kalenderProAsset=n2b;

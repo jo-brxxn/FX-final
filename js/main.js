@@ -6330,7 +6330,6 @@ function renderDetail(){
       <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
-    ${assetMonthCalHtml(c)}
     ${/* ⚠ Zugeklappt wird die Sektion GAR NICHT mehr gezeichnet: ihr
          Auf-/Zu-Schalter sitzt jetzt im Fuss der Kalenderkarte. Vorher stand
          hier immer eine eigene 43px-Zeile plus Abstand, nur um zu sagen, was
@@ -6600,11 +6599,6 @@ function assetNotesFoldersHtml(c){
 // Karte sichtbar (abgedeckte Tage normal, Rest sichtbar gedaempft plus eine
 // Zeile, die den abgedeckten Zeitraum nennt). Ohne das waere die Karte eine
 // huebsche Luege - dieselbe Klasse wie geschaetzte Werte, siehe Regel 4.
-let abCalZu=false;          // Kalenderreihe eingeklappt?
-// ⚠ Rein transient wie evtSectionOpen: eine eingeklappte Ansicht ist kein
-// Inhalt, den man auf dem anderen Geraet wiederfinden muss - und damit auch
-// kein Fall fuer den Cross-Device-Sync.
-function toggleAbCal(){abCalZu=!abCalZu;renderDetail();}
 let abCalMonat=0;           // 0 = aktueller Monat, -1 = voriger, ...
 let abCalTag=null;          // gewaehlter Tag als 'YYYY-MM-DD'
 const AB_WOCHENTAGE=['M','T','W','T','F','S','S'];
@@ -6623,133 +6617,136 @@ function abCalNachTag(assetId){
 function abTagStr(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function assetMonthCalHtml(c){
+function assetMonthCalHtml(c,gross){
   const proTag=abCalNachTag(c.id);
   const tage=Object.keys(proTag).sort();
-  // Wie weit reicht der Feed wirklich? Das ist eine gemessene Groesse, keine
-  // Annahme - deshalb steht sie auch so in der Fusszeile.
+  // Wie weit reicht der Feed wirklich? Gemessene Groesse, keine Annahme.
   const von=tage[0]||null, bis=tage[tage.length-1]||null;
 
   const heute=new Date();heute.setHours(0,0,0,0);
   const anker=new Date(heute.getFullYear(),heute.getMonth()+abCalMonat,1);
   const jahr=anker.getFullYear(),monat=anker.getMonth();
   const heuteStr=todayStr();
-  // Montag zuerst (wie im Vorbild). getDay() liefert 0 fuer Sonntag.
-  const ersterWochentag=(new Date(jahr,monat,1).getDay()+6)%7;
+  const ersterWochentag=(new Date(jahr,monat,1).getDay()+6)%7;   // Montag zuerst
   const tageImMonat=new Date(jahr,monat+1,0).getDate();
-
-  // Vorauswahl: der gewaehlte Tag, sonst heute, sonst der naechste Tag mit
-  // Terminen in diesem Monat - ein leeres rechtes Feld waere verschenkt.
-  let gewaehlt=abCalTag;
-  if(!gewaehlt){
-    const imMonat=tage.filter(t=>t.startsWith(`${jahr}-${String(monat+1).padStart(2,'0')}`));
-    gewaehlt=(abCalMonat===0&&proTag[heuteStr])?heuteStr
-      :(imMonat.find(t=>t>=heuteStr)||imMonat[imMonat.length-1]||(abCalMonat===0?heuteStr:null));
-  }
 
   let zellen='';
   for(let i=0;i<ersterWochentag;i++)zellen+='<span class="abc-d leer"></span>';
   for(let t=1;t<=tageImMonat;t++){
     const datum=abTagStr(new Date(jahr,monat,t));
-    const evs=proTag[datum]||[];
+    const evs=(proTag[datum]||[]).filter(ev=>!calHighOnly||evtImpact(ev)==='high');
     const wochenende=[5,6].includes((ersterWochentag+t-1)%7);
     const bekannt=!!(von&&bis&&datum>=von&&datum<=bis);
-    // Hoechster Impact des Tages bestimmt die Farbe der Punkte.
     const imps=evs.map(evtImpact);
     const punkte=evs.length?`<span class="abc-dots">${
       (imps.includes('high')?['high']:[]).concat(imps.includes('medium')?['medium']:[],imps.includes('low')?['low']:[])
         .slice(0,3).map(i=>`<span class="abc-dot ${i==='high'?'ih':i==='medium'?'im':'il'}"></span>`).join('')}</span>`:'';
     const klassen=['abc-d'];
     if(datum===heuteStr)klassen.push('heute');
-    if(datum===gewaehlt)klassen.push('gew');
+    if(datum===abCalTag)klassen.push('gew');
     if(wochenende)klassen.push('we');
     if(!bekannt)klassen.push('unbekannt');
     const titel=evs.length?`${evs.length} event${evs.length===1?'':'s'} — ${evs.map(e=>e.name).slice(0,4).join(', ')}`
       :bekannt?'Nothing scheduled on this day':'Not published yet — the calendar feed does not reach this far';
-    zellen+=`<button class="${klassen.join(' ')}" onclick="abCalPick('${datum}')" title="${escH(titel)}">
+    // Im Widget oeffnet JEDER Tag das Detailfenster; im Fenster selbst waehlt
+    // der Klick nur den Tag aus.
+    const tun=gross?`abCalPick('${datum}')`:`openAssetCal('${datum}')`;
+    zellen+=`<button class="${klassen.join(' ')}" onclick="event.stopPropagation();${tun}" title="${escH(titel)}">
       <span class="abc-n">${t}</span>${punkte}</button>`;
   }
+  const raster=`<div class="abc-hd">
+        <button class="abc-nav" onclick="event.stopPropagation();abCalShift(-1)" title="Previous month">‹</button>
+        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>
+        <button class="abc-nav" onclick="event.stopPropagation();abCalShift(1)" title="Next month">›</button>
+      </div>
+      <div class="abc-grid">
+        ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
+        ${zellen}
+      </div>`;
+  if(gross)return raster;
+  // ⚠ Die Fusszeile bleibt: der Feed reicht nur rund eine Woche voraus, ein
+  // leerer Tag heisst also fast nie "nichts los", sondern "weiss noch
+  // niemand". Ohne diesen Hinweis waere die Karte eine huebsche Luege.
+  return`<div class="abc-cal" onclick="openAssetCal()" title="Open the full calendar for this asset">
+      ${raster}
+      <div class="abc-foot">${von&&bis
+        ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>.`
+        :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>
+    </div>`;
+}
 
-  // ── Rechte Spalte: die Termine des gewaehlten Tages ──
-  const liste=(proTag[gewaehlt]||[]).slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+// ══ DETAILFENSTER ZUM KALENDER ═════════════════════════════════════════
+// Nutzer 2026-09-13: "wenn man auf Kalender klickt oeffnet sich ein
+// rechteckiges Fenster zentriert mittig wo man die Events mit mehr Detail
+// sieht und denk an den Filter fuer high impact".
+// ⚠ Der Filter ist NICHT nachgebaut: calToolbarHtml() liefert denselben
+// Knopf wie der Hauptkalender, und toggleCalHighOnly() ruft auf der
+// Asset-Seite ohnehin renderDetail() - dort wird dieses Fenster mit
+// aufgefrischt. Ein zweiter Filter waere ein zweiter Zustand.
+let abCalOffen=false;
+function openAssetCal(tag){
+  if(tag)abCalTag=tag;
+  abCalOffen=true;
+  renderAssetCalBody();
+  openM('mAssetCal');
+}
+function closeAssetCal(){abCalOffen=false;closeM('mAssetCal');}
+function renderAssetCalBody(){
+  const el=document.getElementById('assetCalBody');
+  if(!el||!abCalOffen)return;
+  const c=getSym();if(!c)return;
+  const proTag=abCalNachTag(c.id);
+  const heuteStr=todayStr();
+  const sicht=ev=>!calHighOnly||evtImpact(ev)==='high';
+  const tage=Object.keys(proTag).sort();
+  // Vorauswahl wie im Widget: heute, sonst der naechste Tag mit Terminen.
+  let gewaehlt=abCalTag;
+  if(!gewaehlt||!proTag[gewaehlt])
+    gewaehlt=proTag[heuteStr]?heuteStr:(tage.find(t=>t>=heuteStr)||tage[tage.length-1]||heuteStr);
+  const liste=(proTag[gewaehlt]||[]).filter(sicht)
+    .slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
   const wert=(v,cls)=>`<span class="abc-v${cls?' '+cls:''}">${v?escH(v):'–'}</span>`;
   const zeilen=liste.length?liste.map(ev=>{
     const imp=evtImpact(ev);
     return`<div class="abc-e ${imp==='high'?'ih':imp==='medium'?'im':'il'}${isEvtPast(ev)?' vorbei':''}">
       <div class="abc-e-top"><span class="abc-e-t">${escH(ev.time||'—')}</span>
         <span class="abc-e-c">${escH(ev.currencies||'')}</span>
-        <span class="abc-e-n" title="${escH(ev.name)}">${escH(ev.name)}</span></div>
-      <div class="abc-e-v"><span class="abc-l">A</span>${wert(ev.actual,actualColor(ev,c.id))}
-        <span class="abc-l">F</span>${wert(ev.forecast)}
-        <span class="abc-l">P</span>${wert(ev.previous)}</div>
+        <span class="abc-e-n" title="${escH(ev.name)}">${escH(ev.name)}</span>
+        <span class="abc-e-i ${imp==='high'?'ih':imp==='medium'?'im':'il'}">${imp==='high'?'High':imp==='medium'?'Medium':'Low'}</span></div>
+      <div class="abc-e-v"><span class="abc-l">Actual</span>${wert(ev.actual,actualColor(ev,c.id))}
+        <span class="abc-l">Forecast</span>${wert(ev.forecast)}
+        <span class="abc-l">Previous</span>${wert(ev.previous)}</div>
     </div>`;}).join('')
-    :`<div class="abc-empty">${gewaehlt&&von&&bis&&gewaehlt>=von&&gewaehlt<=bis
-        ?'Nothing scheduled for this asset on this day.'
-        :'Not published yet — the calendar feed only looks about a week ahead. This day is unknown, not empty.'}</div>`;
-
-  const kopf=gewaehlt?fmtDayHdr(gewaehlt):'—';
-  // Eingeklappt bleibt genau das stehen, wofuer man den Kalender aufmacht:
-  // wann der naechste Termin ist und wie viele es sind.
-  if(abCalZu){
-    const naechster=tage.filter(d=>d>=heuteStr)[0];
-    const n=naechster?(proTag[naechster]||[]).length:0;
-    return`<button class="abc-zu" onclick="toggleAbCal()" title="Show the calendar">
-      <span class="abc-zu-ic">${icn('calendar',13)}</span>
-      <span class="abc-zu-t">${AB_MONATE[monat]}</span>
-      <span class="abc-zu-n">${naechster?`Next: <b>${escH(fmtDayHdr(naechster))}</b> · ${n} event${n===1?'':'s'}`:'Nothing scheduled in the published window'}</span>
-      <span class="abc-zu-a">▸</span>
-    </button>`;
-  }
-  return`<div class="abc-wrap">
-    <div class="abc-cal">
-      <div class="abc-hd">
-        <button class="abc-nav" onclick="abCalShift(-1)" title="Previous month">‹</button>
-        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>
-        <button class="abc-nav" onclick="abCalShift(1)" title="Next month">›</button>
-        <button class="abc-nav" onclick="toggleAbCal()" title="Collapse the calendar">▾</button>
-      </div>
-      <div class="abc-grid">
-        ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
-        ${zellen}
-      </div>
-      <div class="abc-foot">${von&&bis
-        ?`Calendar covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>, not empty.`
-        :'No calendar data for this asset yet.'}
-        <button class="abc-full${evtSectionOpen[c.id]?' on':''}" onclick="toggleEvtSection('${escJH(c.id)}')" title="The full seven-day table with its high-impact filter">${evtSectionOpen[c.id]?'▾ Hide full list':'▸ Full list'}</button></div>
-    </div>
-    <div class="abc-day">
-      <div class="abc-day-hd">${escH(kopf)}${liste.length?`<span class="abc-day-n">${liste.length} event${liste.length===1?'':'s'}</span>`:''}</div>
-      <div class="abc-day-list">${zeilen}</div>
-    </div>
-    ${abNextUpHtml(c,proTag,heuteStr,gewaehlt)}
-  </div>`;
-}
-// Dritte Spalte: was als Naechstes ansteht. Ohne sie stuende rechts eine
-// halb leere Karte - an einem Tag mit zwei Terminen war das gemessen die
-// Haelfte der Reihe. Und es beantwortet die Frage, die man beim Blick auf
-// einen Kalender wirklich hat: was kommt, nicht was war.
-function abNextUpHtml(c,proTag,heuteStr,gewaehlt){
+    :`<div class="abc-empty">${proTag[gewaehlt]&&proTag[gewaehlt].length
+        ?'Only medium/low-impact events on this day — switch the filter above to see them.'
+        :'Nothing scheduled for this asset on this day. Days the feed does not reach are dimmed in the grid.'}</div>`;
+  // Was als Naechstes ansteht.
   const kommend=[];
-  Object.keys(proTag).filter(d=>d>=heuteStr).sort().forEach(d=>{
-    proTag[d].slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')))
-      .forEach(ev=>{if(kommend.length<5&&!isEvtPast(ev))kommend.push([d,ev]);});
+  tage.filter(d=>d>=heuteStr).forEach(d=>{
+    (proTag[d]||[]).filter(sicht).slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')))
+      .forEach(ev=>{if(kommend.length<8&&!isEvtPast(ev))kommend.push([d,ev]);});
   });
-  const zeilen=kommend.length?kommend.map(([d,ev])=>{
-    const imp=evtImpact(ev);
-    const tage=daysUntil(d);
-    const wann=tage===0?'Today':tage===1?'Tomorrow':`in ${tage}d`;
+  const naechste=kommend.length?kommend.map(([d,ev])=>{
+    const imp=evtImpact(ev),t=daysUntil(d);
     return`<button class="abc-u ${imp==='high'?'ih':imp==='medium'?'im':'il'}${d===gewaehlt?' gew':''}" onclick="abCalPick('${d}')" title="${escH(ev.name)} — jump to this day">
-      <span class="abc-u-w">${escH(wann)}</span>
+      <span class="abc-u-w">${t===0?'Today':t===1?'Tomorrow':'in '+t+'d'}</span>
       <span class="abc-u-n">${escH(ev.name)}</span>
       <span class="abc-u-t">${escH(ev.time||'—')}</span>
     </button>`;}).join('')
     :`<div class="abc-empty">Nothing upcoming in the published window.</div>`;
-  return`<div class="abc-next">
-    <div class="abc-day-hd">Next up${kommend.length?`<span class="abc-day-n">${kommend.length}</span>`:''}</div>
-    <div class="abc-day-list">${zeilen}</div>
-  </div>`;
+  el.innerHTML=`${calToolbarHtml()}
+    <div class="acm-grid">
+      <div class="acm-cal">${assetMonthCalHtml(c,true)}</div>
+      <div class="acm-day">
+        <div class="abc-day-hd">${escH(fmtDayHdr(gewaehlt))}${liste.length?`<span class="abc-day-n">${liste.length} event${liste.length===1?'':'s'}</span>`:''}</div>
+        <div class="abc-day-list">${zeilen}</div>
+      </div>
+      <div class="acm-next">
+        <div class="abc-day-hd">Next up${kommend.length?`<span class="abc-day-n">${kommend.length}</span>`:''}</div>
+        <div class="abc-day-list">${naechste}</div>
+      </div>
+    </div>`;
 }
-
 // ══ NEUE ASSET-SEITE (Layout-Umbau 2026-09-13) ═════════════════════════
 //
 // Nutzer-Wunsch: "Wir haben schon diese Quick-Links, aber irgendwie vergisst
@@ -6893,9 +6890,16 @@ function abGrafikHtml(art,c){
         <span class="ab-bar"><span class="ab-bar-in" style="width:${a.lang}%;background:var(--bias-bull)"></span><span class="ab-bar-in" style="width:${a.kurz}%;background:var(--bias-bear)"></span></span>
         <span class="ab-bar-r">${a.kurz}%</span></div>`;
     }).join('');
+    // ⚠ Die Tabelle der COT-Karte steht jetzt HIER (Nutzer 2026-09-13: "bei
+    // der cot Karte soll die Tabelle hin"). Die Karte selbst wird nicht mehr
+    // gezeichnet, ihre Indikatoren zaehlen aber weiter im Score - ohne diese
+    // Tabelle waeren sie unsichtbar UND unbedienbar geworden.
+    const cotRi=(getSym().rubrics||[]).findIndex(r=>r&&r.name==='COT Data');
+    const cotRub=cotRi>=0?getSym().rubrics[cotRi]:null;
     return abTile('COT Positioning',AB_PH,
       `<div class="ab-big" style="color:${biasCss(lang>=55?'bull':lang<=45?'bear':'neu')}">${lang}% long</div>
        <div class="ab-bars">${reihen}</div>
+       ${cotRub?`<div class="ab-cottbl">${renderIndsTable(cotRub,cotRi)}</div>`:''}
        <div class="ab-note">Institutional positioning, weekly from the CFTC.</div>`);
   }
   if(art==='retail'){
@@ -6977,7 +6981,7 @@ function abNotesHtml(c){
     <div class="ab-nt-list">${zeilen}</div>
   </div>`;
 }
-function abNoteAdd(assetId){
+function abNoteAdd(assetId,anpinnen){
   // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6).
   try{
     const inp=document.getElementById('abNoteInp');
@@ -6989,7 +6993,7 @@ function abNoteAdd(assetId){
     // ord kleiner als alles Vorhandene: neue Notizen stehen oben.
     const min=Math.min(0,...abNotizen(assetId).map(n=>typeof n.ord==='number'?n.ord:0));
     research.notes.push({id:uid(),fids:[fid].filter(Boolean),
-      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:false,hl:false,
+      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:!!anpinnen,hl:false,
       ord:min-1,ts:jetzt,up:jetzt,bias:'neu',asset:fid?'':assetId});
     if(inp)inp.value='';
     save();rerenderNotesHost();
@@ -7016,6 +7020,56 @@ function abNoteMove(id,assetId,richtung){
     list[i].ord=j;list[j].ord=i;
     save();rerenderNotesHost();
   }catch(e){alert('Could not move the note: '+(e&&e.message||e));}
+}
+
+// ── Kopfreihe der Asset-Seite ───────────────────────────────────────────
+// Nutzer 2026-09-13: "wieder 3 Spalten wie bei den makrokarten genau
+// dadrueber ganz links quicklinks Mitte die Notes und rechts den Kalender".
+// Sie liegt deshalb im SELBEN Raster wie die Karten darunter - nur so stehen
+// die Spaltenkanten wirklich uebereinander.
+function abQuickGridHtml(c){
+  const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>{
+    if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'page'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+    return`<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+  }).join('');
+  const aufNotes=curSub==='notes';
+  const notizKnopf=`<button class="aql${aufNotes?' on':''}" onclick="setSub('${aufNotes?'specific':'notes'}')" title="${aufNotes?'Back to the data view':'All notes and folders of this asset'}">${icn('note',14)}<span>${aufNotes?'Close notes':'All notes'}</span></button>`;
+  // ⚠ Unter den Knoepfen die Kursentwicklung. Grund: die Spalte ist so hoch
+  // wie die hoechste der drei Kopfkarten - ohne Inhalt darunter wuerden die
+  // vier Knoepfe auf 160px Hoehe gestreckt. assetPerfStripHtml() war
+  // ausserdem seit laengerem definiert und exportiert, aber an KEINER Stelle
+  // gezeichnet: eine fertige, nuetzliche Anzeige, die niemand zu sehen bekam.
+  return`<div class="aql-col">
+    <div class="aql-grid">${links}${notizKnopf}</div>
+    ${assetPerfStripHtml(c)}
+  </div>`;
+}
+// Angepinnte Notizen. Bewusst NUR die angepinnten: die vollstaendige Liste
+// steht eine Taste weiter unter "All notes", und eine zweite vollstaendige
+// Liste hier waere wieder die Dopplung, die gerade erst weggeraeumt wurde.
+function abPinnedHtml(c){
+  const list=abNotizen(c.id).filter(n=>n.pin);
+  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="border-left:3px solid ${biasCss(n.bias||'neu')}">
+      <button class="ab-nt-hl${n.hl?' on':''}" onclick="abNoteHl('${escJH(n.id)}')" title="${n.hl?'Remove highlight':'Mark as important'}">${n.hl?'★':'☆'}</button>
+      <button class="ab-nt-tx" onclick="openResNote('${escJH(n.id)}')" title="Open this note">
+        <span class="ab-nt-ti">${escH(n.title||'Untitled note')}</span>
+        ${n.body?`<span class="ab-nt-bd">${escH(n.body.replace(/\s+/g,' ').slice(0,90))}</span>`:''}
+      </button>
+      <span class="ab-nt-mv">
+        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',-1)" ${i===0?'disabled':''} title="Move up">▲</button>
+        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',1)" ${i===list.length-1?'disabled':''} title="Move down">▼</button>
+        <button onclick="togResPin('${escJH(n.id)}')" title="Unpin">📌</button>
+      </span>
+    </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. Write one below — new notes from here are pinned straight away.</div>`;
+  return`<div class="ab-ntile">
+    <div class="ab-tile-hd"><span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>
+      <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
+    <div class="ab-nt-add">
+      <input class="finp" id="abNoteInp" placeholder="New pinned note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}',true)">
+      <button class="btn g" onclick="abNoteAdd('${escJH(c.id)}',true)">＋</button>
+    </div>
+    <div class="ab-nt-list">${zeilen}</div>
+  </div>`;
 }
 
 function renderAssetBoard(c){
@@ -7048,14 +7102,22 @@ function renderAssetBoard(c){
   // aus dem Score ist ein eigener Schritt mit Vorher/Nachher-Vergleich.
   return`<div class="ab-board">
     <div class="ab-cards">
+      <div class="ab-col">${abQuickGridHtml(c)}</div>
+      <div class="ab-col">${abPinnedHtml(c)}</div>
+      <div class="ab-col">${assetMonthCalHtml(c)}</div>
       ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
       ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
     </div>
-    <div class="ab-lower">${abKontextHtml(c)}${abNotesHtml(c)}</div>
+    ${/* Die Notizen-Karte ist hier weg (Nutzer: "entfern die Notes Karte
+         sodass dann die Charts da fetter hinpassen") - angepinnt stehen sie
+         jetzt oben in der Kopfreihe. Das Kontext-Band bekommt dadurch die
+         volle Breite. */''}
+    <div class="ab-lower">${abKontextHtml(c)}</div>
   </div>`;
 }
 
 function renderSpecTab(c){
+  if(abCalOffen)setTimeout(renderAssetCalBody,0);
   const rubs=c.rubrics||[];
   // Notes: Ordner + Notizen wie im Research-Terminal. Die aeltere
   // Bullish/Bearish-Tabelle ist entfernt (Nutzer-Wunsch 2026-08-30) - ihr
@@ -7065,8 +7127,11 @@ function renderSpecTab(c){
   // Neuer Aufbau (2026-09-13): drei Karten, Grafik-Band, Kontext + Notizen.
   // Die Overview-Kachelreihe und die Masonry ueber ALLE Rubriken sind damit
   // weg - die Uebersicht leistet jetzt das Board selbst.
-  return`${assetQuickRowHtml(c)}
-  ${renderAssetBoard(c)}
+  // ⚠ KEIN assetQuickRowHtml mehr davor: die vier Schnellzugriffe stehen
+  // jetzt als 2x2 in der Kopfreihe des Boards. Beides zusammen waere genau
+  // die Dopplung, die gerade weggeraeumt wurde - und kostete eine eigene
+  // Reihe ueber die volle Breite.
+  return`${renderAssetBoard(c)}
   ${newsAssetSectionHtml(c)}`;
 }
 // Kursperformance des Assets ueber die vier Standardfenster. Die Assets-Seite
@@ -19572,9 +19637,9 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
-  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,
+  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
-  assetMonthCalHtml,abCalShift,abCalPick,toggleAbCal,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
+  assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,

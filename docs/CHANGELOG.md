@@ -13182,3 +13182,61 @@ Kontext-Charts liegen bei y≈1500 auf einem 1000 px hohen Fenster,
 `boundingBox()` liefert dann Koordinaten **außerhalb** des Fensters und
 `mouse.move` landet im Nichts. Mit `scrollIntoView` davor: alle 13
 Zusicherungen grün.
+
+### 2026-09-13 — Kopfreihe im Karten-Raster, Kalender als Widget mit Fenster (VERSION-CHECK-507)
+
+**Nutzer:** *„wieder 3 Spalten wie bei den makrokarten genau dadrüber ganz
+links quicklinks Mitte die Notes und rechts den Kalender"* — plus
+Detailfenster beim Klick, COT-Tabelle in die COT-Kachel, Notes-Karte unten
+raus für fettere Charts.
+
+Die Kopfreihe liegt im **selben Raster** wie die Karten darunter — nur so
+stehen die Kanten wirklich übereinander. Gemessen bei **192 / 623 / 1055 px**
+in beiden Reihen identisch, Kopfkarten alle 235 px hoch.
+
+| Spalte | Inhalt |
+|---|---|
+| links | 4 Schnellzugriffe als **2×2**, darunter die **Kursentwicklung** |
+| Mitte | **angepinnte** Notizen (Anlegen pinnt sofort) |
+| rechts | Kalender als **Monats-Widget**, Klick öffnet das Fenster |
+
+⚠ `assetPerfStripHtml()` war **seit längerem gebaut und exportiert, aber an
+keiner Stelle gezeichnet** — eine fertige Anzeige, die niemand zu sehen
+bekam. Sie füllt jetzt genau den Platz, auf den die vier Knöpfe sonst auf
+160 px Höhe gestreckt worden wären.
+
+### Das Kalenderfenster
+
+1020 px breit, zentriert: Monatsraster · Termine des gewählten Tages mit
+Actual/Forecast/Previous und Impact · „Next up" mit den nächsten acht.
+
+⚠ **Der High-Impact-Filter ist nicht nachgebaut.** `calToolbarHtml()` liefert
+denselben Knopf wie der Hauptkalender, und `toggleCalHighOnly()` ruft auf der
+Asset-Seite ohnehin `renderDetail()` — dort wird das Fenster mit aufgefrischt.
+Ein zweiter Filter wäre ein zweiter Zustand, der irgendwann auseinanderläuft.
+Der Filter wirkt auch auf die Punkte im Widget und steht in dessen Fußzeile.
+
+### Zwei Dinge, die sonst unbedienbar geworden wären
+
+- **Die COT-Tabelle** steht jetzt in der COT-Kachel. Die Karte wird nicht mehr
+  gezeichnet, ihre drei Indikatoren zählen aber weiter im Score — ohne die
+  Tabelle wären sie unsichtbar **und** unkorrigierbar.
+- **Die alte Quicklink-Zeile** über den Karten ist weg; sie wäre neben der
+  neuen Kopfreihe dieselbe Dopplung gewesen.
+
+Die Notizen-Karte unten ist raus → Kontext-Band über die volle Breite, die
+Charts wuchsen von **208 auf 360 px** Breite bei 150 px Mindesthöhe.
+
+### ⚠ Dieselbe CSS-Falle zum zweiten Mal an einem Tag
+
+Eine Regel weiter **oben** in der Datei verliert bei gleicher Spezifität
+gegen die Basisregel weiter unten. Das Fenster blieb 720 statt 1020 px breit,
+bis die Regel als `.modal.acm-modal` geschrieben war. Beim Container-Query
+für die Indikator-Tabellen war es am selben Tag exakt derselbe Fehler.
+
+### `check/display.js` zum zweiten Mal nachgeführt — und erweitert
+
+Der Wächter aus dem CAD-Bug prüft jetzt **beides**: das Widget (≥28 Tage,
+Fußzeile nennt den Abdeckungszeitraum) **und** das Fenster (Termine oder
+ehrlicher Hinweis, Impact-Filter vorhanden). **Zwei Gegenproben:** Filter
+entfernt → 24 Treffer, Fußzeile entfernt → 24 Treffer, zurück → je 0.
