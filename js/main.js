@@ -2297,7 +2297,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Upper: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-168'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'+0.38%',forecast:null,previous:'+0.40%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',period:'Y/Y',applicable:true,actual:'4.2%',forecast:'4.2%',previous:'3.8%',releaseDate:'2026-06-10',interval:'monthly',source:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-yoy-733',secondarySource:'https://www.investing.com/economic-calendar/united-states-consumer-price-index-(cpi)-mom-69',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2323,7 +2322,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Deposit Rate) / 2.15% (Main Refi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'2.68% (Bund 2Y)',forecast:null,previous:'2.62%',releaseDate:'2026-06-03',interval:'daily',source:'https://www.investing.com/rates-bonds/germany-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/germany-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',period:'Y/Y',applicable:true,actual:'3.2% (HICP y/y)',forecast:'3.1%',previous:'3.0%',releaseDate:'2026-05-29',interval:'monthly',source:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-yoy-68',secondarySource:'https://www.investing.com/economic-calendar/european-consumer-price-index-(cpi)-mom-928',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2349,7 +2347,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-170'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.35% (UK Gilt 2Y)',forecast:null,previous:'4.34%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/uk-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/uk-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:'0.61%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:'2.9%',previous:'3.3%',period:'Y/Y',releaseDate:'2026-05-20',interval:'monthly',source:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-yoy-67',secondarySource:'https://www.investing.com/economic-calendar/united-kingdom-consumer-price-index-(cpi)-mom-727',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2375,7 +2372,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'every 3 months',source:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'0.11%',forecast:null,previous:'0.11%',releaseDate:'2026-06-02',interval:'daily',source:'https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'0.33%',forecast:null,previous:'0.31%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'0.6%',forecast:'0.8%',previous:'0.6%',period:'Y/Y',releaseDate:'2026-06-04',interval:'monthly',source:'https://www.investing.com/economic-calendar/swiss-cpi-956',secondarySource:'https://www.investing.com/economic-calendar/swiss-cpi-71',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2404,7 +2400,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/japan-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'~1.31% (134 bps)',forecast:null,previous:'~1.15%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'1.4%',forecast:'1.5%',previous:'1.5%',period:'Y/Y',releaseDate:'2026-05-22',interval:'monthly',source:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-yoy-992',secondarySource:'https://www.investing.com/economic-calendar/japan-national-consumer-price-index-(cpi)-mom-1766',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2435,7 +2430,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-166'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'2.85%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'daily',source:'https://ca.investing.com/rates-bonds/canada-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'daily',source:'https://www.investing.com/rates-bonds/canada-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'0.58%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'2.8%',forecast:null,previous:'2.4%',period:'Y/Y',releaseDate:'2026-05-19',interval:'monthly',source:'https://www.investing.com/economic-calendar/cpi-741',secondarySource:'https://www.investing.com/economic-calendar/canada-consumer-price-index-(cpi)-mom-70',secondaryLabel:'CPI m/m'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2461,7 +2455,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (hold expected)',previous:'4.10%',releaseDate:'2026-05-06',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-171'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.54%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/australia-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/australia-10-year-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'0.36% (36 bps)',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'4.2% y/y (monthly indicator, April)',forecast:null,previous:'4.6% y/y (March)',releaseDate:'2026-05-28',interval:'monthly',source:'https://www.investing.com/economic-calendar/monthly-cpi-indicator-2215'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2487,7 +2480,6 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'3.14%',forecast:null,previous:'3.10%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield'},
-    {rubric:'Inflation',indicator:'2Y/10Y Spread',applicable:true,actual:'1.74%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/world-government-bonds'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.1% y/y (+0.9% q/q)',forecast:'3.0% y/y',previous:'3.1% y/y',releaseDate:'2026-04-21',interval:'quarterly',source:'https://www.investing.com/economic-calendar/new-zealand-consumer-price-index-(cpi)-yoy-1063'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
@@ -2910,7 +2902,7 @@ function applyIndResearch(sym){
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield'])},
   {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CB Tone','Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])},
@@ -2940,7 +2932,6 @@ const IND_INFO_DEFAULTS={
   'Central Bank Rate':'The central bank\'s main policy interest rate, in %. Higher rates generally strengthen the currency. Watch the decision vs. expectations and the forward guidance.',
   '2Y Bond Yield':'Yield on 2-year government bonds, in %. Tracks rate-hike/cut expectations closely; rising = market pricing tighter policy = currency-supportive.',
   '10Y Bond Yield':'Yield on 10-year government bonds, in %. Reflects long-term growth & inflation expectations; rising yields often support the currency.',
-  '2Y/10Y Spread':'10-year minus 2-year yield, in percentage points. Negative (inverted) = recession warning; steepening = improving growth outlook.',
   'CB Tone':'Your own read of the central bank\'s current rhetoric (statement, press conference, speeches). Bullish = hawkish tone, bearish = dovish tone. Set manually - counts at half weight since it overlaps with the Central Bank Rate / bond yields.',
   'Next CB Move':'Your own expectation for the next policy decision. Bullish = hike expected, bearish = cut expected, neutral = hold expected. Set manually.',
   // Labour Market
@@ -3013,7 +3004,12 @@ const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW 
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
 // Rubrik abgedeckt und werden bei der Migration entfernt, um Dopplungen
 // zu vermeiden.
-const OLD_NEWINDS_REMOVE=['ISM Manufacturing PMI','ZEW Economic Sentiment Index','GDP m/m','KOF Economic Barometer','Tankan Large Manufacturers Index','Ivey PMI','NAB Business Confidence','GDT Dairy Auction Price Index'];
+// ⚠ '2Y/10Y Spread' steht hier (Nutzer 2026-09-13: "entfern den Indikator
+// 2y 10y Spread ueberall komplett"). Er zaehlte ohnehin 0 im Score
+// (SCORE_ZERO), das Entfernen aendert also KEINEN Score - nachgerechnet von
+// check/scorediff.js. Ohne diesen Eintrag bliebe er in jedem bereits
+// gespeicherten Stand stehen und waere nur aus der Vorlage verschwunden.
+const OLD_NEWINDS_REMOVE=['2Y/10Y Spread','ISM Manufacturing PMI','ZEW Economic Sentiment Index','GDP m/m','KOF Economic Barometer','Tankan Large Manufacturers Index','Ivey PMI','NAB Business Confidence','GDT Dairy Auction Price Index'];
 // Geopolitics-Karte komplett entfernt (Nutzer-Wunsch 2026-07-13): kein
 // eigener Score-Beitrag mehr, aus allen Templates/Reihenfolgen/Sync-Listen
 // gestrichen. Bestehende gespeicherte Symbole (lokal + Cloud) verlieren die
@@ -3066,7 +3062,7 @@ function migrateRiskEnvRub(rubrics,sym){
 // Score-Verhalten bleibt unveraendert (kein Trend-Bonus fuer die beiden
 // Renditen, weiterhin ueber BOND_HALF_PT statt Rubrik-Zugehoerigkeit
 // geprueft - siehe indScoreParts()).
-const YIELD_INDS_TO_INFLATION=['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread'];
+const YIELD_INDS_TO_INFLATION=['2Y Bond Yield','10Y Bond Yield'];
 function moveYieldIndsToInflation(rubrics){
   if(!Array.isArray(rubrics))return;
   const ir=rubrics.find(r=>r.name==='Interest Rates');
@@ -6331,7 +6327,7 @@ function renderDetail(){
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
-      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; the 2Y/10Y Spread is display-only and counts 0; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
+      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${assetMonthCalHtml(c)}
@@ -6604,6 +6600,11 @@ function assetNotesFoldersHtml(c){
 // Karte sichtbar (abgedeckte Tage normal, Rest sichtbar gedaempft plus eine
 // Zeile, die den abgedeckten Zeitraum nennt). Ohne das waere die Karte eine
 // huebsche Luege - dieselbe Klasse wie geschaetzte Werte, siehe Regel 4.
+let abCalZu=false;          // Kalenderreihe eingeklappt?
+// ⚠ Rein transient wie evtSectionOpen: eine eingeklappte Ansicht ist kein
+// Inhalt, den man auf dem anderen Geraet wiederfinden muss - und damit auch
+// kein Fall fuer den Cross-Device-Sync.
+function toggleAbCal(){abCalZu=!abCalZu;renderDetail();}
 let abCalMonat=0;           // 0 = aktueller Monat, -1 = voriger, ...
 let abCalTag=null;          // gewaehlter Tag als 'YYYY-MM-DD'
 const AB_WOCHENTAGE=['M','T','W','T','F','S','S'];
@@ -6687,12 +6688,25 @@ function assetMonthCalHtml(c){
         :'Not published yet — the calendar feed only looks about a week ahead. This day is unknown, not empty.'}</div>`;
 
   const kopf=gewaehlt?fmtDayHdr(gewaehlt):'—';
+  // Eingeklappt bleibt genau das stehen, wofuer man den Kalender aufmacht:
+  // wann der naechste Termin ist und wie viele es sind.
+  if(abCalZu){
+    const naechster=tage.filter(d=>d>=heuteStr)[0];
+    const n=naechster?(proTag[naechster]||[]).length:0;
+    return`<button class="abc-zu" onclick="toggleAbCal()" title="Show the calendar">
+      <span class="abc-zu-ic">${icn('calendar',13)}</span>
+      <span class="abc-zu-t">${AB_MONATE[monat]}</span>
+      <span class="abc-zu-n">${naechster?`Next: <b>${escH(fmtDayHdr(naechster))}</b> · ${n} event${n===1?'':'s'}`:'Nothing scheduled in the published window'}</span>
+      <span class="abc-zu-a">▸</span>
+    </button>`;
+  }
   return`<div class="abc-wrap">
     <div class="abc-cal">
       <div class="abc-hd">
         <button class="abc-nav" onclick="abCalShift(-1)" title="Previous month">‹</button>
         <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>
         <button class="abc-nav" onclick="abCalShift(1)" title="Next month">›</button>
+        <button class="abc-nav" onclick="toggleAbCal()" title="Collapse the calendar">▾</button>
       </div>
       <div class="abc-grid">
         ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
@@ -6718,7 +6732,7 @@ function abNextUpHtml(c,proTag,heuteStr,gewaehlt){
   const kommend=[];
   Object.keys(proTag).filter(d=>d>=heuteStr).sort().forEach(d=>{
     proTag[d].slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')))
-      .forEach(ev=>{if(kommend.length<9&&!isEvtPast(ev))kommend.push([d,ev]);});
+      .forEach(ev=>{if(kommend.length<5&&!isEvtPast(ev))kommend.push([d,ev]);});
   });
   const zeilen=kommend.length?kommend.map(([d,ev])=>{
     const imp=evtImpact(ev);
@@ -6779,24 +6793,52 @@ function yieldBiasFor(art,klasse,roh){
   return abDreht(art,klasse)?(roh==='bull'?'bear':'bull'):roh;
 }
 
-// ── Kerzen-Chart (Platzhalter) ──────────────────────────────────────────
-function abKerzenSvg(schluessel,w,h){
+// ── Kerzen-Chart mit Achsen und Hover ───────────────────────────────────
+// Nutzer 2026-09-13: "in den Charts will ich unten Datums haben und eine
+// kleine preisskalierung und wie in jedem Diagramm oder Chart das wenn man
+// drueber geht man mehr Details sieht zu den Punkten".
+//
+// ⚠ Die Beschriftungen stehen als HTML NEBEN dem SVG, nicht darin. Das SVG
+// laeuft auf preserveAspectRatio="none", damit die Kerzen jede Kachelbreite
+// ausfuellen - Text darin wuerde dabei mitgezerrt. Ausserdem muss der
+// Hover-Rahmen (.chv) GENAU der Zeichenflaeche entsprechen: seine
+// Trefferrechnung arbeitet mit Bruchteilen seiner eigenen Breite, jede
+// mitgerechnete Achse wuerde den Cursor verschieben.
+function abKerzenBlock(schluessel,titelFuerTip){
+  const W=240,H=100;
   const k=phKerzen(schluessel);
   const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
   const sp=(hi-lo)||1;
-  const y=v=>h-4-((v-lo)/sp)*(h-8);
-  const bw=Math.max(2,(w-8)/k.length-1.6);
+  const y=v=>3+(1-(v-lo)/sp)*(H-6);
+  const bw=Math.max(2,W/k.length-1.8);
+  // Platzhalter-Datumsreihe: Werktage rueckwaerts ab heute.
+  const tage=[];{const d=new Date();
+    while(tage.length<k.length){if(d.getDay()!==0&&d.getDay()!==6)tage.unshift(new Date(d));d.setDate(d.getDate()-1);}}
+  const fmt=d=>d.toLocaleDateString('en',{day:'numeric',month:'short'});
   let s='';
+  // Zwei waagerechte Hilfslinien - ohne sie schwebt die Preisskala neben nichts.
+  [0.25,0.75].forEach(f=>{s+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
+  const pts=[];
   k.forEach((c,i)=>{
-    const x=4+i*((w-8)/k.length), mx=x+bw/2;
+    const x=i*(W/k.length), mx=x+bw/2;
     const auf=c.c>=c.o, col=auf?'var(--bias-bull)':'var(--bias-bear)';
     const yo=y(c.o),yc=y(c.c);
-    s+=`<line x1="${mx.toFixed(1)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(1)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1"/>`;
+    s+=`<line x1="${mx.toFixed(1)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(1)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
     s+=`<rect x="${x.toFixed(1)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
+    const z=(v,l)=>`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">${l}</span><b>${v.toFixed(2)}</b></div>`;
+    pts.push({fx:mx/W,fy:yc/H,col,
+      tip:`<div class="chv-tip-d">${escH(titelFuerTip)} · ${escH(fmt(tage[i]))}</div>`
+        +z(c.o,'Open')+z(c.h,'High')+z(c.l,'Low')+z(c.c,'Close')});
   });
-  const letzte=k[k.length-1],erste=k[0];
-  const pct=((letzte.c-erste.c)/erste.c*100);
-  return{svg:`<svg class="ab-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`,pct};
+  const pct=((k[k.length-1].c-k[0].c)/k[0].c*100);
+  const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`;
+  const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${v.toFixed(2)}</span>`).join('');
+  const achse=[tage[0],tage[Math.floor(tage.length/2)],tage[tage.length-1]]
+    .map(d=>`<span>${escH(fmt(d))}</span>`).join('');
+  return{pct,html:`<div class="ab-plot">
+      <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achse}</div></div>
+      <div class="ab-yax">${skala}</div>
+    </div>`};
 }
 
 // ── Kontext-Band ────────────────────────────────────────────────────────
@@ -6813,17 +6855,20 @@ function abKontextHtml(c){
     // kompakt in der Kopfzeile der Karte, und die drei Charts bekommen die
     // Breite, die sie brauchen.
     if(d.art==='rate')return'';
-    const {svg,pct}=abKerzenSvg(c.id+'|'+a,240,52);
+    const {html:plot,pct}=abKerzenBlock(c.id+'|'+a,d.titel);
     // Die Richtung ist aus Sicht DIESES Assets zu lesen: steigende Renditen
     // sind fuer eine Waehrung tendenziell bullish, fuer Gold das Gegenteil.
     const roh=pct>0.15?'bull':pct<-0.15?'bear':'neu';
     const dreht=abDreht(a,assetCls(c.id));
     const b=yieldBiasFor(a,assetCls(c.id),roh);
-    return`<button class="ab-k"${klick}>
-      <div class="ab-k-t">${escH(d.titel)}${abBiasWort(b)}${AB_PH}</div>
-      ${svg}
+    // ⚠ <div> statt <button>: ein Button darf keine interaktiven Kinder
+    // enthalten, und der Hover-Rahmen faengt die Zeigerereignisse ab. Der
+    // Sprung haengt deshalb an der Kopfzeile, nicht am ganzen Kasten.
+    return`<div class="ab-k">
+      <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}${AB_PH}</div>
+      ${plot}
       <div class="ab-k-s" style="color:${biasCss(roh)}">${pct>0?'+':''}${pct.toFixed(2)}%${dreht?' · inverse for this asset':''}</div>
-    </button>`;
+    </div>`;
   }).join('');
   const rate=arten.includes('cb')
     ?`<span class="ab-rate" title="Policy rate of this asset's central bank">
@@ -6984,28 +7029,31 @@ function renderAssetBoard(c){
   // Loesung: Karte und ihre Grafik stehen in DERSELBEN Spalte untereinander.
   // Dann rutscht jede Grafik direkt unter ihre Karte, egal wie hoch die ist,
   // und keine Karte muss dafuer laenger werden.
-  const spalten=ASSET_CARDS.map((n,si)=>{
-    const i=idx(n);
-    return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}
-      ${ASSET_GRAPHS[si]?abGrafikHtml(ASSET_GRAPHS[si],c):''}</div>`;
-  }).join('');
-  // ⚠ Die restlichen Karten sind NICHT geloescht - ihre Indikatoren zaehlen
-  // weiter im Score. Sie stehen nur nicht mehr im Weg. Ohne diesen Schalter
-  // waeren sie unerreichbar, und damit auch nicht mehr korrigierbar.
-  const rest=rubs.map((r,i)=>({r,i})).filter(x=>!ASSET_CARDS.includes(x.r.name));
-  const restHtml=abRestOpen
-    ?`<div class="ab-rest">${masonryHTML(rest,x=>renderRub(x.r,x.i,rubs.length))}
-       <button onclick="addRub()" class="btn g" style="width:100%;padding:8px;margin-top:8px">＋ Add Rubric</button></div>`
-    :'';
+  // ⚠ ZWEI feste Rasterreihen: oben die drei Karten, darunter die drei
+  // Grafiken. Nutzer 2026-09-13: "bring die drei Makro Karten so das sie
+  // unten gleichmaessig abschliessen". Mit align-items:stretch bekommen alle
+  // drei Karten die Hoehe der hoechsten - sie enden also auf einer Linie,
+  // und die Grafiken darunter beginnen ebenfalls auf einer Linie. Eine
+  // Luecke entsteht dabei NICHT, weil die Karten die Reihe ausfuellen
+  // (genau das war beim ersten Anlauf am selben Tag noch anders: da waren
+  // die Karten inhaltshoch und darunter klafften 89 bzw. 141px).
+  // ⚠ Der Schalter "Show the other 3 cards" ist am 2026-09-13 auf
+  // Nutzer-Wunsch entfernt worden ("die drei Karten die man ausklappen kann
+  // auch"). Die Karten Interest Rates, COT Data und Risk Environment werden
+  // also NICHT mehr gezeichnet.
+  // ⚠ Ihre Daten sind damit NICHT geloescht und ihre Indikatoren zaehlen
+  // unveraendert im Score weiter - nachgerechnet von check/scorediff.js, das
+  // bei einer stillen Score-Aenderung rot faellt. Einsehbar bleiben sie ueber
+  // die Score-Aufschluesselung im Kopf der Seite. Das endgueltige Entfernen
+  // aus dem Score ist ein eigener Schritt mit Vorher/Nachher-Vergleich.
   return`<div class="ab-board">
-    <div class="ab-cards">${spalten}</div>
+    <div class="ab-cards">
+      ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
+      ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
+    </div>
     <div class="ab-lower">${abKontextHtml(c)}${abNotesHtml(c)}</div>
-    <button class="ab-rest-sw" onclick="toggleAbRest()">${abRestOpen?'▾ Hide':'▸ Show'} the other ${rest.length} card${rest.length===1?'':'s'} (still counted in the score)</button>
-    ${restHtml}
   </div>`;
 }
-let abRestOpen=false;
-function toggleAbRest(){abRestOpen=!abRestOpen;renderDetail();}
 
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
@@ -7093,7 +7141,7 @@ function renderRub(rub,ri,total){
 // "die zusammengehören und sich das Gewicht teilen das war auch früher
 // optisch dargestellt mach das wieder" - die Box war zwar dokumentiert,
 // aber beim Umbau auf die Tabellen-Darstellung nie tatsaechlich umgesetzt).
-const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning'],['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']];
+const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Positioning'],['2Y Bond Yield','10Y Bond Yield']];
 // Tabellen-Darstellung 1:1 aus dem Referenz-Mockup (Nutzer-Wunsch 2026-07-28
 // "änder die Tabellen Darstellung genau wie auf dem Bild") - ersetzt die
 // vorherige Karten-pro-Indikator-Darstellung. Kopfzeile INDICATOR/ACTUAL/
@@ -7141,7 +7189,7 @@ function renderIndsTable(rub,ri){
   // renderIndRow fuer sehr lange Indikator-Namen).
   return`<table class="ind-table">
     <colgroup><col style="width:26%"><col style="width:16%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:15%"></colgroup>
-    <thead><tr><th class="iht-name">Indicator</th><th>Actual</th><th>Forecast</th><th>Previous</th><th class="iht-next" title="Days until the next scheduled release of this indicator. Red at 7 days or less. A dash means the calendar feed - which only looks about a week ahead - has no date for it yet; nothing beyond that is estimated.">Next</th><th class="iht-trend">Trend</th></tr></thead>
+    <thead><tr><th class="iht-name">Indicator</th><th title="Actual — the released value">Act</th><th title="Forecast — what the market expected">Fc</th><th title="Previous — the value before this release">Prev</th><th class="iht-next" title="Next — days until the next scheduled release of this indicator. Red at 7 days or less. A dash means the calendar feed - which only looks about a week ahead - has no date for it yet; nothing beyond that is estimated.">Next</th><th class="iht-trend" title="Trend — the last few readings as a sparkline">Trd</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="add-row ind-edit-ctrls" style="margin-top:8px">
@@ -8058,7 +8106,7 @@ const SUM_PHRASE={
   'ADP Employment':'ADP employment','JOLTS Job Openings':'JOLTS openings','Avg Hourly Earnings':'wage growth',
   'GDP Growth QoQ':'GDP growth','Manufacturing PMI':'the manufacturing PMI','Services PMI':'the services PMI',
   'Retail Sales':'retail sales','Consumer Confidence':'consumer confidence',
-  '2Y Bond Yield':'the 2Y yield','10Y Bond Yield':'the 10Y yield','2Y/10Y Spread':'the yield curve',
+  '2Y Bond Yield':'the 2Y yield','10Y Bond Yield':'the 10Y yield',
   'Net Bullish Positioning':'net bullish positioning','Net Bearish Positioning':'net bearish positioning',
   'WoW Change in Net Position (%)':'the weekly positioning shift','Risk Correlation':'risk correlation',
   'Geopolitics':'the geopolitical backdrop',
@@ -14669,7 +14717,6 @@ function indChartSeries(ind,symId){
   const base=stripPeriodSuffix(ind.name).base;
   let pts=[],unit=null;
   if(ccy&&BOND_INDS.includes(base)){pts=bondSeriesPts(ccy,base);unit='%';}
-  else if(ccy&&base==='2Y/10Y Spread'){pts=bondSpreadPts(ccy);unit='%';}
   else if(r.cot&&id){pts=cotHistPts(id,base);unit='%';}
   else if(r.sent&&r.sentKey){pts=sentHistPts(r.sentKey);unit=r.sentKey==='aaii'?'%':'';}
   if(pts.length<2){pts=valHistPts(ind);unit=null;}
@@ -19525,9 +19572,9 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
-  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,toggleAbRest,abKontextHtml,abGrafikHtml,abNotesHtml,
-  abBiasWort,abDreht,yieldBiasFor,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
-  assetMonthCalHtml,abCalShift,abCalPick,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
+  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,
+  abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
+  assetMonthCalHtml,abCalShift,abCalPick,toggleAbCal,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,

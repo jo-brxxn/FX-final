@@ -95,7 +95,7 @@ const MODE = process.argv[2] || 'normalized';
   // Gegenprobe beim Einbau: die Ausnahme abgeschaltet -> 181 Treffer
   // (77 COT + 32 Risk Environment + 72 Renditen), wieder an -> 0.
   ok.ohneAlter={cot:0,risk:0,renditen:0};
-  const RENDITEN=new Set(['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']);
+  const RENDITEN=new Set(['2Y Bond Yield','10Y Bond Yield']);
   syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
     const base=stripPeriodSuffix(ind.name).base;
     const istCot=rub.name==='COT Data', istRisk=rub.name==='Risk Environment', istY=RENDITEN.has(base);

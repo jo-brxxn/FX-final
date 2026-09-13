@@ -165,7 +165,9 @@ const CB_TONE_HALF=new Set(['CB Tone']);
 // (Wachstumsoptimismus vs. Fiskalrisiko-Praemie). Bias bleibt einstellbar
 // und wird weiter angezeigt/auto-gesetzt - er fliesst nur nicht in die Summe
 // ein (auch nicht mit ★-Stern).
-const SCORE_ZERO=new Set(['2Y/10Y Spread']);
+// ⚠ Leer, seit der 2Y/10Y Spread am 2026-09-13 ganz entfernt wurde. Die
+// Menge bleibt: sie ist der Ort fuer 'wird angezeigt, zaehlt aber 0'.
+const SCORE_ZERO=new Set([]);
 // Rubriken OHNE Trend-Anteil (Nutzer-Entscheid 2026-07-05): in der Interest-
 // Rates-Rubrik zaehlt KEIN Trend-Bonus in den Score und es erscheint kein
 // Trend-Chip - weder fuer die Bond-Renditen (25-Tage-Vergleich) noch fuer
@@ -449,7 +451,7 @@ const DECAY_EXEMPT_RUBS=new Set(['COT Data','Risk Environment']);
 // Die Renditen stehen in der Inflations-Karte, nicht in einer eigenen -
 // deshalb hier zusaetzlich ueber den Namen. BOND_INDS deckt 2Y/10Y ab, der
 // Spread ist eine abgeleitete Groesse derselben Reihen.
-const DECAY_EXEMPT_INDS=new Set(['2Y Bond Yield','10Y Bond Yield','2Y/10Y Spread']);
+const DECAY_EXEMPT_INDS=new Set(['2Y Bond Yield','10Y Bond Yield']);
 function indDecayExempt(ind,rub){
   if(rub&&DECAY_EXEMPT_RUBS.has(rub.name))return true;
   return DECAY_EXEMPT_INDS.has(stripPeriodSuffix(ind.name).base);

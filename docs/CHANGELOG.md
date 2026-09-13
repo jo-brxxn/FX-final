@@ -13141,3 +13141,44 @@ nicht mehr gezeichnet wird. Er prüft jetzt die Monatskarte — **strenger als
 vorher**: Raster muss ≥28 Tage haben, und die Tagesspalte muss entweder
 Termine oder den ehrlichen Hinweis zeigen. **Gegenprobe:** Kalender für CAD
 unterdrückt → 1 Treffer, zurück → 0. 24 Assets geprüft.
+
+### 2026-09-13 — Sechs Punkte aus dem Foto (VERSION-CHECK-506)
+
+| Wunsch | Umsetzung |
+|---|---|
+| Spaltenköpfe abkürzen | **Act · Fc · Prev · Next · Trd**, voller Name im `title`. Alle 18 Köpfe nachgemessen einzeilig |
+| 2Y/10Y Spread überall weg | aus Vorlage, Seed-Daten, Renditen-Gruppe, Erklärungen, Chart-Zweig, `SCORE_ZERO`, `DECAY_EXEMPT` — plus `OLD_NEWINDS_REMOVE` für gespeicherte Stände |
+| Drei ausklappbare Karten weg | Schalter entfernt, Karten werden nicht mehr gezeichnet |
+| Karten schließen unten gleich ab | feste Rasterreihe, gemessen alle drei bei **998 px** |
+| Kalender kleiner / einklappbar | Zellen 24 statt 30 px, Spalte 252 statt 300 px, Next up 5 statt 9, Einklappen auf **eine 30-px-Zeile** |
+| Charts mit Achsen und Hover | Datumsachse, Preisskala, Tooltip mit Datum + O/H/L/C |
+
+**⚠ Der Spread ändert keinen Score** — er zählte ohnehin 0 (`SCORE_ZERO`).
+`check/scorediff.js` rechnet jeden Score gegen die Basis nach und blieb grün.
+
+**⚠ Die drei entfernten Karten zählen weiter im Score.** Nur die Anzeige ist
+weg. Das Entfernen aus dem Score ist ein eigener Schritt mit
+Vorher/Nachher-Vergleich — er passiert nicht nebenbei bei einem Layout-Umbau.
+
+### Charts: der vorhandene Hover statt eines zweiten Nachbaus
+
+`chartHoverWrap` gibt es bereits (`docs/design-system.md`: „jedes Diagramm
+nutzt chartHoverWrap"). Genutzt, nicht nachgebaut.
+
+⚠ **Die Achsen stehen als HTML neben dem SVG, nicht darin.** Zwei Gründe:
+das SVG läuft auf `preserveAspectRatio="none"`, damit die Kerzen jede
+Kachelbreite füllen — Text darin würde mitgezerrt. Und der Hover-Rahmen muss
+**exakt** die Zeichenfläche sein: seine Trefferrechnung arbeitet mit
+Bruchteilen der eigenen Breite, jede mitgerechnete Achse verschiebt den
+Cursor. Die Kachel ist deshalb ein `div` statt eines `button` (ein Button
+darf keine interaktiven Kinder haben); der Sprung hängt jetzt an der
+Kopfzeile.
+
+### ⚠ Fehler im Messaufbau, vierter Fall in drei Tagen
+
+Die Hover-Messung meldete „kein Tooltip" — obwohl die Registrierung
+nachweislich stand (34 Punkte, Rahmen 208×178 px). Ursache: die
+Kontext-Charts liegen bei y≈1500 auf einem 1000 px hohen Fenster,
+`boundingBox()` liefert dann Koordinaten **außerhalb** des Fensters und
+`mouse.move` landet im Nichts. Mit `scrollIntoView` davor: alle 13
+Zusicherungen grün.
