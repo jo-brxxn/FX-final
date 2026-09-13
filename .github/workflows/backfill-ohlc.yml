@@ -1,0 +1,118 @@
+# Traegt Open/High/Low in die BESTEHENDE Preis-Historie nach, damit die
+# Kerzen auch rueckwirkend Dochte haben.
+#
+# Anlass (Nutzer 2026-09-13): "ergaenzt dann die ganzen Wicks in den Charts
+# ueberall". Der stuendliche Sammellauf schreibt seit heute OHLC mit, aber nur
+# fuer den jeweils laufenden Tag - von 804 Tagen im Dollar hatte genau EINER
+# einen Docht.
+#
+# ⚠ QUELLE GEMESSEN, NICHT GERATEN (probe-ohlc-sources.yml):
+#   Stooq   - HTTP 200, aber HTML-Sperrseite, alle 17 Symbole. Unbrauchbar.
+#   Binance - HTTP 451, von GitHubs Standort gesperrt.
+#   Yahoo   - 15 von 15 Symbolen, je ~500-730 Tage, 76-100% mit echtem Docht.
+# Also Yahoo.
+#
+# ⚠ DER SCHLUSSKURS WIRD NICHT ANGEFASST. Nur Open/High/Low kommen dazu.
+# Grund: der bestehende Schluss stammt vom TradingView-Scanner und haengt an
+# Dutzenden Rechnungen (Tagesperformance, Marktrelevanz-Gewichtung der
+# Indikatoren, Korrelationen, Saisonalitaets-Ueberlagerung). 500 historische
+# Schlusskurse gegen eine andere Quelle zu tauschen wuerde all das still
+# verschieben - fuer einen rein optischen Gewinn. Wo Yahoos Hoch/Tief nicht
+# zum vorhandenen Schluss passt, wird der Docht auf den Koerper geklemmt,
+# statt eine Kerze zu zeichnen, die auf dem Kopf steht.
+#
+# Idempotent: Tage, die schon OHLC tragen, werden uebersprungen. Laeuft nur
+# von Hand und committet nur, wenn sich wirklich etwas geaendert hat.
+name: Backfill OHLC (wicks) into price history
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yahoo-Tageskerzen holen und Open/High/Low nachtragen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          for PAIR in "USD:DX-Y.NYB" "EUR:EURUSD=X" "GBP:GBPUSD=X" "CHF:USDCHF=X" "JPY:USDJPY=X" "CAD:USDCAD=X" "AUD:AUDUSD=X" "NZD:NZDUSD=X" "GOLD:GC=F" "SILVER:SI=F" "OIL:CL=F" "BTC:BTC-USD" "SP500:%5EGSPC" "NAS:%5ENDX" "DAX:%5EGDAXI"; do
+            ID="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            curl -sL -A "$UA" --max-time 45 -o "y_$ID.json" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || true
+          done
+          node -e '
+            const fs=require("fs");
+            const IDS=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD","GOLD","SILVER","OIL","BTC","SP500","NAS","DAX"];
+            let pd;
+            try{pd=JSON.parse(fs.readFileSync("price_data.json","utf8"));}
+            catch(e){console.log("price_data.json unlesbar - nichts geaendert ("+e.message+")");process.exit(0);}
+            const bericht=[];
+            let gesamtNeu=0;
+            IDS.forEach(id=>{
+              const feed=pd[id];
+              if(!feed||!Array.isArray(feed.series)){bericht.push([id,"keine Reihe in price_data.json","-","-"]);return;}
+              let y=null;
+              try{y=JSON.parse(fs.readFileSync("y_"+id+".json","utf8"));}catch(e){y=null;}
+              const r=y&&y.chart&&y.chart.result&&y.chart.result[0];
+              const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!r||!q||!Array.isArray(r.timestamp)){bericht.push([id,"Yahoo-Antwort unbrauchbar","-","-"]);return;}
+              // Tagesschluessel -> {o,h,l}. Yahoo liefert UTC-Sekunden.
+              const karte={};
+              for(let i=0;i<r.timestamp.length;i++){
+                const o=q.open[i],h=q.high[i],l=q.low[i];
+                if(![o,h,l].every(x=>typeof x==="number"&&isFinite(x)))continue;
+                karte[new Date(r.timestamp[i]*1000).toISOString().slice(0,10)]={o,h,l};
+              }
+              // ⚠ invert: JPY/CHF/CAD stehen als USD/XXX in der Datei. Die
+              // Yahoo-Symbole sind DIESELBE Notierung (USDJPY=X), also passt
+              // O/H/L direkt - NICHT kehrwerten. Die App dreht erst beim
+              // Lesen (priceSeriesFor), und tauscht dort auch Hoch und Tief.
+              let neu=0,schon=0,ohne=0;
+              feed.series=feed.series.map(e=>{
+                if(!Array.isArray(e)||e.length<2)return e;
+                if(e.length>=5){schon++;return e;}
+                const k=karte[e[0]];
+                if(!k){ohne++;return e;}
+                const c=Number(e[1]);
+                if(!isFinite(c))return e;
+                // Klemmen: der vorhandene Schluss bleibt, der Docht darf ihn
+                // nie ausschliessen.
+                const h=Math.max(k.h,k.o,c), l=Math.min(k.l,k.o,c);
+                neu++;
+                return [e[0],e[1],k.o,h,l];
+              });
+              gesamtNeu+=neu;
+              bericht.push([id,String(neu),String(schon),String(ohne)]);
+            });
+            if(!gesamtNeu){console.log("Kein einziger Tag ergaenzt - price_data.json unveraendert.");}
+            else{
+              fs.writeFileSync("price_data.json",JSON.stringify(pd,null,1));
+              console.log("price_data.json: "+gesamtNeu+" Tage um Open/High/Low ergaenzt.");
+            }
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+            zeile("## Backfill Open/High/Low (Yahoo)");
+            zeile("");
+            zeile("| Asset | ergaenzt | hatte schon | kein Yahoo-Tag |");
+            zeile("|---|---|---|---|");
+            bericht.forEach(b=>zeile("| "+b.join(" | ")+" |"));
+            zeile("");
+            zeile("**"+gesamtNeu+" Tage ergaenzt.** Der Schlusskurs wurde NICHT angefasst - nur Open/High/Low kamen dazu, geklemmt auf den vorhandenen Schluss.");
+          '
+          rm -f y_*.json
+
+      - name: Committen, falls sich etwas geaendert hat
+        run: |
+          if git diff --quiet -- price_data.json; then
+            echo "price_data.json unveraendert - kein Commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add price_data.json
+          git commit -m "Backfill: Open/High/Low aus Yahoo in die Preis-Historie (Dochte)"
+          git push

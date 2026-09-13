@@ -6862,7 +6862,13 @@ function tagesKerzen(reihe,assetId){
   const out=[];
   for(let i=1;i<r.length;i++){
     const e=r[i],c=Number(e[1]);
-    const hatOhlc=isFinite(Number(e[2]))&&isFinite(Number(e[3]))&&isFinite(Number(e[4]));
+    // ⚠ NICHT nur isFinite(Number(x)) pruefen: Number(null) ist 0, und
+    // isFinite(0) ist true. bondSeriesPts() legt in Feld 2 ein null ab (dort
+    // steht bei Indikator-Reihen der Forecast) - ohne die null-Pruefung
+    // haette eine Renditen-Reihe eine Eroeffnung von 0 gemeldet und die
+    // Kerze waere ueber die ganze Chart-Hoehe gelaufen.
+    const zahl=x=>x!=null&&x!==''&&isFinite(Number(x));
+    const hatOhlc=zahl(e[2])&&zahl(e[3])&&zahl(e[4]);
     const o=hatOhlc?Number(e[2]):Number(r[i-1][1]);
     // Math.max/min auch im OHLC-Fall: eine Quelle, deren High unter dem
     // Schluss liegt, wuerde sonst eine Kerze zeichnen, die auf dem Kopf steht.
@@ -7020,12 +7026,19 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse){
 // nicht am Sonntag, wenn BTC es tut.
 function abKontextReihe(art,assetId){
   const ccy=isNonFx(assetId)?(macroCcyFor(assetId)||'USD'):assetId;
-  const zu2=(v)=>Array.isArray(v)?v.map(e=>[e[0],e[1]]):null;
+  // ⚠ Frueher schnitt diese Zeile die Reihe auf [Datum, Wert] zu - damit
+  // waere ein High/Low aus dem Feed nie beim Zeichner angekommen, und die
+  // Renditen-Charts haetten NIE einen Docht bekommen, egal was in
+  // bond_data.json steht. Jetzt wird auf die Kerzen-Form gebracht:
+  // [Datum, Close, Open, High, Low]. Feld 2 von bondSeriesPts traegt den
+  // Forecast (bei Renditen immer null) und gehoert NICHT in die Kerze -
+  // deshalb bondSeriesOhlc() statt bondSeriesPts().
+  const zu2=(v)=>Array.isArray(v)?v:null;
   switch(art){
-    case 'y2':    return{reihe:zu2(bondSeriesPts(ccy,'2Y Bond Yield')),einheit:'%',quelle:ccy};
-    case 'y10':   return{reihe:zu2(bondSeriesPts(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy};
-    case 'y2us':  return{reihe:zu2(bondSeriesPts('USD','2Y Bond Yield')),einheit:'%',quelle:'USD'};
-    case 'y10us': return{reihe:zu2(bondSeriesPts('USD','10Y Bond Yield')),einheit:'%',quelle:'USD'};
+    case 'y2':    return{reihe:zu2(bondSeriesOhlc(ccy,'2Y Bond Yield')),einheit:'%',quelle:ccy};
+    case 'y10':   return{reihe:zu2(bondSeriesOhlc(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy};
+    case 'y2us':  return{reihe:zu2(bondSeriesOhlc('USD','2Y Bond Yield')),einheit:'%',quelle:'USD'};
+    case 'y10us': return{reihe:zu2(bondSeriesOhlc('USD','10Y Bond Yield')),einheit:'%',quelle:'USD'};
     case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:'',quelle:'USD'};
     case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:'',quelle:'SP500'};
     case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:'',quelle:'NAS'};
@@ -14949,6 +14962,27 @@ function symIdOfInd(ind){
   for(const s of(syms||[]))for(const r of(s.rubrics||[]))if((r.indicators||[]).indexOf(ind)>=0)return s.id;
   return null;
 }
+// ── Anleiherenditen in KERZEN-Form ─────────────────────────────────────
+// ⚠ bondSeriesPts() liefert [Datum, Wert, Forecast] - das ist die Form der
+// INDIKATOR-Verlaufscharts, dort steht in Feld 2 die Prognose. Die Kerzen
+// erwarten [Datum, Close, Open, High, Low]; Feld 2 hat in beiden Formen
+// eine voellig andere Bedeutung. Deshalb eine eigene Funktion statt eines
+// Umbaus von bondSeriesPts - sonst haette ein Forecast eine Eroeffnung
+// gespielt. Open/High/Low kommen nur mit, wenn der Feed sie fuehrt.
+function bondSeriesOhlc(ccy,base){
+  const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy];
+  const ser=bd&&bd[base]&&bd[base].series;
+  if(!Array.isArray(ser))return[];
+  const zahl=x=>x!=null&&x!==''&&isFinite(Number(x));
+  const out=[];
+  ser.forEach(e=>{
+    const d=String((e&&e[0])||'').slice(0,10),c=Number(e&&e[1]);
+    if(!d||!isFinite(c))return;
+    if(zahl(e[2])&&zahl(e[3])&&zahl(e[4]))out.push([d,c,Number(e[2]),Number(e[3]),Number(e[4])]);
+    else out.push([d,c]);
+  });
+  return out;
+}
 function bondSeriesPts(ccy,base){
   const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy];
   const ser=bd&&bd[base]&&bd[base].series;
@@ -19937,7 +19971,7 @@ Object.assign(window,{
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
-  abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,
+  abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,bondSeriesOhlc,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,

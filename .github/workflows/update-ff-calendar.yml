@@ -2390,7 +2390,7 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
-            --data '{"symbols":{"tickers":["TVC:US10Y","TVC:US02Y","TVC:DE10Y","TVC:DE02Y","TVC:GB10Y","TVC:GB02Y","TVC:CH10Y","TVC:CH02Y","TVC:JP10Y","TVC:JP02Y","TVC:CA10Y","TVC:CA02Y","TVC:AU10Y","TVC:AU02Y","TVC:NZ10Y","TVC:NZ02Y"],"query":{"types":[]}},"columns":["close"]}' \
+            --data '{"symbols":{"tickers":["TVC:US10Y","TVC:US02Y","TVC:DE10Y","TVC:DE02Y","TVC:GB10Y","TVC:GB02Y","TVC:CH10Y","TVC:CH02Y","TVC:JP10Y","TVC:JP02Y","TVC:CA10Y","TVC:CA02Y","TVC:AU10Y","TVC:AU02Y","TVC:NZ10Y","TVC:NZ02Y"],"query":{"types":[]}},"columns":["close","open","high","low"]}' \
             "https://scanner.tradingview.com/global/scan" -o bond_tv.json || true
           echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 bond_tv.json 2>/dev/null || echo "(missing)"
@@ -2446,7 +2446,18 @@ jobs:
               const [ccy,ind]=key.split("|");
               const cur=(out[ccy]&&out[ccy][ind])||{};
               let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
-              series.push([today,val]);
+              // ⚠ DOCHTE FUER DIE RENDITEN-CHARTS (Nutzer 2026-09-13:
+              // "ergaenzt dann die ganzen Wicks in den Charts ueberall").
+              // GEMESSEN im Probelauf probe-ohlc-sources.yml, Schritt E:
+              // 16 von 16 Renditen-Tickern liefern ein High/Low, das ueber
+              // den Kerzenkoerper hinausragt. Format wie bei den Preisen:
+              // [Datum, Close] wie bisher ODER [Datum, Close, Open, High,
+              // Low]. Angehaengt, nicht umgebaut - jeder Leser nimmt weiter
+              // e[1], und die vorhandene Historie bleibt gueltig.
+              const r3=(x)=>String(Math.round(Number(x)*1000)/1000);
+              const o=Number(r.d&&r.d[1]),h=Number(r.d&&r.d[2]),l=Number(r.d&&r.d[3]);
+              const ohlc=[o,h,l].every(x=>isFinite(x))&&h>=l;
+              series.push(ohlc?[today,val,r3(o),r3(h),r3(l)]:[today,val]);
               series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
               series=series.slice(-BOND_KEEP);
               (out[ccy]=out[ccy]||{})[ind]={source:SRC[key]||cur.source||"",series:series};
