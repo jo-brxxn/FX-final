@@ -45,6 +45,7 @@ const PRUEFUNGEN = [
   { n: 'typo',      d: 'Schrifthierarchie in allen 34 Fenstern',             f: 'check/typo.js',      args: [],           browser: true },
   { n: 'theme',     d: 'Design-Vorlagen: Kontrast, Bedeutungsfarben, Tokens',   f: 'check/theme.js',     args: [],           browser: true },
   { n: 'hintergrund',d:'Kontrast unter jedem waehlbaren Hintergrund (am Pixel)', f: 'check/hintergrund.js', args: [],        browser: true },
+  { n: 'kerzen',    d: 'Kerzen: ein Tag, kein Wochenende, eigene Farben, keine erfundenen Dochte', f: 'check/kerzen.js', args: [], browser: true },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 

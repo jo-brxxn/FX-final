@@ -193,7 +193,45 @@ if(snapM&&loadM){
     if(!new RegExp('d\\.'+f+'\\b').test(loadM[0]))snapFehlt.push(f);
   });
 }
+// ── VIERTES NETZ: benutzte CSS-Tokens, die es gar nicht gibt ────────────
+// ⚠ GEMESSEN 2026-09-13: --card wurde an drei Stellen als
+// background:var(--card) benutzt (.ab-tile/.ab-ktile/.ab-ntile,
+// .abc-cal/.acm-cal, .abc-zu), war aber NIRGENDS definiert. CSS wirft in
+// diesem Fall die GANZE Deklaration weg ("invalid at computed-value time"),
+// ohne einen Fehler zu melden: die Karten standen auf rgba(0,0,0,0), also
+// vollstaendig durchsichtig, und der Nutzer sah "bei den karten das ist
+// alles noch so weiss". Kein Waechter konnte das sehen - der Kontrast-
+// Waechter prueft DEFINIERTE Tokens, nicht benutzte.
+// Diese Pruefung nimmt die andere Richtung: jedes var(--x) OHNE Rueckfallwert
+// muss irgendwo als --x: definiert sein. Ein var(--x, rgba(...)) ist in
+// Ordnung - dort gibt es ja einen Wert.
+// ⚠ NUR ECHTES CSS ANSEHEN, nicht die ganze Datei. Der erste Entwurf las
+// index.html am Stueck und meldete daraufhin --x als fehlend - weil der
+// Erklaertext im Versions-Banner das Wort var(--x) enthaelt. Ein Waechter,
+// der ueber Fliesstext stolpert, meldet Unsinn und wird abgeschaltet.
+// Betrachtet werden deshalb: der Inhalt jedes <style>-Blocks und jedes
+// style="..."-Attribut.
+let css='';
+for(const m of h.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) css+=m[1]+'\n';
+for(const m of h.matchAll(/\sstyle="([^"]*)"/g)) css+=m[1]+'\n';
+const tokenDef=new Set();
+for(const m of css.matchAll(/(--[A-Za-z0-9_-]+)\s*:/g)) tokenDef.add(m[1]);
+// Tokens koennen auch aus dem JS kommen - auf zwei Wegen, und BEIDE muessen
+// gezaehlt werden: style.setProperty(...) UND als Inline-Stil in einem
+// Template-Literal (style="--hc:${col}"). Der erste Entwurf kannte nur
+// setProperty und meldete daraufhin fuenf voellig gesunde Tokens
+// (--hc, --a, --d, --rot, --ai-amp) als fehlend - ein Waechter, der
+// Falschmeldungen produziert, wird abgeschaltet und faengt dann gar nichts
+// mehr.
+for(const m of jsAlle.matchAll(/setProperty\(\s*['"`](--[A-Za-z0-9_-]+)/g)) tokenDef.add(m[1]);
+for(const m of jsAlle.matchAll(/(--[A-Za-z0-9_-]+)\s*:/g)) tokenDef.add(m[1]);
+const tokenFehlt=new Set();
+for(const m of css.matchAll(/var\(\s*(--[A-Za-z0-9_-]+)\s*\)/g)){
+  if(!tokenDef.has(m[1])) tokenFehlt.add(m[1]);
+}
+
 const befunde=[];
+if(tokenFehlt.size) befunde.push('var(--x) auf ein nirgends definiertes Token (die ganze Deklaration faellt still weg, das Element bleibt ohne diese Eigenschaft): '+[...tokenFehlt].join(', '));
 if(snapFehlt.length) befunde.push('in snap(), aber nicht in loadState() geladen (Wert wird gespeichert und beim Start verworfen): '+snapFehlt.join(', '));
 if(feedFehlt.length) befunde.push('Feed fehlt in reapplyLiveFeeds() (Cloud-Sync/Undo setzt die App still auf alte Werte zurueck, siehe docs/state-sync.md): '+feedFehlt.join(', '));
 if(doppelt.length) befunde.push('doppelte ids: '+doppelt.map(([k,v])=>k+' x'+v).join(', '));
@@ -201,4 +239,4 @@ if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeil
 if(fehlend.size) befunde.push('Handler ohne Funktion: '+[...fehlend].join(', '));
 if(ohneExport.size) befunde.push('Handler nicht in der window-Bruecke (Klick wirft ReferenceError): '+[...ohneExport].join(', '));
 if(befunde.length){console.log('STRUKTURFEHLER:\n  '+befunde.join('\n  '));process.exit(1);}
-console.log('Struktur ok: keine doppelten ids, kein wiederholter Block, '+def.size+' Funktionen, alle Handler aufloesbar');
+console.log('Struktur ok: keine doppelten ids, kein wiederholter Block, '+def.size+' Funktionen, alle Handler aufloesbar, '+tokenDef.size+' CSS-Tokens alle definiert');

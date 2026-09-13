@@ -13304,3 +13304,191 @@ Hinweis statt eines leeren Kastens mit Achsen — leere Achsen sehen aus wie
 
 **Noch Platzhalter:** COT, Retail und Seasonality im Grafik-Band — sichtbar
 gekennzeichnet.
+
+## 2026-09-13 — Kerzen-Regeln, echte Dochte, keine Platzhalter mehr, der `--card`-Bug (VERSION-CHECK-509)
+
+Sieben Aufträge in einer Runde. Der interessanteste Befund war keiner davon,
+sondern ein Fehler, der seit dem Umbau der Asset-Seite unsichtbar mitlief.
+
+### Der `--card`-Bug — eine ganze Fehlerklasse, nicht ein Tippfehler
+
+Nutzer: *„und mach auch bei den karten eine leicht andere hintergrundfarbe als
+der hintergrund"* und vorher *„bei den karten das ist alles noch so weiß"*.
+
+**Gemessen, bevor eine Zeile geändert wurde** (`getComputedStyle`, EUR-Seite,
+1500 px):
+
+| Selektor | `background-color` |
+|---|---|
+| `.ab-tile` | `rgba(0, 0, 0, 0)` |
+| `.ab-ktile` | `rgba(0, 0, 0, 0)` |
+| `.abc-cal` | `rgba(0, 0, 0, 0)` |
+| `.aql-col` | `rgba(0, 0, 0, 0)` |
+| `.ab-cards .rub-card` | `rgb(242, 243, 249)` |
+
+**Ursache:** `--card` wurde an drei Stellen als `background:var(--card)`
+benutzt und war **nirgends definiert**. CSS wirft in diesem Fall die ganze
+Deklaration weg („invalid at computed-value time") und meldet nichts. Vier von
+fünf Kartenarten hatten also überhaupt keinen Hintergrund; auf dem weissen
+App-Hintergrund war die Seite genau eine weisse Fläche mit ein paar
+Haarlinien. Kein Wächter konnte das sehen: `check/theme.js` rechnet Kontraste
+**definierter** Tokens durch, nicht **benutzter**.
+
+**Wurzel-Fix:** `--card: var(--bg1)` — eine Fläche, die sich von *beiden*
+Hintergründen abhebt (heller als die getönte Seite `#E9EAF6`, eine Spur
+dunkler als die weisse) und die `.rub-card` schon trug, also eine Handschrift
+statt zweier. Dazu die vom Nutzer erbetenen Feinheiten: Haarlinie aussen,
+flacher Schlagschatten, helle Innenkante oben, Haarlinie unter jeder
+Kartenüberschrift. Die Kacheln **in** einer Karte mussten dabei eine Stufe
+hoch (`--bg3` → `--bg2`): `--bg3` ist im hellen Design zeichengleich mit
+`--bg1`, sie wären mit der neuen Kartenfläche verschmolzen.
+
+**Fehlerklasse gesucht** (Regel 8.4) — neues viertes Netz in
+`check/structure.js`: jedes `var(--x)` ohne Rückfallwert muss irgendwo
+definiert sein. Erster Lauf: vier weitere tote Tokens (`--ntc`, `--rc`,
+`--bc`, `--bca`) in den Regeln `.nt-*`, `.ri`, `.pbo` — Reste des alten
+Notizen-UI. Gegenprüfung über alle 14 Seiten und beide Modals: **null
+Treffer** für jede dieser Klassen, also toter Code, gelöscht.
+Zwei Fehlversuche am Wächter selbst, beide durch Falschmeldungen aufgefallen:
+zuerst kannte er nur `setProperty(...)` und meldete fünf gesunde, per
+Inline-Stil gesetzte Tokens (`--hc`, `--a`, `--d`, `--rot`, `--ai-amp`);
+dann las er die ganze Datei und stolperte über das Wort `var(--x)` im
+Erklärtext des Versions-Banners. Er sieht jetzt nur `<style>`-Blöcke und
+`style="..."`-Attribute. Gegenprobe: ein eingebautes `var(--gibtesnicht)`
+meldet er rot, das Original grün.
+
+### Kerzen: ein Tag, kein Wochenende, eigene Farben
+
+Nutzer: *„leg generell bei den charts als regel fest das es keine kerzen für
+samstag und sontag gibt außer bei crypto"* — ausdrücklich als Dauerregel.
+
+**Warum die Regel nötig ist, gemessen in `price_data.json`:** die Reihen
+tragen Wochenendtage, und die tragen keine eigene Bewegung. Im EUR stehen
+Fr 11.09., Sa 12.09. und So 13.09. alle drei auf `1.15978` — der Sammellauf
+notiert am Wochenende den letzten Schluss noch einmal.
+
+| Asset | Wochenendtage im Feed (3 Jahre) | Kerzen nach der Regel |
+|---|---|---|
+| EUR | 107 | 720 |
+| USD / GOLD / SILVER / OIL | 22 | 781 |
+| SP500 / NAS | 22 | 779 |
+| BTC | 315 (bleiben) | 1099 |
+
+Die Ausnahme hängt an der Asset-**Klasse** (`KERZEN_WOCHENENDE_OK=['crypto']`)
+und an der Klasse der **Reihe**, nicht der angezeigten Seite: auf der
+BTC-Seite zeigt die Dollar-Kachel den Dollar, und der handelt auch dann nicht
+am Sonntag, wenn BTC es tut. Deshalb gibt `abKontextReihe()` jetzt zusätzlich
+zurück, wem die Reihe gehört.
+
+Im Preischart-Fenster wird das Wochenende **vor** allem anderen entfernt, nicht
+erst im Kerzen-Zweig: sonst hätte dieselbe Seite je nach Modus verschiedene
+Tage (Kerzen ohne Samstag, Linie mit), und die Ereignis-Kärtchen darunter
+hängen am selben Index.
+
+**Farben** (Nutzer schickte zwei Farbflächen): steigend `--cndl-up` `#3B5BD9`,
+fallend `--cndl-dn` `#2B3040`. Bewusst **eigene** Tokens statt `--bias-*`:
+Bias ist eine Aussage über das Asset, die Kerzenfarbe über einen Tag. Auf den
+dunklen Vorlagen dreht `--cndl-dn` auf `#E4E9F3` — ein fast schwarzer Körper
+auf `#161616` wäre unsichtbar. Das Blau dort ist `#7BA4F8` und nicht
+`#5B86F5`, weil der neue `check/kerzen.js` gemessen hat, dass `#5B86F5` gegen
+nords helle Kartenfläche `#3B4252` nur **2,96:1** erreicht; `#7BA4F8` liefert
+4,08 auf nord und 5,3–6,4 auf den vier anderen.
+
+**Wochentag im Hover** (*„ich will wenn ich drüber hover bei den charts auch
+den wochentag sehen"*): `tagMitWochentag()` mit `timeZone:'UTC'` — ohne diesen
+Zusatz benennt der Browser westlich von Greenwich den Vortag, der Hover hätte
+Donnerstag über einer Freitagskerze gezeigt.
+
+### Dochte: gemessen statt vermutet
+
+Nutzer: *„das wenn das geht man auch die wicks sieht"* — das „wenn das geht"
+war die eigentliche Frage. Eigener Probelauf `.github/workflows/probe-ohlc-sources.yml`
+(schreibt nichts, läuft nur von Hand), zwei Wege:
+
+| Weg | Ergebnis |
+|---|---|
+| **A)** TradingView-Scanner mit `columns:["open","high","low","close"]` | **15 von 15 Tickern** mit einem High/Low, das über den Körper hinausragt (z. B. `TVC:GOLD` O 4319,17 / H 4402,51 / L 4291,57 / C 4348,66) |
+| **B)** Stooq-Tages-CSV als Historien-Quelle | **17 von 17 Symbolen** HTTP 200, aber eine HTML-Sperrseite statt CSV — GitHub-Läufer sind dort gesperrt |
+
+Also: der Sammellauf schreibt ab jetzt `[Datum, Close, Open, High, Low]`
+statt nur `[Datum, Close]` — angehängt, nicht umgebaut, damit jeder Leser
+weiter `e[1]` nimmt und die drei Jahre Bestand gültig bleiben. **Rückwirkend
+gibt es keine Dochte**, weil es dafür keine Quelle gibt; der Bestand bleibt
+Close-to-Close und wächst von heute an mit Dochten weiter. Der Zeichner
+braucht dafür keine weitere Zeile: `tagesKerzen()` nimmt echtes O/H/L, wenn es
+da ist, und fällt sonst auf Close-to-Close zurück.
+
+⚠ **Fallstrick beim Kehrwert:** USD/JPY, USD/CHF und USD/CAD stehen als
+`invert` in der Datei. Der Tageshöchstkurs von USD/JPY ist der *tiefste*
+Yen-Kurs des Tages — `priceSeriesFor()` muss Hoch und Tief beim Invertieren
+tauschen, sonst zeichnet die Kerze einen Docht, der nach innen zeigt. Wäre
+ohne das Nachrechnen mitgegangen.
+
+### Keine Platzhalter mehr
+
+Nutzer: *„bau dann auch überall jetzt alles fertig also keine platzhalter
+sondern richtige daten"*.
+
+- **COT** bekommt den gestapelten Balken-Chart aus dem COT-Tab in
+  Kachelgrösse (blau long, rot short, schwarze Long-%-Linie) — bewusst
+  **nicht** `cotHistChart()` wiederverwendet: der zeichnet 360 px hoch mit
+  zwei beschrifteten Achsen und hängt an festen Element-IDs, also genau ein
+  Chart pro Seite. Die Kachel steht neben zwei weiteren Charts mit Hover und
+  läuft deshalb auf dem app-weiten `chartHoverWrap`. Darunter die vom Nutzer
+  gewünschte Fusszeile: `Long 72,4 % 28,4K · Short 27,6 % 10,8K · w/w +0,9 pp`.
+- **Retail** dreht die Broker-Bücher auf die Seite des Assets. Myfxbook führt
+  *Paare*: „80 % long EURUSD" heisst für den Euro long und für den Dollar
+  short. Ohne dieses Drehen stünde auf der USD-Seite die Positionierung des
+  Euro. Gemessen USD: 7 Paare, Schnitt 66 % long, 4/7 einseitig.
+- **Seasonality** zeigt Monatsschnitt **und** Trefferquote und sagt, ob beide
+  in dieselbe Richtung zeigen („aligned"/„mixed"). Der Schnitt allein hätte
+  bei OIL im September „Rückenwind" gesagt (+0,32 %), wo nur 38 % der Jahre
+  überhaupt gestiegen sind. `seasonality_data.json` wird dafür jetzt beim
+  Start geladen, nicht erst beim Öffnen des Seasonality-Tabs — sonst hätte
+  die Kachel auf einem frisch geladenen Gerät „keine Daten" gemeldet, was
+  schlicht falsch gewesen wäre.
+- Das `PLACEHOLDER`-Abzeichen, sein CSS und die drei Pseudozufalls-Erzeuger in
+  `js/assetlayout.js` sind **gelöscht**, nicht auskommentiert. Erfundene
+  Zahlen, die noch aufrufbar herumliegen, werden irgendwann wieder aufgerufen.
+- Wo eine Quelle fehlt, sagt die Kachel das in Worten: Yields haben keinen
+  CFTC-Kontrakt, Öl und S&P kein Retail-Buch, NZD/BTC/DAX keine Saisonalität.
+
+### Nachgemessen am Bildschirmfoto, drei Korrekturen
+
+Der erste Wurf der drei Kacheln stand, sah aber an drei Stellen falsch aus -
+alle drei erst im Bild aufgefallen, nicht im Code:
+
+1. **Erfundene Ticker.** Die Retail-Kachel drehte den PaarNAMEN mit, nicht nur
+   die Zahl: aus `EURUSD` wurde `USD/EUR`. Das las sich sauber, ist aber ein
+   Paar, das es nicht gibt. Jetzt steht der echte Ticker da, die gedrehten
+   tragen ein `⇄`, und eine Kopfzeile (`PAIR · LONG · SHORT`) sagt, worauf
+   sich die Prozente beziehen - ohne sie stünde neben `EUR/USD` die Zahl 63,
+   während der Broker 37 führt.
+2. **Leere Kachel bei einem einzigen Buch.** Gold hat nur `XAUUSD`, also zwei
+   Zeilen in einer Kachel, die so hoch ist wie die COT-Kachel daneben -
+   gemessen rund 300 px Luft. Dort steht jetzt der **Verlauf der Long-Quote**
+   aus `sentiment_data.json:retailHistory` (55 Messungen für XAUUSD), erst ab
+   vier Punkten gezeichnet: darunter ist es kein Verlauf, sondern ein Zickzack
+   aus zwei Messungen, das wie einer aussieht. Bewusst nur bei EINEM Buch -
+   bei einer Währung wären es sieben Linien in einer 240-px-Kachel.
+3. **Saisonalitäts-Balken 96 px gedeckelt.** Unter dem Chart blieb dieselbe
+   leere Fläche stehen, und die Balken waren Striche. Der Deckel ist weg; das
+   `height:52px` der Basisregel musste dafür im Kachel-Kontext auf `auto`, sonst
+   überschrieb es das `align-items:stretch` des Hover-Rahmens und die Balken
+   blieben trotzdem klein.
+
+### Navigationsleiste bleibt am PC offen
+
+Nutzer: *„mach noch das man links die leiste wo man das menü hat … das die am
+pc dauerhaft da ist"*. Die Ausnahme steht an **einer** Stelle — in
+`collapse()`, durch das alle Auslöser laufen —, nicht an jedem Auslöser
+einzeln. Auf Touch bleibt das Einklappen: dort ist Breite echter Mangel.
+Dazu ein `resize`-Zuhörer, sonst landet man beim Vergrössern des Fensters mit
+einer eingeklappten Leiste, die von selbst nie wieder aufgeht.
+
+### Wächter
+
+Neu: `check/kerzen.js` — prüft alle vier Kerzen-Regeln über 8 Preisreihen und
+5 dunkle Vorlagen. Gegenprobe in beide Richtungen: Wochenend-Filter ausgehängt
+→ rot (`SP500 zeichnet 22 Kerzen für Samstag/Sonntag`, plus `Tooltip steht
+über einem Wochenendtag`); Kerzenfarben auf `--bias-*` zurückgedreht → rot.

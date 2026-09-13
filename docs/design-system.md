@@ -474,3 +474,58 @@ Gegenprobe beim Testen: an mindestens sieben Breiten (1920/1600/1440/1280/1180/8
 Kartenbreite, Karten je Zeile, Überlappung Karte-gegen-Karte, Überlauf aus der
 Karte **und** `scrollWidth > clientWidth` an jedem Textelement messen — ein
 Screenshot in Standardbreite zeigt keinen dieser Fälle.
+
+---
+
+## Kerzen-Charts: die vier Dauerregeln
+
+Nutzer-Vorgabe 2026-09-13, ausdrücklich als Dauerregel gesetzt: *„leg generell
+bei den charts als regel fest das es keine kerzen für samstag und sontag gibt
+außer bei crypto"*.
+
+1. **Eine Kerze = ein Tag.** Kein Zusammenfassen, kein Ausdünnen bei langen
+   Zeiträumen.
+2. **Kein Samstag, kein Sonntag — außer bei Krypto.** ⚠ Die Feeds *tragen*
+   Wochenendtage, und zwar ohne eigene Bewegung: gemessen 2026-09-13 stehen im
+   EUR Fr 11.09., Sa 12.09. und So 13.09. alle drei auf `1.15978`, weil der
+   Sammellauf am Wochenende den letzten Schluss noch einmal notiert. Über drei
+   Jahre sind das 107 Wochenendtage im EUR und je 22 in USD, Gold, Öl, S&P und
+   Nasdaq. BTC hat in denselben drei Jahren an allen sieben Wochentagen je 157
+   Werte — dort ist das Wochenende ein echter Handelstag und bleibt.
+   Die Ausnahme hängt an der **Asset-Klasse** (`KERZEN_WOCHENENDE_OK`), nicht
+   an einer ID-Liste, und an der Klasse der **Reihe**, nicht der angezeigten
+   Seite: auf der BTC-Seite zeigt die Dollar-Kachel den Dollar, und der
+   handelt auch dann nicht am Sonntag, wenn BTC es tut.
+3. **Eigene Farb-Tokens `--cndl-up` / `--cndl-dn`**, nie `--bias-bull` /
+   `--bias-bear`. Bias ist eine Aussage über die Richtung des *Assets*, die
+   Kerzenfarbe nur über die Richtung eines *Tages*. Auf den dunklen Vorlagen
+   dreht `--cndl-dn` auf den hellen Gegenpol — ein fast schwarzer Körper auf
+   `#161616` wäre unsichtbar.
+4. **Dochte nur aus echtem High/Low.** Ein Eintrag ist `[Datum, Close]` oder
+   `[Datum, Close, Open, High, Low]`; nur im zweiten Fall gibt es einen Docht.
+   Alles andere wäre eine erfundene Zahl (Regel 4). Der Rückfall ist
+   Close-to-Close: Eröffnung = Schluss des Vortags.
+   ⚠ **Beim Kehrwert tauschen Hoch und Tief die Rolle.** USD/JPY, USD/CHF und
+   USD/CAD stehen als `invert` in `price_data.json` — der Tageshöchstkurs von
+   USD/JPY ist der *tiefste* Yen-Kurs des Tages. Ohne das Tauschen zeigt der
+   Docht nach innen.
+
+Alle vier prüft `check/kerzen.js` (mit Gegenprobe in beide Richtungen).
+
+## `var(--x)` auf ein Token, das es nicht gibt
+
+⚠ CSS meldet das **nicht**. Die ganze Deklaration fällt lautlos weg („invalid
+at computed-value time"), das Element bleibt ohne diese Eigenschaft.
+
+Gemessen 2026-09-13: `--card` wurde an drei Stellen als
+`background:var(--card)` benutzt und war nirgends definiert — `.ab-tile`,
+`.ab-ktile`, `.abc-cal` und `.aql-col` standen auf `rgba(0,0,0,0)`, also
+vollständig durchsichtig. Auf dem weissen App-Hintergrund war die Asset-Seite
+dadurch genau das, was der Nutzer beschrieben hat: *„bei den karten das ist
+alles noch so weiß"*.
+
+Der Kontrast-Wächter konnte das nie sehen: der prüft **definierte** Tokens,
+nicht **benutzte**. Seit 2026-09-13 nimmt `check/structure.js` die andere
+Richtung — jedes `var(--x)` ohne Rückfallwert muss irgendwo definiert sein.
+Beim ersten Lauf fand es vier weitere tote Tokens in CSS-Regeln, die auf allen
+14 Seiten null Treffer haben.

@@ -2476,7 +2476,7 @@ jobs:
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
-            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close"]}' \
+            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["close","open","high","low"]}' \
             "https://scanner.tradingview.com/global/scan" -o price_tv.json || true
           echo "=== TradingView scanner response (first 500 chars) ==="
           head -c 500 price_tv.json 2>/dev/null || echo "(missing)"
@@ -2534,7 +2534,22 @@ jobs:
               const val=Number(v);
               const cur=out[m.id]||{};
               let series=Array.isArray(cur.series)?cur.series.filter(e=>e&&e[0]!==today):[];
-              series.push([today,val]);
+              // ⚠ ECHTE DOCHTE (Nutzer 2026-09-13: "das wenn das geht man
+              // auch die wicks sieht"). Der Scanner liefert neben close auch
+              // open, high und low - GEMESSEN am 2026-09-13 im Probelauf
+              // probe-ohlc-sources.yml: 15 von 15 Tickern mit einem High/Low,
+              // das ueber den Kerzenkoerper hinausragt.
+              // Format: [Datum, Close] wie bisher ODER [Datum, Close, Open,
+              // High, Low], wenn alle vier Zahlen da sind. Bewusst ANGEHAENGT
+              // statt umgebaut: jeder Leser nimmt weiter e[1] und merkt nichts,
+              // und die drei Jahre Historie in der Datei bleiben gueltig. Sie
+              // bekommen KEINE Dochte, weil es dafuer keine Quelle gibt -
+              // Stooq antwortet GitHub-Laeufern mit einer HTML-Sperrseite
+              // (im selben Probelauf fuer alle 17 Symbole). Von heute an
+              // waechst die Reihe mit Dochten weiter.
+              const o=Number(r.d&&r.d[1]),h=Number(r.d&&r.d[2]),l=Number(r.d&&r.d[3]);
+              const ohlc=[o,h,l].every(x=>isFinite(x)&&x>0)&&h>=l;
+              series.push(ohlc?[today,val,o,h,l]:[today,val]);
               series.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
               // 2026-08-07 von 100 auf 1100 Punkte (~3 Jahre Handelstage)
               // angehoben: der Yahoo-Backfill-Schritt weiter unten laedt

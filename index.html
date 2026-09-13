@@ -212,7 +212,29 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      alle unter WCAG AA (4,5). Aufgefallen war es dem Hintergrund-Waechter,
      der es als Vorbestand gemeldet hat, statt es zu verstecken. */
   --bias-bull:#0B5FCC;--bias-bear:#C50F1A;--bias-neu:#55617A;
+  /* ══ KERZENFARBEN ══════════════════════════════════════════════════
+     Nutzer 2026-09-13, mit zwei Farbflaechen geschickt: steigende Kerze im
+     Blau, fallende im Schwarz. BEWUSST EIGENE TOKENS und nicht
+     --bias-bull/--bias-bear: Bias ist eine Aussage ueber die Richtung des
+     ASSETS, die Kerzenfarbe nur ueber die Richtung eines TAGES. Wer beides
+     in denselben Token legt, kann das eine nie aendern, ohne das andere
+     mitzuverstellen.
+     ⚠ Auf den dunklen Vorlagen wird --cndl-dn weiter unten gedreht: ein
+     fast schwarzer Koerper auf #161616 waere unsichtbar - dort traegt die
+     fallende Kerze den hellen Gegenpol zum Blau. */
+  --cndl-up:#3B5BD9;--cndl-dn:#2B3040;
   --bg0:#E9EAF6;--bg1:#F2F3F9;--bg2:#FFFFFF;--bg3:#F2F3F9;--bg4:#EAECF4;--bg5:#DDE1EC;--bg6:#CBD1E0;
+  /* ⚠ GEMESSEN 2026-09-13: --card wurde an drei Stellen benutzt
+     (.ab-tile/.ab-ktile/.ab-ntile, .abc-cal/.acm-cal, .aql-col), war aber
+     NIRGENDS definiert. var(--card) ohne Rueckfallwert ist dann "invalid at
+     computed-value time" - der Browser wirft die ganze Deklaration weg, und
+     die Karten standen auf rgba(0,0,0,0), also voellig durchsichtig. Auf dem
+     weissen App-Hintergrund war damit alles eine einzige weisse Flaeche
+     ("bei den karten das ist alles noch so weiss", Nutzer 2026-09-13).
+     --bg1 statt --bg2, weil es sich von BEIDEN Hintergruenden abhebt: heller
+     als die getoente Seite (--bg0), eine Spur dunkler als die weisse - und
+     dieselbe Flaeche, die .rub-card schon traegt. */
+  --card:var(--bg1);
   --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
   /* ⚠ --t2 und --accent sind am 2026-09-04 MINIMAL nachgedunkelt worden.
      Der neue Waechter check/theme.js rechnet jede Textstufe gegen jede
@@ -467,7 +489,8 @@ svg.ic{vertical-align:-2px;flex:none}
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .abc-u-t{flex:0 0 auto;font:600 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3)}
 .abc-cal,.abc-day,.abc-next,.acm-cal,.acm-day,.acm-next{background:var(--card);border:1px solid var(--bd);
-  border-radius:var(--rs);padding:9px 10px}
+  border-radius:var(--rs);padding:9px 10px;
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
 .abc-cal{cursor:pointer;display:flex;flex-direction:column}
 @media(hover:hover){.abc-cal:hover{border-color:var(--accent)}}
 .abc-cal .abc-grid{flex:1 1 auto;align-content:space-evenly}
@@ -595,16 +618,41 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-col>.ab-tile{flex:1 1 auto;display:flex;flex-direction:column}
 .ab-col>.ab-tile .ab-tile-bd{flex:1 1 auto;display:flex;flex-direction:column}
 .ab-col>.ab-tile .ab-bars{flex:1 1 auto;justify-content:space-evenly}
-.ab-col>.ab-tile .ab-seas{flex:1 1 auto;min-height:52px;max-height:96px}
+/* ⚠ Traegt die Kachel einen Verlauf, bekommt DER den freien Platz, nicht die
+   Balken. Ohne das verteilte space-evenly bei Gold zwei Zeilen (Kopf + ein
+   Buch) ueber die volle Kachelhoehe - gemessen rund 120px Luft zwischen
+   Ueberschrift, Kopfzeile und Balken. Mit sieben Paaren (jede Waehrung)
+   greift die Regel nicht und space-evenly bleibt richtig. */
+.ab-col>.ab-tile .ab-tile-bd:has(.ab-rtv) .ab-bars{flex:0 0 auto;justify-content:flex-start}
+.ab-rtv{flex:1 1 auto;display:flex;flex-direction:column;min-height:54px}
+.ab-rtv .chv{flex:1 1 auto;min-height:54px}
+.ab-col>.ab-tile .ab-seas{flex:1 1 auto;min-height:64px;height:auto;width:100%}
+/* ⚠ KEIN max-height mehr. Mit dem Deckel von 96px blieb unter dem
+   Saisonalitaets-Chart rund 300px leere Kachel stehen (gemessen an der
+   USD-Seite), waehrend COT und Retail daneben ihre Kachel fuellen - die
+   Spalte sah aus, als fehle dort etwas. */
 @media(max-width:1080px){.ab-lower{grid-template-columns:1fr}}
 @media(max-width:900px){.ab-cards{grid-template-columns:1fr;grid-template-rows:none}}
-.ab-tile,.ab-ktile,.ab-ntile{background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 11px;min-width:0}
-.ab-tile-hd{display:flex;align-items:center;gap:7px;margin-bottom:8px;min-width:0;flex-wrap:wrap}
+/* ── FEINHEITEN AUF DEN KARTEN ────────────────────────────────────────
+   Nutzer 2026-09-13: "bei den karten das ist alles noch so weiss mach da
+   mal ein paar kleine duenne unscheinbare umrandungen und details hin die
+   das qualitativer machen".
+   Drei Lagen, alle bewusst leise - eine Karte soll sich abheben, nicht
+   melden:
+     1. eigene Flaeche (--card, siehe den Kommentar oben bei :root)
+     2. Haarlinie aussen (--bd) + ganz flacher Schlagschatten
+     3. eine helle Kante oben INNEN - das ist der Griff, der eine Flaeche
+        wie ein Blatt aussehen laesst statt wie ein Rechteck. Derselbe
+        Wert, den .aperf/.aqn schon tragen, damit die Seite EINE Handschrift
+        hat und nicht zwei. */
+.ab-tile,.ab-ktile,.ab-ntile{background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 11px;min-width:0;
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+/* Die Kopfzeile bekommt eine Haarlinie: sie trennt Titel und Inhalt, ohne
+   einen Kasten um den Titel zu ziehen. */
+.ab-tile-hd{display:flex;align-items:center;gap:7px;margin-bottom:8px;min-width:0;flex-wrap:wrap;
+  padding-bottom:7px;border-bottom:1px solid var(--bd)}
 .ab-tile-t{font:800 var(--fs-sm)/1.1 var(--ff-text);color:var(--t0);letter-spacing:.01em}
 .ab-tile-s{font:600 var(--fs-2xs)/1.2 var(--ff-num);color:var(--t3);margin-left:auto;text-align:right}
-/* Regel 4: eine erfundene Zahl darf nie wie eine gemessene aussehen. */
-.ab-ph{font:800 var(--fs-2xs)/1 var(--ff-num);letter-spacing:.06em;color:var(--t3);
-  border:1px dashed var(--bd2);border-radius:99px;padding:2px 6px;margin-left:auto;white-space:nowrap}
 .ab-bias{font:800 var(--fs-2xs)/1 var(--ff-text);margin-left:6px}
 .ab-big{font:800 var(--fs-lg)/1.1 var(--ff-num);margin-bottom:8px}
 .ab-note{font-size:var(--fs-2xs);color:var(--t3);margin-top:8px;line-height:1.4}
@@ -612,16 +660,37 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-bar-row{display:flex;align-items:center;gap:6px;min-width:0}
 .ab-bar-n{flex:0 0 78px;font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ab-bar-l,.ab-bar-r{flex:0 0 30px;font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--t3);text-align:right}
-.ab-bar{flex:1 1 auto;display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--bg3);min-width:40px}
+.ab-bar{flex:1 1 auto;display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--bg4);min-width:40px;box-shadow:inset 0 0 0 1px var(--bd)}
 .ab-bar-in{display:block;height:100%}
 /* Zwei gleich hohe Haelften mit der Nulllinie dazwischen - dadurch skalieren
    die Balken mit der Kachel statt in festen Pixeln zu kleben. */
 .ab-seas{display:flex;align-items:stretch;gap:3px;height:52px}
+/* ── Fusszeile einer Grafik-Kachel ──────────────────────────────────────
+   Nutzer 2026-09-13: "ganz unten in der karte steht einfach long: ...
+   short: ... ww change: ...". Drei Werte nebeneinander, umbruchfaehig -
+   in der schmalsten Spalte stehen sie sonst uebereinander ausserhalb der
+   Karte. Haarlinie darueber, damit sie als Abschluss lesbar sind und nicht
+   als weitere Zeile des Inhalts. */
+/* Kopfzeile ueber den Balken: ohne sie steht neben "EUR/USD" die Zahl 63,
+   waehrend der Broker 37 fuehrt - richtig gerechnet, aber eine Falle. */
+.ab-bar-hd .ab-bar-n,.ab-bar-hd .ab-bar-l,.ab-bar-hd .ab-bar-r{color:var(--t3);font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em}
+.ab-bar-hd .ab-bar{background:none;box-shadow:none;height:1px}
+.ab-bar-inv{margin-left:3px;color:var(--t3);font-weight:400}
+/* Verlauf der Retail-Quote - nur da, wo der Feed schon einen hat. */
+.ab-rtv{margin-top:8px}
+.ab-rtv-t{display:flex;justify-content:space-between;gap:8px;font:700 var(--fs-2xs)/1.3 var(--ff-text);
+  color:var(--t2);margin-bottom:3px}
+.ab-rtv-t span{color:var(--t3);font-weight:600}
+.ab-foot{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;padding-top:7px;
+  border-top:1px solid var(--bd);font:700 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t1)}
+.ab-foot-l{color:var(--t3);font-weight:600}
+.ab-foot-n{color:var(--t3);font-weight:600}
 .ab-sb{flex:1 1 0;display:flex;flex-direction:column;align-items:center;min-width:0}
 .ab-sb.on .ab-sb-l{color:var(--accent);font-weight:800}
 .ab-sb-up{flex:1 1 0;width:100%;display:flex;align-items:flex-end}
 .ab-sb-dn{flex:1 1 0;width:100%;display:flex;align-items:flex-start;
-  border-top:1px solid var(--bd)}
+  border-top:1px solid var(--bd2)}
 .ab-sb-up>i,.ab-sb-dn>i{display:block;width:100%;border-radius:2px;min-height:2px}
 .ab-sb-l{font:600 var(--fs-2xs)/1 var(--ff-num);color:var(--t3);margin-top:3px}
 /* ⚠ Die Kachelreihe fuellt die Karte, und in jeder Kachel waechst der
@@ -630,7 +699,7 @@ svg.ic{vertical-align:-2px;flex:none}
    Richtung: die Charts werden dadurch mittelgross statt briefmarkenklein. */
 .ab-kgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;
   flex:1 1 auto;align-content:stretch}
-.ab-k{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--bg3);border:1px solid var(--bd);
+.ab-k{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--bg2);border:1px solid var(--bd);
   border-radius:var(--rss);padding:8px 9px;cursor:pointer;min-width:0}
 @media(hover:hover){.ab-k:hover{border-color:var(--accent)}}
 .ab-k-t{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font:700 var(--fs-2xs)/1.2 var(--ff-text);color:var(--t2)}
@@ -656,7 +725,6 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-rate-l{font:700 var(--fs-2xs)/1 var(--ff-text);color:var(--t3)}
 .ab-rate-v{font:800 var(--fs-sm)/1 var(--ff-num);color:var(--t0)}
 .ab-rate-s{font:600 var(--fs-2xs)/1 var(--ff-num);color:var(--t3)}
-.ab-rate .ab-ph{margin-left:2px}
 /* Zeichenflaeche, Datumsachse und Preisskala. Die Achsen stehen als HTML
    NEBEN dem SVG: das SVG laeuft auf preserveAspectRatio=none, Text darin
    wuerde mitgezerrt - und der Hover-Rahmen muss exakt die Zeichenflaeche
@@ -677,7 +745,7 @@ svg.ic{vertical-align:-2px;flex:none}
   font-size:var(--fs-xs);padding:3px 7px;cursor:pointer}
 @media(hover:hover){.ab-nt-qc:hover{border-color:var(--accent);color:var(--accent)}}
 .ab-nt-list{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-height:0;overflow-y:auto}
-.ab-nt{display:flex;align-items:stretch;gap:4px;background:var(--bg3);border-radius:var(--rss);padding:4px 5px;min-width:0}
+.ab-nt{display:flex;align-items:stretch;gap:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rss);padding:4px 5px;min-width:0}
 .ab-nt.hl{background:color-mix(in srgb,var(--accent) 10%,var(--bg3))}
 .ab-nt-hl{background:none;border:none;color:var(--t3);font-size:var(--fs-xs);cursor:pointer;padding:0 3px}
 .ab-nt-hl.on{color:var(--accent)}
@@ -864,6 +932,18 @@ svg.ic{vertical-align:-2px;flex:none}
 :root[data-fx-theme="carbon"]{
   /* Bias-Farben aufgehellt, Farbton beibehalten - gemessen >=4,6:1 gegen --bg2 */
   --bias-bull:#4A92EF;--bias-bear:#EC636B;--bias-neu:#798FBE;
+  /* Kerzenfarben gedreht: die fallende Kerze ist im hellen Design fast
+     schwarz (#2B3040) und waere hier unsichtbar - die ROLLE bleibt (Blau
+     steigend, neutraler Gegenpol fallend), nur die Helligkeit kippt.
+     ⚠ Das Blau ist #7BA4F8 und nicht #5B86F5, weil check/kerzen.js genau
+     das gefunden hat: gegen nords helle Kartenflaeche (#3B4252) kam
+     #5B86F5 nur auf 2,96:1.
+     ⚠ UND ES STEHT IN JEDEM THEME-BLOCK EINZELN, nicht als eine
+     Sammelregel dahinter. Der erste Versuch war genau so eine Sammelregel
+     - dadurch hatte "solar" ZWEI :root-Bloecke, und check/theme.js las den
+     zweiten: ein halbes Theme, 22 angeblich fehlende Tokens. Steht als
+     Warnung schon in check/README.md. */
+  --cndl-up:#7BA4F8;--cndl-dn:#E4E9F3;
   --chrome-bg:#000000;--chrome-bd:#2A2A2A;--chrome-line:#393939;--chrome-quick:#1F1F1F;
   --bg0:#161616;--bg1:#1C1C1C;--bg2:#262626;--bg3:#212121;--bg4:#2C2C2C;--bg5:#333333;--bg6:#474747;
   --bd:rgba(255,255,255,.16);--bd2:rgba(255,255,255,.30);
@@ -884,6 +964,18 @@ svg.ic{vertical-align:-2px;flex:none}
 :root[data-fx-theme="midnight"]{
   /* Bias-Farben aufgehellt, Farbton beibehalten - gemessen >=4,6:1 gegen --bg2 */
   --bias-bull:#3E8BEE;--bias-bear:#EB5D66;--bias-neu:#758CBC;
+  /* Kerzenfarben gedreht: die fallende Kerze ist im hellen Design fast
+     schwarz (#2B3040) und waere hier unsichtbar - die ROLLE bleibt (Blau
+     steigend, neutraler Gegenpol fallend), nur die Helligkeit kippt.
+     ⚠ Das Blau ist #7BA4F8 und nicht #5B86F5, weil check/kerzen.js genau
+     das gefunden hat: gegen nords helle Kartenflaeche (#3B4252) kam
+     #5B86F5 nur auf 2,96:1.
+     ⚠ UND ES STEHT IN JEDEM THEME-BLOCK EINZELN, nicht als eine
+     Sammelregel dahinter. Der erste Versuch war genau so eine Sammelregel
+     - dadurch hatte "solar" ZWEI :root-Bloecke, und check/theme.js las den
+     zweiten: ein halbes Theme, 22 angeblich fehlende Tokens. Steht als
+     Warnung schon in check/README.md. */
+  --cndl-up:#7BA4F8;--cndl-dn:#E4E9F3;
   --chrome-bg:#060B16;--chrome-bd:#1B2740;--chrome-line:#2A3A5C;--chrome-quick:#122036;
   --bg0:#0A101C;--bg1:#111A2B;--bg2:#16223A;--bg3:#131D31;--bg4:#1B2740;--bg5:#22304C;--bg6:#2C3D5E;
   --bd:rgba(150,180,225,.18);--bd2:rgba(150,180,225,.32);
@@ -904,6 +996,18 @@ svg.ic{vertical-align:-2px;flex:none}
 :root[data-fx-theme="graphite"]{
   /* Bias-Farben aufgehellt, Farbton beibehalten - gemessen >=4,6:1 gegen --bg2 */
   --bias-bull:#448EEF;--bias-bear:#EC636B;--bias-neu:#798FBE;
+  /* Kerzenfarben gedreht: die fallende Kerze ist im hellen Design fast
+     schwarz (#2B3040) und waere hier unsichtbar - die ROLLE bleibt (Blau
+     steigend, neutraler Gegenpol fallend), nur die Helligkeit kippt.
+     ⚠ Das Blau ist #7BA4F8 und nicht #5B86F5, weil check/kerzen.js genau
+     das gefunden hat: gegen nords helle Kartenflaeche (#3B4252) kam
+     #5B86F5 nur auf 2,96:1.
+     ⚠ UND ES STEHT IN JEDEM THEME-BLOCK EINZELN, nicht als eine
+     Sammelregel dahinter. Der erste Versuch war genau so eine Sammelregel
+     - dadurch hatte "solar" ZWEI :root-Bloecke, und check/theme.js las den
+     zweiten: ein halbes Theme, 22 angeblich fehlende Tokens. Steht als
+     Warnung schon in check/README.md. */
+  --cndl-up:#7BA4F8;--cndl-dn:#E4E9F3;
   --chrome-bg:#0F1113;--chrome-bd:#2A2D33;--chrome-line:#3A3E46;--chrome-quick:#1A1D21;
   --bg0:#17181B;--bg1:#1D1F23;--bg2:#232529;--bg3:#1F2126;--bg4:#282B31;--bg5:#31353C;--bg6:#41454E;
   --bd:rgba(255,255,255,.15);--bd2:rgba(255,255,255,.28);
@@ -924,6 +1028,18 @@ svg.ic{vertical-align:-2px;flex:none}
 :root[data-fx-theme="nord"]{
   /* Bias-Farben aufgehellt, Farbton beibehalten - gemessen >=4,6:1 gegen --bg2 */
   --bias-bull:#85B4F1;--bias-bear:#F09CA1;--bias-neu:#A2B2D2;
+  /* Kerzenfarben gedreht: die fallende Kerze ist im hellen Design fast
+     schwarz (#2B3040) und waere hier unsichtbar - die ROLLE bleibt (Blau
+     steigend, neutraler Gegenpol fallend), nur die Helligkeit kippt.
+     ⚠ Das Blau ist #7BA4F8 und nicht #5B86F5, weil check/kerzen.js genau
+     das gefunden hat: gegen nords helle Kartenflaeche (#3B4252) kam
+     #5B86F5 nur auf 2,96:1.
+     ⚠ UND ES STEHT IN JEDEM THEME-BLOCK EINZELN, nicht als eine
+     Sammelregel dahinter. Der erste Versuch war genau so eine Sammelregel
+     - dadurch hatte "solar" ZWEI :root-Bloecke, und check/theme.js las den
+     zweiten: ein halbes Theme, 22 angeblich fehlende Tokens. Steht als
+     Warnung schon in check/README.md. */
+  --cndl-up:#7BA4F8;--cndl-dn:#E4E9F3;
   --chrome-bg:#242933;--chrome-bd:#3B4252;--chrome-line:#4C566A;--chrome-quick:#2B323E;
   --bg0:#2E3440;--bg1:#333B48;--bg2:#3B4252;--bg3:#374050;--bg4:#3E4756;--bg5:#454F60;--bg6:#4F5A6E;
   --bd:rgba(216,222,233,.20);--bd2:rgba(216,222,233,.34);
@@ -944,6 +1060,18 @@ svg.ic{vertical-align:-2px;flex:none}
 :root[data-fx-theme="solar"]{
   /* Bias-Farben aufgehellt, Farbton beibehalten - gemessen >=4,6:1 gegen --bg2 */
   --bias-bull:#5C9CEF;--bias-bear:#ED7A81;--bias-neu:#899DC6;
+  /* Kerzenfarben gedreht: die fallende Kerze ist im hellen Design fast
+     schwarz (#2B3040) und waere hier unsichtbar - die ROLLE bleibt (Blau
+     steigend, neutraler Gegenpol fallend), nur die Helligkeit kippt.
+     ⚠ Das Blau ist #7BA4F8 und nicht #5B86F5, weil check/kerzen.js genau
+     das gefunden hat: gegen nords helle Kartenflaeche (#3B4252) kam
+     #5B86F5 nur auf 2,96:1.
+     ⚠ UND ES STEHT IN JEDEM THEME-BLOCK EINZELN, nicht als eine
+     Sammelregel dahinter. Der erste Versuch war genau so eine Sammelregel
+     - dadurch hatte "solar" ZWEI :root-Bloecke, und check/theme.js las den
+     zweiten: ein halbes Theme, 22 angeblich fehlende Tokens. Steht als
+     Warnung schon in check/README.md. */
+  --cndl-up:#7BA4F8;--cndl-dn:#E4E9F3;
   --chrome-bg:#001F27;--chrome-bd:#073642;--chrome-line:#0F4A57;--chrome-quick:#01303B;
   --bg0:#002B36;--bg1:#03313D;--bg2:#073642;--bg3:#053742;--bg4:#0A3E4A;--bg5:#0F4753;--bg6:#175665;
   --bd:rgba(147,161,161,.24);--bd2:rgba(147,161,161,.40);
@@ -1370,27 +1498,12 @@ body.no-ui-anim #navSidebar{transition:none}
 .quick-note{flex:1;min-width:150px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:var(--fs-base);padding:6px 9px;outline:none;font-family:inherit;resize:none;overflow:hidden;line-height:1.4;white-space:pre-wrap;word-break:break-word;min-height:33px}
 .quick-note:focus{border-color:rgba(var(--blue-rgb),.5)}
 .quick-note::placeholder{color:var(--t3)}
-/* ── Notes: Bullish/Bearish-Tabelle ── */
-.nt-wrap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
-@media(max-width:600px){.nt-wrap{grid-template-columns:1fr}}
-.nt-col{background:var(--bg2);border:1px solid var(--bd);border-top:3px solid var(--ntc);border-radius:10px;padding:10px 11px}
-.nt-col-hd{font-size:16px;font-weight:800;color:var(--ntc);letter-spacing:.4px;margin-bottom:9px}
-.nt-item{background:var(--bg4);border:1px solid var(--bd);border-left:3px solid var(--ntc);border-radius:7px;padding:6px 9px;margin-bottom:7px}
-.nt-item-top{display:flex;align-items:center;gap:6px}
-.nt-item-hd{flex:1;background:transparent;border:none;outline:none;color:var(--ntc);font-size:14px;font-weight:700;font-family:inherit;padding:1px 0;min-width:0}
-.nt-item-hd::placeholder{color:var(--ntc);opacity:.45}
-.nt-item-tx{width:100%;background:transparent;border:none;outline:none;color:var(--ntc);opacity:.9;font-size:var(--fs-sm);line-height:1.45;font-family:inherit;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;margin-top:2px;min-height:18px}
-.nt-item-tx::placeholder{color:var(--t3);opacity:1}
-.nt-del{background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;flex:none}
-@media(hover:hover){.nt-del:hover{color:var(--red)}}
-.nt-add{width:100%;margin-top:2px;background:transparent;border:1px dashed var(--ntc);color:var(--ntc);border-radius:7px;padding:6px;cursor:pointer;font-size:var(--fs-sm);font-weight:600;opacity:.8}
-@media(hover:hover){.nt-add:hover{opacity:1}}
-.nt-sub-lbl{font-size:var(--fs-2xs);font-weight:800;letter-spacing:1.2px;color:var(--t3);margin:5px 0 6px;font-family:var(--ff-num)}
-.nt-divider{border-top:1px solid var(--bd);margin:12px 0 6px}
-.nt-item-ctrl{display:flex;align-items:center;gap:0;flex:none}
-.nt-mv{background:transparent;border:none;color:var(--t3);cursor:pointer;font-size:var(--fs-2xs);padding:1px 3px;line-height:1}
-.nt-mv:disabled{opacity:.3;cursor:default}
-@media(hover:hover){.nt-mv:not(:disabled):hover{color:var(--ntc)}}
+/* ⚠ HIER STAND DIE ALTE NOTES-TABELLE (.nt-wrap/.nt-item/.nt-add/...).
+   Sie ist beim Umbau der Notizen auf .ab-nt-* ersatzlos abgeloest worden,
+   das CSS blieb liegen - samt --ntc, einem Token, das es nirgends gibt.
+   GEMESSEN 2026-09-13 auf allen 14 Seiten und in beiden Modals: null
+   Treffer fuer .nt-item/.nt-add/.nt-mv/.nt-col. Gefunden hat es das neue
+   vierte Netz in check/structure.js (benutztes, nirgends definiertes Token). */
 /* Zahnrad neben der Quick-Note (gleiche Höhe) – nur bei Nicht-FX-Assets */
 .cfg-gear{flex:none;width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--t0);font-size:16px;cursor:pointer;outline:none;transition:all .12s}@media (hover:hover){.cfg-gear:hover{border-color:rgba(var(--blue-rgb),.5);background:var(--bg3)}}.cfg-gear.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.18);color:var(--blue)}
 /* Kompaktansicht-Schalter (neben dem History-Button): rutscht wie ein
@@ -1484,7 +1597,6 @@ body.compact-view .rub-summary{display:block}
 .slbl{font-size:var(--fs-2xs);letter-spacing:2px;font-weight:700;font-family:var(--ff-num);margin:11px 0 6px;display:flex;align-items:center;gap:7px;text-transform:uppercase}
 .slbl-line{flex:1;height:1px;background:var(--bd)}
 /* ── FLAT ITEMS ── */
-.ri{display:flex;align-items:center;gap:6px;margin-bottom:4px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:7px 8px;border-left:2px solid var(--rc);transition:background .12s,border-color .15s}@media (hover:hover){.ri:hover{background:var(--bg3)}}.ri.imp{background:#e9edf1;border-color:var(--star)!important}
 .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:6px}
 .rtxt{flex:1;background:transparent;border:none;color:var(--t1);font-size:var(--fs-base);line-height:1.6;outline:none;padding:0;font-family:var(--ff-text);resize:none;min-height:21px}
 .rtxt:focus{color:var(--t0)}.ri.imp .rtxt{color:#d9c084}
@@ -2513,8 +2625,6 @@ body.res-return-active #resBackBar{display:flex}
 .pair-card.open .pair-hdr{background:var(--bg4)}
 .pair-name{font-size:14px;font-weight:700;font-family:var(--ff-num);flex:1;min-width:0}
 .pbg{display:flex;gap:3px;flex-shrink:0}
-.pbo{padding:2px 5px;border-radius:3px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;font-size:var(--fs-2xs);font-weight:700;transition:all .1s}
-.pbo.on{border-color:var(--bc);background:var(--bca);color:var(--bc)}
 .pair-body{padding:10px;display:none;border-top:1px solid var(--bd)}
 .pair-card.open .pair-body{display:block}
 .pfl{font-size:var(--fs-2xs);letter-spacing:2px;color:var(--t2);font-weight:700;font-family:var(--ff-num);margin-bottom:3px;text-transform:uppercase}
@@ -3762,7 +3872,7 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .bbadge{font-size:var(--fs-base);padding:3px 8px;width:68px}
   .row-score{font-size:var(--fs-sm);width:32px}
   .dw-empty,.dw-chip,.dw-meta{font-size:14px}
-  .dw-add,.pbo,.dw-sel{font-size:var(--fs-base)}
+  .dw-add,.dw-sel{font-size:var(--fs-base)}
   .dw-chip-x,.dw-del{font-size:16px}
   .dw-nav{font-size:var(--fs-sm);padding:3px 6px}
   .modal{max-width:min(720px,94vw);padding:20px}
@@ -4000,7 +4110,7 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .bbadge{font-size:14px;padding:4px 9px;width:74px}
   .row-score{font-size:var(--fs-base);width:36px}
   .dw-empty,.dw-chip,.dw-meta{font-size:var(--fs-md)}
-  .dw-add,.pbo,.dw-sel{font-size:14px}
+  .dw-add,.dw-sel{font-size:14px}
   .dw-chip-x,.dw-del{font-size:18px}
   /* ── CALENDAR TABLE: DESKTOP ── */
   /* Event-Spalte nimmt die Restbreite, Actual/Forecast/Previous als feste
@@ -4938,11 +5048,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-508 - Die Kontext-Charts sind ab jetzt ECHT und nicht mehr Platzhalter. Sie haengen an den vorhandenen Reihen: Anleiherenditen aus bond_data.json ueber bondSeriesPts, Dollar, S&P und Nasdaq aus price_data.json, die Volatilitaet aus der VIX-Zeitreihe in sentiment_data.json. Welche Reihe hinter welcher Kachel steckt, steht an EINER Stelle in abKontextReihe, damit die Zuordnung nicht in den Zeichner wandert. Der Leitzins in der Kopfzeile kommt aus rateInfo; gibt es keinen Wert, steht dort ein Strich und no value on file statt einer Zahl. Eine Kerze ist jetzt genau ein Tag. Wichtig dabei: die Feeds liefern pro Tag genau EINEN Wert, also Schlusskurs beziehungsweise Rendite, kein Open High Low. Eine Kerze mit erfundenen Dochten waere eine erfundene Zahl, deshalb close to close: Eroeffnung gleich Schluss des Vortags, Hoch und Tief sind die beiden Werte selbst. Das ist eine echte, gebraeuchliche Darstellung, die Preischart-Ansicht der App nennt sie seit laengerem genau so, und sie behauptet nichts, was die Daten nicht hergeben. Nachgerechnet gegen die Rohreihe: 91 Tage im Fenster ergeben 90 Kerzen, null Abweichungen zwischen Kerzen-Open und Vortagesschluss. Neu ist ein Zeitfilter mit 1M, 3M, 6M, 1Y und MAX, der fuer ALLE Charts gleichzeitig gilt - vier getrennte Regler waeren vier Gelegenheiten, Charts mit verschiedenen Zeitraeumen zu vergleichen. Er wird gespeichert und geraeteuebergreifend gesynct, angebunden nach dem Vier-Ecken-Muster mit Push, Pull, Export und Import. ⚠ Beim Einbau ist genau der Fehler passiert, den der Filter verhindern soll: der Zuschnitt hing zuerst am letzten Datum JEDER Reihe, dadurch zeigte der Renditen-Chart bei 1Y 204 Kerzen ab dem 5. Januar und der Dollar-Chart 273 ab dem 16. September des Vorjahrs - drei Charts nebeneinander mit drei verschiedenen Zeitraeumen. Die Fenstergrenze kommt jetzt aus dem Kalender, also heute minus Zeitraum, und gilt fuer alle gleich; ausserdem sitzen die Kerzen nach DATUM statt nach Laufindex, sodass derselbe Tag in allen Charts an derselben Stelle liegt. Eine Reihe, die spaeter anfaengt, beginnt eben spaeter im Fenster, statt es zu verschieben - und sagt das dazu, aber nur bei mehr als sieben Tagen Abstand, weil der Hinweis bei einem Tag Differenz unter jedem Chart stand und reines Rauschen war. Gibt es fuer das Fenster gar keine Reihe, erscheint ein Hinweis statt eines leeren Kastens mit Achsen: leere Achsen sehen aus wie der Markt stand still, heissen aber wir haben keine Daten. Der Hover zeigt jetzt echte Werte, also Datum, Close, Vortagesschluss und Veraenderung. Das Grafik-Band mit COT, Retail und Seasonality ist weiterhin Platzhalter und bleibt sichtbar so gekennzeichnet. Die Asset-Seite hat jetzt eine Kopfreihe im SELBEN Dreier-Raster wie die Makro-Karten darunter, damit die Spaltenkanten wirklich uebereinander stehen - gemessen bei 192, 623 und 1055 Pixeln, in beiden Reihen identisch. Links stehen die vier Schnellzugriffe als zwei mal zwei, darunter die Kursentwicklung ueber die vier Standardfenster. Diese Anzeige war seit laengerem gebaut und exportiert, wurde aber an keiner Stelle gezeichnet - eine fertige, nuetzliche Sache, die niemand zu sehen bekam; sie fuellt jetzt genau den Platz, auf den die vier Knoepfe sonst auf 160 Pixel Hoehe gestreckt worden waeren. In der Mitte stehen die angepinnten Notizen, bewusst nur die angepinnten: die vollstaendige Liste ist einen Knopf weiter unter All notes, und eine zweite vollstaendige Liste waere wieder die Dopplung, die gerade weggeraeumt wurde. Eine Notiz, die man hier anlegt, wird sofort angepinnt, sonst taucht sie an der Stelle nicht auf, an der man sie geschrieben hat. Rechts steht der Kalender als reines Monats-Widget. Ein Klick darauf - egal ob auf die Karte oder auf einen einzelnen Tag - oeffnet ein zentriertes Fenster von 1020 Pixeln Breite mit dem Monatsraster, den Terminen des gewaehlten Tages samt Actual, Forecast und Previous und Impact-Angabe, und einer Spalte Next up mit den naechsten acht Terminen. Der High-Impact-Filter darin ist NICHT nachgebaut: calToolbarHtml liefert denselben Knopf wie der Hauptkalender, und toggleCalHighOnly ruft auf der Asset-Seite ohnehin renderDetail - dort wird das Fenster mit aufgefrischt. Ein zweiter Filter waere ein zweiter Zustand, der irgendwann auseinanderlaeuft. Der Filter wirkt auch auf die Punkte im Widget und wird in dessen Fusszeile genannt. Die Tabelle der COT-Karte steht jetzt in der COT-Kachel: die Karte selbst wird seit gestern nicht mehr gezeichnet, ihre drei Indikatoren zaehlen aber weiter im Score - ohne diese Tabelle waeren sie unsichtbar UND unbedienbar geworden. Die Notizen-Karte in der unteren Reihe ist entfernt, dadurch laeuft das Kontext-Band ueber die volle Breite und die Charts sind von 208 auf 360 Pixel Breite gewachsen, bei 150 Pixeln Mindesthoehe. Und die alte, ueber die volle Breite gestreckte Quicklink-Zeile ueber den Karten ist weg - sie waere neben der neuen Kopfreihe genau dieselbe Dopplung gewesen. ⚠ Beim Einbau zweimal dieselbe Falle: eine CSS-Regel weiter oben in der Datei verliert bei gleicher Spezifitaet gegen die Basisregel weiter unten. Das Fenster blieb dadurch 720 statt 1020 Pixel breit, bis die Regel als .modal.acm-modal geschrieben wurde. Sechs Punkte aus dem Nutzer-Foto vom 2026-09-13 umgesetzt. Erstens sind die Spaltenkoepfe der Indikator-Tabellen Abkuerzungen: Act, Fc, Prev, Next, Trd. Ausgeschrieben brachen sie in der Drittel-Breite mitten im Wort um, auf dem Foto als ACTUA L und FOREC AST markiert; der volle Name steht jetzt im title. Nachgemessen sind alle achtzehn Koepfe einzeilig. Zweitens ist der Indikator 2Y/10Y Spread ueberall entfernt: aus der Vorlage, aus den mitgelieferten Recherchedaten, aus der Renditen-Gruppe, aus der Erklaerungsliste, aus dem Chart-Zweig und aus den Score-Mengen SCORE_ZERO und DECAY_EXEMPT. Fuer bereits gespeicherte Staende steht er in OLD_NEWINDS_REMOVE, sonst waere er nur aus der Vorlage verschwunden und in jedem vorhandenen Geraet stehen geblieben. Der Score aendert sich dadurch NICHT, weil er ohnehin mit 0 zaehlte - nachgerechnet von check/scorediff.js. Drittens ist der Schalter fuer die drei ausklappbaren Karten weg, Interest Rates, COT Data und Risk Environment werden also nicht mehr gezeichnet. Ihre Daten sind dabei nicht geloescht und ihre Indikatoren zaehlen unveraendert weiter im Score; das endgueltige Entfernen aus dem Score ist ein eigener Schritt mit Vorher-Nachher-Vergleich. Viertens schliessen die drei Makro-Karten unten auf einer Linie ab: sie stehen wieder in einer festen Rasterreihe, die alle drei auf die Hoehe der hoechsten bringt, gemessen enden sie jetzt alle bei derselben Pixelzeile. Eine Luecke entsteht dadurch nicht, weil die Karten die Reihe ausfuellen. Fuenftens ist die Kalenderreihe deutlich kleiner und laesst sich einklappen: Tageszellen 24 statt 30 Pixel, Kalenderspalte 252 statt 300 Pixel breit, Next up zeigt fuenf statt neun Termine, und der Pfeil in der Kopfzeile klappt die ganze Reihe auf eine einzige 30-Pixel-Zeile ein, die den naechsten Termin und die Anzahl nennt. Sechstens haben die Kontext-Charts jetzt eine Datumsachse unten, eine kleine Preisskala rechts und einen Hover: faehrt man darueber, erscheinen Fuehrungslinie, markierter Punkt und ein Fenster mit Datum sowie Open, High, Low und Close. Dafuer wurde der bereits vorhandene Mechanismus chartHoverWrap benutzt statt eines zweiten Nachbaus. Die Achsenbeschriftungen stehen bewusst als HTML NEBEN dem SVG: das SVG laeuft auf preserveAspectRatio none, damit die Kerzen jede Kachelbreite fuellen, und Text darin wuerde mitgezerrt - ausserdem muss der Hover-Rahmen exakt der Zeichenflaeche entsprechen, weil seine Trefferrechnung mit Bruchteilen der eigenen Breite arbeitet und jede mitgerechnete Achse den Cursor verschieben wuerde. Die Kachel ist deshalb ein div statt eines Buttons, der Sprung auf das jeweilige Asset haengt jetzt an der Kopfzeile. Die Asset-Seite ist entrumpelt und zusammengezogen (Nutzer 2026-09-13: Dopplungen weg, keine Luecken zwischen den Karten, Charts mittelgross, alles ohne viel Scrollen sehen, und das ohne Karten zu verlaengern). Gemessen vorher: die Seite war 2123 Pixel hoch, zwischen den Bloecken lagen vier Luecken von je 14 bis 15 Pixeln, und weil die Karten-Reihe so hoch war wie die HOECHSTE Karte, standen unter den beiden anderen 89 und 141 Pixel tote Flaeche, bevor das Grafik-Band anfing. Nachher sind es 1765 Pixel, die Abstaende liegen bei 5 bis 8 Pixeln, und alle drei Spalten sind exakt gleich hoch. Fuenf der acht Quicklinks waren seit dem Board-Umbau Dopplungen geworden - sie fuehrten auf eine Seite, deren Inhalt zwei Zentimeter weiter oben schon steht: Seasonality, COT und Sentiment stehen im Grafik-Band, Calendar ist die Monatskarte, News steht am Seitenfuss. Geblieben sind Trends, Data und Rate Probabilities. Ebenfalls entfernt wurde die kleine Notes-Karte in derselben Zeile, die gemessen 113 Pixel kostete, um drei Titel zu zeigen, die weiter unten vollstaendig stehen - ihr Open-Knopf war allerdings die EINZIGE Tuer zur Notizen-Ansicht, deshalb steht diese Tuer jetzt als Knopf All notes in derselben Zeile. Ein entfernter Einstieg ohne Ersatz waere genau der Fehler aus Regel 6. Die Zeile mit dem Auf-und-Zu-Schalter fuer die Sieben-Tage-Vollansicht ist als eigener Block verschwunden: zugeklappt wird sie gar nicht mehr gezeichnet, ihr Schalter sitzt im Fuss der Kalenderkarte. Die grosse strukturelle Aenderung: Karte und die zu ihr gehoerende Grafik stehen jetzt in DERSELBEN Spalte untereinander statt in zwei getrennten Rasterreihen. Dadurch rutscht jede Grafik direkt unter ihre Karte, egal wie hoch diese ist. Die Spalten werden auf gleiche Hoehe gebracht und die Grafik-Kachel fuellt den Rest ihrer Spalte - gefuellt wird also nicht durch Strecken einer Indikator-Karte, das war ausdruecklich ausgeschlossen, sondern durch die Grafik, die ohnehin groesser werden sollte. Ein erster Versuch mit flex ohne align-items stretch blieb gemessen wirkungslos, weil das Raster jede Spalte auf ihren Inhalt sized und flex dann nichts zu verteilen hat. Die Seasonality-Balken rechnen jetzt in Prozent der halben Kachelhoehe statt in festen 26 Pixeln: mit festen Pixeln sahen sie zerrissen aus, sobald die Kachel wuchs, die Balken klebten oben und unten am Rand. Zwei gleich hohe Haelften mit der Nulllinie dazwischen, positiv waechst nach oben, negativ nach unten. Kontext-Band und Notizen sind jetzt gleich hoch: vorher war der Kontext 201 und die Notizen 471 Pixel hoch, unter dem Kontext standen also 270 Pixel Nichts. Die Notizenliste scrollt in sich, statt die Reihe aufzuziehen. In der Kontext-Karte fuellt die Kachelreihe die Karte und in jeder Kachel waechst der Chart mit - der Nebeneffekt geht in die gewuenschte Richtung, die Charts sind dadurch mittelgross statt briefmarkenklein. Der Leitzins ist keine Kachel mehr, sondern eine kompakte Angabe in der Kopfzeile der Kontext-Karte: als gleich grosse Kachel stand eine einzelne Zahl in rund 200 Pixeln Weissraum, waehrend die drei Charts daneben die Breite besser gebrauchen koennen. Der Kalender auf der Asset-Seite ist jetzt eine Monatskarte nach dem Vorbild des iOS-Kalender-Widgets, das der Nutzer am 2026-09-13 als Foto geschickt hat, mit ausdruecklich freier Hand bei Form und Platzierung. Die Reihe hat drei Karten und greift damit dasselbe Dreier-Raster auf wie das Board darunter. Links das Monatsraster, Montag zuerst, Wochenenden gedaempft, der heutige Tag als gefuellter Kreis in der Akzentfarbe, der gewaehlte Tag hinterlegt, und unter jeder Tageszahl bis zu drei Punkte fuer die Termine dieses Tages, eingefaerbt nach hoechstem Impact: rot fuer High, gelb fuer Medium, grau fuer Low. Pfeile links und rechts blaettern durch die Monate. In der Mitte stehen die Termine des GEWAEHLTEN Tages mit Uhrzeit, Waehrung, Name und den drei Werten Actual, Forecast und Previous, wobei der Actual dieselbe Einfaerbung nach Ueberraschungsrichtung bekommt wie ueberall sonst; vergangene Termine sind gedaempft. Rechts steht Next up mit den naechsten neun anstehenden Terminen, jeweils mit Abstand in Tagen, Name und Uhrzeit, und jede Zeile springt beim Klick auf ihren Tag im Raster. Ein Monatsraster allein waere huebsch, aber nutzlos: man saehe, DASS etwas ist, und nicht WAS. WICHTIG und der Grund fuer die Fusszeile: der Kalender-Feed reicht nur rund eine Woche voraus, gemessen deckt er bei USD den Zeitraum vom 11. bis zum 23. September ab und damit 17 von 30 Tagen ueberhaupt nicht. Ein leerer Tag im Raster heisst also fast nie, dass nichts ansteht, sondern dass es noch niemand weiss. Genau dieser Unterschied wird sichtbar gemacht: nicht abgedeckte Tage stehen sichtbar gedaempft da, die Fusszeile nennt den tatsaechlich abgedeckten Zeitraum mit Datum, und ein Klick auf so einen Tag sagt es noch einmal im Klartext. Ohne das waere die Karte eine huebsche Luege - dieselbe Fehlerklasse wie ein geschaetzter Wert. Die bisherige Sieben-Tage-Liste bleibt unveraendert als aufklappbare Vollansicht darunter erhalten, samt ihrer Bedienleiste mit dem High-Impact-Filter, sie heisst jetzt nur Full list. Gemessen ueber EUR, USD und CAD: Raster mit 30 Tagen bei 300px Breite, heute genau einmal markiert, 9 beziehungsweise 8 beziehungsweise 2 Tage mit Punkten, 17 bis 20 Tage als unbekannt gekennzeichnet, kein Ueberlauf, Tageswahl und Monatswechsel wirken, und auf 390px Schirmbreite faellt die Reihe auf eine Spalte ohne Querscrollen. Die drei Indikator-Karten haben ihre alte Form zurueck (Nutzer 2026-09-13: die Karten sollen von der Form so bleiben wie vorher, dafuer die Schriftgroessen kleiner). Gemessen war der Zustand vorher eindeutig: bei EUR auf 1500px Schirm ist die Karte im Dreier-Raster nur 422px breit, 28 von 43 Textelementen brachen um, die Indikatorzeilen waren 33 bis 51 Pixel hoch statt einzeilig, die ganze Karte 565px. Die Ursache lag NICHT an zu grosser Schrift allein: die schmalen Stufen der Indikator-Tabelle gibt es laengst, sie haengen aber an media max-width, also am BILDSCHIRM. Bei 1500px Schirm und 422px Karte feuern sie nie, obwohl die Tabelle genauso schmal ist wie auf einem Telefon. Dieselben Stufen haengen jetzt zusaetzlich als container-Abfragen an der KARTENBREITE. Sie stehen bewusst direkt hinter den media-Fassungen: ein erster Versuch weiter oben in der Datei hatte dieselbe Spezifitaet wie die Basisregel und verlor deshalb die Kaskade - die Schriften wurden zwar kleiner, die Tabellenstufe griff aber nicht, gemessen 11px statt 10px. Die zweite Messung hat dann gezeigt, dass die Wertspalten ueberhaupt nicht umbrechen: sie stehen auf nowrap und erben nur die Zeilenhoehe. Umgebrochen ist der NAME, 88px Spalte fuer CPI Headline y/y samt Bedienknopf, waehrend den Wertspalten 68,6px zur Verfuegung standen, wo 3.3% bei 10px Schrift rund 22px braucht. Also wird Breite vom Wert zum Namen umgeschichtet: 40 Prozent Name statt 26, dafuer 13 Prozent je Wertspalte. Die Tabelle hat SECHS Spalten - Name, Actual, Forecast, Previous, Next, Trend - die Telefon-Fassung deckte nur fuenf davon ab. Zusaetzlich laeuft die ganze Typo-Skala im Karten-Band eine Stufe tiefer, und zwar als STUFE und nicht als freier Wert: die acht Tokens werden von 30-24-17-15-13-12-11-10 auf 24-17-15-13-12-11-10-10 gesetzt, damit alles gleichmaessig schrumpft, ohne dass irgendwo eine Groesse neben der Skala entsteht. 10px ist der Boden, darunter ist Text nicht mehr lesbar. Ergebnis der Nachmessung: Indikatorzeilen einheitlich 25 bis 26 Pixel statt 33 bis 51, Kartenhoehe 411 statt 565 Pixel, der Name bricht nicht mehr um, kein Text wird abgeschnitten, und auf 390px Schirmbreite faellt weiterhin alles auf eine Spalte ohne Querscrollen. Die Asset-Seite ist neu aufgebaut (Nutzer-Wunsch 2026-09-13: alles besser an einem Platz statt Quicklinks, nach denen man vergessen hat, was man gerade gesehen hat). Ganz oben bleibt der Minikalender unveraendert. Darunter stehen drei Karten nebeneinander in fester Reihenfolge: Inflation, Labour Market, Economic Growth. Spaltentreu darunter ein eigenes Grafik-Band mit COT Positioning unter Inflation, Retail Positioning in der Mitte und Seasonality unter Wachstum - die Mitte war offen und Retail fuellt sie, damit das Band eine Logik hat, die man sich merkt: institutionell, privat, saisonal. Darunter links das Kontext-Band mit den Charts, die das Asset sonst noch bewegen, und rechts daneben die Notizen. Welche Kontext-Charts erscheinen, haengt an der Asset-Klasse: bei Gold und Silber US 2Y, US 10Y und der Dollar, bei einer Waehrung ihr eigener Leitzins plus eigene 2Y und 10Y und der Dollar, bei Indizes US 10Y, Dollar und Volatilitaet, bei BTC Nasdaq, Dollar und US 10Y, bei Oel Dollar, US 10Y und der S&P. Jede Kachel ist anklickbar und springt auf das jeweilige Asset, nicht nur der Dollar - der Grund dafuer ist ja derselbe. Ueber jedem Yield-Chart steht die Richtung als Wort in Bias-Farbe, und zwar aus Sicht DIESES Assets gelesen: steigende Renditen sind fuer eine Waehrung tendenziell bullish, fuer Gold das Gegenteil, deshalb wird das Label bei Metallen, Energie und Krypto gedreht und sagt das auch dazu. Die Karte Interest Rates ist als Karte verschwunden und nur der Leitzins bleibt als Kachel im Kontext-Band. Die Notizen-Karte hat kein Limit von drei mehr, sondern zeigt alle Notizen des Assets: oben ein Feld zum direkt Reinschreiben, pro Zeile ein Stern zum Hervorheben und Pfeile zum Hoch- und Runterschieben. Reihenfolge und Hervorhebung haengen als Felder am Notiz-Objekt selbst und liegen damit automatisch im Cross-Device-Sync, ohne zweite Speicherform. WICHTIG und ausdruecklich so bestellt: COT, Retail, Seasonality und alle Kontext-Charts sind vorerst PLATZHALTER und tragen sichtbar ein Abzeichen mit genau diesem Wort. Die Zahlen darin sind erzeugt, nicht gemessen - erfundene Zahlen duerfen nie wie echte aussehen. Der Zufall darin ist fest verdrahtet und haengt an Asset-Id plus Kachelname, damit eine Kachel beim naechsten Zeichnen nicht anders aussieht als eben noch; eine Kachel, die bei jedem Rendern springt, sieht kaputt aus und man kann nicht ueber sie reden. Die gesamte Anordnung steht als Tabelle in js/assetlayout.js, nicht im Zeichner: eine Karte verschieben heisst zwei Eintraege im Array tauschen, eine Kachel entfernen heisst eine Zeile loeschen. Genau das war die Vorgabe, dass spaetere Umbauten schnell gehen. Die uebrigen Karten - Interest Rates, COT Data und Risk Environment - sind NICHT geloescht: ihre Indikatoren zaehlen unveraendert im Score weiter und sind ueber einen unauffaelligen Schalter am Fuss der Seite erreichbar und korrigierbar. Ohne diesen Schalter waeren sie unbedienbar geworden, obwohl sie noch rechnen. Gemessen wurde ueber Gold, EUR und SP500: drei Karten in drei echten Rasterspalten auf 1286px, Reihenfolge stimmt, Grafik-Band spaltentreu, null Textueberlaeufe ueber einen Kartenrand, und bei 390px Schirmbreite faellt alles auf eine Spalte zusammen ohne Querscrollen. Die Notizen wurden im Browser angelegt, verschoben und hervorgehoben, und ord und hl tauchen nachweislich im Sync-Schnappschuss auf. Die Schnellerfassung steht jetzt auch dort, wo Notizen tatsaechlich entstehen: auf jeder Watchlist-Zeile je beteiligtem Asset und in der Notes-Ansicht jedes Assets. Bisher war sie nur im Kopf des Research Terminals erreichbar - also genau NICHT an der Stelle, an der einem beim Durchsehen der Watchlist etwas auffaellt. An diesen beiden Stellen ist das Asset bereits bekannt, es wird deshalb vorausgewaehlt, auch wenn der eingefuegte Text es gar nicht nennt (typisch: CPI kam hoeher rein, ohne dass die Waehrung dasteht). Diese Vorauswahl steht sichtbar ueber dem Textfeld, BEVOR ueberhaupt Text da ist, und ist mit einem Klick abwaehlbar - eine stille Entscheidung darueber, wo eine Notiz landet, waere schlimmer als gar keine Vorauswahl, weil man sie spaeter nicht wiederfindet. Von der Watchlist aus wird die Notiz ausserdem direkt angepinnt, solange einer der drei Plaetze frei ist, und die Bestaetigungsmeldung sagt es dazu; sonst legte man eine Notiz genau an der Stelle an, an der sie danach nicht auftaucht - dieselbe Regel, die das manuelle Formular dort schon hatte. Nach dem Speichern wird jetzt auch die Watchlist beziehungsweise die Asset-Seite neu gezeichnet und nicht nur das Research Terminal, sonst bliebe die Stelle, an der man gerade geklickt hat, unveraendert und das Speichern saehe aus, als haette es nicht funktioniert. Die Schrifthierarchie ist jetzt auch in den FENSTERN geprueft, nicht nur auf den Seiten. Beim Durchgang am 08.09. blieben die Modals aussen vor, und zwar nicht aus Nachlaessigkeit: sie stehen im DOM auf display none, getComputedStyle liefert dort zwar Werte, aber die Elemente haben keine Groesse - wer sie nicht einzeln oeffnet, misst nichts. check/typo.js oeffnet jedes der 34 Fenster, misst 248 Textelemente und prueft zweierlei: freie Schriftgroessen neben der acht-stufigen Skala, und zu nahe Paare, also zwei Textbloecke direkt uebereinander, deren Groessen sich um weniger als einen Pixel unterscheiden ohne gleich zu sein - das liest sich als Fehler statt als Hierarchie. Ergebnis: ein einziger Fund in 34 Fenstern, der Schliessen-Knopf der Suche mit 19px. Auf 18 gesetzt, eine der drei bewusst stehengelassenen Groessen; der Unterschied ist unsichtbar, die Skala dafuer geschlossen. Notizen lassen sich jetzt einzeln aus den Sicherungen zurueckholen. Das vorhandene Wiederherstellen war alles-oder-nichts: es setzt den GESAMTEN Zustand auf einen alten Stand zurueck, wer also eine vor zwei Tagen verlorene Notiz will, gibt zwei Tage Arbeit an allem anderen auf. Hier werden die Sicherungen nur gelesen und verglichen. Drei Arten von Verlust werden getrennt gemeldet, weil sie verschieden schwer wiegen: die Notiz fehlt ganz, ihr Text ist deutlich kuerzer als frueher, oder sie liegt in weniger Ordnern - letzteres ist genau der gemeldete Fehler mit Notizen in mehreren Ordnern. Zurueckgeholt wird ZUSAMMENGEFUEHRT, nicht ersetzt: der heutige Stand kann Aenderungen enthalten, die es in der Sicherung nicht gab, und verloren gegangen ist immer nur etwas - also wird ergaenzt und nie ueberschrieben. Neu ist die Schnellerfassung fuer Notizen: Text einfuegen, und Asset, Richtung, Titel und Themen werden herausgelesen. Der Wunsch war dabei ausdruecklich KI, und hier arbeitet keine - das ist eine bewusste Entscheidung. Der Weg ueber eine geplante Claude-Sitzung ist gemessen gescheitert, drei Bauformen konnten nicht ins Repo schreiben, und die API deckt das Abo nicht ab. Was aber eigentlich gewollt war, ist nicht KI, sondern einfuegen und nichts mehr ausfuellen muessen - und das leisten Regeln sofort, ohne Netz, ohne Wartezeit, ohne laufende Kosten. Ein wichtiger Unterschied obendrein: Regeln koennen nichts erfinden. Sie finden ein Asset im Text oder eben keins, und was sie finden, steht VOR dem Speichern da und ist mit einem Klick korrigierbar. Erkannt werden Waehrungen auch ueber ihre Notenbank, also Fed fuer Dollar und EZB fuer Euro, sowie Waehrungspaare, die auf beide Seiten durchschlagen. Die Richtung wird gewichtet gezaehlt, hawkish zaehlt doppelt gegenueber steigt, und bei Gleichstand bleibt sie neutral statt geraten zu werden - daneben steht, woran sie festgemacht wurde. Geprueft wird die Zerlegung von check/quickcapture.js an echten Beispielen, darunter Notenbank ohne Waehrungsnamen, gemischtes Deutsch und Englisch, Gleichstand und ein Text ganz ohne Asset. Die Bias-Farben sind jetzt Design-Token statt fester Werte im Skript. Anlass war ein Befund des Hintergrund-Waechters, den er als Vorbestand gemeldet statt verschwiegen hatte: BC ist ausdruecklich fuer HELLE Flaechen gebaut, und auf den fuenf dunklen Vorlagen kam derselbe Blauton auf 1,69 bis 2,66 zu 1 gegen die Kartenfarbe - alle unter WCAG AA. Eine Inline-Farbe schlaegt jede CSS-Regel, deshalb half kein Regelwerk je Vorlage; die Loesung ist, inline eine VARIABLE zu setzen, die pro Vorlage aufloest. Die hellen Vorlagen bekommen zeichengleiche Werte, aendern sich also nicht. Die dunklen bekommen aufgehellte Fassungen mit gleichem Farbton, berechnet bis mindestens 4,6 zu 1 gegen die jeweilige Kartenfarbe. Fuer Flaechen und Chart-Striche bleibt BC richtig - dort liegt die Farbe auf hellem Grund oder ist selbst die Flaeche. Die Overview-Seite laeuft jetzt rund und zeigt deutlich mehr. Gemessen wurde zuerst, statt zu optimieren: die Seite war nie ausgelastet (16,7 ms Bildabstand, 0 Bilder ueber 20 ms, identisch mit und ohne Kugel). Das Ruckeln kam vom Takt - die Geometrie wurde nur 19,4-mal pro Sekunde gesetzt, waehrend der Bildschirm 60 Bilder zeichnet. Jetzt wird pro Bild aktualisiert: 60,2 statt 19,4. Die Kuestenlinien kommen aus Natural Earth (gemeinfrei) und haben 14000 statt 2170 Punkte, also 6,5-fache Detailtiefe - sie werden erst geladen, wenn jemand Overview oeffnet, damit sie niemanden kosten, der die Seite nie aufruft. Mit 14000 Punkten und einem SVG-Element je Polygon sprang p95 auf 33,4 ms und 66 von 179 Bildern kamen zu spaet; teuer war nicht die Rechnung, sondern 549 DOM-Schreibzugriffe pro Bild. Als EIN Pfad mit vielen Teilstuecken sind es 16,7 ms und null verspaetete Bilder - mehr Details UND fluessiger. Der Sternenhimmel ist gezeichnet statt fotografiert, und das ist eine bewusste Abweichung vom Wunsch aus dem Internet: NASAs gemeinfreie Bibliothek gibt keinen duennen scharfen Nachthimmel her. Teleskopbilder haben je Ausschnitt rund 10000 aufloesbare Sterne und 5-10 Pixel breite Scheiben, die duennen Treffer sind Illustrationen, und passende Fotos sind fast immer urheberrechtlich geschuetzt. Gezeichnet sind es 1307 Sterne bei 20 KB, und die Steilheit am Stern liegt bei 18 gegen 1,02 der Vorlage - also punktfoermig statt verwaschen. Neue Seite Overview ueber dem Dashboard, und die Weltkugel ist zurueck. Die Zeichenmechanik des Globus lag seit dem 2026-08-04 brach - sie war nie geloescht, nur hatte kein Widget mehr type globe. Jetzt bekommt sie eine eigene Buehne statt einer Karte im Raster: die Seite gehoert ihr ganz, entsprechend darf sie bis 760 Pixel gross werden statt der 320, die in ein Karten-Raster passen. Drei Buehnen, drei Obergrenzen - Karte, Intro-Bildschirm, Overview -, alle an einer Stelle in startGlobes. Der Sternenhimmel liegt als eigene Ebene INNERHALB der Seite, nicht auf body: sonst liefe er unter allen anderen Seiten mit und kollidierte mit der Hintergrund-Wahl aus den Einstellungen. Darueber eine Vignette, die den Blick in die Mitte zieht und die hellen Sternfelder am Rand daempft, damit sie nicht mit der Kopfleiste konkurrieren. Das Bild ist nicht erfunden und nicht irgendwo abgegriffen: die Arbeitsumgebung darf nicht ins offene Netz, deshalb holt ein eigener Workflow es auf dem GitHub-Runner ueber die dokumentierte NASA-Bild-API. Gesucht wird ausschliesslich in NASA-eigenem Material - bei Astrofotos liegt das Urheberrecht sonst fast immer beim einzelnen Fotografen, und ein Hintergrundbild wird Teil des Repos. Titel, nasa_id, Zentrum und Adresse liegen als Herkunftsnachweis neben dem Bild. Der Hintergrund laesst sich jetzt in den Einstellungen umschalten: Current (wie bisher), White und drei Marmor-Bilder. Die Marmor-Bilder sind nicht heruntergeladen, sondern gerechnet - fraktales Rauschen fuer die Struktur, eine anisotrop verzerrte Sinuswelle fuer die Adern, mehrfache Gauss-Unschaerfe fuer das Leuchten. Zwei Sackgassen lagen davor: zu schwache Turbulenz gab parallele Streifen wie gebuerstetes Metall, zu starke gab konzentrische Ringe wie eine Hoehenlinienkarte. Geloest hat es die RICHTUNG - das Verzerrungsfeld ist glatt entlang der Ader und fein quer dazu, dadurch bleibt die Phase quer monoton und die Adern schliessen sich nicht zu Ringen. Als WebP mit 1920 Pixeln Breite kosten alle sechs Dateien zusammen 172 KB statt 7,5 MB als PNG - der Hintergrund laedt bei JEDEM Seitenaufruf mit. Bei Marmor werden die Karten zu 88 Prozent deckend und bekommen backdrop-filter, damit der Stein zwischen ihnen durchscheint, ohne dass Zahlen auf wechselndem Untergrund flimmern; die volle Deckfarbe steht als erste Deklaration da, ein Browser ohne color-mix bekommt also die heutige Karte. Unter dem Bild liegt ein Schleier in --bg0, der Flaechenfarbe der GEWAEHLTEN Design-Vorlage - dadurch bleibt Text, der direkt auf dem Hintergrund steht, in allen zehn Vorlagen lesbar, statt vom Zufall abzuhaengen, welche Ader gerade darunter liegt. Die Wahl wird geraeteuebergreifend gesynct und die Frueh-Weiche im head setzt sie, bevor die erste Regel greift, sonst blitzt beim Laden der helle Standard auf. Die Nachrichten-Seite zeigt jetzt WAS HEUTE WAR, und die Quellen wurden vorher gemessen statt geraten. Gemessen wurde jede Kandidaten-Adresse einzeln: BoJ, BoC und RBA antworten mit echtem RSS und kommen direkt rein, dazu eine Google-News-Suche ueber alle fuenf Notenbanken, ForexLive, FXStreet und OilPrice fuer Gold/Oel. NICHT eingebaut wurden Financial Juice (beide Adressen 404, es gibt dort keinen freien Feed - der Nutzer hatte danach gefragt), RBNZ (403) und Kitco (404); eine Adresse zu raten und stumm 0 Eintraege zu holen ist genau der Fehler vom 2026-08-19. Gegen Rauschen sperrt VERLAG_SPERRE sechs Verlage (Motley Fool, Insider Monkey, 24/7 Wall St, Moneywise, TheStreet, Barchart) - das entfernt 257 Schlagzeilen und kostet nur 13 relevante, die Trefferquote steigt von 38 auf 55 Prozent. Der Zeitfilter der News-Seite hat jetzt 1/3/5/7 Tage und Alle (gemessen 154/524/586/667/774 Meldungen), Voreinstellung ist Heute; die Tages-Ueberschrift bleibt beim Scrollen stehen und nennt Anzahl, Wichtiges und die drei haeufigsten Assets. Neu ist ausserdem der Notiz-Vorschlag: die geplante Sitzung darf pro Lauf hoechstens drei Meldungen als Notiz-Entwurf vorschlagen, der Nutzer bestaetigt mit einem Klick und die Notiz landet mit Quellenzeile, Bias und Tags in den Ordnern der genannten Assets. Die Routine laeuft 08:00 und 17:00 deutscher Zeit und arbeitet ab Wasserzeichen: nur Meldungen, die neuer sind als news_ai.json und dort noch nicht stehen. Nachrichten werden von einer KI eingeordnet und bewertet, ohne dass es etwas kostet. Gemessener Ausgangspunkt: von 774 Schlagzeilen trugen nur 378 (49 Prozent) eine Waehrungs-Zuordnung aus den Stichwort-Regeln, und eine Bewertung gab es bei keiner einzigen. Die Regeln treffen Canadian tariffs on US goods, aber Trumps next trade weapon faellt durch. Neu ist news_ai.json: eine GEPLANTE Claude-Sitzung liest zweimal taeglich die Meldungen, ordnet Waehrungen zu und schreibt je Meldung einen Satz, der sagt WARUM das jetzt zaehlt. Das laeuft ueber das Abo und nicht ueber die API - keine Token-Abrechnung, kein Schluessel. Bewusst eine ZWEITE Datei: news_data.json wird stuendlich komplett neu geschrieben, jede Einordnung darin waere eine Stunde spaeter weg; zusammengefuehrt wird beim Laden ueber die Adresse der Meldung. Eine vorhandene Zuordnung aus den Regeln wird nie ueberschrieben, nur Leeres ergaenzt. Die Einordnung steht als eigene Zeile unter der Schlagzeile, abgesetzt durch kleinere Schriftstufe, gedaempfte Farbe und einen senkrechten Anker - die Trennlinie wandert mit, damit sie nicht zwischen Meldung und ihrer eigenen Bewertung laeuft. Weil die Routine unbeaufsichtigt laeuft, prueft check/display.js ihr Ergebnis: kein erfundenes Asset, keine zu lange Zeile, kein Markup, und die Einordnung muss die Meldungen wirklich erreichen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-509 - Diese Runde macht die Asset-Seite fertig und raeumt einen Fehler weg, der lange unsichtbar war. ZUERST DER FEHLER: --card wurde an drei Stellen als background:var(--card) benutzt, war aber nirgends definiert. CSS wirft in so einem Fall die GANZE Deklaration weg, ohne etwas zu melden - die Karten standen auf rgba(0,0,0,0), also vollstaendig durchsichtig, und auf dem weissen App-Hintergrund war die Seite genau das, was der Nutzer beschrieben hat: eine einzige weisse Flaeche. Gemessen mit getComputedStyle auf .ab-tile, .ab-ktile, .abc-cal und .aql-col, alle vier rgba(0,0,0,0). --card ist jetzt --bg1, also eine Flaeche, die sich von BEIDEN Hintergruenden abhebt: heller als die getoente Seite, eine Spur dunkler als die weisse. Dazu feine Details statt nur Kanten: Haarlinie aussen, flacher Schlagschatten, eine helle Kante oben innen, Haarlinie unter jeder Kartenueberschrift, und die Kacheln IN einer Karte liegen eine Stufe hoeher (--bg2), damit sie sich von der Karte abheben statt mit ihr zu verschmelzen. Gegen genau diese Fehlerklasse gibt es ein neues viertes Netz in check/structure.js: jedes var(--x) ohne Rueckfallwert muss irgendwo definiert sein. Es fand auf Anhieb vier weitere tote Tokens (--ntc, --rc, --bc, --bca) in CSS-Regeln, die auf allen 14 Seiten null Treffer haben - alter Notizen-Code, jetzt geloescht. KERZEN: eine Kerze ist ein Tag, und es gibt keine Kerze mehr fuer Samstag und Sonntag - ausser bei Krypto. Das war noetig, weil die Feeds Wochenendtage tragen und dort einfach den Freitagsschluss wiederholen: gemessen 107 Wochenendtage im EUR, 22 in USD, Gold, Oel, S&P und Nasdaq. BTC behaelt seine sieben Tage, dort ist Sonntag ein echter Handelstag (1099 Kerzen statt 785). Die Kerzenfarben kommen aus eigenen Tokens --cndl-up und --cndl-dn - steigend im Blau, fallend im Schwarz, wie geschickt. Bewusst getrennt von den Bias-Farben: Bias ist eine Aussage ueber das Asset, die Kerzenfarbe nur ueber einen Tag. Auf den dunklen Vorlagen dreht sich die fallende Kerze auf einen hellen Gegenpol, sonst waere sie unsichtbar; das Blau ist #7BA4F8 statt #5B86F5, weil der neue Waechter gemessen hat, dass #5B86F5 gegen nords Kartenflaeche nur 2,96:1 erreicht. Der Hover nennt jetzt den Wochentag. DOCHTE: die Frage war, ob das ueberhaupt geht, und die Antwort ist gemessen statt geraten. Ein eigener Probelauf hat zwei Wege geprueft: der TradingView-Scanner liefert neben close auch open, high und low - 15 von 15 Tickern mit einem High/Low, das ueber den Kerzenkoerper hinausragt. Stooq als Historien-Quelle antwortet GitHub-Laeufern dagegen mit einer HTML-Sperrseite, bei allen 17 Symbolen. Also: der Sammellauf schreibt ab jetzt [Datum, Close, Open, High, Low] statt nur [Datum, Close], und die Kerzen zeichnen ihre Dochte, sobald die Werte da sind. Rueckwirkend gibt es sie nicht, weil es dafuer keine Quelle gibt - die drei Jahre Bestand bleiben Close-to-Close. Wichtiger Fallstrick dabei: bei USD/JPY, USD/CHF und USD/CAD rechnet die App den Kehrwert, und dabei tauschen Hoch und Tief die Rolle - ohne dieses Tauschen zeigte der Docht nach innen. KEINE PLATZHALTER MEHR: COT, Retail und Seasonality haengen an echten Feeds. COT bekommt den gestapelten Balken-Chart aus dem COT-Tab in Kachelgroesse (blau long, rot short, schwarze Linie long%) und darunter eine Fusszeile mit Long, Short und der Wochenaenderung. Retail dreht die Broker-Buecher auf die Seite des Assets: 80% long EURUSD heisst fuer den Dollar short, ohne dieses Drehen stuende auf der USD-Seite die Positionierung des Euro. Seasonality zeigt den Monatsschnitt samt Trefferquote und sagt, ob beide in dieselbe Richtung zeigen. Das PLACEHOLDER-Abzeichen und die Pseudozufalls-Erzeuger dahinter sind geloescht, nicht auskommentiert. Wo eine Quelle fehlt, sagt die Kachel das in Worten - Yields haben keinen COT-Kontrakt, Oel und S&P kein Retail-Buch, NZD, BTC und DAX keine Saisonalitaet. NAVIGATIONSLEISTE: am PC bleibt sie dauerhaft offen, das Ein- und Ausfahren beim Scrollen gibt es nur noch auf Touch-Geraeten. Neuer Waechter check/kerzen.js prueft alle vier Kerzen-Regeln, mit Gegenprobe in beide Richtungen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-508</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-509</span>
     </span>
   </div>
   <div class="hdr-r">

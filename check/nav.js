@@ -93,34 +93,68 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     await ctx.close();
   }
 
-  // ── C/D: Maus ───────────────────────────────────────────────────────
+  // ── C/D: Maus am PC - die Leiste bleibt STEHEN ──────────────────────
+  // ⚠ NEUE REGEL seit 2026-09-13 (Nutzer: "mach noch das man links die
+  // leiste wo man das menue hat wo man in den kategorien auswaehlen kann
+  // das die am pc dauerhaft da ist"). Bis dahin klappte sie bei jedem
+  // Scrollen und jedem Klick im Inhalt auf Icon-Breite ein; genau das
+  // verlangte dieser Waechter vorher auch. Er ist jetzt auf die neue Regel
+  // gedreht - und dabei STRENGER geworden statt schwaecher: geprueft werden
+  // beide Ausloeser einzeln (Klick UND Scrollen), die Breite in Pixeln
+  // (nicht nur die Klasse - eine Media Query koennte sie auch ohne Klasse
+  // schmal machen), und zusaetzlich, dass die Leiste nach einem Wechsel von
+  // schmal zurueck auf breit von selbst wieder aufgeht.
   {
     const ctx=await b.newContext({viewport:{width:1194,height:834}});
     const p=await seite(ctx);
-    const mp=await inhaltPunkt(p);await p.mouse.click(mp.x,mp.y);await p.waitForTimeout(300);
+    const breite=()=>p.evaluate(()=>Math.round(document.getElementById('navSidebar').getBoundingClientRect().width));
+    const offenBreite=await breite();
+    pruefe(offenBreite>100,'Maus: die Leiste startet gar nicht offen ('+offenBreite+'px) - alles Weitere waere wirkungslos');
+
+    const mp=await inhaltPunkt(p);await p.mouse.click(mp.x,mp.y);await p.waitForTimeout(350);
     const c1=await zustand(p);
-    pruefe(c1.collapsed,'Maus: Klick im Inhalt klappt die Leiste nicht ein');
+    pruefe(!c1.collapsed,'Maus: Klick im Inhalt klappt die Leiste ein - am PC soll sie stehen bleiben');
+    pruefe(await breite()===offenBreite,'Maus: die Leiste ist nach einem Klick im Inhalt schmaler geworden');
+
+    // Scrollen ist der zweite, unabhaengige Ausloeser - der frueher haeufigere.
+    await p.mouse.move(mp.x,mp.y);await p.mouse.wheel(0,600);await p.waitForTimeout(400);
+    const c1b=await zustand(p);
+    pruefe(!c1b.collapsed,'Maus: Scrollen im Inhalt klappt die Leiste ein - am PC soll sie stehen bleiben');
+    pruefe(await breite()===offenBreite,'Maus: die Leiste ist nach dem Scrollen schmaler geworden');
 
     // ⚠ Mit echtem hover() VOR dem Klick - genau das unterscheidet den
-    // Maus-Pfad vom Touch-Pfad. Anders als beim Touch-Block oben soll der
-    // erste Klick hier SOFORT navigieren (Nutzer-Wunsch 2026-08-22) - kein
-    // Zwei-Klick-Mechanismus am PC.
+    // Maus-Pfad vom Touch-Pfad. Der erste Klick soll SOFORT navigieren
+    // (Nutzer-Wunsch 2026-08-22), kein Zwei-Klick-Mechanismus am PC.
     // Selektor statt Element-Handle: die Leiste wird zwischendurch neu
     // aufgebaut, ein festgehaltener Handle waere dann nicht mehr im DOM.
     await p.hover(ZIEL);await p.waitForTimeout(150);await p.click(ZIEL);await p.waitForTimeout(400);
     const c2=await zustand(p);
     pruefe(c2.page==='cal',REGEL_MAUS+' - der erste Klick hat NICHT sofort navigiert (blieb auf "'+c2.page+'")');
-    pruefe(!c2.collapsed,'Maus: der erste Klick hat die Leiste nicht ausgeklappt');
+    pruefe(!c2.collapsed,'Maus: der erste Klick hat die Leiste eingeklappt');
 
-    // D: Leiste war schon offen und wurde NICHT gerade erst ausgeklappt -
-    // dann muss ein Klick sofort navigieren, nichts darf geschluckt werden.
+    // D: und ein zweiter Klick ebenso - nichts darf geschluckt werden.
     await p.evaluate(()=>{try{showTab('dash');}catch(e){}});
     await p.mouse.move(600,400);await p.waitForTimeout(200);
-    await p.evaluate(()=>{document.getElementById('navSidebar').classList.remove('nav-collapsed');});
     await p.mouse.move(60,400);await p.waitForTimeout(250);
     await p.click(ZIEL);await p.waitForTimeout(400);
     const d1=await zustand(p);
-    pruefe(d1.page!=='dash','Maus: bei bereits offener Leiste wurde der Klick faelschlich geschluckt');
+    pruefe(d1.page!=='dash','Maus: bei offener Leiste wurde der Klick faelschlich geschluckt');
+
+    // D2: schmal -> breit. Unter 760px darf sie einklappen; kommt das
+    // Fenster zurueck, muss sie von selbst wieder aufgehen. Ohne den
+    // resize-Zuhoerer bliebe sie dort fuer immer schmal, weil collapse()
+    // am PC gar nicht mehr laeuft und expand() niemand mehr ruft.
+    await p.setViewportSize({width:700,height:834});
+    await p.waitForTimeout(300);
+    await p.evaluate(()=>{const pa=document.getElementById('pageArea');
+      pa.dispatchEvent(new Event('scroll',{bubbles:true}));});
+    await p.waitForTimeout(350);
+    const d2=await zustand(p);
+    pruefe(d2.collapsed,'Schmaler Schirm: die Leiste klappt nicht mehr ein - dort ist die Breite echter Mangel');
+    await p.setViewportSize({width:1194,height:834});
+    await p.waitForTimeout(500);
+    const d3=await zustand(p);
+    pruefe(!d3.collapsed,'Nach dem Vergroessern bleibt die Leiste eingeklappt und geht von selbst nie wieder auf');
     await ctx.close();
   }
 

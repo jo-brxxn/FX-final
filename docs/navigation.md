@@ -1311,3 +1311,27 @@ Regeln, die beim Erweitern gelten:
 Breite Fenster tragen `class="modal modal-wide"` (max. 1080px) — die Regel
 dazu steht seit 2026-09-06 im CSS und gilt auch fuer das
 Datenqualitaets-Fenster.
+
+## Navigationsleiste: am PC dauerhaft offen (ab 2026-09-13)
+
+Nutzer-Wunsch, wörtlich: *„mach noch das man links die leiste wo man das menü
+hat wo man in den kategorien auswählen kann das die am pc dauerhaft da ist"*.
+
+Bis dahin klappte die Leiste bei jedem Scrollen und jedem Klick im Inhalt auf
+Icon-Breite ein und beim Hovern wieder aus. Am PC gibt es das nicht mehr:
+
+- **„PC" = `(hover:hover) and (pointer:fine)` UND ≥ 760 px** (`navBleibtOffen()`).
+  Dieselbe Prüfung, die schon fürs Klick-Schlucken benutzt wird — `pointer:coarse`
+  oder `ontouchstart` wären bei Touch-Displays mit angeschlossener Maus falsch.
+- Die Ausnahme steht an **einer** Stelle: in `collapse()`, durch das alle
+  Auslöser laufen. Nicht an jedem Auslöser einzeln — sonst lebt die Regel in
+  drei Kopien und der nächste Auslöser vergisst sie.
+- **Auf Touch bleibt alles wie es war**, inklusive Zwei-Klick-Mechanismus:
+  dort ist Breite echter Mangel, und unter 760 px hängt die Icon-Breite ohnehin
+  an einer Media Query.
+- Dazu ein `resize`-Zuhörer. Ohne ihn landet man beim Vergrössern des Fensters
+  mit einer eingeklappten Leiste, die von selbst nie wieder aufgeht: `collapse()`
+  greift dort nicht mehr, aber `expand()` ruft auch niemand.
+
+Geprüft von `check/nav.js` (beide Auslöser einzeln, Breite in Pixeln, beide
+Zeigerarten, schmal→breit), mit Gegenprobe in beide Richtungen.

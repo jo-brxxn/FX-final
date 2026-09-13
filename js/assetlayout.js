@@ -82,39 +82,13 @@ export const KONTEXT_ART = {
 // reden ("die dritte Kerze von links"), wenn sie beim naechsten Blick anders
 // steht. Der Startwert kommt aus Asset-Id + Kachelname, also ist jede Kachel
 // stabil und trotzdem von der daneben verschieden.
-function saat(txt) {
-  let h = 2166136261;
-  for (let i = 0; i < txt.length; i++) { h ^= txt.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
 
-/** Kerzen fuer eine Chart-Kachel. */
-export function phKerzen(schluessel, n = 34) {
-  const r = saat(schluessel);
-  const out = [];
-  let kurs = 100;
-  for (let i = 0; i < n; i++) {
-    const o = kurs;
-    const spanne = 0.6 + r() * 1.6;
-    const c = o + (r() - 0.47) * spanne * 2;
-    const h = Math.max(o, c) + r() * spanne;
-    const l = Math.min(o, c) - r() * spanne;
-    out.push({ o, h, l, c });
-    kurs = c;
-  }
-  return out;
-}
-
-/** Long/Short-Anteil fuer COT- und Retail-Platzhalter. */
-export function phAnteil(schluessel) {
-  const r = saat(schluessel);
-  const lang = Math.round(18 + r() * 64);
-  return { lang, kurz: 100 - lang };
-}
-
-/** Zwoelf Monatswerte fuer das Seasonality-Profil. */
-export function phMonate(schluessel) {
-  const r = saat(schluessel);
-  return Array.from({ length: 12 }, () => +((r() - 0.45) * 4).toFixed(2));
-}
+// ⚠ HIER STANDEN BIS 2026-09-13 DREI PLATZHALTER-ERZEUGER (saat/phKerzen/
+// phAnteil/phMonate): ein deterministischer Pseudozufallsgenerator, der
+// Kerzen, Long/Short-Anteile und Monatsprofile erfunden hat, damit das
+// Layout gebaut werden konnte, bevor die Daten dranhingen. Jede dieser
+// Kacheln trug dabei sichtbar das Abzeichen PLACEHOLDER.
+// Alle drei Kacheln haengen jetzt an echten Feeds (cot_data.json,
+// sentiment_data.json, seasonality_data.json), also sind die Erzeuger weg -
+// nicht auskommentiert, sondern geloescht. Erfundene Zahlen, die noch
+// aufrufbar herumliegen, werden irgendwann wieder aufgerufen.

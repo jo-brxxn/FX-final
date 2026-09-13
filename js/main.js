@@ -3,7 +3,7 @@ import {BC,BL,FX,FX_FLAG,aiStar,aiStars,AI_EU_STARS,AI_UNION_JACK,AI_MAPLE,AI_FL
 import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES,ASSET_BEHAVIOR_SUBTOPICS} from './asset-notes-seed.js';
 import {BT_REASON_SEED} from './backtest-seed.js';
 // Aufbau der Asset-Seite: WO was steht, liegt bewusst dort und nicht hier.
-import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor,phKerzen,phAnteil,phMonate} from './assetlayout.js';
+import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor} from './assetlayout.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -6758,11 +6758,12 @@ function renderAssetCalBody(){
 // Die Anordnung steht komplett in js/assetlayout.js - hier stehen nur die
 // Zeichner. Wer die Reihenfolge aendern will, aendert dort ein Array.
 //
-// ⚠ Stand heute sind COT, Retail, Seasonality und alle Kontext-Charts
-// PLATZHALTER und als solche sichtbar gekennzeichnet. Das ist ausdruecklich
-// so bestellt (Nutzer: "Erst wenn ich dir hinterher das GO gebe") und
-// entspricht Regel 4: erfundene Zahlen duerfen nie wie echte aussehen.
-const AB_PH=`<span class="ab-ph" title="Placeholder — this tile is not wired to live data yet. The numbers are generated, not measured.">PLACEHOLDER</span>`;
+// ⚠ SEIT 2026-09-13 STEHT HIER KEIN PLATZHALTER MEHR (Nutzer: "bau dann
+// auch ueberall jetzt alles fertig also keine platzhalter sondern richtige
+// daten"). Das PLACEHOLDER-Abzeichen und die Zufallszahlen-Erzeuger dahinter
+// sind ersatzlos weg. Was eine Kachel nicht hat, sagt sie jetzt in Worten -
+// das ist die Regel-4-Fassung von "keine Daten", nicht ein huebscher Balken
+// aus einem Pseudozufallsgenerator.
 
 function abTile(titel,zusatz,inhalt,extra){
   return`<div class="ab-tile${extra||''}">
@@ -6847,27 +6848,84 @@ function abImZeitraum(reihe){
   return reihe.filter(e=>e&&e[0]>=f.von&&e[0]<=f.bis);
 }
 
+// ══ EINE KERZE = EIN TAG - UND KEIN HANDELSTAG, DEN ES NICHT GAB ════════
+//
+// DAUERREGEL (Nutzer 2026-09-13, ausdruecklich so gesetzt): "leg generell
+// bei den charts als regel fest das es keine kerzen fuer samstag und
+// sontag gibt ausser bei crypto".
+//
+// ⚠ GEMESSEN 2026-09-13 in price_data.json, warum die Regel noetig ist:
+// die Reihen tragen sehr wohl Wochenendtage - USD 11 Samstage + 11
+// Sonntage, EUR 11 + 96 auf ~3 Jahre. Und sie tragen keine eigene
+// Bewegung: Fr 11.09., Sa 12.09. und So 13.09. stehen im EUR alle drei auf
+// 1.15978, weil der Sammellauf am Wochenende schlicht den letzten Schluss
+// noch einmal notiert. Das sind drei Kerzen, von denen zwei nichts
+// bedeuten - zwei flache Striche, die eine Woche laenger aussehen lassen,
+// als sie war.
+// BTC dagegen hat in denselben drei Jahren an ALLEN sieben Wochentagen je
+// 157 Werte. Dort ist das Wochenende ein echter Handelstag und bleibt.
+const KERZEN_WOCHENENDE_OK=['crypto'];
+function kerzenWochenendeErlaubt(assetId){
+  return KERZEN_WOCHENENDE_OK.includes(assetCls(assetId));
+}
+function istWochenende(ymd){
+  const t=Date.parse(String(ymd)+'T00:00:00Z');
+  if(!isFinite(t))return false;
+  const w=new Date(t).getUTCDay();
+  return w===0||w===6;
+}
+function ohneWochenende(reihe,assetId){
+  if(!Array.isArray(reihe))return[];
+  if(kerzenWochenendeErlaubt(assetId))return reihe;
+  return reihe.filter(e=>e&&!istWochenende(e[0]));
+}
+/** Wochentag + Datum, wie es im Hover stehen soll ("Fri, 12 Sep"). */
+// ⚠ timeZone:'UTC' ist Pflicht: das Datum wird als UTC-Mitternacht gelesen,
+// ohne diesen Zusatz benennt der Browser westlich von Greenwich den
+// VORTAG - der Hover zeigte dann Donnerstag ueber einer Freitagskerze.
+function tagMitWochentag(ymd){
+  try{
+    return new Date(String(ymd)+'T00:00:00Z')
+      .toLocaleDateString('en',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'});
+  }catch(e){return String(ymd);}
+}
+
 // ── Kerzen aus einer TAGESREIHE ─────────────────────────────────────────
-// Nutzer 2026-09-13: "mach bei den Charts das eine Kerze ein Tag ist".
-// ⚠ Die Feeds liefern je Tag genau EINEN Wert (Schlusskurs bzw. Rendite),
-// kein Open/High/Low. Eine Kerze mit erfundenen Dochten waere eine erfundene
-// Zahl (Regel 4). Deshalb CLOSE-TO-CLOSE: Eroeffnung = Schluss des Vortags,
-// Hoch/Tief = die beiden Werte selbst. Das ist eine echte, gebraeuchliche
-// Darstellung - die Preischart-Ansicht der App nennt sie seit laengerem
-// genau so ("close-to-close candles") - und sie behauptet nichts, was die
-// Daten nicht hergeben. Der Chart sagt es in seinem Titel dazu.
-function abTagesKerzen(reihe){
-  const r=abImZeitraum(reihe).filter(e=>e&&isFinite(Number(e[1])));
+// Nutzer 2026-09-13: "mach bei den Charts das eine Kerze ein Tag ist" und
+// "mach bei allen charts die preis abspiegeln das eine kerze immer ein tag
+// ist und das wenn das geht man auch die wicks sieht".
+//
+// ⚠ DOCHTE HAENGEN AN DER QUELLE, NICHT AM ZEICHNER. Ein Eintrag der
+// Tagesreihe ist ENTWEDER [Datum, Schluss] - so liefern price_data.json
+// und bond_data.json es heute, weil der Sammellauf den TradingView-Scanner
+// mit columns:["close"] fragt - ODER [Datum, Schluss, Open, High, Low].
+// Nur im zweiten Fall bekommt die Kerze einen Docht; im ersten waere er
+// erfunden (Regel 4). Close-to-Close ist dann der ehrliche Rueckfall:
+// Eroeffnung = Schluss des Vortags, Hoch/Tief = die beiden Werte selbst.
+// Sobald die Quelle OHLC traegt, zeichnen sich die Dochte von selbst -
+// hier ist dafuer keine Zeile mehr zu aendern.
+function tagesKerzen(reihe,assetId){
+  const r=ohneWochenende(reihe,assetId).filter(e=>e&&isFinite(Number(e[1])));
   const out=[];
   for(let i=1;i<r.length;i++){
-    const o=Number(r[i-1][1]),c=Number(r[i][1]);
-    out.push({d:r[i][0],o,c,h:Math.max(o,c),l:Math.min(o,c)});
+    const e=r[i],c=Number(e[1]);
+    const hatOhlc=isFinite(Number(e[2]))&&isFinite(Number(e[3]))&&isFinite(Number(e[4]));
+    const o=hatOhlc?Number(e[2]):Number(r[i-1][1]);
+    // Math.max/min auch im OHLC-Fall: eine Quelle, deren High unter dem
+    // Schluss liegt, wuerde sonst eine Kerze zeichnen, die auf dem Kopf steht.
+    out.push({d:e[0],o,c,
+      h:hatOhlc?Math.max(Number(e[3]),o,c):Math.max(o,c),
+      l:hatOhlc?Math.min(Number(e[4]),o,c):Math.min(o,c),
+      ohlc:hatOhlc});
   }
   return out;
 }
-function abKerzenBlock(reihe,titel,einheit){
+function abTagesKerzen(reihe,assetId){
+  return tagesKerzen(abImZeitraum(reihe),assetId);
+}
+function abKerzenBlock(reihe,titel,einheit,assetId){
   const W=240,H=100;
-  const k=abTagesKerzen(reihe);
+  const k=abTagesKerzen(reihe,assetId);
   // ⚠ Keine Reihe, kein Chart. Ein leerer Kasten mit Achsen sieht aus wie
   // "der Markt stand still" - er heisst aber "wir haben keine Daten".
   if(k.length<2)return{leer:true,html:`<div class="ab-nodata">No daily series for this window yet.${
@@ -6883,21 +6941,34 @@ function abKerzenBlock(reihe,titel,einheit){
   const spanne=(x1-x0)||1;
   const xOf=d=>((tag(d)-x0)/spanne)*W;
   const bw=Math.max(1,W/Math.max(k.length,(spanne/86400000)*0.72)-(k.length>90?0.3:1.2));
-  const fmt=d=>{try{return new Date(d+'T00:00:00Z').toLocaleDateString('en',{day:'numeric',month:'short'});}catch(e){return d;}};
+  const fmt=d=>{try{return new Date(d+'T00:00:00Z').toLocaleDateString('en',{timeZone:'UTC',day:'numeric',month:'short'});}catch(e){return d;}};
   const zahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):v.toFixed(3);
   let sv='';
   [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
   const pts=[];
   k.forEach((c,i)=>{
     const x=Math.max(0,Math.min(W-bw,xOf(c.d)-bw/2)), mx=x+bw/2;
-    const col=c.c>=c.o?'var(--bias-bull)':'var(--bias-bear)';
+    // Kerzenfarben (Nutzer 2026-09-13, mit zwei Farbflaechen geschickt):
+    // steigend = das Blau, fallend = das Schwarz. Bewusst EIGENE Tokens und
+    // nicht --bias-bull/--bias-bear: Bias ist eine Aussage ueber die
+    // Richtung des Assets, die Kerzenfarbe nur die Richtung des Tages.
+    const col=c.c>=c.o?'var(--cndl-up)':'var(--cndl-dn)';
     const yo=y(c.o),yc=y(c.c);
+    // Docht nur, wenn die Quelle High/Low wirklich mitliefert (c.ohlc) UND
+    // sie ueber den Koerper hinausragen - sonst gaebe es einen Strich, der
+    // nichts Gemessenes darstellt.
+    if(c.ohlc&&(c.h>Math.max(c.o,c.c)||c.l<Math.min(c.o,c.c))){
+      sv+=`<line x1="${mx.toFixed(2)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(2)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+    }
     sv+=`<rect x="${x.toFixed(2)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(2)}" height="${Math.max(0.8,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
     const diff=c.c-c.o;
+    // Nutzer 2026-09-13: "ich will wenn ich drueber hover bei den charts
+    // auch den wochentag sehen".
     pts.push({fx:mx/W,fy:yc/H,col,
-      tip:`<div class="chv-tip-d">${escH(titel)} · ${escH(fmt(c.d))}</div>`
+      tip:`<div class="chv-tip-d">${escH(titel)} · ${escH(tagMitWochentag(c.d))}</div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Close</span><b>${zahl(c.c)}${escH(einheit||'')}</b></div>`
-        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Prev</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
+        +(c.ohlc?`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">High / Low</span><b>${zahl(c.h)} / ${zahl(c.l)}</b></div>`:'')
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">${c.ohlc?'Open':'Prev'}</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${col}">Change</span><b style="color:${col}">${diff>0?'+':''}${zahl(diff)}</b></div>`});
   });
   const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
@@ -6923,20 +6994,24 @@ function abKerzenBlock(reihe,titel,einheit){
 // Zuordnung nicht in den Zeichner wandert. Liefert null, wenn es die Reihe
 // nicht gibt - die Kachel sagt das dann offen, statt eine leere Flaeche zu
 // zeigen (Regel 4).
+// ⚠ quelle = die ID des Assets, dem die REIHE gehoert - nicht die der
+// angezeigten Seite. Davon haengt die Wochenend-Regel ab: auf der
+// BTC-Seite zeigt die Dollar-Kachel den Dollar, und der handelt auch dann
+// nicht am Sonntag, wenn BTC es tut.
 function abKontextReihe(art,assetId){
   const ccy=isNonFx(assetId)?(macroCcyFor(assetId)||'USD'):assetId;
   const zu2=(v)=>Array.isArray(v)?v.map(e=>[e[0],e[1]]):null;
   switch(art){
-    case 'y2':    return{reihe:zu2(bondSeriesPts(ccy,'2Y Bond Yield')),einheit:'%'};
-    case 'y10':   return{reihe:zu2(bondSeriesPts(ccy,'10Y Bond Yield')),einheit:'%'};
-    case 'y2us':  return{reihe:zu2(bondSeriesPts('USD','2Y Bond Yield')),einheit:'%'};
-    case 'y10us': return{reihe:zu2(bondSeriesPts('USD','10Y Bond Yield')),einheit:'%'};
-    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:''};
-    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:''};
-    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:''};
-    case 'ccy':   return{reihe:priceSeriesFor(YIELD_CCY[assetId]||'USD'),einheit:''};
-    case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:''};}
-    default:      return{reihe:null,einheit:''};
+    case 'y2':    return{reihe:zu2(bondSeriesPts(ccy,'2Y Bond Yield')),einheit:'%',quelle:ccy};
+    case 'y10':   return{reihe:zu2(bondSeriesPts(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy};
+    case 'y2us':  return{reihe:zu2(bondSeriesPts('USD','2Y Bond Yield')),einheit:'%',quelle:'USD'};
+    case 'y10us': return{reihe:zu2(bondSeriesPts('USD','10Y Bond Yield')),einheit:'%',quelle:'USD'};
+    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:'',quelle:'USD'};
+    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:'',quelle:'SP500'};
+    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:'',quelle:'NAS'};
+    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:priceSeriesFor(q),einheit:'',quelle:q};}
+    case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:'',quelle:'VIX'};}
+    default:      return{reihe:null,einheit:'',quelle:null};
   }
 }
 function abKontextHtml(c){
@@ -6946,8 +7021,8 @@ function abKontextHtml(c){
     const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
     const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
     const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:'';
-    const {reihe,einheit}=abKontextReihe(a,c.id);
-    const ch=abKerzenBlock(reihe,d.titel,einheit);
+    const {reihe,einheit,quelle}=abKontextReihe(a,c.id);
+    const ch=abKerzenBlock(reihe,d.titel,einheit,quelle);
     if(ch.leer)return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}</div>${ch.html}</div>`;
     const roh=ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu';
@@ -6976,66 +7051,262 @@ function abKontextHtml(c){
   </div>`;
 }
 
-// ── Grafik-Band: COT, Retail, Seasonality (alle Platzhalter) ────────────
-function abGrafikHtml(art,c){
-  if(art==='cot'){
-    const {lang,kurz}=phAnteil(c.id+'|cot');
-    const reihen=['Large Specs','Commercials','Small Specs'].map((n,i)=>{
-      const a=phAnteil(c.id+'|cot'+i);
-      return`<div class="ab-bar-row"><span class="ab-bar-n">${n}</span>
-        <span class="ab-bar-l">${a.lang}%</span>
-        <span class="ab-bar"><span class="ab-bar-in" style="width:${a.lang}%;background:var(--bias-bull)"></span><span class="ab-bar-in" style="width:${a.kurz}%;background:var(--bias-bear)"></span></span>
-        <span class="ab-bar-r">${a.kurz}%</span></div>`;
-    }).join('');
-    // ⚠ Die Tabelle der COT-Karte steht jetzt HIER (Nutzer 2026-09-13: "bei
-    // der cot Karte soll die Tabelle hin"). Die Karte selbst wird nicht mehr
-    // gezeichnet, ihre Indikatoren zaehlen aber weiter im Score - ohne diese
-    // Tabelle waeren sie unsichtbar UND unbedienbar geworden.
-    const cotRi=(getSym().rubrics||[]).findIndex(r=>r&&r.name==='COT Data');
-    const cotRub=cotRi>=0?getSym().rubrics[cotRi]:null;
-    return abTile('COT Positioning',AB_PH,
-      `<div class="ab-big" style="color:${biasCss(lang>=55?'bull':lang<=45?'bear':'neu')}">${lang}% long</div>
-       <div class="ab-bars">${reihen}</div>
-       ${cotRub?`<div class="ab-cottbl">${renderIndsTable(cotRub,cotRi)}</div>`:''}
-       <div class="ab-note">Institutional positioning, weekly from the CFTC.</div>`);
-  }
-  if(art==='retail'){
-    const paare=['EUR/USD','GBP/USD','USD/JPY','USD/CAD','AUD/USD'].map((p,i)=>{
-      const a=phAnteil(c.id+'|rt'+i);
-      return`<div class="ab-bar-row"><span class="ab-bar-n">${p}</span>
-        <span class="ab-bar-l">${a.lang}%</span>
-        <span class="ab-bar"><span class="ab-bar-in" style="width:${a.lang}%;background:var(--bias-bull)"></span><span class="ab-bar-in" style="width:${a.kurz}%;background:var(--bias-bear)"></span></span>
-        <span class="ab-bar-r">${a.kurz}%</span></div>`;
-    }).join('');
-    const {lang}=phAnteil(c.id+'|rt');
-    return abTile('Retail Positioning',AB_PH,
-      `<div class="ab-big" style="color:${biasCss(lang>=60?'bear':lang<=40?'bull':'neu')}">${lang}% long</div>
-       <div class="ab-bars">${paare}</div>
-       <div class="ab-note">Read against the crowd: a one-sided retail book counts the other way.</div>`);
-  }
-  // Seasonality
-  const m=phMonate(c.id+'|seas');
-  const max=Math.max(...m.map(Math.abs))||1;
-  const jetzt=new Date().getMonth();
-  // ⚠ Balkenhoehe als PROZENT der halben Kachelhoehe, nicht in festen Pixeln.
-  // Mit 26px fest sahen die Balken zerrissen aus, sobald die Kachel den Rest
-  // ihrer Spalte fuellt (gemessen: Kachel wuchs auf 277px, die Balken blieben
-  // 26px und klebten oben und unten am Rand). Zwei gleich hohe Haelften mit
-  // der Nulllinie dazwischen: positiv waechst nach oben, negativ nach unten.
-  const balken=m.map((v,i)=>{
-    const pct=(Math.abs(v)/max*100).toFixed(1);
-    const f=biasCss(v>=0?'bull':'bear');
-    return`<span class="ab-sb${i===jetzt?' on':''}" title="${SEAS_MON[i]}: ${v>0?'+':''}${v}%">
-      <span class="ab-sb-up">${v>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
-      <span class="ab-sb-dn">${v<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
-      <span class="ab-sb-l">${SEAS_MON[i][0]}</span></span>`;
-  }).join('');
-  return abTile('Seasonality',AB_PH,
-    `<div class="ab-big" style="color:${biasCss(m[jetzt]>=0?'bull':'bear')}">${m[jetzt]>0?'+':''}${m[jetzt]}% in ${SEAS_MON[jetzt]}</div>
-     <div class="ab-seas">${balken}</div>
-     <div class="ab-note">Average move of this month over the last 16 years.</div>`);
+// ══ GRAFIK-BAND: COT, RETAIL, SEASONALITY - ECHTE DATEN ════════════════
+//
+// Nutzer 2026-09-13: "bau dann auch ueberall jetzt alles fertig also keine
+// platzhalter sondern richtige daten."
+//
+// ⚠ DIE REGEL DABEI BLEIBT REGEL 4. Drei der vierzehn gelisteten Assets
+// haben fuer eine dieser drei Kacheln schlicht keine Quelle (NZD/BTC/DAX
+// ohne Saisonalitaet, OIL/SP500 ohne Retail, Yields ohne COT). Diese
+// Kacheln sagen das jetzt offen, statt die Luecke mit einer plausiblen
+// Zahl zu fuellen - das war der ganze Sinn der PLACEHOLDER-Abzeichen, die
+// hier gerade wegfallen.
+const AB_LEER=(txt)=>`<div class="ab-nodata">${txt}</div>`;
+
+// ── Welcher COT-Kontrakt gehoert zu diesem Asset? ───────────────────────
+// Die CFTC fuehrt Kontrakte, keine Waehrungen - GER100/DAX und die
+// Renditen-Assets haben schlicht keinen. Kein Rateweg ueber macroCcyFor():
+// "Gold hat keinen COT, nimm halt den Dollar" waere eine andere Zahl unter
+// derselben Ueberschrift.
+function abCotId(assetId){
+  return (COT_DATA&&COT_DATA.symbols&&COT_DATA.symbols[assetId])?assetId:null;
 }
 
+// ── Der Verlaufs-Chart aus dem COT-Tab, in Kachelgroesse ────────────────
+// Nutzer 2026-09-13, mit Bildschirmfoto: "denk dran bei cot den graph aus
+// dem anderen bild hinzumachen" - gestapelte Balken (Long + Short
+// Kontrakte) mit der Long-%-Linie darueber.
+//
+// ⚠ BEWUSST NICHT cotHistChart() WIEDERVERWENDET. Der zeichnet 360px hoch
+// mit zwei beschrifteten Achsen und haengt an festen Element-IDs
+// (#cotHistWrap, #cotHoverTip, #cotHoverDot) - also genau EIN Chart pro
+// Seite. Die Kachel ist ein Drittel so hoch und steht neben zwei weiteren
+// Charts mit Hover. Deshalb dieselbe BILDSPRACHE, aber auf dem
+// app-weiten Hover-Mechanismus (chartHoverWrap), der mehrere Charts
+// nebeneinander kann. Die Farben sind die aus dem Bild des Nutzers:
+// Blau = Long, Rot = Short, schwarze Linie = Long %.
+function abCotChart(hist){
+  const W=240,H=100;
+  const h=(hist||[]).filter(e=>e&&isFinite(+e.long)&&isFinite(+e.short)&&(+e.long + +e.short)>0);
+  if(h.length<2)return{leer:true,html:AB_LEER('Not enough COT reports yet — the history builds up with each weekly release.')};
+  const maxStack=Math.max(...h.map(e=>(+e.long)+(+e.short)))*1.08||1;
+  const bw=Math.max(2,(W/h.length)*0.66);
+  const yVal=v=>H-(v/maxStack)*H;
+  const yPct=p=>H-(p/100)*H;
+  let sv=`<line x1="0" y1="${yPct(50).toFixed(1)}" x2="${W}" y2="${yPct(50).toFixed(1)}" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>`;
+  const linie=[],pts=[];
+  h.forEach((e,i)=>{
+    const x=(i+0.5)*(W/h.length)-bw/2, mx=x+bw/2;
+    const L=+e.long,S=+e.short,tot=L+S;
+    const lh=H-yVal(L), sh=H-yVal(S);
+    sv+=`<rect x="${x.toFixed(2)}" y="${(H-lh).toFixed(1)}" width="${bw.toFixed(2)}" height="${lh.toFixed(1)}" fill="${BC.bull}"/>`;
+    sv+=`<rect x="${x.toFixed(2)}" y="${(H-lh-sh).toFixed(1)}" width="${bw.toFixed(2)}" height="${sh.toFixed(1)}" fill="${BC.bear}"/>`;
+    const lp=L/tot*100;
+    linie.push(mx.toFixed(1)+','+yPct(lp).toFixed(1));
+    const m=cotHistRowMetrics(e,h[i-1]||null);
+    pts.push({fx:mx/W,fy:yPct(lp)/H,col:BC.bull,
+      tip:`<div class="chv-tip-d">COT · ${escH(tagMitWochentag(e.date))}</div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${BC.bull}">Long</span><b>${lp.toFixed(1)}% · ${cotNum(L)}</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${BC.bear}">Short</span><b>${(100-lp).toFixed(1)}% · ${cotNum(S)}</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">w/w change</span><b>${m&&m.dNetPct!=null?cotPct(m.dNetPct,true).replace('%','pp'):'–'}</b></div>`});
+  });
+  // Zweimal gezeichnet: die weisse Unterlage haelt die schwarze Linie auch
+  // ueber den dunklen Balken lesbar - dieselbe Loesung wie im COT-Tab.
+  sv+=`<polyline points="${linie.join(' ')}" fill="none" stroke="#fff" stroke-width="3.2" opacity=".5" vector-effect="non-scaling-stroke"/>`;
+  sv+=`<polyline points="${linie.join(' ')}" fill="none" stroke="#000" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+  const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
+  const achse=[h[0].date,h[h.length-1].date].map(d=>{
+    let t;try{t=new Date(d+'T00:00:00Z').toLocaleDateString('en',{timeZone:'UTC',day:'numeric',month:'short'});}catch(e){t=d;}
+    return`<span>${escH(t)}</span>`;
+  }).join('');
+  return{leer:false,berichte:h.length,html:`<div class="ab-plot">
+    <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achse}</div></div>
+    <div class="ab-yax"><span>100%</span><span>50%</span><span>0%</span></div>
+  </div>`};
+}
+
+// ── Retail: die Seite wird auf DAS ASSET gedreht ────────────────────────
+// Nutzer 2026-09-13: "da werden alle Asset Paare aufgelistet oder nur das
+// Asset und das positioning ... zB usd dazu gibt es 5 paare".
+//
+// ⚠ Myfxbook fuehrt PAARE, nicht Beine. "80% long EURUSD" heisst fuer den
+// EURO long und fuer den DOLLAR short - dieselbe Zahl, entgegengesetzte
+// Aussage. Ohne dieses Drehen stuende auf der USD-Seite die Positionierung
+// des Euro. Deshalb: steht die Waehrung hinten im Paar, wird der Anteil
+// gespiegelt (100 - long%), und der angezeigte Name dreht sich mit.
+const AB_FX8=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
+function abRetailZeilen(assetId){
+  const D=SENTIMENT_DATA;
+  const liste=(D&&Array.isArray(D.retail))?D.retail:null;
+  if(!liste||!liste.length)return null;
+  const wert=r=>isFinite(+r.long)?Math.max(0,Math.min(100,+r.long)):null;
+  // Einzel-Asset (Gold, Silber, BTC, Nasdaq ...): genau ein Broker-Symbol.
+  if(!AB_FX8.includes(assetId)){
+    const sym=retailSymFor(assetId);
+    const rec=sym?liste.find(r=>r&&r.sym===sym):null;
+    const L=rec?wert(rec):null;
+    return L==null?[]:[{name:sym,sym,gedreht:false,lang:Math.round(L),kurz:100-Math.round(L)}];
+  }
+  const out=[];
+  liste.forEach(r=>{
+    const s=String(r.sym||'').toUpperCase();
+    if(s.length!==6)return;                      // NAS100/US500 sind keine Paare
+    const basis=s.slice(0,3),quote=s.slice(3);
+    if(!AB_FX8.includes(basis)||!AB_FX8.includes(quote))return;
+    const L=wert(r);if(L==null)return;
+    const vorn=basis===assetId;
+    if(!vorn&&quote!==assetId)return;
+    const lang=Math.round(vorn?L:100-L);
+    // ⚠ Der ANGEZEIGTE Name bleibt der echte Ticker. Der erste Entwurf drehte
+    // ihn mit ("USD/EUR" fuer EURUSD) - das las sich sauber, ist aber ein
+    // Paarname, den es nicht gibt. Stattdessen steht der echte Ticker da und
+    // die Spaltenkoepfe sagen, worauf sich die Prozente beziehen.
+    out.push({name:basis+'/'+quote,sym:s,gedreht:!vorn,lang,kurz:100-lang});
+  });
+  return out.sort((a,b)=>b.lang-a.lang);
+}
+
+// ── Retail-Verlauf: die Long-Quote ueber die Zeit ───────────────────────
+// sentiment_data.json fuehrt unter retailHistory je Broker-Symbol
+// [[Datum, long%, short%], ...]. Die Reihe beginnt erst mit dem ersten
+// veroeffentlichten Stand und waechst mit jedem Lauf - deshalb erst ab vier
+// Punkten gezeichnet. Darunter ist es keine Linie, sondern ein Zickzack aus
+// zwei Messungen, das so aussieht wie ein Verlauf.
+function abRetailVerlauf(sym){
+  const D=SENTIMENT_DATA;
+  const h=(D&&D.retailHistory&&Array.isArray(D.retailHistory[sym]))?D.retailHistory[sym]:null;
+  const r=(h||[]).filter(e=>e&&e[0]&&isFinite(+e[1]));
+  if(r.length<4)return null;
+  const W=240,H=54;
+  const x=i=>(i/(r.length-1))*W;
+  const y=v=>H-2-(Math.max(0,Math.min(100,+v))/100)*(H-4);
+  const pts=[],hp=[];
+  r.forEach((e,i)=>{
+    const L=Math.round(+e[1]);
+    pts.push(x(i).toFixed(1)+','+y(L).toFixed(1));
+    hp.push({fx:x(i)/W,fy:y(L)/H,col:L>=60?BC.bear:L<=40?BC.bull:BC.neu,
+      tip:`<div class="chv-tip-d">${escH(sym)} · ${escH(tagMitWochentag(e[0]))}</div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${BC.bull}">Long</span><b>${L}%</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${BC.bear}">Short</span><b>${100-L}%</b></div>`});
+  });
+  const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <line x1="0" y1="${y(50).toFixed(1)}" x2="${W}" y2="${y(50).toFixed(1)}" stroke="var(--bd2)" stroke-width="1" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>
+    <polyline points="${pts.join(' ')}" fill="none" stroke="${BC.bull}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+  </svg>`;
+  return{punkte:r.length,html:`<div class="ab-rtv">
+    <div class="ab-rtv-t">Long share over time <span>${r.length} readings · 50% line dashed</span></div>
+    ${chartHoverWrap(svg,hp,'height:100%')}</div>`};
+}
+
+// ── Das Grafik-Band ─────────────────────────────────────────────────────
+function abGrafikHtml(art,c){
+  if(art==='cot'){
+    const cotRi=(getSym().rubrics||[]).findIndex(r=>r&&r.name==='COT Data');
+    const cotRub=cotRi>=0?getSym().rubrics[cotRi]:null;
+    // Die Tabelle der COT-Karte steht HIER (Nutzer 2026-09-13: "bei der cot
+    // Karte soll die Tabelle hin"). Die Karte selbst wird nicht mehr
+    // gezeichnet, ihre Indikatoren zaehlen aber weiter im Score - ohne
+    // diese Tabelle waeren sie unsichtbar UND unbedienbar geworden.
+    const tabelle=cotRub?`<div class="ab-cottbl">${renderIndsTable(cotRub,cotRi)}</div>`:'';
+    const id=abCotId(c.id);
+    if(!id)return abTile('COT Positioning','',
+      AB_LEER(`The CFTC publishes futures contracts, and there is none for ${escH(c.name||c.id)}. Covered: the eight FX majors plus Gold, Silver, WTI, BTC, S&amp;P 500 and Nasdaq.`)+tabelle);
+    const s=COT_DATA.symbols[id];
+    const m=cotMetrics(s);
+    if(!m)return abTile('COT Positioning','',AB_LEER('The latest COT report carries no usable long/short figures for this contract.')+tabelle);
+    const ch=abCotChart(s.history);
+    const stand=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
+    // Nutzer 2026-09-13: "ganz unten in der karte steht einfach long: ...
+    // short: ... ww change: ... also bischen anders geschrieben aber so ca."
+    const fuss=`<div class="ab-foot">
+        <span><span class="ab-foot-l">Long</span> <b style="color:${BC.bull}">${m.longPct.toFixed(1)}%</b> <span class="ab-foot-n">${cotNum(m.L)}</span></span>
+        <span><span class="ab-foot-l">Short</span> <b style="color:${BC.bear}">${m.shortPct.toFixed(1)}%</b> <span class="ab-foot-n">${cotNum(m.S)}</span></span>
+        <span><span class="ab-foot-l">w/w change</span> <b style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true).replace('%','pp')}</b></span>
+      </div>`;
+    return abTile('COT Positioning',
+      `<span class="ab-tile-s">as of ${escH(stand)}</span>`,
+      `${ch.html}${fuss}
+       ${tabelle}
+       <div class="ab-note">Large speculators (CFTC Legacy, non-commercial). Blue = long contracts, red = short, black line = long share.${ch.leer?'':` ${ch.berichte} weekly reports.`}</div>`);
+  }
+  if(art==='retail'){
+    const zeilen=abRetailZeilen(c.id);
+    if(zeilen===null)return abTile('Retail Positioning','',
+      AB_LEER('Retail positioning has not loaded yet — it is written hourly into sentiment_data.json.'));
+    if(!zeilen.length)return abTile('Retail Positioning','',
+      AB_LEER(`No retail book for ${escH(c.name||c.id)}. The broker feed carries the FX majors plus Gold, Silver, BTC and Nasdaq — nothing is filled in for the rest.`));
+    const bars=zeilen.map(z=>`<div class="ab-bar-row"><span class="ab-bar-n" title="${escH(z.name)}${z.gedreht?` — the broker quotes ${escH(z.sym)}; the share is flipped so it reads as long ${escH(c.id)}`:''}">${escH(z.name)}${z.gedreht?'<span class="ab-bar-inv" title="flipped from the broker\u2019s quote">\u21c4</span>':''}</span>
+      <span class="ab-bar-l">${z.lang}%</span>
+      <span class="ab-bar"><span class="ab-bar-in" style="width:${z.lang}%;background:${BC.bull}"></span><span class="ab-bar-in" style="width:${z.kurz}%;background:${BC.bear}"></span></span>
+      <span class="ab-bar-r">${z.kurz}%</span></div>`).join('');
+    // ⚠ Ohne diese Kopfzeile steht neben "EUR/USD" die Zahl 63, waehrend der
+    // Broker 37 fuehrt - richtig gerechnet, aber ohne Beschriftung eine Falle.
+    const kopf=`<div class="ab-bar-row ab-bar-hd"><span class="ab-bar-n">Pair</span>
+      <span class="ab-bar-l">long</span><span class="ab-bar"></span><span class="ab-bar-r">short</span></div>`;
+    // Verlauf, wenn der Feed schon einen hat. Bewusst nur fuer EIN Buch
+    // (Gold, Silber, BTC, Nasdaq) - bei einer Waehrung waeren es sieben
+    // Linien in einer Kachel von 240px Breite.
+    const verlauf=zeilen.length===1?abRetailVerlauf(zeilen[0].sym):null;
+    // Der Schnitt ueber die Paare ist das, was der Nutzer als Regel
+    // beschrieben hat ("3/5 Paaren Long ... 5/5 Long"). Hier steht er
+    // vorerst NUR als Anzeige - die Score-Wirkung kommt getrennt, mit
+    // Vorher/Nachher-Tabelle ueber alle Assets.
+    const schnitt=Math.round(zeilen.reduce((a,z)=>a+z.lang,0)/zeilen.length);
+    const einseitig=zeilen.filter(z=>z.lang>=60).length;
+    const kurzSeitig=zeilen.filter(z=>z.lang<=40).length;
+    return abTile('Retail Positioning',
+      `<span class="ab-tile-s">${zeilen.length===1?'1 book':zeilen.length+' pairs'}</span>`,
+      `<div class="ab-big" style="color:${biasCss(schnitt>=60?'bear':schnitt<=40?'bull':'neu')}">${schnitt}% long ${escH(c.id)}</div>
+       <div class="ab-bars">${kopf}${bars}</div>
+       ${verlauf?verlauf.html:''}
+       <div class="ab-foot">
+         <span><span class="ab-foot-l">Crowd long</span> <b>${einseitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">Crowd short</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">Average</span> <b>${schnitt}%</b></span>
+       </div>
+       <div class="ab-note">Broker book, flipped to this asset's side. Read against the crowd: a one-sided retail book counts the other way. Display only — no score effect yet.</div>`);
+  }
+  // ── Seasonality ───────────────────────────────────────────────────────
+  const D=SEASONALITY_DATA;
+  const A=D&&D.assets?D.assets[c.id]:null;
+  if(!A||!Array.isArray(A.months)||!A.months.length)return abTile('Seasonality','',
+    AB_LEER(D&&D.assets
+      ?`No long-run price proxy for ${escH(c.name||c.id)}. Seasonality is computed from 15+ years of ETF history — where there is none, there is no average to show.`
+      :'Seasonality has not loaded yet — it is computed once a day into seasonality_data.json.'));
+  const jetzt=new Date().getMonth()+1;
+  const monate=A.months.slice().sort((a,b)=>a[0]-b[0]);
+  const max=Math.max(...monate.map(m=>Math.abs(+m[1])))||1;
+  const hp=[];
+  const balken=monate.map((mo,i)=>{
+    const[nr,avg,hit,jahre]=mo;
+    const pct=(Math.abs(+avg)/max*100).toFixed(1);
+    const f=biasCss(+avg>=0?'bull':'bear');
+    hp.push({fx:(i+0.5)/12,fy:+avg>=0?0.3:0.7,col:f,
+      tip:`<div class="chv-tip-d">${SEAS_MON[nr-1]} · ${jahre} years</div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Average</span><b style="color:${f}">${+avg>0?'+':''}${(+avg).toFixed(2)}%</b></div>`
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Up in</span><b>${hit}% of years</b></div>`});
+    return`<span class="ab-sb${nr===jetzt?' on':''}">
+      <span class="ab-sb-up">${+avg>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
+      <span class="ab-sb-dn">${+avg<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
+      <span class="ab-sb-l">${SEAS_MON[nr-1][0]}</span></span>`;
+  }).join('');
+  const cur=monate.find(m=>m[0]===jetzt);
+  // ⚠ Durchschnitt UND Trefferquote gehoeren zusammen. OIL im September:
+  // +0,32% im Schnitt, aber nur in 38% der Jahre ueberhaupt gestiegen -
+  // der Schnitt allein haette "Rueckenwind" gesagt, wo keiner ist.
+  const stark=cur&&((+cur[1]>=0&&+cur[2]>=60)||(+cur[1]<0&&+cur[2]<=40));
+  return abTile('Seasonality',
+    `<span class="ab-tile-s">${escH(A.proxy||'')} · ${cur?cur[3]:'–'}y</span>`,
+    `<div class="ab-big" style="color:${cur?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${cur?`${+cur[1]>0?'+':''}${(+cur[1]).toFixed(2)}% in ${SEAS_MON[jetzt-1]}`:'–'}</div>
+     ${chartHoverWrap(`<div class="ab-seas">${balken}</div>`,hp,'flex:1 1 auto;display:flex;min-height:64px')}
+     <div class="ab-foot">
+       <span><span class="ab-foot-l">Up in</span> <b>${cur?cur[2]:'–'}%</b> <span class="ab-foot-n">of years</span></span>
+       <span><span class="ab-foot-l">Sample</span> <b>${cur?cur[3]:'–'}</b> <span class="ab-foot-n">years</span></span>
+       <span><span class="ab-foot-l">Signal</span> <b style="color:${stark?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${stark?'aligned':'mixed'}</b></span>
+     </div>
+     <div class="ab-note">Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}. "Aligned" means average return and hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}.</div>`);
+}
 // ── Notizen-Karte: unbegrenzt, hervorhebbar, sortierbar ─────────────────
 // Nutzer 2026-09-13: "wo man dann ganz einfach eine neue Notiz reinschreiben
 // kann, die automatisch gespeichert wird, aber wo man auch deutlich mehr als
@@ -15420,7 +15691,12 @@ function renderPriceChart(){
   const ttl=document.getElementById('mPriceTitle');
   if(ttl)ttl.textContent=(sym?(sym.name||id):id)+' — price';
   const feed=(typeof PRICE_DATA_FEED!=='undefined'&&PRICE_DATA_FEED)?PRICE_DATA_FEED[id]:null;
-  const all=priceSeriesFor(id);
+  // ⚠ Wochenende raus, bevor IRGENDETWAS gezeichnet wird - nicht erst im
+  // Kerzen-Zweig. Sonst haette dieselbe Seite je nach Modus verschiedene
+  // Tage: Kerzen ohne Samstag, Linie mit. Und die Ereignis-Kaertchen
+  // darunter haengen am selben Index wie der Chart. Krypto behaelt seine
+  // sieben Tage (siehe kerzenWochenendeErlaubt).
+  const all=ohneWochenende(priceSeriesFor(id),id);
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
   const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'Close-to-close bodies. price_data.json delivers daily closes only - there is no open/high/low, so there are deliberately no wicks: they would have to be invented.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
@@ -15449,13 +15725,23 @@ function renderPriceChart(){
   // Anfang der Reihe), bleibt er farblich neutral statt geraten.
   const firstIdx=all.indexOf(use[0]);
   const prevOf=i=>i>0?use[i-1][1]:(firstIdx>0?all[firstIdx-1][1]:null);
-  const dirCol=(v,p)=>p==null?'var(--t3)':(v>=p?BC.bull:BC.bear);
+  // Kerzenfarbe = Richtung des TAGES (Nutzer 2026-09-13: Blau steigend,
+  // Schwarz fallend), nicht die Bias-Farbe des Assets.
+  const dirCol=(v,p)=>p==null?'var(--t3)':(v>=p?'var(--cndl-up)':'var(--cndl-dn)');
   let body='';
   if(priceChartMode==='candle'){
     use.forEach((p,i)=>{
       const pv=prevOf(i),y1=yOf(p[1]),y0=pv==null?y1:yOf(pv);
       const top=Math.min(y0,y1),h=Math.max(1.2,Math.abs(y1-y0));
-      body+=`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2,bw/4).toFixed(1)}" fill="${dirCol(p[1],pv)}"/>`;
+      const col=dirCol(p[1],pv);
+      // Docht nur bei echtem High/Low in der Reihe ([Datum,Close,O,H,L]) -
+      // sonst waere er erfunden (Regel 4). Siehe tagesKerzen().
+      const o=isFinite(Number(p[2]))?Number(p[2]):pv;
+      const hi=Number(p[3]),lo=Number(p[4]);
+      if(isFinite(hi)&&isFinite(lo)&&o!=null&&(hi>Math.max(o,p[1])||lo<Math.min(o,p[1]))){
+        body+=`<line x1="${xOf(i).toFixed(1)}" y1="${yOf(hi).toFixed(1)}" x2="${xOf(i).toFixed(1)}" y2="${yOf(lo).toFixed(1)}" stroke="${col}" stroke-width="1.2"/>`;
+      }
+      body+=`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2,bw/4).toFixed(1)}" fill="${col}"/>`;
     });
   }else{
     let d='';
@@ -19492,6 +19778,13 @@ function applyScoreHistServerFeed(){
   autoFetchPriceData();
   autoFetchNewsData();
   autoFetchRiskIndex();
+  // ⚠ Saisonalitaet wurde bis 2026-09-13 NUR beim Oeffnen des Seasonality-
+  // Tabs geladen. Seit die Asset-Seite eine eigene Seasonality-Kachel hat,
+  // stand die dort auf einem frisch geladenen Geraet leer da, obwohl die
+  // Daten existieren - die Kachel haette "keine Daten" gemeldet, was
+  // schlicht falsch gewesen waere. Kein Score-Einfluss, deshalb bewusst
+  // NICHT in bootFetchScoreFeeds(), sondern wie der Preis-Feed daneben.
+  fetchSeasonalityData().then(()=>{if(SEASONALITY_DATA)rerender();});
 })();
 
 // ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
@@ -19533,9 +19826,23 @@ updNetStatus();
 // Nav-Sidebar klappt automatisch auf Icon-Breite ein, sobald im Inhalt
 // rechts interagiert wird (Scrollen, Tippen/Klicken) - und wieder aus,
 // sobald die Sidebar selbst benutzt wird (Nutzer-Wunsch 2026-08-21).
-// Reine Desktop-Bequemlichkeit: unter der 760px-Grenze ist die Sidebar
-// ohnehin dauerhaft auf Icon-Breite (siehe CSS), die Klasse dort also
-// wirkungslos, aber harmlos.
+//
+// ⚠ NUR NOCH AUF TOUCH-GERAETEN (Nutzer 2026-09-13: "mach noch das man links
+// die leiste wo man das menue hat wo man in den kategorien auswaehlen kann
+// das die am pc dauerhaft da ist"). Am PC bleibt die Leiste offen stehen -
+// dort ist Platz genug, und das Ein-/Ausfahren beim Scrollen war eine
+// staendige Bewegung am Bildrand. Auf Telefon/Tablet bleibt das
+// Einklappen: dort ist die Breite echter Mangel, und unter 760px haengt
+// die Icon-Breite ohnehin an einer Media Query.
+//
+// "PC" = praeziser Zeiger, der hovern kann, UND mindestens 760px - dieselbe
+// Pruefung, die weiter unten schon fuer das Klick-Schlucken benutzt wird
+// (hover:hover + pointer:fine, statt pointer:coarse oder ontouchstart:
+// beide sind bei Touch-Displays mit angeschlossener Maus falsch).
+function navBleibtOffen(){
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    && window.innerWidth>=760;
+}
 (function(){
   const pageArea=document.getElementById('pageArea');
   const nav=document.getElementById('navSidebar');
@@ -19574,7 +19881,12 @@ updNetStatus();
   // auf Geraetewechsel) - Maus an-/absteckend am iPad zur Laufzeit ist ein
   // vernachlaessigbarer Randfall.
   const hatMausHover=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  // ⚠ EINE Stelle fuer "die Leiste geht zu" - alle Ausloeser (Scrollen,
+  // Zeigerdruck im Inhalt) laufen hier durch. Die Desktop-Ausnahme steht
+  // deshalb genau hier und nicht an jedem Ausloeser einzeln; sonst lebt die
+  // Regel in drei Kopien und der naechste Ausloeser vergisst sie.
   const collapse=()=>{
+    if(navBleibtOffen())return;
     if(overNav)return;
     nav.classList.add('nav-collapsed');ebenAusgeklappt=false;
     syncNavExpanded();   // raeumt die Inline-Hoehen ab, siehe dort
@@ -19642,6 +19954,11 @@ updNetStatus();
       expand();ebenAusgeklappt=false;
     }
   },true);
+  // Wer das Fenster von schmal auf breit zieht, landet sonst am PC mit einer
+  // eingeklappten Leiste, die von selbst nie wieder aufgeht - collapse()
+  // greift dort ja nicht mehr, expand() wird aber auch nicht mehr gerufen.
+  window.addEventListener('resize',()=>{if(navBleibtOffen())expand();});
+  if(navBleibtOffen())expand();
 })();
 
 // ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) ──────────────────────────
@@ -19736,6 +20053,10 @@ Object.assign(window,{
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
+  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
+  // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
+  tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
+  abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,

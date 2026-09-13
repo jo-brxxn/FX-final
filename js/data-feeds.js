@@ -497,11 +497,26 @@ function computeFxMovers(){
 }
 // Zeitreihe eines Assets in "eigener Richtung" (invert angewandt) - das ist
 // direkt die Linie fuer den Einzel-Asset-Chart (Waehrung ODER Non-FX-Asset).
+// Ein Eintrag ist [Datum, Close] oder - seit 2026-09-13 fuer jeden neu
+// geschriebenen Tag - [Datum, Close, Open, High, Low]. Die vier Zusatzfelder
+// sind das, was die Kerzen ihre Dochte zeichnen laesst (siehe tagesKerzen in
+// main.js); alles andere liest weiterhin nur e[1] und merkt nichts davon.
 function priceSeriesFor(id){
   const p=PRICE_DATA_FEED&&PRICE_DATA_FEED[id];
   if(!p||!Array.isArray(p.series)||!p.series.length)return null;
   if(!p.invert)return p.series;
-  return p.series.map(e=>[e[0],e[1]?1/e[1]:null]).filter(e=>e[1]!=null);
+  // ⚠ BEIM KEHRWERT TAUSCHEN HOCH UND TIEF DIE ROLLE. USD/JPY steht als
+  // "invert" in der Datei, weil der Kurs FAELLT, wenn der Yen staerker wird.
+  // Der Tageshoechstkurs von USD/JPY ist also der TIEFSTE Yen-Kurs des Tages.
+  // Ohne dieses Tauschen zeichnete die Kerze ein Hoch unter ihrem eigenen
+  // Koerper - ein Docht, der nach innen zeigt.
+  return p.series.map(e=>{
+    if(!e[1])return null;
+    const c=1/e[1];
+    const o=Number(e[2]),h=Number(e[3]),l=Number(e[4]);
+    if(isFinite(o)&&isFinite(h)&&isFinite(l)&&o&&h&&l)return[e[0],c,1/o,1/l,1/h];
+    return[e[0],c];
+  }).filter(Boolean);
 }
 // Synthetischer Cross-Kurs zweier Waehrungen aus ihren (nicht invertierten)
 // USD-Kursen: base_in_usd / quote_in_usd (exakt, da beide auf denselben
