@@ -12997,3 +12997,43 @@ einen JSON-**String** (die erste Fassung kodierte ihn doppelt und fand
 `research.notes` nicht), und der Konsolen-Mitschnitt zählte die vom Proxy
 geblockten externen Ressourcen als Befund. Dritter Fall in zwei Tagen, in dem
 ein roter Lauf am Versuchsaufbau lag und nicht am Code.
+
+### 2026-09-13 — Die drei Indikator-Karten behalten ihre Form (VERSION-CHECK-503)
+
+**Nutzer:** *„Die drei Karten mit den Indikatoren sollen von der Form so
+bleiben wie vorher damit das geht mach schriftgrösen kleiner"*.
+
+**Gemessen vorher** (EUR, 1500 px Schirm): Karte im Dreier-Raster **422 px**
+breit, **28 von 43** Textelementen umgebrochen, Indikatorzeilen **33–51 px**
+statt einzeilig, Karte **565 px** hoch.
+
+**Die Ursache war nicht die Schriftgröße allein.** Die schmalen Stufen der
+Tabelle **gibt es längst** — sie hängen nur an `@media(max-width)`, also am
+**Bildschirm**. Bei 1500 px Schirm und 422 px Karte feuern sie nie, obwohl
+die Tabelle genauso schmal ist wie auf einem Telefon. Dieselben Stufen hängen
+jetzt zusätzlich als **`@container`** an der Kartenbreite.
+
+**Drei Messungen, drei Korrekturen:**
+
+1. **Erster Versuch wirkungslos.** Die `@container`-Regeln standen weiter
+   oben in der Datei — gleiche Spezifität wie `.ind-table`, also entscheidet
+   die Reihenfolge, und die Basisregel gewann. Gemessen: Schriften wurden
+   kleiner, die Tabellenstufe griff nicht (11 px statt 10 px). Jetzt stehen
+   sie direkt hinter den `@media`-Fassungen.
+2. **Die Wertspalten brachen gar nicht um.** Sie stehen auf `nowrap` und
+   erben nur die Zeilenhöhe — meine erste Auswertung hat sie fälschlich als
+   umgebrochen gezählt. Umgebrochen ist der **Name**: 88 px Spalte für
+   „CPI (Headline) y/y" samt Bedienknopf, während den Wertspalten **68,6 px**
+   zur Verfügung standen, wo „3.3%" bei 10 px rund **22 px** braucht.
+   → Breite umgeschichtet: **40 % Name** statt 26, dafür 13 % je Wertspalte.
+3. **Die Tabelle hat sechs Spalten**, nicht fünf (Name, Actual, Forecast,
+   Previous, Next, Trend) — die Telefon-Fassung deckte nur fünf ab.
+
+**Schriftgrößen als Stufe, nicht als freier Wert:** Die acht Tokens laufen im
+Karten-Band eine Stufe tiefer (30-24-17-15-13-12-11-10 → 24-17-15-13-12-11-10-10).
+Damit schrumpft alles gleichmäßig, ohne dass irgendwo eine Größe **neben** der
+Skala entsteht. 10 px ist der Boden.
+
+**Nachgemessen:** Zeilen einheitlich **25–26 px** (vorher 33–51), Karte
+**411 px** statt 565, Name einzeilig, nichts abgeschnitten, 390 px weiterhin
+eine Spalte ohne Querscrollen.
