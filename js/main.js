@@ -2,6 +2,8 @@
 import {BC,BL,FX,FX_FLAG,aiStar,aiStars,AI_EU_STARS,AI_UNION_JACK,AI_MAPLE,AI_FLAGS,YIELD_CCY,AI_SYMBOLS,AI_BOND_BADGE,aiIndex,AI_INDEX_ACCENT} from './constants.js';
 import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES,ASSET_BEHAVIOR_SUBTOPICS} from './asset-notes-seed.js';
 import {BT_REASON_SEED} from './backtest-seed.js';
+// Aufbau der Asset-Seite: WO was steht, liegt bewusst dort und nicht hier.
+import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor,phKerzen,phAnteil,phMonate} from './assetlayout.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -6571,6 +6573,258 @@ function assetNotesFoldersHtml(c){
     <div class="anf-main">${researchNotesPanelHtml(c.id,assetNoteFid)}</div>
   </div>`;
 }
+// ══ NEUE ASSET-SEITE (Layout-Umbau 2026-09-13) ═════════════════════════
+//
+// Nutzer-Wunsch: "Wir haben schon diese Quick-Links, aber irgendwie vergisst
+// man, selbst wenn man kurz davor auf diesem Quick-Link war, was wirklich
+// passiert ist und wie das aussieht." Die Antwort darauf ist, das Wichtigste
+// AN ORT UND STELLE zu zeigen statt wegzunavigieren.
+//
+// Die Anordnung steht komplett in js/assetlayout.js - hier stehen nur die
+// Zeichner. Wer die Reihenfolge aendern will, aendert dort ein Array.
+//
+// ⚠ Stand heute sind COT, Retail, Seasonality und alle Kontext-Charts
+// PLATZHALTER und als solche sichtbar gekennzeichnet. Das ist ausdruecklich
+// so bestellt (Nutzer: "Erst wenn ich dir hinterher das GO gebe") und
+// entspricht Regel 4: erfundene Zahlen duerfen nie wie echte aussehen.
+const AB_PH=`<span class="ab-ph" title="Placeholder — this tile is not wired to live data yet. The numbers are generated, not measured.">PLACEHOLDER</span>`;
+
+function abTile(titel,zusatz,inhalt,extra){
+  return`<div class="ab-tile${extra||''}">
+    <div class="ab-tile-hd"><span class="ab-tile-t">${titel}</span>${zusatz||''}</div>
+    <div class="ab-tile-bd">${inhalt}</div>
+  </div>`;
+}
+// Ein Wort in Bias-Farbe - fuer die Kopfzeilen der Yield-Charts.
+// Nutzer 2026-09-13: "Yields Label immer passend und dann in bias Farbe."
+function abBiasWort(b){
+  return`<span class="ab-bias" style="color:${biasCss(b)}">${b==='bull'?'Bullish':b==='bear'?'Bearish':'Neutral'}</span>`;
+}
+// ⚠ Welche Kontext-Kacheln sich fuer das angezeigte Asset UMDREHEN.
+// Steigende Renditen und ein starker Dollar sind fuer eine WAEHRUNG
+// tendenziell bullish - fuer Gold, Oel und Krypto das Gegenteil. Stuende auf
+// der Gold-Seite ueber den US-Renditen "Bullish", weil die Renditen steigen,
+// waere das fuer Gold die falsche Aussage.
+const AB_INVERS_KLASSEN=['metal','energy','crypto'];
+const AB_INVERS_ARTEN=['y2','y10','y2us','y10us','dxy'];
+function abDreht(art,klasse){
+  return AB_INVERS_ARTEN.includes(art)&&AB_INVERS_KLASSEN.includes(klasse);
+}
+/** Richtung einer Kontext-Kachel aus Sicht des angezeigten Assets. */
+function yieldBiasFor(art,klasse,roh){
+  if(roh!=='bull'&&roh!=='bear')return'neu';
+  return abDreht(art,klasse)?(roh==='bull'?'bear':'bull'):roh;
+}
+
+// ── Kerzen-Chart (Platzhalter) ──────────────────────────────────────────
+function abKerzenSvg(schluessel,w,h){
+  const k=phKerzen(schluessel);
+  const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
+  const sp=(hi-lo)||1;
+  const y=v=>h-4-((v-lo)/sp)*(h-8);
+  const bw=Math.max(2,(w-8)/k.length-1.6);
+  let s='';
+  k.forEach((c,i)=>{
+    const x=4+i*((w-8)/k.length), mx=x+bw/2;
+    const auf=c.c>=c.o, col=auf?'var(--bias-bull)':'var(--bias-bear)';
+    const yo=y(c.o),yc=y(c.c);
+    s+=`<line x1="${mx.toFixed(1)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(1)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1"/>`;
+    s+=`<rect x="${x.toFixed(1)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
+  });
+  const letzte=k[k.length-1],erste=k[0];
+  const pct=((letzte.c-erste.c)/erste.c*100);
+  return{svg:`<svg class="ab-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${s}</svg>`,pct};
+}
+
+// ── Kontext-Band ────────────────────────────────────────────────────────
+function abKontextHtml(c){
+  const arten=assetContextFor(c.id,assetCls(c.id));
+  const kacheln=arten.map(a=>{
+    const d=KONTEXT_ART[a];if(!d)return'';
+    // '#YIELD' meint die Rendite der EIGENEN Waehrung des Assets.
+    const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
+    const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
+    const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:' title="Not wired to live data yet"';
+    if(d.art==='rate'){
+      return`<button class="ab-k ab-k-rate"${klick}>
+        <div class="ab-k-t">${escH(d.titel)}${AB_PH}</div>
+        <div class="ab-k-v">4.25<span class="ab-k-u">%</span></div>
+        <div class="ab-k-s">unchanged since Jul</div>
+      </button>`;
+    }
+    const {svg,pct}=abKerzenSvg(c.id+'|'+a,240,52);
+    // Die Richtung ist aus Sicht DIESES Assets zu lesen: steigende Renditen
+    // sind fuer eine Waehrung tendenziell bullish, fuer Gold das Gegenteil.
+    const roh=pct>0.15?'bull':pct<-0.15?'bear':'neu';
+    const dreht=abDreht(a,assetCls(c.id));
+    const b=yieldBiasFor(a,assetCls(c.id),roh);
+    return`<button class="ab-k"${klick}>
+      <div class="ab-k-t">${escH(d.titel)}${abBiasWort(b)}${AB_PH}</div>
+      ${svg}
+      <div class="ab-k-s" style="color:${biasCss(roh)}">${pct>0?'+':''}${pct.toFixed(2)}%${dreht?' · inverse for this asset':''}</div>
+    </button>`;
+  }).join('');
+  return`<div class="ab-ktile">
+    <div class="ab-tile-hd"><span class="ab-tile-t">Context</span>
+      <span class="ab-tile-s">What else moves this asset — tap a tile to open it</span></div>
+    <div class="ab-kgrid">${kacheln}</div>
+  </div>`;
+}
+
+// ── Grafik-Band: COT, Retail, Seasonality (alle Platzhalter) ────────────
+function abGrafikHtml(art,c){
+  if(art==='cot'){
+    const {lang,kurz}=phAnteil(c.id+'|cot');
+    const reihen=['Large Specs','Commercials','Small Specs'].map((n,i)=>{
+      const a=phAnteil(c.id+'|cot'+i);
+      return`<div class="ab-bar-row"><span class="ab-bar-n">${n}</span>
+        <span class="ab-bar-l">${a.lang}%</span>
+        <span class="ab-bar"><span class="ab-bar-in" style="width:${a.lang}%;background:var(--bias-bull)"></span><span class="ab-bar-in" style="width:${a.kurz}%;background:var(--bias-bear)"></span></span>
+        <span class="ab-bar-r">${a.kurz}%</span></div>`;
+    }).join('');
+    return abTile('COT Positioning',AB_PH,
+      `<div class="ab-big" style="color:${biasCss(lang>=55?'bull':lang<=45?'bear':'neu')}">${lang}% long</div>
+       <div class="ab-bars">${reihen}</div>
+       <div class="ab-note">Institutional positioning, weekly from the CFTC.</div>`);
+  }
+  if(art==='retail'){
+    const paare=['EUR/USD','GBP/USD','USD/JPY','USD/CAD','AUD/USD'].map((p,i)=>{
+      const a=phAnteil(c.id+'|rt'+i);
+      return`<div class="ab-bar-row"><span class="ab-bar-n">${p}</span>
+        <span class="ab-bar-l">${a.lang}%</span>
+        <span class="ab-bar"><span class="ab-bar-in" style="width:${a.lang}%;background:var(--bias-bull)"></span><span class="ab-bar-in" style="width:${a.kurz}%;background:var(--bias-bear)"></span></span>
+        <span class="ab-bar-r">${a.kurz}%</span></div>`;
+    }).join('');
+    const {lang}=phAnteil(c.id+'|rt');
+    return abTile('Retail Positioning',AB_PH,
+      `<div class="ab-big" style="color:${biasCss(lang>=60?'bear':lang<=40?'bull':'neu')}">${lang}% long</div>
+       <div class="ab-bars">${paare}</div>
+       <div class="ab-note">Read against the crowd: a one-sided retail book counts the other way.</div>`);
+  }
+  // Seasonality
+  const m=phMonate(c.id+'|seas');
+  const max=Math.max(...m.map(Math.abs))||1;
+  const jetzt=new Date().getMonth();
+  const balken=m.map((v,i)=>{
+    const hh=Math.abs(v)/max*26;
+    return`<span class="ab-sb${i===jetzt?' on':''}" title="${SEAS_MON[i]}: ${v>0?'+':''}${v}%">
+      <span class="ab-sb-b" style="height:${hh.toFixed(1)}px;background:${biasCss(v>=0?'bull':'bear')};${v>=0?'margin-top:auto':'margin-bottom:auto'}"></span>
+      <span class="ab-sb-l">${SEAS_MON[i][0]}</span></span>`;
+  }).join('');
+  return abTile('Seasonality',AB_PH,
+    `<div class="ab-big" style="color:${biasCss(m[jetzt]>=0?'bull':'bear')}">${m[jetzt]>0?'+':''}${m[jetzt]}% in ${SEAS_MON[jetzt]}</div>
+     <div class="ab-seas">${balken}</div>
+     <div class="ab-note">Average move of this month over the last 16 years.</div>`);
+}
+
+// ── Notizen-Karte: unbegrenzt, hervorhebbar, sortierbar ─────────────────
+// Nutzer 2026-09-13: "wo man dann ganz einfach eine neue Notiz reinschreiben
+// kann, die automatisch gespeichert wird, aber wo man auch deutlich mehr als
+// bis zu drei Notizen anzeigen kann, also unendlich viele ... Man soll sie
+// auch markieren koennen und hoch- oder runter in der Reihenfolge
+// verschieben koennen."
+//
+// ⚠ Reihenfolge und Hervorhebung sind persistenter Zustand und haengen
+// deshalb als Felder AM NOTIZ-OBJEKT (n.ord, n.hl) - damit liegen sie
+// automatisch im bestehenden Cross-Device-Sync von research.notes, genau wie
+// n.fav und n.pin. Regel 1 ohne zweite Speicherform.
+function abNotizen(assetId){
+  return resNotes().filter(n=>n&&resNoteAssetIds(n).includes(assetId))
+    .sort((a,b)=>{
+      const ao=typeof a.ord==='number'?a.ord:1e9, bo=typeof b.ord==='number'?b.ord:1e9;
+      if(ao!==bo)return ao-bo;
+      return String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||''));
+    });
+}
+function abNotesHtml(c){
+  const list=abNotizen(c.id);
+  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="border-left:3px solid ${biasCss(n.bias||'neu')}">
+      <button class="ab-nt-hl${n.hl?' on':''}" onclick="abNoteHl('${escJH(n.id)}')" title="${n.hl?'Remove highlight':'Mark as important'}">${n.hl?'★':'☆'}</button>
+      <button class="ab-nt-tx" onclick="openResNote('${escJH(n.id)}')" title="Open this note">
+        <span class="ab-nt-ti">${escH(n.title||'Untitled note')}</span>
+        ${n.body?`<span class="ab-nt-bd">${escH(n.body.replace(/\s+/g,' ').slice(0,90))}</span>`:''}
+      </button>
+      <span class="ab-nt-mv">
+        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',-1)" ${i===0?'disabled':''} title="Move up">▲</button>
+        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',1)" ${i===list.length-1?'disabled':''} title="Move down">▼</button>
+      </span>
+    </div>`).join('')||`<div class="ab-nt-empty">No notes on ${escH(c.name)} yet. Write one above — it saves as you go.</div>`;
+  return`<div class="ab-ntile">
+    <div class="ab-tile-hd"><span class="ab-tile-t">Notes</span><span class="ab-tile-s">${list.length}</span>
+      <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
+    <div class="ab-nt-add">
+      <input class="finp" id="abNoteInp" placeholder="New note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}')">
+      <button class="btn g" onclick="abNoteAdd('${escJH(c.id)}')">＋</button>
+    </div>
+    <div class="ab-nt-list">${zeilen}</div>
+  </div>`;
+}
+function abNoteAdd(assetId){
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6).
+  try{
+    const inp=document.getElementById('abNoteInp');
+    const txt=(inp&&inp.value||'').trim();
+    if(!txt)return;
+    const fid=researchGenFidFor(assetId);
+    const jetzt=new Date().toISOString();
+    pushU();
+    // ord kleiner als alles Vorhandene: neue Notizen stehen oben.
+    const min=Math.min(0,...abNotizen(assetId).map(n=>typeof n.ord==='number'?n.ord:0));
+    research.notes.push({id:uid(),fids:[fid].filter(Boolean),
+      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:false,hl:false,
+      ord:min-1,ts:jetzt,up:jetzt,bias:'neu',asset:fid?'':assetId});
+    if(inp)inp.value='';
+    save();rerenderNotesHost();
+  }catch(e){
+    alert('The note could not be saved: '+(e&&e.message||e)+'\nYour text is still in the box.');
+  }
+}
+function abNoteHl(id){
+  try{
+    const n=resNotes().find(x=>x.id===id);if(!n)return;
+    pushU();n.hl=!n.hl;n.up=new Date().toISOString();save();rerenderNotesHost();
+  }catch(e){alert('Could not change the note: '+(e&&e.message||e));}
+}
+function abNoteMove(id,assetId,richtung){
+  try{
+    const list=abNotizen(assetId);
+    const i=list.findIndex(n=>n.id===id);
+    const j=i+richtung;
+    if(i<0||j<0||j>=list.length)return;
+    pushU();
+    // Erst durchnummerieren, dann tauschen - sonst haengt das Ergebnis davon
+    // ab, ob die Notizen ueberhaupt schon ein ord hatten.
+    list.forEach((n,k)=>{n.ord=k;});
+    list[i].ord=j;list[j].ord=i;
+    save();rerenderNotesHost();
+  }catch(e){alert('Could not move the note: '+(e&&e.message||e));}
+}
+
+function renderAssetBoard(c){
+  const rubs=c.rubrics||[];
+  const idx=n=>rubs.findIndex(r=>r&&r.name===n);
+  const karten=ASSET_CARDS.map(n=>{const i=idx(n);
+    return i<0?'':`<div class="ab-col">${renderRub(rubs[i],i,rubs.length)}</div>`;}).join('');
+  const grafiken=ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('');
+  // ⚠ Die restlichen Karten sind NICHT geloescht - ihre Indikatoren zaehlen
+  // weiter im Score. Sie stehen nur nicht mehr im Weg. Ohne diesen Schalter
+  // waeren sie unerreichbar, und damit auch nicht mehr korrigierbar.
+  const rest=rubs.map((r,i)=>({r,i})).filter(x=>!ASSET_CARDS.includes(x.r.name));
+  const restHtml=abRestOpen
+    ?`<div class="ab-rest">${masonryHTML(rest,x=>renderRub(x.r,x.i,rubs.length))}
+       <button onclick="addRub()" class="btn g" style="width:100%;padding:8px;margin-top:8px">＋ Add Rubric</button></div>`
+    :'';
+  return`<div class="ab-board">
+    <div class="ab-cards">${karten}</div>
+    <div class="ab-graphs">${grafiken}</div>
+    <div class="ab-lower">${abKontextHtml(c)}${abNotesHtml(c)}</div>
+    <button class="ab-rest-sw" onclick="toggleAbRest()">${abRestOpen?'▾ Hide':'▸ Show'} the other ${rest.length} card${rest.length===1?'':'s'} (still counted in the score)</button>
+    ${restHtml}
+  </div>`;
+}
+let abRestOpen=false;
+function toggleAbRest(){abRestOpen=!abRestOpen;renderDetail();}
+
 function renderSpecTab(c){
   const rubs=c.rubrics||[];
   // Notes: Ordner + Notizen wie im Research-Terminal. Die aeltere
@@ -6578,11 +6832,12 @@ function renderSpecTab(c){
   // Inhalt wurde per migrateLegacyAssetNotesIntoResearch() vollstaendig als
   // Notizen uebernommen, nichts geht verloren.
   if(curSub==='notes')return assetQuickRowHtml(c)+assetNotesFoldersHtml(c);
+  // Neuer Aufbau (2026-09-13): drei Karten, Grafik-Band, Kontext + Notizen.
+  // Die Overview-Kachelreihe und die Masonry ueber ALLE Rubriken sind damit
+  // weg - die Uebersicht leistet jetzt das Board selbst.
   return`${assetQuickRowHtml(c)}
-  ${renderOverviewCard(rubs)}
-  ${masonryHTML(rubs,(rub,ri)=>renderRub(rub,ri,rubs.length))}
-  ${newsAssetSectionHtml(c)}
-  <button onclick="addRub()" class="btn g" style="width:100%;padding:8px">＋ Add Rubric</button>`;
+  ${renderAssetBoard(c)}
+  ${newsAssetSectionHtml(c)}`;
 }
 // Kursperformance des Assets ueber die vier Standardfenster. Die Assets-Seite
 // zeigte bisher NUR den Score - was der Kurs tatsaechlich gemacht hat, musste
@@ -19081,6 +19336,8 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
+  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,toggleAbRest,abKontextHtml,abGrafikHtml,abNotesHtml,
+  abBiasWort,abDreht,yieldBiasFor,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,

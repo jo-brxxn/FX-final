@@ -427,6 +427,44 @@ const MODE = process.argv[2] || 'normalized';
     if(grenzenFalsch)add('histTagsComparable: echte Modellgrenze in der Historie als vergleichbar eingestuft',{faelle:grenzenFalsch,von:grenzenGeprueft});
     ok.modellGrenzenGeprueft=grenzenGeprueft;
   }
+  // ── H2) Richtung der Kontext-Kacheln auf der Asset-Seite ───────
+  // Nutzer 2026-09-13: "Yields Label immer passend und dann in bias Farbe."
+  // ⚠ "Passend" heisst: AUS SICHT DES ANGEZEIGTEN ASSETS. Steigende
+  // Renditen und ein starker Dollar sind fuer eine Waehrung tendenziell
+  // bullish, fuer Gold, Oel und Krypto das Gegenteil. Stuende auf der
+  // Gold-Seite "Bullish", weil die US-Renditen steigen, waere das die
+  // falsche Aussage - und zwar eine, die man nicht bemerkt, weil sie
+  // plausibel aussieht. Genau deshalb steht die Drehung in einer eigenen
+  // Funktion und wird hier festgenagelt.
+  if(typeof yieldBiasFor==='function'){
+    const faelle=[
+      // [Kachel, Asset-Klasse, Rohrichtung, erwartet]
+      ['y10us','metal','bull','bear'],   // Gold: steigende Renditen = Gegenwind
+      ['y10us','metal','bear','bull'],
+      ['dxy','metal','bull','bear'],     // starker Dollar = Gegenwind
+      ['y2','fx','bull','bull'],         // Waehrung: unveraendert
+      ['y10','fx','bear','bear'],
+      ['dxy','energy','bull','bear'],
+      ['y10us','crypto','bull','bear'],
+      ['y10us','index','bull','bull'],   // Indizes drehen NICHT
+      ['cb','metal','bull','bull'],      // der Leitzins ist keine Chart-Kachel
+      ['y10us','metal','neu','neu'],     // ohne Richtung bleibt es neutral
+    ];
+    faelle.forEach(([art,kl,roh,soll])=>{
+      const ist=yieldBiasFor(art,kl,roh);
+      if(ist!==soll)add('Kontext-Kachel zeigt die falsche Richtung',{art,klasse:kl,roh,soll,ist});
+    });
+    ok.kontextRichtungGeprueft=faelle.length;
+    // Das Wort selbst muss die Bias-VARIABLE benutzen, nicht einen festen
+    // Farbwert - sonst ist es auf den dunklen Vorlagen wieder unlesbar
+    // (gemessen 2026-09-12: 1,69 bis 2,66:1, alle unter WCAG AA).
+    if(typeof abBiasWort==='function'){
+      ['bull','bear','neu'].forEach(b=>{
+        const h=abBiasWort(b);
+        if(!h.includes('var(--bias-'+b+')'))add('Bias-Wort ohne Design-Token',{bias:b,html:String(h).slice(0,80)});
+      });
+    }
+  }
   // ── H) NaN/undefined in irgendeinem Score ──────────────────────
   syms.forEach(s=>{[symScore(s),symScoreCmp(s)].forEach((v,i)=>{
     if(!isFinite(v))add('Score nicht endlich',{sym:s.id,welcher:i?'cmp':'raw',v:String(v)});});});

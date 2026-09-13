@@ -12883,3 +12883,117 @@ am Versuchsaufbau liegen.
 Checkout** — `news_data.json` 30,3 h, `seasonality_data.json` 34,8 h. Nach
 `git pull`: beide frisch. Das ist der zweite Fall in zwei Tagen; der Hinweis
 „zuerst git pull" steht deshalb zu Recht an erster Stelle des Wächtertextes.
+
+---
+
+## 2026-09-13 — Asset-Seite neu aufgebaut, Schritt 1: Layout mit Platzhaltern (VERSION-CHECK-502)
+
+**Anlass (Nutzer):** *„Wir haben schon diese Quick-Links, aber irgendwie
+vergisst man, selbst wenn man kurz davor auf diesem Quick-Link war, was
+wirklich passiert ist und wie das aussieht."* Die Antwort darauf ist, das
+Wichtigste **an Ort und Stelle** zu zeigen statt wegzunavigieren.
+
+### Aufbau
+
+```
+Minikalender (unverändert)
+┌ Inflation ──────┬ Labour Market ──┬ Economic Growth ─┐
+├ COT Positioning ┼ Retail Position.┼ Seasonality ─────┤   spaltentreu
+├ Kontext (Charts, klickbar) ───────┼ Notizen ─────────┤
+```
+
+Die Mitte des Grafik-Bands war offen (*„Unter Labour market das was passt"*)
+— dort steht **Retail**, damit das Band eine Logik hat, die man sich merkt:
+**institutionell · privat · saisonal**.
+
+### Entscheidungen des Nutzers, umgesetzt
+
+| Punkt | Umsetzung |
+|---|---|
+| 2Y/10Y Spread | fällt weg |
+| Interest Rates | Karte weg, **nur der Leitzins** als Kontext-Kachel |
+| Yields-Label | Wort in Bias-Farbe, **aus Sicht des gezeigten Assets** |
+| Notizen | unbegrenzt, ★ hervorheben, ▲▼ verschieben, direkt eintippen |
+| Notizen-Platz | rechts neben dem Kontext-Band |
+
+### Kontext-Band je Asset-Klasse
+
+| Klasse | Kacheln |
+|---|---|
+| Metall (GOLD, SILVER) | US 2Y · US 10Y · Dollar |
+| Währung | eigener Leitzins · eigene 2Y · eigene 10Y · Dollar |
+| USD | Leitzins · 2Y · 10Y · S&P 500 |
+| Energie | Dollar · US 10Y · S&P 500 |
+| Index | US 10Y · Dollar · Volatility |
+| Krypto | Nasdaq · Dollar · US 10Y |
+
+**Jede** Kachel springt beim Klick auf ihr Asset, nicht nur der Dollar — der
+Grund dafür ist ja derselbe.
+
+### ⚠ Die Drehung des Yield-Labels — und warum sie einen eigenen Wächter hat
+
+Steigende Renditen sind für eine **Währung** tendenziell bullish, für **Gold,
+Öl und Krypto das Gegenteil**. Stünde auf der Gold-Seite „Bullish", weil die
+US-Renditen steigen, wäre das die falsche Aussage — und zwar eine, die man
+nicht bemerkt, weil sie plausibel aussieht.
+
+Deshalb steht die Drehung in einer eigenen Funktion `yieldBiasFor(art,
+klasse, roh)` statt inline, und `check/score.js` nagelt sie mit **10 Fällen**
+fest. **Gegenprobe beidseitig:** Drehung entfernt → **5 Treffer**, wieder
+eingesetzt → **0**. Zusätzlich wird geprüft, dass das Wort `var(--bias-*)`
+benutzt und keinen festen Farbwert — sonst wäre es auf den dunklen Vorlagen
+wieder unlesbar (gemessen 12.09.: 1,69–2,66:1).
+
+Ausgelöst hat das **Regel 5** des `rules`-Wächters („neue Score-Größe ohne
+Prüfung") bei `abBiasWort`. Die Regel ist bewusst grob — hier hat sie
+funktioniert wie gedacht: aus einem Fehlalarm-Verdacht wurde eine echte,
+fehlende Prüfung.
+
+### ⚠ Alles im Grafik- und Kontext-Band ist PLATZHALTER
+
+Ausdrücklich so bestellt (*„Mach erstmal nicht alles direkt schon verknüpft
+mit Daten … Setz da wirklich Platzhalter ein"*). Jede erfundene Kachel trägt
+sichtbar das Abzeichen **PLACEHOLDER** — Regel 4 verbietet Zahlen, die echt
+aussehen, aber keine sind.
+
+Der Zufall darin ist **fest verdrahtet** (Startwert aus Asset-Id +
+Kachelname), nicht `Math.random()`. Eine Kachel, die bei jedem Neuzeichnen
+anders aussieht, wirkt kaputt — und man kann nicht über sie reden („die
+dritte Kerze von links"), wenn sie beim nächsten Blick woanders steht.
+
+### Die Anordnung steht in `js/assetlayout.js`, nicht im Zeichner
+
+Vorgabe war: *„wenn ich dir sage: Ändere mal die und die Karte von der
+Reihenfolge oder Form oder so her, das ganz schnell geht."* Deshalb liegt die
+ganze Seite als Tabelle in einem eigenen Modul: **Karte verschieben = zwei
+Array-Einträge tauschen, Kachel entfernen = eine Zeile löschen.**
+
+### ⚠ Die übrigen Karten sind NICHT gelöscht
+
+`Interest Rates`, `COT Data` und `Risk Environment` zählen **unverändert im
+Score** weiter und sind über einen unauffälligen Schalter am Fuß der Seite
+erreichbar. Ohne ihn wären sie unbedienbar geworden, obwohl sie noch rechnen
+— und damit auch nicht mehr korrigierbar. Das Löschen von Risk Environment
+und die neuen Score-Regeln (Seasonality ±0,5, Retail) sind bewusst **Schritt
+3**, mit Vorher/Nachher-Vergleich über alle Assets.
+
+### Messung (Playwright, 21 Zusicherungen, 0 Fehler)
+
+```
+GOLD / EUR / SP500, je: drei Karten in drei echten Rasterspalten (1286px),
+  Reihenfolge Inflation | Labour Market | Economic Growth,
+  Grafik-Band spaltentreu, 0 Textüberläufe über einen Kartenrand,
+  6-7 PLACEHOLDER-Abzeichen
+Kontext GOLD   : US 2Y Bearish · US 10Y Bearish · Dollar Bearish
+Kontext EUR    : Central Bank Rate · 2Y Bullish · 10Y Bullish · Dollar Neutral
+Kontext SP500  : US 10Y Bearish · Dollar Bullish · Volatility Bullish
+Notizen        : anlegen (neueste oben), ▼ vertauscht, ★ speichert n.hl
+Sync           : ord und hl liegen im Schnappschuss
+390px          : 1 Spalte, kein Querscrollen (390px Inhalt / 390px Schirm)
+```
+
+⚠ Zwei Fehler im **Messaufbau**, beide lehrreich: `snap()` liefert bereits
+einen JSON-**String** (die erste Fassung kodierte ihn doppelt und fand
+`research.notes` nicht), und der Konsolen-Mitschnitt zählte die vom Proxy
+geblockten externen Ressourcen als Befund. Dritter Fall in zwei Tagen, in dem
+ein roter Lauf am Versuchsaufbau lag und nicht am Code.
