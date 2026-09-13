@@ -70,6 +70,71 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
     if (a.dochtOhneOhlc) fail('DOCHTE', `${a.id}: ${a.dochtOhneOhlc} Kerzen mit Docht, obwohl die Reihe kein High/Low traegt`);
   });
 
+  // ── 1b: Geometrie - keine Wochenendloecher, keine Ueberlappung ────────
+  // ⚠ GEMESSEN 2026-09-13 (Nutzer, mit Markierung im Bildschirmfoto: "da wo
+  // das Wochenende ist eine Luecke entfern das" und "guck mal die Kerzen wie
+  // komisch das jetzt aussieht ... nicht die Farbe sondern wie die da
+  // stehen"): USD auf 1M hatte 3 Luecken von 14,09px (die drei Wochenenden)
+  // UND -1,91px Abstand bei 16 von 19 Nachbarpaaren - die Kerzen ueberlappten
+  // sich zu einer Treppe. Eine Ursache: x kam aus dem Kalenderdatum, die
+  // Breite aus einer Schaetzung ueber die Kalenderspanne. Seither zaehlt die
+  // Achse Handelstage.
+  await p.evaluate(() => gotoSym('USD'));
+  await p.waitForTimeout(700);
+  for (const zeitraum of ['1M', '3M', '1Y', 'MAX']) {
+    await p.evaluate(z => setAbChartRange(z), zeitraum);
+    await p.waitForTimeout(400);
+    const g = await p.evaluate(() => {
+      const charts = [...document.querySelectorAll('.ab-k .ab-chart')].map(svg => {
+        const rs = [...svg.querySelectorAll('rect')]
+          .map(r => ({ x: +r.getAttribute('x'), w: +r.getAttribute('width') }))
+          .sort((a, b) => a.x - b.x);
+        const l = [];
+        for (let j = 1; j < rs.length; j++) l.push(rs[j].x - (rs[j - 1].x + rs[j - 1].w));
+        // Der typische Abstand ist der haeufigste - ein einzelner Feiertag
+        // darf eine Luecke lassen, ein ganzes Wochenende nicht.
+        const sortiert = l.slice().sort((a, b) => a - b);
+        return { n: rs.length, min: l.length ? Math.min(...l) : 0,
+                 median: sortiert.length ? sortiert[Math.floor(sortiert.length / 2)] : 0,
+                 max: l.length ? Math.max(...l) : 0 };
+      });
+      const achsen = [...document.querySelectorAll('.ab-k .ab-xax')].map(e => e.textContent.replace(/\s+/g, ' ').trim());
+      return { charts, achsenGleich: new Set(achsen).size <= 1, achse: achsen[0] || '' };
+    });
+    g.charts.forEach((c, i) => {
+      if (!c.n) return;
+      // -0,02px Toleranz: Rundung auf zwei Nachkommastellen im SVG.
+      if (c.min < -0.02) fail('GEOMETRIE', `${zeitraum}, Chart ${i}: Kerzen ueberlappen sich um ${(-c.min).toFixed(2)}px`);
+      // Eine Luecke, die groesser ist als vier typische Abstaende, ist ein
+      // uebersprungener Block - also ein Wochenendloch.
+      if (c.median > 0.05 && c.max > c.median * 4 + 2)
+        fail('GEOMETRIE', `${zeitraum}, Chart ${i}: Luecke von ${c.max.toFixed(2)}px bei typisch ${c.median.toFixed(2)}px - da fehlt ein Block`);
+    });
+    if (!g.achsenGleich) fail('GEMEINSAME ACHSE', `${zeitraum}: die Kontext-Charts beschriften verschiedene Zeitraeume`);
+  }
+  await p.evaluate(() => setAbChartRange('3M'));
+  await p.waitForTimeout(300);
+
+  // ── 1c: 1D zeigt den letzten HANDELSTAG ───────────────────────────────
+  // Nutzer 2026-09-13: "mach das es seit Freitag heisst und bei crypto seit
+  // Sonntag". Vorher stand am Wochenende ueberall "1D 0.00%", weil die Reihe
+  // Samstag und Sonntag mit dem Freitagsschluss traegt.
+  const perf = await p.evaluate(() => {
+    const wd = d => new Date(d + 'T00:00:00Z').getUTCDay();
+    return ['USD', 'EUR', 'GOLD', 'SP500', 'BTC'].map(id => {
+      const r = perfReturn(id, 1);
+      return r ? { id, from: r.from, to: r.to, vonWd: wd(r.from), bisWd: wd(r.to),
+                   krypto: kerzenWochenendeErlaubt(id) } : { id, fehlt: true };
+    });
+  });
+  perf.forEach(x => {
+    if (x.fehlt) { fail('1D', `${x.id}: keine Preisreihe`); return; }
+    const we = w => w === 0 || w === 6;
+    if (!x.krypto && (we(x.vonWd) || we(x.bisWd)))
+      fail('1D', `${x.id}: 1D vergleicht ein Wochenende (${x.from} -> ${x.to})`);
+    if (x.from === x.to) fail('1D', `${x.id}: 1D vergleicht denselben Tag mit sich`);
+  });
+
   // ── 2: Wochentag im Hover ─────────────────────────────────────────────
   await p.evaluate(() => gotoSym('EUR'));
   await p.waitForTimeout(900);

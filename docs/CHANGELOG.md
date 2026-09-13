@@ -13492,3 +13492,95 @@ Neu: `check/kerzen.js` — prüft alle vier Kerzen-Regeln über 8 Preisreihen un
 5 dunkle Vorlagen. Gegenprobe in beide Richtungen: Wochenend-Filter ausgehängt
 → rot (`SP500 zeichnet 22 Kerzen für Samstag/Sonntag`, plus `Tooltip steht
 über einem Wochenendtag`); Kerzenfarben auf `--bias-*` zurückgedreht → rot.
+
+## 2026-09-13 abends — Kerzen standen falsch, 1D am Wochenende, COT-Tabelle raus (VERSION-CHECK-510)
+
+Vier Nachbesserungen, alle aus einem Bildschirmfoto mit Markierungen.
+
+### Die Kerzen: Wochenendlöcher UND Überlappung, eine Ursache
+
+Nutzer: *„da wo das Wochenende ist eine Lücke entfern das"* und *„guck mal die
+Kerzen wie komisch das jetzt aussieht vorher sah das besser aus, also ich
+meine nicht die Farbe sondern wie die da stehen"*.
+
+**Gemessen** (USD, 1M, Abstand zwischen benachbarten Rechtecken):
+
+| | Wert |
+|---|---|
+| Lücken | 3 × **14,09 px** — die drei Wochenenden |
+| Abstand der übrigen 16 von 19 Paare | **−1,91 px** — die Kerzen *überlappen* |
+| Kerzenbreite / Raster | 9,91 px auf 8 px |
+
+**Eine Ursache für beides:** x kam aus dem Kalenderdatum (240 px / 30
+Kalendertage = 8 px je Tag), die Breite aber aus einer Schätzung über die
+Kalenderspanne. Wochenenden liessen Löcher, und weil die Breite nicht ins
+Raster passte, klebten die Kerzen zu einer Treppe zusammen.
+
+Die Achse zählt jetzt **Handelstage**. Jeder bekommt ein gleich breites Fach,
+die Kerze sitzt mittig darin und füllt 70 %. Nachgemessen:
+
+| Zeitraum | Kerzen | Breite | Abstand |
+|---|---|---|---|
+| 1M | 20 | 8,00 px | 3,42–3,43 px |
+| 3M | 64 | 2,58 px | 1,11–1,12 px |
+| 6M | 127 | 1,67 px | 0,19–2,05 px |
+| 1Y | 177 | 0,83 px | 0,09–1,02 px |
+| MAX | 779 | 0,30 px | −0,01–0,30 px |
+
+Die Eigenschaft, wegen der x überhaupt aus dem Datum kam, bleibt: alle Charts
+einer Seite benutzen **dieselbe** Handelstag-Liste. Bei MAX wird dafür der
+früheste Tag über *alle* Reihen eingesammelt, bevor gezeichnet wird
+(`abAchseFuer`) — sonst hätte jeder Chart dort wieder seine eigene Achse, und
+genau das war der Fehler vom Vortag.
+
+⚠ **Fallstrick:** der Mindestwert der Kerzenbreite darf das Fach nie
+überschreiten. Mit einem festen Boden von 0,6 px überlappten sich bei MAX alle
+Kerzen um 0,31 px — 779 Handelstage auf 240 px sind 0,31 px je Fach. Erst
+begrenzen, dann anheben.
+
+### 1D am Wochenende
+
+Nutzer: *„mach das es seit Freitag heisst und bei crypto seit Sonntag"*.
+
+Vorher stand am Sonntag überall `1D 0.00%`: die Reihe trägt Sa und So mit dem
+Freitagsschluss, der Vergleich lief also Sonntag gegen Samstag — zwei Kopien
+derselben Zahl. `perfReturn()` benutzt jetzt dieselbe Wochenend-Regel wie die
+Kerzen. Gemessen:
+
+| Asset | 1D | Zeitraum |
+|---|---|---|
+| USD | +0,00 % | Thu 10.09. → **Fri 11.09.** |
+| EUR | −0,10 % | Thu → Fri |
+| GOLD | +0,61 % | Thu → Fri |
+| SP500 | +0,86 % | Thu → Fri |
+| **BTC** | +0,06 % | Sat 12.09. → **Sun 13.09.** |
+
+1W/1M/YTD hängen mit dran.
+
+### COT-Kachel: Tabelle raus, Wochenänderung hervorgehoben
+
+Die Indikator-Tabelle trug exakt die drei Zahlen, die zwei Zeilen darüber
+schon in der Fusszeile stehen — eine Dopplung, kein zweiter Inhalt. Die Werte
+kommen automatisch aus `applyCotDataFeed` und werden stündlich neu gesetzt;
+ein Hand-Override hätte dort ohnehin nur bis zum nächsten Abruf gehalten. Die
+Karte mit allen Bedienelementen steht unverändert im COT-Tab.
+
+### Drei Kachel-Korrekturen, die erst im Bild auffielen
+
+1. Die Retail-Kachel drehte den Paar**namen** mit statt nur die Zahl — aus
+   `EURUSD` wurde `USD/EUR`, ein Paar, das es nicht gibt. Jetzt echter Ticker,
+   `⇄` an den gedrehten, Kopfzeile `PAIR · LONG · SHORT`.
+2. Bei einem einzigen Buch (Gold) blieben rund 300 px leere Kachel — dort
+   steht jetzt der Verlauf der Long-Quote (55 Messungen), erst ab vier Punkten.
+3. Die Saisonalitäts-Balken waren auf 96 px gedeckelt, darunter dieselbe leere
+   Fläche. Deckel weg; `height:52px` der Basisregel musste dafür im
+   Kachel-Kontext auf `auto`, sonst überschrieb es das `align-items:stretch`
+   des Hover-Rahmens.
+
+### Wächter
+
+`check/kerzen.js` prüft jetzt zusätzlich die Geometrie (keine Überlappung,
+keine übersprungenen Blöcke, identische Achse über alle Charts) und dass 1D
+auf einem echten Handelstag landet. Gegenproben: Kerzen 1,3× ihres Fachs →
+rot mit 3,44 px Überlappung; Wochenenden als leere Fächer in der Achse → rot
+mit 17,81 px Lücke bei typisch 2,32 px.

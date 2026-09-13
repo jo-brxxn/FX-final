@@ -6923,7 +6923,54 @@ function tagesKerzen(reihe,assetId){
 function abTagesKerzen(reihe,assetId){
   return tagesKerzen(abImZeitraum(reihe),assetId);
 }
-function abKerzenBlock(reihe,titel,einheit,assetId){
+
+// ── DIE GEMEINSAME X-ACHSE: HANDELSTAGE, NICHT KALENDERTAGE ────────────
+//
+// ⚠ GEMESSEN 2026-09-13, USD auf 1M (Nutzer: "da wo das Wochenende ist eine
+// Luecke entfern das" und "guck mal die Kerzen wie komisch das jetzt
+// aussieht ... nicht die Farbe sondern wie die da stehen"):
+//   3 Luecken von 14,09px  -> die drei Wochenenden im Fenster
+//   Abstand zwischen benachbarten Kerzen: -1,91px bei 16 von 19 Paaren
+//   -> die Kerzen UEBERLAPPTEN sich, 9,91px breit auf 8px Raster
+// EINE Ursache fuer beides: x kam aus dem KALENDERDATUM (240px / 30 Tage =
+// 8px je Kalendertag), die Breite aber aus einer Schaetzung ueber die
+// Kalenderspanne. Wochenenden liessen Loecher, und weil die Breite nicht
+// zum Raster passte, klebten die Kerzen als Treppe aneinander.
+//
+// Jetzt zaehlt die Achse HANDELSTAGE. Das loest beides und behaelt die
+// Eigenschaft, wegen der x ueberhaupt aus dem Datum kam: alle Charts einer
+// Seite benutzen DIESELBE Liste, derselbe Tag liegt also weiter an
+// derselben Stelle - auch wenn eine Reihe spaeter anfaengt.
+function abHandelstage(von,bis,krypto){
+  const out=[];
+  const a=Date.parse(String(von)+'T00:00:00Z'), b=Date.parse(String(bis)+'T00:00:00Z');
+  if(!isFinite(a)||!isFinite(b)||b<a)return out;
+  for(let t=a;t<=b;t+=86400000){
+    const d=new Date(t);
+    if(!krypto){const w=d.getUTCDay();if(w===0||w===6)continue;}
+    out.push(d.toISOString().slice(0,10));
+  }
+  return out;
+}
+/** Die Handelstage, die fuer ALLE Kontext-Charts dieser Seite gelten. */
+// Bei MAX gibt es keine untere Fenstergrenze - dann ist der frueheste Tag
+// ueber ALLE gezeigten Reihen der Anfang. Ohne dieses Einsammeln haette
+// jeder Chart bei MAX wieder seine eigene Achse, und genau das war der
+// Fehler vom Vortag.
+function abAchseFuer(reihen,krypto){
+  const f=abFenster();
+  let von=f.von;
+  if(f.max){
+    reihen.forEach(r=>{
+      if(!Array.isArray(r)||!r.length)return;
+      const d=r[0]&&r[0][0];
+      if(d&&(!von||d<von))von=d;
+    });
+  }
+  return abHandelstage(von||f.bis,f.bis,krypto);
+}
+
+function abKerzenBlock(reihe,titel,einheit,assetId,achse){
   const W=240,H=100;
   const k=abTagesKerzen(reihe,assetId);
   // ⚠ Keine Reihe, kein Chart. Ein leerer Kasten mit Achsen sieht aus wie
@@ -6933,21 +6980,39 @@ function abKerzenBlock(reihe,titel,einheit,assetId){
   const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
   const sp=(hi-lo)||1;
   const y=v=>3+(1-(v-lo)/sp)*(H-6);
-  // ⚠ x nach DATUM, nicht nach Index: nur so liegt derselbe Tag in allen
-  // Charts an derselben Stelle, auch wenn eine Reihe spaeter anfaengt.
+  // Handelstag-Raster. Jeder Tag bekommt ein gleich breites Fach, die Kerze
+  // sitzt mittig darin und fuellt 70% davon - dadurch steht zwischen zwei
+  // Kerzen immer ein sichtbarer Abstand, und zwar auf jeder Zeitspanne.
   const f=abFenster();
-  const tag=d=>Date.parse(d+'T00:00:00Z');
-  const x0=tag(f.max?k[0].d:f.von), x1=tag(f.bis);
-  const spanne=(x1-x0)||1;
-  const xOf=d=>((tag(d)-x0)/spanne)*W;
-  const bw=Math.max(1,W/Math.max(k.length,(spanne/86400000)*0.72)-(k.length>90?0.3:1.2));
+  const tage=(achse&&achse.length)?achse:abHandelstage(f.max?k[0].d:f.von,f.bis,kerzenWochenendeErlaubt(assetId));
+  const platz={};tage.forEach((d,i)=>{platz[d]=i;});
+  const n=Math.max(tage.length,1);
+  const fach=W/n;
+  // Ab etwa 120 Kerzen ist ein Fach schmaler als 2px - dort waere ein
+  // Abstand von 30% nur noch ein Flimmern, deshalb duennere Luecke.
+  const anteil=fach<3?0.9:0.7;
+  // ⚠ Der Mindestwert darf das Fach NIE ueberschreiten. Mit einem festen
+  // Boden von 0,6px ueberlappten sich bei MAX (779 Handelstage auf 240px,
+  // also 0,31px je Fach) alle Kerzen um 0,31px - gemessen. Erst begrenzen,
+  // dann anheben.
+  const bw=Math.min(fach,Math.max(0.4,fach*anteil));
+  const xOf=d=>{
+    const i=platz[d];
+    // Ein Tag, den die Achse nicht kennt (kann bei MAX am Rand passieren),
+    // wird nicht geraten - er landet auf dem naechstgelegenen Fach.
+    if(i!=null)return i*fach+fach/2;
+    const t=Date.parse(d+'T00:00:00Z');
+    let best=0,bd=Infinity;
+    tage.forEach((x,j)=>{const dd=Math.abs(Date.parse(x+'T00:00:00Z')-t);if(dd<bd){bd=dd;best=j;}});
+    return best*fach+fach/2;
+  };
   const fmt=d=>{try{return new Date(d+'T00:00:00Z').toLocaleDateString('en',{timeZone:'UTC',day:'numeric',month:'short'});}catch(e){return d;}};
   const zahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):v.toFixed(3);
   let sv='';
   [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
   const pts=[];
   k.forEach((c,i)=>{
-    const x=Math.max(0,Math.min(W-bw,xOf(c.d)-bw/2)), mx=x+bw/2;
+    const mx=xOf(c.d), x=mx-bw/2;
     // Kerzenfarben (Nutzer 2026-09-13, mit zwei Farbflaechen geschickt):
     // steigend = das Blau, fallend = das Schwarz. Bewusst EIGENE Tokens und
     // nicht --bias-bull/--bias-bear: Bias ist eine Aussage ueber die
@@ -6974,17 +7039,19 @@ function abKerzenBlock(reihe,titel,einheit,assetId){
   const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
   const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
   const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${zahl(v)}</span>`).join('');
-  // Die Achse beschriftet das FENSTER (bei MAX die Datenspanne) - dadurch
-  // steht unter allen Charts derselbe Zeitraum.
-  const mitte=new Date((x0+x1)/2).toISOString().slice(0,10);
-  const achse=[f.max?k[0].d:f.von,mitte,f.bis].map(d=>`<span>${escH(fmt(d))}</span>`).join('');
+  // Die Achse beschriftet die HANDELSTAGE des Fensters - dieselbe Liste, aus
+  // der auch die Kerzen ihre Position bekommen. Damit steht unter allen
+  // Charts derselbe Zeitraum, und die genannten Tage sind auch wirklich Tage
+  // mit einer Kerze (das Fenster fing vorher gern an einem Samstag an).
+  const achsTxt=[tage[0],tage[Math.floor((tage.length-1)/2)],tage[tage.length-1]]
+    .filter(Boolean).map(d=>`<span>${escH(fmt(d))}</span>`).join('');
   // ⚠ Nur melden, wenn die Reihe SPUERBAR spaeter anfaengt. Bei einem Tag
   // Differenz (Fenster ab Dienstag, Feed ab Mittwoch) stand der Hinweis unter
   // jedem Chart und war reines Rauschen - gemessen bei allen drei Kacheln.
   const spaeter=!f.max&&(Date.parse(k[0].d)-Date.parse(f.von))/86400000>7;
   return{pct,tage:k.length,von:k[0].d,bis:k[k.length-1].d,spaeter,
     html:`<div class="ab-plot">
-      <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achse}</div></div>
+      <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achsTxt}</div></div>
       <div class="ab-yax">${skala}</div>
     </div>`};
 }
@@ -7016,13 +7083,25 @@ function abKontextReihe(art,assetId){
 }
 function abKontextHtml(c){
   const arten=assetContextFor(c.id,assetCls(c.id));
-  const kacheln=arten.map(a=>{
-    const d=KONTEXT_ART[a];if(!d||d.art==='rate')return'';
+  // ⚠ ERST alle Reihen einsammeln, DANN zeichnen. Die x-Achse muss fuer alle
+  // Kacheln dieselbe sein; bei MAX steht ihr Anfang erst fest, wenn man den
+  // fruehesten Tag ueber ALLE Reihen kennt. Wer die Achse pro Kachel bildet,
+  // hat wieder drei Charts mit drei Zeitraeumen nebeneinander.
+  const quellen=arten.map(a=>{
+    const d=KONTEXT_ART[a];
+    if(!d||d.art==='rate')return null;
+    return{art:a,d,...abKontextReihe(a,c.id)};
+  }).filter(Boolean);
+  // Alle Kontext-Kacheln zeigen Nicht-Krypto-Reihen (Renditen, Dollar,
+  // Aktienindizes) - die Achse zaehlt also Werktage. Faende sich hier je
+  // eine Krypto-Reihe, braeuchte sie ihre eigene Achse.
+  const krypto=quellen.length>0&&quellen.every(q=>kerzenWochenendeErlaubt(q.quelle));
+  const achse=abAchseFuer(quellen.map(q=>abImZeitraum(q.reihe)),krypto);
+  const kacheln=quellen.map(({art:a,d,reihe,einheit,quelle})=>{
     const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
     const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
     const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:'';
-    const {reihe,einheit,quelle}=abKontextReihe(a,c.id);
-    const ch=abKerzenBlock(reihe,d.titel,einheit,quelle);
+    const ch=abKerzenBlock(reihe,d.titel,einheit,quelle,achse);
     if(ch.leer)return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}</div>${ch.html}</div>`;
     const roh=ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu';
@@ -7202,32 +7281,39 @@ function abRetailVerlauf(sym){
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
 function abGrafikHtml(art,c){
   if(art==='cot'){
-    const cotRi=(getSym().rubrics||[]).findIndex(r=>r&&r.name==='COT Data');
-    const cotRub=cotRi>=0?getSym().rubrics[cotRi]:null;
-    // Die Tabelle der COT-Karte steht HIER (Nutzer 2026-09-13: "bei der cot
-    // Karte soll die Tabelle hin"). Die Karte selbst wird nicht mehr
-    // gezeichnet, ihre Indikatoren zaehlen aber weiter im Score - ohne
-    // diese Tabelle waeren sie unsichtbar UND unbedienbar geworden.
-    const tabelle=cotRub?`<div class="ab-cottbl">${renderIndsTable(cotRub,cotRi)}</div>`:'';
+    // ⚠ HIER STAND BIS 2026-09-13 ABEND DIE INDIKATOR-TABELLE DER COT-KARTE.
+    // Sie ist wieder raus (Nutzer, mit Markierung im Bildschirmfoto: "entfern
+    // die Tabelle") - und das ist diesmal kein Verlust: ihre drei Zeilen
+    // (Net Bullish, Net Bearish, WoW Change) tragen exakt die drei Zahlen,
+    // die zwei Zeilen darueber schon in der Fusszeile stehen. Sie war eine
+    // Dopplung, kein zweiter Inhalt.
+    // Die Werte kommen automatisch aus applyCotDataFeed und werden stuendlich
+    // neu gesetzt; ein Hand-Override haette hier also ohnehin nur bis zum
+    // naechsten Abruf gehalten. Wer die Karte mit allen Bedienelementen
+    // braucht, findet sie unveraendert im COT-Tab.
     const id=abCotId(c.id);
     if(!id)return abTile('COT Positioning','',
-      AB_LEER(`The CFTC publishes futures contracts, and there is none for ${escH(c.name||c.id)}. Covered: the eight FX majors plus Gold, Silver, WTI, BTC, S&amp;P 500 and Nasdaq.`)+tabelle);
+      AB_LEER(`The CFTC publishes futures contracts, and there is none for ${escH(c.name||c.id)}. Covered: the eight FX majors plus Gold, Silver, WTI, BTC, S&amp;P 500 and Nasdaq.`));
     const s=COT_DATA.symbols[id];
     const m=cotMetrics(s);
-    if(!m)return abTile('COT Positioning','',AB_LEER('The latest COT report carries no usable long/short figures for this contract.')+tabelle);
+    if(!m)return abTile('COT Positioning','',AB_LEER('The latest COT report carries no usable long/short figures for this contract.'));
     const ch=abCotChart(s.history);
     const stand=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
     // Nutzer 2026-09-13: "ganz unten in der karte steht einfach long: ...
     // short: ... ww change: ... also bischen anders geschrieben aber so ca."
+    // Die Wochenaenderung bekommt einen leichten Rahmen (Nutzer: "markier die
+    // wow Zahl leicht") - sie ist die Zahl, die man woechentlich liest, die
+    // anderen beiden sind der Stand. Bewusst nur ein getoentes Feld, kein
+    // Farbblock: die Zahl traegt ihre Richtung schon als Schriftfarbe.
     const fuss=`<div class="ab-foot">
         <span><span class="ab-foot-l">Long</span> <b style="color:${BC.bull}">${m.longPct.toFixed(1)}%</b> <span class="ab-foot-n">${cotNum(m.L)}</span></span>
         <span><span class="ab-foot-l">Short</span> <b style="color:${BC.bear}">${m.shortPct.toFixed(1)}%</b> <span class="ab-foot-n">${cotNum(m.S)}</span></span>
-        <span><span class="ab-foot-l">w/w change</span> <b style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true).replace('%','pp')}</b></span>
+        <span class="ab-foot-hl" title="Week-over-week change of the long share — the value that moves">
+          <span class="ab-foot-l">w/w change</span> <b style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true).replace('%','pp')}</b></span>
       </div>`;
     return abTile('COT Positioning',
       `<span class="ab-tile-s">as of ${escH(stand)}</span>`,
       `${ch.html}${fuss}
-       ${tabelle}
        <div class="ab-note">Large speculators (CFTC Legacy, non-commercial). Blue = long contracts, red = short, black line = long share.${ch.leer?'':` ${ch.berichte} weekly reports.`}</div>`);
   }
   if(art==='retail'){
@@ -12347,8 +12433,18 @@ let perfWindow='1W';
 function setPerfWindow(w){perfWindow=w;renderDash();}
 // Rendite ueber ein Zeitfenster aus der (bereits invert-bereinigten) Reihe.
 // null, wenn kein Startpunkt im Fenster liegt - dann zeigt die Zeile "–".
+// ⚠ HANDELSTAGE, NICHT KALENDERTAGE (Nutzer 2026-09-13: "mach das es seit
+// Freitag heisst und bei crypto seit Sonntag").
+// Vorher stand am Sonntag ueberall "1D 0.00%": die Reihe traegt Sa und So
+// mit dem Freitagsschluss, der Vergleich lief also Sonntag gegen Samstag -
+// zwei Kopien derselben Zahl. Mit derselben Wochenend-Regel wie bei den
+// Kerzen ist der letzte Punkt eines FX-Assets am Wochenende der Freitag und
+// der davor der Donnerstag: "1D" zeigt damit den Freitag. Krypto handelt
+// auch sonntags und behaelt seine sieben Tage, dort zeigt "1D" den Sonntag.
+// Auch 1W/1M/YTD haengen daran - ihr Fensterbeginn wird jetzt ebenfalls von
+// einem echten Handelstag aus gezaehlt.
 function perfReturn(id,days){
-  const s=priceSeriesFor(id);
+  const s=ohneWochenende(priceSeriesFor(id),id);
   if(!Array.isArray(s)||s.length<2)return null;
   const last=s[s.length-1];
   const lastV=Number(last[1]);
@@ -20056,7 +20152,7 @@ Object.assign(window,{
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
-  abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,
+  abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
