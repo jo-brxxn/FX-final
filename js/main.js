@@ -2646,15 +2646,41 @@ function feedEntryFor(feed,name){
 // landet, waere schlimmer als gar keine - man findet sie spaeter nicht
 // wieder und merkt nie, dass sie falsch einsortiert wurde.
 let _qcStand=null;
+// Von welcher Stelle aus die Erfassung geoeffnet wurde. Auf der Watchlist und
+// in der Asset-Ansicht ist das Asset ja schon bekannt (Nutzer-Wunsch
+// 2026-09-13: "Mach das auch auf der Watchlist und in der Asset-Ansicht") -
+// dort waere es unsinnig, es aus dem Text erraten zu lassen. Der Text lautet
+// dann typisch "CPI kam hoeher rein" und nennt die Waehrung gar nicht.
+let _qcAssetVor=null;
 
-function openQuickNote(vorbelegung){
+function openQuickNote(vorbelegung,assetVor){
   _qcStand=null;
+  // ⚠ Nur ein Asset, das es in dieser App wirklich gibt (Regel 4) - sonst
+  // stuende eine Vorauswahl da, die beim Speichern still verschwindet.
+  _qcAssetVor=(assetVor&&syms.some(x=>x.id===assetVor))?assetVor:null;
+  // Ein abgebrochener Watchlist-Aufruf darf nicht dazu fuehren, dass die
+  // NAECHSTE Notiz ungefragt angepinnt wird.
+  _resAutoPin=null;
   const inp=document.getElementById('qcInput');
   if(inp)inp.value=vorbelegung||'';
   const out=document.getElementById('qcOut'); if(out)out.hidden=true;
   const b=document.getElementById('qcSaveBtn'); if(b)b.disabled=true;
+  const pre=document.getElementById('qcPre');
+  if(pre){
+    const sym=_qcAssetVor?syms.find(x=>x.id===_qcAssetVor):null;
+    pre.hidden=!_qcAssetVor;
+    pre.textContent=_qcAssetVor?`Filed on ${sym?sym.name:_qcAssetVor} — you can change that below.`:'';
+  }
   openM('mQuickNote');
   if(inp){inp.focus();if(inp.value)qcAnalyse();}
+}
+// Aus der Watchlist heraus: wie newResNoteForAsset(), nur mit der
+// Schnellerfassung statt des leeren Formulars. Solange Platz ist, wird die
+// Notiz angepinnt - sonst legt man sie genau an der Stelle an, an der sie
+// danach nicht auftaucht.
+function quickNoteForAsset(assetId){
+  openQuickNote('',assetId);
+  _resAutoPin=(assetPinnedNotes(assetId).length<ASSET_PIN_MAX)?assetId:null;
 }
 
 function qcAnalyse(){
@@ -2666,6 +2692,9 @@ function qcAnalyse(){
   if(!roh.trim()){out.hidden=true;if(knopf)knopf.disabled=true;_qcStand=null;return;}
   // Nur Assets vorschlagen, die es in DIESER App wirklich gibt (Regel 4).
   _qcStand=qcZerlegen(roh,syms.map(x=>x.id));
+  // Das Asset der aufrufenden Stelle steht vorn und bleibt gewaehlt, auch
+  // wenn der Text es nicht nennt. Abwaehlbar ist es wie jedes andere.
+  if(_qcAssetVor&&!_qcStand.assets.includes(_qcAssetVor))_qcStand.assets.unshift(_qcAssetVor);
   out.hidden=false;
   if(knopf)knopf.disabled=false;
   const t=document.getElementById('qcTitle'); if(t)t.value=_qcStand.titel;
@@ -2727,22 +2756,32 @@ function qcSpeichern(){
     const fids=ids.map(id=>researchGenFidFor(id)).filter(Boolean);
     const jetzt=new Date().toISOString();
     const id=uid();
+    // Dieselbe Anpin-Regel wie beim manuellen Formular (saveResNote): wurde
+    // die Notiz auf der Watchlist begonnen, soll sie dort auch erscheinen.
+    const pinNeu=!!(_resAutoPin&&fids.length
+      &&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX
+      &&resNoteAssetIds({fids}).includes(_resAutoPin));
     pushU();
     research.notes.push({
       id,fids,
       title:String(titel||'Quick note').slice(0,120),
       body:String(_qcStand.body||''),
       tags:_qcStand.tags.slice(0,5),
-      fav:false,pin:false,ts:jetzt,up:jetzt,
+      fav:false,pin:pinNeu,ts:jetzt,up:jetzt,
       bias:_qcStand.bias||'neu',
       // Ohne Ordner haengt die Notiz sonst nirgends - dasselbe Verhalten wie
       // bei den Notiz-Vorschlaegen aus den Nachrichten.
       asset:fids.length?'':(ids[0]||''),
     });
+    _resAutoPin=null;
     save();
     closeM('mQuickNote');
-    if(curPage==='notes')rerenderNotesHost();
-    newsNoteHinweis('Note saved'+(ids.length?' on '+ids.join(', '):' (no asset)'));
+    // ⚠ Nicht nur die Research-Seite: die Notiz erscheint auch in der
+    // Watchlist-Zeile und auf der Asset-Seite. Ohne diese drei Faelle bliebe
+    // die Stelle, an der man gerade geklickt hat, unveraendert - fuer den
+    // Nutzer sieht das aus, als haette das Speichern nicht funktioniert.
+    if(curPage==='notes'||curPage==='cur'||curPage==='watch')rerenderNotesHost();
+    newsNoteHinweis('Note saved'+(ids.length?' on '+ids.join(', '):' (no asset)')+(pinNeu?' · pinned':''));
   }catch(e){
     alert('The note could not be saved: '+(e&&e.message||e)+'\nYour text is still in the box.');
   }
@@ -9067,6 +9106,7 @@ function watchAssetNotesHtml(name){
       <div class="wt-pinhd">
         <span class="wt-pinid" onclick="event.stopPropagation();gotoSym('${escJH(id)}')" title="Open ${escH(sym?sym.name:id)}">${escH(sym?sym.name:id)}</span>
         <span class="wt-pincnt">${pins.length}/${ASSET_PIN_MAX} pinned${total?' · '+total+' total':''}</span>
+        <button class="wt-pinadd" onclick="event.stopPropagation();quickNoteForAsset('${escJH(id)}')" title="Paste a text for ${escH(sym?sym.name:id)} — direction and topics are picked out for you">⚡ Quick</button>
         <button class="wt-pinadd" onclick="event.stopPropagation();newResNoteForAsset('${escJH(id)}')" title="Add a note for ${escH(sym?sym.name:id)} — it is stored on the asset itself">＋ Note</button>
       </div>${rows}
     </div>`;
@@ -10607,6 +10647,7 @@ function researchNotesPanelHtml(assetId,fid){
     <div class="rterm-noterow">
       <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search in ${scopeName} and its subfolders…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
       ${resSearchFieldPickerHtml()}
+      <button class="btn" onclick="openQuickNote('','${escJH(assetId)}')" title="Paste a text — direction and topics are picked out for you">⚡ Quick capture</button>
       <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
     </div>
     <div class="res-list" style="margin-top:10px">${rows}</div>
@@ -19039,7 +19080,7 @@ Object.assign(window,{
   setAppBg,renderAppBgGrid,applyAppBg,APP_BGS,APP_BG_IDS,
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
-  openQuickNote,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
+  openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
   AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,

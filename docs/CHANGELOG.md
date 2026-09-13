@@ -12813,3 +12813,73 @@ einer öffentlichen Primärquelle machbar — **eine** Datei, 4,1 MB Download.
 GDP), auch vom GitHub-Runner aus. Das ist kein Serien-Id-Problem — die
 Verbindung kommt gar nicht zustande. Für CPI/Arbeitsmarkt/BIP braucht es
 also eine andere Quelle als FRED; der Leitzins-Backfill hängt nicht davon ab.
+
+---
+
+## 2026-09-13 — Schnellerfassung auch auf der Watchlist und in der Asset-Ansicht (VERSION-CHECK-501)
+
+**Nutzer-Wunsch:** *„Mach das auch auf der Watchlist und in der
+Asset-Ansicht"* — nachdem die Frage „wo kann man den automatischen Notizen
+Macher benutzen" gezeigt hatte, dass sie nur an einer Stelle stand: im Kopf
+des Research Terminals. Also genau **nicht** dort, wo einem beim Durchsehen
+der Watchlist etwas auffällt.
+
+**Zwei neue Einstiege:**
+- **Watchlist**, je beteiligtem Asset einer Zeile: `⚡ Quick` neben `＋ Note`
+  (bei EUR/USD also für EUR und für USD getrennt).
+- **Asset-Ansicht → Notes**: `⚡ Quick capture` neben `+ New note`.
+
+**Das Asset wird vorausgewählt, weil es an beiden Stellen bereits bekannt
+ist.** Ein eingefügter Text lautet dort typisch „CPI kam höher rein" und
+nennt die Währung gar nicht — die Erkennung aus dem Text allein würde also
+regelmäßig leer ausgehen. Gemessen: mit dem Text *„CPI came in hotter than
+expected, hawkish tone from the meeting"* (kein Währungswort) bleibt **EUR**
+gewählt, Richtung **Bullish**.
+
+**Die Vorauswahl steht sichtbar über dem Textfeld, bevor überhaupt Text da
+ist** (`.qc-pre`, „Filed on EUR — you can change that below.") und ist
+abwählbar. Begründung wie beim Bau der Erfassung selbst: eine stille
+Entscheidung darüber, wo eine Notiz landet, ist schlimmer als gar keine —
+man findet sie später nicht wieder.
+
+**Von der Watchlist aus wird angepinnt**, solange einer der drei Plätze frei
+ist — dieselbe Regel (`_resAutoPin`), die das manuelle Formular dort schon
+hatte, sonst legt man eine Notiz genau an der Stelle an, an der sie danach
+nicht auftaucht. Die Bestätigung sagt es dazu (`… · pinned`).
+
+**Fehlerklasse mitbehoben:** `qcSpeichern()` zeichnete nur bei
+`curPage==='notes'` neu. Von der Watchlist oder der Asset-Seite aus wäre die
+Stelle, an der man gerade geklickt hat, unverändert geblieben — für den
+Nutzer sieht das aus, als hätte das Speichern nicht funktioniert. Jetzt
+`rerenderNotesHost()` für alle drei Seiten (die Funktion unterscheidet sie
+bereits selbst).
+
+### Messung (Playwright, 14 Zusicherungen, 0 Fehler)
+
+```
+=== Watchlist ===
+  ok ⚡ Quick steht auf der Watchlist-Zeile          "⚡ Quick" 61x20px
+  ok Handler zeigt auf quickNoteForAsset            quickNoteForAsset('EUR')
+  ok quickNoteForAsset ist auf window exportiert
+  ok Vorauswahl ist SICHTBAR, bevor Text da ist     Filed on EUR — …
+  ok Asset der Zeile ist trotzdem vorausgewaehlt    gewaehlt: EUR · ▲ Bullish
+  ok Notiz ist gespeichert                          1545 -> 1546
+  ok Notiz ist angepinnt (Watchlist-Regel)
+  ok Notiz steht danach WIRKLICH in der Zeile
+=== Asset-Ansicht (Notes) ===
+  ok ⚡ Quick capture steht in der Notes-Ansicht     "⚡ Quick capture" 143x32px
+  ok Asset der Seite ist vorbelegt                  Filed on USD — …
+  ok Gegenprobe: ohne Aufrufer-Asset keine Vorauswahl   qcPre.hidden=true
+```
+
+⚠ Die Messung selbst war im ersten Anlauf falsch: sie setzte `p.watch=true`,
+um einen Watchlist-Eintrag zu erzeugen. Die Zugehörigkeit hängt aber an der
+Kategorie (`catId` der Kategorie „Watchlist"), nicht an einem Feld am Paar —
+sie fand deshalb gar keine Zeile und meldete den Knopf als fehlend. Dieselbe
+Lehre wie am 12.09. bei der Typografie-Gegenprobe: ein roter Lauf kann auch
+am Versuchsaufbau liegen.
+
+⚠ **Regel 9 hat wieder korrekt gefeuert und war wieder ein veralteter
+Checkout** — `news_data.json` 30,3 h, `seasonality_data.json` 34,8 h. Nach
+`git pull`: beide frisch. Das ist der zweite Fall in zwei Tagen; der Hinweis
+„zuerst git pull" steht deshalb zu Recht an erster Stelle des Wächtertextes.
