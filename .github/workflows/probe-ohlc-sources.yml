@@ -1,24 +1,24 @@
 # Gibt es fuer die Preis-Charts echte Tages-OHLC (also echte Dochte)?
 #
 # Anlass (Nutzer 2026-09-13): "mach bei allen charts die preis abspiegeln das
-# eine kerze immer ein tag ist und das wenn das geht man auch die wicks
-# sieht". Das "wenn das geht" ist die eigentliche Frage.
+# eine kerze ein tag ist und das wenn das geht man auch die wicks sieht" und
+# danach "ergaenzt dann die ganzen Wicks in den Charts ueberall".
 #
-# STAND HEUTE traegt price_data.json je Tag GENAU EINEN Wert (Schlusskurs) -
-# der Workflow-Schritt "Fetch asset/FX prices" fragt den TradingView-Scanner
-# mit columns:["close"]. Daraus laesst sich kein Docht zeichnen, der nicht
-# erfunden waere (Regel 4). Die App zeichnet deshalb Close-to-Close.
+# RUNDE 1 (2026-09-13) hat gemessen:
+#   A) TradingView-Scanner mit columns:["open","high","low","close"] liefert
+#      echte Dochte - 15 von 15 Tickern. Ist seither im Sammellauf drin, aber
+#      nur VORWAERTS: eine Momentaufnahme je Tag, keine Historie.
+#   B) Stooq-Tages-CSV: HTTP 200, aber eine HTML-Sperrseite bei allen 17
+#      Symbolen. GitHub-Laeufer sind dort gesperrt. Kein Backfill.
 #
-# Dieser Lauf MISST, ob eine echte OHLC-Quelle erreichbar ist, statt es zu
-# vermuten. Er laeuft NUR von Hand, schreibt NICHTS in die Daten und kann
-# den stuendlichen Job damit nicht beschaedigen.
+# RUNDE 2 sucht deshalb nach einer HISTORIEN-Quelle und prueft ausserdem, ob
+# der Scanner auch fuer die ANLEIHERENDITEN Open/High/Low liefert - die
+# Renditen-Charts haben bis heute gar keine.
+#   C) Yahoo-Chart-API (v8), zwei Jahre Tageskerzen je Symbol
+#   D) Binance-Klines fuer BTC (frei, ohne Schluessel)
+#   E) TradingView-Scanner mit OHLC fuer die 16 Renditen-Ticker
 #
-# Zwei Wege werden geprueft:
-#   A) derselbe TradingView-Scanner, nur mit columns:["open","high","low",
-#      "close"] - waere ab dem naechsten Lauf ein echter Tages-Docht, aber
-#      NUR vorwaerts (eine Momentaufnahme pro Tag, keine Historie).
-#   B) Stooq-Tages-CSV - liefert Datum,Open,High,Low,Close ueber Jahre und
-#      koennte die bestehende Historie rueckwirkend mit Dochten fuellen.
+# Schreibt NICHTS in die Daten, laeuft nur von Hand.
 name: Probe OHLC sources (wicks)
 
 on:
@@ -28,88 +28,102 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: A) TradingView-Scanner mit open/high/low/close
+      - name: C) Yahoo-Chart-API - Historie mit Dochten
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
-            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["open","high","low","close"]}' \
-            "https://scanner.tradingview.com/global/scan" -o tv_ohlc.json || true
-          echo "## A) TradingView-Scanner: open/high/low/close" >> $GITHUB_STEP_SUMMARY
+          echo "## C) Yahoo-Chart-API (v8) - Historie" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          node -e '
-            const fs=require("fs");
-            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
-            let d=null;
-            try{d=JSON.parse(fs.readFileSync("tv_ohlc.json","utf8"));}catch(e){d=null;}
-            const rows=d&&Array.isArray(d.data)?d.data:null;
-            if(!rows){
-              zeile("Antwort unbrauchbar - erste 300 Zeichen:");
-              zeile("");
-              zeile("```");
-              try{zeile(fs.readFileSync("tv_ohlc.json","utf8").slice(0,300));}catch(e){zeile("(keine Datei)");}
-              zeile("```");
-            }else{
-              zeile("| Ticker | Open | High | Low | Close | Docht sichtbar? |");
-              zeile("|---|---|---|---|---|---|");
-              let mitDocht=0;
-              rows.forEach(r=>{
-                const v=r.d||[];
-                const [o,h,l,c]=v;
-                const echt=[o,h,l,c].every(x=>x!=null&&isFinite(Number(x)));
-                // Ein Docht ist nur dann einer, wenn High/Low ueber den
-                // Kerzenkoerper hinausragen - sonst ist es dieselbe
-                // Close-to-Close-Kerze wie heute, nur anders beschriftet.
-                const docht=echt&&(Number(h)>Math.max(Number(o),Number(c))||Number(l)<Math.min(Number(o),Number(c)));
-                if(docht)mitDocht++;
-                zeile("| "+r.s+" | "+o+" | "+h+" | "+l+" | "+c+" | "+(docht?"ja":echt?"nein (H/L = Koerper)":"keine Zahl")+" |");
-              });
-              zeile("");
-              zeile("**"+mitDocht+" von "+rows.length+" Tickern liefern einen echten Docht.**");
-            }
-          '
-
-      - name: B) Stooq-Tages-CSV mit echter OHLC-Historie
-        run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## B) Stooq-Tages-CSV (Historie mit Dochten)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| App-ID | Stooq-Symbol | HTTP | Zeilen | erster Tag | letzter Tag | Dochte |" >> $GITHUB_STEP_SUMMARY
+          echo "| App-ID | Yahoo-Symbol | HTTP | Tage | erster | letzter | mit Docht |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
-          # App-ID:Stooq-Symbol. Fuer den Dollar-Index gibt es mehrere
-          # Kandidaten - alle drei werden geprueft, damit die Wahl gemessen
-          # und nicht geraten ist.
-          for PAIR in "USD:dx.f" "USD:^dxy" "USD:dx_f" "EUR:eurusd" "GBP:gbpusd" "CHF:usdchf" "JPY:usdjpy" "CAD:usdcad" "AUD:audusd" "NZD:nzdusd" "GOLD:xauusd" "SILVER:xagusd" "OIL:cl.f" "BTC:btcusd" "SP500:^spx" "NAS:^ndx" "DAX:^dax"; do
+          for PAIR in "USD:DX-Y.NYB" "EUR:EURUSD=X" "GBP:GBPUSD=X" "CHF:USDCHF=X" "JPY:USDJPY=X" "CAD:USDCAD=X" "AUD:AUDUSD=X" "NZD:NZDUSD=X" "GOLD:GC=F" "SILVER:SI=F" "OIL:CL=F" "BTC:BTC-USD" "SP500:%5EGSPC" "NAS:%5ENDX" "DAX:%5EGDAXI"; do
             ID="${PAIR%%:*}"; SYM="${PAIR#*:}"
-            CODE=$(curl -sL -A "$UA" --max-time 40 -o "stooq_$ID.csv" -w "%{http_code}" \
-              "https://stooq.com/q/d/l/?s=$(printf '%s' "$SYM" | sed 's/\^/%5E/g')&i=d" || echo "000")
+            CODE=$(curl -sL -A "$UA" --max-time 40 -o "y_$ID.json" -w "%{http_code}" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=2y&interval=1d" || echo "000")
             node -e '
               const fs=require("fs");
               const id=process.argv[1],sym=process.argv[2],code=process.argv[3];
               const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
-              let txt="";
-              try{txt=fs.readFileSync("stooq_"+id+".csv","utf8");}catch(e){txt="";}
-              const lines=txt.trim().split("\n").filter(Boolean);
-              const kopf=(lines[0]||"").toLowerCase();
-              if(!/date/.test(kopf)||lines.length<3){
-                zeile("| "+id+" | "+sym+" | "+code+" | – | – | – | Antwort: "+JSON.stringify(txt.slice(0,60))+" |");
+              let d=null;
+              try{d=JSON.parse(fs.readFileSync("y_"+id+".json","utf8"));}catch(e){d=null;}
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];
+              const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!r||!q||!Array.isArray(r.timestamp)){
+                let roh="";try{roh=fs.readFileSync("y_"+id+".json","utf8").slice(0,70);}catch(e){roh="(keine Datei)";}
+                zeile("| "+id+" | "+sym+" | "+code+" | – | – | – | Antwort: "+JSON.stringify(roh)+" |");
               }else{
-                const sp=kopf.split(",");
-                const iD=sp.indexOf("date"),iO=sp.indexOf("open"),iH=sp.indexOf("high"),iL=sp.indexOf("low"),iC=sp.indexOf("close");
-                let docht=0,n=0,erst="",letzt="";
-                for(let i=1;i<lines.length;i++){
-                  const f=lines[i].split(",");
-                  const o=+f[iO],h=+f[iH],l=+f[iL],c=+f[iC];
-                  if(![o,h,l,c].every(isFinite))continue;
-                  n++;
-                  if(!erst)erst=f[iD];
-                  letzt=f[iD];
+                let n=0,docht=0,erst="",letzt="";
+                for(let i=0;i<r.timestamp.length;i++){
+                  const o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+                  if(![o,h,l,c].every(x=>typeof x==="number"&&isFinite(x)))continue;
+                  const t=new Date(r.timestamp[i]*1000).toISOString().slice(0,10);
+                  n++; if(!erst)erst=t; letzt=t;
                   if(h>Math.max(o,c)||l<Math.min(o,c))docht++;
                 }
                 zeile("| "+id+" | "+sym+" | "+code+" | "+n+" | "+erst+" | "+letzt+" | "+docht+" ("+(n?Math.round(docht/n*100):0)+"%) |");
               }
             ' "$ID" "$SYM" "$CODE"
-            rm -f "stooq_$ID.csv"
+            rm -f "y_$ID.json"
           done
+
+      - name: D) Binance-Klines fuer BTC
+        run: |
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Spalte **Dochte** = Zeilen, in denen High/Low ueber den Kerzenkoerper hinausragen. Nur solche Zeilen tragen einen Docht, der keine erfundene Zahl ist." >> $GITHUB_STEP_SUMMARY
+          echo "## D) Binance-Klines (BTC, frei ohne Schluessel)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          CODE=$(curl -sL --max-time 40 -o binance.json -w "%{http_code}" \
+            "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1000" || echo "000")
+          node -e '
+            const fs=require("fs");
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+            let d=null;
+            try{d=JSON.parse(fs.readFileSync("binance.json","utf8"));}catch(e){d=null;}
+            if(!Array.isArray(d)||!d.length){
+              let roh="";try{roh=fs.readFileSync("binance.json","utf8").slice(0,90);}catch(e){roh="(keine Datei)";}
+              zeile("HTTP "+process.argv[1]+" - unbrauchbar: "+JSON.stringify(roh));
+            }else{
+              let n=0,docht=0,erst="",letzt="";
+              d.forEach(k=>{
+                const o=+k[1],h=+k[2],l=+k[3],c=+k[4];
+                if(![o,h,l,c].every(isFinite))return;
+                const t=new Date(k[0]).toISOString().slice(0,10);
+                n++; if(!erst)erst=t; letzt=t;
+                if(h>Math.max(o,c)||l<Math.min(o,c))docht++;
+              });
+              zeile("HTTP "+process.argv[1]+" · **"+n+" Tage** von "+erst+" bis "+letzt+" · Dochte: "+docht+" ("+(n?Math.round(docht/n*100):0)+"%)");
+            }
+          ' "$CODE"
+          rm -f binance.json
+
+      - name: E) TradingView-Scanner mit OHLC fuer die Renditen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["TVC:US10Y","TVC:US02Y","TVC:DE10Y","TVC:DE02Y","TVC:GB10Y","TVC:GB02Y","TVC:CH10Y","TVC:CH02Y","TVC:JP10Y","TVC:JP02Y","TVC:CA10Y","TVC:CA02Y","TVC:AU10Y","TVC:AU02Y","TVC:NZ10Y","TVC:NZ02Y"],"query":{"types":[]}},"columns":["close","open","high","low"]}' \
+            "https://scanner.tradingview.com/global/scan" -o tv_bond.json || true
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## E) TradingView-Scanner: OHLC fuer die Anleiherenditen" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          node -e '
+            const fs=require("fs");
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+            let d=null;
+            try{d=JSON.parse(fs.readFileSync("tv_bond.json","utf8"));}catch(e){d=null;}
+            const rows=d&&Array.isArray(d.data)?d.data:null;
+            if(!rows){
+              let roh="";try{roh=fs.readFileSync("tv_bond.json","utf8").slice(0,200);}catch(e){roh="(keine Datei)";}
+              zeile("Antwort unbrauchbar: "+JSON.stringify(roh));
+            }else{
+              zeile("| Ticker | Close | Open | High | Low | Docht? |");
+              zeile("|---|---|---|---|---|---|");
+              let mit=0;
+              rows.forEach(r=>{
+                const v=r.d||[];const [c,o,h,l]=v;
+                const echt=[c,o,h,l].every(x=>x!=null&&isFinite(Number(x)));
+                const docht=echt&&(Number(h)>Math.max(Number(o),Number(c))||Number(l)<Math.min(Number(o),Number(c)));
+                if(docht)mit++;
+                zeile("| "+r.s+" | "+c+" | "+o+" | "+h+" | "+l+" | "+(docht?"ja":echt?"nein (H/L = Koerper)":"keine Zahl")+" |");
+              });
+              zeile("");
+              zeile("**"+mit+" von "+rows.length+" Renditen-Tickern liefern einen echten Docht.**");
+            }
+          '
