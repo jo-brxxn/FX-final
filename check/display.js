@@ -69,16 +69,30 @@ const MODE=process.argv[2]||'normalized';
   // Information, die vorlag. Ein leerer Zustand darf nichts verschlucken,
   // was bekannt ist - deshalb hier als Dauerpruefung ueber ALLE Assets,
   // nicht nur ueber das eine, das gerade auffiel.
+  // ⚠ NACHGEFUEHRT 2026-09-13: der Kalender ist jetzt die Monatskarte
+  // (.abc-wrap), und die alte Sieben-Tage-Sektion (.evt-section) wird
+  // ZUGEKLAPPT gar nicht mehr gezeichnet - ihr Schalter sitzt im Fuss der
+  // Kalenderkarte. Die Pruefung selbst bleibt woertlich dieselbe und wird
+  // NICHT entschaerft: auf jedem Asset muss ein Kalender stehen. Geprueft
+  // wird zusaetzlich, dass das Raster auch wirklich Tage enthaelt - eine
+  // leere Karte waere derselbe Verlust wie damals die fehlende Sektion.
   let n2b=0;
   Object.keys(soll).forEach(id=>{
     selSym(id);
-    if(!document.querySelector('#detail .evt-section')){
-      F.push({ort:'Event-Sektion fehlt',id,hinweis:'Asset zeigt weder Kalender noch "Next Event"'});
+    const kal=document.querySelector('#detail .abc-wrap');
+    const tage=kal?kal.querySelectorAll('.abc-d:not(.leer)').length:0;
+    if(!kal||tage<28){
+      F.push({ort:'Kalender fehlt',id,tage,
+        hinweis:'Asset zeigt keinen Monatskalender (frueher: weder Kalender noch "Next Event")'});
       return;
     }
+    // Und die Termine des Tages bzw. der ehrliche Hinweis, dass der Feed so
+    // weit nicht reicht - eine Spalte ohne beides waere eine stumme Karte.
+    if(!kal.querySelector('.abc-e,.abc-empty'))
+      F.push({ort:'Tagesspalte stumm',id,hinweis:'weder Termine noch Hinweistext'});
     n2b++;
   });
-  ok.evtSektion=n2b;
+  ok.kalenderProAsset=n2b;
   // 2c) Der Zeitraum steht im Namen NUR EINMAL.
   // ⚠ Nutzer-Wunsch 2026-09-07: "ich will auch nicht das das da doppelt steht
   // bei anderen Indikatoren ist das so". Gemessen war genau ein Name

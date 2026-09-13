@@ -6335,9 +6335,13 @@ function renderDetail(){
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${assetMonthCalHtml(c)}
-    ${`<div class="evt-section">
-      <div class="evt-toggle${evtOpen?' open':''}" onclick="toggleEvtSection('${c.id}')">
-        ${evtOpen?`<span>📅 ECONOMIC EVENTS</span>`:`<span>Full list · Next Event: ${nextLbl}</span>`}
+    ${/* ⚠ Zugeklappt wird die Sektion GAR NICHT mehr gezeichnet: ihr
+         Auf-/Zu-Schalter sitzt jetzt im Fuss der Kalenderkarte. Vorher stand
+         hier immer eine eigene 43px-Zeile plus Abstand, nur um zu sagen, was
+         die Karte darueber ohnehin schon zeigt. */''}
+    ${!evtOpen?'':`<div class="evt-section">
+      <div class="evt-toggle open" onclick="toggleEvtSection('${c.id}')">
+        <span>📅 ECONOMIC EVENTS</span>
         <span class="evt-tog-arrow">▶</span>
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{
@@ -6503,7 +6507,17 @@ function assetQuickRowHtml(c){
     if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'page'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
     return`<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
   }).join('');
-  return`<div class="aqr"><div class="aqr-links">${links}</div>${assetNotesCardHtml(c)}</div>`;
+  // ⚠ Die angepinnten Notizen standen hier bisher als eigene Karte. Seit das
+  // Board eine vollstaendige Notizen-Karte hat, ist das eine Dopplung - und
+  // zwar eine teure: gemessen 113px Hoehe fuer drei Titel, die zwei
+  // Bildschirmzentimeter weiter unten vollstaendig stehen.
+  // ⚠ ABER: ihr "Open"-Knopf war die EINZIGE Tuer zur Notizen-Ansicht
+  // (setSub('notes') kommt sonst nirgends vor). Die Karte faellt weg, die
+  // Tuer bleibt - als Knopf in derselben Zeile. Ein entfernter Einstieg ohne
+  // Ersatz ist genau der Fehler aus Regel 6.
+  const aufNotes=curSub==='notes';
+  const notizKnopf=`<button class="aql${aufNotes?' on':''}" onclick="setSub('${aufNotes?'specific':'notes'}')" title="${aufNotes?'Back to the data view':'All notes and folders of this asset'}">${icn('note',14)}<span>${aufNotes?'Close notes':'All notes'}</span></button>`;
+  return`<div class="aqr"><div class="aqr-links">${links}${notizKnopf}</div></div>`;
 }
 // Hoechstens so viele Notizen darf man pro Asset anpinnen.
 const ASSET_PIN_MAX=3;
@@ -6686,7 +6700,8 @@ function assetMonthCalHtml(c){
       </div>
       <div class="abc-foot">${von&&bis
         ?`Calendar covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>, not empty.`
-        :'No calendar data for this asset yet.'}</div>
+        :'No calendar data for this asset yet.'}
+        <button class="abc-full${evtSectionOpen[c.id]?' on':''}" onclick="toggleEvtSection('${escJH(c.id)}')" title="The full seven-day table with its high-impact filter">${evtSectionOpen[c.id]?'▾ Hide full list':'▸ Full list'}</button></div>
     </div>
     <div class="abc-day">
       <div class="abc-day-hd">${escH(kopf)}${liste.length?`<span class="abc-day-n">${liste.length} event${liste.length===1?'':'s'}</span>`:''}</div>
@@ -6793,13 +6808,11 @@ function abKontextHtml(c){
     const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
     const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
     const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:' title="Not wired to live data yet"';
-    if(d.art==='rate'){
-      return`<button class="ab-k ab-k-rate"${klick}>
-        <div class="ab-k-t">${escH(d.titel)}${AB_PH}</div>
-        <div class="ab-k-v">4.25<span class="ab-k-u">%</span></div>
-        <div class="ab-k-s">unchanged since Jul</div>
-      </button>`;
-    }
+    // ⚠ Der Leitzins ist eine ZAHL, kein Chart. Als gleich grosse Kachel im
+    // Raster stand er gemessen in rund 200px Weissraum - jetzt sitzt er
+    // kompakt in der Kopfzeile der Karte, und die drei Charts bekommen die
+    // Breite, die sie brauchen.
+    if(d.art==='rate')return'';
     const {svg,pct}=abKerzenSvg(c.id+'|'+a,240,52);
     // Die Richtung ist aus Sicht DIESES Assets zu lesen: steigende Renditen
     // sind fuer eine Waehrung tendenziell bullish, fuer Gold das Gegenteil.
@@ -6812,8 +6825,13 @@ function abKontextHtml(c){
       <div class="ab-k-s" style="color:${biasCss(roh)}">${pct>0?'+':''}${pct.toFixed(2)}%${dreht?' · inverse for this asset':''}</div>
     </button>`;
   }).join('');
+  const rate=arten.includes('cb')
+    ?`<span class="ab-rate" title="Policy rate of this asset's central bank">
+        <span class="ab-rate-l">Policy rate</span>
+        <span class="ab-rate-v">4.25<span class="ab-k-u">%</span></span>
+        <span class="ab-rate-s">unchanged since Jul</span>${AB_PH}</span>`:'';
   return`<div class="ab-ktile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">Context</span>
+    <div class="ab-tile-hd"><span class="ab-tile-t">Context</span>${rate}
       <span class="ab-tile-s">What else moves this asset — tap a tile to open it</span></div>
     <div class="ab-kgrid">${kacheln}</div>
   </div>`;
@@ -6853,10 +6871,17 @@ function abGrafikHtml(art,c){
   const m=phMonate(c.id+'|seas');
   const max=Math.max(...m.map(Math.abs))||1;
   const jetzt=new Date().getMonth();
+  // ⚠ Balkenhoehe als PROZENT der halben Kachelhoehe, nicht in festen Pixeln.
+  // Mit 26px fest sahen die Balken zerrissen aus, sobald die Kachel den Rest
+  // ihrer Spalte fuellt (gemessen: Kachel wuchs auf 277px, die Balken blieben
+  // 26px und klebten oben und unten am Rand). Zwei gleich hohe Haelften mit
+  // der Nulllinie dazwischen: positiv waechst nach oben, negativ nach unten.
   const balken=m.map((v,i)=>{
-    const hh=Math.abs(v)/max*26;
+    const pct=(Math.abs(v)/max*100).toFixed(1);
+    const f=biasCss(v>=0?'bull':'bear');
     return`<span class="ab-sb${i===jetzt?' on':''}" title="${SEAS_MON[i]}: ${v>0?'+':''}${v}%">
-      <span class="ab-sb-b" style="height:${hh.toFixed(1)}px;background:${biasCss(v>=0?'bull':'bear')};${v>=0?'margin-top:auto':'margin-bottom:auto'}"></span>
+      <span class="ab-sb-up">${v>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
+      <span class="ab-sb-dn">${v<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
       <span class="ab-sb-l">${SEAS_MON[i][0]}</span></span>`;
   }).join('');
   return abTile('Seasonality',AB_PH,
@@ -6951,9 +6976,19 @@ function abNoteMove(id,assetId,richtung){
 function renderAssetBoard(c){
   const rubs=c.rubrics||[];
   const idx=n=>rubs.findIndex(r=>r&&r.name===n);
-  const karten=ASSET_CARDS.map(n=>{const i=idx(n);
-    return i<0?'':`<div class="ab-col">${renderRub(rubs[i],i,rubs.length)}</div>`;}).join('');
-  const grafiken=ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('');
+  // ⚠ GEMESSEN 2026-09-13: als zwei getrennte Rasterreihen war die Karten-
+  // Reihe so hoch wie die HOECHSTE Karte (526px), waehrend die beiden
+  // anderen 407 und 381 hoch waren - unter ihnen standen 145px tote Flaeche,
+  // bevor das Grafik-Band anfing. Genau die Luecke, die der Nutzer meint
+  // ("mach das es zwischen den einzelnen Karten keine Luecken gibt").
+  // Loesung: Karte und ihre Grafik stehen in DERSELBEN Spalte untereinander.
+  // Dann rutscht jede Grafik direkt unter ihre Karte, egal wie hoch die ist,
+  // und keine Karte muss dafuer laenger werden.
+  const spalten=ASSET_CARDS.map((n,si)=>{
+    const i=idx(n);
+    return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}
+      ${ASSET_GRAPHS[si]?abGrafikHtml(ASSET_GRAPHS[si],c):''}</div>`;
+  }).join('');
   // ⚠ Die restlichen Karten sind NICHT geloescht - ihre Indikatoren zaehlen
   // weiter im Score. Sie stehen nur nicht mehr im Weg. Ohne diesen Schalter
   // waeren sie unerreichbar, und damit auch nicht mehr korrigierbar.
@@ -6963,8 +6998,7 @@ function renderAssetBoard(c){
        <button onclick="addRub()" class="btn g" style="width:100%;padding:8px;margin-top:8px">＋ Add Rubric</button></div>`
     :'';
   return`<div class="ab-board">
-    <div class="ab-cards">${karten}</div>
-    <div class="ab-graphs">${grafiken}</div>
+    <div class="ab-cards">${spalten}</div>
     <div class="ab-lower">${abKontextHtml(c)}${abNotesHtml(c)}</div>
     <button class="ab-rest-sw" onclick="toggleAbRest()">${abRestOpen?'▾ Hide':'▸ Show'} the other ${rest.length} card${rest.length===1?'':'s'} (still counted in the score)</button>
     ${restHtml}
@@ -10503,10 +10537,17 @@ function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(
 // Tages) sind wieder EIN gemeinsamer 'sent'-Platzhalter - Klick oeffnet
 // openSentPicker() mit den zutreffenden Unterkategorien statt direkt zu
 // navigieren, siehe SENT_QUICK_SUBLINKS.
+// ⚠ Nur noch die Seiten, die auf der Asset-Seite NICHT ohnehin schon stehen
+// (Nutzer 2026-09-13: "entfern bitte dopplungen also die quicklinks ein paar
+// sind davon nicht noetig"). Seit dem Board-Umbau sind fuenf der acht
+// Verknuepfungen Dopplungen geworden - sie fuehrten auf eine Seite, deren
+// Inhalt zwei Zentimeter weiter oben schon steht:
+//   Seasonality → Grafik-Band, COT → Grafik-Band, Sentiment → Grafik-Band,
+//   Calendar    → Monatskarte, News → News-Abschnitt am Seitenfuss.
+// Ein Knopf, der dorthin fuehrt, wo man schon ist, kostet Platz und
+// Aufmerksamkeit und gibt nichts zurueck.
 const ASSET_QUICK_LINKS=[
-  ['seas','clock','Seasonality'],['trends','trendUp','Trends'],['cot','bars','COT'],
-  ['sent','pulse','Sentiment'],['data','note','Data'],['rate','flame','Rate Probabilities'],
-  ['news','news','News'],['cal','calendar','Calendar'],
+  ['trends','trendUp','Trends'],['data','note','Data'],['rate','flame','Rate Probabilities'],
 ];
 // Unterkategorien hinter dem 'sent'-Quicklink (openSentPicker) - jede
 // springt in den passenden Sentiment-Subtab (QUICK_LINK_REAL_TAB, alle

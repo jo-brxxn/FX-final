@@ -13083,3 +13083,61 @@ Die bisherige Sieben-Tage-Liste bleibt unverändert als aufklappbare
 markiert, 9 / 8 / 2 Tage mit Punkten, 17–20 Tage als unbekannt
 gekennzeichnet, 0 Überläufe, Tageswahl und Monatswechsel wirken, 390 px eine
 Spalte ohne Querscrollen.
+
+### 2026-09-13 — Asset-Seite entrümpelt und zusammengezogen (VERSION-CHECK-505)
+
+**Nutzer:** *„entfern bitte dopplungen … mach das es zwischen den einzelnen
+Karten keine Lücken gibt das die Charts Mittelgroß sind und alles logisch
+angeornet ist und man alles ohne viel scrollen schnell sehen kann und mach
+das zwischen den Sachen keine Lücke ist ohne Karten zu verlängern"*.
+
+| gemessen | vorher | nachher |
+|---|---|---|
+| Seitenhöhe | **2123 px** | **1765 px** |
+| Abstände zwischen Blöcken | 4× 14–15 px | 5–8 px |
+| Spaltenhöhen (Karten-Reihe) | 667 / 578 / 526 px | **667 / 667 / 667** |
+| Loch unter dem Kontext-Band | **270 px** | 0 |
+| Quicklink-Zeile | 113 px, 8 Knöpfe | 42 px, 4 Knöpfe |
+| Chart in einer Kontext-Kachel | 52 px | **~160 px** |
+
+### Fünf Quicklinks waren Dopplungen geworden
+
+Sie führten auf eine Seite, deren Inhalt zwei Zentimeter weiter oben schon
+steht: **Seasonality, COT, Sentiment** (Grafik-Band), **Calendar**
+(Monatskarte), **News** (Seitenfuß). Geblieben: Trends, Data, Rate
+Probabilities.
+
+⚠ Die kleine Notes-Karte in derselben Zeile kostete 113 px, um drei Titel zu
+zeigen, die weiter unten vollständig stehen — **aber ihr „Open"-Knopf war die
+einzige Tür zur Notizen-Ansicht** (`setSub('notes')` kommt sonst nirgends
+vor). Die Karte fiel weg, die Tür blieb als Knopf „All notes". Ein entfernter
+Einstieg ohne Ersatz ist genau der Fehler aus Regel 6.
+
+### Die strukturelle Änderung: Karte und Grafik in DERSELBEN Spalte
+
+Als zwei getrennte Rasterreihen war die Karten-Reihe so hoch wie die höchste
+Karte (526 px), unter den beiden anderen (407/381) standen **89 bzw. 141 px
+tote Fläche**. Jetzt steht jede Grafik direkt unter ihrer Karte.
+
+Die Spalten werden auf gleiche Höhe gebracht und die **Grafik** füllt den
+Rest — nicht die Indikator-Karte, die durfte ausdrücklich nicht länger
+werden. ⚠ Erster Versuch mit `flex:1` **blieb wirkungslos**: `align-items:start`
+sizet jede Spalte auf ihren Inhalt, dann hat `flex` nichts zu verteilen.
+
+### Drei Folgefehler, die erst der Augenschein zeigte
+
+1. **Seasonality-Balken zerrissen.** Sie rechneten in festen 26 px und klebten
+   oben und unten am Rand, sobald die Kachel wuchs. Jetzt Prozent der halben
+   Kachelhöhe, zwei gleich hohe Hälften mit Nulllinie dazwischen.
+2. **270 px Nichts unter dem Kontext-Band** — Kontext 201 px, Notizen 471 px.
+   Beide jetzt gleich hoch, die Notizenliste scrollt in sich.
+3. **Leitzins-Kachel fast leer** — eine Zahl in ~200 px Weißraum. Sie sitzt
+   jetzt kompakt in der Kopfzeile, die drei Charts bekommen die Breite.
+
+### `check/display.js` nachgeführt statt entschärft
+
+Der Wächter aus dem CAD-Bug (06.09.) suchte `.evt-section`, die zugeklappt
+nicht mehr gezeichnet wird. Er prüft jetzt die Monatskarte — **strenger als
+vorher**: Raster muss ≥28 Tage haben, und die Tagesspalte muss entweder
+Termine oder den ehrlichen Hinweis zeigen. **Gegenprobe:** Kalender für CAD
+unterdrückt → 1 Treffer, zurück → 0. 24 Assets geprüft.
