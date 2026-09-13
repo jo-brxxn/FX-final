@@ -1,0 +1,115 @@
+# Gibt es fuer die Preis-Charts echte Tages-OHLC (also echte Dochte)?
+#
+# Anlass (Nutzer 2026-09-13): "mach bei allen charts die preis abspiegeln das
+# eine kerze immer ein tag ist und das wenn das geht man auch die wicks
+# sieht". Das "wenn das geht" ist die eigentliche Frage.
+#
+# STAND HEUTE traegt price_data.json je Tag GENAU EINEN Wert (Schlusskurs) -
+# der Workflow-Schritt "Fetch asset/FX prices" fragt den TradingView-Scanner
+# mit columns:["close"]. Daraus laesst sich kein Docht zeichnen, der nicht
+# erfunden waere (Regel 4). Die App zeichnet deshalb Close-to-Close.
+#
+# Dieser Lauf MISST, ob eine echte OHLC-Quelle erreichbar ist, statt es zu
+# vermuten. Er laeuft NUR von Hand, schreibt NICHTS in die Daten und kann
+# den stuendlichen Job damit nicht beschaedigen.
+#
+# Zwei Wege werden geprueft:
+#   A) derselbe TradingView-Scanner, nur mit columns:["open","high","low",
+#      "close"] - waere ab dem naechsten Lauf ein echter Tages-Docht, aber
+#      NUR vorwaerts (eine Momentaufnahme pro Tag, keine Historie).
+#   B) Stooq-Tages-CSV - liefert Datum,Open,High,Low,Close ueber Jahre und
+#      koennte die bestehende Historie rueckwirkend mit Dochten fuellen.
+name: Probe OHLC sources (wicks)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: A) TradingView-Scanner mit open/high/low/close
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["TVC:DXY","FX:EURUSD","FX:GBPUSD","FX:USDCHF","FX:USDJPY","FX:USDCAD","FX:AUDUSD","FX:NZDUSD","TVC:GOLD","TVC:SILVER","NYMEX:CL1!","COINBASE:BTCUSD","SP:SPX","NASDAQ:NDX","TVC:DEU40"],"query":{"types":[]}},"columns":["open","high","low","close"]}' \
+            "https://scanner.tradingview.com/global/scan" -o tv_ohlc.json || true
+          echo "## A) TradingView-Scanner: open/high/low/close" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          node -e '
+            const fs=require("fs");
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");};
+            let d=null;
+            try{d=JSON.parse(fs.readFileSync("tv_ohlc.json","utf8"));}catch(e){d=null;}
+            const rows=d&&Array.isArray(d.data)?d.data:null;
+            if(!rows){
+              zeile("Antwort unbrauchbar - erste 300 Zeichen:");
+              zeile("");
+              zeile("```");
+              try{zeile(fs.readFileSync("tv_ohlc.json","utf8").slice(0,300));}catch(e){zeile("(keine Datei)");}
+              zeile("```");
+            }else{
+              zeile("| Ticker | Open | High | Low | Close | Docht sichtbar? |");
+              zeile("|---|---|---|---|---|---|");
+              let mitDocht=0;
+              rows.forEach(r=>{
+                const v=r.d||[];
+                const [o,h,l,c]=v;
+                const echt=[o,h,l,c].every(x=>x!=null&&isFinite(Number(x)));
+                // Ein Docht ist nur dann einer, wenn High/Low ueber den
+                // Kerzenkoerper hinausragen - sonst ist es dieselbe
+                // Close-to-Close-Kerze wie heute, nur anders beschriftet.
+                const docht=echt&&(Number(h)>Math.max(Number(o),Number(c))||Number(l)<Math.min(Number(o),Number(c)));
+                if(docht)mitDocht++;
+                zeile("| "+r.s+" | "+o+" | "+h+" | "+l+" | "+c+" | "+(docht?"ja":echt?"nein (H/L = Koerper)":"keine Zahl")+" |");
+              });
+              zeile("");
+              zeile("**"+mitDocht+" von "+rows.length+" Tickern liefern einen echten Docht.**");
+            }
+          '
+
+      - name: B) Stooq-Tages-CSV mit echter OHLC-Historie
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## B) Stooq-Tages-CSV (Historie mit Dochten)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| App-ID | Stooq-Symbol | HTTP | Zeilen | erster Tag | letzter Tag | Dochte |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          # App-ID:Stooq-Symbol. Fuer den Dollar-Index gibt es mehrere
+          # Kandidaten - alle drei werden geprueft, damit die Wahl gemessen
+          # und nicht geraten ist.
+          for PAIR in "USD:dx.f" "USD:^dxy" "USD:dx_f" "EUR:eurusd" "GBP:gbpusd" "CHF:usdchf" "JPY:usdjpy" "CAD:usdcad" "AUD:audusd" "NZD:nzdusd" "GOLD:xauusd" "SILVER:xagusd" "OIL:cl.f" "BTC:btcusd" "SP500:^spx" "NAS:^ndx" "DAX:^dax"; do
+            ID="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            CODE=$(curl -sL -A "$UA" --max-time 40 -o "stooq_$ID.csv" -w "%{http_code}" \
+              "https://stooq.com/q/d/l/?s=$(printf '%s' "$SYM" | sed 's/\^/%5E/g')&i=d" || echo "000")
+            node -e '
+              const fs=require("fs");
+              const id=process.argv[1],sym=process.argv[2],code=process.argv[3];
+              const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");};
+              let txt="";
+              try{txt=fs.readFileSync("stooq_"+id+".csv","utf8");}catch(e){txt="";}
+              const lines=txt.trim().split("\n").filter(Boolean);
+              const kopf=(lines[0]||"").toLowerCase();
+              if(!/date/.test(kopf)||lines.length<3){
+                zeile("| "+id+" | "+sym+" | "+code+" | – | – | – | Antwort: "+JSON.stringify(txt.slice(0,60))+" |");
+              }else{
+                const sp=kopf.split(",");
+                const iD=sp.indexOf("date"),iO=sp.indexOf("open"),iH=sp.indexOf("high"),iL=sp.indexOf("low"),iC=sp.indexOf("close");
+                let docht=0,n=0,erst="",letzt="";
+                for(let i=1;i<lines.length;i++){
+                  const f=lines[i].split(",");
+                  const o=+f[iO],h=+f[iH],l=+f[iL],c=+f[iC];
+                  if(![o,h,l,c].every(isFinite))continue;
+                  n++;
+                  if(!erst)erst=f[iD];
+                  letzt=f[iD];
+                  if(h>Math.max(o,c)||l<Math.min(o,c))docht++;
+                }
+                zeile("| "+id+" | "+sym+" | "+code+" | "+n+" | "+erst+" | "+letzt+" | "+docht+" ("+(n?Math.round(docht/n*100):0)+"%) |");
+              }
+            ' "$ID" "$SYM" "$CODE"
+            rm -f "stooq_$ID.csv"
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Spalte **Dochte** = Zeilen, in denen High/Low ueber den Kerzenkoerper hinausragen. Nur solche Zeilen tragen einen Docht, der keine erfundene Zahl ist." >> $GITHUB_STEP_SUMMARY
