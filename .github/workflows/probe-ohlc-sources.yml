@@ -127,3 +127,92 @@ jobs:
               zeile("**"+mit+" von "+rows.length+" Renditen-Tickern liefern einen echten Docht.**");
             }
           '
+
+  runde3:
+    runs-on: ubuntu-latest
+    steps:
+      # RUNDE 3 (2026-09-14): Nutzer "da fehlen Charts und die wicks".
+      # Die Renditen-Charts haben genau EINEN Docht (den von heute), weil der
+      # Scanner nur eine Momentaufnahme je Tag liefert. Gesucht wird eine
+      # HISTORIEN-Quelle mit Tages-OHLC fuer Staatsanleiherenditen.
+      #   F) Yahoo-Indizes ^TNX/^FVX/^TYX/^IRX - US-Renditen als Index
+      #   G) FRED-CSV (DGS2/DGS10 usw.) - taeglicher Einzelwert, KEIN OHLC;
+      #      geprueft, um es belegt ausschliessen zu koennen statt zu raten
+      #   H) Yahoo-Symbole fuer die uebrigen sieben Laender, falls es sie gibt
+      - name: F) Yahoo-Indizes fuer die US-Renditen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "## F) Yahoo-Indizes fuer US-Renditen" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| gesucht | Symbol | HTTP | Tage | erster | letzter | mit Docht |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          for PAIR in "US 13W:%5EIRX" "US 5Y:%5EFVX" "US 10Y:%5ETNX" "US 30Y:%5ETYX" "US 2Y:%5EUS2Y" "US 2Y alt:2YY%3DF"; do
+            NAME="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            CODE=$(curl -sL -A "$UA" --max-time 40 -o y.json -w "%{http_code}" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || echo "000")
+            node -e '
+              const fs=require("fs");
+              const [nm,sym,code]=process.argv.slice(1);
+              const z=a=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+              let d=null;try{d=JSON.parse(fs.readFileSync("y.json","utf8"));}catch(e){}
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];
+              const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!r||!q||!Array.isArray(r.timestamp)){z("| "+nm+" | "+sym+" | "+code+" | – | – | – | nicht verfuegbar |");}
+              else{let n=0,dd=0,e1="",e2="";
+                for(let i=0;i<r.timestamp.length;i++){
+                  const o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+                  if(![o,h,l,c].every(x=>typeof x==="number"&&isFinite(x)))continue;
+                  const t=new Date(r.timestamp[i]*1000).toISOString().slice(0,10);
+                  n++;if(!e1)e1=t;e2=t;
+                  if(h>Math.max(o,c)||l<Math.min(o,c))dd++;}
+                z("| "+nm+" | "+sym+" | "+code+" | "+n+" | "+e1+" | "+e2+" | "+dd+" ("+(n?Math.round(dd/n*100):0)+"%) |");}
+            ' "$NAME" "$SYM" "$CODE"
+            rm -f y.json
+          done
+
+      - name: G) FRED-CSV - hat es ueberhaupt Hoch/Tief?
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## G) FRED (DGS2/DGS10) - Spaltenpruefung" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for S in DGS2 DGS10; do
+            CODE=$(curl -sL --max-time 40 -o f.csv -w "%{http_code}" \
+              "https://fred.stlouisfed.org/graph/fredgraph.csv?id=$S" || echo "000")
+            KOPF=$(head -1 f.csv 2>/dev/null | tr -d '\r')
+            ZEILEN=$(wc -l < f.csv 2>/dev/null || echo 0)
+            LETZTE=$(tail -1 f.csv 2>/dev/null | tr -d '\r')
+            echo "- **$S** HTTP $CODE · $ZEILEN Zeilen · Kopf \`$KOPF\` · letzte \`$LETZTE\`" >> $GITHUB_STEP_SUMMARY
+            rm -f f.csv
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Zwei Spalten (Datum, Wert) heisst: KEIN Hoch/Tief, also keine Dochte - nur ein Ersatz fuer den Schluss." >> $GITHUB_STEP_SUMMARY
+
+      - name: H) Yahoo fuer die uebrigen sieben Laender
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## H) Yahoo fuer DE/GB/CH/JP/CA/AU/NZ" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| gesucht | Symbol | HTTP | Tage | mit Docht |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          for PAIR in "DE 10Y:%5EDE10Y" "DE 10Y b:DE10YB.BD" "GB 10Y:%5EGB10Y" "GB 10Y b:GB10YT%3DRR" "JP 10Y:%5EJP10Y" "CH 10Y:%5ECH10Y" "CA 10Y:%5ECA10Y" "AU 10Y:%5EAU10Y" "NZ 10Y:%5ENZ10Y"; do
+            NAME="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            CODE=$(curl -sL -A "$UA" --max-time 30 -o y.json -w "%{http_code}" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=1y&interval=1d" || echo "000")
+            node -e '
+              const fs=require("fs");
+              const [nm,sym,code]=process.argv.slice(1);
+              const z=a=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+              let d=null;try{d=JSON.parse(fs.readFileSync("y.json","utf8"));}catch(e){}
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];
+              const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!r||!q||!Array.isArray(r.timestamp)){z("| "+nm+" | "+sym+" | "+code+" | – | nicht verfuegbar |");}
+              else{let n=0,dd=0;
+                for(let i=0;i<r.timestamp.length;i++){
+                  const o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+                  if(![o,h,l,c].every(x=>typeof x==="number"&&isFinite(x)))continue;
+                  n++;if(h>Math.max(o,c)||l<Math.min(o,c))dd++;}
+                z("| "+nm+" | "+sym+" | "+code+" | "+n+" | "+dd+" ("+(n?Math.round(dd/n*100):0)+"%) |");}
+            ' "$NAME" "$SYM" "$CODE"
+            rm -f y.json
+          done
