@@ -7576,6 +7576,25 @@ const ASSET_ART={
   GOLD:artBarren, SILVER:artBarren, OIL:artFass, BTC:()=>artMuenze('%E2%82%BF'),
   SP500:artKerzen, NAS:artKerzen, DAX:artKerzen, GER100:artKerzen,
 };
+// ── ECHTE SCHEINE ALS BREITES BAND ─────────────────────────────────────
+// Nutzer 2026-09-14, mit Referenzfoto und drei Geldschein-Bildern: das Motiv
+// soll KEIN kleines Emblem neben dem Titel sein, sondern ein breites Band
+// ueber die ganze obere Flaeche, so blass, dass Titel und Knopfleiste
+// DARUEBER liegen koennen.
+//
+// ⚠ NUR die Assets in dieser Liste haben ein Foto. Alle anderen behalten
+// das gezeichnete SVG-Emblem in der Luecke (assetArtUrl). Eine Datei, die
+// nicht existiert, waere ein stilles 404 und eine leere Flaeche - deshalb
+// eine ausdrueckliche Liste statt "probier mal, ob es die Datei gibt".
+// Die Bilder liegen als img/note-<id>.webp, rund 50 KB je Schein: 1600x420,
+// der Schein rechts angeschnitten, nach links in den Grund auslaufend.
+// Erzeugt aus den vom Nutzer gelieferten Vorlagen, Herkunft in
+// img/note-herkunft.json.
+const NOTE_FOTOS=['USD','EUR','JPY'];
+function assetBandUrl(id){
+  return NOTE_FOTOS.includes(id)?`url(img/note-${String(id).toLowerCase()}.webp)`:'';
+}
+
 /** Der fertige data-URI fuers Hintergrundbild - oder '' ohne Motiv. */
 function assetArtUrl(id){
   let bau=ASSET_ART[id];
@@ -7601,6 +7620,10 @@ function assetArtUrl(id){
 // Score und an der Schriftgroesse; das kann CSS nicht wissen.
 // Ist die Luecke schmaler als das Motiv (schmales Fenster, langer Name),
 // gibt es KEIN Motiv statt einer Kollision.
+// Hoehe des Schein-Bands. ⚠ Bewusst hoeher als das freie Band ueber der
+// Kartenreihe (gemessen 103px): es DARF hinter die Karten laufen, weil der
+// Schleier es vorher ausblendet - genau wie im Referenzbild des Nutzers.
+const BAND_HOEHE=300;
 const ART_MIN_BREITE=120;   // darunter ist es kein Bild mehr, nur ein Fleck
 const ART_LUFT=18;          // Mindestabstand zu Titel und Knopfleiste
 function positioniereAssetArt(assetId){
@@ -7612,7 +7635,20 @@ function positioniereAssetArt(assetId){
   // nie zurueck.
   if(assetId)d.dataset.artId=assetId;
   const id=assetId||d.dataset.artId;
-  if(!id){d.style.setProperty('--asset-art','none');return;}
+  if(!id){d.style.setProperty('--asset-art','none');d.classList.remove('hat-band');return;}
+  // ── BANDMODUS: das Asset hat ein echtes Schein-Foto ──────────────────
+  // Das Band laeuft ueber die volle Breite und braucht keine Luecke - der
+  // Schleier davor (CSS) haelt es so blass, dass Schrift darauf lesbar
+  // bleibt. Gemessen von check/kartenlook.js an JEDER Textstelle.
+  const band=assetBandUrl(id);
+  if(band){
+    d.classList.add('hat-band');
+    d.style.setProperty('--asset-art',band);
+    d.style.setProperty('--asset-art-size','auto '+BAND_HOEHE+'px');
+    d.style.setProperty('--asset-art-x','right');
+    return;
+  }
+  d.classList.remove('hat-band');
   const t=d.querySelector('.atitle'), meta=d.querySelector('.dmeta');
   const url=assetArtUrl(id)||'none';
   if(!t||!meta){d.style.setProperty('--asset-art','none');return;}
@@ -20500,6 +20536,7 @@ Object.assign(window,{
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
   assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,assetArtUrl,ASSET_ART,positioniereAssetArt,
+  assetBandUrl,NOTE_FOTOS,BAND_HOEHE,
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,

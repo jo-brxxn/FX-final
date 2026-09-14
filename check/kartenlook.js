@@ -146,7 +146,7 @@ const MIN_SCHATTEN_LAGEN = 3;
   // zweistelligen Score ist rund 100px breiter als "USD".
   const BREITEN = [[1920, 1080], [1500, 1000], [1280, 900], [1100, 820], [390, 844]];
   const ASSETS = ['USD', 'EUR', 'GOLD', 'OIL', 'BTC', 'SP500', 'GER100', 'USYIELD', 'NZYIELD'];
-  let geprueft = 0, mitMotiv = 0, ohneMotiv = 0;
+  let geprueft = 0, mitMotiv = 0, ohneMotiv = 0, mitBand = 0;
   for (const [w, h] of BREITEN) {
     await p.setViewportSize({ width: w, height: h });
     await p.waitForTimeout(260);
@@ -157,6 +157,10 @@ const MIN_SCHATTEN_LAGEN = 3;
         const d = document.getElementById('detail');
         const cs = getComputedStyle(d);
         if (cs.backgroundImage === 'none') return { aus: true };
+        // ⚠ Im Bandmodus liegt das Motiv ABSICHTLICH unter der Schrift -
+        // die Kollisionspruefung gilt dort nicht, dafuer die Streuung
+        // weiter unten. Erkennbar an der Klasse, die renderDetail setzt.
+        if (d.classList.contains('hat-band')) return { aus: false, band: true };
         const dr = d.getBoundingClientRect();
         // Wo genau liegt das Motiv? Aus background-position/-size.
         const pos = cs.backgroundPosition.split(' ');
@@ -181,6 +185,7 @@ const MIN_SCHATTEN_LAGEN = 3;
       });
       geprueft++;
       if (r.aus) { ohneMotiv++; continue; }
+      if (r.band) { mitBand++; continue; }   // Bandmodus: eigene Pruefung unten
       mitMotiv++;
       if (r.treffer.length) fail('MOTIV AUF SCHRIFT',
         `${id} bei ${w}px: das Motiv (x ${r.kasten.l}-${r.kasten.r}) ueberdeckt ${r.treffer.map(t => t.was + ' "' + t.txt + '"').join(', ')}`);
@@ -193,13 +198,75 @@ const MIN_SCHATTEN_LAGEN = 3;
   if (!mitMotiv) fail('GAR KEIN MOTIV', 'auf keiner der geprueften Breiten wurde ein Asset-Motiv gezeichnet.');
   if (!ohneMotiv) fail('NIE ABGESCHALTET', 'auch auf 390px Breite stand ein Motiv - dort gibt es keine Luecke, es muesste verschwinden.');
 
+  // ── 3b) Wie unruhig macht das Band den Grund? ───────────────────────
+  // ⚠ DIE RICHTIGE MESSGROESSE. Der erste Versuch nahm den Kontrast
+  // Schrift-gegen-Grund - der kam MIT Band sogar besser heraus als ohne,
+  // weil die Linien des Scheins den Median des Grunds verschieben. Was ein
+  // Bild hinter Schrift wirklich kostet, ist die STREUUNG: ruhig heisst
+  // sigma nahe 0 (gemessen 0,3-0,4 ohne Band), ein Geldschein mit eigener
+  // Schrift darunter hat eine hohe. Geprueft wird der ZUWACHS, weil die
+  // Flagge im Titel auch ohne Band schon sigma 66 hat.
+  const MAX_ZUWACHS = 6;
+  await p.setViewportSize({ width: 1500, height: 1000 });
+  const bandAsset = await p.evaluate(() => (typeof NOTE_FOTOS !== 'undefined' && NOTE_FOTOS[0]) || null);
+  if (bandAsset) {
+    await p.evaluate(x => gotoSym(x), bandAsset);
+    await p.waitForTimeout(500);
+    const raster = await p.evaluate(() => {
+      const d = document.getElementById('detail').getBoundingClientRect();
+      const karten = document.querySelector('.ab-cards');
+      const bis = karten ? karten.getBoundingClientRect().top - 4 : d.top + 100;
+      const zeilen = Math.max(1, Math.floor((bis - d.top - 6) / 26));
+      const out = [];
+      for (let gy = 0; gy < zeilen; gy++) for (let gx = 0; gx < 6; gx++)
+        out.push({ n: `r${gy}c${gx}`, x: Math.round(d.left + 10 + gx * (d.width - 30) / 6), y: Math.round(d.top + 3 + gy * 26), w: Math.round((d.width - 30) / 6 - 6), h: 22 });
+      return out;
+    });
+    const sigma = async () => {
+      const foto = (await p.screenshot({ type: 'png' })).toString('base64');
+      return await p.evaluate(async ([b64, zz]) => {
+        const img = new Image();
+        await new Promise(ok => { img.onload = ok; img.src = 'data:image/png;base64,' + b64; });
+        const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+        const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
+        return zz.map(z => {
+          const d = ctx.getImageData(z.x, z.y, z.w, z.h).data; const h = [];
+          for (let i = 0; i < d.length; i += 4) h.push(.2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]);
+          h.sort((a, b) => a - b);
+          const g = h.slice(Math.floor(h.length * .12));   // Schrift/Icons raus
+          const m = g.reduce((a, b) => a + b, 0) / g.length;
+          return Math.sqrt(g.reduce((a, b) => a + (b - m) * (b - m), 0) / g.length);
+        });
+      }, [foto, raster]);
+    };
+    const mitB = await sigma();
+    await p.evaluate(() => { const d = document.getElementById('detail'); d.classList.remove('hat-band'); d.style.setProperty('--asset-art', 'none'); });
+    await p.waitForTimeout(220);
+    const ohneB = await sigma();
+    let maxZ = 0, wo = '';
+    mitB.forEach((v, i) => { const z = v - ohneB[i]; if (z > maxZ) { maxZ = z; wo = raster[i].n; } });
+    if (maxZ > MAX_ZUWACHS) fail('BAND ZU KRAEFTIG',
+      `das Schein-Band erhoeht die Streuung des Grunds um bis zu +${maxZ.toFixed(1)} sigma (${wo}), erlaubt sind ${MAX_ZUWACHS}. Darueber liest man die Schrift des Scheins hinter der Knopfleiste - der Nutzer wollte "unscheinbar ... so blass". Der Schleier in .detail.hat-band gehoert hochgesetzt.`);
+    global._bandZuwachs = maxZ;
+    await p.evaluate(x => gotoSym(x), 'USD');
+    await p.waitForTimeout(300);
+  }
+
   // ── 4) Jedes Asset hat ein Motiv, und es laedt ───────────────────────
   await p.setViewportSize({ width: 1500, height: 1000 });
   const laden = await p.evaluate(async () => {
     const out = [];
     for (const s of syms) {
       let u = '';
-      try { u = assetArtUrl(s.id); } catch (e) { u = ''; }
+      try { u = assetBandUrl(s.id) || assetArtUrl(s.id); } catch (e) { u = ''; }
+      // Ein Band-Foto ist eine echte Datei - laedt sie nicht, ist die Seite
+      // still ohne Motiv (404 faellt niemandem auf).
+      if (u.startsWith('url(img/')) {
+        const pfad = u.slice(4, -1);
+        const ok2 = await new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = pfad; });
+        if (!ok2) out.push({ id: s.id, dateiWeg: pfad });
+        continue;
+      }
       if (!u) { out.push({ id: s.id, fehlt: true }); continue; }
       const src = u.slice(5, -2);
       const ok = await new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = src; });
@@ -210,6 +277,7 @@ const MIN_SCHATTEN_LAGEN = 3;
   laden.forEach(x => {
     if (x.fehlt) fail('KEIN MOTIV', `${x.id} bekommt kein Hintergrundmotiv - jedes gelistete Asset soll eins haben.`);
     if (x.kaputt) fail('MOTIV LAEDT NICHT', `${x.id}: der data-URI ist kein gueltiges SVG (Sonderzeichen nicht kodiert?).`);
+    if (x.dateiWeg) fail('SCHEIN-FOTO FEHLT', `${x.id} steht in NOTE_FOTOS, aber ${x.dateiWeg} laedt nicht. Ein 404 faellt niemandem auf - die Seite steht dann einfach ohne Motiv da.`);
   });
 
   await b.close();
@@ -220,5 +288,6 @@ const MIN_SCHATTEN_LAGEN = 3;
   }
   console.log(`[kartenlook] ok (Karte gegen Seitengrund ${(global._kontrast || 0).toFixed(2)}:1 am Pixel, `
     + `${Object.values(schatten)[0].lagen} gestapelte Schattenlagen; Motiv auf ${geprueft} Kombinationen aus `
-    + `${BREITEN.length} Breiten x ${ASSETS.length} Assets geprueft - ${mitMotiv} gezeichnet, ${ohneMotiv} mangels Platz aus, 0 Kollisionen)`);
+    + `${BREITEN.length} Breiten x ${ASSETS.length} Assets geprueft - ${mitMotiv} als Emblem, ${mitBand} als Band, ${ohneMotiv} mangels Platz aus, 0 Kollisionen; `
+    + `Band erhoeht die Streuung um +${(global._bandZuwachs || 0).toFixed(1)} sigma)`);
 })().catch(e => { console.error('KARTEN-LOOK-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

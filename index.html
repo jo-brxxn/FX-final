@@ -1518,7 +1518,46 @@ body.no-ui-anim #navSidebar{transition:none}
      0% 0% zurueck. Gemessen: --asset-art-x stand korrekt auf 422px, und das
      Motiv klebte trotzdem links hinter der Flagge. */
   background-position:var(--asset-art-x,214px) 6px;
-  background-size:var(--asset-art-size,auto 96px)}
+  background-size:var(--asset-art-size,auto 96px);
+  /* ⚠ local, nicht scroll: das Band gehoert an den ANFANG der Seite und soll
+     beim Scrollen mit nach oben verschwinden. Mit dem Standardwert bliebe es
+     als Wasserzeichen hinter den Zahlen stehen - genau das, was am
+     2026-09-04 abgelehnt wurde. */
+  background-attachment:local}
+/* ── SCHEIN-BAND (Nutzer 2026-09-14, mit Referenzfoto): bei Assets mit
+   echtem Foto laeuft das Motiv ueber die VOLLE Breite, und Titel,
+   NEXT EVENT und die Knopfleiste liegen darueber.
+   ⚠ Das geht nur mit einem Schleier davor. Er ist die ERSTE Ebene der
+   background-image-Liste, liegt also ueber dem Foto, und faerbt sich ueber
+   --bg0 mit der jeweiligen Vorlage mit - in einer dunklen Vorlage wird er
+   dunkel statt weiss. Der senkrechte Verlauf im Schleier blendet das Band
+   nach unten aus; deshalb braucht es keine mask-image, die sonst auch den
+   INHALT von .detail wegmaskieren wuerde.
+   ⚠ DIE DECKKRAFT IST GEMESSEN, und zwar an der RICHTIGEN Groesse. Der
+   erste Messversuch nahm den Kontrast Schrift-gegen-Grund - der kam MIT
+   Band sogar besser heraus als ohne, weil die Linien des Scheins den
+   Median des Grunds verschieben. Was ein Bild hinter Schrift wirklich
+   kostet, ist die STREUUNG des Grunds: ruhig heisst sigma nahe 0, ein
+   Geldschein mit eigener Schrift darunter hat eine hohe. Gemessen als
+   Zuwachs gegenueber der Seite ohne Band, ueber ein Raster im Kopfband:
+       Schleier 82/88/97%  ->  +8.8 sigma
+       Schleier 88/92/98%  ->  +5.7
+       Schleier 91/94/99%  ->  +4.8   <- ab hier ist nicht mehr das Band
+       Schleier 94/96/99%  ->  +5.1      der groesste Treiber, sondern die
+                                         Flagge im Titel (sigma 66 auch
+                                         ohne Band). Also 91/94/99. */
+.detail.hat-band{
+  background-image:
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--bg0) 91%,transparent) 0%,
+      color-mix(in srgb,var(--bg0) 94%,transparent) 46%,
+      color-mix(in srgb,var(--bg0) 99%,transparent) 82%,
+      var(--bg0) 100%),
+    var(--asset-art,none);
+  background-repeat:no-repeat,no-repeat;
+  background-position:0 0,var(--asset-art-x,right) 0;
+  background-size:100% var(--band-h,300px),var(--asset-art-size,auto 300px);
+  background-attachment:local,local}
 /* ⚠ POSITION UND GROESSE GEMESSEN, nicht gegriffen - in zwei Anlaeufen:
    (1) 330px hoch, rechts oben: davon verschwanden 70% hinter der
        Kartenreihe (zwischen Inhaltsoberkante und Karten liegen genau
@@ -5176,11 +5215,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-516 - Der Hintergrund ist weiss, die Karten sind getoent, und sie heben sich jetzt wirklich ab. AUSGANGSLAGE GEMESSEN: die Karten standen bei 1,08 zu 1 gegen den Seitenhintergrund - praktisch unsichtbar. Der Kommentar im Bestand nannte 1,39, das war aber eine andere Flaeche als die, an der die Karten wirklich hingen. UMGEKEHRT: die Seite ist reinweiss, die Toenung traegt jetzt die Karte. ⚠ AM ECHTEN BILDSCHIRMPIXEL nachgemessen, nicht nur an den Farbvariablen: die Aurora, also der Risk-Sentiment-Schleier hinter allem, toent die weisse Seite auf rgb(248,247,247). Gegen DIESEN Grund zaehlt der Kontrast - der erste Anlauf kam deshalb nur auf 1,15 statt der gerechneten 1,23. Jetzt sind es gemessene 1,23 zu 1, also gut das Dreifache des vorherigen Unterschieds. DER EFFEKT IST NACHGESCHLAGEN, NICHT GERATEN: Material 3 empfiehlt tonale Erhoehung als erste Wahl und Schatten zusaetzlich fuer Fokus, und die meisten ihrer erhabenen Bauteile nutzen beides. Die Schatten folgen der Technik von Tobias Ahlin, popularisiert von Josh Comeau: statt EINEM Schatten vier gestapelte Lagen, bei denen sich Versatz und Weichzeichnung je Lage verdoppeln. Ein einzelner Schatten faellt linear ab und wirkt wie ein aufgemalter Rand. Die Schattenfarbe ist bewusst kein reines Schwarz, sondern das Blauschwarz der App - ein grauer Schatten auf getoentem Grund sieht ausgewaschen aus. EINE Kartenflaeche fuer ALLE Karten: vorher standen die Makro-Karten auf einem anderen Ton als die Kacheln und hatten gar keinen Schatten. Die beiden leisen Textstufen sind eine Spur nachgedunkelt, weil sie auf der kraeftigeren Karte sonst unter die Lesbarkeitsgrenze gefallen waeren - mit 4,88 und 4,89 zu 1 sind sie jetzt sogar besser lesbar als vorher. Alle zehn Vorlagen haben --card eigenstaendig; ohne das haetten die fuenf dunklen still die helle Kartenfarbe geerbt, also hellgraue Karten auf schwarzem Grund. NEU AUSSERDEM: jedes Asset hat ein blasses Motiv im oberen Hintergrund - Geldschein mit dem jeweiligen Waehrungszeichen, Barrenstapel, Oelfass, Muenze, Kerzenchart, Anleiheurkunde. SELBST GEZEICHNET als SVG, keine Fotos: die Seite laeuft offline aus dem Cache, sechzehn Fotos waeren mehrere Megabyte, und fuer Geldscheine braeuchte es Rechte. Je Motiv ein paar hundert Byte. ⚠ DIE PLATZIERUNG HAT ZWEI ANLAEUFE GEBRAUCHT, beide durch Messung korrigiert: 330 Pixel hoch und rechts oben liess 70 Prozent hinter der Kartenreihe verschwinden - zwischen Inhaltsoberkante und Karten liegen genau 103 Pixel. Danach passte die Groesse, aber das Motiv lag hinter der Knopfleiste Price chart, History, Backtester. Schrift auf Textur ist hier ausdruecklich schon einmal abgelehnt worden. Jetzt sitzt es in der GEMESSENEN Luecke zwischen Asset-Titel und Knopfleiste, und zwar bei jedem Aufruf neu berechnet: eine feste Position war auf USD gerechnet und lag bei S&P 500 mitten auf dem Score-Abzeichen. Wo die Luecke schmaler ist als das Motiv, gibt es kein Motiv statt einer Kollision. Ein dritter Fehler steckte in der CSS-Syntax: background-position mit einer blanken Laenge und danach einem Schluesselwort mit Abstand ist ungueltig, der Browser wirft die ganze Deklaration weg - die Variable stand korrekt auf 422 Pixel und das Motiv klebte trotzdem ganz links. Ein neuer Waechter misst die Kartentrennung am Bildschirmfoto, zaehlt die Schattenlagen, verlangt EINE Kartenfarbe und prueft das Motiv auf 45 Kombinationen aus fuenf Fensterbreiten und neun Assets auf Ueberschneidung mit jedem Textelement. Fuenf Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-517 - Das Asset-Motiv ist jetzt ein breites Band statt eines kleinen Emblems, mit echten Schein-Fotos (Nutzer mit Referenzfoto und drei Geldscheinen: der Schein soll ueber die ganze obere Flaeche laufen und Titel wie Knopfleiste sollen DARUEBER liegen). Drei Assets haben ihr Foto: Dollar, Euro und Yen. Die uebrigen einundzwanzig behalten vorerst das gezeichnete Emblem in der Luecke, bis Vorlagen dafuer da sind. ⚠ DIE DECKKRAFT IST GEMESSEN, und zwar erst nach einem Fehlversuch an der FALSCHEN Groesse: der erste Ansatz nahm den Kontrast Schrift gegen Grund - der kam MIT Band sogar besser heraus als ohne, weil die Linien des Scheins den Median des Grunds nach oben ziehen. Was ein Bild hinter Schrift wirklich kostet, ist die STREUUNG des Grunds: ruhig heisst eine Standardabweichung nahe null, gemessen 0,3 bis 0,4 ohne Band; ein Geldschein mit eigener Schrift darunter hat eine hohe. Gemessen als Zuwachs ueber ein Raster im Kopfband ergab sich bei 82 Prozent Schleier plus 8,8 Sigma, bei 88 Prozent plus 5,7 und bei 91 Prozent plus 4,8 - ab da ist nicht mehr das Band der groesste Treiber, sondern die Flagge im Titel, die auch ohne Band bei 66 liegt. Also 91 Prozent. ⚠ DIE HARTE KANTE hatte eine unerwartete Ursache: die Vorlagen tragen oben und unten fast weisse Raender, der Schein selbst liegt bei Helligkeit 147 - dazwischen entsteht eine sichtbare Linie. Das Zuschneiden hatte nur DUNKLE Raender entfernt. Jetzt werden beide weggeschnitten, der Schein ragt ueber die Bandhoehe hinaus und blendet zu allen Kanten hin in den Grund aus. Je Band rund 45 Kilobyte als WebP, 1600 mal 420, Herkunft in img/note-herkunft.json. Der Schleier faerbt sich ueber den Seitenton mit der jeweiligen Vorlage mit, wird in einer dunklen Vorlage also dunkel statt weiss, und sein senkrechter Verlauf blendet das Band nach unten aus - deshalb braucht es keine Maske, die sonst auch den INHALT der Seite wegmaskieren wuerde. Das Band haengt am Inhalt statt am Rahmen und verschwindet beim Scrollen mit nach oben, statt als Wasserzeichen hinter den Zahlen stehen zu bleiben. Der Waechter prueft jetzt beide Betriebsarten: beim Emblem die Kollision mit jedem Textelement, beim Band den Streuungs-Zuwachs mit einer Obergrenze von 6 Sigma, und dass ein eingetragenes Schein-Foto auch wirklich laedt - ein 404 faellt sonst niemandem auf. Drei Gegenproben melden rot: Schleier auf 70 Prozent ergibt plus 16,2 Sigma, eine fehlende Bilddatei wird als solche benannt, und ein zu kraeftiges Band ebenso.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-516</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-517</span>
     </span>
   </div>
   <div class="hdr-r">

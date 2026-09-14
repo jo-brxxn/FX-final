@@ -14146,3 +14146,72 @@ auf breiten Fenstern *muss* es da sein, auf 390 px *muss* es weg sein.
 | `.rub-card` zurück auf `--bg3` | ZWEI KARTENFARBEN |
 | feste Motivposition statt gemessener | MOTIV AUF SCHRIFT (EUR, GOLD, OIL … auf dem Score-Abzeichen) |
 | Abschalten bei zu wenig Platz deaktiviert | MOTIV AUF SCHRIFT (GOLD/OIL bei 1100 px auf der Knopfleiste) |
+
+### Nachtrag: echte Scheine als breites Band (VERSION-CHECK-517)
+
+Nutzer mit Referenzfoto seiner eigenen Seite und drei Geldschein-Bildern:
+*„schau mal wie das auf dem Bild ist … da ist zwar ein anderes Bild aber egal
+als Inspiration für die Scheine hier ein paar Bilder"*. Abgestimmt per
+Rückfrage: **großes Band wie im Foto**, **echte Fotos** (er liefert),
+**nur im Asset-Kopf**.
+
+Damit wechselt das Motiv von einem kleinen Emblem, das Text *ausweicht*, zu
+einem breiten Band, unter dem Text *liegt*. USD, EUR und JPY haben ihr Foto,
+die übrigen 21 Assets behalten vorerst das gezeichnete Emblem.
+
+### ⚠ Erst die falsche Größe gemessen
+
+Der erste Ansatz nahm den **Kontrast Schrift-gegen-Grund**:
+
+| Textstelle | ohne Band | mit Band |
+|---|---|---|
+| „Price chart" | 4,35 | 9,08 |
+| „History" | 2,91 | 9,08 |
+| „Next event" | 2,74 | 5,47 |
+
+Mit Band *besser* als ohne — offensichtlich unsinnig. Ursache: die Linien des
+Scheins ziehen den Median des „Grunds" nach oben, also misst man den falschen
+Bezugspunkt. **Was ein Bild hinter Schrift wirklich kostet, ist die STREUUNG**
+des Grunds: ruhig heißt σ nahe 0 (gemessen 0,3–0,4 ohne Band), ein Geldschein
+mit eigener Schrift darunter hat eine hohe.
+
+Gemessen als **Zuwachs** (die Flagge im Titel hat auch ohne Band σ 66):
+
+| Schleier | Zuwachs |
+|---|---|
+| 82/88/97 % | +8,8 σ |
+| 88/92/98 % | +5,7 σ |
+| **91/94/99 %** | **+4,8 σ** ← ab hier ist die Flagge der größte Treiber, nicht das Band |
+| 94/96/99 % | +5,1 σ |
+
+### ⚠ Die harte Kante hatte eine unerwartete Ursache
+
+Das Band brach oben und unten sichtbar ab. Nicht die Bandhöhe war schuld,
+sondern die **Vorlagen**: sie tragen fast weiße Ränder (Zeilenhelligkeit 254),
+der Schein selbst liegt bei 147 — dazwischen eine sichtbare Linie. Mein
+Zuschneiden entfernte nur *dunkle* Ränder (das JPY-Bild hatte 27 schwarze
+Zeilen). Jetzt werden beide weggeschnitten, der Schein ragt 18 % über die
+Bandhöhe hinaus, und die Maske blendet zu allen Kanten hin aus.
+
+Je Band ~45 KB WebP (1600×420), Herkunft in `img/note-herkunft.json`.
+
+**Technik:** Der Schleier ist die erste Ebene der `background-image`-Liste,
+liegt also über dem Foto, und färbt sich über `--bg0` mit der Vorlage mit — in
+einer dunklen Vorlage wird er dunkel statt weiß. Sein senkrechter Verlauf
+blendet das Band nach unten aus; deshalb **keine** `mask-image`, die sonst auch
+den *Inhalt* von `.detail` wegmaskieren würde. `background-attachment:local`,
+damit das Band beim Scrollen mit nach oben verschwindet statt als Wasserzeichen
+hinter den Zahlen stehen zu bleiben.
+
+### Wächter
+
+`check/kartenlook.js` prüft jetzt **beide Betriebsarten**: beim Emblem die
+Kollision mit jedem Textelement, beim Band den Streuungs-Zuwachs (Obergrenze
+6 σ) — und dass ein in `NOTE_FOTOS` eingetragenes Foto auch wirklich lädt, denn
+ein 404 fällt sonst niemandem auf.
+
+| Eingriff | Meldung |
+|---|---|
+| Schleier auf 70 % | BAND ZU KRÄFTIG (+16,2 σ) |
+| `img/note-eur.webp` entfernt | SCHEIN-FOTO FEHLT |
+| feste Emblemposition (Emblem-Assets) | MOTIV AUF SCHRIFT |
