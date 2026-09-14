@@ -1817,7 +1817,7 @@ jobs:
               });
               console.log("ind_data <- TE country pages: "+tepN+" written, "+tepSkip+" skipped (no release date)");
             }catch(err){console.log("ind_data <- TE country pages: nicht nutzbar ("+err.message+")");}
-            fs.writeFileSync("ind_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("ind_data.json",JSON.stringify(out));
             // Report: welche (ccy|ind) der RULES KEINEN Wert bekamen.
             const ALLCCY=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"];
             const missing=[];
@@ -1953,7 +1953,7 @@ jobs:
             }
             let eur2=merge("EUR","2Y Bond Yield",parseEcb("ecb2.csv")),eur10=merge("EUR","10Y Bond Yield",parseEcb("ecb10.csv"));
             if(usd2||usd10||cad2||cad10||eur2||eur10){
-              fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+              fs.writeFileSync("bond_data.json",JSON.stringify(out));
               console.log("bond backfill: USD 2Y="+usd2+"/10Y="+usd10+", CAD 2Y="+cad2+"/10Y="+cad10+", EUR 2Y="+eur2+"/10Y="+eur10+" pts");
             }else{
               console.log("bond backfill: no data from official sources, keeping existing file");
@@ -2230,7 +2230,7 @@ jobs:
             const snb=parseSnb("snb.csv");
             const chf2=merge("CHF","2Y Bond Yield",snb.p2),chf10=merge("CHF","10Y Bond Yield",snb.p10);
 
-            fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("bond_data.json",JSON.stringify(out));
             console.log("bond backfill (CSV sources): JPY 2Y="+jpy2+"/10Y="+jpy10+", AUD 2Y="+aud2+"/10Y="+aud10+", CHF 2Y="+chf2+"/10Y="+chf10+" pts");
           '
 
@@ -2371,7 +2371,7 @@ jobs:
               if(!nzd2&&!nzd10)console.log("RBNZ: no sheet with a 2-year/10-year government bond column found");
             }catch(e){console.log("RBNZ: unavailable ("+e.message+")");}
 
-            fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("bond_data.json",JSON.stringify(out));
             console.log("bond backfill (XLSX sources): GBP 2Y="+gbp2+"/10Y="+gbp10+", NZD 2Y="+nzd2+"/10Y="+nzd10+" pts");
           '
           rm -f jgb.csv jgb_utf8.csv rba.csv snb.csv rbnz.xlsx
@@ -2466,7 +2466,7 @@ jobs:
             // Reihen, die diesmal fehlten, aber bereits existieren, bleiben erhalten.
             const wantMiss=Object.keys(MAP).map(k=>MAP[k]).filter(key=>{const[c,i]=key.split("|");return !(out[c]&&out[c][i]);});
             if(okN>0){
-              fs.writeFileSync("bond_data.json",JSON.stringify(out,null,1));
+              fs.writeFileSync("bond_data.json",JSON.stringify(out));
               console.log("bond_data.json: "+okN+"/16 series appended for "+today+(miss.length?" [no value: "+miss.join(", ")+"]":"")+(wantMiss.length?" [never seen: "+wantMiss.join(", ")+"]":""));
             }else{
               console.log("bond_data: no usable values from TradingView, keeping existing file"+(miss.length?" [no value: "+miss.join(", ")+"]":""));
@@ -2535,6 +2535,38 @@ jobs:
             try{resp=JSON.parse(fs.readFileSync("price_tv.json","utf8"));}catch(e){console.log("price_data: TradingView response unreadable, keeping existing file ("+e.message+")");process.exit(0);}
             const rows=resp&&Array.isArray(resp.data)?resp.data:null;
             if(!rows){console.log("price_data: unexpected TradingView shape, keeping existing file");process.exit(0);}
+            // ⚠ PLATZSPAREND SCHREIBEN. Am 2026-09-13 hat der OHLC-Backfill
+            // price_data.json von 512 auf 1299 KB aufgeblaeht - Faktor 2,53 -
+            // und damit den 8-Sekunden-Timeout des Browsers gerissen: auf dem
+            // iPad des Nutzers kam die Datei nicht mehr an, die Preis-Kacheln
+            // und der PRICE-Streifen standen leer (reproduziert, siehe
+            // check/feedgroesse.js). Zwei Ursachen, beide hier:
+            //   (1) Einrueckung - 400 KB, also 31% der Datei, waren Leerzeichen.
+            //   (2) Gleitkomma-Rauschen - Yahoo liefert 102.01000213623047 fuer
+            //       einen Wert mit zwei sinnvollen Stellen; 34400 Felder so.
+            // Gerundet wird NUR Open/High/Low. Der SCHLUSS bleibt Bit fuer Bit,
+            // er haengt an Tagesperformance, Marktrelevanz-Gewichtung,
+            // Korrelationen und der Saisonalitaets-Ueberlagerung.
+            // Gemessen: 1298,6 -> 581,1 KB (-55,3%), groesste relative
+            // Abweichung eines Dochts 4,95e-5 Prozent.
+            const schreibePreise=(obj)=>{
+              const r=v=>(typeof v==="number"&&isFinite(v))?Number(v.toPrecision(7)):v;
+              Object.keys(obj).forEach(k=>{
+                const s=obj[k]&&obj[k].series;
+                if(!Array.isArray(s))return;
+                obj[k].series=s.map(e=>{
+                  if(!Array.isArray(e)||e.length<5)return e;
+                  const c=e[1],o=r(e[2]);
+                  // ⚠ NACH dem Runden wieder klemmen. Gemessen: ohne diese
+                  // Zeile rutschen 115 von 12229 Dochten einen Hauch UNTER den
+                  // Koerper, weil O/H/L gerundet werden und der Schluss nicht.
+                  // Der Zeichner klemmt zwar ohnehin - aber dann stuende in der
+                  // Datei eine Kerze, die es so nicht gibt.
+                  return[e[0],c,o,Math.max(r(e[3]),o,c),Math.min(r(e[4]),o,c)];
+                });
+              });
+              fs.writeFileSync("price_data.json",JSON.stringify(obj));
+            };
             let out={};
             try{const d=JSON.parse(fs.readFileSync("price_data.json","utf8"));if(d&&typeof d==="object"&&!Array.isArray(d))out=d;}catch(e){}
             let okN=0;const miss=[];
@@ -2573,7 +2605,7 @@ jobs:
             });
             const wantMiss=Object.keys(MAP).filter(k=>!out[MAP[k].id]);
             if(okN>0){
-              fs.writeFileSync("price_data.json",JSON.stringify(out,null,1));
+              schreibePreise(out);
               console.log("price_data.json: "+okN+"/"+Object.keys(MAP).length+" series appended for "+today+(miss.length?" [no value: "+miss.join(", ")+"]":"")+(wantMiss.length?" [never seen: "+wantMiss.join(", ")+"]":""));
             }else{
               console.log("price_data: no usable values from TradingView, keeping existing file"+(miss.length?" [no value: "+miss.join(", ")+"]":""));
@@ -2848,7 +2880,7 @@ jobs:
               log.push("retailHistory:weekend-skip(dow="+retailDow+")");
             }
             out.updated=new Date().toISOString();
-            fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("sentiment_data.json",JSON.stringify(out));
             console.log("sentiment_data.json: "+log.join(" | "));
           '
           rm -f sent_cfng.json sent_sfng.json sent_tv.json sent_occ.json sent_occ_date.txt sent_retail.json sent_mfxlogin.json mfx_cookies.txt
@@ -3008,7 +3040,7 @@ jobs:
           const l=hist[hist.length-1];
           out.aaii=Object.assign({},out.aaii||{},{history:hist,source:"https://www.aaii.com/sentimentsurvey"});
           if(out.aaii.bull==null){out.aaii.date=l[0];out.aaii.bull=l[1];out.aaii.neutral=l[2];out.aaii.bear=l[3];out.aaii.value=+(l[1]-l[3]).toFixed(1);}
-          fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+          fs.writeFileSync("sentiment_data.json",JSON.stringify(out));
           console.log("[debug] aaii-hist: "+hist.length+" Wochen geschrieben ("+hist[0][0]+" bis "+l[0]+"), letzter Spread "+(l[1]-l[3]).toFixed(1)+"pp");
           AAIIHIST
           node aaii_hist.js
@@ -3078,7 +3110,7 @@ jobs:
           const hist=Object.keys(map).sort().map(k=>map[k]).slice(-520);   // 10 Jahre Wochen
           out.aaii={date:datum,bull:+w.bull.toFixed(1),neutral:+w.neutral.toFixed(1),bear:+w.bear.toFixed(1),
             value:+(w.bull-w.bear).toFixed(1),source:"https://www.aaii.com/sentimentsurvey",history:hist};
-          fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+          fs.writeFileSync("sentiment_data.json",JSON.stringify(out));
           console.log("[debug] aaii: "+datum+" bull "+w.bull+" / neutral "+w.neutral+" / bear "+w.bear+" (Muster "+w.quelle+"), Spread "+out.aaii.value+"pp, Historie "+hist.length+" Wochen");
           AAIIJS
           node aaii_parse.js
@@ -3189,7 +3221,7 @@ jobs:
             });
             if(skipped)console.log("[debug] put/call cutoff: "+skipped+" asset(s) below "+VOL_CUTOFF+" contracts skipped");
             out.putCallByAsset=byAsset;
-            fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("sentiment_data.json",JSON.stringify(out));
             console.log("sentiment_data.json: putCallByAsset "+n+"/"+Object.keys(raw).length+" assets updated ("+Object.keys(byAsset).sort().join(",")+")");
           '
           rm -f yopt_all.json ycookies.txt
@@ -3288,7 +3320,7 @@ jobs:
                 totalNew+=add.length;
               });
               out.putCallByAsset=byAsset;
-              fs.writeFileSync("sentiment_data.json",JSON.stringify(out,null,1));
+              fs.writeFileSync("sentiment_data.json",JSON.stringify(out));
               console.log("marketdata backfill: "+totalNew+" new points merged across "+Object.keys(byA).length+" assets");
             '
             rm -f md_series_all.txt
@@ -3404,8 +3436,40 @@ jobs:
               touched++;
               console.log("[debug] "+id+": +"+add.length+" points -> "+merged.length+" total ("+merged[0][0]+" .. "+merged[merged.length-1][0]+")");
             });
+            // ⚠ PLATZSPAREND SCHREIBEN. Am 2026-09-13 hat der OHLC-Backfill
+            // price_data.json von 512 auf 1299 KB aufgeblaeht - Faktor 2,53 -
+            // und damit den 8-Sekunden-Timeout des Browsers gerissen: auf dem
+            // iPad des Nutzers kam die Datei nicht mehr an, die Preis-Kacheln
+            // und der PRICE-Streifen standen leer (reproduziert, siehe
+            // check/feedgroesse.js). Zwei Ursachen, beide hier:
+            //   (1) Einrueckung - 400 KB, also 31% der Datei, waren Leerzeichen.
+            //   (2) Gleitkomma-Rauschen - Yahoo liefert 102.01000213623047 fuer
+            //       einen Wert mit zwei sinnvollen Stellen; 34400 Felder so.
+            // Gerundet wird NUR Open/High/Low. Der SCHLUSS bleibt Bit fuer Bit,
+            // er haengt an Tagesperformance, Marktrelevanz-Gewichtung,
+            // Korrelationen und der Saisonalitaets-Ueberlagerung.
+            // Gemessen: 1298,6 -> 581,1 KB (-55,3%), groesste relative
+            // Abweichung eines Dochts 4,95e-5 Prozent.
+            const schreibePreise=(obj)=>{
+              const r=v=>(typeof v==="number"&&isFinite(v))?Number(v.toPrecision(7)):v;
+              Object.keys(obj).forEach(k=>{
+                const s=obj[k]&&obj[k].series;
+                if(!Array.isArray(s))return;
+                obj[k].series=s.map(e=>{
+                  if(!Array.isArray(e)||e.length<5)return e;
+                  const c=e[1],o=r(e[2]);
+                  // ⚠ NACH dem Runden wieder klemmen. Gemessen: ohne diese
+                  // Zeile rutschen 115 von 12229 Dochten einen Hauch UNTER den
+                  // Koerper, weil O/H/L gerundet werden und der Schluss nicht.
+                  // Der Zeichner klemmt zwar ohnehin - aber dann stuende in der
+                  // Datei eine Kerze, die es so nicht gibt.
+                  return[e[0],c,o,Math.max(r(e[3]),o,c),Math.min(r(e[4]),o,c)];
+                });
+              });
+              fs.writeFileSync("price_data.json",JSON.stringify(obj));
+            };
             if(touched){
-              fs.writeFileSync("price_data.json",JSON.stringify(out,null,1));
+              schreibePreise(out);
               console.log("price_data.json: backfilled "+touched+" series");
             }else{
               console.log("price_data: backfill added nothing, file unchanged");
@@ -4334,7 +4398,7 @@ jobs:
               summary.push(ccy+": ref="+Rcurrent+"%, "+cfg.curve.n+" contracts, "+meetings.length+" upcoming, method="+out.method+", history="+out.history.length+"d"+(pastMeeting?", past="+pastMeeting.realizedDeltaBp+"bp":""));
             });
 
-            fs.writeFileSync("rate_probabilities.json",JSON.stringify(full,null,1));
+            fs.writeFileSync("rate_probabilities.json",JSON.stringify(full));
             console.log("rate_probabilities.json:\n  "+summary.join("\n  "));
           '
           rm -f rate_usd_ref.json rate_aud_ref.csv rate_eur_ref.csv rate_gbp_ref.csv rate_cad_ref.json rate_chf_ref.csv rate_tv.json rate_tv_tickers.json
@@ -4931,7 +4995,7 @@ jobs:
             out.sources=[...new Set(liste.map(h=>h.s))].sort();
             const th=themaDesTages(liste);
             if(th)out.topic=th; else delete out.topic;
-            fs.writeFileSync("news_data.json",JSON.stringify(out,null,1));
+            fs.writeFileSync("news_data.json",JSON.stringify(out));
             const heute=liste.filter(h=>Date.parse(h.d)>Date.now()-864e5).length;
             const gebuendelt=liste.filter(h=>h.n>1).length;
             console.log("[debug] news: "+liste.length+" Schlagzeilen gesamt, "+heute+" aus den letzten 24h, "

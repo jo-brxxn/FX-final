@@ -7,7 +7,7 @@ import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor} from './assetlayou
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
-  DATA_BASE,DATA_LIVE_OK,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,
+  DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,
   applyRevisionToValHist,applyTrendModel,checkPriceAlerts,fmtDayHdr,indBiasInputSig,indBiasPinned,
   invalidateRateStepCache,isNonFx,macroCcyFor,parseNumLike,pushU,renderDash,rerender,researchBias,
   resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,todayStr,trackIndValues,widgets,feedEntryFor,kanonIndName,
@@ -241,6 +241,21 @@ const SK='fxpro_v1';
 const DATA_BASE=(location.hostname==='jo-brxxn.github.io'||location.hostname==='localhost'||location.hostname==='127.0.0.1')
   ?''
   :'https://raw.githubusercontent.com/jo-brxxn/FX-final/main/';
+
+// ⚠ FRIST FUER JEDEN LIVE-FEED - gemessen, nicht gegriffen.
+// Bis 2026-09-14 stand hier fest 8000 an jeder einzelnen Abrufstelle. Das
+// hat gereicht, solange die groesste Datei 512 KB hatte. Der OHLC-Backfill
+// vom 13.09. hat price_data.json auf 1299 KB gebracht - und auf dem iPad des
+// Nutzers (ueber VPN) kam sie damit nicht mehr an: der PRICE-Streifen zeigte
+// vier Striche, die S&P-500-Kachel meldete "No daily series for this window
+// yet". Beides aus DERSELBEN Ursache, beides per Playwright wortgleich
+// reproduziert, indem der Abruf ueber die Frist hinaus verzoegert wurde.
+// Die Datei ist inzwischen wieder auf 581 KB (siehe check/feedgroesse.js) -
+// die Frist bleibt trotzdem grosszuegiger, weil eine zu knappe Frist auf
+// einer langsamen Leitung IMMER wie ein Datenausfall aussieht, obwohl das
+// Netz nur langsam ist. Eine Konstante statt zwoelf Zahlen: die naechste
+// Anpassung soll nicht wieder elf Stellen uebersehen koennen.
+const FEED_TIMEOUT_MS=20000;
 
 // Live-Status der acht Hintergrund-Datenfeeds, die alle ueber DATA_BASE
 // laufen (Nutzer-Wunsch 2026-08-25: "immer aktuelle Daten, nie veraltete" -
@@ -6947,13 +6962,47 @@ function abAchseFuer(reihen,krypto){
   return abHandelstage(von||f.bis,f.bis,krypto);
 }
 
-function abKerzenBlock(reihe,titel,einheit,assetId,achse){
+// ⚠ WARUM IST DIE KACHEL LEER? Zwei voellig verschiedene Gruende sehen
+// gleich aus, und die Meldung hat bis 2026-09-14 IMMER den zweiten behauptet:
+//   (a) Der Feed ist in dieser Sitzung gar nicht angekommen.
+//   (b) Der Feed ist da, faengt aber spaeter an als der gewaehlte Zeitraum.
+// Gemeldeter Fall (Bildschirmfoto vom iPad): price_data.json war nach dem
+// OHLC-Backfill auf 1299 KB gewachsen und riss die 8-Sekunden-Frist. Die
+// Kachel sagte trotzdem "Try MAX — the feed may start later than the selected
+// range" - ein Rat, der nichts geholfen haette, und eine Erklaerung, die die
+// echte Ursache verdeckt. Exakt dieselbe Fehlerklasse wie bei OUT OF DATE
+// (indIsStale): keine Begruendung nennen, die es so nicht gibt.
+function abFeedFehltHinweis(feed){
+  const nam={price:'Prices',bond:'Yields',sentiment:'Sentiment'};
+  if(!feed||typeof DATA_LIVE_OK==='undefined'||DATA_LIVE_OK[feed]!==false)return null;
+  return`<div class="ab-nodata">Live data unavailable: ${escH(nam[feed]||feed)}. `
+    +`The feed did not load in this session — this chart is not empty because the history is short, `
+    +`it is empty because nothing arrived. It fills in by itself on the next successful fetch.</div>`;
+}
+// ⚠ WARUM HAT DIESE KACHEL KAUM DOCHTE? Auch das hat zwei Gruende, die
+// gleich aussehen - und der Nutzer hat am 2026-09-14 genau danach gefragt
+// ("da fehlen ... die wicks"). Gemessen (probe-ohlc-sources.yml, Runde 3):
+// fuer die PREISE gibt es bei Yahoo eine Historie mit 76-100% Dochten, fuer
+// die RENDITEN genau eine einzige - ^TNX fuer die US-10Y (1255 Tage, 99%).
+// ^US2Y und alle neun geprueften Symbole fuer DE/GB/CH/JP/CA/AU/NZ
+// antworten mit HTTP 404; die US-2Y gibt es dort nur als Future, also als
+// anderes Instrument. Fuer fuenfzehn der sechzehn Renditen-Ticker waechst
+// die Docht-Historie deshalb nur vorwaerts, einen Tag pro Tag.
+function abDochtGrund(feed){
+  if(feed==='bond')return'Yields carry one measured high/low per day from the day it was first collected — there is no reachable history source for government bond yields except the US 10Y, so the older candles show the close-to-close body only.';
+  if(feed==='price')return'Days before the backfill carry no measured high/low. The body is always close-to-close, so the candle itself is correct either way.';
+  return'Days without a measured high/low show the close-to-close body only.';
+}
+function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
   const W=240,H=100;
   const k=abTagesKerzen(reihe,assetId);
   // ⚠ Keine Reihe, kein Chart. Ein leerer Kasten mit Achsen sieht aus wie
   // "der Markt stand still" - er heisst aber "wir haben keine Daten".
-  if(k.length<2)return{leer:true,html:`<div class="ab-nodata">No daily series for this window yet.${
-    abChartRange!=='MAX'?' Try <b>MAX</b> — the feed may start later than the selected range.':''}</div>`};
+  if(k.length<2){
+    const fehlt=abFeedFehltHinweis(feed);
+    return{leer:true,html:fehlt||`<div class="ab-nodata">No daily series for this window yet.${
+      abChartRange!=='MAX'?' Try <b>MAX</b> — the feed may start later than the selected range.':''}</div>`};
+  }
   const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
   const sp=(hi-lo)||1;
   const y=v=>3+(1-(v-lo)/sp)*(H-6);
@@ -7052,17 +7101,21 @@ function abKontextReihe(art,assetId){
   // Forecast (bei Renditen immer null) und gehoert NICHT in die Kerze -
   // deshalb bondSeriesOhlc() statt bondSeriesPts().
   const zu2=(v)=>Array.isArray(v)?v:null;
+  // ⚠ `feed` sagt, AUS WELCHER Datei die Reihe kommt. Ohne das kann eine
+  // leere Kachel nicht unterscheiden, ob die Historie kurz ist oder ob der
+  // Abruf gescheitert ist - und genau diese Verwechslung war der gemeldete
+  // Bug (siehe abFeedFehltHinweis).
   switch(art){
-    case 'y2':    return{reihe:zu2(bondSeriesOhlc(ccy,'2Y Bond Yield')),einheit:'%',quelle:ccy};
-    case 'y10':   return{reihe:zu2(bondSeriesOhlc(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy};
-    case 'y2us':  return{reihe:zu2(bondSeriesOhlc('USD','2Y Bond Yield')),einheit:'%',quelle:'USD'};
-    case 'y10us': return{reihe:zu2(bondSeriesOhlc('USD','10Y Bond Yield')),einheit:'%',quelle:'USD'};
-    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:'',quelle:'USD'};
-    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:'',quelle:'SP500'};
-    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:'',quelle:'NAS'};
-    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:priceSeriesFor(q),einheit:'',quelle:q};}
-    case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:'',quelle:'VIX'};}
-    default:      return{reihe:null,einheit:'',quelle:null};
+    case 'y2':    return{reihe:zu2(bondSeriesOhlc(ccy,'2Y Bond Yield')),einheit:'%',quelle:ccy,feed:'bond'};
+    case 'y10':   return{reihe:zu2(bondSeriesOhlc(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy,feed:'bond'};
+    case 'y2us':  return{reihe:zu2(bondSeriesOhlc('USD','2Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
+    case 'y10us': return{reihe:zu2(bondSeriesOhlc('USD','10Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
+    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:'',quelle:'USD',feed:'price'};
+    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:'',quelle:'SP500',feed:'price'};
+    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:'',quelle:'NAS',feed:'price'};
+    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:priceSeriesFor(q),einheit:'',quelle:q,feed:'price'};}
+    case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:'',quelle:'VIX',feed:'sentiment'};}
+    default:      return{reihe:null,einheit:'',quelle:null,feed:null};
   }
 }
 function abKontextHtml(c){
@@ -7081,11 +7134,11 @@ function abKontextHtml(c){
   // eine Krypto-Reihe, braeuchte sie ihre eigene Achse.
   const krypto=quellen.length>0&&quellen.every(q=>kerzenWochenendeErlaubt(q.quelle));
   const achse=abAchseFuer(quellen.map(q=>abImZeitraum(q.reihe)),krypto);
-  const kacheln=quellen.map(({art:a,d,reihe,einheit,quelle})=>{
+  const kacheln=quellen.map(({art:a,d,reihe,einheit,quelle,feed})=>{
     const ccy=isNonFx(c.id)?(macroCcyFor(c.id)||'USD'):c.id;
     const ziel=d.ziel==='#YIELD'?Object.keys(YIELD_CCY).find(k=>YIELD_CCY[k]===ccy):d.ziel;
     const klick=ziel?` onclick="gotoSym('${escJH(ziel)}')" title="Open ${escH(ziel)}"`:'';
-    const ch=abKerzenBlock(reihe,d.titel,einheit,quelle,achse);
+    const ch=abKerzenBlock(reihe,d.titel,einheit,quelle,achse,feed);
     if(ch.leer)return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}</div>${ch.html}</div>`;
     const roh=ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu';
@@ -7094,7 +7147,7 @@ function abKontextHtml(c){
     return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}</div>
       ${ch.html}
-      <div class="ab-k-s" style="color:${biasCss(roh)}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
+      <div class="ab-k-s" style="color:${biasCss(roh)}"${ch.dochte<ch.tage?` title="${escH(abDochtGrund(feed))}"`:''}>${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:' · no measured high/low'}${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
     </div>`;
   }).join('');
   const rate=arten.includes('cb')?(()=>{
@@ -7641,14 +7694,15 @@ function abQuickGridHtml(c){
   }).join('');
   const aufNotes=curSub==='notes';
   const notizKnopf=`<button class="aql${aufNotes?' on':''}" onclick="setSub('${aufNotes?'specific':'notes'}')" title="${aufNotes?'Back to the data view':'All notes and folders of this asset'}">${icn('note',14)}<span>${aufNotes?'Close notes':'All notes'}</span></button>`;
-  // ⚠ Unter den Knoepfen die Kursentwicklung. Grund: die Spalte ist so hoch
-  // wie die hoechste der drei Kopfkarten - ohne Inhalt darunter wuerden die
-  // vier Knoepfe auf 160px Hoehe gestreckt. assetPerfStripHtml() war
-  // ausserdem seit laengerem definiert und exportiert, aber an KEINER Stelle
-  // gezeichnet: eine fertige, nuetzliche Anzeige, die niemand zu sehen bekam.
+  // ⚠ REIHENFOLGE GETAUSCHT am 2026-09-14 (Nutzer: "und das das mit den
+  // quicklinks Position Switcht"): erst der Preis-Chart, dann die vier
+  // Knoepfe. Vorher standen die Knoepfe oben und darunter nur ein Streifen
+  // mit vier Prozentzahlen - die Spalte ist so hoch wie die hoechste der
+  // drei Kopfkarten, der Chart fuellt sie jetzt sinnvoll aus statt die
+  // Knoepfe auf 160px Hoehe zu strecken.
   return`<div class="aql-col">
+    ${assetPreisKarteHtml(c)}
     <div class="aql-grid">${links}${notizKnopf}</div>
-    ${assetPerfStripHtml(c)}
   </div>`;
 }
 // Angepinnte Notizen. Bewusst NUR die angepinnten: die vollstaendige Liste
@@ -7750,14 +7804,53 @@ function renderSpecTab(c){
 // Preisreihe fehlt oder kuerzer als das Fenster ist - dann steht hier "–"
 // und NICHT etwa ein hochgerechneter Wert (Projekt-Grundsatz: nie schaetzen).
 function assetPerfStripHtml(c){
+  const feedWeg=typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false;
   const cells=PERF_WINDOWS.map(([lbl,days])=>{
     const r=perfReturn(c.id,days);
     const val=r?`${r.pct>0?'+':''}${r.pct.toFixed(2)}%`:'–';
     const col=!r?'var(--t3)':r.pct>0.001?'var(--green)':r.pct<-0.001?'var(--red)':'var(--t2)';
-    const tip=r?`${lbl}: ${r.from} → ${r.to}`:`No price history covering ${lbl} yet`;
+    // ⚠ Ein Strich hat zwei voellig verschiedene Bedeutungen, und bis zum
+    // 2026-09-14 nannte der Hinweis immer die zweite: entweder ist der
+    // Preis-Feed in dieser Sitzung nicht angekommen, oder die Historie ist
+    // kuerzer als das Fenster. Im gemeldeten Fall (Bildschirmfoto vom iPad)
+    // war es das Erste - vier Striche mit der Erklaerung "no price history
+    // covering 1D yet", obwohl drei Jahre Historie in der Datei stehen.
+    const tip=r?`${lbl}: ${r.from} → ${r.to}`
+      :feedWeg?`Live data unavailable: Prices — the feed did not load in this session, so there is nothing to compare ${lbl} against.`
+      :`No price history covering ${lbl} yet`;
     return`<div class="aperf-c" title="${escH(tip)}"><div class="aperf-l">${escH(lbl)}</div><div class="aperf-v" style="color:${col}">${escH(val)}</div></div>`;
   }).join('');
   return`<div class="aperf"><span class="aperf-t">PRICE</span>${cells}</div>`;
+}
+
+// ── Die Preis-Karte: Chart des Assets + die vier Fenster darunter ────────
+// Nutzer 2026-09-14: "ich will da wo man taegliche und woechentliche
+// Veraenderung sieht das da ein Preis Chart von dem Asset ist und das das
+// mit den quicklinks Position Switcht".
+//
+// ⚠ DERSELBE Kerzen-Bauer wie das Kontext-Band (abKerzenBlock): eine Kerze
+// ein Tag, kein Wochenende ausser bei Krypto, Dochte wo der Feed Hoch und
+// Tief fuehrt, Wochentag im Hover. Ein zweiter Zeichner fuer dieselbe Kerze
+// wuerde irgendwann anders aussehen als der erste.
+// ⚠ Der Zeitregler ist NICHT neu, sondern derselbe wie unten im Kontext-Band
+// (abChartRange, gesynct ueber alle Geraete). Zwei Regler fuer dieselbe
+// Einstellung waeren zwei Wahrheiten; so steht ueber der ganzen Seite
+// derselbe Zeitraum, und man erreicht ihn von oben wie von unten.
+function assetPreisKarteHtml(c){
+  const reihe=priceSeriesFor(c.id);
+  const ch=abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price');
+  const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart on this page">${lbl}</button>`).join('');
+  const kopf=`<div class="ab-tile-hd">
+    <span class="ab-tile-t">Price</span>
+    ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
+    <span class="ab-rgs">${regler}</span></div>`;
+  const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
+  return`<div class="ab-ptile">
+    ${kopf}
+    <div class="ab-pk-chart">${ch.html}</div>
+    ${fuss}
+    ${assetPerfStripHtml(c)}
+  </div>`;
 }
 
 function renderRub(rub,ri,total){
@@ -10713,7 +10806,7 @@ async function fetchFFJson(){
     // Cache-Buster (?t=...) erzwingen: iOS-Safari und der Fastly-CDN vor
     // GitHub Pages ignorieren cache:'no-store' teilweise und liefern sonst
     // eine veraltete Kopie OHNE die frisch ergänzten Actual-Werte.
-    const res=await fetch(DATA_BASE+'ff_calendar.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'ff_calendar.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){
       const evts=await res.json();
       if(Array.isArray(evts)&&evts.length)return evts;
@@ -14398,7 +14491,7 @@ function cotMergeHistory(fresh){
 }
 async function fetchCotData(){
   try{
-    const res=await fetch(DATA_BASE+'cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'cot_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&d.symbols)COT_DATA=d;}
   }catch(e){}
   // Falls die staendlich geschriebene Datei (noch) fehlt oder leer ist, direkt
@@ -14913,7 +15006,7 @@ function sentEval(key,d){
   return null;
 }
 function fetchSentimentData(){
-  return fetch(DATA_BASE+'sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null)
     .then(d=>{
       if(d&&typeof d==='object'&&!Array.isArray(d)){SENTIMENT_DATA=d;DATA_LIVE_OK.sentiment=true;}
@@ -18028,7 +18121,7 @@ function renderCot(){
 // Schema: {updated, assets:{ID:{proxy,inv,months:[[mon,avgPct,hitPct,nYears]x12]}}}
 let SEASONALITY_DATA=null,seasAsset='';
 function fetchSeasonalityData(){
-  return fetch(DATA_BASE+'seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets)SEASONALITY_DATA=d;}).catch(()=>{});
 }
 function autoFetchSeasonality(){
@@ -18244,7 +18337,7 @@ let RATE_PROB_DATA=null,rateProbFocus=0;
 // kein snap()/Cloud-Sync-Feld noetig (siehe CLAUDE.md-Muster).
 let rateProbCcy='USD';
 function fetchRateProbData(){
-  return fetch(DATA_BASE+'rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'rate_probabilities.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object')RATE_PROB_DATA=d;}).catch(()=>{});
 }
 function autoFetchRateProb(){fetchRateProbData().then(()=>{if(curPage==='rate')renderRateProb();});}
@@ -19914,7 +20007,7 @@ async function bootFetchScoreFeeds(){
 let SCORE_HIST_SERVER=null;
 async function fetchScoreHistServer(){
   try{
-    const res=await fetch(DATA_BASE+'score_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'score_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d))SCORE_HIST_SERVER=d;}
   }catch(e){}
 }
@@ -20220,6 +20313,7 @@ Object.assign(window,{
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
+  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
@@ -20230,7 +20324,7 @@ Object.assign(window,{
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
-  AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,DATA_LIVE_OK,
+  AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,
   ASSET_SYNC_FIELDS,symSyncGroup,SYNC_EXCLUDE_RUBS,syncAssetGroup,PAIR_CODE_TO_ID,nonFxLegAssetId,nonFxWatchIconHtml,

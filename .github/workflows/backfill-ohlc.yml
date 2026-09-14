@@ -89,10 +89,36 @@ jobs:
               gesamtNeu+=neu;
               bericht.push([id,String(neu),String(schon),String(ohne)]);
             });
+            // ⚠ PLATZSPAREND SCHREIBEN - genau der Fehler, den DIESER Lauf am
+            // 2026-09-13 verursacht hat: die Datei wuchs von 512 auf 1299 KB
+            // (Faktor 2,53) und riss damit den 8-Sekunden-Timeout des Browsers.
+            // Auf dem iPad kam sie nicht mehr an, die Preis-Kacheln und der
+            // PRICE-Streifen standen leer. Einrueckung war 400 KB (31%), das
+            // Gleitkomma-Rauschen von Yahoo (102.01000213623047 fuer zwei
+            // sinnvolle Stellen) noch einmal so viel. Gerundet wird NUR
+            // Open/High/Low, der Schluss bleibt Bit fuer Bit.
+            const schreibePreise=(obj)=>{
+              const r=v=>(typeof v==="number"&&isFinite(v))?Number(v.toPrecision(7)):v;
+              Object.keys(obj).forEach(k=>{
+                const s=obj[k]&&obj[k].series;
+                if(!Array.isArray(s))return;
+                obj[k].series=s.map(e=>{
+                  if(!Array.isArray(e)||e.length<5)return e;
+                  const c=e[1],o=r(e[2]);
+                  // ⚠ NACH dem Runden wieder klemmen. Gemessen: ohne diese
+                  // Zeile rutschen 115 von 12229 Dochten einen Hauch UNTER den
+                  // Koerper, weil O/H/L gerundet werden und der Schluss nicht.
+                  // Der Zeichner klemmt zwar ohnehin - aber dann stuende in der
+                  // Datei eine Kerze, die es so nicht gibt.
+                  return[e[0],c,o,Math.max(r(e[3]),o,c),Math.min(r(e[4]),o,c)];
+                });
+              });
+              fs.writeFileSync("price_data.json",JSON.stringify(obj));
+            };
             if(!gesamtNeu){console.log("Kein einziger Tag ergaenzt - price_data.json unveraendert.");}
             else{
-              fs.writeFileSync("price_data.json",JSON.stringify(pd,null,1));
-              console.log("price_data.json: "+gesamtNeu+" Tage um Open/High/Low ergaenzt.");
+              schreibePreise(pd);
+              console.log("price_data.json: "+gesamtNeu+" Tage um Open/High/Low ergaenzt ("+(fs.statSync("price_data.json").size/1024).toFixed(1)+" KB).");
             }
             const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
             zeile("## Backfill Open/High/Low (Yahoo)");
@@ -105,14 +131,110 @@ jobs:
           '
           rm -f y_*.json
 
+
+
+      # ── RENDITEN: Dochte fuer die US-10Y, und sonst nichts ──────────────
+      # Anlass (Nutzer 2026-09-14): "da fehlen Charts und die wicks". Die
+      # Renditen-Charts hatten genau EINEN Docht - den von heute - weil der
+      # TradingView-Scanner nur eine Momentaufnahme je Tag liefert.
+      #
+      # ⚠ GEMESSEN (probe-ohlc-sources.yml, Runde 3 am 2026-09-14):
+      #   ^TNX  US 10Y  1255 Tage, 99% mit echtem Docht  -> brauchbar
+      #   ^FVX  US 5Y   1255 Tage, 99%   } fuehren wir nicht
+      #   ^TYX  US 30Y  1255 Tage, 99%   }
+      #   ^IRX  US 13W  1255 Tage, 88%   }
+      #   ^US2Y         HTTP 404 - gibt es bei Yahoo nicht
+      #   2YY=F US 2Y   1255 Tage, 72% - aber das sind FUTURES auf die
+      #         Zweijahresrendite, nicht die Kassarendite. Eine andere Zahl
+      #         unter derselben Ueberschrift waere genau das, was der
+      #         Projekt-Grundsatz verbietet. Also NICHT.
+      #   DE/GB/CH/JP/CA/AU/NZ: alle neun geprueften Symbole HTTP 404.
+      # Ergebnis: von sechzehn Renditen-Tickern bekommt GENAU EINER eine
+      # Historie mit Dochten. Die anderen fuenfzehn sagen in ihrer Fusszeile
+      # weiter offen, wie viele ihrer Kerzen ein gemessenes Hoch und Tief
+      # tragen - statt so zu tun, als haetten sie eins.
+      #
+      # ⚠ DER SCHLUSS BLEIBT auch hier unangetastet. Yahoos ^TNX und der
+      # TradingView-Scanner sind zwei Quellen fuer dieselbe Rendite; bevor
+      # irgendetwas geschrieben wird, misst der Schritt, wie weit sie
+      # auseinanderliegen, und schreibt nur an Tagen, an denen sie es nicht
+      # tun (Grenze 0,15 Prozentpunkte).
+      - name: Yahoo ^TNX -> Dochte fuer die US-10Y-Rendite
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sL -A "$UA" --max-time 45 -o tnx.json \
+            "https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?range=5y&interval=1d" || true
+          node -e '
+            const fs=require("fs");
+            const zeile=(a)=>{fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,a+"\n");console.log(a);};
+            const GRENZE=0.15;   // Prozentpunkte
+            let bd;
+            try{bd=JSON.parse(fs.readFileSync("bond_data.json","utf8"));}
+            catch(e){zeile("bond_data.json unlesbar - nichts geaendert ("+e.message+")");process.exit(0);}
+            const reihe=bd&&bd.USD&&bd.USD["10Y Bond Yield"]&&bd.USD["10Y Bond Yield"].series;
+            if(!Array.isArray(reihe)){zeile("Keine USD-10Y-Reihe in bond_data.json - nichts geaendert.");process.exit(0);}
+            let y=null;
+            try{y=JSON.parse(fs.readFileSync("tnx.json","utf8"));}catch(e){}
+            const r=y&&y.chart&&y.chart.result&&y.chart.result[0];
+            const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+            if(!r||!q||!Array.isArray(r.timestamp)){zeile("Yahoo-Antwort unbrauchbar - nichts geaendert.");process.exit(0);}
+            const karte={};
+            for(let i=0;i<r.timestamp.length;i++){
+              const o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+              if(![o,h,l,c].every(x=>typeof x==="number"&&isFinite(x)))continue;
+              karte[new Date(r.timestamp[i]*1000).toISOString().slice(0,10)]={o,h,l,c};
+            }
+            // ERST messen, DANN schreiben.
+            const abw=[];
+            reihe.forEach(e=>{
+              const k=karte[String(e&&e[0]).slice(0,10)];
+              const c=Number(e&&e[1]);
+              if(k&&isFinite(c))abw.push(Math.abs(k.c-c));
+            });
+            abw.sort((a,b)=>a-b);
+            const median=abw.length?abw[Math.floor(abw.length/2)]:null;
+            zeile("## Dochte fuer die US-10Y-Rendite (Yahoo ^TNX)");
+            zeile("");
+            zeile("Vergleichbare Tage: **"+abw.length+"** · Median-Abstand der beiden Schlusskurse: **"
+              +(median==null?"–":median.toFixed(4))+" Prozentpunkte** · Grenze je Tag: "+GRENZE+" pp.");
+            if(median!=null&&median>GRENZE){
+              zeile("");
+              zeile("⚠ **Nichts geschrieben.** Die beiden Quellen liegen im Median weiter auseinander als die Grenze - dann ist ^TNX nicht dieselbe Zahl wie der gefuehrte Schluss, und ein Docht daraus wuerde eine Kerze behaupten, die es nicht gab.");
+              process.exit(0);
+            }
+            let neu=0,schon=0,ohne=0,zuWeit=0;
+            bd.USD["10Y Bond Yield"].series=reihe.map(e=>{
+              if(!Array.isArray(e)||e.length<2)return e;
+              if(e.length>=5&&e[3]!=null&&e[4]!=null){schon++;return e;}
+              const k=karte[String(e[0]).slice(0,10)];
+              if(!k){ohne++;return e;}
+              const c=Number(e[1]);
+              if(!isFinite(c))return e;
+              if(Math.abs(k.c-c)>GRENZE){zuWeit++;return e;}
+              const rd=v=>Number(v.toPrecision(6));
+              const o=rd(k.o);
+              neu++;
+              return[e[0],e[1],o,rd(Math.max(k.h,k.o,c)),rd(Math.min(k.l,k.o,c))];
+            });
+            if(!neu){zeile("");zeile("Kein einziger Tag ergaenzt - bond_data.json unveraendert.");process.exit(0);}
+            fs.writeFileSync("bond_data.json",JSON.stringify(bd));
+            zeile("");
+            zeile("| ergaenzt | hatte schon | kein Yahoo-Tag | zu weit auseinander |");
+            zeile("|---|---|---|---|");
+            zeile("| "+neu+" | "+schon+" | "+ohne+" | "+zuWeit+" |");
+            zeile("");
+            zeile("**"+neu+" Tage** der US-10Y-Rendite haben jetzt ein gemessenes Hoch und Tief. Der Schlusskurs wurde nicht angefasst. Die uebrigen fuenfzehn Renditen-Ticker bekommen keinen Backfill - fuer sie existiert keine erreichbare Historienquelle (alle neun geprueften Yahoo-Symbole antworten mit HTTP 404, und die US-2Y gibt es dort nur als Future, also als anderes Instrument).");
+          '
+          rm -f tnx.json
+
       - name: Committen, falls sich etwas geaendert hat
         run: |
-          if git diff --quiet -- price_data.json; then
-            echo "price_data.json unveraendert - kein Commit."
+          if git diff --quiet -- price_data.json bond_data.json; then
+            echo "Nichts geaendert - kein Commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add price_data.json
-          git commit -m "Backfill: Open/High/Low aus Yahoo in die Preis-Historie (Dochte)"
+          git add price_data.json bond_data.json
+          git commit -m "Backfill: Open/High/Low aus Yahoo (Dochte fuer Preise und die US-10Y)"
           git push

@@ -398,21 +398,71 @@ Zwei Punkte, die dabei bewusst so sind:
    `trackIndValues()`) zaehlen ebenfalls nicht: ohne echtes Release-Datum
    gibt es keinen Punkt auf der Zeitachse.
 
-## Preisdaten: `price_data.json` liefert NUR Schlusskurse
+## Preisdaten: `price_data.json` — Schluss aus TradingView, Dochte aus Yahoo
 
-`price_data.json` enthält je Asset `{source, invert, series:[[Datum, Close], …]}`
-— **kein Open/High/Low**. Abgedeckt sind die acht FX-Währungen (über ihr
-liquidestes USD-Paar, `invert:true` bei USD/XXX-Notierungen) plus GOLD, SILVER,
-OIL, BTC, DAX, SP500 und NAS. Alles andere (Yields, GER100, Einzelaktien) hat
-**keine** Reihe; der Preischart sagt das dort ausdrücklich, statt etwas zu
-zeichnen.
+`price_data.json` enthält je Asset `{source, invert, series:[…]}`. Ein Tag steht
+entweder als `[Datum, Close]` oder — seit 2026-09-13 — als
+`[Datum, Close, Open, High, Low]`. Abgedeckt sind die acht FX-Währungen (über
+ihr liquidestes USD-Paar, `invert:true` bei USD/XXX-Notierungen) plus GOLD,
+SILVER, OIL, BTC, DAX, SP500 und NAS. Alles andere (Yields, GER100,
+Einzelaktien) hat **keine** Reihe; der Preischart sagt das dort ausdrücklich,
+statt etwas zu zeichnen.
 
-**Daraus folgt für Kerzendarstellungen** (Regel seit 2026-09-05): Es gibt keine
-echten OHLC-Kerzen und darf keine geben. Der Kerzenmodus des Preischarts
-zeichnet **Close-zu-Close-Körper** (Vortagesschluss → Schluss) und hat deshalb
-**keine Dochte** — die bräuchten High/Low und wären erfunden (Regel 4). Der
-Modus heißt in der Oberfläche darum nicht einfach „Candles", sondern erklärt im
-Titel, warum die Dochte fehlen.
+**Zwei Quellen, zwei Rollen — und das ist Absicht:**
+
+- Der **Schluss** kommt vom TradingView-Scanner und wird **nie** angefasst. Er
+  hängt an Tagesperformance, Marktrelevanz-Gewichtung der Indikatoren,
+  Korrelationen und der Saisonalitäts-Überlagerung.
+- **Open/High/Low** kommen aus dem Yahoo-Backfill und tragen **keine
+  Richtungsaussage**. Der Kerzenkörper ist deshalb weiter **close-to-close**
+  (Vortagesschluss → Schluss), der Docht ist das gemessene Tageshoch/-tief,
+  **auf den Körper geklemmt**. Gemessen am 2026-09-13: vom echten Open aus
+  gezeichnet wechselten 352 von 710 EUR-Kerzen ihre Farbe, weil die beiden
+  Quellen den Handelstag verschieden schneiden.
+
+## ⚠️ Wie groß darf ein Live-Feed werden? (Regel seit 2026-09-14)
+
+**Ein Feed, der beim Nutzer nicht mehr ankommt, sieht nicht nach einem Fehler
+aus, sondern nach fehlenden Daten.** Gemeldeter Fall: der OHLC-Backfill hat
+`price_data.json` von 512 auf 1299 KB gebracht und damit die damalige
+8-Sekunden-Frist gerissen; auf dem iPad standen der PRICE-Streifen und die
+S&P-500-Kachel leer, obwohl drei Jahre Historie in der Datei liegen.
+
+Daraus drei feste Regeln, erzwungen von `check/feedgroesse.js`:
+
+1. **Große Feeds werden minifiziert geschrieben** (`JSON.stringify(obj)`, keine
+   Einrückung). Bei `price_data.json` waren 31 % der Datei Leerzeichen.
+   Ausgenommen sind die kleinen Dateien (< 200 KB) — dort ist das Nachsehen im
+   Repo mehr wert als die Kilobytes.
+2. **Kein Gleitkomma-Rauschen in Open/High/Low.** Yahoo liefert
+   `102.01000213623047` für einen Wert mit zwei sinnvollen Stellen. `toPrecision(7)`
+   reicht; danach **wieder auf den Körper klemmen**, sonst rutschen Dochte
+   einen Hauch unter den Schluss (gemessen: 115 von 12 229).
+3. **Deckel:** 900 KB je Datei, 3500 KB für alle zusammen — sie werden beim
+   Start parallel geholt und teilen sich die Leitung.
+
+Die Abruf-Frist steht an **einer** Stelle (`FEED_TIMEOUT_MS` in `js/main.js`),
+nicht an zwölf. Eine zu knappe Frist sieht auf einer langsamen Leitung immer
+wie ein Datenausfall aus.
+
+## ⚠️ Dochte für die Anleiherenditen: genau EINE Quelle existiert
+
+Gemessen (`probe-ohlc-sources.yml`, Runde 3 am 2026-09-14), nicht vermutet:
+
+| gesucht | Symbol | HTTP | Tage | mit Docht |
+|---|---|---|---|---|
+| **US 10Y** | **`^TNX`** | 200 | 1255 | **99 %** |
+| US 5Y / 30Y / 13W | `^FVX` `^TYX` `^IRX` | 200 | 1255 | 99 / 99 / 88 % |
+| US 2Y | `^US2Y` | **404** | – | – |
+| US 2Y (Future) | `2YY=F` | 200 | 1255 | 72 % |
+| DE, GB, CH, JP, CA, AU, NZ 10Y | 9 Symbole geprüft | **alle 404** | – | – |
+
+Von sechzehn Renditen-Tickern bekommt also **genau einer** eine Historie mit
+Dochten. `2YY=F` ist ein **Future auf** die Zweijahresrendite, nicht die
+Kassarendite — eine andere Zahl unter derselben Überschrift kommt nicht in die
+Datei. Die übrigen fünfzehn wachsen nur vorwärts, einen Docht pro Tag, und
+sagen das in ihrer Fußzeile („N with a measured high/low") samt Erklärung im
+Tooltip (`abDochtGrund`).
 
 ## ⚠️ `ind.research.unit` ist eine ART, kein Suffix
 

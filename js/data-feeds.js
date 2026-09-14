@@ -10,7 +10,7 @@
 // das allgemeine Muster) - dieses Modul exportiert deshalb weiter unten
 // die Namen, die main.js zurueck braucht.
 import {BC,FX} from './constants.js';
-import {DATA_BASE,DATA_LIVE_OK,feedEntryFor,kanonIndName,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
+import {DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,feedEntryFor,kanonIndName,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
 
 // ── INDIKATOR-WERTE AUS ECHTER API-QUELLE (ind_data.json) ──
 // ind_data.json wird stündlich per GitHub Action aus TradingViews
@@ -25,7 +25,7 @@ let IND_DATA_FEED=null;
 async function fetchIndData(){
   DATA_LIVE_OK.ind=false;
   try{
-    const res=await fetch(DATA_BASE+'ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'ind_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){IND_DATA_FEED=d;invalidateRateStepCache();DATA_LIVE_OK.ind=true;}}
   }catch(e){}
 }
@@ -184,7 +184,7 @@ let BOND_DATA_FEED=null;
 async function fetchBondData(){
   DATA_LIVE_OK.bond=false;
   try{
-    const res=await fetch(DATA_BASE+'bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'bond_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){BOND_DATA_FEED=d;DATA_LIVE_OK.bond=true;}}
   }catch(e){}
 }
@@ -311,7 +311,7 @@ let priceDataLastFetch=null;
 async function fetchPriceData(){
   DATA_LIVE_OK.price=false;
   try{
-    const res=await fetch(DATA_BASE+'price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'});
+    const res=await fetch(DATA_BASE+'price_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(res.ok){const d=await res.json();if(d&&typeof d==='object'&&!Array.isArray(d)){PRICE_DATA_FEED=d;DATA_LIVE_OK.price=true;}}
   }catch(e){}
   priceDataLastFetch=Date.now();
@@ -330,7 +330,7 @@ function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rere
 // "nie schaetzen").
 let NEWS_DATA=null;
 function fetchNewsData(){
-  return fetch(DATA_BASE+'news_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'news_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null)
     .then(d=>{
       if(d&&typeof d==='object'&&Array.isArray(d.headlines)){NEWS_DATA=d;DATA_LIVE_OK.news=true;}
@@ -355,7 +355,7 @@ function fetchNewsData(){
 // zeigt an, von wann er ist - erfunden wird nichts.
 let NEWS_AI=null;
 function fetchNewsAi(){
-  return fetch(DATA_BASE+'news_ai.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'news_ai.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null)
     .then(d=>{
       if(d&&typeof d==='object'&&d.items&&typeof d.items==='object'){NEWS_AI=d;mergeNewsAi();return true;}
@@ -401,7 +401,7 @@ function autoFetchNewsData(){fetchNewsData().then(()=>fetchNewsAi()).then(()=>{i
 // zeigt dann ehrlich "kein Live-Wert" statt eines geratenen Ersatzes.
 let RISK_INDEX_DATA=null;
 function fetchRiskIndexData(){
-  return fetch(DATA_BASE+'risk_index.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
+  return fetch(DATA_BASE+'risk_index.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null)
     .then(d=>{
       if(d&&typeof d==='object'&&d.value!=null){RISK_INDEX_DATA=d;DATA_LIVE_OK.risk=true;}

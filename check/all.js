@@ -47,6 +47,7 @@ const PRUEFUNGEN = [
   { n: 'hintergrund',d:'Kontrast unter jedem waehlbaren Hintergrund (am Pixel)', f: 'check/hintergrund.js', args: [],        browser: true },
   { n: 'kerzen',    d: 'Kerzen: ein Tag, kein Wochenende, eigene Farben, keine erfundenen Dochte', f: 'check/kerzen.js', args: [], browser: true },
   { n: 'seasretail',d: 'Saisonalitaet/Retail: Schwellen, Deckel, Monats-Markierung', f: 'check/seasretail.js', args: [], browser: true },
+  { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 

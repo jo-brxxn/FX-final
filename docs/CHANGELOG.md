@@ -13871,3 +13871,144 @@ Maß, und in der COT-Karte ist der Alters-Faktor ausgenommen. Erst mit
 *beidem* — anderer Karte **und** altem Datum — wirkt die Normierung und der
 Wächter fällt. Eine Gegenprobe, die grün bleibt, ist kein Beleg für den
 Wächter, sondern für die eigene Annahme.
+
+---
+
+## 2026-09-14 (abends) — Die fehlenden Charts, und wer sie kaputtgemacht hat (VERSION-CHECK-514)
+
+Nutzer, mit zwei Bildschirmfotos vom iPad: *„Schau auf den Fotos da fehlen
+Charts und die wicks und ich will da wo man tägliche und wöchentliche
+Veränderung sieht das da ein Preis Chart von dem Asset ist und das das mit den
+quicklinks Position Switcht"*
+
+### Reproduktion vor der ersten Codezeile (Regel 8.1)
+
+Auf dem Foto: die S&P-500-Kachel meldet *„No daily series for this window yet.
+Try MAX — the feed may start later than the selected range"*, und der
+PRICE-Streifen zeigt vier Striche. Lokal war beides in Ordnung — S&P 500 mit
+20 Kerzen und 19 Dochten, alle vier Fenster mit Zahlen. Also **nicht** aus dem
+Code geraten, sondern die Bedingung hergestellt: `page.route` verzögert
+`price_data.json` über die Frist hinaus.
+
+Ergebnis Wort für Wort dasselbe Bild — dieselbe Meldung, dieselben vier
+Striche, dieselben Renditen-Kacheln daneben. **Eine** Ursache für beide
+Symptome: `price_data.json` kam nicht an.
+
+### Die Ursache war meine eigene, einen Tag alt
+
+| Stand | `price_data.json` |
+|---|---|
+| 2026-09-12 | 512,0 KB |
+| 2026-09-13 vormittags | 512,5 KB |
+| 2026-09-13 nach dem OHLC-Backfill | **1297,5 KB** |
+| 2026-09-14 | 1298,6 KB |
+
+Faktor 2,53 — bei einem Timeout von 8 s. Auf dem iPad über VPN reicht das
+nicht mehr. Zwei Gründe, beide meine:
+
+1. **Einrückung.** `JSON.stringify(pd,null,1)` — 399,9 KB, also **30,8 %** der
+   Datei, waren Leerzeichen bei 86 939 Zeilen.
+2. **Gleitkomma-Rauschen.** Yahoo liefert `102.01000213623047` für einen Wert
+   mit zwei sinnvollen Stellen. **34 400 Felder** trugen das.
+
+### Der Fix, gemessen
+
+`toPrecision(7)` auf **nur** Open/High/Low, plus minifiziert schreiben:
+
+| | KB | Δ |
+|---|---|---|
+| vorher (eingerückt) | 1298,6 | |
+| nur minifiziert | 898,8 | −30,8 % |
+| **minifiziert + O/H/L auf 7 Stellen** | **581,5** | **−55,2 %** |
+
+Gegengerechnet über alle 12 540 Tage: **0 Schlusskurse verändert**, größte
+relative Abweichung eines Dochts **4,95·10⁻⁵ %** (BTC 2025-01-20).
+
+⚠ **Nach dem Runden muss wieder geklemmt werden.** Ohne diese Zeile rutschen
+**115 von 12 229** Dochten einen Hauch *unter* den Körper — O/H/L werden
+gerundet, der Schluss bewusst nicht. Der Zeichner klemmt zwar ohnehin, aber
+dann stünde in der Datei eine Kerze, die es so nicht gab.
+
+### Die Fehlerklasse (Regel 8.4) — vier weitere Fundstellen
+
+Der neue Wächter hat sie sofort gefunden:
+
+| Datei | vorher | nachher |
+|---|---|---|
+| `ind_data.json` | 736 KB | **378 KB** (−48,6 %) |
+| `sentiment_data.json` | 248 KB | **120 KB** (−51,5 %) |
+| `bond_data.json` | 126 KB | **65 KB** (−48,7 %) |
+| `rate_probabilities.json` | 58 KB | **25 KB** (−56,5 %) |
+| `news_data.json` | 297 KB | **257 KB** (−13,5 %) |
+
+Alle Live-Daten zusammen: **2763 → 1595 KB**. Die kleinen Dateien
+(`seasonality_data.json` 8 KB, `ff_calendar.json` 26 KB, `cot_data.json` 39 KB,
+`risk_index.json` 28 KB) bleiben bewusst eingerückt — dort ist das Nachsehen im
+Repo mehr wert als die gesparten Kilobytes.
+
+### Die Meldung beschuldigte das Falsche
+
+*„Try MAX — the feed may start later than the selected range"* ist ein Rat, der
+nichts geholfen hätte, und eine Erklärung, die die echte Ursache verdeckt —
+**exakt dieselbe Fehlerklasse wie damals bei OUT OF DATE** (`indIsStale`, siehe
+Eintrag vom 2026-08-09). Kommt ein Feed gar nicht an, sagt die Kachel das
+jetzt (`abFeedFehltHinweis`), und der PRICE-Streifen ebenso.
+
+Außerdem: die Frist stand an **zwölf** Stellen als eigene `8000`. Jetzt eine
+Konstante `FEED_TIMEOUT_MS = 20000`. Eine zu knappe Frist sieht auf einer
+langsamen Leitung immer wie ein Datenausfall aus.
+
+### Neu: die Preis-Karte, und der Platztausch
+
+Wo bisher nur vier Prozentzahlen standen, steht jetzt ein Kerzenchart des
+Assets — **derselbe Zeichner** wie das Kontext-Band (`abKerzenBlock`): eine
+Kerze ein Tag, kein Wochenende außer bei Krypto, Dochte wo der Feed sie führt,
+Wochentag im Hover. Der Zeitregler darin ist **derselbe** wie unten
+(`abChartRange`, gesynct), nicht ein zweiter — zwei Regler für dieselbe
+Einstellung wären zwei Wahrheiten. Darunter die vier Fenster, darunter die
+Schnellzugriffe: Karte und Knöpfe haben die Plätze getauscht.
+
+Gemessen auf der USD-Seite: Karte 423×289 px, Chart 399×166, 63 Tageskerzen
+davon 61 mit gemessenem Hoch/Tief.
+
+### Die Dochte der Renditen — gemessen, nicht vermutet
+
+`probe-ohlc-sources.yml` Runde 3:
+
+| gesucht | Symbol | HTTP | Tage | mit Docht |
+|---|---|---|---|---|
+| US 13W | `^IRX` | 200 | 1255 | 88 % |
+| US 5Y | `^FVX` | 200 | 1255 | 99 % |
+| **US 10Y** | **`^TNX`** | **200** | **1255** | **99 %** |
+| US 30Y | `^TYX` | 200 | 1255 | 99 % |
+| US 2Y | `^US2Y` | **404** | – | – |
+| US 2Y (Future) | `2YY=F` | 200 | 1255 | 72 % |
+| DE/GB/CH/JP/CA/AU/NZ 10Y | 9 Symbole | **alle 404** | – | – |
+
+Von sechzehn Renditen-Tickern bekommt also **genau einer** eine Historie. Die
+US-2Y gibt es bei Yahoo nur als **Future auf** die Zweijahresrendite — ein
+anderes Instrument, und eine andere Zahl unter derselben Überschrift kommt
+nicht in die Datei. Der Backfill trägt deshalb nur die US-10Y nach, und auch
+das erst, nachdem er gemessen hat, wie weit die beiden Quellen im Median
+auseinanderliegen (Grenze 0,15 Prozentpunkte, sonst schreibt er nichts). Die
+übrigen fünfzehn sagen in ihrer Fußzeile weiter offen, wie viele ihrer Kerzen
+ein gemessenes Hoch und Tief tragen, und erklären beim Darüberfahren warum.
+
+### Wächter + Gegenproben
+
+Neu: **`check/feedgroesse.js`** (21. Prüfung). Deckelt jeden Live-Feed auf
+900 KB und alle zusammen auf 3500 KB, verlangt minifizierte große Dateien,
+verbietet Gleitkomma-Rauschen in O/H/L, prüft dass jeder Docht seinen Körper
+umschließt, und dass alle zwölf Abrufe dieselbe Frist-Konstante benutzen.
+
+| Eingriff | Meldung |
+|---|---|
+| `price_data.json` wieder eingerückt | ZU GROSS (981 KB) + EINGERÜCKT (−40,7 % möglich) |
+| `FEED_TIMEOUT_MS` zurück auf 8000 | FRIST ZU KNAPP |
+| eine Abrufstelle mit eigener Zahl | EIGENE FRIST (`price_data.json`, 8000) |
+| einen Docht unter den Körper geschoben | DOCHT AUSSERHALB DES KÖRPERS |
+
+⚠ Eine **Fehlmessung des Wächters**, sofort korrigiert: die Rauschen-Prüfung
+meldete zunächst 61 Felder. Nachgesehen: das sind Dochte, die exakt auf dem
+**Schlusskurs** klemmen und dessen (bewusst ungerundete) Darstellung erben —
+harmlos. Die Prüfung nimmt Werte, die gleich dem Schluss sind, jetzt aus.
