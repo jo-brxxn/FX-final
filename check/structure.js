@@ -211,8 +211,15 @@ if(snapM&&loadM){
 // der ueber Fliesstext stolpert, meldet Unsinn und wird abgeschaltet.
 // Betrachtet werden deshalb: der Inhalt jedes <style>-Blocks und jedes
 // style="..."-Attribut.
+// ⚠ CSS-KOMMENTARE RAUS, und zwar aus demselben Grund wie der Fliesstext
+// oben. Am 2026-09-14 hat ein Kommentar den Waechter rot gemeldet, der
+// erklaert, WARUM "background-position:var(--x) top 6px" ungueltig ist -
+// also ausgerechnet die Dokumentation eines echten, gefundenen Fehlers.
+// Ein /* ... */-Block ist kein CSS, er deklariert nichts und er benutzt
+// nichts; wer ihn mitliest, meldet Unsinn.
+const ohneKommentar=(t)=>t.replace(/\/\*[\s\S]*?\*\//g,' ');
 let css='';
-for(const m of h.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) css+=m[1]+'\n';
+for(const m of h.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)) css+=ohneKommentar(m[1])+'\n';
 for(const m of h.matchAll(/\sstyle="([^"]*)"/g)) css+=m[1]+'\n';
 const tokenDef=new Set();
 for(const m of css.matchAll(/(--[A-Za-z0-9_-]+)\s*:/g)) tokenDef.add(m[1]);

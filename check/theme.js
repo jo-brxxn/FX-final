@@ -52,7 +52,12 @@ function sat([r, g, b]) {
   return l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn);
 }
 
-const PFLICHT = ['--bg0','--bg1','--bg2','--bg3','--bg4','--bg5','--bg6','--bd','--bd2',
+// ⚠ --card ist seit dem 2026-09-14 die Flaeche JEDER Karte und steht nicht
+// mehr als Alias auf --bg1. Ohne Pflichteintrag erbt eine Vorlage, die ihn
+// vergisst, still den hellen Standardwert - in einer dunklen Vorlage waeren
+// das hellgraue Karten auf schwarzem Grund, und der Kontrast-Teil dieses
+// Waechters rechnet nur mit den Toenen, die die Vorlage SELBST nennt.
+const PFLICHT = ['--bg0','--bg1','--bg2','--bg3','--bg4','--bg5','--bg6','--card','--bd','--bd2',
   '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
   '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
   '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',

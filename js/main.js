@@ -6336,6 +6336,16 @@ function renderDetail(){
     ${renderSpecTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
+  // Das blasse Motiv des Assets in den Seitenhintergrund (siehe
+  // assetArtUrl). Als CSS-Variable auf dem Scroll-Container statt als
+  // eigenes DOM-Element: kein zusaetzlicher Kasten, kein z-index-Stapel,
+  // und es scrollt selbstverstaendlich mit dem Inhalt nach oben weg.
+  // ⚠ try/catch: ein kaputter data-URI darf nicht das Zeichnen der ganzen
+  // Seite mitreissen (Regel 6 - kein Schreibpfad ohne sichtbares Verhalten).
+  try{
+    const d=document.getElementById('detail');
+    positioniereAssetArt(c.id);
+  }catch(e){}
   attachChartHovers(document.getElementById('detail'));
   // Sidebar-Zahlen und den Score im Detail-Kopf aus EINER frischen Rechnung
   // schreiben - synchron, direkt nachdem das Markup steht. Beide Anzeigen
@@ -7473,6 +7483,156 @@ function applySeasRetailFeed(){
 }
 
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
+// ══ BLASSE ASSET-MOTIVE IM HINTERGRUND ═════════════════════════════════
+//
+// Nutzer 2026-09-14: "kann man vlt im generellen Hintergrund im oberen
+// Drittel so z.B. beim Dollar einen Dollar Schein unscheinbar in den
+// Hintergrund setzen der einfach so blass ist und das bei den anderen
+// Assets auch das man da so Bilder hat die so blass sind".
+//
+// ⚠ SELBST GEZEICHNET, NICHT GELADEN. Drei Gruende gegen echte Fotos:
+//   (1) Die Seite laeuft offline aus dem Service-Worker-Cache - ein externes
+//       Bild waere dann eine leere Flaeche.
+//   (2) Sechzehn Fotos waeren mehrere Megabyte; der Feed-Waechter deckelt
+//       gerade erst die Datenmenge, weil genau das die Charts gekillt hat.
+//   (3) Fuer Geldscheine, Goldbarren und Indexlogos braeuchte es Rechte.
+// Also schlichte Strichmotive als data-URI, ein paar hundert Byte je Asset.
+//
+// ⚠ FARBE: ein neutrales Blaugrau bei sehr niedriger Deckkraft. Es muss auf
+// der weissen Standardseite UND auf den fuenf dunklen Vorlagen funktionieren,
+// und ein data-URI kann currentColor nicht erben. #7A88A8 bei 0.13 ist auf
+// beidem eine Ahnung, nie ein Bild - genau das gewuenschte "unscheinbar".
+const ART_FARBE='%237A88A8';
+const ART_OP='.2';
+/** Gemeinsames Banknoten-Geruest - nur das Waehrungszeichen wechselt. */
+function artSchein(zeichen){
+  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
+    <rect x="30" y="52" width="480" height="236" rx="14"/>
+    <rect x="52" y="74" width="436" height="192" rx="8" stroke-width="3"/>
+    <circle cx="270" cy="170" r="74"/>
+    <circle cx="270" cy="170" r="92" stroke-width="2.5" stroke-dasharray="9 11"/>
+    <path d="M92 118h56M92 134h34M392 206h56M414 222h34" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="270" y="206" text-anchor="middle" font-family="Georgia,serif" font-size="104"
+        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">${zeichen}</text>`;
+}
+/** Barrenstapel fuer die Metalle. */
+function artBarren(){
+  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5" stroke-linejoin="round">
+    <path d="M150 262h240l-26-58H176z"/>
+    <path d="M96 196h168l-26-58H122z"/>
+    <path d="M280 196h168l-26-58H306z"/>
+    <path d="M188 130h164l-24-56H212z"/>
+    <path d="M176 204h188M122 138h116M306 138h116" stroke-width="2.5" opacity=".6"/>
+  </g>`;
+}
+/** Oelfass. */
+function artFass(){
+  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
+    <path d="M186 70h168v200H186z"/>
+    <ellipse cx="270" cy="70" rx="84" ry="24"/>
+    <ellipse cx="270" cy="270" rx="84" ry="24"/>
+    <path d="M186 122c56 18 112 18 168 0M186 170c56 18 112 18 168 0M186 218c56 18 112 18 168 0" stroke-width="3.5"/>
+    <path d="M270 300v46M244 346h52" stroke-width="4" stroke-linecap="round"/>
+  </g>`;
+}
+/** Muenze - fuer Krypto. */
+function artMuenze(zeichen){
+  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
+    <circle cx="270" cy="170" r="112"/>
+    <circle cx="270" cy="170" r="92" stroke-width="3"/>
+  </g>
+  <text x="270" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="124"
+        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">${zeichen}</text>`;
+}
+/** Kerzenchart - fuer die Aktienindizes. */
+function artKerzen(){
+  const k=[[70,150,96,60],[120,120,70,54],[170,168,120,44],[220,96,52,72],
+           [270,130,88,60],[320,72,40,78],[370,110,66,66],[420,60,26,84]];
+  return`<g opacity="${ART_OP}" stroke="${ART_FARBE}" stroke-width="4.5" fill="none">
+    ${k.map(([x,y,h,w])=>`<path d="M${x} ${y-18}v${h+36}"/><rect x="${x-13}" y="${y}" width="26" height="${h}" rx="3"/>`).join('')}
+    <path d="M40 288h460" stroke-width="3" opacity=".7"/>
+  </g>`;
+}
+/** Anleihe-Urkunde - fuer die Renditen. */
+function artAnleihe(){
+  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
+    <rect x="46" y="56" width="448" height="228" rx="10"/>
+    <path d="M78 100h160M78 122h96" stroke-width="4" stroke-linecap="round"/>
+    <path d="M78 240h150M78 262h90" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
+    <circle cx="396" cy="196" r="46" stroke-width="4"/>
+    <path d="M370 222l52-52" stroke-width="4"/>
+  </g>
+  <text x="270" y="196" text-anchor="middle" font-family="Georgia,serif" font-size="86"
+        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">%25</text>`;
+}
+// Welches Motiv gehoert zu welchem Asset? Die acht Majors bekommen ihren
+// eigenen Schein, alles andere sein Sinnbild. Ein Asset ohne Eintrag
+// bekommt bewusst NICHTS statt eines beliebigen Platzhalters.
+const ASSET_ART={
+  USD:()=>artSchein('%24'), EUR:()=>artSchein('%E2%82%AC'), GBP:()=>artSchein('%C2%A3'),
+  JPY:()=>artSchein('%C2%A5'), CHF:()=>artSchein('%E2%82%A3'), CAD:()=>artSchein('C%24'),
+  AUD:()=>artSchein('A%24'), NZD:()=>artSchein('NZ%24'),
+  GOLD:artBarren, SILVER:artBarren, OIL:artFass, BTC:()=>artMuenze('%E2%82%BF'),
+  SP500:artKerzen, NAS:artKerzen, DAX:artKerzen, GER100:artKerzen,
+};
+/** Der fertige data-URI fuers Hintergrundbild - oder '' ohne Motiv. */
+function assetArtUrl(id){
+  let bau=ASSET_ART[id];
+  if(!bau&&assetCls(id)==='yield')bau=artAnleihe;
+  if(!bau)return'';
+  // ⚠ Der Verlauf blendet das Motiv nach unten aus, damit es unter der
+  // Kartenreihe verschwindet statt an einer Kante abzureissen. Er steckt IM
+  // SVG, weil mask-image auf einem background-image nicht greift.
+  const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 400' width='540' height='400'>`
+    +`<defs><linearGradient id='f' x1='0' y1='0' x2='0' y2='1'>`
+    +`<stop offset='0' stop-color='white' stop-opacity='1'/>`
+    +`<stop offset='.78' stop-color='white' stop-opacity='.7'/>`
+    +`<stop offset='1' stop-color='white' stop-opacity='0'/></linearGradient>`
+    +`<mask id='m'><rect width='540' height='400' fill='url(%23f)'/></mask></defs>`
+    +`<g mask='url(%23m)'>${bau()}</g></svg>`;
+  return`url("data:image/svg+xml,${svg.replace(/"/g,"'").replace(/#/g,'%23').replace(/\n\s*/g,' ')}")`;
+}
+
+/** Legt das Motiv in die LUECKE zwischen Asset-Titel und Knopfleiste. */
+// ⚠ GEMESSEN STATT FEST VERDRAHTET. Eine feste Position (x=214) war auf
+// "USD" gerechnet - bei "S&P 500 -3.8" und "US Yield -0.4" lag das Motiv
+// dann mitten auf dem Score-Abzeichen. Die Titelbreite haengt am Namen, am
+// Score und an der Schriftgroesse; das kann CSS nicht wissen.
+// Ist die Luecke schmaler als das Motiv (schmales Fenster, langer Name),
+// gibt es KEIN Motiv statt einer Kollision.
+const ART_MIN_BREITE=120;   // darunter ist es kein Bild mehr, nur ein Fleck
+const ART_LUFT=18;          // Mindestabstand zu Titel und Knopfleiste
+function positioniereAssetArt(assetId){
+  const d=document.getElementById('detail');
+  if(!d)return;
+  // ⚠ Die Id wird am Element GEMERKT. Beim Resize kommt keine mit, und ohne
+  // das Merken bliebe das Bild auf 'none' stehen, sobald es einmal wegen zu
+  // wenig Platz abgeschaltet wurde - beim Aufziehen des Fensters kaeme es
+  // nie zurueck.
+  if(assetId)d.dataset.artId=assetId;
+  const id=assetId||d.dataset.artId;
+  if(!id){d.style.setProperty('--asset-art','none');return;}
+  const t=d.querySelector('.atitle'), meta=d.querySelector('.dmeta');
+  const url=assetArtUrl(id)||'none';
+  if(!t||!meta){d.style.setProperty('--asset-art','none');return;}
+  const dr=d.getBoundingClientRect(), tr=t.getBoundingClientRect(), mr=meta.getBoundingClientRect();
+  // Bricht die Knopfleiste unter den Titel (schmales Fenster), gibt es
+  // ueberhaupt keine Luecke - erkennbar daran, dass sie tiefer anfaengt.
+  const untereinander=mr.top>=tr.bottom-4;
+  const links=tr.right-dr.left+ART_LUFT;
+  const rechts=(untereinander?dr.right:mr.left)-dr.left-ART_LUFT;
+  const platz=rechts-links;
+  if(platz<ART_MIN_BREITE||untereinander){d.style.setProperty('--asset-art','none');return;}
+  d.style.setProperty('--asset-art',url);
+  // Das SVG ist 540x400 - die Hoehe folgt aus der Breite, gedeckelt auf das
+  // freie Band ueber der Kartenreihe (gemessen 103px, also 96 mit Luft).
+  const hoehe=Math.min(96,Math.round(Math.min(platz,230)*400/540));
+  const breite=Math.round(hoehe*540/400);
+  d.style.setProperty('--asset-art-size','auto '+hoehe+'px');
+  d.style.setProperty('--asset-art-x',Math.round(links+(platz-breite)/2)+'px');
+}
+
 function abGrafikHtml(art,c){
   if(art==='cot'){
     // ⚠ HIER STAND BIS 2026-09-13 ABEND DIE INDIKATOR-TABELLE DER COT-KARTE.
@@ -19924,6 +20084,11 @@ window.addEventListener('resize',()=>{
   _masonryResizeT=setTimeout(()=>{
     const n=masonryCols(),o=ovCols();
     if(n!==_masonryCols||o!==_ovCols){_masonryCols=n;_ovCols=o;renderDetail();}
+    // ⚠ Auch OHNE Spaltenwechsel: das Asset-Motiv sitzt in der gemessenen
+    // Luecke zwischen Titel und Knopfleiste, und die aendert sich mit jeder
+    // Fensterbreite. Ohne diesen Aufruf klebte es an der alten Stelle und
+    // laege nach dem Verkleinern auf dem Score-Abzeichen.
+    else{try{positioniereAssetArt();}catch(e){}}
   },150);
 });
 
@@ -20334,7 +20499,7 @@ Object.assign(window,{
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
-  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,
+  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,assetArtUrl,ASSET_ART,positioniereAssetArt,
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,

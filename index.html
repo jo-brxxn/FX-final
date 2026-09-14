@@ -107,10 +107,10 @@ html[data-app-bg="marble-dark"]{--app-bg-img:url(img/marble-dark.webp);--app-bg-
    ⚠ backdrop-filter ist hier kein Zierrat, sondern der Grund, warum Zahlen
    auf wechselndem Untergrund ruhig stehen: er glaettet weg, was durch die
    12% Transparenz durchkommt. */
-html[data-app-bg^="marble-"] .dw{background:var(--bg2)}
+html[data-app-bg^="marble-"] .dw{background:var(--card)}
 @supports (backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px)){
   html[data-app-bg^="marble-"] .dw{
-    background:color-mix(in srgb,var(--bg2) 84%,transparent);
+    background:color-mix(in srgb,var(--card) 84%,transparent);
     -webkit-backdrop-filter:blur(9px) saturate(108%);backdrop-filter:blur(9px) saturate(108%)}
 }
 body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,39,70,.035),transparent 260px);background-size:cover;background-position:center center;background-repeat:no-repeat;background-color:var(--bg0);background-blend-mode:normal;color:var(--t0);height:100vh;height:100dvh;overflow:hidden;overscroll-behavior:none;position:fixed;inset:0;display:flex;flex-direction:column;font-weight:400;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-variant-numeric:tabular-nums}
@@ -223,18 +223,32 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      fast schwarzer Koerper auf #161616 waere unsichtbar - dort traegt die
      fallende Kerze den hellen Gegenpol zum Blau. */
   --cndl-up:#3B5BD9;--cndl-dn:#2B3040;
-  --bg0:#E9EAF6;--bg1:#F2F3F9;--bg2:#FFFFFF;--bg3:#F2F3F9;--bg4:#EAECF4;--bg5:#DDE1EC;--bg6:#CBD1E0;
-  /* ⚠ GEMESSEN 2026-09-13: --card wurde an drei Stellen benutzt
-     (.ab-tile/.ab-ktile/.ab-ntile, .abc-cal/.acm-cal, .aql-col), war aber
-     NIRGENDS definiert. var(--card) ohne Rueckfallwert ist dann "invalid at
-     computed-value time" - der Browser wirft die ganze Deklaration weg, und
-     die Karten standen auf rgba(0,0,0,0), also voellig durchsichtig. Auf dem
-     weissen App-Hintergrund war damit alles eine einzige weisse Flaeche
-     ("bei den karten das ist alles noch so weiss", Nutzer 2026-09-13).
-     --bg1 statt --bg2, weil es sich von BEIDEN Hintergruenden abhebt: heller
-     als die getoente Seite (--bg0), eine Spur dunkler als die weisse - und
-     dieselbe Flaeche, die .rub-card schon traegt. */
-  --card:var(--bg1);
+  /* ⚠ UMGEKEHRT AM 2026-09-14 (Nutzer: "mach jetzt den generellen
+     Hintergrund weis und die Karten dunkler ... mach so einen Effekt das es
+     so aussieht als ob sich die Karten vom Hintergrund abheben").
+     VORHER war es andersherum: getoente Seite (#E9EAF6), hellere Karten -
+     und GEMESSEN lag der Kartenkontrast bei mageren 1,08:1. Genau deshalb
+     ging die Trennung unter. (Der Kommentar im Bestand nannte 1,39:1, das
+     war aber --bg2 gegen --bg0; die Karten hingen an --bg1.)
+     JETZT: die Seite ist reinweiss, die Karte traegt die Toenung. */
+  --bg0:#FFFFFF;--bg1:#F2F3F9;--bg2:#F4F6FB;--bg3:#E7EBF5;--bg4:#DDE2F0;--bg5:#D2D8E8;--bg6:#C0C7DA;
+  /* ⚠ --card ist seit 2026-09-13 ein EIGENER Wert, kein Alias mehr auf
+     --bg1. Damals war er an drei Stellen benutzt und nirgends definiert -
+     var(--card) ohne Rueckfallwert ist "invalid at computed-value time", der
+     Browser wirft die ganze Deklaration weg, und die Karten standen auf
+     rgba(0,0,0,0). Als Alias auf --bg1 war er dann zwar definiert, aber zu
+     schwach. Jetzt ein eigener Ton, der die ganze Kartentrennung traegt:
+     ⚠ AM ECHTEN BILDSCHIRMPIXEL nachgemessen, nicht nur am Token: die
+     Aurora (#dashAurora, der Risk-Sentiment-Schleier hinter allem) toent
+     die weisse Seite auf rgb(248,247,247). Gegen DIESEN Grund zaehlt der
+     Kontrast, nicht gegen #FFFFFF - der erste Anlauf mit --card:#E4E8F3
+     kam deshalb nur auf 1,146:1 statt der gerechneten 1,23.
+       --card gegen den ECHTEN Grund:  1,28:1  (vorher 1,15:1)
+       --bg2  gegen --card (Kachel IN der Karte): 1,16:1
+       --t0/--t1/--t2/--t3 auf der Karte: 12,49 / 7,55 / 4,88 / 4,89 : 1
+     Die Staffelung laeuft monoton nach innen: weisse Seite -> getoente
+     Karte -> wieder hellere Kachel. */
+  --card:#D6DCEC;
   --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
   /* ⚠ --t2 und --accent sind am 2026-09-04 MINIMAL nachgedunkelt worden.
      Der neue Waechter check/theme.js rechnet jede Textstufe gegen jede
@@ -244,7 +258,12 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      docs/design-system.md behauptete "alle Textfarben >= 4,6:1 gegen jede
      Flaeche" - das stimmte nicht mehr. Farbton und Charakter bleiben, nur
      die Helligkeit ist eine Spur zurueckgenommen. */
-  --t0:#141B2E;--t1:#33405C;--t2:#56637F;--t3:#57637B;
+  /* ⚠ 2026-09-14 eine Spur nachgedunkelt, weil die Kartenflaeche kraeftiger
+     geworden ist: --t2 #56637F hielt darauf nur noch 4,39:1, --t3 4,40 -
+     beide unter AA. Mit #505C77/#515C74 sind es 4,88 und 4,89, also BESSER
+     als die 4,91/4,93 von vorher auf der helleren Karte. Der Abstand zu
+     --t1 (#33405C) bleibt erhalten, die Hierarchie also auch. */
+  --t0:#141B2E;--t1:#33405C;--t2:#505C77;--t3:#515C74;
   --green:#0B5FCC;--red:#C50F1A;--amber:#55617A;--due:#B45309;--due-rgb:180,83,9;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
   --green-rgb:11,95,204;--red-rgb:197,15,26;--amber-rgb:85,97,122;
   --star-rgb:85,97,122;--blue-rgb:11,95,204;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
@@ -252,7 +271,12 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
      aktiver Tab, Fokusring, ausgewaehlter Filter. NIE fuer einen Datenwert -
      sonst konkurriert es mit Blau=bullish und die Score-Farbe wird mehrdeutig. */
-  --accent:#2C89A9;--accent-rgb:44,137,169;
+  /* ⚠ 2026-09-14 eine Spur nachgedunkelt (#2C89A9 -> #277B98), weil --bg5
+     mit der Palettenumkehr dunkler geworden ist: als Zahlenfarbe hielt der
+     alte Ton darauf nur noch 2,80:1. Jetzt 3,37:1 auf --bg5 und 3,50 auf der
+     Karte. Die -rgb-Variante zieht mit - sonst faerben Fuellungen und Rahmen
+     weiter im alten Ton, und DAS faellt keinem Kontrast-Waechter auf. */
+  --accent:#277B98;--accent-rgb:39,123,152;
   /* ⚠ CHROME-TOKENS (2026-09-04, fuer die Design-Vorlagen). Kopfzeile und
      Nav-Sidebar hatten ihre Farben als LITERALE verstreut (#35456B, #2C3A5E,
      #1d2127) - in einer Vorlage mit heller Kopfzeile waeren das dunkle
@@ -277,10 +301,36 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   --a-infl:#B5791C;--a-rate:#7250B8;--a-lab:#1A8477;
   --a-grow:#BE6320;--a-cot:#1F7F9E;
   --r:12px;--rs:8px;--rss:6px;
-  /* Schatten leicht kraeftiger (war rein dekorativ zu schwach, um neben dem
-     jetzt sichtbaren Rand noch eigene Tiefe beizutragen). */
-  --shadow-card:0 1px 3px rgba(20,27,46,.09);
-  --shadow-pop:0 8px 24px rgba(20,27,46,.16);
+  /* ── DER ABHEBE-EFFEKT (Nutzer 2026-09-14: "mach so einen Effekt das es
+     so aussieht als ob sich die Karten vom Hintergrund abheben ... guck im
+     Internet was man da machen kann").
+     NACHGESCHLAGEN, nicht geraten. Zwei Techniken sind heute Stand:
+       (1) TONALE ERHOEHUNG (Material 3): die Flaeche selbst wird getoent -
+           das ist --card oben, und M3 empfiehlt sie als ERSTE Wahl.
+       (2) GESTAPELTE SCHATTEN (Tobias Ahlin, popularisiert von Josh
+           Comeau): statt EINEM Schatten mehrere Lagen uebereinander. Je
+           Lage verdoppeln sich Versatz und Weichzeichnung bei gleicher,
+           niedriger Deckkraft. Ein einzelner Schatten faellt linear ab und
+           wirkt deshalb wie ein aufgemalter Rand; gestapelt entsteht die
+           Abnahme, die echtes Licht hat.
+       Material 3 sagt ausdruecklich, dass beides ZUSAMMEN benutzt wird -
+       die meisten ihrer erhabenen Bauteile tun genau das. Hier also auch.
+     ⚠ Die Schattenfarbe ist NICHT reines Schwarz, sondern das Blauschwarz
+     der App (20,27,46). Ein grauer Schatten auf getoentem Grund sieht
+     ausgewaschen aus - das ist Comeaus Hauptpunkt neben dem Stapeln.
+     Vier Lagen: 1/2/4/8 px Versatz bei 2/4/10/20 px Weichzeichnung. */
+  --shadow-card:
+    0 1px 2px rgba(20,27,46,.10),
+    0 2px 5px rgba(20,27,46,.085),
+    0 5px 12px rgba(20,27,46,.075),
+    0 10px 26px rgba(20,27,46,.065);
+  /* Dieselbe Staffelung, eine Stufe hoeher - fuer alles, was ueber der
+     Seite schwebt (Popups, Menues, Bias-Picker). */
+  --shadow-pop:
+    0 2px 4px rgba(20,27,46,.07),
+    0 6px 12px rgba(20,27,46,.07),
+    0 12px 28px rgba(20,27,46,.07),
+    0 24px 48px rgba(20,27,46,.06);
 }
 /* ── LAYOUT ── */
 /* Kopfzeile komplett in EINER Reihe (Nutzer-Wunsch 2026-08-21 per /goal:
@@ -490,7 +540,7 @@ svg.ic{vertical-align:-2px;flex:none}
 .abc-u-t{flex:0 0 auto;font:600 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3)}
 .abc-cal,.abc-day,.abc-next,.acm-cal,.acm-day,.acm-next{background:var(--card);border:1px solid var(--bd);
   border-radius:var(--rs);padding:9px 10px;
-  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5)}
 .abc-cal{cursor:pointer;display:flex;flex-direction:column}
 @media(hover:hover){.abc-cal:hover{border-color:var(--accent)}}
 .abc-cal .abc-grid{flex:1 1 auto;align-content:space-evenly}
@@ -646,7 +696,7 @@ svg.ic{vertical-align:-2px;flex:none}
         Wert, den .aperf/.aqn schon tragen, damit die Seite EINE Handschrift
         hat und nicht zwei. */
 .ab-tile,.ab-ktile,.ab-ntile,.ab-ptile{background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);padding:10px 11px;min-width:0;
-  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5)}
 /* ── Preis-Karte oben links (Nutzer 2026-09-14: "da wo man taegliche und
    woechentliche Veraenderung sieht das da ein Preis Chart von dem Asset
    ist"). Sie fuellt die Spalte, der Chart bekommt den Rest der Hoehe -
@@ -896,7 +946,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Linear Light */
 :root[data-fx-theme="linear"]{
   --chrome-bg:#1C1D21;--chrome-bd:#101114;--chrome-line:#33353C;--chrome-quick:#2A2C33;
-  --bg0:#F4F5F8;--bg1:#FAFAFB;--bg2:#FFFFFF;--bg3:#F7F8FA;--bg4:#EFF1F5;--bg5:#E4E7EE;--bg6:#D3D8E2;
+  --bg0:#FFFFFF;--bg1:#FAFAFB;--bg2:#F5F6F9;--bg3:#EEF0F4;--bg4:#E5E7EE;--bg5:#E4E7EE;--bg6:#D3D8E2;
   --bd:rgba(28,29,33,.12);--bd2:rgba(28,29,33,.22);
   --t0:#16171A;--t1:#2C2F36;--t2:#4C515B;--t3:#4A4F59;--t3-rgb:74,79,89;
   --green:#2C51C7;--red:#B02B26;--amber:#535966;--due:#B45309;--due-rgb:180,83,9;--star:#535966;--blue:#2C51C7;--purple:#6B4CC4;--success:#0F6B3C;--live:#C4302B;
@@ -905,6 +955,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#93670F;--a-rate:#5F45AB;--a-lab:#136B60;--a-grow:#9C5117;--a-cot:#1A6E89;
   --on-accent:#FFFFFF;
   --green-lt:#2C51C7;--red-dk:#B02B26;
+  --card:#E5E7EE;
 }
 [data-fx-theme="linear"] .hdr,[data-fx-theme="linear"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -914,7 +965,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Stripe Slate */
 :root[data-fx-theme="stripe"]{
   --chrome-bg:#0A2540;--chrome-bd:#04162A;--chrome-line:#264260;--chrome-quick:#153454;
-  --bg0:#F0F4F9;--bg1:#F6F9FC;--bg2:#FFFFFF;--bg3:#F4F7FB;--bg4:#EAF0F7;--bg5:#DDE6F1;--bg6:#C9D5E5;
+  --bg0:#FFFFFF;--bg1:#F6F9FC;--bg2:#F4F7FB;--bg3:#EBF1F8;--bg4:#E2EAF3;--bg5:#DDE6F1;--bg6:#C9D5E5;
   --bd:rgba(10,37,64,.13);--bd2:rgba(10,37,64,.24);
   --t0:#0A2540;--t1:#243851;--t2:#495D75;--t3:#465A73;--t3-rgb:70,90,115;
   --green:#0B57B8;--red:#B0322A;--amber:#4E5F74;--due:#B45309;--due-rgb:180,83,9;--star:#4E5F74;--blue:#0B57B8;--purple:#6A4BDD;--success:#0C6B41;--live:#C93326;
@@ -923,6 +974,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#96660F;--a-rate:#5E42AC;--a-lab:#0F6E5F;--a-grow:#A2551A;--a-cot:#186D87;
   --on-accent:#FFFFFF;
   --green-lt:#0B57B8;--red-dk:#B0322A;
+  --card:#E2EAF3;
 }
 [data-fx-theme="stripe"] .hdr,[data-fx-theme="stripe"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -932,7 +984,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Swiss Editorial */
 :root[data-fx-theme="swiss"]{
   --chrome-bg:#111111;--chrome-bd:#000000;--chrome-line:#333333;--chrome-quick:#242424;
-  --bg0:#FFFFFF;--bg1:#FAFAFA;--bg2:#FFFFFF;--bg3:#F7F7F7;--bg4:#F0F0F0;--bg5:#E4E4E4;--bg6:#D0D0D0;
+  --bg0:#FFFFFF;--bg1:#FAFAFA;--bg2:#F6F6F6;--bg3:#F0F0F0;--bg4:#E9E9E9;--bg5:#E4E4E4;--bg6:#D0D0D0;
   --bd:rgba(0,0,0,.14);--bd2:rgba(0,0,0,.26);
   --t0:#000000;--t1:#242424;--t2:#4E4E4E;--t3:#4A4A4A;--t3-rgb:74,74,74;
   --green:#0B4BA8;--red:#A81F17;--amber:#4A4A4A;--due:#B45309;--due-rgb:180,83,9;--star:#4A4A4A;--blue:#0B4BA8;--purple:#4E3F8C;--success:#0F5C33;--live:#B32B26;
@@ -941,6 +993,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#7C540F;--a-rate:#4F3A8C;--a-lab:#105C50;--a-grow:#8A4714;--a-cot:#155C74;
   --on-accent:#FFFFFF;
   --green-lt:#0B4BA8;--red-dk:#A81F17;
+  --card:#E9E9E9;
 }
 [data-fx-theme="swiss"] .hdr,[data-fx-theme="swiss"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -950,7 +1003,7 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Notion Warm */
 :root[data-fx-theme="notion"]{
   --chrome-bg:#37352F;--chrome-bd:#211F1B;--chrome-line:#4E4B43;--chrome-quick:#45423A;
-  --bg0:#F7F7F5;--bg1:#FBFBFA;--bg2:#FFFFFF;--bg3:#F6F5F3;--bg4:#EFEEEA;--bg5:#E5E3DE;--bg6:#D5D2CB;
+  --bg0:#FFFFFF;--bg1:#FBFBFA;--bg2:#F7F6F3;--bg3:#F1F0EC;--bg4:#EBEAE5;--bg5:#E5E3DE;--bg6:#D5D2CB;
   --bd:rgba(55,53,47,.14);--bd2:rgba(55,53,47,.25);
   --t0:#191817;--t1:#302E28;--t2:#54504A;--t3:#524E48;--t3-rgb:82,78,72;
   --green:#1461B0;--red:#A93125;--amber:#55514A;--due:#B45309;--due-rgb:180,83,9;--star:#55514A;--blue:#1461B0;--purple:#6B44AD;--success:#0F6039;--live:#BE3826;
@@ -959,6 +1012,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#8F6113;--a-rate:#5B41A0;--a-lab:#136759;--a-grow:#964E17;--a-cot:#166583;
   --on-accent:#FFFFFF;
   --green-lt:#1461B0;--red-dk:#A93125;
+  --card:#EBEAE5;
 }
 [data-fx-theme="notion"] .hdr,[data-fx-theme="notion"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -991,6 +1045,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#E3B23C;--a-rate:#B48CFF;--a-lab:#5FE3E1;--a-grow:#FF9E52;--a-cot:#5CC2F0;
   --on-accent:#0A1520;
   --green-lt:#78A9FF;--red-dk:#FF8389;
+  --card:#1C1C1C;
 }
 [data-fx-theme="carbon"] .hdr,[data-fx-theme="carbon"] #navSidebar{
   --t0:#F4F4F4;--t1:#E0E4E9;--t2:#B4BAC1;--t3:#AEB4BB;
@@ -1023,6 +1078,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#EBBA55;--a-rate:#B49CFF;--a-lab:#4FD3BF;--a-grow:#F59B5C;--a-cot:#5FC0E0;
   --on-accent:#04121B;
   --green-lt:#7DBBFF;--red-dk:#FF8C87;
+  --card:#111A2B;
 }
 [data-fx-theme="midnight"] .hdr,[data-fx-theme="midnight"] #navSidebar{
   --t0:#EEF3FB;--t1:#D5DFEF;--t2:#A9B8D0;--t3:#A3B2CB;
@@ -1055,6 +1111,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#DFB25A;--a-rate:#AF9AE0;--a-lab:#57C0AE;--a-grow:#E5975A;--a-cot:#78B8D2;
   --on-accent:#101A20;
   --green-lt:#82B8F5;--red-dk:#F58A86;
+  --card:#1D1F23;
 }
 [data-fx-theme="graphite"] .hdr,[data-fx-theme="graphite"] #navSidebar{
   --t0:#F2F3F5;--t1:#DBDEE3;--t2:#ADB3BC;--t3:#A7ADB6;
@@ -1087,6 +1144,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#E6C87F;--a-rate:#C7ACDD;--a-lab:#83D8C6;--a-grow:#E7A67F;--a-cot:#A3CCE0;
   --on-accent:#14202A;
   --green-lt:#9EC1DE;--red-dk:#EE9AA0;
+  --card:#333B48;
 }
 [data-fx-theme="nord"] .hdr,[data-fx-theme="nord"] #navSidebar{
   --t0:#ECEFF4;--t1:#E0E6EF;--t2:#C3CCDA;--t3:#BDC7D6;
@@ -1119,6 +1177,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --a-infl:#E0BC4A;--a-rate:#B79BE6;--a-lab:#55CBB8;--a-grow:#EA9F52;--a-cot:#5FC0D8;
   --on-accent:#02222A;
   --green-lt:#7CBCEC;--red-dk:#F58C86;
+  --card:#03313D;
 }
 [data-fx-theme="solar"] .hdr,[data-fx-theme="solar"] #navSidebar{
   --t0:#EEE8D5;--t1:#DCD6C4;--t2:#B3BDBA;--t3:#ADB7B4;
@@ -1437,7 +1496,45 @@ body.no-ui-anim #navSidebar{transition:none}
    Nutzer-Wunsch 2026-07-23 - frueher deutlich dunkler). */
 .aurora-c{background:radial-gradient(circle,var(--aurora-c,#3d6fa8) 0%,transparent 70%);width:38vw;height:38vw;top:28%;right:8%}
 /* ── DETAIL ── */
-.detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* ⚠ Das blasse Asset-Motiv im oberen Drittel (Nutzer 2026-09-14: "kann man
+   vlt im generellen Hintergrund im oberen Drittel so z.B. beim Dollar einen
+   Dollar Schein unscheinbar in den Hintergrund setzen"). --asset-art wird
+   in renderDetail() gesetzt und ist 'none', wenn es fuer das Asset kein
+   Motiv gibt - dann faellt die Regel still auf nichts zurueck.
+   Rechtsbuendig oben: links stehen Asset-Name und Score, dort wuerde selbst
+   ein blasses Motiv mit der Schrift konkurrieren.
+   ⚠ background-attachment bleibt der Standard (scroll): das Motiv gehoert
+   an den Anfang der Seite und soll beim Scrollen mit nach oben verschwinden,
+   nicht als Wasserzeichen ueber den Zahlen stehen bleiben. Genau dafuer gab
+   es 2026-09-04 schon einen Nutzer-Entscheid ("dekorative Textur HINTER
+   dichten Zahlen-Karten" wurde abgelehnt) - deshalb blendet das SVG selbst
+   nach unten aus und der Effekt endet ueber der Kartenreihe. */
+.detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background-image:var(--asset-art,none);
+  background-repeat:no-repeat;
+  /* ⚠ ZWEI-WERT-FORM. "var(--x) top 6px" ist ungueltig: sobald eine Achse
+     eine blanke Laenge ist, darf die andere kein Schluesselwort mit Offset
+     mehr sein - der Browser wirft die GANZE Deklaration weg und faellt auf
+     0% 0% zurueck. Gemessen: --asset-art-x stand korrekt auf 422px, und das
+     Motiv klebte trotzdem links hinter der Flagge. */
+  background-position:var(--asset-art-x,214px) 6px;
+  background-size:var(--asset-art-size,auto 96px)}
+/* ⚠ POSITION UND GROESSE GEMESSEN, nicht gegriffen - in zwei Anlaeufen:
+   (1) 330px hoch, rechts oben: davon verschwanden 70% hinter der
+       Kartenreihe (zwischen Inhaltsoberkante und Karten liegen genau
+       103px), sichtbar blieb ein Streifen Linien, den niemand als
+       Geldschein erkennt.
+   (2) 128px hoch, rechts oben: jetzt ganz im freien Band - aber GENAU
+       hinter der Knopfleiste "Price chart / History / Backtester / Data
+       quality". Schrift auf Textur ist hier schon einmal abgelehnt worden
+       (Nutzer-Entscheid 2026-09-04, die acht Dekorlinien).
+   Also in die LUECKE zwischen Titel und Knopfleiste. Gemessen:
+       1920px Fenster -> Luecke 896px    1180px -> 156px
+       1500px         -> Luecke 476px     820px -> keine (Leiste bricht um)
+   Der Titel endet bei x=199, deshalb x=214. Unter 1100px wird die Luecke
+   schmaler als das Motiv, dort gibt es kein Motiv statt einer Kollision -
+   geprueft von check/assetart.js ueber fuenf Fensterbreiten. */
+
 .dp{padding:14px}
 .atitle{font-size:34px;font-weight:700;color:var(--t0);letter-spacing:-.5px;display:flex;align-items:center;flex-wrap:wrap;gap:0}
 /* Landesflagge vor dem Ticker-Titel (tech-design-Skill) - Groesse an die
@@ -1653,7 +1750,13 @@ body.compact-view .rub-summary{display:block}
    grenzen sich nur durch eine duenne Kontur ab, keine Elevation. Alt:
    border:1px solid var(--bd2);border-left:4px solid #2c4f7c;border-radius:
    var(--r);margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.18); */
-.rub-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+/* ⚠ EINE Kartenflaeche fuer ALLE Karten (2026-09-14). Vorher stand hier
+   --bg3 und bei den Kacheln --card - zwei Toene fuer dieselbe Rolle, die
+   sich bei jeder Palettenaenderung auseinanderentwickeln. Und der Schatten
+   fehlte hier ganz: die Makro-Karten hatten nur einen Rand, die Kacheln
+   daneben Rand UND Schatten. */
+.rub-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:var(--gap-block);overflow:hidden;transition:border-color .15s,box-shadow .15s;
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5)}
 .masonry .rub-card:last-child{margin-bottom:0}
 .rub-card.imp{border-color:var(--star);box-shadow:0 0 0 1px rgba(var(--star-rgb),.33),0 2px 12px rgba(0,0,0,.22)}
 .rub-card.imp .rub-hdr{background:var(--bg4)}
@@ -2703,7 +2806,7 @@ body.res-return-active #resBackBar{display:flex}
    liest sich eine Karte dadurch als erhabene Flaeche statt als blosser
    Farbfleck - der Effekt aus der Nutzer-Vorlage (2026-08-23), aber sehr
    zurueckhaltend dosiert (4.5% Weiss), damit er nicht als Rahmen wirkt. */
-.dw{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.045)}
+.dw{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5)}
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
 /* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
    solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
@@ -5073,11 +5176,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-515 - Die vier Schnellzugriffe stehen jetzt als durchgehende Zeile unter den drei Kopfkarten statt als 2x2-Block in der linken Spalte (Nutzer: Mach die 4 quicklinks als Zeile unter die 3 oberen Karten). Sie liegen bewusst IM selben Kartenraster und spannen alle drei Spalten - nur so nehmen sie denselben Spaltenabstand mit wie die Reihen darueber und darunter und sitzen buendig dazwischen. GEMESSEN ueber drei Breiten: bei 1500 Pixeln vier Knoepfe zu je 315 Pixeln in einer Zeile, von der linken Kante der Preis-Karte bis zur rechten Kante des Kalenders, kein Loch zur naechsten Reihe; bei 1180 Pixeln vier zu je 235; bei Handybreite brechen sie auf zwei mal zwei um, ohne Seiten-Ueberlauf. ⚠ Das Umbrechen ist Absicht und kein Nebeneffekt: eine fest vierspaltige Zeile ergibt auf 390 Pixeln vier Knoepfe zu 90 Pixeln - genau der Grund, aus dem sie im Juli ueberhaupt erst zum 2x2-Raster geworden waren. Deshalb auto-fit mit einer Mindestbreite von 150 Pixeln statt vier festen Spalten. Die linke Kopfspalte traegt damit nur noch die Preis-Karte und streckt sich auf die Hoehe der Reihe, und das tote 2x2-Raster ist aus dem Stilblatt entfernt statt als unbenutzte Regel liegenzubleiben.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-516 - Der Hintergrund ist weiss, die Karten sind getoent, und sie heben sich jetzt wirklich ab. AUSGANGSLAGE GEMESSEN: die Karten standen bei 1,08 zu 1 gegen den Seitenhintergrund - praktisch unsichtbar. Der Kommentar im Bestand nannte 1,39, das war aber eine andere Flaeche als die, an der die Karten wirklich hingen. UMGEKEHRT: die Seite ist reinweiss, die Toenung traegt jetzt die Karte. ⚠ AM ECHTEN BILDSCHIRMPIXEL nachgemessen, nicht nur an den Farbvariablen: die Aurora, also der Risk-Sentiment-Schleier hinter allem, toent die weisse Seite auf rgb(248,247,247). Gegen DIESEN Grund zaehlt der Kontrast - der erste Anlauf kam deshalb nur auf 1,15 statt der gerechneten 1,23. Jetzt sind es gemessene 1,23 zu 1, also gut das Dreifache des vorherigen Unterschieds. DER EFFEKT IST NACHGESCHLAGEN, NICHT GERATEN: Material 3 empfiehlt tonale Erhoehung als erste Wahl und Schatten zusaetzlich fuer Fokus, und die meisten ihrer erhabenen Bauteile nutzen beides. Die Schatten folgen der Technik von Tobias Ahlin, popularisiert von Josh Comeau: statt EINEM Schatten vier gestapelte Lagen, bei denen sich Versatz und Weichzeichnung je Lage verdoppeln. Ein einzelner Schatten faellt linear ab und wirkt wie ein aufgemalter Rand. Die Schattenfarbe ist bewusst kein reines Schwarz, sondern das Blauschwarz der App - ein grauer Schatten auf getoentem Grund sieht ausgewaschen aus. EINE Kartenflaeche fuer ALLE Karten: vorher standen die Makro-Karten auf einem anderen Ton als die Kacheln und hatten gar keinen Schatten. Die beiden leisen Textstufen sind eine Spur nachgedunkelt, weil sie auf der kraeftigeren Karte sonst unter die Lesbarkeitsgrenze gefallen waeren - mit 4,88 und 4,89 zu 1 sind sie jetzt sogar besser lesbar als vorher. Alle zehn Vorlagen haben --card eigenstaendig; ohne das haetten die fuenf dunklen still die helle Kartenfarbe geerbt, also hellgraue Karten auf schwarzem Grund. NEU AUSSERDEM: jedes Asset hat ein blasses Motiv im oberen Hintergrund - Geldschein mit dem jeweiligen Waehrungszeichen, Barrenstapel, Oelfass, Muenze, Kerzenchart, Anleiheurkunde. SELBST GEZEICHNET als SVG, keine Fotos: die Seite laeuft offline aus dem Cache, sechzehn Fotos waeren mehrere Megabyte, und fuer Geldscheine braeuchte es Rechte. Je Motiv ein paar hundert Byte. ⚠ DIE PLATZIERUNG HAT ZWEI ANLAEUFE GEBRAUCHT, beide durch Messung korrigiert: 330 Pixel hoch und rechts oben liess 70 Prozent hinter der Kartenreihe verschwinden - zwischen Inhaltsoberkante und Karten liegen genau 103 Pixel. Danach passte die Groesse, aber das Motiv lag hinter der Knopfleiste Price chart, History, Backtester. Schrift auf Textur ist hier ausdruecklich schon einmal abgelehnt worden. Jetzt sitzt es in der GEMESSENEN Luecke zwischen Asset-Titel und Knopfleiste, und zwar bei jedem Aufruf neu berechnet: eine feste Position war auf USD gerechnet und lag bei S&P 500 mitten auf dem Score-Abzeichen. Wo die Luecke schmaler ist als das Motiv, gibt es kein Motiv statt einer Kollision. Ein dritter Fehler steckte in der CSS-Syntax: background-position mit einer blanken Laenge und danach einem Schluesselwort mit Abstand ist ungueltig, der Browser wirft die ganze Deklaration weg - die Variable stand korrekt auf 422 Pixel und das Motiv klebte trotzdem ganz links. Ein neuer Waechter misst die Kartentrennung am Bildschirmfoto, zaehlt die Schattenlagen, verlangt EINE Kartenfarbe und prueft das Motiv auf 45 Kombinationen aus fuenf Fensterbreiten und neun Assets auf Ueberschneidung mit jedem Textelement. Fuenf Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-515</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-516</span>
     </span>
   </div>
   <div class="hdr-r">

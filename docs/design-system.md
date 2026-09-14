@@ -552,3 +552,65 @@ nicht **benutzte**. Seit 2026-09-13 nimmt `check/structure.js` die andere
 Richtung — jedes `var(--x)` ohne Rückfallwert muss irgendwo definiert sein.
 Beim ersten Lauf fand es vier weitere tote Tokens in CSS-Regeln, die auf allen
 14 Seiten null Treffer haben.
+
+## Karten-Erhebung: weiße Seite, getönte Karte, gestapelte Schatten (seit 2026-09-14)
+
+Nutzer-Vorgabe: *„mach jetzt den generellen Hintergrund weis und die Karten
+dunkler … mach so einen Effekt das es so aussieht als ob sich die Karten vom
+Hintergrund abheben"*.
+
+**Die Rollen, monoton nach innen:**
+
+| Rolle | Token | Standard-Vorlage |
+|---|---|---|
+| Seite | `--bg0` | `#FFFFFF` |
+| **jede Karte** | `--card` | `#D6DCEC` |
+| Kachel *in* der Karte | `--bg2` | `#F4F6FB` |
+
+⚠ **`--card` ist die Fläche JEDER Karte** — `.ab-tile/.ab-ktile/.ab-ntile/
+.ab-ptile`, `.rub-card`, `.dw`, `.abc-cal`. Zwei Töne für dieselbe Rolle
+entwickeln sich bei der nächsten Palettenänderung auseinander; `.rub-card` hing
+bis 2026-09-14 auf `--bg3` und hatte gar keinen Schatten. `check/kartenlook.js`
+erzwingt die eine Farbe, `check/theme.js` erzwingt `--card` als Pflicht-Token
+in **allen zehn** Vorlagen (ohne das erben die dunklen still die helle Fläche).
+
+**⚠ Der Kartenkontrast ist ein Pixelwert, kein Tokenwert.** Die Aurora
+(`#dashAurora`, der Risk-Sentiment-Schleier hinter allem) tönt die weiße Seite
+auf `rgb(248,247,247)`. Gerechnet ergab `#E4E8F3` 1,23:1 — gemessen waren es
+1,146. Jede Änderung an der Palette gehört deshalb am Bildschirmfoto
+nachgemessen, nicht an den Variablen.
+
+**Der Schatten** folgt Tobias Ahlin / Josh Comeau und Material 3: tonale
+Erhöhung **plus** Schatten, und der Schatten in **vier gestapelten Lagen**, bei
+denen sich Versatz und Weichzeichnung je Lage verdoppeln (1/2/5/10 px bei
+2/5/12/26 px). Ein einzelner Schatten fällt linear ab und wirkt wie ein
+aufgemalter Rand. Die Schattenfarbe ist das **Blauschwarz der App**
+(`20,27,46`), kein reines Schwarz — grau auf getöntem Grund sieht ausgewaschen
+aus.
+
+## Blasse Asset-Motive im Kopfbereich (seit 2026-09-14)
+
+Jedes Asset hat ein selbst gezeichnetes SVG-Motiv (`ASSET_ART`/`assetArtUrl`):
+Geldschein mit Währungszeichen, Barrenstapel, Ölfass, Münze, Kerzenchart,
+Anleihe-Urkunde. **Keine Fotos** — die Seite läuft offline aus dem Cache,
+sechzehn Fotos wären mehrere Megabyte, und für Geldscheine bräuchte es Rechte.
+Je Motiv ein paar hundert Byte.
+
+⚠ **Die Position wird GEMESSEN, nie fest verdrahtet** (`positioniereAssetArt`).
+Sie liegt in der Lücke zwischen Asset-Titel und Knopfleiste und wird bei jedem
+Render *und* jedem Resize neu berechnet. Drei Anläufe lagen daneben: 330 px
+hoch verschwand zu 70 % hinter den Karten (frei sind genau 103 px), rechts oben
+lag es hinter der Knopfleiste, und eine feste `x=214` war auf `USD` gerechnet —
+bei `S&P 500 -3.8` lag das Motiv auf dem Score-Abzeichen. **Ist die Lücke
+schmaler als das Motiv, gibt es kein Motiv** statt einer Kollision.
+
+**Schrift auf Textur bleibt verboten** (Nutzer-Entscheid 2026-09-04, die acht
+Dekorlinien). Das Motiv steht *neben* dem Text, nie darunter, und blendet im
+SVG selbst nach unten aus. `check/kartenlook.js` prüft das auf 45
+Kombinationen aus fünf Fensterbreiten × neun Assets.
+
+⚠ **CSS-Falle:** `background-position: var(--x) top 6px` ist **ungültig** —
+sobald eine Achse eine blanke Länge ist, darf die andere kein Schlüsselwort mit
+Offset mehr sein. Der Browser wirft die ganze Deklaration weg und fällt auf
+`0% 0%` zurück. Gemessen: die Variable stand korrekt auf 422 px, das Motiv
+klebte trotzdem links. Zwei-Wert-Form (`var(--x) 6px`) behebt es.

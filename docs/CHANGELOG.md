@@ -14038,3 +14038,111 @@ Die linke Kopfspalte trägt damit nur noch die Preis-Karte (`.aql-col>.ab-ptile`
 streckt sie auf die Reihenhöhe, sonst stünde darunter tote Fläche). Das tote
 `.aql-grid` ist aus dem Stilblatt **entfernt**, statt als unbenutzte Regel
 liegenzubleiben.
+
+---
+
+## 2026-09-14 (spät) — Weißer Grund, getönte Karten, blasse Asset-Motive (VERSION-CHECK-516)
+
+Nutzer: *„Ja mach das aber dann mal extremer und mach jetzt den generellen
+Hintergrund weis und die Karten dunkler guck im Internet was man da machen
+kann und mach so einen Effekt das es so aussieht als ob sich die Karten vom
+Hintergrund abheben. Und kann man vlt im generellen Hintergrund im oberen
+Drittel so z.B. beim Dollar einen Dollar Schein unscheinbar in den Hintergrund
+setzen der einfach so blass ist und das bei den anderen Assets auch"*
+
+### Die Ausgangslage war schwächer als dokumentiert
+
+Gemessen: die Karten standen bei **1,08:1** gegen den Seitenhintergrund. Der
+Kommentar im Bestand nannte 1,39:1 — das war aber `--bg2` gegen `--bg0`,
+während die Karten an `--bg1` hingen. Die Beschwerde war also berechtigt und
+der Code hat etwas anderes behauptet.
+
+### Umgekehrt: Seite weiß, Tönung in der Karte
+
+⚠ **Am echten Bildschirmpixel nachgemessen, nicht nur am Token.** Die Aurora
+(`#dashAurora`, der Risk-Sentiment-Schleier hinter allem) tönt die weiße Seite
+auf `rgb(248,247,247)`. Gegen **diesen** Grund zählt der Kontrast:
+
+| | Token-Rechnung | am Pixel gemessen |
+|---|---|---|
+| vorher | 1,08:1 | 1,15:1 |
+| erster Anlauf `#E4E8F3` | 1,23:1 | **1,146:1** |
+| jetzt `#D6DCEC` | 1,28:1 | **1,23:1** |
+
+### Der Effekt — nachgeschlagen, nicht geraten
+
+Zwei Techniken sind Stand: **tonale Erhöhung** (Material 3 empfiehlt sie als
+erste Wahl) und **gestapelte Schatten** (Tobias Ahlin, popularisiert von Josh
+Comeau). Material 3 sagt ausdrücklich, dass beides zusammen benutzt wird — die
+meisten ihrer erhabenen Bauteile tun genau das. Also beides:
+
+- Vier Schattenlagen statt einer; Versatz und Weichzeichnung verdoppeln sich
+  je Lage (1/2/5/10 px bei 2/5/12/26 px). Ein einzelner Schatten fällt linear
+  ab und wirkt wie ein aufgemalter Rand.
+- Schattenfarbe ist das **Blauschwarz der App**, kein reines Schwarz — ein
+  grauer Schatten auf getöntem Grund sieht ausgewaschen aus (Comeaus
+  Hauptpunkt neben dem Stapeln).
+
+**Eine** Kartenfläche für alle Karten: `.rub-card` stand auf `--bg3` und hatte
+gar keinen Schatten, die Kacheln auf `--card`. Zwei Töne für dieselbe Rolle
+entwickeln sich bei der nächsten Palettenänderung auseinander.
+
+Die beiden leisen Textstufen sind mitgezogen (`--t2` `#56637F`→`#505C77`,
+`--t3` `#57637B`→`#515C74`): auf der kräftigeren Karte hielten sie nur noch
+4,39 bzw. 4,40:1. Jetzt **4,88 / 4,89:1** — besser als die 4,91/4,93 auf der
+alten, helleren Karte. Alle zehn Vorlagen haben `--card` eigenständig;
+`check/theme.js` erzwingt das jetzt, sonst hätten die fünf dunklen still die
+helle Kartenfarbe geerbt.
+
+### Die blassen Asset-Motive
+
+**Selbst gezeichnet als SVG, keine Fotos.** Drei Gründe: die Seite läuft
+offline aus dem Service-Worker-Cache, sechzehn Fotos wären mehrere Megabyte
+(der Feed-Wächter deckelt gerade erst die Datenmenge, weil genau das die Charts
+gekillt hat), und für Geldscheine bräuchte es Rechte. Je Motiv ein paar hundert
+Byte — größter data-URI **1191 Zeichen**. Motive: Geldschein mit dem jeweiligen
+Währungszeichen (8 Majors), Barrenstapel (Gold/Silber), Ölfass, Münze mit ₿,
+Kerzenchart (Indizes), Anleihe-Urkunde mit % (Renditen).
+
+### ⚠ Die Platzierung brauchte drei Korrekturen, alle durch Messung
+
+1. **330 px hoch, rechts oben** → 70 % verschwand hinter der Kartenreihe.
+   Gemessen: zwischen Inhaltsoberkante und Karten liegen genau **103 px**.
+2. **128 px, rechts oben** → lag genau hinter der Knopfleiste *Price chart /
+   History / Backtester / Data quality*. Schrift auf Textur ist hier schon
+   einmal abgelehnt worden (Nutzer-Entscheid 2026-09-04, die acht Dekorlinien).
+3. **Feste Position `x=214`** → war auf `USD` gerechnet; bei `S&P 500 -3.8`
+   und `US Yield -0.4` lag das Motiv auf dem Score-Abzeichen.
+
+Jetzt sitzt es in der **gemessenen** Lücke zwischen Titel und Knopfleiste, bei
+jedem Render und jedem Resize neu berechnet:
+
+| Fenster | Lücke |
+|---|---|
+| 1920 px | 896 px |
+| 1500 px | 476 px |
+| 1180 px | 156 px |
+| ≤ 820 px | keine (Leiste bricht um) → **kein Motiv** |
+
+⚠ **Ein vierter Fehler steckte in der CSS-Syntax:**
+`background-position: var(--x) top 6px` ist **ungültig** — sobald eine Achse
+eine blanke Länge ist, darf die andere kein Schlüsselwort mit Offset mehr sein.
+Der Browser wirft die *ganze* Deklaration weg und fällt auf `0% 0%` zurück.
+Gemessen: `--asset-art-x` stand korrekt auf 422 px, und das Motiv klebte
+trotzdem links hinter der Flagge. Zwei-Wert-Form behebt es.
+
+### Wächter + Gegenproben
+
+Neu: **`check/kartenlook.js`** (23. Prüfung). Misst die Kartentrennung **am
+Bildschirmfoto** (nicht am Token), zählt die Schattenlagen, verlangt eine
+einzige Kartenfarbe, und prüft das Motiv auf **45 Kombinationen** aus fünf
+Fensterbreiten × neun Assets gegen jedes Textelement — plus beide Richtungen:
+auf breiten Fenstern *muss* es da sein, auf 390 px *muss* es weg sein.
+
+| Eingriff | Meldung |
+|---|---|
+| `--card` zurück auf die alte helle Fläche | KARTE HEBT SICH NICHT AB (1,007:1) |
+| ein Schatten statt vier | SCHATTEN NICHT GESTAPELT (3 Karten) |
+| `.rub-card` zurück auf `--bg3` | ZWEI KARTENFARBEN |
+| feste Motivposition statt gemessener | MOTIV AUF SCHRIFT (EUR, GOLD, OIL … auf dem Score-Abzeichen) |
+| Abschalten bei zu wenig Platz deaktiviert | MOTIV AUF SCHRIFT (GOLD/OIL bei 1100 px auf der Knopfleiste) |
