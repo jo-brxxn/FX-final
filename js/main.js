@@ -6272,7 +6272,7 @@ function renderDetail(){
   // AskUserQuestion bestaetigt) hier in der Kopfzeilen-Leiste erreichbar -
   // Klick schaltet zwischen Macro/Notes um wie zuvor die Buttons.
   const dmetaControls=`<div class="dmeta-controls">
-    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openPriceChart('${c.id}')" title="Price chart: daily closes as a line, step line or close-to-close candles, with the releases of each day as cards underneath">Price chart</button></div>
+    <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openPriceChart('${c.id}')" title="Price chart: daily closes as a line, step line or candles, with the releases of each day as cards underneath">Price chart</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openBacktester('${c.id}')" title="Backtester: every rate hike and cut on file, and the inflation, labour and growth readings the central bank had in front of it — three releases each, so the trend into the decision is visible">Backtester</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
@@ -6857,25 +6857,38 @@ function tagMitWochentag(ymd){
 // Eroeffnung = Schluss des Vortags, Hoch/Tief = die beiden Werte selbst.
 // Sobald die Quelle OHLC traegt, zeichnen sich die Dochte von selbst -
 // hier ist dafuer keine Zeile mehr zu aendern.
+// ⚠ DER KOERPER BLEIBT CLOSE-TO-CLOSE, AUCH WENN DIE REIHE EINE EROEFFNUNG
+// TRAEGT. Das sieht nach Halbherzigkeit aus, ist aber der einzige ehrliche
+// Weg bei DIESER Datenlage, und zwar GEMESSEN:
+//   Der Schluss kommt vom TradingView-Scanner, die Eroeffnung aus dem
+//   Yahoo-Backfill. Zwischen Vortagesschluss und Eroeffnung liegt dadurch an
+//   100% aller Tage ein Sprung (EUR 710 von 710, Gold 778 von 779, S&P 777
+//   von 777) - ein Markt springt nicht jeden Tag, das ist ein
+//   Quellen-Artefakt: die beiden schneiden den Handelstag verschieden.
+//   Wuerde der Koerper von dieser Eroeffnung aus gezeichnet, wechselten
+//   352 von 710 EUR-Kerzen (50%), 143 Gold- und 129 S&P-Kerzen ihre FARBE.
+//   Eine Kerze, die bei der Haelfte aller Tage die Richtung umdreht, weil
+//   zwei Quellen den Tag anders schneiden, behauptet etwas Falsches
+//   (Regel 4).
+// Also: Koerper = Vortagesschluss -> Schluss, beides aus EINER Quelle. Der
+// DOCHT ist das echte gemessene Tageshoch und -tief - genau das, was gefehlt
+// hat, und es haengt an keiner Richtungsaussage. Er wird auf den Koerper
+// geklemmt, damit nie ein Docht nach innen zeigt.
 function tagesKerzen(reihe,assetId){
   const r=ohneWochenende(reihe,assetId).filter(e=>e&&isFinite(Number(e[1])));
   const out=[];
   for(let i=1;i<r.length;i++){
-    const e=r[i],c=Number(e[1]);
+    const e=r[i],c=Number(e[1]),o=Number(r[i-1][1]);
     // ⚠ NICHT nur isFinite(Number(x)) pruefen: Number(null) ist 0, und
     // isFinite(0) ist true. bondSeriesPts() legt in Feld 2 ein null ab (dort
     // steht bei Indikator-Reihen der Forecast) - ohne die null-Pruefung
-    // haette eine Renditen-Reihe eine Eroeffnung von 0 gemeldet und die
-    // Kerze waere ueber die ganze Chart-Hoehe gelaufen.
+    // haette eine Renditen-Reihe ein Hoch von 0 gemeldet.
     const zahl=x=>x!=null&&x!==''&&isFinite(Number(x));
-    const hatOhlc=zahl(e[2])&&zahl(e[3])&&zahl(e[4]);
-    const o=hatOhlc?Number(e[2]):Number(r[i-1][1]);
-    // Math.max/min auch im OHLC-Fall: eine Quelle, deren High unter dem
-    // Schluss liegt, wuerde sonst eine Kerze zeichnen, die auf dem Kopf steht.
+    const hatHL=zahl(e[3])&&zahl(e[4]);
     out.push({d:e[0],o,c,
-      h:hatOhlc?Math.max(Number(e[3]),o,c):Math.max(o,c),
-      l:hatOhlc?Math.min(Number(e[4]),o,c):Math.min(o,c),
-      ohlc:hatOhlc});
+      h:hatHL?Math.max(Number(e[3]),o,c):Math.max(o,c),
+      l:hatHL?Math.min(Number(e[4]),o,c):Math.min(o,c),
+      ohlc:hatHL});
   }
   return out;
 }
@@ -6991,8 +7004,8 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse){
     pts.push({fx:mx/W,fy:yc/H,col,
       tip:`<div class="chv-tip-d">${escH(titel)} · ${escH(tagMitWochentag(c.d))}</div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Close</span><b>${zahl(c.c)}${escH(einheit||'')}</b></div>`
-        +(c.ohlc?`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">High / Low</span><b>${zahl(c.h)} / ${zahl(c.l)}</b></div>`:'')
-        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">${c.ohlc?'Open':'Prev'}</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
+        +(c.ohlc?`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Day high / low</span><b>${zahl(c.h)} / ${zahl(c.l)}</b></div>`:'')
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Prev close</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${col}">Change</span><b style="color:${col}">${diff>0?'+':''}${zahl(diff)}</b></div>`});
   });
   const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
@@ -7008,7 +7021,7 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse){
   // Differenz (Fenster ab Dienstag, Feed ab Mittwoch) stand der Hinweis unter
   // jedem Chart und war reines Rauschen - gemessen bei allen drei Kacheln.
   const spaeter=!f.max&&(Date.parse(k[0].d)-Date.parse(f.von))/86400000>7;
-  return{pct,tage:k.length,von:k[0].d,bis:k[k.length-1].d,spaeter,
+  return{pct,tage:k.length,dochte:k.filter(c=>c.ohlc).length,von:k[0].d,bis:k[k.length-1].d,spaeter,
     html:`<div class="ab-plot">
       <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achsTxt}</div></div>
       <div class="ab-yax">${skala}</div>
@@ -7076,7 +7089,7 @@ function abKontextHtml(c){
     return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}</div>
       ${ch.html}
-      <div class="ab-k-s" style="color:${biasCss(roh)}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
+      <div class="ab-k-s" style="color:${biasCss(roh)}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
     </div>`;
   }).join('');
   const rate=arten.includes('cb')?(()=>{
@@ -15614,7 +15627,7 @@ function renderPriceChart(){
   const all=ohneWochenende(priceSeriesFor(id),id);
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
-  const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'Close-to-close bodies. price_data.json delivers daily closes only - there is no open/high/low, so there are deliberately no wicks: they would have to be invented.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
+  const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'One candle per trading day. The wick is the real measured high and low of that day; the body runs from the previous close to that day\u2019s close. Body and wick come from different sources (TradingView close, Yahoo high/low), and those two cut the day differently \u2014 so the body deliberately is not drawn from the open, which would flip the direction of about half the days.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
   const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange')}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange')}</div>`;
   const src=feed&&feed.source?`<a class="px-src" href="${safeUrl(feed.source)}" target="_blank" rel="noopener">Source ↗</a>`:'';
   const bar=`<div class="px-toolbar">${modeBar}${rangeBar}<div class="px-toolbar-sp"></div>${src}</div>`;
@@ -15645,16 +15658,21 @@ function renderPriceChart(){
   const dirCol=(v,p)=>p==null?'var(--t3)':(v>=p?'var(--cndl-up)':'var(--cndl-dn)');
   let body='';
   if(priceChartMode==='candle'){
-    use.forEach((p,i)=>{
-      const pv=prevOf(i),y1=yOf(p[1]),y0=pv==null?y1:yOf(pv);
-      const top=Math.min(y0,y1),h=Math.max(1.2,Math.abs(y1-y0));
-      const col=dirCol(p[1],pv);
-      // Docht nur bei echtem High/Low in der Reihe ([Datum,Close,O,H,L]) -
-      // sonst waere er erfunden (Regel 4). Siehe tagesKerzen().
-      const o=isFinite(Number(p[2]))?Number(p[2]):pv;
-      const hi=Number(p[3]),lo=Number(p[4]);
-      if(isFinite(hi)&&isFinite(lo)&&o!=null&&(hi>Math.max(o,p[1])||lo<Math.min(o,p[1]))){
-        body+=`<line x1="${xOf(i).toFixed(1)}" y1="${yOf(hi).toFixed(1)}" x2="${xOf(i).toFixed(1)}" y2="${yOf(lo).toFixed(1)}" stroke="${col}" stroke-width="1.2"/>`;
+    // ⚠ EINE Kerzen-Rechnung fuer die ganze App: tagesKerzen(). Hier stand
+    // eine zweite, die dasselbe noch einmal ausrechnete - gemessen kam sie
+    // auf dieselben 114 Dochte von 128 Kerzen, also kein sichtbarer
+    // Unterschied. Trotzdem weg: zwei Rechnungen fuer dieselbe Kerze laufen
+    // irgendwann auseinander, und die naechste Regel (Wochenende, Klemmung
+    // des Dochts) haette man an zwei Stellen nachziehen muessen.
+    const idx={};use.forEach((p,i)=>{idx[p[0]]=i;});
+    const vorher=firstIdx>0?[all[firstIdx-1]]:[];
+    tagesKerzen(vorher.concat(use),id).forEach(c=>{
+      const i=idx[c.d];if(i==null)return;
+      const yo=yOf(c.o),yc=yOf(c.c);
+      const top=Math.min(yo,yc),h=Math.max(1.2,Math.abs(yc-yo));
+      const col=c.c>=c.o?'var(--cndl-up)':'var(--cndl-dn)';
+      if(c.ohlc&&(c.h>Math.max(c.o,c.c)||c.l<Math.min(c.o,c.c))){
+        body+=`<line x1="${xOf(i).toFixed(1)}" y1="${yOf(c.h).toFixed(1)}" x2="${xOf(i).toFixed(1)}" y2="${yOf(c.l).toFixed(1)}" stroke="${col}" stroke-width="1.2"/>`;
       }
       body+=`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2,bw/4).toFixed(1)}" fill="${col}"/>`;
     });

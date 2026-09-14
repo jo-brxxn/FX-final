@@ -13658,3 +13658,78 @@ Doppelung ist gewollt, der Test musste sie kennen.
 Das 12. Feld der Score-History (früher der Beitrag dieser Karte) bleibt im
 Eintrag stehen und trägt jetzt 0: die Aufzeichnung ist positionsbasiert, ein
 entferntes Feld würde jeden alten Eintrag um eine Stelle verschieben.
+
+## 2026-09-14 — Dochte überall (VERSION-CHECK-512)
+
+Nutzer: *„ergänzt dann die ganzen Wicks in den Charts überall"*. Ausgangslage:
+der Sammellauf schrieb OHLC seit dem Vortag mit, aber nur für den laufenden
+Tag — von 804 Tagen im Dollar hatte **genau einer** einen Docht.
+
+### Quellen gemessen, nicht geraten (`probe-ohlc-sources.yml`, Runde 2)
+
+| Weg | Ergebnis |
+|---|---|
+| **Yahoo-Chart-API** | ✅ 15/15 Symbole, je ~500–730 Tage bei `range=2y`, 76–100 % mit echtem Docht |
+| Binance (BTC) | ❌ HTTP 451 — von GitHubs Standort gesperrt |
+| **Scanner für die Renditen** | ✅ **16/16** Tickern mit echtem Docht |
+
+(Runde 1 hatte Stooq als Historienquelle bereits ausgeschlossen: HTTP 200,
+aber HTML-Sperrseite, alle 17 Symbole.)
+
+### Ergebnis
+
+- **Renditen vorwärts:** der Bond-Schritt fragt jetzt `close,open,high,low`.
+  Für Staatsanleihen gibt es keine erreichbare Historie — sie bekommen Dochte
+  ab heute, einen pro Tag.
+- **Preise rückwirkend:** neuer, idempotenter Workflow `backfill-ohlc.yml`
+  (`range=5y`). Ergebnis nach dem ersten Lauf: **12 229 von 12 540 Tagen (98 %)**
+  tragen jetzt O/H/L, davon 81–100 % mit einem Hoch/Tief außerhalb des Körpers.
+
+### ⚠ Der Fehler, den die Messung verhindert hat
+
+Der erste Entwurf zeichnete den Körper von der **echten Eröffnung** aus — was
+zunächst richtiger klingt. Gemessen:
+
+| Asset | Kerzen mit OHLC | Tage mit Sprung Vortagesschluss → Eröffnung | Farbwechsel gegenüber close-to-close |
+|---|---|---|---|
+| EUR | 710 | 710 (**100 %**) | **352 (50 %)** |
+| GOLD | 779 | 778 (100 %) | 143 |
+| SP500 | 777 | 777 (100 %) | 129 |
+| BTC | 1098 | 1095 (100 %) | 8 |
+
+Ein Sprung an **jedem einzelnen Tag** ist kein Markt. Der Schluss kommt von
+TradingView, die Eröffnung von Yahoo — die beiden schneiden den Handelstag
+verschieden. Eine Kerze, die deshalb bei der Hälfte aller EUR-Tage die
+Richtung umdreht, behauptet etwas Falsches (Regel 4).
+
+**Also:** Körper = Vortagesschluss → Schluss, beides aus *einer* Quelle. Der
+Docht ist das gemessene Tageshoch/-tief, auf den Körper geklemmt — er trägt
+keine Richtungsaussage und darf deshalb aus der zweiten Quelle kommen. Der
+Backfill fasst den Schlusskurs bewusst nicht an: er hängt an Tagesperformance,
+Marktrelevanz-Gewichtung, Korrelationen und der Saisonalitäts-Überlagerung.
+
+### Zwei weitere Fallen im Zeichner
+
+1. **`Number(null)` ist `0`, und `isFinite(0)` ist `true`.** `bondSeriesPts()`
+   legt in Feld 2 ein `null` ab (dort steht bei Indikator-Reihen der Forecast).
+   Ohne eine `null`-Prüfung hätte eine Renditen-Kerze ein Hoch von 0 gemeldet.
+2. **`abKontextReihe` schnitt jede Reihe auf `[Datum, Wert]` zu.** Damit wäre
+   ein High/Low aus `bond_data.json` *nie* beim Zeichner angekommen. Neue
+   Funktion `bondSeriesOhlc()` liefert die Kerzen-Form — statt `bondSeriesPts`
+   umzubauen, dessen Feld 2 eine völlig andere Bedeutung hat.
+
+### Eine eigene Fehlmessung, korrigiert
+
+Ich hatte gemeldet, das Preischart-Fenster zeichne nur 56 % der Dochte. Falsch:
+ich hatte die Ereignis-Markierungen (`<rect>` auf der Grundlinie) als Kerzen
+mitgezählt. Richtig sind **117 Dochte auf 128 Kerzen (91 %)** bei 77
+Ereignis-Markierungen — deckungsgleich mit dem Datenbestand. Die Vereinheitli-
+gung auf einen einzigen Kerzen-Bauer bleibt trotzdem: zwei Rechnungen für
+dieselbe Kerze laufen irgendwann auseinander.
+
+### Wächter
+
+`check/kerzen.js` prüft jetzt zusätzlich, dass der Körper am Vortagesschluss
+hängt und dass Dochte tatsächlich ankommen, wo der Feed High/Low führt.
+Gegenproben: Körper aus der Eröffnung → rot (711 EUR-Kerzen); High/Low
+abgeklemmt → rot (808 EUR-Tage im Feed, kein Docht gezeichnet).

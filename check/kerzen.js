@@ -18,6 +18,15 @@
 //   4. Dochte nur aus echtem High/Low. Solange die Reihe je Tag einen
 //      einzigen Wert traegt, darf keine Kerze einen Docht haben (Regel 4:
 //      ein erfundener Docht ist eine erfundene Zahl).
+//   5. Der KOERPER laeuft close-to-close, auch wenn die Reihe eine
+//      Eroeffnung traegt. GEMESSEN 2026-09-14: Schluss kommt vom
+//      TradingView-Scanner, Eroeffnung aus dem Yahoo-Backfill; zwischen
+//      Vortagesschluss und Eroeffnung liegt an 100% aller Tage ein Sprung,
+//      weil die beiden Quellen den Handelstag verschieden schneiden. Vom
+//      Open aus gezeichnet wechselten 352 von 710 EUR-Kerzen (50%) ihre
+//      Farbe. Der Docht ist das gemessene Tageshoch/-tief und traegt keine
+//      Richtungsaussage - deshalb darf er aus der zweiten Quelle kommen,
+//      der Koerper nicht.
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -48,6 +57,7 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
       if (!Array.isArray(roh) || roh.length < 3) return;
       const k = tagesKerzen(roh, id);
       out.push({ id, krypto: kerzenWochenendeErlaubt(id),
+        imFeed: roh.filter(e => e.length >= 5).length,
         rohWe: roh.filter(e => we(e[0])).length,
         kerzenWe: k.filter(c => we(c.d)).length,
         kerzen: k.length,
@@ -55,7 +65,16 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
         doppelt: k.length - new Set(k.map(c => c.d)).size,
         // Ein Docht ohne echtes OHLC waere erfunden.
         dochtOhneOhlc: k.filter(c => !c.ohlc && (c.h > Math.max(c.o, c.c) || c.l < Math.min(c.o, c.c))).length,
-        ohlc: k.filter(c => c.ohlc).length });
+        ohlc: k.filter(c => c.ohlc).length,
+        // Der Koerper MUSS am Vortagesschluss haengen - auch bei Tagen, die
+        // im Feed eine eigene Eroeffnung tragen.
+        koerperFalsch: (() => { const roh2 = ohneWochenende(roh, id); let n = 0;
+          for (let i = 1; i < roh2.length; i++) {
+            const c = k[i - 1]; if (!c) continue;
+            if (Math.abs(c.o - Number(roh2[i - 1][1])) > 1e-9) n++;
+          } return n; })(),
+        // Und es MUSS inzwischen Dochte geben - sonst ist der Backfill weg.
+        anteilDocht: k.length ? Math.round(k.filter(c => c.ohlc).length / k.length * 100) : 0 });
     });
     return out;
   });
@@ -68,6 +87,12 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
     }
     if (a.doppelt) fail('EIN TAG = EINE KERZE', `${a.id} hat ${a.doppelt} doppelte Tage`);
     if (a.dochtOhneOhlc) fail('DOCHTE', `${a.id}: ${a.dochtOhneOhlc} Kerzen mit Docht, obwohl die Reihe kein High/Low traegt`);
+    if (a.koerperFalsch) fail('KOERPER', `${a.id}: ${a.koerperFalsch} Kerzen haengen nicht am Vortagesschluss - der Koerper darf NICHT aus der Eroeffnung kommen (siehe Regel 5 oben)`);
+    // ⚠ Kein harter Fehler bei 0%: eine frisch aufgesetzte Umgebung hat den
+    // Backfill noch nicht gelaufen. Aber wenn die Reihe im Feed High/Low
+    // traegt und trotzdem nichts ankommt, ist der Weg dorthin kaputt.
+    if (a.imFeed > 20 && a.anteilDocht === 0)
+      fail('DOCHTE', `${a.id}: ${a.imFeed} Tage tragen im Feed ein High/Low, gezeichnet wird kein einziger Docht`);
   });
 
   // ── 1b: Geometrie - keine Wochenendloecher, keine Ueberlappung ────────
@@ -206,6 +231,6 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
     console.error('KERZEN-REGELN NICHT BESTANDEN:\n' + F.map(x => '  - ' + x).join('\n'));
     process.exit(1);
   }
-  const we = r1.map(a => `${a.id} ${a.kerzen}${a.krypto ? ' (7 Tage)' : ''}`).join(', ');
-  console.log(`[kerzen] ok (${r1.length} Reihen: ${we} · Wochenende nur bei Krypto, Wochentag im Hover, eigene Kerzenfarben auf 5 dunklen Vorlagen)`);
+  const we = r1.map(a => `${a.id} ${a.kerzen}${a.krypto ? ' (7T)' : ''}/${a.anteilDocht}%D`).join(', ');
+  console.log(`[kerzen] ok (${r1.length} Reihen, Kerzen/Docht-Anteil: ${we} · Wochenende nur bei Krypto, Koerper close-to-close, Wochentag im Hover, eigene Farben auf 5 dunklen Vorlagen)`);
 })().catch(e => { console.error('KERZEN-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

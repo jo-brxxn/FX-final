@@ -501,14 +501,37 @@ außer bei crypto"*.
    Kerzenfarbe nur über die Richtung eines *Tages*. Auf den dunklen Vorlagen
    dreht `--cndl-dn` auf den hellen Gegenpol — ein fast schwarzer Körper auf
    `#161616` wäre unsichtbar.
-4. **Dochte nur aus echtem High/Low.** Ein Eintrag ist `[Datum, Close]` oder
-   `[Datum, Close, Open, High, Low]`; nur im zweiten Fall gibt es einen Docht.
-   Alles andere wäre eine erfundene Zahl (Regel 4). Der Rückfall ist
-   Close-to-Close: Eröffnung = Schluss des Vortags.
+4. **Dochte nur aus echtem High/Low — aber der Körper bleibt close-to-close.**
+   Ein Eintrag ist `[Datum, Close]` oder `[Datum, Close, Open, High, Low]`; nur
+   im zweiten Fall gibt es einen Docht. Alles andere wäre eine erfundene Zahl
+   (Regel 4).
+   ⚠ **Der Körper wird NICHT aus der Eröffnung gezeichnet, obwohl sie dasteht.**
+   Gemessen 2026-09-14: der Schluss kommt vom TradingView-Scanner, die Eröffnung
+   aus dem Yahoo-Backfill. Zwischen Vortagesschluss und Eröffnung liegt dadurch
+   an **100 % aller Tage** ein Sprung (EUR 710/710, Gold 778/779, S&P 777/777) —
+   ein Markt springt nicht jeden Tag, das ist ein Quellen-Artefakt: die beiden
+   schneiden den Handelstag verschieden. Vom Open aus gezeichnet wechselten
+   **352 von 710 EUR-Kerzen (50 %)** ihre Farbe. Der Docht dagegen trägt keine
+   Richtungsaussage — er darf aus der zweiten Quelle kommen, der Körper nicht.
+   Also: Körper = Vortagesschluss → Schluss (eine Quelle), Docht = gemessenes
+   Tageshoch/-tief, auf den Körper geklemmt.
    ⚠ **Beim Kehrwert tauschen Hoch und Tief die Rolle.** USD/JPY, USD/CHF und
    USD/CAD stehen als `invert` in `price_data.json` — der Tageshöchstkurs von
    USD/JPY ist der *tiefste* Yen-Kurs des Tages. Ohne das Tauschen zeigt der
    Docht nach innen.
+5. **Woher die Dochte kommen** (gemessen, `probe-ohlc-sources.yml`):
+
+   | Quelle | Ergebnis |
+   |---|---|
+   | TradingView-Scanner `open/high/low/close` | ✅ Preise 15/15, Renditen 16/16 — im Sammellauf, aber nur *vorwärts* |
+   | Yahoo-Chart-API | ✅ 15/15, ~5 Jahre — der Rückwärts-Backfill (`backfill-ohlc.yml`) |
+   | Stooq | ❌ HTTP 200, HTML-Sperrseite, 17/17 |
+   | Binance | ❌ HTTP 451, von GitHubs Standort gesperrt |
+
+   Für **Staatsanleihen gibt es keine erreichbare Historienquelle** — die
+   Renditen-Charts bekommen Dochte ab dem 2026-09-14, einen Tag pro Tag. Die
+   Kachel schreibt darunter, wie viele ihrer Kerzen ein gemessenes Hoch/Tief
+   tragen.
 
 Alle vier prüft `check/kerzen.js` (mit Gegenprobe in beide Richtungen).
 
