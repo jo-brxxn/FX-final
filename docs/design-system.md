@@ -564,7 +564,7 @@ Hintergrund abheben"*.
 | Rolle | Token | Standard-Vorlage |
 |---|---|---|
 | Seite | `--bg0` | `#FFFFFF` |
-| **jede Karte** | `--card` | `#D6DCEC` |
+| **jede Karte** | `--card` | `#E0E5F1` |
 | Kachel *in* der Karte | `--bg2` | `#F4F6FB` |
 
 ⚠ **`--card` ist die Fläche JEDER Karte** — `.ab-tile/.ab-ktile/.ab-ntile/
@@ -588,9 +588,72 @@ aufgemalter Rand. Die Schattenfarbe ist das **Blauschwarz der App**
 (`20,27,46`), kein reines Schwarz — grau auf getöntem Grund sieht ausgewaschen
 aus.
 
-## Blasse Asset-Motive im Kopfbereich (seit 2026-09-14)
+**⚠ Der SCHATTEN trägt die Trennung, nicht der Farbton** (seit 2026-09-14,
+nachdem der Nutzer den Kartenton ausdrücklich zurückgenommen hat: *„mach
+weniger stark die hintergrundfarbe der Karten"*). Gemessen an der
+Schattenkante direkt unter der Karte gegen den freien Grund: **1,340:1 — und
+zwar bei `#D6DCEC` genauso wie bei `#E0E5F1`**. Die Fläche selbst kam dabei
+von 1,230 auf 1,131:1 herunter.
 
-Jedes Asset hat ein selbst gezeichnetes SVG-Motiv (`ASSET_ART`/`assetArtUrl`):
+Daraus die Regel für jede künftige Palettenänderung: **den Kartenton darf man
+verschieben, den Schattenstapel nicht.** `check/kartenlook.js` prüft beides
+getrennt — `MIN_SCHATTENKANTE = 1.28` als die eigentliche Trennung,
+`MIN_KONTRAST = 1.10` nur noch als Grenze, ab der die Fläche überhaupt
+verschwunden wäre. Einen Wächter einfach auf den gerade gesetzten Wert
+nachzuziehen macht ihn stumpf; er muss weiter etwas prüfen, was nicht von
+derselben Änderung abhängt.
+
+## Restzeit bis zu einem Termin: EIN Baustein, überall gleich (seit 2026-09-14)
+
+Nutzer-Regel: *„Wenn ein Event tomorrow ist dann schreib 1d und nicht tomorrow
+und wenn es heute ist dann mach ein auffälliges Ausrufezeichen dahin."*
+
+| Abstand | Anzeige |
+|---|---|
+| heute | `Today` + rotes `!` (`span.cd-heute`) |
+| morgen | `1d` |
+| in n Tagen | `{n}d` |
+| gestern | `1d ago` |
+| in n Tagen zurück | `{n}d ago` |
+
+`Today` bleibt ein **Wort** — eine Null wäre dort keine Auskunft. *Tomorrow*
+und *Yesterday* verschwinden dagegen beide, sonst hätte das Muster genau eine
+Ausnahme in die falsche Richtung.
+
+**Zwei Funktionen, beide in `js/calendar.js`:**
+
+- `countdownLbl(d)` → reiner Text. **Für `title`-Attribute**, dort darf kein
+  Markup stehen.
+- `countdownHtml(d)` → dasselbe fürs Auge, mit dem `!` bei heute. **Für alles,
+  was im Inhalt steht.**
+
+⚠ Wer `countdownHtml()` einbaut, darf das Ergebnis **nicht** noch einmal durch
+`escH()` schicken — sonst steht das `<span>` als Text auf der Seite.
+
+**Zwei bewusste Ausnahmen:** die Erwartung aus dem eigenen Turnus behält ihre
+Tilde (`~1d`) und bekommt **kein** `!` — sie ist kein bestätigter Termin. Der
+Kalender-Tageskopf behält sein `🔥 TODAY`, ein zweites Zeichen wäre doppelt.
+
+`--live` (Rot) für das `!` ist **kein** Bruch der Bedeutungsfarben: es markiert
+keinen Datenwert und keine Richtung, sondern „passiert jetzt" — dieselbe Rolle
+wie der Live-Punkt. `--red` wäre *bearish* gewesen. `aria-hidden`, weil das
+Wort daneben die Information schon vollständig trägt.
+
+⚠ Die Kette stand vorher an **vier** Stellen als eigene Kopie, mit vier
+Schreibweisen (`in 21d`, `21d`, `Tomorrow`, `tomorrow`). Drei waren von Hand
+zu finden, die vierte fand erst der Wächter — `check/structure.js` meldet
+jede Restzeit-Beschriftung, die wieder „Tomorrow" sagt.
+
+## ~~Blasse Asset-Motive im Kopfbereich~~ — am 2026-09-14 wieder ENTFERNT
+
+⚠ **Es gibt keine Asset-Motive mehr.** Der Nutzer hat sie am selben Tag wieder
+abbestellt (*„entfern die Bilder komplett wieder"*) — erst die gezeichneten
+Embleme, dann auch die Schein-Fotos als breites Band. Code, Bilddateien und die
+zugehörigen Wächter-Abschnitte sind raus. Der Abschnitt bleibt als **Fundgrube
+für die drei Lehren** stehen, die unabhängig vom Motiv gelten; er beschreibt
+nicht den heutigen Stand.
+
+Was damals gebaut war: jedes Asset hatte ein selbst gezeichnetes SVG-Motiv (`ASSET_ART`/`assetArtUrl`):
 Geldschein mit Währungszeichen, Barrenstapel, Ölfass, Münze, Kerzenchart,
 Anleihe-Urkunde. **Keine Fotos** — die Seite läuft offline aus dem Cache,
 sechzehn Fotos wären mehrere Megabyte, und für Geldscheine bräuchte es Rechte.

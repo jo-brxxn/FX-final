@@ -247,8 +247,20 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
        --bg2  gegen --card (Kachel IN der Karte): 1,16:1
        --t0/--t1/--t2/--t3 auf der Karte: 12,49 / 7,55 / 4,88 / 4,89 : 1
      Die Staffelung laeuft monoton nach innen: weisse Seite -> getoente
-     Karte -> wieder hellere Kachel. */
-  --card:#D6DCEC;
+     Karte -> wieder hellere Kachel.
+     ⚠ 2026-09-14, SPAETER AM TAG, auf ausdrueckliche Ansage des Nutzers
+     zurueckgenommen ("mach weniger stark die hintergrundfarbe der Karten"):
+     #D6DCEC -> #E0E5F1. Am Bildschirmpixel gemessen, dieselbe Messstelle:
+       Karte gegen Seitengrund   1,230:1 -> 1,131:1
+       --bg2 auf der Karte       1,269   -> 1,167
+       --t2 / --t3 auf der Karte 4,88/4,89 -> 5,30/5,31 (also BESSER)
+       --accent auf der Karte    3,50    -> 3,81
+     Das "Abheben" haengt jetzt nicht mehr am Farbton, sondern am Schatten:
+     die Schattenkante misst 1,340:1 gegen den Grund, unveraendert und
+     unabhaengig von --card. Genau deshalb ist in check/kartenlook.js der
+     Schatten als EIGENE Untergrenze dazugekommen - sonst wuerde das
+     Absenken des Kartentons die Pruefung leer laufen lassen. */
+  --card:#E0E5F1;
   --bd:rgba(27,39,70,.13);--bd2:rgba(27,39,70,.24);
   /* ⚠ --t2 und --accent sind am 2026-09-04 MINIMAL nachgedunkelt worden.
      Der neue Waechter check/theme.js rechnet jede Textstufe gegen jede
@@ -2577,6 +2589,21 @@ body.res-return-active #resBackBar{display:flex}
    werden. Die Amber-Regel ab 7 Tagen gilt fuer beide. */
 .ir-next.ir-next-est{font-weight:500;color:var(--t3)}
 .ir-next.ir-next-est.soon{color:var(--due);opacity:.85}
+/* ── HEUTE: das auffaellige Ausrufezeichen ──────────────────────────────
+   Nutzer-Regel 2026-09-14: "wenn es heute ist dann mach ein auffaelliges
+   Ausrufezeichen dahin." Kommt aus countdownHtml() und haengt sich an JEDE
+   Restzeit-Angabe, die "Today" heisst - Indikator-Tabelle, Kalender-Kachel,
+   Asset-Kopf, Paar-Ansicht, Watchlist-Zeile.
+   ⚠ --live (Rot) ist hier bewusst KEIN Regelbruch der Bedeutungsfarben: es
+   markiert keinen Datenwert und keine Richtung, sondern "passiert jetzt" -
+   dieselbe Rolle wie der Live-Punkt. --red waere bearish gewesen.
+   aria-hidden im Markup, weil der Text daneben ("Today") die Information
+   schon vollstaendig traegt; ein vorgelesenes "Ausrufezeichen" waere nur
+   Laerm. */
+.cd-heute{display:inline-block;margin-left:2px;font:900 1.12em/1 var(--ff-num);
+  color:var(--live);transform:translateY(.5px);animation:cdPuls 1.9s ease-in-out infinite}
+@keyframes cdPuls{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.cd-heute{animation:none}}
 /* "As of / Next" ueber jedem Vergleichs-Chart */
 .px-asof{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;margin:0 0 8px;font:500 var(--fs-xs)/1.4 var(--ff-num);color:var(--t2)}
 .px-asof-lbl{font:700 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.7px;text-transform:uppercase;color:var(--t3)}
@@ -5205,11 +5232,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-518 - Zwei Dinge: die Asset-Motive sind wieder komplett raus, und die Asset-Seite hat oben endlich einen Anfang. RUECKBAU: die drei Schein-Fotos, die sechs gezeichneten Vorlagen fuer Schein, Barren, Fass, Muenze, Kerzenchart und Anleiheurkunde, die Zuordnung je Asset, die gemessene Platzierung samt Neuberechnung bei jedem Fenstergroessenwechsel, das Schleier-Regelwerk und die beiden Waechter-Abschnitte dazu - 186 Zeilen, drei Bilddateien, ein Herkunftsnachweis. Die Kartenoptik bleibt, die war der eigentliche Auftrag. DIE KOPFLEISTE: gemessen hatte der Kopf gar keine eigene Flaeche, der Hintergrund war vollstaendig durchsichtig, die Trennlinie nach unten null Pixel breit, und zwischen Titel und Knopfleiste klaffte bei 1500 Pixeln Fensterbreite ein Loch von 476 Pixeln. Drei schwebende Teile, nichts was sagt hier faengt die Seite an. Jetzt ein Block mit eigener Flaeche, Rahmen und Schatten - dieselbe Sprache wie die Karten darunter, damit er kein Fremdkoerper ist. ⚠ DIE KENNZAHLEN SIND NICHT NEU, SIE SIND UMGEZOGEN: 1D, 1W, 1M und YTD standen vorher unten in der Preis-Karte. Sie oben zusaetzlich zu zeigen waere eine Dopplung gewesen und haette echte Hoehe gekostet - der Wunsch war ausdruecklich, keinen Platz zu verschwenden. Also wandern sie nach oben und fuellen dabei genau das Loch, und die Preis-Karte wird um ihren 51 Pixel hohen Streifen leichter. Dazu der letzte Kurs. FUER DIE ACHT RENDITEN gibt es keine Preisreihe - dort steht die Rendite selbst, und die Veraenderung in BASISPUNKTEN statt in Prozent, weil am Anleihemarkt niemand von Prozent der Rendite spricht. Beim Jahresvergleich greift die Reihe auf ihren ersten Tag zurueck, wenn sie erst im Januar beginnt; ohne das stand YTD bei allen acht auf einem Strich, obwohl acht Monate Historie vorliegen. GENAU EIN Asset von 24 hat weder Preis noch Rendite: GER 100, weil der Feed diesen Index unter DAX fuehrt. Die beiden stillschweigend gleichzusetzen waere dieselbe Art Fehler wie die US-Zweijahresrendite aus einem Future zu speisen - eine andere Zahl unter derselben Ueberschrift. Statt eines Lochs sagt die Leiste dort, warum sie leer ist. DIE REIHEN-UEBERSCHRIFTEN sind bewusst sparsam: eine Zeile von 15 Pixeln, in der die Haarlinie NEBEN dem Wort weiterlaeuft statt darunter. Mit eigenem Abstand oben und unten haette jede rund 40 Pixel gekostet, bei drei Reihen also 120 - so sind es 45 fuer alle drei, und die 51 Pixel des umgezogenen Streifens zahlen das mehr als auf. Die Schnellzugriff-Zeile bekommt bewusst keine, das waere das Uebergliedern, das ausgeschlossen war. ⚠ EIN FEHLER GEMESSEN UND BEHOBEN: bei 390 Pixeln lief die Knopfleiste 122 Pixel ueber den rechten Rand, weil sie in der alten Anordnung an letzter Stelle einer selbst umbrechenden Zeile stand und in der neuen Leiste nicht mehr umbrechen konnte. Der Waechter prueft die Kopfleiste jetzt auf 30 Kombinationen aus fuenf Fensterbreiten und sechs Assets: eigene Flaeche, Rahmen, keine Ueberschneidungen, kein waagerechter Ueberlauf, nie ein Loch und hoechstens drei schmale Ueberschriften. Vier Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-519 - Zwei Nutzer-Ansagen. ERSTENS DIE RESTZEIT: "wenn ein Event tomorrow ist dann schreib 1d und nicht tomorrow und wenn es heute ist dann mach ein auffaelliges Ausrufezeichen dahin". Aus Tomorrow wird 1d - und damit das Muster nicht genau eine Ausnahme in die falsche Richtung hat, aus Yesterday 1d ago. Today bleibt ein Wort, eine Null waere dort keine Auskunft, und traegt jetzt ein rot pulsierendes Ausrufezeichen. ⚠ DIE KETTE STAND AN VIER STELLEN ALS EIGENE KOPIE, mit vier Schreibweisen: in 21d, 21d, Tomorrow und ein kleingeschriebenes tomorrow. Drei hatte ich von Hand gefunden, die vierte hat erst der neue Waechter gemeldet - genau deshalb ein Waechter und nicht nur ein Absatz. Jetzt gibt es EINEN Baustein, countdownHtml, den alle sechs Anzeigestellen benutzen: Indikator-Tabelle, As-of-Zeile ueber den Charts, Kalender-Kachel, Asset-Kopf, Paar-Ansicht und Watchlist-Zeile. Die Schaetzung aus dem eigenen Turnus behaelt ihre Tilde und bekommt bewusst KEIN Ausrufezeichen - sie ist kein bestaetigter Termin. Der Kalender-Tageskopf behaelt sein 🔥 TODAY, ein zweites Zeichen daneben waere doppelt. ZWEITENS DER KARTENTON: "mach weniger stark die hintergrundfarbe der Karten". --card geht von D6DCEC auf E0E5F1, am Bildschirmpixel gemessen von 1,230 auf 1,131:1 gegen den Seitengrund; die Texte auf der Karte werden dabei besser statt schlechter (t2/t3 von 4,88/4,89 auf 5,30/5,31). ⚠ Den Waechter einfach nachzusenken haette ihn stumpf gemacht - er haette dann gar nichts mehr geschuetzt. Das Abheben haengt ohnehin nicht am Farbton, sondern am gestapelten Schatten: dessen Kante misst 1,340:1 gegen den Grund, bei BEIDEN Toenen identisch. Also prueft check/kartenlook.js jetzt zwei getrennte Dinge - den Schatten streng (1,28) als das, was die Karte wirklich hebt, und die Flaeche nur noch als Untergrenze, ab der sie ueberhaupt verschwunden waere. Drei Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-518</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-519</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -237,7 +237,32 @@ for(const m of css.matchAll(/var\(\s*(--[A-Za-z0-9_-]+)\s*\)/g)){
   if(!tokenDef.has(m[1])) tokenFehlt.add(m[1]);
 }
 
+// ── EINHEITLICHE RESTZEIT (Nutzer-Regel 2026-09-14) ───────────────────
+// "Wenn ein Event tomorrow ist dann schreib 1d und nicht tomorrow und wenn
+// es heute ist dann mach ein auffaelliges Ausrufezeichen dahin."
+// Die Today/Tomorrow-Kette stand vorher an DREI Stellen als eigene Kopie,
+// mit drei Schreibweisen ("in 21d", "21d", "Tomorrow") - genau deshalb ein
+// Waechter und nicht nur ein Absatz: die vierte Kopie schreibt sich sonst
+// beim naechsten Mal von selbst wieder hin.
+// Geprueft wird der reine Code OHNE Kommentare (die duerfen das Wort
+// nennen, sie erklaeren ja die Regel). Getroffen wird nur eine
+// RESTZEIT-BESCHRIFTUNG, also ein Textstueck, das im Wesentlichen aus dem
+// Wort besteht - mit oder ohne Tilde/"in". Fliesstext wie "check back
+// tomorrow for a trend line" oder "last week's positioning, not tomorrow's"
+// ist ausdruecklich erlaubt: dort ist "tomorrow" ein Wort im Satz und keine
+// Angabe, wie lange es noch dauert.
+const ohneJsKommentar=(t)=>t.replace(/\/\*[\s\S]*?\*\//g,' ').replace(/(^|[^:])\/\/[^\n]*/g,'$1 ');
+const morgenTreffer=[...ohneJsKommentar(jsAlle).matchAll(/(['"`])\s*(?:~|in )?[Tt]omorrow\s*\1/g)].map(m=>m[0]);
+// Das Ausrufezeichen braucht sowohl den Baustein als auch seine Darstellung -
+// ein <span class="cd-heute"> ohne CSS-Regel waere unsichtbar, also genau
+// das Gegenteil von "auffaellig".
+const hatBaustein=/function countdownHtml\s*\(/.test(jsAlle)&&/cd-heute/.test(jsAlle);
+const hatCss=/\.cd-heute\s*\{/.test(h);
+
 const befunde=[];
+if(morgenTreffer.length) befunde.push('sichtbarer Text sagt "Tomorrow" statt "1d" (Nutzer-Regel 2026-09-14, countdownHtml() benutzen): '+morgenTreffer.join(' | '));
+if(!hatBaustein) befunde.push('countdownHtml() fehlt oder setzt die Heute-Markierung nicht (span.cd-heute) - ohne sie faellt das auffaellige Ausrufezeichen weg');
+if(!hatCss) befunde.push('.cd-heute ist in index.html nicht formatiert - das Ausrufezeichen waere da, aber nicht auffaellig');
 if(tokenFehlt.size) befunde.push('var(--x) auf ein nirgends definiertes Token (die ganze Deklaration faellt still weg, das Element bleibt ohne diese Eigenschaft): '+[...tokenFehlt].join(', '));
 if(snapFehlt.length) befunde.push('in snap(), aber nicht in loadState() geladen (Wert wird gespeichert und beim Start verworfen): '+snapFehlt.join(', '));
 if(feedFehlt.length) befunde.push('Feed fehlt in reapplyLiveFeeds() (Cloud-Sync/Undo setzt die App still auf alte Werte zurueck, siehe docs/state-sync.md): '+feedFehlt.join(', '));

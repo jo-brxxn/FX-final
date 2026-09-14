@@ -38,7 +38,31 @@ function isEvtPast(ev){
 }
 // Datum (YYYY-MM-DD) um n Tage verschieben, lokal gerechnet (kein UTC-Versatz).
 function dateAddStr(dateStr,n){const d=new Date(dateStr+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function countdownLbl(dateStr){const n=daysUntil(dateStr);if(n===0)return'Today';if(n===1)return'Tomorrow';if(n===-1)return'Yesterday';return n>1?`in ${n}d`:`${-n}d ago`;}
+// ⚠ EINHEITLICHE RESTZEIT (Nutzer-Regel 2026-09-14): "Wenn ein Event
+// tomorrow ist dann schreib 1d und nicht tomorrow und wenn es heute ist dann
+// mach ein auffaelliges Ausrufezeichen dahin."
+// Aus "Tomorrow" wird "1d" - und aus "Yesterday" konsequenterweise "1d ago",
+// sonst haette das Muster genau eine Ausnahme in die falsche Richtung.
+// "Today" bleibt ein Wort: eine Null waere dort keine Auskunft. Das
+// Ausrufezeichen kommt in countdownHtml() dazu, weil dieser Text hier auch
+// in title-Attributen landet (pov-ev-d, die Watchlist-Zeile) und dort kein
+// Markup stehen darf.
+function countdownLbl(dateStr){
+  const n=daysUntil(dateStr);
+  if(n===0)return'Today';
+  if(n>0)return`${n}d`;
+  return`${-n}d ago`;
+}
+// Dieselbe Angabe fuers Auge: heute mit einem auffaelligen Ausrufezeichen.
+// ⚠ EIN Baustein fuer alle Stellen (CLAUDE.md: wiederkehrende UI-Bausteine
+// muessen einheitlich sein) - vorher stand die Today/Tomorrow-Kette an drei
+// Stellen als eigene Kopie, mit drei verschiedenen Schreibweisen
+// ("in 21d", "21d", "Tomorrow").
+function countdownHtml(dateStr){
+  const n=daysUntil(dateStr);
+  const txt=countdownLbl(dateStr);
+  return n===0?`${escH(txt)}<span class="cd-heute" aria-hidden="true">!</span>`:escH(txt);
+}
 // ⚠ IMMER MIT JAHR (Nutzer-Regel 2026-09-05): "mach bitte das ueberall wo
 // ein Datum steht in zwei Zahlen immer auch da steht das Jahr also 26 fuer
 // 2026 ... generell in der ganzen Webseite". Ohne Jahr ist "Mar 26" nicht
@@ -260,6 +284,9 @@ function calTableHtml(evts,opts){
       html+=n?dayEvts.map(rows).join(''):`<div class="cal-empty-day">No events</div>`;
       html+=`</div>`;
     }else{
+      // Bewusst countdownLbl statt countdownHtml: der Tages-Header traegt bei
+      // heute schon "🔥 TODAY" als auffaellige Markierung, ein zweites
+      // Ausrufezeichen daneben waere doppelt gemoppelt.
       html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 TODAY':''}</span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
       html+=n?(nowHere?renderToday(dayEvts):dayEvts.map(rows).join('')):(nowHere?nowMarker+`<div class="cal-empty-day">No events</div>`:`<div class="cal-empty-day">No events</div>`);
     }
@@ -358,7 +385,7 @@ function updCalCcySel(){
 }
 
 export {
-  evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,fmtDayHdr,
+  evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,countdownHtml,fmtDayHdr,
   LOWER_IS_BETTER_RE,parseNumLike,actualColor,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,
   calTableHtml,calWindowDatesFor,updCalHighBtn,normCompactLevel,COMPACT_TITLES,applyCompactView,
   updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,

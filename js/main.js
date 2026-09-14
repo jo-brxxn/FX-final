@@ -494,7 +494,7 @@ import {
   symScoreAvg,symOwnHistory,symOwnZ,symStrength10,symStrengthMissing,pairScore,rowScore,fmtDate,
 } from './score.js';
 import {
-  evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,fmtDayHdr,
+  evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,countdownHtml,fmtDayHdr,
   LOWER_IS_BETTER_RE,parseNumLike,actualColor,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,
   calTableHtml,calWindowDatesFor,updCalHighBtn,normCompactLevel,COMPACT_TITLES,applyCompactView,
   updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,
@@ -1749,16 +1749,19 @@ function indNextReleaseCell(symId,ind){
     const d=daysUntil(ev.date);
     const soon=d<=IND_NEXT_SOON_D;
     // Nutzer-Wunsch 2026-09-06: nur die Restzeit, ohne Praeposition -
-    // "21d" statt "in 21d". Today/Tomorrow bleiben Woerter, dort waere eine
-    // Zahl keine Auskunft.
-    const lbl=d<=0?'Today':d===1?'Tomorrow':d+'d';
-    return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar)${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${escH(lbl)}</span>`;
+    // "21d" statt "in 21d". Seit 2026-09-14 kommt die Angabe aus dem
+    // gemeinsamen Baustein countdownHtml(), damit "morgen" ueberall "1d"
+    // heisst und "heute" ueberall dasselbe Ausrufezeichen traegt.
+    return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar)${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${countdownHtml(ev.date)}</span>`;
   }
   const exp=indNextExpected(ind);
   if(!exp)return`<span class="ir-dash" title="No scheduled release inside the calendar window, and this indicator has no measured release rhythm to expect one from — so nothing is claimed here.">–</span>`;
   const d=daysUntil(exp);
   const soon=d<=IND_NEXT_SOON_D;
-  const lbl=d<=0?'due':d===1?'~tomorrow':'~'+d+'d';
+  // Die Schaetzung traegt die Tilde und kein Ausrufezeichen - sie ist kein
+  // bestaetigter Termin. Die Schreibweise der Restzeit folgt trotzdem
+  // derselben Regel: "~1d" statt "~tomorrow".
+  const lbl=d<=0?'due':'~'+d+'d';
   return`<span class="ir-next ir-next-est${soon?' soon':''}" title="Expected around ${escH(fmtDayHdr(exp))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps) counted from its last release on ${escH(fmtDayHdr((ind.research||{}).date||''))}. The calendar only carries about ten days ahead; once the release enters that window, the exact date replaces this.">${escH(lbl)}</span>`;
 }
 // Lange Form fuer den Vergleich: von wann der Wert ist UND wann der naechste
@@ -1775,10 +1778,14 @@ function indAsOfNextHtml(symId,ind){
   const datum=nx?nx.date:exp;
   const d=datum?daysUntil(datum):null;
   const soon=d!=null&&d<=IND_NEXT_SOON_D;
-  const nxTxt=datum==null?null:nx?(d<=0?'today':d===1?'tomorrow':'in '+d+'d'):(d<=0?'due':d===1?'~tomorrow':'~in '+d+'d');
+  // ⚠ Die vierte Kopie derselben Kette - vom Struktur-Waechter gefunden,
+  // nicht von Hand. Bestaetigter Termin: gemeinsamer Baustein (also auch das
+  // Heute-Ausrufezeichen). Schaetzung: Tilde-Form, aber dieselbe Schreibweise
+  // der Restzeit ("~1d", nicht "~tomorrow").
+  const nxHtml=datum==null?null:nx?countdownHtml(datum):escH(d<=0?'due':'~'+d+'d');
   const nxTitle=nx?`${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''} (confirmed date from the calendar)`
     :`Expected around ${escH(fmtDayHdr(exp||''))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps). Once the release enters the calendar window, roughly ten days ahead, the exact date replaces this.`;
-  return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${datum?`<b class="px-next${nx?'':' px-next-est'}${soon?' soon':''}" title="${nxTitle}">${escH(nxTxt)}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window, and no measured release rhythm to expect one from — so nothing is claimed here.">not scheduled yet</b>`}</div>`;
+  return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${datum?`<b class="px-next${nx?'':' px-next-est'}${soon?' soon':''}" title="${nxTitle}">${nxHtml}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window, and no measured release rhythm to expect one from — so nothing is claimed here.">not scheduled yet</b>`}</div>`;
 }
 // Eigene, rollierende Werte-Historie je Indikator (unabhaengig vom kurzen
 // calEvts-Rueckblickfenster von CAL_PAST_DAYS Tagen). calEvts behaelt naemlich
@@ -6276,7 +6283,9 @@ function renderDetail(){
   const c=getSym();if(!c)return;
   const{events:symEvts,nextHighDate}=getSymEventsCompact(c.id);
   const evtOpen=!!evtSectionOpen[c.id];
-  const nextLbl=nextHighDate?(nextHighDate===todayStr()?'Today':`${fmtDayHdr(nextHighDate)} (${countdownLbl(nextHighDate)})`):'–';
+  // ⚠ nextLbl ist FERTIGES Markup (countdownHtml traegt das Heute-Ausrufe-
+  // zeichen), darf an der Einbaustelle also NICHT noch einmal durch escH().
+  const nextLbl=nextHighDate?(nextHighDate===todayStr()?countdownHtml(nextHighDate):`${escH(fmtDayHdr(nextHighDate))} (${countdownHtml(nextHighDate)})`):'–';
   // Nutzer-Foto 2026-08-04: History-Button, Kompakt-Regler und (bei Non-FX)
   // das Asset-Einstellungen-Zahnrad ziehen aus der stabs-row (neben Quick
   // Note, die gleichzeitig entfernt wird) in die Kopfzeilen-Leiste
@@ -6698,9 +6707,9 @@ function renderAssetCalBody(){
       .forEach(ev=>{if(kommend.length<8&&!isEvtPast(ev))kommend.push([d,ev]);});
   });
   const naechste=kommend.length?kommend.map(([d,ev])=>{
-    const imp=evtImpact(ev),t=daysUntil(d);
+    const imp=evtImpact(ev);
     return`<button class="abc-u ${imp==='high'?'ih':imp==='medium'?'im':'il'}${d===gewaehlt?' gew':''}" onclick="abCalPick('${d}')" title="${escH(ev.name)} — jump to this day">
-      <span class="abc-u-w">${t===0?'Today':t===1?'Tomorrow':'in '+t+'d'}</span>
+      <span class="abc-u-w">${countdownHtml(d)}</span>
       <span class="abc-u-n">${escH(ev.name)}</span>
       <span class="abc-u-t">${escH(ev.time||'—')}</span>
     </button>`;}).join('')
@@ -9992,7 +10001,7 @@ function povCalendarHtml(name){
     const imp=evtImpact(ev);
     const col=imp==='high'?BC.bear:imp==='medium'?'var(--amber)':'var(--t3)';
     return`<div class="pov-ev" title="${escH((ev.currencies||'')+' '+(ev.name||''))}">
-      <span class="pov-ev-d">${escH(countdownLbl(ev.date))}</span>
+      <span class="pov-ev-d">${countdownHtml(ev.date)}</span>
       <span class="pov-ev-c" style="color:${col}">${escH(side)}</span>
       <span class="pov-ev-n">${escH(ev.name||'')}</span>
       <span class="pov-ev-t">${escH(ev.time||'')}</span>
@@ -10253,7 +10262,9 @@ function watchRowHtml(p){
   const cm=(COT_DATA&&COT_DATA.symbols&&cotId)?cotMetrics(COT_DATA.symbols[cotId]):null;
   // Naechster Termin
   const ev=watchNextEvent(name);
-  const evTxt=ev?`${escH(countdownLbl(ev.date))} · ${escH((ev.name||'').slice(0,26))}`:'–';
+  // watchMetric() setzt den Wert roh ein - countdownHtml darf hier also
+  // stehen, der Event-Name wird weiter escaped.
+  const evTxt=ev?`${countdownHtml(ev.date)} · ${escH((ev.name||'').slice(0,26))}`:'–';
   const evCol=ev&&evtImpact(ev)==='high'?BC.bear:'var(--t2)';
   return`<div class="wt-card ${glowClass(bias)}">
     <div class="wt-head" onclick="gotoPairOverview('${escJH(name)}')" title="Open the full overview for this pair">
@@ -12509,6 +12520,8 @@ function assetKopfWarumLeer(c){
     return'Live data unavailable: Prices — the feed did not load in this session.';
   return`No own price series for ${c.name||c.id} — the feed carries this index under a different ticker.`;
 }
+// ⚠ nextLbl kommt als FERTIGES Markup herein (countdownHtml), nicht als
+// Rohtext - wird hier bewusst nicht mehr durch escH() geschickt.
 function assetKopfHtml(c,nextLbl,extraControlsHtml){
   const kz=assetKopfKennzahlen(c);
   return`<div class="ahead">
@@ -12520,7 +12533,7 @@ function assetKopfHtml(c,nextLbl,extraControlsHtml){
         :`<div class="ahead-kpi"><div class="ahk-i ahk-leer" title="${escH(assetKopfWarumLeer(c))}">${escH(assetKopfWarumLeer(c))}</div></div>`}
     <div class="ahead-right">
       <div class="ahk-i ahk-next" title="Next high-impact calendar event for this asset">
-        <div class="ahk-l">Next event</div><div class="ahk-v">${escH(nextLbl)}</div></div>
+        <div class="ahk-l">Next event</div><div class="ahk-v">${nextLbl}</div></div>
       ${extraControlsHtml||''}
     </div>
   </div>`;
@@ -12537,7 +12550,7 @@ function detailMetaHtml(c,nextLbl,extraControlsHtml){
   // in renderDetail()) - optional, damit detailMetaHtml() ohne dieses
   // Argument (falls je von woanders aufgerufen) unveraendert funktioniert.
   return`<div class="dmeta">
-    ${mi('Next event',escH(nextLbl),'Next high-impact calendar event for this asset')}
+    ${mi('Next event',nextLbl,'Next high-impact calendar event for this asset')}
     ${extraControlsHtml||''}
   </div>`;
 }

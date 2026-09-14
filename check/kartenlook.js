@@ -31,7 +31,18 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
 // Untergrenzen. Der Kartenkontrast lag vor dem Umbau bei 1,08:1 (Token) bzw.
 // 1,15:1 (Pixel) - jede Zahl darunter heisst, die Karten sind wieder eine
 // Flaeche mit dem Hintergrund.
-const MIN_KONTRAST = 1.18;
+//
+// ⚠ 2026-09-14 NEU AUFGETEILT. Der Nutzer hat den Kartenton ausdruecklich
+// zurueckgenommen ("mach weniger stark die hintergrundfarbe der Karten"),
+// --card ging von #D6DCEC auf #E0E5F1 und der Flaechenkontrast damit von
+// 1,230 auf 1,131:1. Einfach nur MIN_KONTRAST abzusenken haette den
+// Waechter stumpf gemacht: er haette dann gar nichts mehr geschuetzt.
+// Deshalb traegt jetzt der SCHATTEN die eigentliche Pruefung - er ist das,
+// was die Karte wirklich abhebt, und er ist unabhaengig vom Kartenton
+// (gemessen an derselben Kante: 1,340:1 bei BEIDEN Toenen). MIN_KONTRAST
+// ist nur noch die Grenze, ab der die Flaeche ueberhaupt nicht mehr da ist.
+const MIN_KONTRAST = 1.10;
+const MIN_SCHATTENKANTE = 1.28;
 const MIN_SCHATTEN_LAGEN = 3;
 
 (async () => {
@@ -62,6 +73,10 @@ const MIN_SCHATTEN_LAGEN = 3;
       karte: { x: Math.round(k.x + k.width * .52), y: Math.round(k.y + 3), w: 30, h: 5 },
       // Freier Grund: ueber der Kartenreihe, weit genug vom Schatten weg
       grund: { x: Math.round(k.x + 40), y: Math.round(d.top + 4), w: 60, h: 5 },
+      // Direkt UNTER der Kartenunterkante liegt der Schatten. Dort wird der
+      // dunkelste Bildpunkt genommen, nicht der Median: der Schatten ist ein
+      // Verlauf, sein Anfang ist die Kante.
+      schatten: { x: Math.round(k.x + k.width * .3), y: Math.round(k.bottom + 1), w: 60, h: 6 },
     };
   });
   if (!ziele) fail('AUFBAU', 'keine Preis-Karte auf der Asset-Seite gefunden');
@@ -80,14 +95,27 @@ const MIN_SCHATTEN_LAGEN = 3;
         const hell = q => .2126 * q[0] + .7152 * q[1] + .0722 * q[2];
         return px.sort((a, c) => hell(a) - hell(c))[Math.floor(px.length / 2)];
       };
-      return { karte: med(zz.karte), grund: med(zz.grund) };
+      const dunkelst = z => {
+        const d = ctx.getImageData(z.x, z.y, z.w, z.h).data, px = [];
+        for (let i = 0; i < d.length; i += 4) px.push([d[i], d[i + 1], d[i + 2]]);
+        const hell = q => .2126 * q[0] + .7152 * q[1] + .0722 * q[2];
+        return px.sort((a, c) => hell(a) - hell(c))[0];
+      };
+      return { karte: med(zz.karte), grund: med(zz.grund), schatten: dunkelst(zz.schatten) };
     }, [foto, ziele]);
     const lum = c => { const s = c.map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * s[0] + .7152 * s[1] + .0722 * s[2]; };
     const kon = (a, c) => { const l1 = lum(a), l2 = lum(c); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
     const gemessen = kon(farben.karte, farben.grund);
-    if (!(gemessen >= MIN_KONTRAST)) fail('KARTE HEBT SICH NICHT AB',
-      `am Bildschirmpixel nur ${gemessen.toFixed(3)}:1 zwischen Karte rgb(${farben.karte}) und Seitengrund rgb(${farben.grund}), verlangt sind ${MIN_KONTRAST}. Vor dem Umbau waren es 1,15 - genau das war die Beschwerde.`);
+    if (!(gemessen >= MIN_KONTRAST)) fail('KARTENFLAECHE VERSCHWUNDEN',
+      `am Bildschirmpixel nur ${gemessen.toFixed(3)}:1 zwischen Karte rgb(${farben.karte}) und Seitengrund rgb(${farben.grund}), verlangt sind ${MIN_KONTRAST}. Darunter ist die Karte farblich gar nicht mehr da.`);
     global._kontrast = gemessen;
+    // Der Schatten ist das, was die Karte wirklich abhebt - und das Einzige,
+    // was auch dann noch traegt, wenn der Kartenton (auf Nutzer-Wunsch)
+    // zurueckgenommen wird. Deshalb eine eigene, strengere Untergrenze.
+    const schattenKon = kon(farben.schatten, farben.grund);
+    if (!(schattenKon >= MIN_SCHATTENKANTE)) fail('KARTE WIRFT KEINEN SCHATTEN',
+      `die Schattenkante unter der Karte misst nur ${schattenKon.toFixed(3)}:1 gegen den Grund rgb(${farben.grund}), verlangt sind ${MIN_SCHATTENKANTE}. Der Schatten traegt seit dem 2026-09-14 die Kartentrennung, weil der Kartenton bewusst schwaecher ist - faellt er weg, liegen die Karten wieder flach auf der Seite.`);
+    global._schatten = schattenKon;
   }
 
   // ── 1b) EINE Kartenfarbe fuer alle Karten ────────────────────────────
@@ -201,6 +229,7 @@ const MIN_SCHATTEN_LAGEN = 3;
     process.exit(1);
   }
   console.log(`[kartenlook] ok (Karte gegen Seitengrund ${(global._kontrast || 0).toFixed(2)}:1 am Pixel, `
+    + `Schattenkante ${(global._schatten || 0).toFixed(2)}:1, `
     + `${Object.values(schatten)[0].lagen} gestapelte Schattenlagen, EINE Kartenflaeche fuer alle Karten; `
     + `Kopfleiste auf ${kopfGeprueft} Kombinationen geprueft - ${mitKennzahlen} mit Kennzahlen, ${mitGrund} mit Begruendung, 0 Loecher)`);
 })().catch(e => { console.error('KARTEN-LOOK-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

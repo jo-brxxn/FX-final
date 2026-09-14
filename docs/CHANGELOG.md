@@ -14298,3 +14298,114 @@ kein waagerechter Überlauf, nie ein Loch, höchstens drei Überschriften à ≤
 | `flex-wrap:nowrap` an der Knopfleiste | KOPF LÄUFT ÜBER (390 px) |
 | eine vierte Überschrift | ZU VIEL GEGLIEDERT |
 | GER 100 ohne Begründung | KOPF OHNE INHALT |
+
+---
+
+## 2026-09-14 — VERSION-CHECK-519: einheitliche Restzeit + zurückgenommener Kartenton
+
+Zwei Ansagen des Nutzers in einer Nachricht: *„Wenn ein Event tomorrow ist
+dann schreib 1d und nicht tomorrow und wenn es heute ist dann mach ein
+auffälliges Ausrufezeichen dahin. Und mach weniger stark die hintergrundfarbe
+der Karten."*
+
+### 1) Die Restzeit stand an VIER Stellen als eigene Kopie
+
+Der eigentliche Befund war nicht „hier steht Tomorrow", sondern: dieselbe
+Today/Tomorrow-Kette war viermal von Hand hingeschrieben worden, mit **vier
+verschiedenen Schreibweisen**.
+
+| Stelle | vorher | jetzt |
+|---|---|---|
+| `indNextReleaseCell` (Indikator-Tabelle) | `Today` / `Tomorrow` / `21d` | `countdownHtml()` |
+| As-of-Zeile über den Charts (`px-asof`) | `today` / `tomorrow` / `in 21d` | `countdownHtml()` |
+| Kalender-Kachel der Asset-Seite (`abc-u-w`) | `Today` / `Tomorrow` / `in 21d` | `countdownHtml()` |
+| Asset-Kopf „Next event" | `Today` / Datum + `countdownLbl` | `countdownHtml()` |
+| Paar-Ansicht (`pov-ev-d`), Watchlist-Zeile | `countdownLbl` | `countdownHtml()` |
+
+**Drei davon hatte ich von Hand gefunden, die vierte (`px-asof`, das
+kleingeschriebene `tomorrow`) hat erst der neue Wächter gemeldet** — genau
+der Grund, warum eine solche Regel als Prüfung und nicht als Absatz
+festgehalten wird.
+
+Der Baustein liegt in `js/calendar.js`:
+
+- `countdownLbl(d)` → `Today` / `{n}d` / `{n}d ago`. Aus *Tomorrow* wird `1d`
+  und aus *Yesterday* konsequenterweise `1d ago`; sonst hätte das Muster
+  genau eine Ausnahme in die falsche Richtung. **`Today` bleibt ein Wort** —
+  eine Null wäre dort keine Auskunft.
+- `countdownHtml(d)` → dasselbe fürs Auge, bei *heute* mit
+  `<span class="cd-heute">!</span>`.
+
+Warum zwei Funktionen: `countdownLbl` landet auch in `title`-Attributen, und
+dort darf kein Markup stehen.
+
+**Zwei bewusste Ausnahmen.** Die Erwartung aus dem eigenen Turnus behält ihre
+Tilde (`~1d`) und bekommt **kein** Ausrufezeichen — sie ist kein bestätigter
+Termin, und das Zeichen würde genau diesen Unterschied einebnen. Der
+Kalender-Tageskopf behält sein `🔥 TODAY`; ein zweites Zeichen daneben wäre
+doppelt gemoppelt.
+
+**Gemessen im DOM** (USD-Seite, vier High-Impact-Events auf heute gelegt):
+`.cd-heute` rendert 8 × 13 px in `rgb(217,58,52)` = `--live`, `font-weight:900`.
+`--live` ist hier kein Bruch der Bedeutungsfarben: es markiert keinen Datenwert
+und keine Richtung, sondern „passiert jetzt" — dieselbe Rolle wie der
+Live-Punkt. `--red` wäre *bearish* gewesen. `aria-hidden`, weil das Wort
+„Today" daneben die Information vollständig trägt.
+
+### 2) Kartenton zurückgenommen — und warum der Wächter dabei NICHT einfach mitgesenkt wurde
+
+`--card` von `#D6DCEC` auf `#E0E5F1`. Am Bildschirmpixel gemessen (dieselbe
+Messstelle wie am Vortag, Median über 30 × 5 px oben in der Preis-Karte gegen
+den freien Grund über der Kartenreihe):
+
+| | vorher `#D6DCEC` | jetzt `#E0E5F1` |
+|---|---|---|
+| Karte gegen Seitengrund (Pixel) | 1,230:1 | **1,131:1** |
+| `--bg2` auf der Karte | 1,269 | 1,167 |
+| `--t2` / `--t3` auf der Karte | 4,88 / 4,89 | **5,30 / 5,31** |
+| `--accent` auf der Karte | 3,50 | 3,81 |
+
+Die Texte werden dabei also **besser** statt schlechter — das war der Grund,
+`--t2`/`--t3` nicht wieder zurückzudrehen.
+
+**Der Denkfehler, der hier nahe lag:** `MIN_KONTRAST` in
+`check/kartenlook.js` einfach von 1,18 auf 1,10 zu senken und fertig. Dann
+hätte der Wächter gar nichts mehr geschützt — er wäre auf jeden Wert
+nachgezogen worden, den ich gerade gesetzt habe.
+
+Gemessen wurde deshalb, **was die Karte tatsächlich abhebt**: der gestapelte
+Schatten. Dunkelster Bildpunkt im 60 × 6 px-Streifen direkt unter der
+Kartenunterkante gegen denselben Grund:
+
+| Kartenton | Schattenkante gegen Grund |
+|---|---|
+| `#D6DCEC` | 1,340:1 |
+| `#E0E5F1` | **1,340:1 — identisch** |
+
+Der Schatten ist vom Kartenton unabhängig. Also prüft der Wächter jetzt zwei
+getrennte Dinge: `MIN_SCHATTENKANTE = 1.28` als die eigentliche Trennung, und
+`MIN_KONTRAST = 1.10` nur noch als Untergrenze, ab der die Fläche überhaupt
+verschwunden wäre.
+
+### Wächter + Gegenproben
+
+Neu in `check/structure.js` (statisch, kostet nichts):
+
+- kein `'Tomorrow'` / `'tomorrow'` / `'~tomorrow'` als **Restzeit-Beschriftung**
+  in `js/*.js`. Fließtext wie *„check back tomorrow for a trend line"* ist
+  ausdrücklich erlaubt — dort ist es ein Wort im Satz, keine Restzeit.
+  Kommentare werden vorher entfernt, sie dürfen die Regel ja erklären.
+- `countdownHtml()` existiert und setzt `span.cd-heute`.
+- `.cd-heute` ist in `index.html` auch wirklich formatiert — ein `<span>` ohne
+  CSS-Regel wäre unsichtbar, also das Gegenteil von „auffällig".
+
+| Eingriff | Meldung |
+|---|---|
+| `d===1?'Tomorrow':…` wieder eingesetzt | sichtbarer Text sagt „Tomorrow" statt „1d" |
+| `.cd-heute{` in `.cd-heute-x{` umbenannt (beide Vorkommen) | `.cd-heute` ist nicht formatiert |
+| Schattenstapel entfernt | KARTE WIRFT KEINEN SCHATTEN |
+
+⚠ Die erste Gegenprobe fürs CSS lief **grün und war damit ungültig**: `perl -pi`
+ohne `/g` hatte nur das erste der beiden `.cd-heute{` umbenannt, die Regel im
+`@media (prefers-reduced-motion)`-Block blieb stehen. Mit `/g` meldet der
+Wächter rot.
