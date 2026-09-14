@@ -1335,3 +1335,39 @@ Icon-Breite ein und beim Hovern wieder aus. Am PC gibt es das nicht mehr:
 
 Geprüft von `check/nav.js` (beide Auslöser einzeln, Breite in Pixeln, beide
 Zeigerarten, schmal→breit), mit Gegenprobe in beide Richtungen.
+
+### ⚠ Was diese Regel zwei Tage später kaputtgemacht hat (2026-09-14)
+
+**Am PC war danach JEDER Klick im Inhalt tot** — nicht nur der erste.
+Gemeldet als *„am ipad geht es aber am pc nicht mehr"*, gemessen mit echten
+Mausklicks: der History-Knopf öffnete am PC weder beim ersten noch beim
+zweiten noch beim dritten Klick etwas; am iPad wirkte wie vorgesehen der
+zweite, unter 760 px der erste.
+
+Der Schluck-Merker des Zwei-Klick-Mechanismus soll **genau einen** Klick
+verwerfen: den, der die ausgeklappte Leiste zuklappt. Die Zeile hat das
+Zuklappen aber *unterstellt* statt geprüft:
+
+```js
+if(breiteLeiste() && !nav.classList.contains('nav-collapsed')) ebenEingeklappt = true;
+```
+
+Am PC ist die Leiste seit dieser Regel **immer** offen, `collapse()` kehrt
+sofort zurück — die Bedingung war also immer wahr, und jeder Klick wurde
+verworfen. Richtig ist, die Wirkung zu messen:
+
+```js
+const warOffen = !nav.classList.contains('nav-collapsed');
+collapse();
+ebenEingeklappt = breiteLeiste() && warOffen && nav.classList.contains('nav-collapsed');
+```
+
+**Dauerregel daraus:** *Kein Merker, der eine Wirkung unterstellt.* Wer sich
+merkt „diese Geste hat X ausgelöst", muss X vorher/nachher vergleichen — sonst
+hält die Annahme nur so lange, bis jemand eine zweite Regel danebenstellt.
+
+**Und für die Prüfmethode:** die Wächter A–E prüfen die Leiste selbst (die war
+in Ordnung), alle anderen rufen Funktionen über `p.evaluate()` direkt auf — ein
+geschluckter Mausklick ist für sie unsichtbar. Seither prüft `check/nav.js`
+(Abschnitt F) mit einem **echten Mausklick auf einen Knopf im Inhalt**, dass am
+PC der ERSTE Klick wirkt und auf Touch erst der zweite.

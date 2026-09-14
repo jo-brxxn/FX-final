@@ -752,7 +752,11 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-bar-hd .ab-bar-n,.ab-bar-hd .ab-bar-l,.ab-bar-hd .ab-bar-r{color:var(--t3);font-weight:600;
   text-transform:uppercase;letter-spacing:.05em}
 .ab-bar-hd .ab-bar{background:none;box-shadow:none;height:1px}
-.ab-bar-inv{margin-left:3px;color:var(--t3);font-weight:400}
+/* ⚠ .ab-bar-inv (das ⇄ fuer eine gedrehte Quote) ist am 2026-09-14 weggefallen:
+   die Kachel dreht nichts mehr, sie zeigt die Broker-Quote. An seine Stelle
+   tritt .ab-bar-me - das Kuerzel DIESES Assets im Paarnamen, damit auf einen
+   Blick zu sehen ist, auf welcher Seite es steht. */
+.ab-bar-me{color:var(--t0);font-weight:800}
 /* Verlauf der Retail-Quote - nur da, wo der Feed schon einen hat. */
 .ab-rtv{margin-top:8px}
 .ab-rtv-t{display:flex;justify-content:space-between;gap:8px;font:700 var(--fs-2xs)/1.3 var(--ff-text);
@@ -1510,51 +1514,14 @@ body.no-ui-anim #navSidebar{transition:none}
 /* ── DETAIL ── */
 .detail{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .dp{padding:14px}
-/* ══ KOPFLEISTE DER ASSET-SEITE (Nutzer 2026-09-14: "hat nicht oben einen
-   richtigen Anfang") ══════════════════════════════════════════════════
-   ⚠ GEMESSEN, was gefehlt hat: der Kopf hatte background rgba(0,0,0,0),
-   border-bottom 0px, ein 476px-Loch zwischen Titel und Knopfleiste und
-   103px leeren Raum bis zur ersten Karte. Drei schwebende Teile, nichts,
-   was "hier faengt die Seite an" sagt.
-   Jetzt EIN Block mit eigener Flaeche, Rahmen und Schatten - dieselbe
-   Sprache wie die Karten darunter, damit es nicht wie ein Fremdkoerper
-   wirkt, aber als durchgehende Leiste ueber die volle Breite. */
-.ahead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-  background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);
-  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5);
-  padding:9px 13px;margin-bottom:var(--gap-block)}
-.ahead-id{min-width:0;flex:0 1 auto}
-/* ⚠ Die Kennzahlen fuellen das Loch in der Mitte - genau dafuer sind sie
-   hierher gezogen. flex:1 1 auto laesst sie den Platz nehmen, der da ist,
-   statt eine feste Breite zu beanspruchen. */
-.ahead-kpi{display:flex;align-items:stretch;gap:0;flex:1 1 auto;min-width:0;
-  flex-wrap:wrap;justify-content:flex-start;margin-left:6px}
-.ahead-right{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
-.ahk-i{padding:2px 13px;border-left:1px solid var(--bd);min-width:0;flex:0 0 auto}
-.ahead-kpi .ahk-i:first-child{border-left:none;padding-left:0}
-.ahk-l{font:600 var(--fs-2xs)/1.2 var(--ff-text);color:var(--t3);
-  text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.ahk-v{font:700 var(--fs-base)/1.25 var(--ff-num);color:var(--t0);margin-top:1px;white-space:nowrap}
-.ahk-last .ahk-v{font-size:var(--fs-lg)}
-.ahk-next{border-left:none;padding-left:0}
-.ahk-next .ahk-v{font-size:var(--fs-sm)}
-/* Einheit klein und leise - die ZAHL ist die Aussage, "%" und "bp" sind nur
-   der Massstab. */
-.ahk-u{font-size:var(--fs-2xs);color:var(--t3);font-weight:600;margin-left:1px}
-/* Statt eines Lochs: der ehrliche Grund, leise gesetzt. */
-.ahk-leer{font:600 var(--fs-2xs)/1.35 var(--ff-text);color:var(--t3);
-  display:flex;align-items:center;max-width:46ch;padding-left:0;border-left:none}
-/* Der Titel sitzt jetzt IN der Leiste - die grossen Aussenabstaende von
-   frueher wuerden sie unnoetig hoch machen. */
-.ahead .atitle{font-size:27px;margin:0}
-.ahead .afull{margin-top:0}
-@media(max-width:900px){
-  .ahead{gap:8px;padding:8px 10px}
-  .ahead .atitle{font-size:23px}
-  .ahead-kpi{margin-left:0;width:100%;order:3}
-  .ahead-right{margin-left:0}
-  .ahk-i{padding:2px 9px}
-}
+/* ⚠ DIE KOPFLEISTE (.ahead/.ahk-*) IST WIEDER WEG (2026-09-14).
+   Sie stand genau eine Version lang da (VERSION-CHECK-518) und ist auf
+   ausdrueckliche Ansage wieder abgeraeumt worden: "mach die leiste oben
+   wieder weg und mach das wie vorher". Gezeichnet wird wieder .dmeta, die
+   schmale Zeile mit "Next event" und der Knopfleiste; 1D/1W/1M/YTD stehen
+   wieder unten in der Preis-Karte.
+   GEBLIEBEN sind die Reihen-Ueberschriften darunter - die waren nicht
+   gemeint. */
 /* ── Schmale Zwischenueberschrift ueber einer Rasterreihe.
    ⚠ Nutzer: "Aber nicht zu viel gliedern das da nicht so viel Platz
    verschwendet wird und es so klein wird." Deshalb EINE 15px-Zeile, in der
@@ -5232,11 +5199,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-519 - Zwei Nutzer-Ansagen. ERSTENS DIE RESTZEIT: "wenn ein Event tomorrow ist dann schreib 1d und nicht tomorrow und wenn es heute ist dann mach ein auffaelliges Ausrufezeichen dahin". Aus Tomorrow wird 1d - und damit das Muster nicht genau eine Ausnahme in die falsche Richtung hat, aus Yesterday 1d ago. Today bleibt ein Wort, eine Null waere dort keine Auskunft, und traegt jetzt ein rot pulsierendes Ausrufezeichen. ⚠ DIE KETTE STAND AN VIER STELLEN ALS EIGENE KOPIE, mit vier Schreibweisen: in 21d, 21d, Tomorrow und ein kleingeschriebenes tomorrow. Drei hatte ich von Hand gefunden, die vierte hat erst der neue Waechter gemeldet - genau deshalb ein Waechter und nicht nur ein Absatz. Jetzt gibt es EINEN Baustein, countdownHtml, den alle sechs Anzeigestellen benutzen: Indikator-Tabelle, As-of-Zeile ueber den Charts, Kalender-Kachel, Asset-Kopf, Paar-Ansicht und Watchlist-Zeile. Die Schaetzung aus dem eigenen Turnus behaelt ihre Tilde und bekommt bewusst KEIN Ausrufezeichen - sie ist kein bestaetigter Termin. Der Kalender-Tageskopf behaelt sein 🔥 TODAY, ein zweites Zeichen daneben waere doppelt. ZWEITENS DER KARTENTON: "mach weniger stark die hintergrundfarbe der Karten". --card geht von D6DCEC auf E0E5F1, am Bildschirmpixel gemessen von 1,230 auf 1,131:1 gegen den Seitengrund; die Texte auf der Karte werden dabei besser statt schlechter (t2/t3 von 4,88/4,89 auf 5,30/5,31). ⚠ Den Waechter einfach nachzusenken haette ihn stumpf gemacht - er haette dann gar nichts mehr geschuetzt. Das Abheben haengt ohnehin nicht am Farbton, sondern am gestapelten Schatten: dessen Kante misst 1,340:1 gegen den Grund, bei BEIDEN Toenen identisch. Also prueft check/kartenlook.js jetzt zwei getrennte Dinge - den Schatten streng (1,28) als das, was die Karte wirklich hebt, und die Flaeche nur noch als Untergrenze, ab der sie ueberhaupt verschwunden waere. Drei Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-520 - Ein echter Bug, ein Rueckbau und ein Widerspruch. ⚠ DER BUG: "check mal bitte ob noch alle funktionen wo man drauf klicken kann gehen - am ipad geht es aber am pc nicht mehr". Mit echten Mausklicks nachgestellt, nicht mit Handler-Aufrufen - die sehen so etwas nie. Gemessen: am PC oeffnete der History-Knopf weder beim ersten noch beim zweiten noch beim dritten Klick irgendetwas; am iPad wirkte wie vorgesehen der zweite; unter 760px der erste. Es war nicht dieser eine Knopf, sondern JEDES Bedienelement im ganzen Inhaltsbereich. Ursache ist der Schluck-Merker der Seitenleiste: der erste Klick in den Inhalt soll die ausgeklappte Leiste nur zuklappen und wird deshalb verworfen. Die Zeile setzte diesen Merker aber schon dann, wenn die Leiste offen WAR - und seit dem 13.09. bleibt sie am PC dauerhaft offen. Also war die Bedingung dort immer wahr und jeder Klick wurde verworfen, nicht nur der eine. FEHLERKLASSE: ein Merker, der eine Wirkung unterstellt, statt sie zu pruefen. Solange beide Regeln zusammenpassten, fiel es nicht auf; die Dauer-offen-Regel hat sie auseinandergezogen. Jetzt wird die Wirkung gemessen - kein Einklappen, kein Schlucken. Kein bestehender Waechter konnte das sehen: die Sidebar-Pruefungen testen die Leiste selbst, und alle anderen rufen die Funktionen direkt auf. check/nav.js klickt deshalb jetzt mit echter Maus auf einen Knopf IM INHALT, auf zwei PC-Breiten und auf dem iPad, und verlangt am PC Wirkung beim ERSTEN Klick - die Gegenprobe mit der alten Zeile meldet vier Fehler. DER RUECKBAU: die Kopfleiste vom Vortag ist wieder weg ("mach die leiste oben wieder weg und mach das wie vorher"). Titel und die schmale Zeile mit Next event und Knopfleiste stehen wieder nebeneinander, 1D/1W/1M/YTD wieder unten in der Preis-Karte; 123 Zeilen JS und 46 Zeilen CSS raus. Die Reihen-Ueberschriften bleiben - abgestimmt, die waren nicht gemeint. DER WIDERSPRUCH: zwei Bildschirmfotos nebeneinander, Sentiment-Tab "NZDJPY 95% long", JPY-Kachel daneben "5%". Beides war richtig gerechnet - die Kachel drehte jedes Paar auf die Asset-Seite - und trotzdem eine Falle, weil neben der 5 der echte Ticker NZD/JPY stand. Auf Ansage ("lass es doch richtig da stehen was fuer einen sinn hat es das zu drehen") zeigt die Kachel jetzt die Broker-Quote, unveraendert: 56 Zeilen ueber acht Assets gegen den Feed geprueft, 0 Abweichungen. Die Asset-Sicht ist nicht verschwunden, sie steht jetzt nur dort, wo sie hingehoert - in der Zusammenfassung und im Score, jedes Mal ausdruecklich mit dem Kuerzel beschriftet. Beides braucht es: bei USD steht das Asset mal vorn (USD/JPY) und mal hinten (EUR/USD), ein Mittelwert ueber ungedrehte Zeilen waere die Vermischung zweier Blickrichtungen. In welchem Paar das Asset auf welcher Seite steht, zeigt jetzt sein hervorgehobenes Kuerzel im Paarnamen.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-519</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-520</span>
     </span>
   </div>
   <div class="hdr-r">

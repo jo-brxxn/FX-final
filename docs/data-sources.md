@@ -561,3 +561,34 @@ nicht (z. B. NZD PPI), ist das eine ehrliche Lücke und kein Fehler.
 Zeitraum immer nur einmal. Der *gespeicherte* Name bleibt unverändert, weil
 Feed, Kalender und Recherche über ihn zusammenfinden. Wer den Namen ändert,
 kappt die Verbindung zu den Daten.
+
+## ⚠ Retail Positioning: dieselbe Zahl, zwei Blickwinkel — beide beschriftet
+
+Myfxbook führt **Paare, nicht Beine**. „95 % long NZD/JPY" heißt für den
+Neuseeland-Dollar long und für den Yen short — dieselbe Zahl, entgegengesetzte
+Aussage. Daraus entstand am 2026-09-14 ein gemeldeter Widerspruch: der
+Sentiment-Tab zeigte *„NZDJPY 95 % long"*, die JPY-Kachel daneben *„5 %"*.
+
+**Dauerregel seither:** eine Retail-Zeile zeigt **die Quote des Brokers,
+unverändert**. Gedreht wird nur, was über das ganze Buch aussagt — und das
+trägt dann ausdrücklich das Kürzel des Assets im Text.
+
+| Feld in `abRetailZeilen()` | Bedeutung | wo es hingehört |
+|---|---|---|
+| `lang` / `kurz` | Broker-Quote, unverändert | **jede Zeile der Kachel** |
+| `langAsset` | dieselbe Quote auf dieses Asset gedreht | Kopfzahl, Fußzeile, **`retailBiasFor()` / Score** |
+
+**Warum es beides braucht und der gedrehte Wert nicht einfach wegfallen kann:**
+bei USD steht das Asset mal vorn (USD/JPY) und mal hinten (EUR/USD). Ein
+Mittelwert über ungedrehte Zeilen wäre die Vermischung zweier Blickrichtungen
+in einer Zahl — und der Score würde messen, wie die Menge in irgendwelchen
+Paaren steht statt auf diesem Asset.
+
+Sichtbar gemacht wird die Seite durch das **hervorgehobene Kürzel im
+Paarnamen** (`.ab-bar-me`). Das frühere ⇄-Zeichen für „gedrehte Quote" ist
+damit weggefallen; es markierte eine Drehung, die es nicht mehr gibt.
+
+⚠ **Wer eine dieser beiden Größen anfasst, muss prüfen, welche der beiden er
+meint.** `retailBiasFor()` liest ausschließlich `langAsset` — mit `lang` würde
+der Score still die falsche Seite bewerten, ohne dass irgendwo ein Strich oder
+eine Fehlermeldung erscheint.

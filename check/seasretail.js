@@ -220,6 +220,66 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
     else if (!x.sichtbar) fail('SCORE-ZEILE FEHLT', `${n}: .ab-scoreline ist 0px hoch`);
   });
 
+  // ── 6) RETAIL-ZEILEN GEGEN DEN ROHEN FEED ────────────────────────────
+  // ⚠ Nutzer-Bugreport 2026-09-14, zwei Bildschirmfotos nebeneinander: der
+  // Sentiment-Tab sagte "NZDJPY 95% long", die JPY-Kachel daneben "5%".
+  // Beides war richtig gerechnet - die Kachel drehte jedes Paar auf die
+  // Asset-Seite - und trotzdem eine Falle, weil neben der 5 der echte
+  // Ticker NZD/JPY stand. Woertlich: "lass es doch richtig da stehen was
+  // fuer einen sinn hat es das zu drehen".
+  //
+  // ⚠ FEHLERKLASSE: dieselbe Groesse an zwei Stellen in zwei
+  // Blickrichtungen, ohne dass die Beschriftung den Unterschied traegt. Das
+  // faellt in keinem Diff auf und in keiner Rechenprobe - beide Zahlen sind
+  // ja richtig. Nur der direkte Vergleich mit der Quelle zeigt es.
+  //
+  // Geprueft wird deshalb JEDE angezeigte Zeile gegen sentiment_data.json:
+  // die Prozentzahl neben "NZD/JPY" muss die Zahl sein, die der Broker fuer
+  // NZDJPY fuehrt. Die Sicht des Assets darf weiter vorkommen, aber nur
+  // beschriftet (Kopfzahl/Fusszeile tragen das Kuerzel) und nur im Score.
+  const FX8 = ['USD', 'EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'NZD'];
+  let rzeilen = 0;
+  for (const id of FX8) {
+    await p.evaluate(x => gotoSym(x), id);
+    await p.waitForTimeout(260);
+    const r = await p.evaluate(assetId => {
+      const roh = {};
+      ((window.SENTIMENT_DATA || {}).retail || []).forEach(x => { if (x && x.sym) roh[String(x.sym).toUpperCase()] = Math.round(+x.long); });
+      const kachel = [...document.querySelectorAll('.ab-tile')].find(t => /Retail Positioning/.test(t.textContent || ''));
+      if (!kachel) return { fehlt: true };
+      const zeilen = [...kachel.querySelectorAll('.ab-bar-row:not(.ab-bar-hd)')].map(e => ({
+        name: ((e.querySelector('.ab-bar-n') || {}).textContent || '').trim(),
+        lang: parseInt((((e.querySelector('.ab-bar-l') || {}).textContent) || '').replace('%', ''), 10),
+        kurz: parseInt((((e.querySelector('.ab-bar-r') || {}).textContent) || '').replace('%', ''), 10),
+        markiert: [...e.querySelectorAll('.ab-bar-me')].map(x => x.textContent),
+      }));
+      const big = ((kachel.querySelector('.ab-big') || {}).textContent || '').trim();
+      const fuss = ((kachel.querySelector('.ab-foot') || {}).textContent || '').replace(/\s+/g, ' ');
+      return { fehlt: false, zeilen, roh, big, fuss, assetId };
+    }, id);
+    if (r.fehlt) { fail('RETAIL-KACHEL FEHLT', `${id}: keine Retail-Kachel auf der Asset-Seite`); continue; }
+    r.zeilen.forEach(z => {
+      rzeilen++;
+      const sym = z.name.replace('/', '').toUpperCase();
+      const soll = r.roh[sym];
+      if (soll == null) { fail('ZEILE NICHT IM FEED', `${id} ${z.name}: der Broker fuehrt kein Symbol ${sym}`); return; }
+      if (z.lang !== soll) fail('RETAIL-ZEILE GEDREHT',
+        `${id} ${z.name}: die Kachel zeigt ${z.lang}%, der Feed (und damit der Sentiment-Tab) fuehrt ${soll}%. `
+        + `Genau dieser Widerspruch wurde am 2026-09-14 gemeldet - die Zeile gehoert dem PAAR, nur Kopfzahl und Fusszeile drehen auf das Asset.`);
+      if (z.lang + z.kurz !== 100) fail('ZEILE ERGIBT NICHT 100', `${id} ${z.name}: ${z.lang}% + ${z.kurz}% = ${z.lang + z.kurz}`);
+      // Auf welcher Seite das Asset steht, muss sichtbar sein - sonst ist
+      // die ungedrehte Zahl zwar richtig, aber nicht deutbar.
+      if (z.name.includes('/') && !z.markiert.includes(id)) fail('EIGENE SEITE NICHT MARKIERT',
+        `${id} ${z.name}: das eigene Kuerzel ist im Paarnamen nicht hervorgehoben (.ab-bar-me). Ohne das ist nicht zu sehen, ob "long" fuer oder gegen ${id} spricht.`);
+    });
+    // Die gedrehte Zusammenfassung muss das Kuerzel tragen, sonst steht
+    // wieder eine Zahl ohne Blickrichtung da.
+    if (r.zeilen.length && !new RegExp('long\\s+' + id + '\\b').test(r.big))
+      fail('KOPFZAHL OHNE BLICKRICHTUNG', `${id}: die grosse Zahl lautet "${r.big}" und nennt das Asset nicht. Sie ist gedreht - ohne Kuerzel ist sie von den Zeilen nicht zu unterscheiden.`);
+    if (r.zeilen.length > 1 && !r.fuss.includes(id))
+      fail('FUSSZEILE OHNE BLICKRICHTUNG', `${id}: die Fusszeile lautet "${r.fuss}" und nennt das Asset nicht.`);
+  }
+
   await b.close();
   if (perr.length) fail('SEITENFEHLER', perr.slice(0, 3).join(' | '));
   if (F.length) {
@@ -229,5 +289,6 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
   const mit = r2.treffer.filter(t => t.v !== 0);
   console.log(`[seasretail] ok (${r1.seas.length + r1.ret.length + r1.paare.length} Schwellen-Faelle, `
     + `${r2.zeilen} Indikatoren in ${new Set(r2.treffer.map(t => t.sym)).size} Assets, davon ${mit.length} mit Beitrag; `
-    + `laufender Monat "${r3.jetzt}" markiert, Kachel und Score-Fenster deckungsgleich)`);
+    + `laufender Monat "${r3.jetzt}" markiert, Kachel und Score-Fenster deckungsgleich; `
+  + `${rzeilen} Retail-Zeilen ungedreht gegen den Feed geprueft)`);
 })().catch(e => { console.error('SEASRETAIL-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

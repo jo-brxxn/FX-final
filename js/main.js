@@ -6309,7 +6309,14 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
-    ${assetKopfHtml(c,nextLbl,dmetaControls)}
+    ${/* ⚠ Titel und Meta-Zeile stehen wieder NEBENEINANDER, wie vor dem
+         518er Umbau (Nutzer 2026-09-14: "mach das wie vorher"). Der Titel
+         war in die Kopfleiste gewandert; ohne ihn hier haette die
+         Asset-Seite ueberhaupt keine Ueberschrift mehr. */''}
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
+      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor.','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
+      ${detailMetaHtml(c,nextLbl,dmetaControls)}
+    </div>
     ${/* ⚠ Zugeklappt wird die Sektion GAR NICHT mehr gezeichnet: ihr
          Auf-/Zu-Schalter sitzt jetzt im Fuss der Kalenderkarte. Vorher stand
          hier immer eine eigene 43px-Zeile plus Abstand, nur um zu sagen, was
@@ -7248,15 +7255,20 @@ function abCotChart(hist){
   </div>`};
 }
 
-// ── Retail: die Seite wird auf DAS ASSET gedreht ────────────────────────
+// ── Retail: die Paare eines Assets, mit BEIDEN Blickwinkeln ─────────────
 // Nutzer 2026-09-13: "da werden alle Asset Paare aufgelistet oder nur das
 // Asset und das positioning ... zB usd dazu gibt es 5 paare".
 //
 // ⚠ Myfxbook fuehrt PAARE, nicht Beine. "80% long EURUSD" heisst fuer den
 // EURO long und fuer den DOLLAR short - dieselbe Zahl, entgegengesetzte
-// Aussage. Ohne dieses Drehen stuende auf der USD-Seite die Positionierung
-// des Euro. Deshalb: steht die Waehrung hinten im Paar, wird der Anteil
-// gespiegelt (100 - long%), und der angezeigte Name dreht sich mit.
+// Aussage. Jede Zeile traegt deshalb ZWEI Werte:
+//   lang       die Broker-Quote, unveraendert (was ANGEZEIGT wird)
+//   langAsset  dieselbe Quote auf dieses Asset gedreht (was der SCORE liest)
+// ⚠ Bis zum 2026-09-14 wurde nur der gedrehte Wert gefuehrt und angezeigt.
+// Der Nutzer hat das mit zwei Bildschirmfotos nebeneinander gemeldet: der
+// Sentiment-Tab sagte "NZDJPY 95% long", die JPY-Kachel daneben "5%". Beides
+// war richtig gerechnet und trotzdem eine Falle, weil neben der 5 der echte
+// Ticker NZD/JPY stand. Seitdem zeigt die Kachel die Broker-Quote.
 const AB_FX8=['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD'];
 function abRetailZeilen(assetId){
   const D=SENTIMENT_DATA;
@@ -7268,7 +7280,9 @@ function abRetailZeilen(assetId){
     const sym=retailSymFor(assetId);
     const rec=sym?liste.find(r=>r&&r.sym===sym):null;
     const L=rec?wert(rec):null;
-    return L==null?[]:[{name:sym,sym,gedreht:false,lang:Math.round(L),kurz:100-Math.round(L)}];
+    // Ein einzelnes Buch (Gold, Silber, BTC, Nasdaq): Broker-Quote und
+    // Asset-Sicht sind dasselbe, es gibt keine zweite Seite.
+    return L==null?[]:[{name:sym,sym,vorn:true,lang:Math.round(L),kurz:100-Math.round(L),langAsset:Math.round(L)}];
   }
   const out=[];
   liste.forEach(r=>{
@@ -7279,14 +7293,28 @@ function abRetailZeilen(assetId){
     const L=wert(r);if(L==null)return;
     const vorn=basis===assetId;
     if(!vorn&&quote!==assetId)return;
-    const lang=Math.round(vorn?L:100-L);
-    // ⚠ Der ANGEZEIGTE Name bleibt der echte Ticker. Der erste Entwurf drehte
-    // ihn mit ("USD/EUR" fuer EURUSD) - das las sich sauber, ist aber ein
-    // Paarname, den es nicht gibt. Stattdessen steht der echte Ticker da und
-    // die Spaltenkoepfe sagen, worauf sich die Prozente beziehen.
-    out.push({name:basis+'/'+quote,sym:s,gedreht:!vorn,lang,kurz:100-lang});
+    // ⚠⚠ NICHT MEHR DREHEN (Nutzer 2026-09-14, nach zwei Bildschirmfotos
+    // nebeneinander: "da steht nzdjpy 95% long und bei den assets da steht
+    // genau das gegenteil warum wird das denn gedreht. lass es doch richtig
+    // da stehen was fuer einen sinn hat es das zu drehen").
+    // `lang` ist ab jetzt die BROKER-QUOTE, unveraendert - dieselbe Zahl, die
+    // der Sentiment-Tab zeigt. Vorher stand hier 100-L, sobald das Asset die
+    // Quote-Waehrung war: rechnerisch richtig (95% long NZD/JPY = 5% long
+    // JPY), aber neben dem echten Ticker "NZD/JPY" gelesen schlicht falsch.
+    //
+    // Die Sicht des Assets wird dadurch nicht verworfen, sie wandert nur
+    // dorthin, wo sie hingehoert: `langAsset` ist die auf das Asset gedrehte
+    // Quote und traegt die Zusammenfassung und den Score. Der Grund, warum es
+    // beides braucht: bei USD steht das Asset mal vorn (USD/JPY) und mal
+    // hinten (EUR/USD) - ein Mittelwert ueber ungedrehte Zeilen waere die
+    // Vermischung zweier Blickrichtungen und damit sinnlos.
+    const lang=Math.round(L);
+    const langAsset=vorn?lang:100-lang;
+    out.push({name:basis+'/'+quote,sym:s,vorn,lang,kurz:100-lang,langAsset});
   });
-  return out.sort((a,b)=>b.lang-a.lang);
+  // Sortiert nach der Sicht des Assets - sonst springt die Reihenfolge, je
+  // nachdem auf welcher Seite das Asset in dem jeweiligen Paar steht.
+  return out.sort((a,b)=>b.langAsset-a.langAsset);
 }
 
 // ── Retail-Verlauf: die Long-Quote ueber die Zeit ───────────────────────
@@ -7373,8 +7401,13 @@ function retailBiasFor(id){
   const z=abRetailZeilen(id);
   if(!z||!z.length)return{bias:'neu',txt:null,grund:'no retail book'};
   const einzel=z.length===1;
+  // ⚠ IMMER langAsset, nie lang. `lang` ist seit dem 2026-09-14 die
+  // ungedrehte Broker-Quote (so steht sie in der Kachel), `langAsset` die
+  // auf dieses Asset gedrehte. Fuer den Score zaehlt nur die zweite: ob die
+  // Menge auf DIESEM Asset long sitzt, nicht ob sie auf einem Paar long
+  // sitzt, in dem das Asset hinten steht.
   // Einzel-Asset: der Anteil des Buches. Waehrung: der Anteil ihrer Paare.
-  const lang=einzel?z[0].lang:Math.round(z.filter(x=>x.lang>50).length/z.length*100);
+  const lang=einzel?z[0].langAsset:Math.round(z.filter(x=>x.langAsset>50).length/z.length*100);
   const kurz=100-lang;
   let bias='neu';
   if(lang>=RETAIL_EXTREM)bias='sbear';
@@ -7382,7 +7415,7 @@ function retailBiasFor(id){
   else if(kurz>=RETAIL_EXTREM)bias='sbull';
   else if(kurz>=RETAIL_MILD)bias='bull';
   return{bias,lang,einzel,paare:z.length,
-    txt:einzel?`${lang}% long`:`${z.filter(x=>x.lang>50).length}/${z.length} pairs long`,
+    txt:einzel?`${lang}% long`:`${z.filter(x=>x.langAsset>50).length}/${z.length} pairs long`,
     grund:bias==='neu'?'crowd is balanced (40-60%)':null};
 }
 /** Die Score-Regel in einem Satz - einmal geschrieben, in Kachel und Score-Fenster gleich. */
@@ -7522,34 +7555,54 @@ function abGrafikHtml(art,c){
       AB_LEER('Retail positioning has not loaded yet — it is written hourly into sentiment_data.json.'));
     if(!zeilen.length)return abTile('Retail Positioning','',
       AB_LEER(`No retail book for ${escH(c.name||c.id)}. The broker feed carries the FX majors plus Gold, Silver, BTC and Nasdaq — nothing is filled in for the rest.`));
-    const bars=zeilen.map(z=>`<div class="ab-bar-row"><span class="ab-bar-n" title="${escH(z.name)}${z.gedreht?` — the broker quotes ${escH(z.sym)}; the share is flipped so it reads as long ${escH(c.id)}`:''}">${escH(z.name)}${z.gedreht?'<span class="ab-bar-inv" title="flipped from the broker\u2019s quote">\u21c4</span>':''}</span>
+    // ⚠ DIE ZEILEN ZEIGEN DIE BROKER-QUOTE, UNGEDREHT (Nutzer 2026-09-14,
+    // nach zwei Bildschirmfotos nebeneinander: "lass es doch richtig da
+    // stehen was fuer einen sinn hat es das zu drehen"). Neben "NZD/JPY"
+    // stehen also dieselben 95%, die auch der Sentiment-Tab zeigt.
+    // Damit trotzdem sichtbar bleibt, auf welcher Seite dieses Asset in dem
+    // Paar steht, wird sein Kuerzel im Paarnamen hervorgehoben - und der
+    // Titel sagt, was die Broker-Zahl fuer das Asset bedeutet.
+    const bars=zeilen.map(z=>{
+      const teile=String(z.name).split('/');
+      const marke=t=>t===c.id?`<b class="ab-bar-me">${escH(t)}</b>`:escH(t);
+      const nameHtml=teile.length===2?`${marke(teile[0])}/${marke(teile[1])}`:escH(z.name);
+      const tip=z.vorn
+        ?`${z.lang}% of the broker book is long ${z.name}. ${c.id} is the base currency here, so that is ${z.lang}% long ${c.id}.`
+        :`${z.lang}% of the broker book is long ${z.name}. ${c.id} is the QUOTE currency here, so being long this pair means being short ${c.id} — ${z.langAsset}% long ${c.id}.`;
+      return`<div class="ab-bar-row"><span class="ab-bar-n" title="${escH(tip)}">${nameHtml}</span>
       <span class="ab-bar-l">${z.lang}%</span>
       <span class="ab-bar"><span class="ab-bar-in" style="width:${z.lang}%;background:${BC.bull}"></span><span class="ab-bar-in" style="width:${z.kurz}%;background:${BC.bear}"></span></span>
-      <span class="ab-bar-r">${z.kurz}%</span></div>`).join('');
-    // ⚠ Ohne diese Kopfzeile steht neben "EUR/USD" die Zahl 63, waehrend der
-    // Broker 37 fuehrt - richtig gerechnet, aber ohne Beschriftung eine Falle.
+      <span class="ab-bar-r">${z.kurz}%</span></div>`;}).join('');
     const kopf=`<div class="ab-bar-row ab-bar-hd"><span class="ab-bar-n">Pair</span>
       <span class="ab-bar-l">long</span><span class="ab-bar"></span><span class="ab-bar-r">short</span></div>`;
     // Verlauf, wenn der Feed schon einen hat. Bewusst nur fuer EIN Buch
     // (Gold, Silber, BTC, Nasdaq) - bei einer Waehrung waeren es sieben
     // Linien in einer Kachel von 240px Breite.
     const verlauf=zeilen.length===1?abRetailVerlauf(zeilen[0].sym):null;
-    const schnitt=Math.round(zeilen.reduce((a,z)=>a+z.lang,0)/zeilen.length);
-    const einseitig=zeilen.filter(z=>z.lang>=60).length;
-    const kurzSeitig=zeilen.filter(z=>z.lang<=40).length;
+    // ⚠ DIE ZUSAMMENFASSUNG rechnet mit langAsset, die ZEILEN zeigen lang.
+    // Das ist kein Widerspruch, sondern die einzige Art, die beides ehrlich
+    // hinzubekommen: die Zeile gehoert dem Paar (NZD/JPY 95% long), die
+    // Zusammenfassung gehoert dem Asset (5% long JPY). Ein Mittelwert ueber
+    // die ungedrehten Zeilen waere bei USD sinnlos - dort steht USD mal vorn
+    // (USD/JPY) und mal hinten (EUR/USD), das waeren zwei Blickrichtungen in
+    // einer Zahl. Beide Angaben sind deshalb ausdruecklich beschriftet.
+    const schnitt=Math.round(zeilen.reduce((a,z)=>a+z.langAsset,0)/zeilen.length);
+    const einseitig=zeilen.filter(z=>z.langAsset>=60).length;
+    const kurzSeitig=zeilen.filter(z=>z.langAsset<=40).length;
+    const mehrfach=zeilen.length>1;
     let rb=null;try{rb=retailBiasFor(c.id);}catch(e){}
     return abTile('Retail Positioning',
       `<span class="ab-tile-s">${zeilen.length===1?'1 book':zeilen.length+' pairs'}</span>`,
-      `<div class="ab-big" style="color:${biasCss(schnitt>=60?'bear':schnitt<=40?'bull':'neu')}">${schnitt}% long ${escH(c.id)}</div>
+      `<div class="ab-big" style="color:${biasCss(schnitt>=60?'bear':schnitt<=40?'bull':'neu')}" title="The same book seen from ${escH(c.id)}'s own side — this is what the score reads. The rows below are the broker's quote, unchanged.">${schnitt}% long ${escH(c.id)}</div>
        <div class="ab-bars">${kopf}${bars}</div>
        ${verlauf?verlauf.html:''}
        <div class="ab-foot">
-         <span><span class="ab-foot-l">Crowd long</span> <b>${einseitig}/${zeilen.length}</b></span>
-         <span><span class="ab-foot-l">Crowd short</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
-         <span><span class="ab-foot-l">Average</span> <b>${schnitt}%</b></span>
+         <span><span class="ab-foot-l">Long ${escH(c.id)}</span> <b>${einseitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">Short ${escH(c.id)}</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">Average</span> <b>${schnitt}% long ${escH(c.id)}</b></span>
        </div>
        ${abScoreZeile(c,RETAIL_IND_NAME,rb&&rb.grund)}
-       <div class="ab-note">Broker book, flipped to this asset's side. Read against the crowd: a one-sided retail book counts the other way. ${escH(retailRegelText())}</div>`);
+       <div class="ab-note">The rows are the broker's own quote, exactly as published — the same numbers as the Sentiment tab.${mehrfach?` ${escH(c.id)} is highlighted in each pair so its side is visible; where it is the quote currency, long the pair means short ${escH(c.id)}. The figure above turns the whole book onto ${escH(c.id)}'s side.`:''} Read against the crowd: a one-sided retail book counts the other way. ${escH(retailRegelText())}</div>`);
   }
   // ── Seasonality ───────────────────────────────────────────────────────
   const D=SEASONALITY_DATA;
@@ -7888,15 +7941,15 @@ function assetPreisKarteHtml(c){
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
     <span class="ab-rgs">${regler}</span></div>`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
-  // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) steht seit dem 2026-09-14 OBEN in
-  // der Kopfleiste. Hier waere er eine Dopplung und kostete 51px Hoehe -
-  // genau der Platz, den die neuen Reihen-Ueberschriften brauchen.
-  // assetPerfStripHtml() bleibt bestehen, es wird nur nicht mehr von hier
-  // gezeichnet.
+  // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
+  // der Kopfleiste. Die Leiste ist am selben Tag auf Nutzer-Wunsch wieder
+  // abgeschafft worden ("mach die leiste oben wieder weg und mach das wie
+  // vorher") - also steht der Streifen wieder hier, wo er herkam.
   return`<div class="ab-ptile">
     ${kopf}
     <div class="ab-pk-chart">${ch.html}</div>
     ${fuss}
+    ${assetPerfStripHtml(c)}
   </div>`;
 }
 
@@ -12415,129 +12468,17 @@ function symSourceLabel(c){
   const list=[...set];
   return{lbl:list.length>1?'MULTI':list[0],list};
 }
-// ══ DIE KOPFLEISTE DER ASSET-SEITE ═════════════════════════════════════
-//
-// Nutzer 2026-09-14: "ich finde jetzt die Asset Kategorie mit dieser 3
-// Spalten Optik mit den ganzen Karten hat nicht oben einen richtigen Anfang
-// was kann man da machen wie bekommt man das umdesignt". Abgestimmt per
-// Rueckfrage: Kopfleiste MIT Kennzahlen darin.
-//
-// ⚠ GEMESSEN, was gefehlt hat - der Kopf war kein Block, sondern drei
-// schwebende Teile:
-//     Kopfbereich background : rgba(0,0,0,0)   - keine eigene Flaeche
-//     border-bottom          : 0px             - keine Trennlinie
-//     Loch Titel -> Knopfleiste : 476px bei 1500px Fensterbreite
-//     Abstand Titel -> erste Karte : 103px leerer Raum
-// Es gab also nichts, was "hier faengt die Seite an" gesagt haette.
-//
-// ⚠ DIE KENNZAHLEN SIND NICHT NEU, SIE SIND UMGEZOGEN. Vorher standen
-// 1D/1W/1M/YTD unten in der Preis-Karte. Sie hier oben ZUSAETZLICH zu
-// zeigen waere eine Dopplung und haette echte Hoehe gekostet - der Nutzer
-// hat ausdruecklich gesagt, es soll kein Platz verschwendet werden. Also
-// wandern sie, und die Preis-Karte wird um ihren 51px-Streifen leichter.
-function assetKopfKennzahlen(c){
-  // ⚠ Die acht Renditen-Assets haben KEINE Preisreihe - fuer sie ist die
-  // Rendite selbst die Zahl, um die es geht, und die liegt in bond_data.json.
-  // Ohne diesen Zweig stuende ihre Kopfleiste leer da, also wieder mit
-  // einem Loch in der Mitte: genau das Problem, das die Leiste loesen soll.
-  if(YIELD_CCY[c.id])return assetKopfRendite(c);
-  const ser=priceSeriesFor(c.id);
-  const feedWeg=typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false;
-  const zellen=[];
-  // Letzter Kurs. ⚠ Nicht jedes Asset hat eine Preisreihe (die acht
-  // Renditen haben keine) - dort steht KEINE Zelle statt eines Strichs,
-  // sonst fuellt sich die Leiste mit Platzhaltern.
-  if(ser&&ser.length){
-    const last=ser[ser.length-1];
-    const v=Number(last[1]);
-    const dec=Math.abs(v)>=1000?0:Math.abs(v)>=50?2:Math.abs(v)>=5?3:4;
-    zellen.push(`<div class="ahk-i ahk-last" title="Last close on file — ${escH(String(last[0]))}">
-      <div class="ahk-l">Last</div><div class="ahk-v">${v.toFixed(dec)}</div></div>`);
-  }
-  PERF_WINDOWS.forEach(([lbl,days])=>{
-    const r=perfReturn(c.id,days);
-    if(!r&&!ser)return;                    // kein Preis, keine Spalte
-    const val=r?`${r.pct>0?'+':''}${r.pct.toFixed(2)}%`:'–';
-    const col=!r?'var(--t3)':r.pct>0.001?'var(--green)':r.pct<-0.001?'var(--red)':'var(--t2)';
-    const tip=r?`${lbl}: ${r.from} → ${r.to}`
-      :feedWeg?`Live data unavailable: Prices — the feed did not load in this session, so there is nothing to compare ${lbl} against.`
-      :`No price history covering ${lbl} yet`;
-    zellen.push(`<div class="ahk-i" title="${escH(tip)}">
-      <div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:${col}">${escH(val)}</div></div>`);
-  });
-  return zellen.join('');
-}
-/** Kennzahlen eines Renditen-Assets: der Stand und die Veraenderung in
-    Basispunkten ueber dieselben vier Fenster wie bei den Preisen. */
-// ⚠ BASISPUNKTE, nicht Prozent. Eine Rendite von 4,97 auf 5,02 ist ein Plus
-// von 1 Prozent, aber 5 Basispunkten - und am Anleihemarkt spricht niemand
-// von Prozent der Rendite. Ein Prozentwert waere hier keine falsche Zahl,
-// aber eine, die niemand so liest.
-function assetKopfRendite(c){
-  const ccy=YIELD_CCY[c.id];
-  const reihe=(typeof bondSeriesOhlc==='function')?bondSeriesOhlc(ccy,'10Y Bond Yield'):null;
-  const r=(reihe||[]).filter(e=>e&&e[0]&&isFinite(Number(e[1])));
-  if(r.length<2)return'';
-  const letzte=r[r.length-1], jetzt=Number(letzte[1]);
-  const zellen=[`<div class="ahk-i ahk-last" title="10-year government bond yield, last close on file — ${escH(String(letzte[0]))}">
-    <div class="ahk-l">10Y</div><div class="ahk-v">${jetzt.toFixed(3)}<span class="ahk-u">%</span></div></div>`];
-  const bis=new Date(letzte[0]+'T00:00:00Z');
-  PERF_WINDOWS.forEach(([lbl,days])=>{
-    let ziel;
-    if(days==null)ziel=new Date(Date.UTC(bis.getUTCFullYear()-1,11,31));
-    else{ziel=new Date(bis);ziel.setUTCDate(ziel.getUTCDate()-days);}
-    const zStr=ziel.toISOString().slice(0,10);
-    // Der letzte Tag AM ODER VOR dem Zieldatum - Wochenenden und Feiertage
-    // haben keinen Wert, ein exakter Treffer waere Zufall.
-    let vor=null;
-    for(let i=r.length-1;i>=0;i--){if(r[i][0]<=zStr){vor=r[i];break;}}
-    // ⚠ YTD misst ab JAHRESANFANG - und wenn die Reihe erst im Januar
-    // beginnt (bond_data faengt am 02.01. an), ist ihr erster Tag der
-    // richtige Bezug, nicht "kein Wert". Gemessen stand YTD sonst bei allen
-    // acht Renditen auf einem Strich, obwohl acht Monate Historie da sind.
-    if(!vor&&days==null&&r[0][0].slice(0,4)===letzte[0].slice(0,4))vor=r[0];
-    if(!vor||vor===letzte){
-      zellen.push(`<div class="ahk-i" title="No yield history covering ${escH(lbl)} yet"><div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:var(--t3)">–</div></div>`);
-      return;
-    }
-    const bp=Math.round((jetzt-Number(vor[1]))*100);
-    const col=bp>0?'var(--green)':bp<0?'var(--red)':'var(--t2)';
-    zellen.push(`<div class="ahk-i" title="${escH(lbl)}: ${escH(vor[0])} → ${escH(letzte[0])}, ${Number(vor[1]).toFixed(3)}% → ${jetzt.toFixed(3)}%">
-      <div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:${col}">${bp>0?'+':''}${bp}<span class="ahk-u">bp</span></div></div>`);
-  });
-  return zellen.join('');
-}
-/** Warum hat dieses Asset keine Kennzahlen? */
-// ⚠ Ein Loch in der Leiste ist genau das Problem, das sie loesen soll -
-// aber eine erfundene Zahl waere schlimmer (Grundsatz 4). Also sagt die
-// Leiste, was Sache ist. Gemessen betrifft das GENAU EIN Asset von 24:
-// GER 100 hat keine eigene Reihe in price_data.json, der Feed fuehrt den
-// Index unter DAX. Die beiden hier stillschweigend gleichzusetzen waere
-// dieselbe Art Fehler wie die US-2Y aus einem Future zu speisen: eine
-// andere Zahl unter derselben Ueberschrift.
-function assetKopfWarumLeer(c){
-  if(typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false)
-    return'Live data unavailable: Prices — the feed did not load in this session.';
-  return`No own price series for ${c.name||c.id} — the feed carries this index under a different ticker.`;
-}
-// ⚠ nextLbl kommt als FERTIGES Markup herein (countdownHtml), nicht als
-// Rohtext - wird hier bewusst nicht mehr durch escH() geschickt.
-function assetKopfHtml(c,nextLbl,extraControlsHtml){
-  const kz=assetKopfKennzahlen(c);
-  return`<div class="ahead">
-    <div class="ahead-id">
-      <div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor.','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div>
-      <div class="afull">${escH(c.full)}</div>
-    </div>
-    ${kz?`<div class="ahead-kpi">${kz}</div>`
-        :`<div class="ahead-kpi"><div class="ahk-i ahk-leer" title="${escH(assetKopfWarumLeer(c))}">${escH(assetKopfWarumLeer(c))}</div></div>`}
-    <div class="ahead-right">
-      <div class="ahk-i ahk-next" title="Next high-impact calendar event for this asset">
-        <div class="ahk-l">Next event</div><div class="ahk-v">${nextLbl}</div></div>
-      ${extraControlsHtml||''}
-    </div>
-  </div>`;
-}
+// ⚠ DIE KOPFLEISTE DER ASSET-SEITE IST WIEDER WEG (2026-09-14).
+// Sie stand genau eine Version lang da (VERSION-CHECK-518) und ist auf
+// ausdrueckliche Ansage wieder abgeraeumt worden: "mach die leiste oben
+// wieder weg und mach das wie vorher". Mit ihr sind assetKopfHtml(),
+// assetKopfKennzahlen(), assetKopfRendite() und assetKopfWarumLeer()
+// gegangen; 1D/1W/1M/YTD stehen wieder unten in der Preis-Karte
+// (assetPerfStripHtml, von assetPreisKarteHtml gezeichnet).
+// GEBLIEBEN sind die Reihen-Ueberschriften ueber den Kartenreihen
+// (abReihenTitel) - die waren ausdruecklich nicht gemeint.
+// Gezeichnet wird wieder detailMetaHtml(): die schmale Zeile mit
+// "Next event" und der Knopfleiste, so wie vor dem 518er Umbau.
 function detailMetaHtml(c,nextLbl,extraControlsHtml){
   // "Last update", "Data quality" und "Source" sind auf Nutzer-Wunsch aus der
   // Leiste geflogen (2026-08-23) - es bleibt nur "Next event". symDataQuality()
@@ -20335,13 +20276,37 @@ function navBleibtOffen(){
   const breiteLeiste=()=>window.innerWidth>=760;
   pageArea.addEventListener('scroll',collapse,{capture:true,passive:true});
   pageArea.addEventListener('pointerdown',()=>{
-    if(breiteLeiste()&&!nav.classList.contains('nav-collapsed'))ebenEingeklappt=true;
     // Der Zeiger beruehrt hier definitiv den INHALT, nicht mehr die Leiste -
     // unabhaengig von der Zeigerart der zuverlaessigste Punkt, um overNav
     // zurueckzusetzen (siehe ausfuehrliche Begruendung bei der
     // pointerleave-Behandlung weiter unten).
     overNav=false;
+    // ⚠⚠ DER SCHLUCK-MERKER WIRD ERST NACH collapse() GESETZT, UND NUR WENN
+    // DIE LEISTE WIRKLICH ZUGEGANGEN IST.
+    //
+    // Nutzer-Bugreport 2026-09-14: "check mal bitte ob noch alle funktionen
+    // wo man drauf klicken kann gehen - am ipad geht es aber am pc nicht
+    // mehr". Gemessen mit echten Mausklicks (nicht mit Handler-Aufrufen, die
+    // sehen das nie): am PC reagierte im ganzen Inhaltsbereich KEIN
+    // Bedienelement mehr, auch beim zweiten und dritten Klick nicht - am
+    // iPad wirkte wie vorgesehen der zweite.
+    //
+    // URSACHE: die Vorgaengerzeile lautete
+    //     if(breiteLeiste()&&!nav.classList.contains('nav-collapsed'))ebenEingeklappt=true;
+    // und hat damit ANGENOMMEN, dass dieser Zeigerdruck die Leiste zuklappt.
+    // Seit dem 2026-09-13 bleibt die Leiste am PC aber dauerhaft offen
+    // (navBleibtOffen), collapse() kehrt dort sofort zurueck. Die Bedingung
+    // "nicht eingeklappt" war deshalb am PC IMMER wahr: jeder Zeigerdruck
+    // setzte den Merker, der folgende Klick wurde geschluckt, und der
+    // naechste wieder, und der naechste.
+    //
+    // ⚠ FEHLERKLASSE: ein Merker, der eine Wirkung UNTERSTELLT, statt sie zu
+    // pruefen. Solange beide Regeln zusammenpassten, fiel es nicht auf; die
+    // Dauer-offen-Regel hat sie auseinandergezogen. Jetzt wird die Wirkung
+    // gemessen - kein Einklappen, kein Schlucken.
+    const warOffen=!nav.classList.contains('nav-collapsed');
     collapse();
+    ebenEingeklappt=breiteLeiste()&&warOffen&&nav.classList.contains('nav-collapsed');
   },{capture:true,passive:true});
   // Den durch dieses Einklappen ausgeloesten Klick schlucken - der Inhalt
   // wird erst mit dem naechsten Klick bedient.
@@ -20484,7 +20449,7 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
-  assetKopfHtml,assetKopfKennzahlen,assetKopfRendite,assetKopfWarumLeer,abReihenTitel,
+  abReihenTitel,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
   assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt

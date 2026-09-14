@@ -161,14 +161,25 @@ const MIN_SCHATTEN_LAGEN = 3;
       `${n} hat ${schatten[n].lagen} Schattenlage(n), verlangt sind ${MIN_SCHATTEN_LAGEN}. Ein einzelner Schatten faellt linear ab und sieht aus wie ein aufgemalter Rand - "${schatten[n].roh}"`);
   });
 
-  // ── 3) Die Kopfleiste ist ein Block, kein schwebender Text ───────────
-  // ⚠ Nutzer 2026-09-14: "hat nicht oben einen richtigen Anfang". Gemessen
-  // hatte der Kopf background rgba(0,0,0,0), border-bottom 0px und ein
-  // 476px-Loch zwischen Titel und Knopfleiste. Genau das darf nicht
-  // zurueckkommen.
+  // ── 3) Was oben auf der Asset-Seite steht ────────────────────────────
+  // ⚠ DIE KOPFLEISTE IST WIEDER WEG. Sie stand genau eine Version lang da
+  // (VERSION-CHECK-518) und ist am 2026-09-14 auf ausdrueckliche Ansage
+  // abgeraeumt worden: "mach die leiste oben wieder weg und mach das wie
+  // vorher". Die sechs Pruefungen auf .ahead sind mit ihr gegangen - ein
+  // Waechter auf ein Element, das es nicht mehr geben SOLL, meldet sonst
+  // dauerhaft rot fuer den gewuenschten Zustand.
+  //
+  // Was bleibt, sind die zwei Dinge, die den Rueckbau ueberlebt haben und
+  // beim naechsten Umbau still verschwinden koennten:
+  //   • die schmale .dmeta-Zeile mit "Next event" und der Knopfleiste,
+  //   • der PRICE-Streifen (1D/1W/1M/YTD) UNTEN in der Preis-Karte - der
+  //     war beim 518er Umbau nach oben gewandert und muss jetzt wieder da
+  //     sein, wo er herkam.
+  // Dazu die Reihen-Ueberschriften, die der Nutzer ausdruecklich behalten
+  // wollte, mit seiner Obergrenze ("nicht zu viel gliedern").
   const KOPF_BREITEN = [[1920, 1080], [1500, 1000], [1280, 900], [820, 1180], [390, 844]];
   const KOPF_ASSETS = ['USD', 'GOLD', 'SP500', 'GER100', 'USYIELD', 'NZYIELD'];
-  let kopfGeprueft = 0, mitKennzahlen = 0, mitGrund = 0;
+  let kopfGeprueft = 0, mitStreifen = 0, ohneStreifen = 0;
   for (const [w, h] of KOPF_BREITEN) {
     await p.setViewportSize({ width: w, height: h });
     await p.waitForTimeout(240);
@@ -177,41 +188,36 @@ const MIN_SCHATTEN_LAGEN = 3;
       await p.waitForTimeout(170);
       const r = await p.evaluate(() => {
         const d = document.getElementById('detail');
-        const k = d.querySelector('.ahead');
-        if (!k) return { fehlt: true };
-        const cs = getComputedStyle(k), kr = k.getBoundingClientRect();
-        // Ueberlappen sich Teile IN der Leiste? (Kinder in Eltern zaehlen nicht)
-        const teile = [...k.querySelectorAll('.ahead-id, .ahk-i, .dmeta-ctrl')].map(e => e.getBoundingClientRect());
-        let ueber = 0;
-        for (let i = 0; i < teile.length; i++) for (let j = i + 1; j < teile.length; j++) {
-          const a = teile[i], c = teile[j];
-          if (a.left < c.right - 1 && a.right > c.left + 1 && a.top < c.bottom - 1 && a.bottom > c.top + 1) ueber++;
-        }
         const titel = [...d.querySelectorAll('.ab-rtitel')];
+        const ptile = d.querySelector('.ab-ptile');
         return {
-          fehlt: false,
-          flaeche: cs.backgroundColor, rand: cs.borderTopWidth,
-          hoehe: Math.round(kr.height),
-          kennzahlen: k.querySelectorAll('.ahead-kpi .ahk-i:not(.ahk-leer)').length,
-          grund: !!k.querySelector('.ahk-leer'),
-          ueber,
+          dmeta: !!d.querySelector('.dmeta'),
+          knoepfe: d.querySelectorAll('.dmeta .dmeta-hist-btn').length,
+          ahead: !!d.querySelector('.ahead'),
+          ptile: !!ptile,
+          // Der Streifen gehoert IN die Preis-Karte, nicht irgendwohin.
+          streifenInKarte: !!(ptile && ptile.querySelector('.aperf')),
+          streifenIrgendwo: !!d.querySelector('.aperf'),
           ueberlauf: d.scrollWidth > d.clientWidth + 1,
           titelAnzahl: titel.length,
           titelHoehe: Math.max(0, ...titel.map(e => Math.round(e.getBoundingClientRect().height))),
         };
       });
       kopfGeprueft++;
-      if (r.fehlt) { fail('KOPFLEISTE FEHLT', `${id} bei ${w}px: kein .ahead-Element`); continue; }
-      if (/, 0\)$/.test(r.flaeche) || r.flaeche === 'transparent') fail('KOPF OHNE EIGENE FLAECHE',
-        `${id} bei ${w}px: die Kopfleiste steht auf ${r.flaeche}. Genau so schwebte sie vorher ueber dem Raster - das war der gemeldete Fehler.`);
-      if (r.rand === '0px') fail('KOPF OHNE RAHMEN', `${id} bei ${w}px: border-top 0px, die Leiste ist nicht als Block erkennbar.`);
-      if (r.ueber) fail('KOPF UEBERLAPPT SICH', `${id} bei ${w}px: ${r.ueber} Ueberschneidung(en) zwischen Titel, Kennzahlen und Knopfleiste.`);
-      if (r.ueberlauf) fail('KOPF LAEUFT UEBER', `${id} bei ${w}px: die Seite scrollt waagerecht. Gemessen lief die Knopfleiste bei 390px 122px ueber den Rand.`);
-      // ⚠ Nie ein Loch: entweder Kennzahlen oder der ehrliche Grund, warum
-      // es keine gibt (Grundsatz 4 - die Luecke wird gemeldet, nicht gefuellt).
-      if (!r.kennzahlen && !r.grund) fail('KOPF OHNE INHALT',
-        `${id} bei ${w}px: weder Kennzahlen noch eine Begruendung - die Leiste hat wieder ein Loch in der Mitte.`);
-      if (r.kennzahlen) mitKennzahlen++; else mitGrund++;
+      if (r.ahead) fail('KOPFLEISTE IST ZURUECK',
+        `${id} bei ${w}px: es gibt wieder ein .ahead-Element. Die Leiste war ausdruecklich unerwuenscht ("mach die leiste oben wieder weg").`);
+      if (!r.dmeta) fail('META-ZEILE FEHLT',
+        `${id} bei ${w}px: keine .dmeta-Zeile. Das ist die Zeile mit "Next event" und der Knopfleiste - ohne sie sind Price chart, History, Backtester und Data quality gar nicht erreichbar.`);
+      if (r.dmeta && r.knoepfe < 4) fail('KNOEPFE FEHLEN IN DER META-ZEILE',
+        `${id} bei ${w}px: nur ${r.knoepfe} von 4 Knoepfen (Price chart, History, Backtester, Data quality) in der .dmeta-Zeile.`);
+      // ⚠ Der Streifen ist beim 518er Umbau nach oben gewandert und beim
+      // Rueckbau wieder heruntergekommen. Genau solche Wanderungen fallen
+      // sonst niemandem auf - die Zahlen sind ja irgendwo.
+      if (r.ptile && !r.streifenInKarte) fail('PRICE-STREIFEN NICHT IN DER PREIS-KARTE',
+        `${id} bei ${w}px: 1D/1W/1M/YTD stehen ${r.streifenIrgendwo ? 'irgendwo anders auf der Seite' : 'gar nicht da'}, nicht unten in der Preis-Karte. Dorthin gehoeren sie seit dem Rueckbau vom 2026-09-14.`);
+      if (r.streifenInKarte) mitStreifen++; else ohneStreifen++;
+      if (r.ueberlauf) fail('SEITE LAEUFT UEBER',
+        `${id} bei ${w}px: die Asset-Seite scrollt waagerecht.`);
       // ⚠ Nutzer: "nicht zu viel gliedern das da nicht so viel Platz
       // verschwendet wird und es so klein wird."
       if (r.titelAnzahl > 3) fail('ZU VIEL GEGLIEDERT',
@@ -231,5 +237,5 @@ const MIN_SCHATTEN_LAGEN = 3;
   console.log(`[kartenlook] ok (Karte gegen Seitengrund ${(global._kontrast || 0).toFixed(2)}:1 am Pixel, `
     + `Schattenkante ${(global._schatten || 0).toFixed(2)}:1, `
     + `${Object.values(schatten)[0].lagen} gestapelte Schattenlagen, EINE Kartenflaeche fuer alle Karten; `
-    + `Kopfleiste auf ${kopfGeprueft} Kombinationen geprueft - ${mitKennzahlen} mit Kennzahlen, ${mitGrund} mit Begruendung, 0 Loecher)`);
+    + `Asset-Seite auf ${kopfGeprueft} Kombinationen geprueft - keine Kopfleiste, ${mitStreifen} mit PRICE-Streifen in der Preis-Karte, ${ohneStreifen} ohne Preis-Karte)`);
 })().catch(e => { console.error('KARTEN-LOOK-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

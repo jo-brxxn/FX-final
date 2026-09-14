@@ -14409,3 +14409,158 @@ Neu in `check/structure.js` (statisch, kostet nichts):
 ohne `/g` hatte nur das erste der beiden `.cd-heute{` umbenannt, die Regel im
 `@media (prefers-reduced-motion)`-Block blieb stehen. Mit `/g` meldet der
 Wächter rot.
+
+---
+
+## 2026-09-14 — VERSION-CHECK-520: am PC war JEDER Klick im Inhalt tot
+
+### ⚠ Der Bug — und warum ihn kein Wächter sah
+
+Gemeldet als: *„check mal bitte ob noch alle funktionen wo man drauf klicken
+kann gehen am ipad geht es aber am pc nicht mehr."*
+
+**Reproduziert mit echten Mausklicks** (Playwright `p.click()`, nicht
+`evaluate(() => openHistModal(…))`). Gemessen am History-Knopf der
+Asset-Seite, `#mHist` als Beweis:
+
+| Gerät | 1. Klick | 2. Klick | `nav`-Klasse |
+|---|---|---|---|
+| PC 1920, Maus | `none` | `none` | *(keine)* |
+| PC 1500, Maus | `none` | `none` | *(keine)* |
+| iPad 1180, Touch | `none` | **`flex`** | `nav-collapsed` |
+| iPad 820, Touch | `none` | **`flex`** | `nav-collapsed` |
+| schmal 700 | **`flex`** | `flex` | `nav-collapsed` |
+
+Am PC also **nie** — auch beim dritten nicht. Und es war nicht dieser eine
+Knopf: betroffen war **jedes Bedienelement im gesamten Inhaltsbereich**.
+
+Zwei Zwischenschritte, die den Weg zeigten:
+- `btn.click()` per Skript **öffnete das Fenster** → der Handler ist intakt,
+  `window.openHistModal` existiert, `onclick` steht am Knopf.
+- Die Ereigniskette kam vollständig an (`pointerdown → mousedown → mouseup →
+  click`, Ziel jedes Mal `.dmeta-hist-btn`, Knopf durchgehend im DOM) — aber
+  `openHistModal` wurde nie aufgerufen. Also wurde das Ereignis **in der
+  Capture-Phase geschluckt**.
+
+### Die Ursache
+
+```js
+// vorher, js/main.js, pageArea-pointerdown:
+if(breiteLeiste() && !nav.classList.contains('nav-collapsed')) ebenEingeklappt = true;
+collapse();
+// … und der click-Handler verwirft den Klick, wenn ebenEingeklappt gesetzt ist.
+```
+
+`ebenEingeklappt` soll genau **einen** Klick verwerfen: den, der die
+ausgeklappte Leiste zuklappt. Die Zeile hat das Zuklappen aber **unterstellt**
+statt geprüft. **Seit dem 2026-09-13 bleibt die Leiste am PC dauerhaft offen**
+(`navBleibtOffen()`), `collapse()` kehrt dort sofort zurück. Die Bedingung
+„nicht eingeklappt" war am PC damit **immer** wahr — jeder Zeigerdruck setzte
+den Merker, jeder folgende Klick wurde verworfen.
+
+Am iPad greift `navBleibtOffen()` nicht, die Leiste klappt wirklich zu, der
+Merker stimmt, der zweite Tipper wirkt. Genau der gemeldete Unterschied.
+
+**⚠ Fehlerklasse: ein Merker, der eine Wirkung unterstellt, statt sie zu
+messen.** Solange beide Regeln zusammenpassten, fiel es nicht auf; die
+Dauer-offen-Regel hat sie auseinandergezogen.
+
+Die Korrektur misst die Wirkung — kein Einklappen, kein Schlucken:
+
+```js
+const warOffen = !nav.classList.contains('nav-collapsed');
+collapse();
+ebenEingeklappt = breiteLeiste() && warOffen && nav.classList.contains('nav-collapsed');
+```
+
+Nach der Korrektur: PC `flex`/`flex`, iPad `none`/`flex`, schmal `flex` — der
+Zwei-Klick-Mechanismus auf Touch bleibt also unverändert.
+
+### Warum 23 grüne Wächter das durchgelassen haben
+
+`check/nav.js` (A–E) prüft **die Leiste selbst** — die funktionierte
+tadellos. Alle anderen Wächter rufen die Funktionen über `p.evaluate()`
+**direkt** auf; ein geschluckter Mausklick ist für sie unsichtbar. Es gab
+keine einzige Prüfung, die im Inhalt wirklich mit der Maus klickt.
+
+**Neu: `check/nav.js`, Abschnitt F.** Echter Klick auf einen Knopf *im
+Inhalt*, auf zwei PC-Breiten und auf dem iPad, mit unterschiedlicher
+Erwartung: am PC muss der **erste** Klick wirken, auf Touch erst der zweite.
+
+| Eingriff | Meldung |
+|---|---|
+| die alte `ebenEingeklappt`-Zeile wieder eingesetzt | 4 Fehler: „der ERSTE Mausklick auf History oeffnet nichts" (PC 1920 + PC 1280), dazu „auch der zweite … der Knopf ist dauerhaft tot" |
+
+### Der Rückbau: die Kopfleiste ist wieder weg
+
+*„mach die leiste oben wieder weg und mach das wie vorher"* — abgestimmt:
+**Leiste weg, Reihen-Überschriften behalten.** Titel und die schmale
+`.dmeta`-Zeile stehen wieder nebeneinander, 1D/1W/1M/YTD wieder unten in der
+Preis-Karte. Raus: 123 Zeilen JS (`assetKopfHtml`, `assetKopfKennzahlen`,
+`assetKopfRendite`, `assetKopfWarumLeer`) und 46 Zeilen CSS (`.ahead`,
+`.ahk-*`).
+
+⚠ Beim Rückbau wäre fast der **Asset-Titel** verschwunden: er war beim
+518er Umbau *in* die Leiste gewandert, und `detailMetaHtml()` enthält ihn
+nicht. Im Bildschirmfoto aufgefallen, nicht im Code.
+
+Die sechs `.ahead`-Prüfungen in `check/kartenlook.js` sind mitgegangen — ein
+Wächter auf ein Element, das es nicht mehr geben *soll*, meldet sonst dauerhaft
+rot für den gewünschten Zustand. An ihrer Stelle steht jetzt, was den Rückbau
+überleben muss: keine `.ahead`, eine `.dmeta` mit vier Knöpfen, und der
+PRICE-Streifen **in** der Preis-Karte (er ist schon einmal gewandert).
+
+### Retail Positioning: nicht mehr drehen
+
+Zwei Bildschirmfotos nebeneinander: Sentiment-Tab *„NZDJPY 95% long"*,
+JPY-Kachel daneben *„5%"*. Beides war richtig gerechnet — die Kachel drehte
+jedes Paar auf die Asset-Seite (95 % long NZD/JPY = 5 % long JPY) — und
+trotzdem eine Falle, weil neben der 5 der echte Ticker `NZD/JPY` stand.
+
+Entschieden: *„lass es doch richtig da stehen was für einen sinn hat es das zu
+drehen"*. Jede Zeile trägt jetzt zwei Werte:
+
+| Feld | Bedeutung | wo es steht |
+|---|---|---|
+| `lang` | Broker-Quote, unverändert | **die Zeilen der Kachel** |
+| `langAsset` | dieselbe Quote auf dieses Asset gedreht | Kopfzahl, Fußzeile, **Score** |
+
+**Beides wird gebraucht:** bei USD steht das Asset mal vorn (USD/JPY) und mal
+hinten (EUR/USD) — ein Mittelwert über ungedrehte Zeilen wäre die Vermischung
+zweier Blickrichtungen in einer Zahl. Deshalb ist jede Angabe ausdrücklich
+beschriftet („15% long JPY", „Long JPY 0/7"), und in welchem Paar das Asset auf
+welcher Seite steht, zeigt sein **hervorgehobenes Kürzel** im Paarnamen
+(`.ab-bar-me`, ersetzt das alte ⇄).
+
+**Gemessen:** 56 Zeilen über alle acht FX-Assets gegen `sentiment_data.json`
+— **0 Abweichungen**, jede Zeile identisch zum Sentiment-Tab. Der Score
+ändert sich nicht (`scorediff` grün): er las schon vorher die gedrehte Größe.
+
+**Wächter: `check/seasretail.js`, Abschnitt 6.** Jede angezeigte Zeile gegen
+den rohen Feed, 56 Zeilen über acht Assets — dazu, dass das eigene Kürzel im
+Paarnamen hervorgehoben ist und die gedrehte Zusammenfassung das Asset
+ausdrücklich nennt.
+
+⚠ **Diese Fehlerklasse konnte kein bestehender Wächter sehen:** dieselbe Größe
+an zwei Stellen in zwei Blickrichtungen fällt in keinem Diff auf und in keiner
+Rechenprobe — beide Zahlen *sind* ja richtig. Nur der direkte Vergleich mit der
+Quelle zeigt es.
+
+| Eingriff | Meldung |
+|---|---|
+| die alte Drehung wieder eingebaut (`lang = langAsset`) | 14 × „RETAIL-ZEILE GEDREHT", z. B. „USD NZD/USD: die Kachel zeigt 21%, der Feed führt 79%" |
+
+### ⚠ Zwei eigene Messfehler auf dem Weg (beide zählen)
+
+1. Mein erster Klick-Audit meldete **zehn tote Knöpfe** in der Seitenleiste.
+   Das waren die Untereinträge eines **eingeklappten** Stapels: echte Box im
+   DOM, über einen Vorfahren unsichtbar. `getComputedStyle` prüft nur das
+   Element selbst — `checkVisibility({checkVisibilityCSS, checkOpacity})`
+   prüft die ganze Kette. Erst das Bildschirmfoto hat es gezeigt.
+2. Derselbe Audit zählte einen Treffer auch dann als „ok", wenn
+   `elementFromPoint` einen **Vorfahren** lieferte (`t.contains(e)`) — genau
+   der Fall „von einem `overflow:hidden`-Vorfahren abgeschnitten". Nur
+   `t === e || e.contains(t)` ist ein Treffer.
+
+Beide Male hätte ich um ein Haar einen Fehler gemeldet, den es nicht gibt —
+und der echte Fehler lag ganz woanders.

@@ -209,6 +209,59 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     await ctx.close();
   }
 
+  // ── F: WIRKT EIN KNOPF IM INHALT BEIM ERSTEN KLICK? ─────────────────
+  // ⚠ Nutzer-Bugreport 2026-09-14: "check mal bitte ob noch alle funktionen
+  // wo man drauf klicken kann gehen - am ipad geht es aber am pc nicht
+  // mehr". Gemessen: am PC reagierte im GANZEN Inhaltsbereich kein
+  // Bedienelement mehr, auch nicht beim zweiten oder dritten Klick.
+  //
+  // URSACHE war der Schluck-Merker dieses Mechanismus: er wurde bei jedem
+  // Zeigerdruck im Inhalt gesetzt, sobald die Leiste offen war - und seit
+  // dem 2026-09-13 ist sie am PC DAUERHAFT offen. Geschluckt wurde also
+  // jeder Klick, nicht nur der eine, der die Leiste zuklappt.
+  //
+  // ⚠ WARUM KEIN BESTEHENDER WAECHTER DAS SAH: A bis E pruefen die Leiste
+  // selbst (die funktionierte), und alle anderen Waechter rufen die
+  // Funktionen ueber p.evaluate() direkt auf - ein geschluckter MAUSKLICK
+  // ist fuer sie unsichtbar. Deshalb hier ein ECHTER Klick auf einen Knopf
+  // im Inhalt, mit der Frage, ob danach wirklich etwas passiert ist.
+  {
+    for(const [name,opt,ersterKlickWirkt] of [
+      ['PC 1920',{viewport:{width:1920,height:1080}},true],
+      ['PC 1280',{viewport:{width:1280,height:900}},true],
+      // Touch behaelt den Zwei-Klick-Mechanismus: der erste Tipper klappt
+      // die Leiste zu und wird bewusst geschluckt.
+      ['iPad 1194 Touch',{viewport:{width:1194,height:834},hasTouch:true},false],
+    ]){
+      const ctx=await b.newContext(opt);
+      const p=await seite(ctx);
+      await p.evaluate(()=>{try{gotoSym('USD');}catch(e){}});
+      await p.waitForTimeout(700);
+      const zu=()=>p.evaluate(()=>{const m=document.getElementById('mHist');if(m)m.style.display='none';});
+      const offen=()=>p.evaluate(()=>{const m=document.getElementById('mHist');return !!m&&m.style.display==='flex';});
+      const knopf='.dmeta .dmeta-hist-btn:has-text("History")';
+      const da=await p.$(knopf);
+      if(!da){fehler.push(`${name}: kein History-Knopf in der .dmeta-Zeile gefunden - der Waechter kann nichts pruefen`);await ctx.close();continue;}
+      await zu();
+      await p.click(knopf,{force:true});
+      await p.waitForTimeout(400);
+      const nach1=await offen();
+      await zu();
+      await p.click(knopf,{force:true});
+      await p.waitForTimeout(400);
+      const nach2=await offen();
+      await zu();
+      if(ersterKlickWirkt){
+        pruefe(nach1,`${name}: der ERSTE Mausklick auf "History" oeffnet nichts. Genau so sah der Fehler vom 2026-09-14 aus - am PC wurde jeder Klick im Inhalt geschluckt.`);
+        pruefe(nach2,`${name}: auch der zweite Mausklick auf "History" oeffnet nichts - der Knopf ist dauerhaft tot.`);
+      }else{
+        pruefe(!nach1,`${name}: der erste Tipper wirkt schon. Auf Touch soll er nur die Leiste einklappen (${REGEL}).`);
+        pruefe(nach2,`${name}: auch der zweite Tipper oeffnet nichts - auf Touch muss spaetestens der zweite wirken.`);
+      }
+      await ctx.close();
+    }
+  }
+
   await b.close();
   console.log(JSON.stringify({total:fehler.length,findings:fehler},null,2));
 })();
