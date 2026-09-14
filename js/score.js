@@ -75,6 +75,7 @@ function indIsHalfWeight(ind,rub){
   if(BOND_HALF_PT.has(ind.name))return true;
   if(COT_NET_HALF.has(stripPeriodSuffix(ind.name).base))return true;
   if(CB_TONE_HALF.has(ind.name))return true;
+  if(SEAS_RETAIL_HALF.has(ind.name))return true;
   if(cotWowIsSmall(ind))return true;
   if(typeof SENT_HALF!=='undefined'&&SENT_HALF.has(stripPeriodSuffix(ind.name).base))return true;
   // Risk Correlation: halbes Gewicht, damit sbull/sbear (biasScore +/-2) auf
@@ -159,6 +160,15 @@ const AAII_STALE_DAYS=21;
 // Interest-Rates-Rubrik statt eines separaten Bolt-ons auf symScore:
 // Ton bull=hawkish/bear=dovish (Standard-Bias-Buttons, manuell).
 const CB_TONE_HALF=new Set(['CB Tone']);
+// ── Saisonalitaet und Retail: beide HALBGEWICHT (Nutzer-Vorgabe 2026-09-14)
+// Saisonalitaet: "0,5 Aenderung macht das dann." seasBiasFor liefert nur
+// bull/bear/neu (biasScore +/-1) -> mit w=0,5 genau +/-0,5.
+// Retail: "ab Extremen von 85 und 15 Long oder Short in % 1 scoreaemderung
+// in die andere Richtung und ab 60 bzw 40% nur 0,5 Aenderung aber bei 40-60
+// gar nix". retailBiasFor liefert dafuer sbull/sbear (biasScore +/-2 -> mit
+// w=0,5 genau +/-1) bzw. bull/bear (+/-1 -> +/-0,5) - dieselbe Mechanik wie
+// beim frueheren "Risk Correlation", siehe biasScore().
+const SEAS_RETAIL_HALF=new Set(['Seasonality','Retail Positioning']);
 // Anzeige-Indikatoren OHNE Score-Beitrag: der 2Y/10Y-Spread zaehlt 0, weil
 // (a) eine 10Y-Bewegung sonst doppelt zaehlt (im 10Y-Indikator UND im Spread)
 // und (b) eine Versteilerung kein sauberes bullish/bearish-Signal ist
@@ -1472,7 +1482,24 @@ function symScoreCmp(sym){
 // verwaessert. Gemessen: 16 von 24 Scores aendern sich, alle nach OBEN, am
 // staerksten JPY (+8,3 -> +9,1) und JP Yield (+7,7 -> +8,0). Aufgezeichnete
 // Tage davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=11;
+// V12 (2026-09-14): ZWEI NEUE SCORE-TREIBER in der Karte "COT Data".
+// (a) Saisonalitaet, +/-0,5 (Nutzer: "ich will das sessonality mit in den
+//     Score genommen wird. 0,5 Aenderung macht das dann.") - aber nur, wenn
+//     Monatsschnitt UND Trefferquote dasselbe sagen; sonst 0. Die Doppel-
+//     bedingung greift gemessen bei 3 von 13 Assets mit Datenlage (OIL:
+//     +0,32% Schnitt, aber nur 38% gestiegene Jahre; AUD 50%; SP500 44%).
+// (b) Retail gegen die Menge (Nutzer: "ab Extremen von 85 und 15 Long oder
+//     Short in % 1 scoreaemderung in die andere Richtung und ab 60 bzw 40%
+//     nur 0,5 Aenderung aber bei 40-60 gar nix"), bei einer Waehrung ueber
+//     den Anteil ihrer Paare ("3/5 Paaren Long ... Aber wenn 5/5 Long dann
+//     -1") - dieselbe Skala, einmal in Prozent des Buches, einmal in
+//     Prozent der Paare.
+// Gemessen mit check/scorediff.js gegen origin/main: 23 von 48 rohen und 45
+// von 48 verglichenen Symbol-Scores aendern sich, 24 von 240 Karten-Scores,
+// 63 von 70 Paar-Scores. Groesste Einzelbewegung NAS (-6 -> -7,5: -0,5
+// Saisonalitaet und -1 Retail bei 98% Long). Die Note 1-10 bleibt bei allen
+// 48 unveraendert. Aufgezeichnete Tage davor sind eine andere Rechnung.
+const SCORE_MODEL_VERSION=12;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -1550,7 +1577,7 @@ function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),m
 export {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
-  SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
+  SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SEAS_RETAIL_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,

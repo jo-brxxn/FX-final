@@ -140,6 +140,32 @@ const MODE = process.argv[2] || 'normalized';
   if(mitAlter<50)add('Alters-Faktor wirkt nirgends mehr',
     {mitAlter,hinweis:'Die Ausnahme greift zu weit - erwartet werden mehrere hundert echte Veroeffentlichungen mit Alters-Gewicht.'});
 
+  // ── E1c) Saisonalitaet und Retail: kein Normierungs-Faktor ─────
+  // Die Schwellen der beiden Regeln stehen in check/seasretail.js - hier
+  // geht es um die EBENE DARUEBER, und zwar in BEIDEN Modi (dieser Waechter
+  // laeuft classic UND normalized, seasretail nur im Standardmodus):
+  // ihr Beitrag darf in "normalized" nicht durch indNormFactor verschoben
+  // werden. Beide sind laufend gemessene Zustaende ohne Prognose und ohne
+  // Release-Termin - Ueberraschungsgroesse, Alter und Marktrelevanz haben
+  // dort nichts zu multiplizieren. Kaeme irgendwann ein research.date oder
+  // eine chartHist dazu, wuerde aus der Nutzer-Regel "0,5" still eine Zahl
+  // zwischen 0,2 und 0,9, ohne dass jemand die Regel angefasst haette.
+  const SR_MAX={'Seasonality':0.5,'Retail Positioning':1};
+  ok.seasRetail={geprueft:0,mitBeitrag:0};
+  syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+    const max=SR_MAX[ind.name];
+    if(max==null)return;
+    if(rub.name!=='COT Data')add('Saisonalitaet/Retail in der falschen Karte',{sym:sym.id,rub:rub.name,ind:ind.name});
+    const teile=indScoreParts(ind,rub);
+    if(Math.abs(teile.norm-1)>1e-9)add('Normierung wirkt auf Saisonalitaet/Retail',
+      {sym:sym.id,ind:ind.name,norm:Math.round(teile.norm*1000)/1000});
+    if(Math.abs(teile.w-0.5)>1e-9)add('Saisonalitaet/Retail nicht Halbgewicht',{sym:sym.id,ind:ind.name,w:teile.w});
+    if(Math.abs(teile.total)>max+1e-9)add('Saisonalitaet/Retail ueber der Nutzer-Regel',
+      {sym:sym.id,ind:ind.name,beitrag:teile.total,max});
+    ok.seasRetail.geprueft++;
+    if(teile.total!==0)ok.seasRetail.mitBeitrag++;
+  })));
+
   // ── E2) OUT OF DATE nur bei BEKANNTEM Zyklus ───────────────────
   // Nutzer-Bugreport 2026-09-06 (AUD GDP, zweite Runde): ohne Historie UND
   // ohne ind.interval faellt indCycleDaysCalc auf pauschale 30 Tage zurueck.
@@ -172,7 +198,11 @@ const MODE = process.argv[2] || 'normalized';
       add('Ohne Feed faelschlich OUT OF DATE (Zyklus nur geraten)',{sym:sym.id,ind:ind.name,date:r.date});}
   })));
   // ── F) Feed-Idempotenz ─────────────────────────────────────────
-  const feeds={applyIndDataFeed,applyBondDataFeed,applyCotDataFeed,applySentimentFeed};
+  // ⚠ applySeasRetailFeed legt Indikatoren an UND entfernt sie wieder - ein
+  // Feed, der beides tut, ist der wahrscheinlichste Kandidat fuers Pendeln
+  // (anlegen, beim naechsten Lauf entfernen, wieder anlegen). Jeder Durchlauf
+  // wuerde dann save() ausloesen und den Cloud-Sync in Bewegung halten.
+  const feeds={applyIndDataFeed,applyBondDataFeed,applyCotDataFeed,applySentimentFeed,applySeasRetailFeed};
   ok.idempotenz={};
   Object.keys(feeds).forEach(n=>{
     try{feeds[n]();recomputeAuto();const zweiter=feeds[n]();ok.idempotenz[n]=zweiter;

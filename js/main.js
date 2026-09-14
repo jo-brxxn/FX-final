@@ -466,7 +466,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 import {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
-  SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
+  SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SEAS_RETAIL_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
@@ -4711,7 +4711,12 @@ function reapplyLiveFeeds(){
   [()=>(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)?applyIndDataFeed():false,
    ()=>applyBondDataFeed(),
    ()=>applyCotDataFeed(),
-   ()=>applySentimentFeed()].forEach(fn=>{try{fn();}catch(e){}});
+   ()=>applySentimentFeed(),
+   // Saisonalitaet/Retail: derselbe Grund wie bei den vier daroeber. Ein
+   // Snapshot von VOR dem 2026-09-14 kennt die beiden Indikatoren gar nicht -
+   // ohne diesen Aufruf fehlte ihr Score-Beitrag nach jedem Sync, jedem
+   // Backup und jedem Undo, bis die Seite neu geladen wird.
+   ()=>applySeasRetailFeed()].forEach(fn=>{try{fn();}catch(e){}});
 }
 function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // Nutzer-Bugreport 2026-09-01 ("Notizen in mehreren Ordnern sind weg,
@@ -7257,6 +7262,163 @@ function abRetailVerlauf(sym){
     ${chartHoverWrap(svg,hp,'height:100%')}</div>`};
 }
 
+// ══ ZWEI NEUE SCORE-BEITRAEGE: SEASONALITY UND RETAIL ══════════════════
+//
+// Beide sitzen als Indikator in der Karte "COT Data" - das ist die einzige
+// Karte, die Markt-/Positionierungsdaten fuehrt statt Konjunkturzahlen, und
+// sie ist ohnehin vom Alters-Faktor ausgenommen (DECAY_EXEMPT_RUBS), was
+// fuer laufend gemessene Zustaende genau richtig ist.
+// ⚠ GESEHEN wird der Beitrag aber NICHT dort, sondern in der jeweiligen
+// Kachel (Nutzer 2026-09-14: "Das kommt zu sesonality kurz dadrunter ...
+// Und retail kommt zu retail dadrunter"). Die Karte ist die Rechnung, die
+// Kachel ist die Anzeige.
+
+// ── Seasonality: ±0,5, aber nur wenn sich Schnitt und Trefferquote einig sind
+// Nutzer: "ich will das sessonality mit in den Score genommen wird. 0,5
+// Aenderung macht das dann."
+// ⚠ Die Doppelbedingung ist mein Zusatz, und sie traegt: OIL steht im
+// September bei +0,32% Schnitt, ist aber nur in 38% der Jahre gestiegen.
+// Der Schnitt allein haette "Rueckenwind" in den Score geschrieben, wo die
+// Mehrheit der Jahre das Gegenteil sagt. Gemessen greift die Bedingung bei
+// 3 von 13 Assets mit Datenlage (OIL, AUD, SP500 -> 0).
+const SEAS_HIT_HOCH=60, SEAS_HIT_TIEF=40;
+function seasBiasFor(id){
+  const D=SEASONALITY_DATA;
+  const A=D&&D.assets?D.assets[id]:null;
+  if(!A||!Array.isArray(A.months))return{bias:'neu',txt:null,grund:'no seasonality series'};
+  const m=A.months.find(x=>Number(x[0])===new Date().getMonth()+1);
+  if(!m)return{bias:'neu',txt:null,grund:'no value for this month'};
+  const avg=Number(m[1]),hit=Number(m[2]);
+  if(!isFinite(avg)||!isFinite(hit))return{bias:'neu',txt:null,grund:'no value for this month'};
+  const einig=(avg>=0&&hit>=SEAS_HIT_HOCH)||(avg<0&&hit<=SEAS_HIT_TIEF);
+  return{bias:einig?(avg>=0?'bull':'bear'):'neu',avg,hit,einig,
+    txt:`${avg>0?'+':''}${avg.toFixed(2)}% · up in ${hit}%`,
+    grund:einig?null:'average and hit rate disagree'};
+}
+
+// ── Retail: gegen die Menge, nach der Regel des Nutzers ──────────────────
+// Woertlich: "ab Extremen von 85 und 15 Long oder Short in % 1
+// scoreaemderung in die andere Richtung und ab 60 bzw 40% nur 0,5 Aenderung
+// aber bei 40-60 gar nix das ist neutral" - und fuer eine Waehrung ueber
+// ihre Paare: "3/5 Paaren Long Dann scoreaemderung -0,5 bearish. Aber wenn
+// 5/5 Long dann -1".
+// ⚠ Die beiden Saetze sind DIESELBE Skala, einmal in Prozent des Buches und
+// einmal in Prozent der Paare: 3 von 5 sind 60%, 5 von 5 sind 100%. Deshalb
+// eine Schwelle fuer beide Faelle - bei einer Waehrung zaehlt der ANTEIL DER
+// PAARE, die auf dieser Seite stehen, bei einem Einzel-Asset der Anteil des
+// Buches. Mit sieben USD-Paaren heisst das: 5 von 7 (71%) mild, 6 von 7
+// (86%) extrem.
+// Das Vorzeichen dreht: eine einseitig long positionierte Menge ist bearish.
+const RETAIL_EXTREM=85, RETAIL_MILD=60;
+function retailBiasFor(id){
+  const z=abRetailZeilen(id);
+  if(!z||!z.length)return{bias:'neu',txt:null,grund:'no retail book'};
+  const einzel=z.length===1;
+  // Einzel-Asset: der Anteil des Buches. Waehrung: der Anteil ihrer Paare.
+  const lang=einzel?z[0].lang:Math.round(z.filter(x=>x.lang>50).length/z.length*100);
+  const kurz=100-lang;
+  let bias='neu';
+  if(lang>=RETAIL_EXTREM)bias='sbear';
+  else if(lang>=RETAIL_MILD)bias='bear';
+  else if(kurz>=RETAIL_EXTREM)bias='sbull';
+  else if(kurz>=RETAIL_MILD)bias='bull';
+  return{bias,lang,einzel,paare:z.length,
+    txt:einzel?`${lang}% long`:`${z.filter(x=>x.lang>50).length}/${z.length} pairs long`,
+    grund:bias==='neu'?'crowd is balanced (40-60%)':null};
+}
+/** Die Score-Regel in einem Satz - einmal geschrieben, in Kachel und Score-Fenster gleich. */
+function retailRegelText(){
+  return`From ${RETAIL_EXTREM}/${100-RETAIL_EXTREM} the score moves a full 1 the other way, from ${RETAIL_MILD}/${100-RETAIL_MILD} it moves 0.5, and between ${100-RETAIL_MILD} and ${RETAIL_MILD} nothing happens.`;
+}
+function seasRegelText(){
+  return`Counts ±0.5, and only when the average and the hit rate agree — a positive average needs at least ${SEAS_HIT_HOCH}% up years, a negative one at most ${SEAS_HIT_TIEF}%.`;
+}
+
+/** Der Score-Beitrag einer Kachel als kurze Zeile darunter. */
+// Nutzer 2026-09-14: "Das kommt zu sesonality kurz dadrunter ... Und retail
+// kommt zu retail dadrunter". Zeigt den WIRKLICHEN Beitrag aus indScore(),
+// nicht eine zweite Rechnung daneben - sonst koennen Kachel und Score-Fenster
+// verschiedene Zahlen nennen.
+// ⚠ Das ASSET der Kachel, nicht getSym(). Auf der Assets-Seite ist `c` das
+// dargestellte Asset; getSym() liefert die Auswahl der Seitenleiste - beides
+// faellt in 23 von 24 Faellen auseinander, sobald man eine Kachel eines
+// anderen Assets ansieht.
+function abScoreZeile(c,indName,grund){
+  const rub=(c&&c.rubrics||[]).find(r=>r&&r.name==='COT Data');
+  const ind=rub&&(rub.indicators||[]).find(i=>i&&i.name===indName);
+  if(!ind)return'';
+  const v=Math.round(indScore(ind,rub)*100)/100;
+  const col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
+  const wort=v>0?'bullish':v<0?'bearish':'no effect';
+  return`<div class="ab-scoreline" title="What this tile contributes to ${escH(c?(c.name||c.id):'this asset')}'s score — read straight from the score engine, not computed a second time here.">
+    <span class="ab-scoreline-l">Score effect</span>
+    <b style="color:${col}">${v>0?'+':''}${v}</b>
+    <span class="ab-scoreline-n">${escH(wort)}${v===0&&grund?' — '+escH(grund):''}</span>
+  </div>`;
+}
+
+// ── Beide Beitraege in die COT-Karte schreiben ──────────────────────────
+// Nach dem Muster von applyCotDataFeed/applySentimentFeed: der Indikator
+// wird angelegt, wenn es eine Datenlage gibt, und WIEDER ENTFERNT, wenn
+// nicht. So steht in keiner Karte eine leere Geisterzeile - und Assets ohne
+// Saisonalitaets-Reihe (NZD, BTC, DAX, GER 100) bekommen weder eine Zeile
+// noch einen Score-Beitrag, statt eines geschaetzten Nullwerts (Grundsatz 4).
+// ⚠ Bewusst OHNE research.date: beides sind ZUSTAENDE, keine Veroeffent-
+// lichungen. Mit Datum wuerde indOverdueCycles sie nach zwei Zyklen als
+// "OUT OF DATE" markieren, obwohl ein Saisonalitaets-Mittel aus 15 Jahren
+// nicht altern kann. Ohne Datum liefert indOverdueCycles null -> nie stale,
+// und die History-Synthese (pushForInd) laesst sie ebenfalls in Ruhe.
+const SEAS_IND_NAME='Seasonality', RETAIL_IND_NAME='Retail Positioning';
+function applySeasRetailFeed(){
+  if(!Array.isArray(syms))return false;
+  let changed=false;
+  const setOne=(rub,name,erg,quelle)=>{
+    const idx=rub.indicators.findIndex(i=>i&&i.name===name);
+    // Keine Datenlage -> Indikator raus (und weg ist auch sein Score).
+    if(!erg||!erg.txt){
+      if(idx>=0){rub.indicators.splice(idx,1);changed=true;}
+      return;
+    }
+    let ind=idx>=0?rub.indicators[idx]:null;
+    if(!ind){
+      ind={id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]};
+      rub.indicators.push(ind);changed=true;
+    }
+    const col=erg.bias==='bull'||erg.bias==='sbull'?'bond-up'
+             :erg.bias==='bear'||erg.bias==='sbear'?'bond-down':'bond-flat';
+    const r=ind.research||{};
+    if(!(r.actual===erg.txt&&r.cotColor===col&&r.source===quelle&&r.forecast===null)){
+      ind.research={actual:erg.txt,forecast:null,previous:null,source:quelle,cotColor:col};
+      changed=true;
+    }
+    if(!indBiasPinned(ind,indBiasInputSig(erg.txt,null,null,''))&&ind.bias!==erg.bias){
+      ind.bias=erg.bias;changed=true;
+    }
+    // Wie COT und Sentiment: kein Trend-Modell, kein Step-Signal.
+    if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+    if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}
+  };
+  syms.forEach(c=>{
+    const rub=(c.rubrics||[]).find(r=>r&&r.name==='COT Data');
+    if(!rub||!Array.isArray(rub.indicators))return;
+    let s=null,rt=null;
+    try{s=seasBiasFor(c.id);}catch(e){s=null;}
+    try{rt=retailBiasFor(c.id);}catch(e){rt=null;}
+    // Quelle: die Saisonalitaet hat keine Web-Adresse - sie wird taeglich aus
+    // der Kurshistorie des jeweiligen Proxys gerechnet; deshalb steht dort
+    // der Proxy statt eines Links. Retail nennt den Broker.
+    const proxy=SEASONALITY_DATA&&SEASONALITY_DATA.assets&&SEASONALITY_DATA.assets[c.id];
+    setOne(rub,SEAS_IND_NAME,s,proxy&&proxy.proxy?'seasonality_data.json · '+proxy.proxy:'seasonality_data.json');
+    setOne(rub,RETAIL_IND_NAME,rt,(SENTIMENT_DATA&&SENTIMENT_DATA.retailSource)||'https://www.myfxbook.com/community/outlook');
+    // Karten-Bias wie in applyCotDataFeed direkt am Vorzeichen (die Karte
+    // hat eine eigene, niedrigere Schwelle - rubAutoBiasNeeded schliesst
+    // 'COT Data' aus).
+    const sc=rubScore(rub),cardBias=sc>0?'bull':sc<0?'bear':'neu';
+    if(rub.bias!==cardBias){rub.bias=cardBias;changed=true;}
+  });
+  return changed;
+}
+
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
 function abGrafikHtml(art,c){
   if(art==='cot'){
@@ -7313,13 +7475,10 @@ function abGrafikHtml(art,c){
     // (Gold, Silber, BTC, Nasdaq) - bei einer Waehrung waeren es sieben
     // Linien in einer Kachel von 240px Breite.
     const verlauf=zeilen.length===1?abRetailVerlauf(zeilen[0].sym):null;
-    // Der Schnitt ueber die Paare ist das, was der Nutzer als Regel
-    // beschrieben hat ("3/5 Paaren Long ... 5/5 Long"). Hier steht er
-    // vorerst NUR als Anzeige - die Score-Wirkung kommt getrennt, mit
-    // Vorher/Nachher-Tabelle ueber alle Assets.
     const schnitt=Math.round(zeilen.reduce((a,z)=>a+z.lang,0)/zeilen.length);
     const einseitig=zeilen.filter(z=>z.lang>=60).length;
     const kurzSeitig=zeilen.filter(z=>z.lang<=40).length;
+    let rb=null;try{rb=retailBiasFor(c.id);}catch(e){}
     return abTile('Retail Positioning',
       `<span class="ab-tile-s">${zeilen.length===1?'1 book':zeilen.length+' pairs'}</span>`,
       `<div class="ab-big" style="color:${biasCss(schnitt>=60?'bear':schnitt<=40?'bull':'neu')}">${schnitt}% long ${escH(c.id)}</div>
@@ -7330,7 +7489,8 @@ function abGrafikHtml(art,c){
          <span><span class="ab-foot-l">Crowd short</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
          <span><span class="ab-foot-l">Average</span> <b>${schnitt}%</b></span>
        </div>
-       <div class="ab-note">Broker book, flipped to this asset's side. Read against the crowd: a one-sided retail book counts the other way. Display only — no score effect yet.</div>`);
+       ${abScoreZeile(c,RETAIL_IND_NAME,rb&&rb.grund)}
+       <div class="ab-note">Broker book, flipped to this asset's side. Read against the crowd: a one-sided retail book counts the other way. ${escH(retailRegelText())}</div>`);
   }
   // ── Seasonality ───────────────────────────────────────────────────────
   const D=SEASONALITY_DATA;
@@ -7351,7 +7511,15 @@ function abGrafikHtml(art,c){
       tip:`<div class="chv-tip-d">${SEAS_MON[nr-1]} · ${jahre} years</div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Average</span><b style="color:${f}">${+avg>0?'+':''}${(+avg).toFixed(2)}%</b></div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Up in</span><b>${hit}% of years</b></div>`});
-    return`<span class="ab-sb${nr===jetzt?' on':''}">
+    // ⚠ Der laufende Monat wird MARKIERT, nicht nur eingefaerbt (Nutzer
+    // 2026-09-14: "in der Grafik wird auch immer der aktuelle Monat
+    // markiert"). Bis hierher tat `.on` nur eines: das Monatskuerzel
+    // bekam die Akzentfarbe - bei zwoelf 14px breiten Spalten nicht zu
+    // finden. Jetzt traegt die Spalte selbst eine getoente Flaeche mit
+    // Rahmen, der Balken volle Deckkraft, und das Kuerzel steht als
+    // Kapsel darunter. Der Balken des laufenden Monats ist damit auch
+    // dann auffindbar, wenn sein Ausschlag der kleinste im Jahr ist.
+    return`<span class="ab-sb${nr===jetzt?' on':''}"${nr===jetzt?` title="Current month — ${escH(SEAS_MON[nr-1])}"`:''}>
       <span class="ab-sb-up">${+avg>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
       <span class="ab-sb-dn">${+avg<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
       <span class="ab-sb-l">${SEAS_MON[nr-1][0]}</span></span>`;
@@ -7360,7 +7528,12 @@ function abGrafikHtml(art,c){
   // ⚠ Durchschnitt UND Trefferquote gehoeren zusammen. OIL im September:
   // +0,32% im Schnitt, aber nur in 38% der Jahre ueberhaupt gestiegen -
   // der Schnitt allein haette "Rueckenwind" gesagt, wo keiner ist.
-  const stark=cur&&((+cur[1]>=0&&+cur[2]>=60)||(+cur[1]<0&&+cur[2]<=40));
+  // ⚠ EINE Rechnung, nicht zwei: "aligned" in der Fusszeile und der
+  // Score-Beitrag muessen dieselbe Bedingung pruefen, sonst kann die Kachel
+  // "aligned" sagen und der Score trotzdem 0 zeigen. Frueher stand die
+  // Doppelbedingung hier als eigener Ausdruck mit fest eingetippten 60/40.
+  let sb=null;try{sb=seasBiasFor(c.id);}catch(e){}
+  const stark=!!(sb&&sb.einig);
   return abTile('Seasonality',
     `<span class="ab-tile-s">${escH(A.proxy||'')} · ${cur?cur[3]:'–'}y</span>`,
     `<div class="ab-big" style="color:${cur?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${cur?`${+cur[1]>0?'+':''}${(+cur[1]).toFixed(2)}% in ${SEAS_MON[jetzt-1]}`:'–'}</div>
@@ -7370,7 +7543,8 @@ function abGrafikHtml(art,c){
        <span><span class="ab-foot-l">Sample</span> <b>${cur?cur[3]:'–'}</b> <span class="ab-foot-n">years</span></span>
        <span><span class="ab-foot-l">Signal</span> <b style="color:${stark?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${stark?'aligned':'mixed'}</b></span>
      </div>
-     <div class="ab-note">Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}. "Aligned" means average return and hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}.</div>`);
+     ${abScoreZeile(c,SEAS_IND_NAME,sb&&sb.grund)}
+     <div class="ab-note">Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}. "Aligned" means average return and hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}. ${escH(seasRegelText())}</div>`);
 }
 // ── Notizen-Karte: unbegrenzt, hervorhebbar, sortierbar ─────────────────
 // Nutzer 2026-09-13: "wo man dann ganz einfach eine neue Notiz reinschreiben
@@ -8302,6 +8476,7 @@ const FLIP_CAUSE_TXT={
   cot:'Cause: new COT data.',
   sentiment:'Cause: new sentiment data (put/call, AAII, retail, ...).',
   bond:'Cause: new bond/yield data.',
+  seasonality:'Cause: new seasonality averages.',
   sync:'Cause: state adopted from another tab/device (sync).',
   backup:'Cause: local backup restored.',
   undo:'Cause: undo/redo.'
@@ -9129,11 +9304,37 @@ function summarizeCot(sym,rub){
   }
   const scWord=magnitudeBiasWord(rubScore(rub));
   if(scWord){
+    // ⚠ Bis hier beschreibt der Satz NUR die Positionierung - das Urteil am
+    // Ende kommt aber aus dem KARTEN-Score, und in dem stecken seit dem
+    // 2026-09-14 auch Saisonalitaet und Retail. Ohne diesen Zusatz behauptet
+    // der Satz, das Urteil folge aus den COT-Zahlen, die davorstehen: bei
+    // GOLD stuende "net long at 90.0% (crowded) ... on balance slightly
+    // bullish", obwohl die Abschwaechung von der Saisonalitaet kommt und
+    // nicht von der Positionierung. Deshalb werden die beiden mit ihrem
+    // echten Beitrag benannt statt mit einem Adjektiv - dieselbe Zahl, die
+    // in der Kachel und im Score-Fenster steht.
+    const extras=[];
+    (rub.indicators||[]).forEach(i=>{
+      const lbl=SUM_COT_EXTRA[i&&i.name];
+      if(!lbl)return;
+      const v=indScore(i,rub);
+      if(!v)return;
+      extras.push(`${lbl} ${v>0?'+':''}${v}`);
+    });
+    const liste=extras.join(' and ');
     const contrast=levelSign&&wowSign&&levelSign!==wowSign;
-    sentence+=contrast?`, which is currently the stronger signal — on balance, that makes the picture ${scWord}`:`. On balance, that makes the picture ${scWord}`;
+    // ⚠ In der Kontrast-Variante steht schon ein Gedankenstrich - dort
+    // Klammern statt eines zweiten Strichs, sonst liest sich der Satz wie
+    // zwei ineinandergeschobene Einschuebe.
+    sentence+=contrast
+      ?`, which is currently the stronger signal — on balance${liste?` (counting ${liste})`:''}, that makes the picture ${scWord}`
+      :`. On balance${liste?` — counting ${liste} — `:', '}that makes the picture ${scWord}`;
   }
   return sentence+'.';
 }
+// Welche Nicht-Positionierungs-Indikatoren der COT-Karte im Kartentext
+// namentlich genannt werden, wenn sie wirklich etwas beitragen.
+const SUM_COT_EXTRA={'Seasonality':'seasonality','Retail Positioning':'the retail book'};
 // ⚠ summarizeRiskEnv() ist weg (2026-09-13, mit der Risk-Environment-Karte).
 const RUB_SUMMARIZERS={
   'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
@@ -9165,7 +9366,15 @@ function summarizeRub(sym,rub){
 // Kartentext aendert sich dadurch an 24 Stellen (einmal je Asset - der
 // Risk-Environment-Absatz faellt weg). Ohne diesen Bump saehen
 // Bestandsnutzer weiter den alten, gespeicherten Text.
-const SUMMARY_ENGINE_VERSION=12;
+// V13 (2026-09-14): summarizeCot() nennt jetzt Saisonalitaet und Retail mit
+// ihrem echten Beitrag, wenn sie einen haben. Grund: der Satz beschreibt
+// davor NUR die Positionierung, sein Urteil kommt aber aus dem Karten-Score,
+// in dem seit heute beide mitzaehlen. Bei GOLD stand "net long at 90.0%
+// (crowded) ... on balance slightly bullish" - die Abschwaechung kam aus der
+// Saisonalitaet, nicht aus der Positionierung, und der Satz behauptete das
+// Gegenteil. Ausserdem aendert sich das Schlusswort selbst an 8 Karten, weil
+// der Karten-Score ein anderer ist.
+const SUMMARY_ENGINE_VERSION=13;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
@@ -14713,7 +14922,14 @@ function fetchSentimentData(){
 }
 function autoFetchSentiment(){
   fetchSentimentData().then(()=>{
-    if(applySentimentFeed()){_flipCauseTag='sentiment';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
+    // ⚠ Das Retail-Buch steckt in DERSELBEN Datei - ohne den zweiten Aufruf
+    // liefe der Retail-Score-Beitrag bis zum naechsten Neuladen auf dem
+    // alten Stand weiter, obwohl die Kachel daneben schon die neuen
+    // Prozente zeigt.
+    let ch=false;
+    try{ch=applySentimentFeed();}catch(e){}
+    try{if(applySeasRetailFeed())ch=true;}catch(e){}
+    if(ch){_flipCauseTag='sentiment';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
     rerender();
   });
 }
@@ -17815,7 +18031,17 @@ function fetchSeasonalityData(){
   return fetch(DATA_BASE+'seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(8000),cache:'no-store'})
     .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets)SEASONALITY_DATA=d;}).catch(()=>{});
 }
-function autoFetchSeasonality(){fetchSeasonalityData().then(()=>{if(curPage==='seas')renderSeasonality();});}
+function autoFetchSeasonality(){
+  fetchSeasonalityData().then(()=>{
+    // Seit 2026-09-14 score-relevant: ein neuer Monatsschnitt kann den
+    // Beitrag von +0,5 auf 0 oder -0,5 drehen. Ohne diesen Aufruf stuende
+    // die Aenderung nur in der Kachel und nicht im Score.
+    let ch=false;
+    try{ch=applySeasRetailFeed();}catch(e){}
+    if(ch){_flipCauseTag='seasonality';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}
+    if(curPage==='seas')renderSeasonality();else if(ch)rerender();
+  });
+}
 function setSeasAsset(v){seasAsset=v||'';renderSeasonality();}
 const SEAS_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // Anzeige-Reihenfolge = Reihenfolge der App-Listung (FX-Majors, dann Non-FX)
@@ -19647,9 +19873,16 @@ async function bootFetchScoreFeeds(){
     fetchBondData().then(()=>{try{return applyBondDataFeed();}catch(e){return false;}}),
     fetchCotData().then(()=>{try{return applyCotDataFeed();}catch(e){return false;}}),
     fetchSentimentData().then(()=>{try{return applySentimentFeed();}catch(e){return false;}}),
-    fetchScoreHistServer().then(()=>{try{return applyScoreHistServerFeed();}catch(e){return false;}})
+    fetchScoreHistServer().then(()=>{try{return applyScoreHistServerFeed();}catch(e){return false;}}),
+    // ⚠ Saisonalitaet ist seit 2026-09-14 score-relevant (+/-0,5) und gehoert
+    // deshalb HIERHER statt neben den Preis-Feed. Sie meldet selbst kein
+    // "changed" - angewandt wird sie erst unten, wenn AUCH das Sentiment da
+    // ist, weil applySeasRetailFeed() beide Quellen zugleich braucht.
+    fetchSeasonalityData().then(()=>false)
   ]);
-  if(results.some(Boolean)){
+  let seasCh=false;
+  try{seasCh=applySeasRetailFeed();}catch(e){}
+  if(results.some(Boolean)||seasCh){
     // Flip-Ursache fuer den seltenen Fall, dass flipCauseLines() kein
     // heutiges Kalender-Event findet: ind_data hat die konkreteste
     // Erklaerung (bleibt ungetaggt, flipCauseLines() greift dann), sonst
@@ -19715,9 +19948,10 @@ function applyScoreHistServerFeed(){
   // Tabs geladen. Seit die Asset-Seite eine eigene Seasonality-Kachel hat,
   // stand die dort auf einem frisch geladenen Geraet leer da, obwohl die
   // Daten existieren - die Kachel haette "keine Daten" gemeldet, was
-  // schlicht falsch gewesen waere. Kein Score-Einfluss, deshalb bewusst
-  // NICHT in bootFetchScoreFeeds(), sondern wie der Preis-Feed daneben.
-  fetchSeasonalityData().then(()=>{if(SEASONALITY_DATA)rerender();});
+  // schlicht falsch gewesen waere.
+  // ⚠ Seit 2026-09-14 traegt sie +/-0,5 zum Score bei und wird deshalb IN
+  // bootFetchScoreFeeds() geladen, nicht mehr hier daneben - sonst liefe
+  // recomputeAuto() los, bevor der Beitrag ueberhaupt bekannt ist.
 })();
 
 // ══ OFFLINE-NUTZUNG ═════════════════════════════════════════════════
@@ -19990,6 +20224,8 @@ Object.assign(window,{
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
   abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,bondSeriesOhlc,
+  seasBiasFor,retailBiasFor,abScoreZeile,applySeasRetailFeed,SEAS_IND_NAME,RETAIL_IND_NAME,
+  SEAS_HIT_HOCH,SEAS_HIT_TIEF,RETAIL_EXTREM,RETAIL_MILD,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,

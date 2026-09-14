@@ -13733,3 +13733,141 @@ dieselbe Kerze laufen irgendwann auseinander.
 hängt und dass Dochte tatsächlich ankommen, wo der Feed High/Low führt.
 Gegenproben: Körper aus der Eröffnung → rot (711 EUR-Kerzen); High/Low
 abgeklemmt → rot (808 EUR-Tage im Feed, kein Docht gezeichnet).
+
+---
+
+## 2026-09-14 — Saisonalität und Retail zählen im Score (VERSION-CHECK-513)
+
+Nutzer-Vorgaben, wörtlich:
+
+- *„ich will das sessonality mit in den Score genommen wird. 0,5 Änderung
+  macht das dann."*
+- *„ab Extremen von 85 und 15 Long oder Short in % 1 scoreaemderung in die
+  andere Richtung und ab 60 bzw 40% nur 0,5 Änderung aber bei 40-60 gar nix
+  das ist neutral"* — und für eine Währung über ihre Paare: *„3/5 Paaren Long
+  Dann scoreaemderung -0,5 bearish. Aber wenn 5/5 Long dann -1"*
+- Auf die Rückfrage, wo der Beitrag stehen soll: *„Das kommt zu sesonality
+  kurz dadrunter und in der Grafik wird auch immer der aktuelle Monat
+  markiert. Und retail kommt zu retail dadrunter"*
+
+### Wo die Rechnung hängt und wo sie zu sehen ist
+
+Beide sitzen als Indikator in der Karte **COT Data** — die einzige Karte, die
+Markt-/Positionierungsdaten statt Konjunkturzahlen führt, und ohnehin vom
+Alters-Faktor ausgenommen (`DECAY_EXEMPT_RUBS`). **Gesehen** wird der Beitrag
+aber in der jeweiligen Kachel: die Karte ist die Rechnung, die Kachel ist die
+Anzeige. `abScoreZeile()` liest dafür `indScore()` — also die echte
+Score-Rechnung, keine zweite Rechnung daneben. Sonst können Kachel und
+Score-Fenster verschiedene Zahlen nennen.
+
+### Die Doppelbedingung bei der Saisonalität (mein Zusatz)
+
+Schnitt **und** Trefferquote müssen dasselbe sagen, sonst 0. Gemessen greift
+das bei 3 von 13 Assets mit Datenlage:
+
+| Asset | Monatsschnitt Sep | in % der Jahre gestiegen | Beitrag |
+|---|---|---|---|
+| OIL | +0,32 % | 38 % | **0** |
+| AUD | −0,59 % | 50 % | **0** |
+| SP500 | −1,04 % | 44 % | **0** |
+
+Der Schnitt allein hätte bei OIL „Rückenwind" in den Score geschrieben, wo die
+Mehrheit der Jahre das Gegenteil sagt.
+
+### Beide Sätze des Nutzers sind DIESELBE Skala
+
+„85/15" ist Prozent des Buches, „5/5 Paare" ist Prozent der Paare — 3 von 5
+sind 60 %, 5 von 5 sind 100 %. Deshalb eine Schwelle für beide Fälle: bei
+einer Währung zählt der **Anteil ihrer Paare** auf einer Seite, bei einem
+Einzel-Asset der **Anteil des Buches**. Mit sieben USD-Paaren heißt das 5/7
+(71 %) mild und 6/7 (86 %) extrem.
+
+Gemessener Stand am 2026-09-14:
+
+| Asset | Seasonality | Beitrag | Retail | Beitrag |
+|---|---|---|---|---|
+| USD | +0,69 % · 63 % | +0,5 | 7/7 Paare long | −1 |
+| EUR | −0,57 % · 31 % | −0,5 | 3/7 (ausgeglichen) | 0 |
+| GBP | −0,37 % · 38 % | −0,5 | 5/7 Paare long | −0,5 |
+| CHF | −0,69 % · 31 % | −0,5 | 5/7 Paare long | −0,5 |
+| JPY | −0,69 % · 38 % | −0,5 | 1/7 Paare long | +1 |
+| CAD | −0,62 % · 31 % | −0,5 | 3/7 (ausgeglichen) | 0 |
+| AUD | −0,59 % · 50 % | 0 | 0/7 Paare long | +1 |
+| NZD | keine Reihe | – | 4/7 (ausgeglichen) | 0 |
+| BTC | keine Reihe | – | 55 % long | 0 |
+| GOLD | −0,96 % · 25 % | −0,5 | 50 % long | 0 |
+| SILVER | −1,78 % · 38 % | −0,5 | 55 % long | 0 |
+| OIL | +0,32 % · 38 % | 0 | kein Buch | – |
+| SP500 | −1,04 % · 44 % | 0 | kein Buch | – |
+| NAS | −1,04 % · 38 % | −0,5 | 98 % long | −1 |
+
+DAX, GER 100 und die zehn Renditen haben weder das eine noch das andere.
+
+### Keine Geisterzeilen, kein Release-Datum
+
+`applySeasRetailFeed()` legt den Indikator an, **wenn** es eine Datenlage gibt,
+und entfernt ihn wieder, wenn nicht — statt einer leeren Zeile mit einem
+geschätzten Nullwert (Grundsatz 4). Beide tragen bewusst **kein**
+`research.date`: es sind Zustände, keine Veröffentlichungen. Mit Datum hätte
+`indOverdueCycles` einen 15-Jahres-Mittelwert nach zwei Zyklen als *OUT OF
+DATE* markiert.
+
+### Gemessen, nicht geschätzt (check/scorediff.js gegen origin/main)
+
+- Symbol-Score roh: **23 von 48** verändert, verglichen (`cmp`) **45 von 48**
+- Karten-Score: **24 von 240**, Paar-Score: **63 von 70**
+- Note 1–10: **0 von 48** — die Stärke-Note bleibt überall gleich
+- Größte Einzelbewegung: NAS −6 → −7,5 (−0,5 Saisonalität, −1 Retail bei 98 %
+  long). `SCORE_MODEL_VERSION` 11 → **12**.
+
+### Der Kartentext behauptete etwas Falsches
+
+`summarizeCot()` beschreibt oben nur die Positionierung, sein Urteil kommt aber
+aus dem Karten-Score. Bei GOLD stand damit *„net long at 90.0 % (crowded) … on
+balance slightly bullish"* — die Abschwächung kam aus der Saisonalität, nicht
+aus der Positionierung. Der Satz nennt jetzt beide mit ihrem echten Beitrag
+(*„On balance — counting seasonality −0,5 and the retail book −1 — …"*).
+`check/summarydiff.js`: 10 von 120 Kartentexten ändern sich,
+`SUMMARY_ENGINE_VERSION` 12 → **13**.
+
+### Der aktuelle Monat war nicht markiert, sondern nur eingefärbt
+
+`.ab-sb.on` tat bis hier **genau eines**: das Monatskürzel bekam die
+Akzentfarbe. Bei zwölf Spalten von rund 14 px Breite ist das nicht zu finden —
+besonders nicht, wenn der Balken des laufenden Monats der kleinste im Jahr ist.
+Jetzt trägt die Spalte eine getönte Fläche mit Rahmen (`color-mix` auf
+`--accent`) und das Kürzel eine Kapsel.
+
+### Wächter + Gegenproben
+
+Neu: **`check/seasretail.js`** (20. Prüfung in `check/all.js`). Prüft 28
+Schwellen-Fälle beider Regeln an **eingespeisten** Werten statt an dem, was
+zufällig in der Datei steht — die echten Daten decken heute weder exakt 60 %
+noch exakt 85 % ab, ein Wächter darauf könnte eine verschobene Schwelle nicht
+sehen. Dazu: Halbgewicht und Deckel (Saisonalität nie über 0,5, Retail nie über
+1), Geisterzeilen in beide Richtungen, Kachel-Zeile gegen `indScore()`, kein
+Release-Datum, und die Monats-Markierung **im DOM gemessen** statt im Quelltext
+behauptet.
+
+`check/score.js` bekam Abschnitt **E1c**: dieselben Grenzen zusätzlich in
+*beiden* Score-Modi, plus die Forderung `indNormFactor === 1` — käme
+irgendwann ein `research.date` oder eine `chartHist` dazu, würde aus der
+Nutzer-Regel „0,5" still eine Zahl zwischen 0,2 und 0,9.
+
+Gegenproben, alle rot gemeldet und danach wieder grün:
+
+| Eingriff | Meldung |
+|---|---|
+| `RETAIL_MILD` 60 → 55 | 4 Schwellen-Fälle falsch (59 %, 41 %, 4/7, 3/7) |
+| `SEAS_RETAIL_HALF` aus `indIsHalfWeight` | kein Halbgewicht + Beitrag über der Regel, 24 Indikatoren |
+| `.ab-sb.on` zurück auf „nur Schriftfarbe" | markierte Spalte ohne eigene Fläche (`rgba(0,0,0,0)`) |
+| `abScoreZeile` aus der Retail-Kachel | keine `.ab-scoreline` in der Kachel |
+| Indikatoren in die Inflations-Karte + altes Datum | falsche Karte (24×) + Normierung wirkt (24×) |
+
+⚠ Eine **Gegenprobe, die nicht anschlug**, und warum: der erste Versuch, die
+Normierung zu brechen, gab dem Indikator eine Prognose und ein Datum — der
+Wächter blieb grün. Grund: ohne `chartHist` liefert `indSurpriseScale()` kein
+Maß, und in der COT-Karte ist der Alters-Faktor ausgenommen. Erst mit
+*beidem* — anderer Karte **und** altem Datum — wirkt die Normierung und der
+Wächter fällt. Eine Gegenprobe, die grün bleibt, ist kein Beleg für den
+Wächter, sondern für die eigene Annahme.

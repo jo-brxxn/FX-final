@@ -16,6 +16,46 @@ verschiedene Rechnungen.
 | Step-Signal (Actual vs. Previous) | ±0,5 | NUR wenn kein Forecast existiert - Ersatz fuer Beat/Miss, betrifft 38 Indikatoren |
 | ★ Wichtig | +0,5 additiv | Nutzer-Markierung |
 | Normierung (nur Modus `normalized`) | ×0,4 bis ×1,8 | drei gemessene Faktoren, siehe unten |
+| **Saisonalitaet** | ±0,5 | seit 2026-09-14, siehe unten |
+| **Retail-Positionierung** | ±0,5 / ±1 | seit 2026-09-14, gegen die Menge, siehe unten |
+
+### Saisonalitaet und Retail (seit 2026-09-14)
+
+Beide sitzen als Indikator in der Karte **COT Data** (`applySeasRetailFeed()`
+in `js/main.js`), beide sind **Halbgewicht** (`SEAS_RETAIL_HALF` in
+`js/score.js`) — `bull`/`bear` ergeben damit ±0,5, `sbull`/`sbear` ±1.
+Angezeigt wird der Beitrag aber in der jeweiligen **Kachel** der Asset-Seite
+(`abScoreZeile()`), nicht in einer eigenen Karte: Nutzer-Vorgabe *„Das kommt
+zu sesonality kurz dadrunter … Und retail kommt zu retail dadrunter"*.
+`abScoreZeile()` liest `indScore()` — nie eine zweite Rechnung danebenstellen,
+sonst nennen Kachel und Score-Fenster verschiedene Zahlen.
+
+**Saisonalitaet** (`seasBiasFor`, `SEAS_HIT_HOCH=60` / `SEAS_HIT_TIEF=40`):
+Monatsschnitt **und** Trefferquote muessen dasselbe sagen, sonst 0. Ein
+positiver Schnitt braucht mindestens 60 % gestiegene Jahre, ein negativer
+hoechstens 40 %. Die Doppelbedingung traegt: OIL steht im September bei
++0,32 % Schnitt, ist aber nur in 38 % der Jahre gestiegen — der Schnitt allein
+haette Rueckenwind in den Score geschrieben. Nie `sbull`/`sbear`, also nie
+mehr als ±0,5.
+
+**Retail** (`retailBiasFor`, `RETAIL_EXTREM=85` / `RETAIL_MILD=60`): gegen die
+Menge. Ab 85/15 volle ∓1, ab 60/40 nur ∓0,5, zwischen 40 und 60 nichts.
+⚠ Bei einer **Waehrung** zaehlt der Anteil ihrer **Paare** auf einer Seite,
+bei einem **Einzel-Asset** der Anteil des **Buches** — das sind dieselben
+Schwellen auf derselben Skala (3 von 5 Paaren = 60 %, 5 von 5 = 100 %), nicht
+zwei Regeln. Mit sieben USD-Paaren heisst das 5/7 (71 %) mild, 6/7 (86 %)
+extrem.
+
+**Kein `research.date`** bei beiden, mit Absicht: es sind Zustaende, keine
+Veroeffentlichungen. Mit Datum wuerde `indOverdueCycles` einen 15-Jahres-
+Mittelwert nach zwei Zyklen als OUT OF DATE markieren. **Keine Geisterzeile:**
+wo es keine Datenlage gibt, wird der Indikator entfernt statt mit einem
+geschaetzten Nullwert stehen gelassen.
+
+Geprueft von `check/seasretail.js` (Schwellen an eingespeisten Werten,
+Deckel, Geisterzeilen, Kachel gegen Score, Monats-Markierung im DOM) und
+`check/score.js` Abschnitt E1c (Halbgewicht, Deckel und `indNormFactor === 1`
+in **beiden** Score-Modi).
 
 ## Was NICHT (mehr) in den Score einfliesst
 
