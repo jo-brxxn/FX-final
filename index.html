@@ -2105,15 +2105,26 @@ body.res-return-active #resBackBar{display:flex}
 /* Die Notes-Karte rechts ist weg (Dopplung zum Board), also kein
    Zwei-Spalten-Raster mehr - die Knoepfe fuellen die Zeile allein. */
 .aqr{display:block;margin-bottom:8px}
-/* Vier Schnellzugriffe als 2x2 (Nutzer 2026-09-13) - als eine Zeile waren sie
-   ueber die volle Breite gestreckt und kosteten eine eigene Reihe. */
+/* Die linke Kopfspalte traegt seit dem 2026-09-14 nur noch die Preis-Karte -
+   die vier Schnellzugriffe sind daraus heraus in eine eigene Reihe gewandert
+   (siehe .ab-qrow weiter unten). */
 .aql-col{display:flex;flex-direction:column;gap:8px;min-width:0}
-.aql-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;flex:0 0 auto}
 /* ⚠ War: der Streifen streckte sich ueber die Resthoehe der Spalte. Seit er
    in der Preis-Karte sitzt, streckt sich stattdessen die KARTE - sonst
    zieht der Streifen selbst sich auf 160px auf. */
 .aql-col>.ab-ptile{flex:1 1 auto}
-.aql-grid .aql{width:100%;height:100%;justify-content:center}
+/* ── Die vier Schnellzugriffe als eigene Reihe unter der Kopfreihe
+   (Nutzer 2026-09-14: "Mach die 4 quicklinks als Zeile unter die 3 oberen
+   Karten"). Sie liegt IM Kartenraster und spannt alle drei Spalten, damit
+   sie denselben Spaltenabstand mitnimmt wie die Reihen darueber und
+   darunter.
+   ⚠ auto-fit statt fester vier Spalten: auf Handybreite waeren vier Knoepfe
+   je rund 90px breit - genau der Grund, aus dem sie im Juli zum 2x2-Raster
+   geworden waren. So stehen sie am PC in einer Zeile und brechen erst um,
+   wenn ein Knopf unter 150px fiele. */
+.ab-qrow{grid-column:1 / -1}
+.ab-qzeile{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ab-qzeile .aql{min-height:46px;justify-content:center}
 .aqr-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .aql{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;min-height:42px;border:1px solid var(--chrome-line);background:var(--chrome-quick);color:#C3D0E6;border-radius:var(--rs);font:700 var(--fs-sm)/1.2 var(--ff-text);cursor:pointer;min-width:0}
 .aql span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -5062,11 +5073,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-514 - Die fehlenden Charts hatten EINE Ursache, und es war meine eigene von gestern. GEMELDET (zwei Bildschirmfotos vom iPad): die S&amp;P-500-Kachel meldete No daily series for this window yet und der PRICE-Streifen zeigte vier Striche - obwohl drei Jahre Historie in der Datei stehen. GEMESSEN, NICHT GERATEN: der OHLC-Backfill vom 13. September hat price_data.json von 512 auf 1299 Kilobyte gebracht, also Faktor 2,53, und damit die 8-Sekunden-Frist des Browsers gerissen. Auf einer langsamen Leitung kam die Datei nicht mehr an. Per Playwright wortgleich reproduziert, indem der Abruf ueber die Frist hinaus verzoegert wurde: dieselbe Meldung, dieselben vier Striche, dieselben Renditen-Kacheln daneben. ZWEI GRUENDE FUER DIE GROESSE, beide meine: 400 Kilobyte, also 31 Prozent der Datei, waren Einrueckung, und 34400 Felder trugen Gleitkomma-Rauschen - Yahoo liefert 102.01000213623047 fuer einen Wert mit zwei sinnvollen Stellen. Open, High und Low stehen jetzt auf sieben signifikanten Stellen und die Datei wird ohne Einrueckung geschrieben: 1299 auf 581 Kilobyte, also 55 Prozent kleiner, bei einer groessten relativen Abweichung eines Dochts von 0,0000495 Prozent. DER SCHLUSSKURS WURDE NICHT ANGEFASST - nachgerechnet ueber alle 12540 Tage: null Veraenderungen. Er haengt an Tagesperformance, Marktrelevanz-Gewichtung, Korrelationen und der Saisonalitaets-Ueberlagerung. Nach dem Runden wird wieder auf den Koerper geklemmt, sonst rutschen 115 von 12229 Dochten einen Hauch darunter. DIE FEHLERKLASSE gesucht und mitbehoben: derselbe Fehler steckte in vier weiteren Feeds. Indikatoren 736 auf 378, Sentiment 248 auf 120, Anleihen 126 auf 65, Zinswahrscheinlichkeiten 58 auf 25 und Nachrichten 297 auf 257 Kilobyte. Alle Live-Daten zusammen: 2763 auf 1595 Kilobyte. DIE MELDUNG BESCHULDIGTE DAS FALSCHE: Try MAX - the feed may start later than the selected range ist ein Rat, der nichts geholfen haette, und eine Erklaerung, die die echte Ursache verdeckt - exakt dieselbe Fehlerklasse wie damals bei OUT OF DATE. Kommt ein Feed gar nicht an, sagt die Kachel das jetzt, und der PRICE-Streifen auch. Die Frist steht ausserdem nur noch an EINER Stelle statt an zwoelf und liegt bei 20 Sekunden - eine zu knappe Frist sieht auf einer langsamen Leitung immer wie ein Datenausfall aus. NEU: die Preis-Karte. Wo bisher nur vier Prozentzahlen standen, steht jetzt ein Kerzenchart des Assets mit demselben Zeichner wie das Kontext-Band - eine Kerze ein Tag, kein Wochenende ausser bei Krypto, Dochte wo der Feed sie fuehrt, Wochentag im Hover - und der Zeitregler darin ist derselbe wie unten, nicht ein zweiter. Darunter die vier Fenster, darunter die Schnellzugriffe: Karte und Knoepfe haben die Plaetze getauscht. DIE DOCHTE DER RENDITEN: gemessen gibt es dafuer genau eine erreichbare Historienquelle. Yahoos ^TNX liefert fuer die US-Zehnjaehrige 1255 Tage mit 99 Prozent Dochten; ^US2Y und alle neun geprueften Symbole fuer Deutschland, Grossbritannien, die Schweiz, Japan, Kanada, Australien und Neuseeland antworten mit HTTP 404, und die US-Zweijaehrige gibt es dort nur als Future, also als anderes Instrument - eine andere Zahl unter derselben Ueberschrift kommt nicht in die Datei. Der Backfill traegt deshalb NUR die US-10Y nach, und auch das erst, nachdem er gemessen hat, wie weit die beiden Quellen im Median auseinanderliegen. Die uebrigen fuenfzehn Ticker sagen in ihrer Fusszeile weiter offen, wie viele ihrer Kerzen ein gemessenes Hoch und Tief tragen, und erklaeren beim Darueberfahren warum. Ein neuer Waechter deckelt jeden Live-Feed auf 900 Kilobyte und alle zusammen auf 3500, verlangt minifizierte grosse Dateien, verbietet Gleitkomma-Rauschen in Open, High und Low, prueft dass jeder Docht seinen Koerper umschliesst und dass alle zwoelf Abrufe dieselbe Frist-Konstante benutzen. Vier Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-515 - Die vier Schnellzugriffe stehen jetzt als durchgehende Zeile unter den drei Kopfkarten statt als 2x2-Block in der linken Spalte (Nutzer: Mach die 4 quicklinks als Zeile unter die 3 oberen Karten). Sie liegen bewusst IM selben Kartenraster und spannen alle drei Spalten - nur so nehmen sie denselben Spaltenabstand mit wie die Reihen darueber und darunter und sitzen buendig dazwischen. GEMESSEN ueber drei Breiten: bei 1500 Pixeln vier Knoepfe zu je 315 Pixeln in einer Zeile, von der linken Kante der Preis-Karte bis zur rechten Kante des Kalenders, kein Loch zur naechsten Reihe; bei 1180 Pixeln vier zu je 235; bei Handybreite brechen sie auf zwei mal zwei um, ohne Seiten-Ueberlauf. ⚠ Das Umbrechen ist Absicht und kein Nebeneffekt: eine fest vierspaltige Zeile ergibt auf 390 Pixeln vier Knoepfe zu 90 Pixeln - genau der Grund, aus dem sie im Juli ueberhaupt erst zum 2x2-Raster geworden waren. Deshalb auto-fit mit einer Mindestbreite von 150 Pixeln statt vier festen Spalten. Die linke Kopfspalte traegt damit nur noch die Preis-Karte und streckt sich auf die Hoehe der Reihe, und das tote 2x2-Raster ist aus dem Stilblatt entfernt statt als unbenutzte Regel liegenzubleiben.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-514</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-515</span>
     </span>
   </div>
   <div class="hdr-r">

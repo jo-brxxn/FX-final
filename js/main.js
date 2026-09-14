@@ -7694,16 +7694,31 @@ function abQuickGridHtml(c){
   }).join('');
   const aufNotes=curSub==='notes';
   const notizKnopf=`<button class="aql${aufNotes?' on':''}" onclick="setSub('${aufNotes?'specific':'notes'}')" title="${aufNotes?'Back to the data view':'All notes and folders of this asset'}">${icn('note',14)}<span>${aufNotes?'Close notes':'All notes'}</span></button>`;
-  // ⚠ REIHENFOLGE GETAUSCHT am 2026-09-14 (Nutzer: "und das das mit den
-  // quicklinks Position Switcht"): erst der Preis-Chart, dann die vier
-  // Knoepfe. Vorher standen die Knoepfe oben und darunter nur ein Streifen
-  // mit vier Prozentzahlen - die Spalte ist so hoch wie die hoechste der
-  // drei Kopfkarten, der Chart fuellt sie jetzt sinnvoll aus statt die
-  // Knoepfe auf 160px Hoehe zu strecken.
-  return`<div class="aql-col">
-    ${assetPreisKarteHtml(c)}
-    <div class="aql-grid">${links}${notizKnopf}</div>
-  </div>`;
+  // ⚠ ZWEI SCHRITTE AM 2026-09-14, in dieser Reihenfolge:
+  //   1. "und das das mit den quicklinks Position Switcht" - der Preis-Chart
+  //      nach oben, die vier Knoepfe darunter.
+  //   2. "Mach die 4 quicklinks als Zeile unter die 3 oberen Karten" - die
+  //      Knoepfe sind ganz aus der Spalte heraus und stehen jetzt als eigene
+  //      Reihe ueber die volle Breite unter der Kopfreihe (renderAssetBoard).
+  // Uebrig bleibt hier also nur noch die Preis-Karte. Der Wrapper bleibt
+  // trotzdem stehen: .aql-col traegt die Regel, die die Karte auf die Hoehe
+  // der Reihe streckt - ohne ihn stuende unter ihr wieder tote Flaeche.
+  return`<div class="aql-col">${assetPreisKarteHtml(c)}</div>`;
+}
+/** Die vier Schnellzugriffe als eigene Reihe ueber die volle Breite. */
+// Nutzer 2026-09-14: "Mach die 4 quicklinks als Zeile unter die 3 oberen
+// Karten". ⚠ auto-fit statt fester vier Spalten: bei 1500px sind das vier
+// Knoepfe zu je rund 360px, bei Handybreite brechen sie auf 2x2 um. Genau
+// deshalb waren sie im Juli ueberhaupt erst zum 2x2-Raster geworden - eine
+// fest vierspaltige Zeile ergibt auf 390px vier Knoepfe zu 90px.
+function abQuickZeileHtml(c){
+  const links=ASSET_QUICK_LINKS.map(([tab,ic,lbl])=>{
+    if(tab==='sent')return`<button class="aql" onclick="openSentPicker({kind:'page'})" title="${escH(lbl)} — pick which view">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+    return`<button class="aql" onclick="assetQuickGo('${tab}')" title="${escH(lbl)} — opens with this asset already selected">${icn(ic,14)}<span>${escH(lbl)}</span></button>`;
+  }).join('');
+  const aufNotes=curSub==='notes';
+  const notizKnopf=`<button class="aql${aufNotes?' on':''}" onclick="setSub('${aufNotes?'specific':'notes'}')" title="${aufNotes?'Back to the data view':'All notes and folders of this asset'}">${icn('note',14)}<span>${aufNotes?'Close notes':'All notes'}</span></button>`;
+  return`<div class="ab-qzeile">${links}${notizKnopf}</div>`;
 }
 // Angepinnte Notizen. Bewusst NUR die angepinnten: die vollstaendige Liste
 // steht eine Taste weiter unter "All notes", und eine zweite vollstaendige
@@ -7766,6 +7781,12 @@ function renderAssetBoard(c){
       <div class="ab-col">${abQuickGridHtml(c)}</div>
       <div class="ab-col">${abPinnedHtml(c)}</div>
       <div class="ab-col">${assetMonthCalHtml(c)}</div>
+      ${/* ⚠ Eigene Reihe ueber alle drei Spalten (Nutzer 2026-09-14: "Mach
+           die 4 quicklinks als Zeile unter die 3 oberen Karten"). Sie steht
+           im SELBEN Raster statt in einem eigenen Block darueber oder
+           darunter - nur so sitzt sie garantiert buendig zwischen den beiden
+           Reihen und nimmt denselben Spaltenabstand mit. */''}
+      <div class="ab-col ab-qrow">${abQuickZeileHtml(c)}</div>
       ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
       ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
     </div>
@@ -20313,7 +20334,7 @@ Object.assign(window,{
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
-  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,
+  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,
   // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,

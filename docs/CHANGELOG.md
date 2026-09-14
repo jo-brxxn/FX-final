@@ -14012,3 +14012,29 @@ umschließt, und dass alle zwölf Abrufe dieselbe Frist-Konstante benutzen.
 meldete zunächst 61 Felder. Nachgesehen: das sind Dochte, die exakt auf dem
 **Schlusskurs** klemmen und dessen (bewusst ungerundete) Darstellung erben —
 harmlos. Die Prüfung nimmt Werte, die gleich dem Schluss sind, jetzt aus.
+
+### Nachtrag: die vier Schnellzugriffe als eigene Zeile (VERSION-CHECK-515)
+
+Nutzer direkt danach: *„Mach die 4 quicklinks als Zeile unter die 3 oberen
+Karten"*. Sie liegen jetzt **im selben Kartenraster** und spannen alle drei
+Spalten (`grid-column:1/-1`) — nicht als eigener Block darüber oder darunter.
+Nur so nehmen sie denselben Spaltenabstand mit wie die Reihen darüber und
+darunter und sitzen bündig dazwischen.
+
+Gemessen über drei Breiten:
+
+| Viewport | Knopfbreite | Zeilen | Seiten-Überlauf |
+|---|---|---|---|
+| 1500 px | 4 × 315 px (x=192 → 1478) | 1 | nein |
+| 1180 px | 4 × 235 px | 1 | nein |
+| 390 px | 4 × 153 px | **2** (2×2) | nein |
+
+⚠ Das Umbrechen ist Absicht: eine **fest** vierspaltige Zeile ergibt auf 390 px
+vier Knöpfe zu 90 px — genau der Grund, aus dem sie am 2026-09-13 überhaupt
+erst zum 2×2-Raster geworden waren. Deshalb
+`repeat(auto-fit,minmax(150px,1fr))` statt `repeat(4,1fr)`.
+
+Die linke Kopfspalte trägt damit nur noch die Preis-Karte (`.aql-col>.ab-ptile`
+streckt sie auf die Reihenhöhe, sonst stünde darunter tote Fläche). Das tote
+`.aql-grid` ist aus dem Stilblatt **entfernt**, statt als unbenutzte Regel
+liegenzubleiben.
