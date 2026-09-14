@@ -14215,3 +14215,86 @@ ein 404 fällt sonst niemandem auf.
 | Schleier auf 70 % | BAND ZU KRÄFTIG (+16,2 σ) |
 | `img/note-eur.webp` entfernt | SCHEIN-FOTO FEHLT |
 | feste Emblemposition (Emblem-Assets) | MOTIV AUF SCHRIFT |
+
+### Rückbau: die Asset-Motive sind wieder raus (VERSION-CHECK-518)
+
+Nutzer: *„Ja ne entfern die Bilder komplett wieder"*. Entfernt: die drei
+Schein-Fotos, die sechs gezeichneten SVG-Vorlagen (Schein, Barren, Fass,
+Münze, Kerzenchart, Anleihe-Urkunde), die Zuordnung je Asset, die gemessene
+Platzierung samt Neuberechnung bei jedem Resize, das Schleier-Regelwerk für
+das Band und die beiden Wächter-Abschnitte dazu — **186 Zeilen Code**, drei
+Bilddateien und der Herkunftsnachweis.
+
+**Was bleibt**, weil es der eigentliche Auftrag war: weißer Seitenhintergrund,
+getönte Karten (gemessene 1,23:1 am Pixel), vier gestapelte Schattenlagen,
+eine Kartenfläche für alle Karten, und die nachgezogenen Textstufen.
+`check/kartenlook.js` prüft weiterhin genau das.
+
+### Die Asset-Seite bekommt oben einen Anfang (VERSION-CHECK-518, zweiter Teil)
+
+Nutzer: *„ich finde jetzt die Asset Kategorie mit dieser 3 Spalten Optik mit
+den ganzen Karten hat nicht oben einen richtigen Anfang was kann man da machen
+wie bekommt man das umdesignt"*. Abgestimmt: **Kopfleiste mit Kennzahlen
+darin** + **Reihen-Überschriften**, aber *„nicht zu viel gliedern das da nicht
+so viel Platz verschwendet wird"*.
+
+### Gemessen, was gefehlt hat
+
+| | Wert |
+|---|---|
+| Kopfbereich `background` | `rgba(0,0,0,0)` — keine eigene Fläche |
+| `border-bottom` | `0px` — keine Trennlinie |
+| Loch Titel → Knopfleiste (1500 px) | **476 px** |
+| Abstand Titel → erste Karte | 103 px leerer Raum |
+
+Drei schwebende Teile, nichts das „hier fängt die Seite an" sagt.
+
+### ⚠ Die Kennzahlen sind nicht neu, sie sind umgezogen
+
+1D/1W/1M/YTD standen vorher **unten in der Preis-Karte**. Sie oben *zusätzlich*
+zu zeigen wäre eine Dopplung und hätte echte Höhe gekostet. Also wandern sie
+nach oben, füllen dabei genau das Loch, und die Preis-Karte wird um ihren
+51-px-Streifen leichter. Dazu der letzte Kurs.
+
+**Höhenbilanz bei 1500 px:** Kopf 73 → 76 px (+3), Preis-Karte −51 px,
+Überschriften +45 px → **netto −3 px**. Die Gliederung kostet nichts.
+
+### Die acht Renditen zeigen ihre Rendite, in Basispunkten
+
+Sie haben keine Preisreihe. Für sie ist die Rendite selbst die Zahl, und sie
+liegt in `bond_data.json`. Die Veränderung steht in **Basispunkten**, nicht in
+Prozent — 4,97 → 5,02 ist ein Plus von 1 % aber 5 bp, und am Anleihemarkt liest
+das niemand als Prozent. Beim Jahresvergleich greift die Reihe auf ihren ersten
+Tag zurück, wenn sie erst im Januar beginnt: ohne das stand YTD bei allen acht
+auf einem Strich, obwohl acht Monate Historie vorliegen (jetzt USYIELD +78 bp).
+
+**Genau ein Asset von 24** hat weder Preis noch Rendite: GER 100, weil der Feed
+den Index unter DAX führt. Die beiden stillschweigend gleichzusetzen wäre
+dieselbe Art Fehler wie die US-2Y aus einem Future zu speisen. Statt eines
+Lochs sagt die Leiste dort, warum sie leer ist (Grundsatz 4).
+
+### Die Überschriften kosten fast nichts
+
+Eine Zeile von **15 px**, in der die Haarlinie *neben* dem Wort weiterläuft
+statt darunter. Mit eigenem Abstand oben und unten hätte jede rund 40 px
+gekostet, bei drei Reihen also 120. Die Quicklink-Zeile bekommt bewusst keine —
+das wäre das Übergliedern, das ausgeschlossen war.
+
+### ⚠ Ein Fehler gemessen und behoben
+
+Bei **390 px** lief die Knopfleiste **122 px** über den rechten Rand. Ursache:
+sie stand in der alten Anordnung an letzter Stelle einer selbst umbrechenden
+Zeile und konnte in der neuen Leiste nicht mehr umbrechen (`flex-wrap` fehlte).
+
+### Wächter + Gegenproben
+
+`check/kartenlook.js` prüft die Kopfleiste auf **30 Kombinationen** aus fünf
+Fensterbreiten × sechs Assets: eigene Fläche, Rahmen, keine Überschneidungen,
+kein waagerechter Überlauf, nie ein Loch, höchstens drei Überschriften à ≤20 px.
+
+| Eingriff | Meldung |
+|---|---|
+| Kopfleiste auf transparent (der alte Zustand) | KOPF OHNE EIGENE FLÄCHE + KOPF OHNE RAHMEN |
+| `flex-wrap:nowrap` an der Knopfleiste | KOPF LÄUFT ÜBER (390 px) |
+| eine vierte Überschrift | ZU VIEL GEGLIEDERT |
+| GER 100 ohne Begründung | KOPF OHNE INHALT |

@@ -6300,10 +6300,7 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   document.getElementById('detail').innerHTML=`<div class="dp">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
-      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor. Raw sum: a release beating its forecast counts +1, missing it -1, neutral 0; an indicator with its own Core variant counts ±0.5 each, likewise bond yields, COT net positioning and CB Tone; Next CB Move counts ±1; a release with NO forecast is scored against its previous value instead, at ±0.5; marking an indicator ★ important adds +0.5. A release more than 2 of its own cycles overdue counts 0 and is marked OUT OF DATE. The momentum trend and revisions of the previous value are shown and coloured but no longer scored (removed August 2026). The automatic ▲/▼ bias threshold (±3) evaluates the raw sum','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
-      ${detailMetaHtml(c,nextLbl,dmetaControls)}
-    </div>
+    ${assetKopfHtml(c,nextLbl,dmetaControls)}
     ${/* ⚠ Zugeklappt wird die Sektion GAR NICHT mehr gezeichnet: ihr
          Auf-/Zu-Schalter sitzt jetzt im Fuss der Kalenderkarte. Vorher stand
          hier immer eine eigene 43px-Zeile plus Abstand, nur um zu sagen, was
@@ -6336,16 +6333,6 @@ function renderDetail(){
     ${renderSpecTab(c)}
   </div>`;
   document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
-  // Das blasse Motiv des Assets in den Seitenhintergrund (siehe
-  // assetArtUrl). Als CSS-Variable auf dem Scroll-Container statt als
-  // eigenes DOM-Element: kein zusaetzlicher Kasten, kein z-index-Stapel,
-  // und es scrollt selbstverstaendlich mit dem Inhalt nach oben weg.
-  // ⚠ try/catch: ein kaputter data-URI darf nicht das Zeichnen der ganzen
-  // Seite mitreissen (Regel 6 - kein Schreibpfad ohne sichtbares Verhalten).
-  try{
-    const d=document.getElementById('detail');
-    positioniereAssetArt(c.id);
-  }catch(e){}
   attachChartHovers(document.getElementById('detail'));
   // Sidebar-Zahlen und den Score im Detail-Kopf aus EINER frischen Rechnung
   // schreiben - synchron, direkt nachdem das Markup steht. Beide Anzeigen
@@ -7483,192 +7470,6 @@ function applySeasRetailFeed(){
 }
 
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
-// ══ BLASSE ASSET-MOTIVE IM HINTERGRUND ═════════════════════════════════
-//
-// Nutzer 2026-09-14: "kann man vlt im generellen Hintergrund im oberen
-// Drittel so z.B. beim Dollar einen Dollar Schein unscheinbar in den
-// Hintergrund setzen der einfach so blass ist und das bei den anderen
-// Assets auch das man da so Bilder hat die so blass sind".
-//
-// ⚠ SELBST GEZEICHNET, NICHT GELADEN. Drei Gruende gegen echte Fotos:
-//   (1) Die Seite laeuft offline aus dem Service-Worker-Cache - ein externes
-//       Bild waere dann eine leere Flaeche.
-//   (2) Sechzehn Fotos waeren mehrere Megabyte; der Feed-Waechter deckelt
-//       gerade erst die Datenmenge, weil genau das die Charts gekillt hat.
-//   (3) Fuer Geldscheine, Goldbarren und Indexlogos braeuchte es Rechte.
-// Also schlichte Strichmotive als data-URI, ein paar hundert Byte je Asset.
-//
-// ⚠ FARBE: ein neutrales Blaugrau bei sehr niedriger Deckkraft. Es muss auf
-// der weissen Standardseite UND auf den fuenf dunklen Vorlagen funktionieren,
-// und ein data-URI kann currentColor nicht erben. #7A88A8 bei 0.13 ist auf
-// beidem eine Ahnung, nie ein Bild - genau das gewuenschte "unscheinbar".
-const ART_FARBE='%237A88A8';
-const ART_OP='.2';
-/** Gemeinsames Banknoten-Geruest - nur das Waehrungszeichen wechselt. */
-function artSchein(zeichen){
-  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
-    <rect x="30" y="52" width="480" height="236" rx="14"/>
-    <rect x="52" y="74" width="436" height="192" rx="8" stroke-width="3"/>
-    <circle cx="270" cy="170" r="74"/>
-    <circle cx="270" cy="170" r="92" stroke-width="2.5" stroke-dasharray="9 11"/>
-    <path d="M92 118h56M92 134h34M392 206h56M414 222h34" stroke-width="4" stroke-linecap="round"/>
-  </g>
-  <text x="270" y="206" text-anchor="middle" font-family="Georgia,serif" font-size="104"
-        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">${zeichen}</text>`;
-}
-/** Barrenstapel fuer die Metalle. */
-function artBarren(){
-  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5" stroke-linejoin="round">
-    <path d="M150 262h240l-26-58H176z"/>
-    <path d="M96 196h168l-26-58H122z"/>
-    <path d="M280 196h168l-26-58H306z"/>
-    <path d="M188 130h164l-24-56H212z"/>
-    <path d="M176 204h188M122 138h116M306 138h116" stroke-width="2.5" opacity=".6"/>
-  </g>`;
-}
-/** Oelfass. */
-function artFass(){
-  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
-    <path d="M186 70h168v200H186z"/>
-    <ellipse cx="270" cy="70" rx="84" ry="24"/>
-    <ellipse cx="270" cy="270" rx="84" ry="24"/>
-    <path d="M186 122c56 18 112 18 168 0M186 170c56 18 112 18 168 0M186 218c56 18 112 18 168 0" stroke-width="3.5"/>
-    <path d="M270 300v46M244 346h52" stroke-width="4" stroke-linecap="round"/>
-  </g>`;
-}
-/** Muenze - fuer Krypto. */
-function artMuenze(zeichen){
-  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
-    <circle cx="270" cy="170" r="112"/>
-    <circle cx="270" cy="170" r="92" stroke-width="3"/>
-  </g>
-  <text x="270" y="214" text-anchor="middle" font-family="Georgia,serif" font-size="124"
-        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">${zeichen}</text>`;
-}
-/** Kerzenchart - fuer die Aktienindizes. */
-function artKerzen(){
-  const k=[[70,150,96,60],[120,120,70,54],[170,168,120,44],[220,96,52,72],
-           [270,130,88,60],[320,72,40,78],[370,110,66,66],[420,60,26,84]];
-  return`<g opacity="${ART_OP}" stroke="${ART_FARBE}" stroke-width="4.5" fill="none">
-    ${k.map(([x,y,h,w])=>`<path d="M${x} ${y-18}v${h+36}"/><rect x="${x-13}" y="${y}" width="26" height="${h}" rx="3"/>`).join('')}
-    <path d="M40 288h460" stroke-width="3" opacity=".7"/>
-  </g>`;
-}
-/** Anleihe-Urkunde - fuer die Renditen. */
-function artAnleihe(){
-  return`<g opacity="${ART_OP}" fill="none" stroke="${ART_FARBE}" stroke-width="5">
-    <rect x="46" y="56" width="448" height="228" rx="10"/>
-    <path d="M78 100h160M78 122h96" stroke-width="4" stroke-linecap="round"/>
-    <path d="M78 240h150M78 262h90" stroke-width="3.5" stroke-linecap="round" opacity=".7"/>
-    <circle cx="396" cy="196" r="46" stroke-width="4"/>
-    <path d="M370 222l52-52" stroke-width="4"/>
-  </g>
-  <text x="270" y="196" text-anchor="middle" font-family="Georgia,serif" font-size="86"
-        font-weight="700" fill="${ART_FARBE}" opacity="${ART_OP}">%25</text>`;
-}
-// Welches Motiv gehoert zu welchem Asset? Die acht Majors bekommen ihren
-// eigenen Schein, alles andere sein Sinnbild. Ein Asset ohne Eintrag
-// bekommt bewusst NICHTS statt eines beliebigen Platzhalters.
-const ASSET_ART={
-  USD:()=>artSchein('%24'), EUR:()=>artSchein('%E2%82%AC'), GBP:()=>artSchein('%C2%A3'),
-  JPY:()=>artSchein('%C2%A5'), CHF:()=>artSchein('%E2%82%A3'), CAD:()=>artSchein('C%24'),
-  AUD:()=>artSchein('A%24'), NZD:()=>artSchein('NZ%24'),
-  GOLD:artBarren, SILVER:artBarren, OIL:artFass, BTC:()=>artMuenze('%E2%82%BF'),
-  SP500:artKerzen, NAS:artKerzen, DAX:artKerzen, GER100:artKerzen,
-};
-// ── ECHTE SCHEINE ALS BREITES BAND ─────────────────────────────────────
-// Nutzer 2026-09-14, mit Referenzfoto und drei Geldschein-Bildern: das Motiv
-// soll KEIN kleines Emblem neben dem Titel sein, sondern ein breites Band
-// ueber die ganze obere Flaeche, so blass, dass Titel und Knopfleiste
-// DARUEBER liegen koennen.
-//
-// ⚠ NUR die Assets in dieser Liste haben ein Foto. Alle anderen behalten
-// das gezeichnete SVG-Emblem in der Luecke (assetArtUrl). Eine Datei, die
-// nicht existiert, waere ein stilles 404 und eine leere Flaeche - deshalb
-// eine ausdrueckliche Liste statt "probier mal, ob es die Datei gibt".
-// Die Bilder liegen als img/note-<id>.webp, rund 50 KB je Schein: 1600x420,
-// der Schein rechts angeschnitten, nach links in den Grund auslaufend.
-// Erzeugt aus den vom Nutzer gelieferten Vorlagen, Herkunft in
-// img/note-herkunft.json.
-const NOTE_FOTOS=['USD','EUR','JPY'];
-function assetBandUrl(id){
-  return NOTE_FOTOS.includes(id)?`url(img/note-${String(id).toLowerCase()}.webp)`:'';
-}
-
-/** Der fertige data-URI fuers Hintergrundbild - oder '' ohne Motiv. */
-function assetArtUrl(id){
-  let bau=ASSET_ART[id];
-  if(!bau&&assetCls(id)==='yield')bau=artAnleihe;
-  if(!bau)return'';
-  // ⚠ Der Verlauf blendet das Motiv nach unten aus, damit es unter der
-  // Kartenreihe verschwindet statt an einer Kante abzureissen. Er steckt IM
-  // SVG, weil mask-image auf einem background-image nicht greift.
-  const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 400' width='540' height='400'>`
-    +`<defs><linearGradient id='f' x1='0' y1='0' x2='0' y2='1'>`
-    +`<stop offset='0' stop-color='white' stop-opacity='1'/>`
-    +`<stop offset='.78' stop-color='white' stop-opacity='.7'/>`
-    +`<stop offset='1' stop-color='white' stop-opacity='0'/></linearGradient>`
-    +`<mask id='m'><rect width='540' height='400' fill='url(%23f)'/></mask></defs>`
-    +`<g mask='url(%23m)'>${bau()}</g></svg>`;
-  return`url("data:image/svg+xml,${svg.replace(/"/g,"'").replace(/#/g,'%23').replace(/\n\s*/g,' ')}")`;
-}
-
-/** Legt das Motiv in die LUECKE zwischen Asset-Titel und Knopfleiste. */
-// ⚠ GEMESSEN STATT FEST VERDRAHTET. Eine feste Position (x=214) war auf
-// "USD" gerechnet - bei "S&P 500 -3.8" und "US Yield -0.4" lag das Motiv
-// dann mitten auf dem Score-Abzeichen. Die Titelbreite haengt am Namen, am
-// Score und an der Schriftgroesse; das kann CSS nicht wissen.
-// Ist die Luecke schmaler als das Motiv (schmales Fenster, langer Name),
-// gibt es KEIN Motiv statt einer Kollision.
-// Hoehe des Schein-Bands. ⚠ Bewusst hoeher als das freie Band ueber der
-// Kartenreihe (gemessen 103px): es DARF hinter die Karten laufen, weil der
-// Schleier es vorher ausblendet - genau wie im Referenzbild des Nutzers.
-const BAND_HOEHE=300;
-const ART_MIN_BREITE=120;   // darunter ist es kein Bild mehr, nur ein Fleck
-const ART_LUFT=18;          // Mindestabstand zu Titel und Knopfleiste
-function positioniereAssetArt(assetId){
-  const d=document.getElementById('detail');
-  if(!d)return;
-  // ⚠ Die Id wird am Element GEMERKT. Beim Resize kommt keine mit, und ohne
-  // das Merken bliebe das Bild auf 'none' stehen, sobald es einmal wegen zu
-  // wenig Platz abgeschaltet wurde - beim Aufziehen des Fensters kaeme es
-  // nie zurueck.
-  if(assetId)d.dataset.artId=assetId;
-  const id=assetId||d.dataset.artId;
-  if(!id){d.style.setProperty('--asset-art','none');d.classList.remove('hat-band');return;}
-  // ── BANDMODUS: das Asset hat ein echtes Schein-Foto ──────────────────
-  // Das Band laeuft ueber die volle Breite und braucht keine Luecke - der
-  // Schleier davor (CSS) haelt es so blass, dass Schrift darauf lesbar
-  // bleibt. Gemessen von check/kartenlook.js an JEDER Textstelle.
-  const band=assetBandUrl(id);
-  if(band){
-    d.classList.add('hat-band');
-    d.style.setProperty('--asset-art',band);
-    d.style.setProperty('--asset-art-size','auto '+BAND_HOEHE+'px');
-    d.style.setProperty('--asset-art-x','right');
-    return;
-  }
-  d.classList.remove('hat-band');
-  const t=d.querySelector('.atitle'), meta=d.querySelector('.dmeta');
-  const url=assetArtUrl(id)||'none';
-  if(!t||!meta){d.style.setProperty('--asset-art','none');return;}
-  const dr=d.getBoundingClientRect(), tr=t.getBoundingClientRect(), mr=meta.getBoundingClientRect();
-  // Bricht die Knopfleiste unter den Titel (schmales Fenster), gibt es
-  // ueberhaupt keine Luecke - erkennbar daran, dass sie tiefer anfaengt.
-  const untereinander=mr.top>=tr.bottom-4;
-  const links=tr.right-dr.left+ART_LUFT;
-  const rechts=(untereinander?dr.right:mr.left)-dr.left-ART_LUFT;
-  const platz=rechts-links;
-  if(platz<ART_MIN_BREITE||untereinander){d.style.setProperty('--asset-art','none');return;}
-  d.style.setProperty('--asset-art',url);
-  // Das SVG ist 540x400 - die Hoehe folgt aus der Breite, gedeckelt auf das
-  // freie Band ueber der Kartenreihe (gemessen 103px, also 96 mit Luft).
-  const hoehe=Math.min(96,Math.round(Math.min(platz,230)*400/540));
-  const breite=Math.round(hoehe*540/400);
-  d.style.setProperty('--asset-art-size','auto '+hoehe+'px');
-  d.style.setProperty('--asset-art-x',Math.round(links+(platz-breite)/2)+'px');
-}
-
 function abGrafikHtml(art,c){
   if(art==='cot'){
     // ⚠ HIER STAND BIS 2026-09-13 ABEND DIE INDIKATOR-TABELLE DER COT-KARTE.
@@ -7944,6 +7745,19 @@ function abPinnedHtml(c){
   </div>`;
 }
 
+/** Eine schmale Zwischenueberschrift ueber einer Rasterreihe. */
+// Nutzer 2026-09-14: "Ueberschriften ueber den Kartenreihen. Aber nicht zu
+// viel gliedern das da nicht so viel Platz verschwendet wird und es so klein
+// wird." Deshalb: EINE Zeile von 15px, Grossbuchstaben in der kleinsten
+// Schriftstufe, und die Haarlinie laeuft in der SELBEN Zeile weiter statt
+// darunter - eine Ueberschrift mit eigenem Abstand darueber und darunter
+// haette je Reihe rund 40px gekostet.
+// Drei Reihen bekommen eine, die Quicklink-Zeile bewusst nicht: sie ist
+// selbsterklaerend und eine vierte Ueberschrift waere genau das
+// Uebergliedern, das ausgeschlossen wurde.
+function abReihenTitel(txt){
+  return`<div class="ab-rtitel"><span>${escH(txt)}</span></div>`;
+}
 function renderAssetBoard(c){
   const rubs=c.rubrics||[];
   const idx=n=>rubs.findIndex(r=>r&&r.name===n);
@@ -7974,6 +7788,7 @@ function renderAssetBoard(c){
   // aus dem Score ist ein eigener Schritt mit Vorher/Nachher-Vergleich.
   return`<div class="ab-board">
     <div class="ab-cards">
+      ${abReihenTitel('Overview')}
       <div class="ab-col">${abQuickGridHtml(c)}</div>
       <div class="ab-col">${abPinnedHtml(c)}</div>
       <div class="ab-col">${assetMonthCalHtml(c)}</div>
@@ -7983,7 +7798,9 @@ function renderAssetBoard(c){
            darunter - nur so sitzt sie garantiert buendig zwischen den beiden
            Reihen und nimmt denselben Spaltenabstand mit. */''}
       <div class="ab-col ab-qrow">${abQuickZeileHtml(c)}</div>
+      ${abReihenTitel('Macro')}
       ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
+      ${abReihenTitel('Positioning')}
       ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
     </div>
     ${/* Die Notizen-Karte ist hier weg (Nutzer: "entfern die Notes Karte
@@ -8062,11 +7879,15 @@ function assetPreisKarteHtml(c){
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
     <span class="ab-rgs">${regler}</span></div>`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
+  // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) steht seit dem 2026-09-14 OBEN in
+  // der Kopfleiste. Hier waere er eine Dopplung und kostete 51px Hoehe -
+  // genau der Platz, den die neuen Reihen-Ueberschriften brauchen.
+  // assetPerfStripHtml() bleibt bestehen, es wird nur nicht mehr von hier
+  // gezeichnet.
   return`<div class="ab-ptile">
     ${kopf}
     <div class="ab-pk-chart">${ch.html}</div>
     ${fuss}
-    ${assetPerfStripHtml(c)}
   </div>`;
 }
 
@@ -12582,6 +12403,127 @@ function symSourceLabel(c){
   if(!set.size)return{lbl:'–',list:[]};
   const list=[...set];
   return{lbl:list.length>1?'MULTI':list[0],list};
+}
+// ══ DIE KOPFLEISTE DER ASSET-SEITE ═════════════════════════════════════
+//
+// Nutzer 2026-09-14: "ich finde jetzt die Asset Kategorie mit dieser 3
+// Spalten Optik mit den ganzen Karten hat nicht oben einen richtigen Anfang
+// was kann man da machen wie bekommt man das umdesignt". Abgestimmt per
+// Rueckfrage: Kopfleiste MIT Kennzahlen darin.
+//
+// ⚠ GEMESSEN, was gefehlt hat - der Kopf war kein Block, sondern drei
+// schwebende Teile:
+//     Kopfbereich background : rgba(0,0,0,0)   - keine eigene Flaeche
+//     border-bottom          : 0px             - keine Trennlinie
+//     Loch Titel -> Knopfleiste : 476px bei 1500px Fensterbreite
+//     Abstand Titel -> erste Karte : 103px leerer Raum
+// Es gab also nichts, was "hier faengt die Seite an" gesagt haette.
+//
+// ⚠ DIE KENNZAHLEN SIND NICHT NEU, SIE SIND UMGEZOGEN. Vorher standen
+// 1D/1W/1M/YTD unten in der Preis-Karte. Sie hier oben ZUSAETZLICH zu
+// zeigen waere eine Dopplung und haette echte Hoehe gekostet - der Nutzer
+// hat ausdruecklich gesagt, es soll kein Platz verschwendet werden. Also
+// wandern sie, und die Preis-Karte wird um ihren 51px-Streifen leichter.
+function assetKopfKennzahlen(c){
+  // ⚠ Die acht Renditen-Assets haben KEINE Preisreihe - fuer sie ist die
+  // Rendite selbst die Zahl, um die es geht, und die liegt in bond_data.json.
+  // Ohne diesen Zweig stuende ihre Kopfleiste leer da, also wieder mit
+  // einem Loch in der Mitte: genau das Problem, das die Leiste loesen soll.
+  if(YIELD_CCY[c.id])return assetKopfRendite(c);
+  const ser=priceSeriesFor(c.id);
+  const feedWeg=typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false;
+  const zellen=[];
+  // Letzter Kurs. ⚠ Nicht jedes Asset hat eine Preisreihe (die acht
+  // Renditen haben keine) - dort steht KEINE Zelle statt eines Strichs,
+  // sonst fuellt sich die Leiste mit Platzhaltern.
+  if(ser&&ser.length){
+    const last=ser[ser.length-1];
+    const v=Number(last[1]);
+    const dec=Math.abs(v)>=1000?0:Math.abs(v)>=50?2:Math.abs(v)>=5?3:4;
+    zellen.push(`<div class="ahk-i ahk-last" title="Last close on file — ${escH(String(last[0]))}">
+      <div class="ahk-l">Last</div><div class="ahk-v">${v.toFixed(dec)}</div></div>`);
+  }
+  PERF_WINDOWS.forEach(([lbl,days])=>{
+    const r=perfReturn(c.id,days);
+    if(!r&&!ser)return;                    // kein Preis, keine Spalte
+    const val=r?`${r.pct>0?'+':''}${r.pct.toFixed(2)}%`:'–';
+    const col=!r?'var(--t3)':r.pct>0.001?'var(--green)':r.pct<-0.001?'var(--red)':'var(--t2)';
+    const tip=r?`${lbl}: ${r.from} → ${r.to}`
+      :feedWeg?`Live data unavailable: Prices — the feed did not load in this session, so there is nothing to compare ${lbl} against.`
+      :`No price history covering ${lbl} yet`;
+    zellen.push(`<div class="ahk-i" title="${escH(tip)}">
+      <div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:${col}">${escH(val)}</div></div>`);
+  });
+  return zellen.join('');
+}
+/** Kennzahlen eines Renditen-Assets: der Stand und die Veraenderung in
+    Basispunkten ueber dieselben vier Fenster wie bei den Preisen. */
+// ⚠ BASISPUNKTE, nicht Prozent. Eine Rendite von 4,97 auf 5,02 ist ein Plus
+// von 1 Prozent, aber 5 Basispunkten - und am Anleihemarkt spricht niemand
+// von Prozent der Rendite. Ein Prozentwert waere hier keine falsche Zahl,
+// aber eine, die niemand so liest.
+function assetKopfRendite(c){
+  const ccy=YIELD_CCY[c.id];
+  const reihe=(typeof bondSeriesOhlc==='function')?bondSeriesOhlc(ccy,'10Y Bond Yield'):null;
+  const r=(reihe||[]).filter(e=>e&&e[0]&&isFinite(Number(e[1])));
+  if(r.length<2)return'';
+  const letzte=r[r.length-1], jetzt=Number(letzte[1]);
+  const zellen=[`<div class="ahk-i ahk-last" title="10-year government bond yield, last close on file — ${escH(String(letzte[0]))}">
+    <div class="ahk-l">10Y</div><div class="ahk-v">${jetzt.toFixed(3)}<span class="ahk-u">%</span></div></div>`];
+  const bis=new Date(letzte[0]+'T00:00:00Z');
+  PERF_WINDOWS.forEach(([lbl,days])=>{
+    let ziel;
+    if(days==null)ziel=new Date(Date.UTC(bis.getUTCFullYear()-1,11,31));
+    else{ziel=new Date(bis);ziel.setUTCDate(ziel.getUTCDate()-days);}
+    const zStr=ziel.toISOString().slice(0,10);
+    // Der letzte Tag AM ODER VOR dem Zieldatum - Wochenenden und Feiertage
+    // haben keinen Wert, ein exakter Treffer waere Zufall.
+    let vor=null;
+    for(let i=r.length-1;i>=0;i--){if(r[i][0]<=zStr){vor=r[i];break;}}
+    // ⚠ YTD misst ab JAHRESANFANG - und wenn die Reihe erst im Januar
+    // beginnt (bond_data faengt am 02.01. an), ist ihr erster Tag der
+    // richtige Bezug, nicht "kein Wert". Gemessen stand YTD sonst bei allen
+    // acht Renditen auf einem Strich, obwohl acht Monate Historie da sind.
+    if(!vor&&days==null&&r[0][0].slice(0,4)===letzte[0].slice(0,4))vor=r[0];
+    if(!vor||vor===letzte){
+      zellen.push(`<div class="ahk-i" title="No yield history covering ${escH(lbl)} yet"><div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:var(--t3)">–</div></div>`);
+      return;
+    }
+    const bp=Math.round((jetzt-Number(vor[1]))*100);
+    const col=bp>0?'var(--green)':bp<0?'var(--red)':'var(--t2)';
+    zellen.push(`<div class="ahk-i" title="${escH(lbl)}: ${escH(vor[0])} → ${escH(letzte[0])}, ${Number(vor[1]).toFixed(3)}% → ${jetzt.toFixed(3)}%">
+      <div class="ahk-l">${escH(lbl)}</div><div class="ahk-v" style="color:${col}">${bp>0?'+':''}${bp}<span class="ahk-u">bp</span></div></div>`);
+  });
+  return zellen.join('');
+}
+/** Warum hat dieses Asset keine Kennzahlen? */
+// ⚠ Ein Loch in der Leiste ist genau das Problem, das sie loesen soll -
+// aber eine erfundene Zahl waere schlimmer (Grundsatz 4). Also sagt die
+// Leiste, was Sache ist. Gemessen betrifft das GENAU EIN Asset von 24:
+// GER 100 hat keine eigene Reihe in price_data.json, der Feed fuehrt den
+// Index unter DAX. Die beiden hier stillschweigend gleichzusetzen waere
+// dieselbe Art Fehler wie die US-2Y aus einem Future zu speisen: eine
+// andere Zahl unter derselben Ueberschrift.
+function assetKopfWarumLeer(c){
+  if(typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false)
+    return'Live data unavailable: Prices — the feed did not load in this session.';
+  return`No own price series for ${c.name||c.id} — the feed carries this index under a different ticker.`;
+}
+function assetKopfHtml(c,nextLbl,extraControlsHtml){
+  const kz=assetKopfKennzahlen(c);
+  return`<div class="ahead">
+    <div class="ahead-id">
+      <div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor.','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div>
+      <div class="afull">${escH(c.full)}</div>
+    </div>
+    ${kz?`<div class="ahead-kpi">${kz}</div>`
+        :`<div class="ahead-kpi"><div class="ahk-i ahk-leer" title="${escH(assetKopfWarumLeer(c))}">${escH(assetKopfWarumLeer(c))}</div></div>`}
+    <div class="ahead-right">
+      <div class="ahk-i ahk-next" title="Next high-impact calendar event for this asset">
+        <div class="ahk-l">Next event</div><div class="ahk-v">${escH(nextLbl)}</div></div>
+      ${extraControlsHtml||''}
+    </div>
+  </div>`;
 }
 function detailMetaHtml(c,nextLbl,extraControlsHtml){
   // "Last update", "Data quality" und "Source" sind auf Nutzer-Wunsch aus der
@@ -20120,11 +20062,7 @@ window.addEventListener('resize',()=>{
   _masonryResizeT=setTimeout(()=>{
     const n=masonryCols(),o=ovCols();
     if(n!==_masonryCols||o!==_ovCols){_masonryCols=n;_ovCols=o;renderDetail();}
-    // ⚠ Auch OHNE Spaltenwechsel: das Asset-Motiv sitzt in der gemessenen
-    // Luecke zwischen Titel und Knopfleiste, und die aendert sich mit jeder
-    // Fensterbreite. Ohne diesen Aufruf klebte es an der alten Stelle und
-    // laege nach dem Verkleinern auf dem Score-Abzeichen.
-    else{try{positioniereAssetArt();}catch(e){}}
+
   },150);
 });
 
@@ -20533,11 +20471,10 @@ Object.assign(window,{
   // ⚠ Alle fuenf haengen an onclick/oninput im Modal-HTML - fehlt eine,
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
+  assetKopfHtml,assetKopfKennzahlen,assetKopfRendite,assetKopfWarumLeer,abReihenTitel,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
-  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,assetArtUrl,ASSET_ART,positioniereAssetArt,
-  assetBandUrl,NOTE_FOTOS,BAND_HOEHE,
-  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
+  assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
   abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,bondSeriesOhlc,
