@@ -4,6 +4,9 @@ import {ASSET_BEHAVIOR_THEMES,ASSET_BEHAVIOR_NOTES,ASSET_BEHAVIOR_SUBTOPICS} fro
 import {BT_REASON_SEED} from './backtest-seed.js';
 // Aufbau der Asset-Seite: WO was steht, liegt bewusst dort und nicht hier.
 import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor} from './assetlayout.js';
+// Regime Radar: die Szenario-Rechnung liegt in einem eigenen Modul, weil sie
+// NUR liest und mit dem Score nichts zu tun hat (siehe Kopf von regime.js).
+import {RG_CCYS,REGIME_MIN_BED,regimeStand,rgKurve,rgRealzins,rgVix,rgVol,rgSpreizung,rgRisk,rgPutCall,rgHafen,rgDollarBreite,rgDrawdown,rgRendite,rgCpiTrend,rgArbeitslos,rgClaims,rgUeberraschung,rgProduktivitaet} from './regime.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -15,7 +18,17 @@ export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScor
   markPrefEdit,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,scoreHist,selId,setSuppressBiasFlipAlerts,
   MACRO_DERIVE_RUBS,calCcyFilter,calHighOnly,calOpenDays,compactView,effDeriveRules,escJH,eventAlerts,
   evtDismissKey,evtNewsCount,evtNewsIds,isScoreDrivingEvent,renderCalendar,renderDetail,
-  setCalCcyFilterVal,setCalHighOnlyVal,setCompactViewVal};
+  setCalCcyFilterVal,setCalHighOnlyVal,setCompactViewVal,
+  // Was js/regime.js von hier zurueckbraucht (zirkulaerer Import, wie bei
+  // globe.js/calendar.js - Muster: docs/module-split.md).
+  // ⚠ Diese vier Namen stehen weiter unten ZUSAETZLICH in der
+  // window-Bruecke am Dateiende. Das ist KEIN doppelter
+  // Export: die Bruecke ist ein Objektliteral fuer inline-Handler und
+  // Pruefskripte, die Export-Liste hier ist das, was andere MODULE sehen.
+  // Genau das habe ich beim Bauen einmal verwechselt - die Namen standen
+  // nur in der Bruecke, und der Browser brach die ganze Datei mit
+  // "does not provide an export named 'bondSeriesPts'" ab: weisse Seite.
+  bondSeriesPts,bondSpreadPts,ohneWochenende,SENTIMENT_DATA};
 // ── EINFARBIGER ICON-SATZ (Nutzer-Wunsch 2026-08-23) ───────────────────────
 // "mach davor die Flagge aber ohne Farben also eine Art icon aber schon die
 // richtige Form und nicht animiert und bei Gold und dem Rest auch gleich".
@@ -5520,14 +5533,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -5764,7 +5777,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -5910,6 +5923,7 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupNonFxOnly!==undefined){setupNonFxOnly=cd.setupNonFxOnly;try{localStorage.setItem('fxpro_setup_nonfxonly',setupNonFxOnly?'1':'0');}catch(e){}}
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.abChartRange!==undefined){setAbChartRangeVal(cd.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}
+        if(cd.regimeCcy!==undefined){setRegimeCcyVal(cd.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}if(curPage==='regime')renderRegime();}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
       }
@@ -18345,6 +18359,109 @@ function seasBarChart(months,curMon,curYear){
   // overflow-x:auto am umschliessenden Card-Container in renderSeasonality).
   return chartHoverWrap(svg,hpts,`min-width:${W}px`);
 }
+// ══ REGIME RADAR: DARSTELLUNG ══════════════════════════════════════════
+// Die Rechnung liegt in js/regime.js - hier steht nur, wie sie aussieht.
+//
+// ⚠ Der Tab ist bewusst eine LESE-Ansicht. Er schreibt keinen Bias, kein
+// Score-Feld und keine History. Der einzige Zustand ist die gewaehlte
+// Waehrung fuer die waehrungsabhaengigen Bedingungen (Kurve, Realzins,
+// CPI, Arbeitsmarkt) - und die wird nach dem Muster von abChartRange
+// geraeteuebergreifend gesynct (CLAUDE.md Regel 1, docs/state-sync.md).
+let regimeCcy=(()=>{try{const v=localStorage.getItem('fxpro_regime_ccy');
+  return RG_CCYS.includes(v)?v:'USD';}catch(e){return'USD';}})();
+function setRegimeCcyVal(v){regimeCcy=RG_CCYS.includes(v)?v:'USD';}
+function setRegimeCcy(v){
+  // ⚠ Schreibpfad MIT try/catch und sichtbarer Folge (CLAUDE.md Regel 6):
+  // faellt localStorage aus (privates Fenster, volles Kontingent), soll die
+  // Ansicht trotzdem umschalten statt still gar nichts zu tun.
+  setRegimeCcyVal(v);
+  try{
+    localStorage.setItem('fxpro_regime_ccy',regimeCcy);
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    markLsUpdatedSeen();
+  }catch(e){
+    alert('The currency choice could not be saved: '+(e&&e.message||e));
+  }
+  markPrefEdit();
+  cloudAutoSync();
+  renderRegime();
+}
+/** Farbe eines Erfuellungsgrads: viel erfuellt = auffaellig, wenig = leise. */
+function regimeFarbe(grad){
+  if(grad==null)return'var(--t3)';
+  if(grad>=75)return BC.bear;      // ein stark erfuelltes Stress-Szenario ist eine Warnung
+  if(grad>=50)return'var(--due)';
+  return'var(--t2)';
+}
+function regimeZeileHtml(z){
+  const ic=z.zustand==='ja'?'✓':z.zustand==='nein'?'·':'–';
+  const cls=z.zustand==='ja'?' rg-ja':z.zustand==='nein'?' rg-nein':' rg-offen';
+  // ⚠ "Not measured" ist KEIN Fehlerzustand und wird auch nicht so gefaerbt.
+  // Es ist die ehrliche Auskunft, dass die App diese Bedingung nicht sehen
+  // kann (Grundsatz 4) - der Grund steht daneben, nicht in einem Tooltip.
+  const rechts=z.zustand==='unbekannt'
+    ?`<span class="rg-nm">Not measured</span>`
+    :`<span class="rg-w">${escH(z.wert==null?'':String(z.wert))}</span>`;
+  return`<div class="rg-row${cls}"><span class="rg-ic">${ic}</span>
+    <span class="rg-t">${escH(z.txt)}${z.zustand==='unbekannt'?`<span class="rg-why">${escH(z.warum||'')}</span>`:''}</span>
+    ${rechts}</div>`;
+}
+function regimeKarteHtml(s){
+  const f=regimeFarbe(s.grad);
+  const bal=s.grad==null?'':`<span class="rg-bar"><span class="rg-bar-in" style="width:${s.grad}%;background:${f}"></span></span>`;
+  return`<div class="rg-card">
+    <div class="rg-hd">
+      <div class="rg-hd-l">
+        <div class="rg-name">${escH(s.name)}</div>
+        <div class="rg-kurz">${escH(s.kurz)}</div>
+      </div>
+      <div class="rg-hd-r">
+        <div class="rg-grad" style="color:${s.kernOffen?'var(--t3)':f}">${s.grad==null?'–':s.grad+'%'}</div>
+        <div class="rg-zahl">${s.erfuellt}/${s.messbar} conditions${s.offen?` · ${s.offen} not measured`:''}</div>
+      </div>
+    </div>
+    ${bal}
+    ${/* ⚠ Steht hier, nicht in einem Tooltip: dass die entscheidende
+         Bedingung fehlt, ist die WICHTIGSTE Auskunft dieser Karte. */''}
+    ${s.kernOffen?`<div class="rg-kern">Core condition not measured — this scenario cannot be confirmed from the data in this app, whatever the percentage says.</div>`:''}
+    ${s.zuWenig?`<div class="rg-kern">Only ${s.messbar} condition${s.messbar===1?'':'s'} can be measured for this currency — too few for a percentage. A share built from one observation is not a share.</div>`:''}
+    <div class="rg-lang">${escH(s.lang)}</div>
+    <div class="rg-rows">${s.zeilen.map(regimeZeileHtml).join('')}</div>
+  </div>`;
+}
+function renderRegime(){
+  const el=document.getElementById('regimeBody');if(!el)return;
+  const stand=regimeStand(regimeCcy);
+  const messbar=stand.filter(s=>s.grad!=null);
+  // ⚠ NIE ein Loch: gibt es gar keine Datenlage, sagt die Seite das, statt
+  // leer dazustehen oder eine Null zu erfinden.
+  if(!messbar.length){
+    el.innerHTML=`<div class="cot-empty">No live data has arrived yet in this session, so not a single condition can be measured. The radar reads price_data, bond_data, ind_data, sentiment_data and risk_index — nothing here is estimated while they are missing.</div>`;
+    return;
+  }
+  // ⚠ Nur ein VOLLSTAENDIG belegtes Szenario darf "Leading regime" heissen.
+  // Beim ersten Live-Lauf stand Funding Squeeze mit 100% an der Spitze,
+  // obwohl seine beiden entscheidenden Bedingungen gar nicht messbar sind.
+  const voll=messbar.filter(x=>!x.kernOffen);
+  const fuehrend=voll[0]||null;
+  const waehler=RG_CCYS.map(c=>`<button class="rg-ccy${regimeCcy===c?' on':''}" onclick="setRegimeCcy('${c}')" title="Use ${c} for the currency-specific conditions: yield curve, real yield, CPI and labour market">${c}</button>`).join('');
+  el.innerHTML=`
+    <div class="rg-top">
+      <div class="rg-top-l">
+        <div class="rg-top-lbl">Leading regime</div>
+        <div class="rg-top-v" style="color:${fuehrend?regimeFarbe(fuehrend.grad):'var(--t3)'}">${fuehrend?escH(fuehrend.name)+' · '+fuehrend.grad+'%':'None fully covered'}</div>
+        <div class="rg-top-n">${fuehrend
+          ?`${fuehrend.erfuellt} of ${fuehrend.messbar} measurable conditions are met right now. This is context for reading the scores — it never changes one.`
+          :'Every scenario is missing one of its decisive conditions, so none of them can be named as the leading regime. The cards below still show what IS measurable.'}</div>
+      </div>
+      <div class="rg-top-r">
+        <div class="rg-top-lbl">Currency for curve, real yield, CPI &amp; labour</div>
+        <div class="rg-ccys">${waehler}</div>
+      </div>
+    </div>
+    <div class="rg-grid">${stand.map(regimeKarteHtml).join('')}</div>
+    <div class="rg-foot">Every threshold is measured against that series' OWN history, not against a remembered number — "VIX above 20" ages, "VIX above its own 80th percentile" does not. Absolute thresholds (curve below zero, PMI below 50) are definitional, not calibrated. Conditions without a live source are listed as Not measured and are excluded from the denominator, so a half-covered scenario cannot look like a confirmed one; a scenario missing a decisive condition can never be the leading regime, and under ${REGIME_MIN_BED} measurable conditions there is no percentage at all.</div>`;
+}
 function renderSeasonality(){
   const el=document.getElementById('seasBody');if(!el)return;
   const D=SEASONALITY_DATA;
@@ -18968,7 +19085,7 @@ function renderRateProb(){
 }
 
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={over:'pgOver',edge:'pgEdge',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+const PAGE_IDS={over:'pgOver',edge:'pgEdge',regime:'pgRegime',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
@@ -18997,6 +19114,9 @@ const TABS={
   rate:{label:'Rate Probabilities',tab:'rate'},
   news:{label:'News',tab:'news'},
   edge:{label:'Edge',tab:'edge'},
+  // Regime Radar (Nutzer-Wunsch 2026-09-15): Szenarien aus vorhandenen
+  // Daten. Liegt im Insights-Stapel, weil es eine Analyse-Ansicht ist.
+  regime:{label:'Regime',tab:'regime'},
   carry:{label:'Carry',tab:'carry'},
   pairs:{label:'Set-ups',tab:'pairs'},
   // Eigener Tab statt eines Eintrags im Insights-Stapel (Nutzer-Wunsch
@@ -19032,6 +19152,12 @@ function loadTabStacks(){
     // Seasonality ebenso nachtraeglich einreihen (direkt nach Sentiment).
     const ins2=tabStacks.find(st=>st.members&&st.members.includes('sent')&&!st.members.includes('seas'));
     if(ins2){const i=ins2.members.indexOf('sent');ins2.members.splice(i+1,0,'seas');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
+    // Regime Radar ebenso nachtraeglich einreihen (ans Ende des Stapels,
+    // in dem auch Edge liegt - Nutzer-Wunsch 2026-09-15). Ohne diese
+    // Migration landete der neue Tab bei Bestandsnutzern heimatlos in der
+    // Hauptleiste statt unter Insights.
+    const insRg=tabStacks.find(st=>st.members&&st.members.includes('edge')&&!st.members.includes('regime'));
+    if(insRg){insRg.members.push('regime');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     // Data (Indikator-Verlaufschart-Browser) ebenso nachtraeglich einreihen
     // (direkt nach Seasonality, Nutzer-Wunsch 2026-07-14).
     const ins3=tabStacks.find(st=>st.members&&st.members.includes('seas')&&!st.members.includes('data'));
@@ -19075,7 +19201,7 @@ function loadTabStacks(){
     }
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['mx','trends','cot','sent','seas','data','rate','news','edge','carry']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['mx','trends','cot','sent','seas','data','rate','news','edge','carry','regime']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -19112,6 +19238,7 @@ const TAB_ICONS={
   calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>',
   edge:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  regime:'<path d="M20.5 14.5A9 9 0 1 1 12 3"/><path d="M16.5 13.5A5 5 0 1 1 12 7"/><line x1="12" y1="12" x2="20" y2="6"/><circle cx="12" cy="12" r="1"/>',
   carry:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
   pairs:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
   watch:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
@@ -19379,6 +19506,10 @@ function showTab(tab,btn,fxMode){
   else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
   else if(tab==='news'){renderNewsTab();}
   else if(tab==='edge'){renderEdge();}
+  // ⚠ Das Regime liest fuenf Feeds. Wer den Tab als ERSTES oeffnet, haette
+  // sonst eine Seite voller "Not measured", die nach dem naechsten
+  // Auto-Refresh von selbst umspringt - das sieht aus wie ein Fehler.
+  else if(tab==='regime'){renderRegime();autoFetchPriceData();autoFetchRiskIndex();}
   else if(tab==='data')renderDataTab();
   else if(tab==='rate'){renderRateProb();autoFetchRateProb();}
   else if(tab==='carry')renderCarry();
@@ -19395,6 +19526,7 @@ function rerender(){
   else if(curPage==='cot')renderCot();
   else if(curPage==='sent')renderSentiment();
   else if(curPage==='seas')renderSeasonality();
+  else if(curPage==='regime')renderRegime();
   else if(curPage==='data')renderDataTab();
   else if(curPage==='rate')renderRateProb();
   else if(curPage==='carry')renderCarry();
@@ -20439,6 +20571,16 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
+  // Regime Radar: setRegimeCcy haengt an einem inline onclick= - ohne
+  // diese Zeile wirft der Klick still ein ReferenceError (Regel 6).
+  // Die Rechen-Bausteine stehen bewusst mit in der Bruecke: check/regime.js
+  // ruft sie direkt auf, damit die Schwellen geprueft werden und nicht nur
+  // dastehen.
+  setRegimeCcy,setRegimeCcyVal,renderRegime,regimeKarteHtml,regimeFarbe,
+  RG_CCYS,REGIME_MIN_BED,regimeStand,rgKurve,rgRealzins,rgVix,rgVol,rgSpreizung,
+  rgRisk,rgPutCall,rgHafen,rgDollarBreite,rgDrawdown,rgRendite,rgCpiTrend,
+  rgArbeitslos,rgClaims,rgUeberraschung,rgProduktivitaet,
+
   // ⚠ setFxTheme wird aus einem onclick im Einstellungs-Raster gerufen -
   // ohne diese Zeile wirft der Klick still ein ReferenceError und die
   // Vorlagen-Auswahl waere fuer den Nutzer einfach kaputt (CLAUDE.md Regel 6).
@@ -20758,6 +20900,10 @@ Object.defineProperty(window,'cotRefreshNote',{get:()=>cotRefreshNote,set:v=>{co
 Object.defineProperty(window,'cotCdTimer',{get:()=>cotCdTimer,set:v=>{cotCdTimer=v;},configurable:true});
 Object.defineProperty(window,'cotChartMeta',{get:()=>cotChartMeta,set:v=>{cotChartMeta=v;},configurable:true});
 Object.defineProperty(window,'SENTIMENT_DATA',{get:()=>SENTIMENT_DATA,set:v=>{SENTIMENT_DATA=v;},configurable:true});
+// Die gewaehlte Regime-Waehrung als LESBARER Wert - check/regime.js muss
+// pruefen koennen, dass ein Klick sie wirklich umstellt, und ein einfaches
+// Object.assign wuerde den Wert beim Bruecken-Aufbau einmalig einfrieren.
+Object.defineProperty(window,'regimeCcy',{get:()=>regimeCcy,configurable:true});
 Object.defineProperty(window,'_chvSeq',{get:()=>_chvSeq,set:v=>{_chvSeq=v;},configurable:true});
 Object.defineProperty(window,'indHistRange',{get:()=>indHistRange,set:v=>{indHistRange=v;},configurable:true});
 Object.defineProperty(window,'indHistCustomFrom',{get:()=>indHistCustomFrom,set:v=>{indHistCustomFrom=v;},configurable:true});

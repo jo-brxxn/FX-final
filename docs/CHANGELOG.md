@@ -14564,3 +14564,107 @@ Quelle zeigt es.
 
 Beide Male hätte ich um ein Haar einen Fehler gemeldet, den es nicht gibt —
 und der echte Fehler lag ganz woanders.
+
+---
+
+## 2026-09-15 — VERSION-CHECK-521: Regime Radar als eigener Tab
+
+Ausgangsfrage: *„Stell mir mal zusammen so Szenarien generell z.B. Crash was
+könnte man beobachten für Indikatoren z.B. Produktivität usw … und wie könnte
+man das auf der Webseite hinzufügen."* Abgestimmt per Rückfrage: **Stufe 1
+(Regime Radar), eigener Tab, keine neue Datenquelle.**
+
+### Was neu gerechnet wird — alles aus vorhandenen Feeds
+
+| Baustein | Quelle | Anmerkung |
+|---|---|---|
+| Zinskurve 10Y − 2Y, alle 8 Währungen | `bond_data.json` | **2Y und 10Y lagen seit Monaten im Feed und standen nirgends in der App** |
+| Realzins 10Y − CPI y/y | `bond_data` + `ind_data` | ⚠ ausdrücklich `CPI (Headline)` |
+| Realisierte 20-Tage-Vol + eigenes Perzentil | `price_data` | annualisiert über log-Returns |
+| Abstand zum 1-Jahres-Hoch | `price_data` | |
+| VIX-Schub über 5 Tage | `sentiment_data` | das **Tempo**, nicht der Stand |
+| Hafen-Gleichlauf (JPY/CHF/Gold − AUD/NZD) | `price_data` | 5 Tage |
+| Dollar-Breite gegen 7 Währungen | `price_data` | inkl. der Frage, ob auch gegen JPY **und** CHF |
+| CPI-Überraschungen der letzten 3 Meldungen | `ind_data.historyFull` | actual vs. forecast |
+| Arbeitslosenquote gegen ihr 12-Meldungs-Tief | `ind_data` | Sahm-Logik |
+| Spannweite der 2Y-Renditen über 8 Währungen | `bond_data` | Politik-Divergenz |
+
+### ⚠ Zwei Befunde im ERSTEN Live-Lauf — beide führten zu einer Schutzregel
+
+**1. „Funding Squeeze · 100 %" stand an der Spitze des Radars.** Erfüllt waren:
+Dollar fest gegen 7/7, fest auch gegen Yen und Franken, Gold fällt mit den
+Aktien. Nicht messbar waren: **Cross-Currency-Basis und SOFR-OIS** — also
+genau die zwei Bedingungen, die dieses Szenario von gewöhnlichem Risk-off
+unterscheiden. Drei erfüllte Nebenbedingungen ergaben eine glatte 100, und die
+las sich wie eine Bestätigung.
+
+Das ist dieselbe Fehlerklasse wie ein geschätzter Wert: **eine Zahl, die mehr
+behauptet, als die Datenlage hergibt.** Die entscheidenden Bedingungen tragen
+jetzt `kern:true`; fehlt eine, bleibt der Grad stehen (er ist ja richtig
+gerechnet), aber das Szenario kann **nicht** das führende Regime sein und sagt
+auf der Karte, woran es liegt.
+
+**2. „Productivity Upswing · 100 %" bei JPY** — aus **einer einzigen**
+zutreffenden Bedingung, weil die anderen für JPY keine Datenlage haben. Ein
+Prozentwert aus einer Beobachtung ist kein Prozentwert. Unter
+`REGIME_MIN_BED = 3` messbaren Bedingungen gibt es jetzt gar keinen, sondern
+einen Strich und den Grund.
+
+### Was die App nicht sehen kann — und das steht auch da
+
+| Fehlt | Für welches Szenario | Warum es zählt |
+|---|---|---|
+| US-HY-Kreditspreads | Risk-Off Shock (Kern) | **der** Unterschied zwischen Korrektur und Systemstress |
+| Cross-Currency-Basis | Funding Squeeze (Kern) | **der** Dollar-Knappheitsindikator |
+| SOFR-OIS | Funding Squeeze | |
+| BLS-Produktivität | Productivity Upswing (Kern) | |
+| Lohnstückkosten | Productivity Upswing | die Brücke zwischen Löhnen und Inflation |
+
+Für Produktivität steht stattdessen eine **als Näherung gekennzeichnete**
+Rechnung aus zwei echten Reihen (GDP q/q gegen die Beschäftigungsentwicklung) —
+kein geschätzter Wert, aber auch nicht die amtliche Zahl, und genau so steht es
+auf der Karte.
+
+### Der Tab rührt den Score nicht an
+
+Bewusst und im Code an drei Stellen festgehalten: ein Regime ist Kontext für
+die Deutung, keine dreizehnte Stimme in derselben Summe. Genau das war „Risk
+Environment", und es ist am 2026-09-13 auf Wunsch wieder ausgebaut worden.
+`js/regime.js` liest nur.
+
+Der einzige Zustand ist die gewählte Währung für die währungsabhängigen
+Bedingungen — nach dem Muster von `abChartRange` an allen vier Stellen
+gerätweit gesynct (`cloudPush` ×2, `cloudPull`, `importData`).
+
+### Wächter + Gegenproben
+
+`check/regime.js` liest `bond_data.json`, `ind_data.json` und
+`risk_index.json` **in Node** und rechnet Kurve, Realzins und Perzentile
+**noch einmal mit eigenem Code** nach — 16 Werte über acht Währungen. Dazu:
+Nenner = messbar, Kernbedingung, Mindestzahl, jedes „Not measured" nennt
+seinen Grund, ein echter Mausklick auf die Währungswahl, kein Überlauf auf
+fünf Breiten.
+
+| Eingriff | Meldung |
+|---|---|
+| Realzins mit `CPI` statt `CPI (Headline)` | REALZINS FALSCH (4,57 statt 1,58) **und** MONATSRATE STATT JAHRESRATE |
+| Kern-Schutz in Sortierung und Kopfzeile entfernt | FALSCHES FÜHRENDES REGIME + LÜCKENHAFTES SZENARIO FÜHRT |
+| `REGIME_MIN_BED` auf 1 gesetzt | PROZENT AUS ZU WENIG BEDINGUNGEN (JPY 100 % aus 1) |
+
+### ⚠ Zwei eigene Fehler beim Bauen
+
+1. **`git checkout js/main.js` hat alle Anbindungen gelöscht.** Ich wollte nur
+   eine Gegenproben-Änderung zurücknehmen und habe die ganze Datei auf den
+   letzten Commit gesetzt — 16 Eingriffe weg. `js/regime.js`, `index.html` und
+   `check/regime.js` blieben, die Anbindung war neu zu bauen.
+2. **Mein Reparatur-Skript hat sich selbst zerschossen:** einer meiner neuen
+   Kommentare enthielt wörtlich `Object.assign(window,{`, und ein späterer
+   Schritt ersetzte dann genau diese Stelle **im Kommentar** statt an der
+   Brücke — `SyntaxError: Unexpected token '...'`. Merksatz: in einem
+   Such-und-Ersetze-Skript darf kein eingefügter Text ein Suchmuster eines
+   späteren Schritts enthalten.
+3. Und einmal war die Diagnose falsch herum: `bondSeriesPts` steht in der
+   **window-Brücke**, nicht in der `export`-Liste. Ich hatte beides
+   verwechselt, die Namen weggelassen — und der Browser brach die ganze Datei
+   ab: *„does not provide an export named 'bondSeriesPts'"*, weiße Seite, kein
+   `showTab`, gar nichts.

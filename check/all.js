@@ -49,6 +49,7 @@ const PRUEFUNGEN = [
   { n: 'seasretail',d: 'Saisonalitaet/Retail: Schwellen, Deckel, Monats-Markierung', f: 'check/seasretail.js', args: [], browser: true },
   { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
   { n: 'kartenlook',d: 'Kartenoptik und Kopfleiste der Asset-Seite', f: 'check/kartenlook.js', args: [], browser: true },
+  { n: 'regime',     d: 'Regime Radar: Zahlen gegen die Rohdaten, Nenner, Kernbedingung',  f: 'check/regime.js',    args: [],           browser: true },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 

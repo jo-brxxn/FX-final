@@ -51,6 +51,7 @@ betrifft.
 | Navigation/Sidebar/Dashboard-Layout (Koyfin-Umbau, Mehrfach-Dashboards, Klick-/Animationsregeln) | `docs/navigation.md` |
 | Arbeits-Workflow (OK einholen, Version-Bump, Push-Regeln, Syntax-Checks) | `docs/workflow.md` |
 | Modul-Aufteilung von `index.html` in `js/*.js` (Vorgehen, window-Bruecke, AST-Verifikation) | `docs/module-split.md` |
+| **Regime Radar** (Szenarien, Bausteine, die drei Schutzregeln) | `docs/regime.md` |
 | Prüfskripte (`check/*.js`), was sie prüfen und warum | `check/README.md` |
 | Volle Änderungshistorie (jeder Bugfix/jede Iteration mit Datum) | `docs/CHANGELOG.md` |
 | **Perfect Rezept (die andere App)** — Trennung, Datenmodell, Bild-Budgets, Themes | `docs/rezept.md` |
