@@ -592,3 +592,89 @@ damit weggefallen; es markierte eine Drehung, die es nicht mehr gibt.
 meint.** `retailBiasFor()` liest ausschließlich `langAsset` — mit `lang` würde
 der Score still die falsche Seite bewerten, ohne dass irgendwo ein Strich oder
 eine Fehlermeldung erscheint.
+
+---
+
+## ⚠️ Schwellen gehören zur Reihe, nicht zur Kennzahl (2026-09-15)
+
+**Regel, die aus dem Put/Call-Bug entstanden ist:** Eine Schwelle, die aus
+der Fachliteratur oder von einem Datenanbieter stammt, gilt für **dessen**
+Zeitreihe — nicht automatisch für die eigene, auch wenn beide dieselbe
+Kennzahl heißen.
+
+**Der Fall:** Die App zeigt eine Put/Call-Ratio und wertete sie an den
+gängigen Marken `≥1.0 = Angst` / `≤0.7 = Sorglosigkeit` aus. Diese Marken
+gelten für die **CBOE-Total**-Ratio (Median ≈ 0,95). Der Workflow summiert
+aber Calls und Puts über **alle US-Optionsbörsen** aus dem
+OCC-`daily-volume-totals`-Report — das ist eine Mischung aus Equity-, Index-
+und ETF-Optionen, und deren Median liegt bei **0,76**. Folge, an 84
+Handelstagen gemessen: `≥1.0` wurde **nie** erreicht (Reihenmaximum 0,93),
+`≤0.7` traf 26,2 % der Tage. Ein Extrem, das nie oder ständig anschlägt.
+
+**Zum Vergleich, CBOE am 01.09.2026:** Total 0,95 · Equity 0,67 · Index 1,03.
+Drei Reihen, drei Niveaus, ein Name.
+
+### Woran man es erkennt
+
+Die Frage ist nicht „ist die Zahl richtig gerechnet", sondern **„ist es
+dieselbe Reihe, aus der die Schwelle stammt"**. Konkret prüfen:
+
+1. **Aggregationsebene** — Equity-only, Index-only, oder alles zusammen?
+2. **Quelle** — CBOE, OCC, ein Broker, ein ETF-Proxy? Die summieren
+   unterschiedliche Universen.
+3. **Gegenprobe an den eigenen Daten** — wie oft schlägt die Schwelle in der
+   eigenen Historie an? Liegt das weit weg von dem, was sie bedeuten soll
+   (ein „Extrem" sollte grob 5–10 % der Zeit gelten), passt sie nicht.
+
+### Was stattdessen gilt
+
+**Schwellen aus der eigenen Verteilung ableiten** (Perzentile über ein
+rollierendes Fenster), nicht aus einer Faustzahl. Das passt sich jeder Reihe
+an und ist die Praxis der Sentiment-Dienste. Umsetzung: `pcThresholds()` in
+`js/main.js`, geprüft von `check/putcall.js`.
+
+**Zwei Einschränkungen, ebenfalls gemessen:**
+
+- **Mindesthistorie** (`PC_MIN_HIST` = 60): darunter keine Extrem-Aussage.
+  Lieber „noch keine Basis" als eine erfundene Marke.
+- **Robustheit** (`PC_MAX_SPREAD` = 15, gemessen am **Roh**-Spread p90/p10):
+  Perzentile sind gegen einzelne Ausreißer robust, nicht gegen eine Reihe,
+  die überwiegend aus ihnen besteht. Die dünnen Währungs-ETFs streuen roh um
+  Faktor 65–210, gesunde Reihen um 1,4–7,2.
+
+### Wo die Regel sonst noch greift
+
+`sentEval()` trägt für **VIX** (≥28/≤13) und die **Fear&Greed-Indizes**
+(≤25/≥75) weiterhin feste Grenzen. Das ist hier **richtig**: beide sind
+normierte Skalen, die der Herausgeber selbst so publiziert — der
+Fear&Greed-Index ist per Konstruktion 0–100 mit definierten Zonen, der VIX
+eine standardisierte Volatilitätsrechnung. Bei Put/Call war die Zahl dagegen
+eine **selbst zusammengesetzte** OCC-Summe. Faustregel: **kommt die Zahl
+fertig von der Quelle, dürfen ihre Schwellen mitkommen; wird sie im eigenen
+Workflow gebildet, müssen die Schwellen aus den eigenen Daten kommen.**
+
+## ⚠️ Der Name eines Indikators ist ein Versprechen (2026-09-15)
+
+Aus demselben Fall: die App hatte eine Karte „Net Options Flow", die
+`(Call−Put)/(Call+Put)` aus **EOD-Kontraktvolumen** rechnete. In der Branche
+bedeutet der Begriff aber **Käufe minus Verkäufe** — Trades gegen Bid/Ask
+klassifiziert, prämiengewichtet, meist delta-adjustiert. Im Volumen zählen
+ein gekaufter und ein verkaufter Put identisch, obwohl sie entgegengesetzte
+Positionen sind.
+
+**Regel:** Trägt eine Karte einen Fachbegriff, muss sie das messen, was der
+Begriff bedeutet — oder anders heißen. Was sie **nicht** kann, gehört
+sichtbar in den Info-Text, nicht nur in einen Code-Kommentar. Die Karte
+heißt jetzt „Call/Put Balance" und sagt ausdrücklich, dass sie
+volumenbasiert ist.
+
+**Quellenlage für einen echten Options Flow** (Recherche 2026-09-15):
+
+| Komponente | Lage |
+|---|---|
+| Prämie | machbar — Yahoo liefert `bid`/`ask`/`lastPrice` je Kontrakt, der Sammellauf holt die Ketten schon komplett und wirft alles außer `volume` weg |
+| Delta | machbar für heute (Marketdata-Greeks oder Black-Scholes aus der IV). Rückwirkend **nicht**: bei `?date=` sind `iv`/`delta`/`gamma` laut Doku null |
+| Richtung | ohne Trade-Ticks mit NBBO nicht messbar; frei nirgends verfügbar (CBOE LiveVol, Polygon nur kostenpflichtig) |
+
+Gemessen wird das von `.github/workflows/probe-options-flow-sources.yml`,
+bevor Sammelcode entsteht — dasselbe Vorgehen wie bei der OHLC-Quellensuche.

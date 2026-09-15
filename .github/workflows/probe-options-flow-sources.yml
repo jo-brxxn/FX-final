@@ -1,0 +1,193 @@
+# Misst, welche Bestandteile eines ECHTEN Net Options Flow aus den Quellen
+# berechenbar sind, die dieses Repo schon benutzt. Schreibt NICHTS ins Repo -
+# das Ergebnis steht im Lauf-Log, wie bei probe-ohlc-sources.yml und
+# probe-news-sources.yml.
+#
+# ── Warum diese Probe ──────────────────────────────────────────────────────
+# Anlass (Nutzer 2026-09-15): die Karte "Net Options Flow" zeigte gemessen in
+# jeder Ansicht eine Konstante - marktweit an 0 von 83 Tagen einen bearischen
+# Balken, bei SPY/QQQ an 90% bzw. 89% der Tage einen. Sie rechnet
+# (Call-Put)/(Call+Put) aus reinem EOD-KONTRAKTVOLUMEN.
+#
+# "Net Options Flow" heisst in der Branche aber etwas anderes. Drei
+# Bestandteile, die das Volumenmass alle nicht hat:
+#   (1) RICHTUNG   - Kaeufe vs. Verkaeufe, unterschieden am Bid/Ask. Ein
+#                    gekaufter und ein verkaufter Put sind entgegengesetzte
+#                    Positionen, im Volumen zaehlen sie gleich.
+#   (2) PRAEMIE    - 1000 Kontrakte zu 0.01 USD sind nicht dasselbe wie 1000
+#                    zu 10 USD. Volumen behandelt sie identisch.
+#   (3) DELTA      - ein weit aus dem Geld liegender Kontrakt bewegt fast
+#                    nichts, ein Kontrakt am Geld fast eine Aktie.
+#
+# Nutzer-Entscheid 2026-09-15: den echten Flow bauen statt die Karte
+# umzubenennen. Also wird zuerst GEMESSEN, was wirklich geht - Projektregel 4
+# (nie schaetzen) und dasselbe Vorgehen wie bei der OHLC-Quellensuche, wo drei
+# von vier Kandidaten im Lauf durchgefallen sind.
+#
+# ⚠ Was die Recherche vorab sagt und was diese Probe pruefen soll:
+#   • Yahoo v7/finance/options liefert je Kontrakt lastPrice/bid/ask/volume/
+#     openInterest/impliedVolatility/strike - also (2) sicher und (3) ueber
+#     Black-Scholes aus der IV. Der taegliche Sammellauf holt diese Ketten
+#     BEREITS komplett (alle Verfaelle) und wirft alles ausser volume weg.
+#   • Marketdata.app liefert tagesaktuell zusaetzlich fertige Greeks, bei
+#     HISTORISCHEN Abfragen (?date=) aber laut Doku delta/gamma/iv = null.
+#     Heisst: (3) baut sich nur vorwaerts auf, rueckwirkend nicht.
+#   • Fuer (1) ist in keiner freien Quelle etwas in Sicht - Trade-Ticks mit
+#     NBBO gibt es bei CBOE LiveVol/Polygon nur kostenpflichtig. Die Probe
+#     misst deshalb zusaetzlich, wie gut die NAEHERUNG last-vs-mid traegt
+#     (letzter Preis ueber der Mitte -> der letzte Trade war eher ein Kauf).
+#     Das ist EIN Trade je Kontrakt, nicht das Tagesvolumen - die Probe sagt,
+#     fuer wie viele Kontrakte diese Naeherung ueberhaupt definiert ist.
+#
+# Laeuft nur von Hand.
+name: Probe options-flow sources (measure, write nothing)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yahoo option chain - welche Felder kommen wirklich an?
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sL --max-time 15 -A "$UA" -c yc.txt "https://fc.yahoo.com" -o /dev/null || true
+          CRUMB=$(curl -sL --max-time 15 -A "$UA" -b yc.txt -c yc.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
+          echo "[debug] crumb len=${#CRUMB}"
+          # Ein liquider und ein duenner Proxy: SPY steht fuer die Index-ETFs,
+          # FXE fuer die Waehrungsketten, an denen die Put/Call-Reihe gemessen
+          # unbrauchbar wurde (Roh-Spread 74x).
+          for SYM in SPY FXE; do
+            echo "── $SYM ──────────────────────────────────────────────"
+            curl -sL --max-time 25 -A "$UA" -b yc.txt -H "Accept: application/json" \
+              "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?crumb=${CRUMB}" -o "y_${SYM}.json" || true
+            node -e '
+              const fs=require("fs"),SYM=process.argv[1];
+              let j;try{j=JSON.parse(fs.readFileSync("y_"+SYM+".json","utf8"));}catch(e){console.log("  FEHLER: Antwort ist kein JSON ("+e.message.slice(0,60)+")");process.exit(0);}
+              const r=j&&j.optionChain&&j.optionChain.result&&j.optionChain.result[0];
+              if(!r){console.log("  FEHLER: kein result - "+JSON.stringify(j).slice(0,200));process.exit(0);}
+              const spot=r.quote&&(r.quote.regularMarketPrice);
+              const opt=r.options&&r.options[0];
+              const calls=(opt&&opt.calls)||[],puts=(opt&&opt.puts)||[];
+              const alle=calls.concat(puts);
+              console.log("  Verfaelle insgesamt : "+((r.expirationDates||[]).length));
+              console.log("  Spot                : "+spot);
+              console.log("  Kontrakte (1 Verfall): "+alle.length+" ("+calls.length+" calls / "+puts.length+" puts)");
+              if(!alle.length)process.exit(0);
+              console.log("  Felder eines Kontrakts: "+Object.keys(alle[0]).join(", "));
+              // ── Abdeckung je Feld: NUR Kontrakte mit Volumen zaehlen, denn
+              // nur die tragen zum Flow bei. Ein Feld, das bei den gehandelten
+              // Kontrakten fehlt, ist fuer die Rechnung wertlos - auch wenn es
+              // bei den ungehandelten brav gefuellt ist.
+              const gehandelt=alle.filter(c=>Number(c.volume)>0);
+              const quote=(f,arr)=>arr.filter(c=>Number.isFinite(Number(c[f]))).length;
+              console.log("  davon mit Volumen>0 : "+gehandelt.length);
+              ["lastPrice","bid","ask","impliedVolatility","strike","openInterest"].forEach(f=>{
+                const n=quote(f,gehandelt);
+                const p=gehandelt.length?(n/gehandelt.length*100).toFixed(1):"-";
+                console.log("    "+f.padEnd(18)+n+"/"+gehandelt.length+"  ("+p+"%)");
+              });
+              // (2) PRAEMIE: laesst sich der Dollar-Fluss rechnen?
+              const praemie=c=>{
+                const b=Number(c.bid),a=Number(c.ask),l=Number(c.lastPrice);
+                const mid=(Number.isFinite(b)&&Number.isFinite(a)&&(b+a)>0)?(b+a)/2:(Number.isFinite(l)?l:null);
+                return mid==null?null:mid*Number(c.volume)*100;
+              };
+              const cP=calls.filter(c=>Number(c.volume)>0).map(praemie).filter(x=>x!=null);
+              const pP=puts.filter(c=>Number(c.volume)>0).map(praemie).filter(x=>x!=null);
+              const sum=a=>a.reduce((x,y)=>x+y,0);
+              const cS=sum(cP),pS=sum(pP);
+              console.log("  (2) PRAEMIE berechenbar fuer "+(cP.length+pP.length)+"/"+gehandelt.length+" gehandelte Kontrakte");
+              if(cS+pS>0){
+                const volNet=(calls.reduce((s,c)=>s+(Number(c.volume)||0),0)-puts.reduce((s,c)=>s+(Number(c.volume)||0),0))/
+                             (calls.reduce((s,c)=>s+(Number(c.volume)||0),0)+puts.reduce((s,c)=>s+(Number(c.volume)||0),0));
+                console.log("      Call-Praemie  : "+Math.round(cS).toLocaleString("en-US")+" USD");
+                console.log("      Put-Praemie   : "+Math.round(pS).toLocaleString("en-US")+" USD");
+                console.log("      Netto praemiengewichtet: "+((cS-pS)/(cS+pS)).toFixed(4));
+                console.log("      Netto volumengewichtet : "+volNet.toFixed(4)+"   <- was die App HEUTE rechnet");
+                console.log("      ⚠ Unterschied: "+Math.abs((cS-pS)/(cS+pS)-volNet).toFixed(4)+" - je groesser, desto mehr traegt die Praemiengewichtung bei.");
+              }
+              // (3) DELTA: reicht die IV fuer Black-Scholes?
+              const mitIv=gehandelt.filter(c=>Number(c.impliedVolatility)>0&&Number(c.strike)>0);
+              console.log("  (3) DELTA aus IV rechenbar fuer "+mitIv.length+"/"+gehandelt.length+" gehandelte Kontrakte"+
+                (Number.isFinite(Number(spot))?"":"  ⚠ ABER: kein Spot in der Antwort, ohne den geht kein Delta"));
+              // (1) RICHTUNG: fuer wie viele ist last-vs-mid ueberhaupt definiert?
+              const klassifizierbar=gehandelt.filter(c=>{
+                const b=Number(c.bid),a=Number(c.ask),l=Number(c.lastPrice);
+                return Number.isFinite(b)&&Number.isFinite(a)&&a>b&&Number.isFinite(l)&&l>0;
+              });
+              console.log("  (1) RICHTUNG (Naeherung last-vs-mid) definiert fuer "+klassifizierbar.length+"/"+gehandelt.length);
+              console.log("      ⚠ Das ist EIN Trade je Kontrakt, nicht das Tagesvolumen - eine grobe Naeherung, keine Messung.");
+            ' "$SYM"
+            rm -f "y_${SYM}.json"
+            sleep 1
+          done
+          rm -f yc.txt
+
+      - name: Marketdata.app - Greeks heute vs. historisch
+        continue-on-error: true
+        env:
+          MDTOKEN: ${{ secrets.MARKETDATA_TOKEN }}
+        run: |
+          if [ -z "$MDTOKEN" ]; then
+            echo "MARKETDATA_TOKEN nicht gesetzt - dieser Teil der Probe entfaellt."
+            echo "⚠ Ohne ihn bleibt Yahoo die einzige Quelle: Delta muesste dann"
+            echo "  selbst aus der IV gerechnet werden (Black-Scholes)."
+            exit 0
+          fi
+          HEUTE=$(date -u +%Y-%m-%d)
+          ALT=$(date -u -d "-20 day" +%Y-%m-%d)
+          for VARIANTE in "heute:" "historisch:&date=${ALT}"; do
+            LABEL="${VARIANTE%%:*}"; PARAM="${VARIANTE#*:}"
+            echo "── SPY ${LABEL} ────────────────────────────────────"
+            curl -sL --max-time 25 "https://api.marketdata.app/v1/options/chain/SPY/?token=${MDTOKEN}${PARAM}" -o md.json || true
+            node -e '
+              const fs=require("fs");
+              let d;try{d=JSON.parse(fs.readFileSync("md.json","utf8"));}catch(e){console.log("  FEHLER: kein JSON");process.exit(0);}
+              if(d.s!=="ok"){console.log("  Antwort s="+d.s+" "+(d.errmsg||JSON.stringify(d).slice(0,160)));process.exit(0);}
+              const spalten=Object.keys(d).filter(k=>Array.isArray(d[k]));
+              const n=(d.side||[]).length;
+              console.log("  Kontrakte: "+n);
+              console.log("  Spalten  : "+spalten.join(", "));
+              // Eine Spalte, die nur aus null besteht, ist fuer die Rechnung
+              // nicht vorhanden - egal ob sie im Schema steht.
+              ["bid","ask","mid","last","volume","openInterest","iv","delta","gamma","underlyingPrice"].forEach(f=>{
+                if(!Array.isArray(d[f])){console.log("    "+f.padEnd(16)+"SPALTE FEHLT");return;}
+                const gut=d[f].filter(x=>x!==null&&Number.isFinite(Number(x))).length;
+                console.log("    "+f.padEnd(16)+gut+"/"+n+"  ("+(n?(gut/n*100).toFixed(1):"-")+"%)"+(gut===0?"   <- komplett null":""));
+              });
+            '
+            rm -f md.json
+            sleep 1
+          done
+          echo
+          echo "⚠ Erwartung aus der Doku: bei ?date= sind iv/delta/gamma/theta/vega null."
+          echo "  Trifft das zu, kann der delta-gewichtete Flow NICHT rueckwirkend"
+          echo "  gefuellt werden - er baut sich ab dem ersten Sammeltag vorwaerts auf."
+
+      - name: Fazit
+        if: always()
+        run: |
+          echo "═══════════════════════════════════════════════════════════"
+          echo "Was aus den Zahlen oben abzulesen ist:"
+          echo
+          echo "  (2) PRAEMIE  - machbar, wenn bid/ask (oder lastPrice) bei den"
+          echo "                 GEHANDELTEN Kontrakten hoch abgedeckt ist. Dann"
+          echo "                 traegt die Praemiengewichtung sofort, auch"
+          echo "                 rueckwirkend (Marketdata liefert mid historisch)."
+          echo "  (3) DELTA    - machbar fuer HEUTE. Rueckwirkend nur, falls die"
+          echo "                 historische Abfrage oben wider Erwarten Greeks"
+          echo "                 liefert; sonst baut sich die Reihe vorwaerts auf."
+          echo "  (1) RICHTUNG - ohne Trade-Ticks nicht messbar. Die Naeherung"
+          echo "                 last-vs-mid deckt nur den LETZTEN Trade je"
+          echo "                 Kontrakt ab. Ob sie eingebaut wird, entscheidet"
+          echo "                 die Abdeckung oben - unter ~80% lohnt sie nicht,"
+          echo "                 und auch darueber bleibt sie eine Naeherung, die"
+          echo "                 als solche beschriftet werden muss."
+          echo
+          echo "Diese Probe schreibt nichts. Der Sammel-Schritt wird erst gebaut,"
+          echo "wenn hier steht, was wirklich ankommt."

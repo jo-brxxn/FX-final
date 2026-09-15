@@ -14668,3 +14668,129 @@ fünf Breiten.
    verwechselt, die Namen weggelassen — und der Browser brach die ganze Datei
    ab: *„does not provide an export named 'bondSeriesPts'"*, weiße Seite, kein
    `showTab`, gar nichts.
+
+---
+
+## 2026-09-15 — Put/Call & Net Options Flow: Schwellen einer fremden Zeitreihe (VERSION-CHECK-522)
+
+**Nutzer-Bugreport, wörtlich:** *„put Call Ratio und net options Flow das
+beides hab ich ja auch auf der Webseite aber es funktioniert nicht so
+richtig also ich glaube das ist falsch eingestellt und es fehlt vlt ein Ema
+oder die Grenzen sind falsch oder die Rechnung oder so."*
+
+Alle drei Vermutungen zutrafen, plus zwei Fehler, die der Bugreport nicht
+benennen konnte. Reproduziert nach Regel 8: an der echten Reihe gerechnet,
+nicht aus dem Code abgeleitet.
+
+### Messung (OCC-Reihe, 83 Handelstage, 12.05.–11.09.2026)
+
+| Was | Sollte | War gemessen |
+|---|---|---|
+| Score-Schwelle `≥1.0` = bullish | ~10 % der Tage | **0 von 83 (0,0 %)** — Reihenmaximum 0,93 |
+| Chart-Schwelle `≥1.8` = bullish | dito | **0 von 83** |
+| Score-Schwelle `≤0.7` = bearish | ~10 % | **26,5 %** |
+| Chart-Schwelle `≤0.8` = bearish | dito | **66,3 %** |
+| Chart vs. Score, gleicher Tag | identisch | **39,8 % abweichend** (33 von 83) |
+| Net Flow, marktweit negativ | ~50 % | **0 von 83** — alle Balken blau |
+| Net Flow bei SPY / QQQ negativ | ~50 % | **90 % / 89 %** — fast alle rot |
+| Net Flow vs. Put/Call (Spearman) | unabhängig | **−0,995** — dieselbe Information |
+
+**Nachgerechnet am Datenstand vom 15.09. (84 statt 83 Punkte):** der Befund
+ist stabil — `≥1.0` weiter 0,0 % · `≤0.7` 26,2 % · `≤0.8` 66,7 % · Widerspruch
+Chart/Score 40,5 % · Net Flow an 0 von 84 Tagen negativ. Die Zahlen oben
+stammen aus der Erstmessung, die Größenordnungen ändern sich nicht.
+
+### Ursache
+
+Zwei unabhängige Fehler, die sich überlagerten:
+
+1. **Zwei Wahrheiten.** `pcThresholds()` entschied für den Chart (HI 1,8 /
+   LO 0,8), feste Zahlen in `sentEval()` für Score und Dashboard (HI 1,0 /
+   LO 0,7). Niemand hielt sie zusammen.
+2. **Fremde Skala.** Die festen Zahlen stammen aus der CBOE-**Total**-Welt
+   (Median ≈ 0,95; CBOE am 01.09.2026: Total 0,95 · Equity 0,67 · Index
+   1,03). Der Workflow summiert aber über die OCC **alle** US-Optionsbörsen,
+   also Equity + Index + ETF gemischt — Median dieser Mischung: 0,76. Die
+   Schwellen einer anderen Zeitreihe lagen auf der eigenen.
+
+Beim Net Options Flow kam ein dritter dazu: `(1−r)/(1+r)` wird nur negativ,
+wenn `r > 1`. Marktweit trat das nie ein, bei Index-ETFs fast immer — die
+Karte zeigte in jeder Ansicht eine **Struktureigenschaft des jeweiligen
+Optionsmarkts**, keinen Tagesbefund.
+
+### Fix
+
+- **Perzentil-Schwellen aus der eigenen Reihe** (`PC_PCTL_LO/HI` = 10/90 %
+  über `PC_WINDOW` = 252 Lesungen), gerechnet auf dem geglätteten Verlauf.
+  Marktweit jetzt 10,8 % bullisch / 10,8 % bearisch.
+- **Eine Funktion für alle drei Stellen**: `pcReading()` → `pcClassify()`.
+  Chart, `sentEval()` und die Dashboard-Karte rufen dieselbe. Ein
+  Auseinanderlaufen ist strukturell ausgeschlossen.
+- **Glättung**: `PC_SMOOTH` = 10 Tage als **SMA** (nicht EMA — die
+  Fachpraxis liest PCR-Extreme am 9–10-Tage-Schnitt). Senkt σ um 36 %
+  (0,0891 → 0,0571). Rohwert bleibt als dünne Linie sichtbar.
+- **Robustheitsgrenze** `PC_MAX_SPREAD` = 15: Reihen, deren äußere Dezile
+  mehr als Faktor 15 auseinanderliegen, bekommen keine Zonen.
+- **Lücken** brechen die Linie und stehen als graues Band (6 fehlende
+  Werktage, größte Lücke 04.09.→10.09.).
+- **`PC_STALE_DAYS` = 5**: ältere Lesungen zählen nicht mehr (die Reihe lag
+  am 14.09. auf dem Stand vom 11.09.).
+- **Net Options Flow → „Call/Put Balance"**, Bezugslinie ist der Median des
+  eigenen Marktes. Der Info-Text sagt jetzt ausdrücklich, dass die Karte aus
+  Volumen gebaut ist und **Kauf nicht von Verkauf unterscheiden kann**.
+
+### Der Wächter hat einen eigenen Fehler gefunden
+
+`PC_MAX_SPREAD` maß zuerst den Spread der **geglätteten** Reihe. Die
+Gegenprobe in `check/putcall.js` widerlegte das: eine Reihe, die täglich
+zwischen 0,5 und 40 springt, mittelt sich auf glatte ~20 und bestand den
+Test mit Spread 1,00× — genau die Reihe, die er aussperren soll. Die
+Streuung der Quelle steht im **Rohwert**; die Glättung versteckt sie.
+Gemessen auf Rohdaten trennt es sauber:
+
+```
+gesund: marktweit 1,36 · NAS 2,63 · SP500 2,97 · SILVER 4,39 · BTC 5,04 · GOLD 5,36 · OIL 7,22
+kaputt: CHF 64,6 · EUR 74,6 · CAD 122 · JPY 124 · USD 135 · GBP 210
+```
+
+⚠ Die alte feste Schwelle (HI 3,0 für Nicht-Index) hatte hier ihren
+schlimmsten Fall: **GBP stand zuletzt bei 4,13 aus 155 Kontrakten** — das
+hätte dauerhaft „extrem contrarian bullish" gemeldet.
+
+### Fehlerklasse (Regel 8.4)
+
+Die Klasse ist nicht „eine Zahl war falsch", sondern **feste Schwellen, die
+aus einer anderen Datenquelle stammen als die Reihe, auf die sie angewendet
+werden**, und **zwei Stellen, die dasselbe unabhängig entscheiden**. Beide
+Muster sind anderswo in der App zu prüfen: `sentEval()` trägt für `vix`
+(≥28/≤13) und die Fear&Greed-Indizes (≤25/≥75) weiterhin feste Grenzen. Bei
+VIX und F&G sind das etablierte, von der Quelle selbst publizierte Skalen —
+anders als bei Put/Call, wo die Zahl aus einer selbst zusammengesetzten
+OCC-Summe stammt. Sie bleiben deshalb bewusst fest, aber der Gedanke ist
+dokumentiert, falls die Quelle dort je wechselt.
+
+### Wächter
+
+`check/putcall.js` (statisch, ohne Browser, 34 Prüfungen) schneidet die
+DOM-freie Rechenlogik aus `js/main.js` und prüft: nur eine Schwellen-Wahrheit
+(`sentEval` darf keine festen Zahlen mehr enthalten), Trefferquote der Zonen
+zwischen 3 und 20 %, kein Asset mit Zonen über `PC_MAX_SPREAD`,
+Lückenerkennung (Fr→Mo = 0, 04.09.→10.09. = 3), SMA-Korrektheit, Altersgrenze.
+**Fünf Gegenproben**, darunter die, die den Spread-Fehler oben aufdeckte.
+Rückbau-Test: alle drei wiederhergestellten Altfehler melden Exit 1.
+
+### Offen: echter Net Options Flow
+
+Nutzer-Entscheid: den echten Flow bauen statt die Karte nur umzubenennen.
+Der braucht drei Komponenten, die das Volumenmaß nicht hat — Richtung
+(Kauf/Verkauf am Bid/Ask), Prämiengewichtung, Delta. Recherche-Stand:
+
+| Komponente | Lage |
+|---|---|
+| Prämie | machbar — Yahoo liefert `bid`/`ask`/`lastPrice` je Kontrakt, der Sammellauf holt die Ketten **bereits komplett** und wirft alles außer `volume` weg |
+| Delta | machbar für heute (Marketdata-Greeks oder Black-Scholes aus Yahoo-IV). Rückwirkend **nicht** — Marketdata liefert bei `?date=` laut Doku `iv`/`delta`/`gamma` = null |
+| Richtung | ohne Trade-Ticks mit NBBO nicht messbar; frei nirgends verfügbar (CBOE LiveVol, Polygon nur kostenpflichtig). Näherung `last`-vs-`mid` deckt nur den letzten Trade je Kontrakt ab |
+
+`.github/workflows/probe-options-flow-sources.yml` misst das, bevor eine
+Zeile Sammelcode entsteht — dasselbe Vorgehen wie bei der OHLC-Quellensuche,
+in der drei von vier Kandidaten durchfielen. Schreibt nichts ins Repo.

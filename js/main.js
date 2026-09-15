@@ -13048,6 +13048,10 @@ function renderDash(){
       else{
         const vxEv=sentEval('vix',D.vix);
         const cfEv=sentEval('cryptoFng',D.cryptoFng);
+        // ⚠ Nimmt bewusst NICHT mehr den rohen letzten Serienwert: sentEval()
+        // liest die Reihe seit 2026-09-15 selbst, glaettet sie und ordnet sie
+        // an den Perzentil-Schwellen ein - sonst stuende hier wieder eine
+        // andere Zahl als im Chart (der alte Zustand, 39.8% Abweichung).
         const pcLast=D.putCall&&D.putCall.series&&D.putCall.series.length?D.putCall.series[D.putCall.series.length-1]:null;
         const pcEv=pcLast&&isFinite(+pcLast[1])?sentEval('putCall',{value:+pcLast[1]}):null;
         const snapRow=(label,ev,tip)=>`<div class="risk-asset-row" onclick="showTab('sent')" title="${escH(tip)}">
@@ -13056,7 +13060,7 @@ function renderDash(){
         </div>`;
         content=snapRow('VIX',vxEv,'CBOE Volatility Index — contrarian: high = fear (bullish), low = complacency (bearish)')+
           snapRow('Crypto F&G',cfEv,'Crypto Fear & Greed Index — contrarian read, applies to BTC')+
-          snapRow('Put/Call',pcEv,'Market-wide OCC put/call ratio — contrarian: ≥1.0 bullish, ≤0.7 bearish')+
+          snapRow('Put/Call',pcEv,`Market-wide OCC put/call ratio, ${PC_SMOOTH}-day average — contrarian. Extremes are the outer ${Math.round(PC_PCTL_LO*100)}% of its own ${PC_WINDOW}-day history, not a fixed level`)+
           `<div class="mw-footer" onclick="showTab('sent')"><span>Go to Sentiment</span></div>`;
       }
     }else if(w.type==='fx_bias'){
@@ -15091,9 +15095,23 @@ function sentEval(key,d){
     return{bias:v<=25?'bull':v>=75?'bear':'neu',actual:Math.round(v)+lbl,extreme:v<=25||v>=75};
   }
   if(key==='putCall'){
-    // Put/Call >= 1.0 = viel Absicherung/Angst -> contrarian bullish;
-    // <= 0.7 = Sorglosigkeit -> contrarian bearish.
-    return{bias:v>=1.0?'bull':v<=0.7?'bear':'neu',actual:v.toFixed(2),extreme:v>=1.0||v<=0.7};
+    // ⚠ HIER STANDEN FESTE SCHWELLEN (>=1.0 bull / <=0.7 bear) - gemessen
+    // falsch: 1.0 wurde an 0 von 83 Tagen erreicht, 0.7 an 26.5%. Und sie
+    // widersprachen den Chart-Schwellen an 39.8% der Tage. Die Begruendung
+    // und die Perzentil-Loesung stehen bei PC_MIN_HIST/pcThresholds().
+    // Die Einordnung laeuft jetzt zentral ueber pcReading() auf der MARKT-
+    // WEITEN Reihe - das ist die einzige, die Score und Dashboard je lesen
+    // (der Asset-Filter wirkt nur im Sentiment-Tab). Damit kann sich diese
+    // Stelle nicht mehr vom Chart entfernen.
+    const rd=pcReading(typeof SENTIMENT_DATA!=='undefined'?SENTIMENT_DATA:null,'');
+    if(!rd)return null;
+    const th=rd.th;
+    // Ohne genug Historie gibt es KEINE Extrem-Aussage (Regel 4: nie
+    // schaetzen). Der Wert wird trotzdem angezeigt, er zaehlt nur nicht.
+    const suffix=th.basis!=='pctl'?' (building history)':rd.stale?` (${rd.ageDays}d old)`:
+      rd.pctl!=null?` (${rd.pctl}th pct)`:'';
+    return{bias:rd.bias,actual:rd.smooth.toFixed(2)+suffix,
+      extreme:rd.bias!=='neu',raw:rd.raw,pctl:rd.pctl,stale:rd.stale};
   }
   if(key==='vix'){
     // VIX = erwartete S&P-Volatilitaet ("Angstbarometer"). Hoch (>=28) =
@@ -16532,15 +16550,20 @@ const SENT_INFO={
      <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#0B5FCC'}">bullish</b>.</li>
      <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#C50F1A'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
-     <p><b>How to read the chart:</b> the stepped line is the daily ratio. The blue-shaded band at the top and the red-shaded band at the bottom are the extreme zones; the dashed lines mark the thresholds. The value updates at the end of each trading day.</p>
+     <p><b>How to read the chart:</b> the thick line is the <b>${'10'}-day average</b> — that is the line the zones are read against, because a single hot daily print is mostly noise. The thin pale line behind it is the raw daily ratio, kept visible so the smoothing hides nothing. Grey vertical bands mark <b>missing trading days</b>: the line is broken there instead of drawn straight through data that does not exist.</p>
+     <p><b>Where the thresholds come from:</b> not from a fixed number, but from <b>this series' own history</b> — the top and bottom ${'10'}% of its last ${'252'} readings. That matters because different options markets sit at completely different levels: the market-wide ratio hovers near 0.76, SPY and QQQ run well above 1.0 (index hedging is done with puts), a thin currency-ETF chain scatters far wider. A fixed level that fits one of them is wrong for the others. Until a series has ${'60'} readings, no zones are drawn at all and nothing is called extreme — an honest "not enough basis" instead of a made-up line.</p>
+     <p>The footer under the chart always names the two current thresholds, and the hover tooltip gives the reading's <b>percentile</b> — the direct answer to "is this actually unusual?". A reading older than ${'5'} days is flagged and stops counting as a current signal.</p>
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
-  netflow:['Net Options Flow (Call−Put)/(Call+Put)',
-    `<p><b>What it is:</b> the net balance between call and put volume on a given day, computed directly from the raw end-of-day option volumes as <b>(total call volume − total put volume) ÷ (total call volume + total put volume)</b>. This is cleanly scaled between <b>−1.0</b> (only puts traded) and <b>+1.0</b> (only calls traded); <b>0</b> means calls and puts balanced.</p>
-     <p><b>How to read it here:</b> each bar is one day (lightly smoothed with a 5-day average to cut single-day noise).</p>
-     <ul><li><b style="color:${'#0B5FCC'}">Blue bar (above 0)</b> — <b>call-heavy</b> flow → bullish options flow.</li>
-     <li><b style="color:${'#C50F1A'}">Red bar (below 0)</b> — <b>put-heavy</b> flow → bearish options flow.</li></ul>
-     <p>It is a direct, normalized read of who is leaning where in the options market, so it builds up one point per trading day as the underlying put/call series fills in.</p>
-     <p><b>Market-wide by default, per-asset via the filter:</b> same scope rules as the Put/Call Ratio above - "Market-wide" uses total U.S. options volume, or pick an asset for its ETF-proxy reading (starts fresh per asset).</p>`],
+  netflow:['Call/Put Balance vs. its own normal',
+    `<p><b>⚠ This card is being rebuilt — read what it actually is first.</b></p>
+     <p><b>What it is:</b> the balance between call and put <b>volume</b>, as <b>(call volume − put volume) ÷ (call volume + put volume)</b>, shown as the distance from this market's <b>own median</b>. Each bar is one day, smoothed with a 5-day average.</p>
+     <ul><li><b style="color:${'#0B5FCC'}">Blue bar</b> — more <b>call-heavy</b> than normal for this market.</li>
+     <li><b style="color:${'#C50F1A'}">Red bar</b> — more <b>put-heavy</b> than normal for this market.</li></ul>
+     <p><b>Why the median and not zero:</b> a zero line assumes an even call/put split is the neutral state. It isn't. Measured over the recorded history, the market-wide series never once crossed it — every bar came out blue since May. SPY and QQQ sit on the opposite side: roughly 9 days out of 10 landed red, because index hedging is done with puts. A fixed zero line was therefore colouring a structural property of each options market as if it were a daily signal.</p>
+     <h4>What this is not</h4>
+     <p>In the industry, <b>"net options flow" means buys minus sells</b> — trades classified against the bid/ask, weighted by premium paid and usually by delta. This card is built from end-of-day <b>contract volume</b>, where a bought put and a sold put count exactly the same. It therefore cannot tell you whether someone was <i>buying</i> downside protection or <i>selling</i> it, which are opposite positions.</p>
+     <p>It is also <b>not independent of the Put/Call Ratio</b> above: the two are the same number on a different scale (rank correlation −0.995). Reading both is reading one thing twice.</p>
+     <p>A source check (<code>probe-options-flow-sources.yml</code>) is measuring which of the three real components — premium weighting, delta weighting, buy/sell classification — can be built from the data available here. This card is replaced by whatever that check shows is honestly computable.</p>`],
   feargreed:['Fear & Greed / VIX',
     `<p><b>Fear & Greed Index (0–100):</b> a single number that blends several market signals into one mood reading. <b>Low = fear</b> (everyone scared), <b>high = greed</b> (everyone euphoric). Read contrarian: extreme fear (≤25) is often a buying opportunity (bullish), extreme greed (≥75) a warning (bearish). There is one for crypto (drives BTC) and one for US stocks.</p>
      <p><b>VIX (the "fear gauge"):</b> the market's expected swing size for the S&P 500 over the next 30 days. A <b>spike (≥28)</b> means panic — often near a bottom (contrarian bullish); a <b>very low reading (≤13)</b> means calm/complacency — often near a top (contrarian bearish).</p>
@@ -17372,7 +17395,7 @@ function pcFilterBar(D){
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
   const D=SENTIMENT_DATA;
-  const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Net Options Flow'],['feargreed','😱 Fear & Greed'],['aaii','🗳️ AAII Survey']];
+  const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Call/Put Balance'],['feargreed','😱 Fear & Greed'],['aaii','🗳️ AAII Survey']];
   const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${escH(l)}</button>`).join('')}</div>`;
   let body;
   if(!D)body=`<div class="cot-empty">Loading sentiment data… (written hourly by the GitHub workflow into sentiment_data.json).</div>`;
@@ -17567,14 +17590,191 @@ function pcThinNote(perAsset){
   if(tot>=PC_THIN_VOL)return'';
   return`<span style="display:block;color:var(--amber);font-size:var(--fs-xs);margin-top:4px">⚠ Low options volume today (${tot} contracts total) — this reading can be noisy, treat as a rough signal only.</span>`;
 }
-// PCR-Schwellen + Achsen-Basis je Asset-Kategorie (Nutzer-Wunsch 2026-07-22):
-// Index-ETFs (SPY/QQQ) und die marktweite OCC-Zahl handeln eng um 1.0 herum
-// -> engere Zonen (1.8/0.8) + kleinere Achse (0-2.5). Rohstoffe, FX-Proxys
-// und Einzelwerte koennen weit streuen (Ratios bis ~5) -> weitere Zonen
-// (3.0/0.3) + groessere Achse (0-8). id: unsere Asset-ID, '' = marktweit.
-function pcThresholds(id){
-  const idxLike = id==='SP500' || id==='NAS' || id===''; // Index-ETF + marktweit
-  return idxLike ? {HI:1.8,LO:0.8,base:2.5} : {HI:3.0,LO:0.3,base:8.0};
+// ══ PUT/CALL: EINE SCHWELLEN-WAHRHEIT FUER CHART, WIDGET UND SCORE ═══════
+//
+// ⚠ Anlass (Nutzer 2026-09-15: "es funktioniert nicht so richtig ... das ist
+// falsch eingestellt und es fehlt vlt ein Ema oder die Grenzen sind falsch").
+// An der echten OCC-Reihe nachgerechnet (83 Handelstage, 12.05.-11.09.2026)
+// und bestaetigt - an MEHR Stellen als vermutet:
+//
+//   • Hier standen feste Schwellen HI 1.8 / LO 0.8 (marktweit), in sentEval()
+//     GLEICHZEITIG andere feste Schwellen HI 1.0 / LO 0.7. Zwei Wahrheiten
+//     fuer dieselbe Zahl -> an 39.8% der Tage (33 von 83) war derselbe Wert
+//     im Chart rot und im Score neutral.
+//   • Das Maximum der Reihe liegt bei 0.93. HI 1.0 wurde an 0 von 83 Tagen
+//     erreicht, HI 1.8 erst recht nicht. Die bullishe Zone war tot.
+//   • LO 0.7 traf 26.5% der Tage, LO 0.8 sogar 66.3%. Ein "Extrem", das zwei
+//     Drittel der Zeit anschlaegt, ist kein Extrem, sondern der Normalfall.
+//
+// URSACHE (gemessen, nicht vermutet): die festen Zahlen stammen aus der
+// CBOE-TOTAL-Welt - dort liegt der Median bei ~0.95 (CBOE Anfang Sep 2026:
+// Total 0.95, Equity 0.67, Index 1.03). Diese App summiert aber ueber die
+// OCC ALLE US-Optionsboersen, also Equity + Index + ETF gemischt; der Median
+// dieser Mischung liegt bei 0.76. Es waren Schwellen einer FREMDEN Zeitreihe,
+// auf die eigene geklebt.
+//
+// LOESUNG: die Schwellen kommen aus der REIHE SELBST (Perzentile ueber ein
+// rollierendes Fenster) - so machen es Sentiment-Dienste wie SentimenTrader
+// mit Stimmungs-Extremen auch. Das passt sich jeder Reihe automatisch an:
+// der marktweiten OCC-Zahl, SPY/QQQ mit strukturell hoher Ratio (Index-
+// Hedging laeuft ueber Puts), UUP mit duenner Kette. Und es gibt die Zahl,
+// die vorher fehlte: WIE unueblich ist die heutige Lesung wirklich.
+//
+// ⚠ Die Perzentile laufen auf der GEGLAETTETEN Reihe, nicht auf dem Rohwert.
+// Grund: die Fachpraxis liest PCR-Extreme am 9-10-Tage-Schnitt (StockCharts,
+// SentimenTrader) - ein einzelner heisser Tagesdruck ist Rauschen. Gemessen
+// senkt der 10-Tage-Schnitt die Streuung der Reihe um 36% (Sigma 0.089 ->
+// 0.057). Der Rohwert bleibt im Chart als duenne Linie sichtbar, damit die
+// Glaettung nichts versteckt.
+const PC_MIN_HIST=60;   // ohne so viele Punkte KEINE Extrem-Aussage (Regel 4:
+                        // nie schaetzen - lieber "noch keine Basis" sagen)
+const PC_WINDOW=252;    // Fenster fuer die Perzentile (~1 Handelsjahr)
+const PC_SMOOTH=10;     // Glaettung in Tagen (Fachpraxis 9-10)
+const PC_PCTL_LO=0.10,PC_PCTL_HI=0.90; // "hoch/niedrig" = die aeusseren 10%
+const PC_STALE_DAYS=5;  // ab hier ist die Lesung veraltet und zaehlt nicht
+                        // mehr (Gegenstueck zu AAII_STALE_DAYS; die OCC-Reihe
+                        // hatte gemessen Luecken bis zu 3 Werktagen und lag
+                        // am 14.09. noch auf dem Stand vom 11.09.)
+// ⚠ Robustheitsgrenze, beim Bauen der Perzentil-Schwellen GEMESSEN gefunden.
+// Perzentile sind gegen einzelne Ausreisser robust - aber nicht, wenn die
+// Ausreisser die Mehrheit stellen. Bei den duennen Waehrungs-ETFs tun sie
+// genau das: ein Tag mit 3 Calls und 120 Puts ergibt eine Ratio von 40, und
+// davon hat so eine Reihe genug, dass schon das 90er-Perzentil dort landet.
+// ⚠ GEMESSEN AUF DER ROHEN REIHE, NICHT AUF DER GEGLAETTETEN. Der erste
+// Versuch prueefte den Spread der geglaetteten Werte - check/putcall.js hat
+// ihn mit einer Gegenprobe widerlegt: eine Reihe, die taeglich zwischen 0.5
+// und 40 springt, mittelt sich auf glatte ~20 und haette den Test mit einem
+// Spread von 1.00x bestanden. Genau die Reihe, die er aussperren soll. Die
+// Streuung der QUELLE steht im Rohwert; die Glaettung versteckt sie.
+// Gemessen am 15.09.2026, Roh-Spread p90/p10 je Reihe:
+//     gesund: marktweit 1.36 · NAS 2.63 · SP500 2.97 · SILVER 4.39 ·
+//             BTC 5.04 · GOLD 5.36 · OIL 7.22
+//     kaputt: CHF 64.6 · EUR 74.6 · CAD 122 · JPY 124 · USD 135 · GBP 210
+// Dazwischen liegt eine ganze Groessenordnung. 15 trennt mit Luft nach beiden
+// Seiten. Eine Reihe darueber bekommt KEINE Zonen - Regel 4 (nie schaetzen):
+// lieber "keine belastbare Basis" sagen als eine Extrem-Marke aus Rauschen.
+// ⚠ Die alte feste Schwelle (HI 3.0 fuer Nicht-Index) hatte genau hier ihren
+// schlimmsten Fehler: GBP stand zuletzt bei 4.13 aus 155 Kontrakten - das
+// haette dauerhaft "extrem contrarian bullish" gemeldet.
+// Warum nicht das Volumen der Historie pruefen statt der Streuung: die Reihe
+// speichert nur [Datum, Ratio], das Tagesvolumen gibt es nur fuer HEUTE
+// (PC_THIN_VOL). Rueckwirkend ist die Streuung der einzige messbare Hinweis.
+const PC_MAX_SPREAD=15;
+
+/** Quantil einer AUFSTEIGEND sortierten Zahlenliste, linear interpoliert. */
+function pcQuantile(sortedAsc,p){
+  const n=sortedAsc.length;if(!n)return null;
+  if(n===1)return sortedAsc[0];
+  const pos=(n-1)*Math.max(0,Math.min(1,p));
+  const lo=Math.floor(pos),hi=Math.ceil(pos);
+  return lo===hi?sortedAsc[lo]:sortedAsc[lo]+(sortedAsc[hi]-sortedAsc[lo])*(pos-lo);
+}
+/**
+ * Achsenschritt aus einer Spanne: die groesste "runde" Zahl (1/2/2.5/5 mal
+ * einer Zehnerpotenz), die hoechstens maxLinien Gitterlinien erzeugt.
+ * ⚠ Ersetzt eine feste Staffel, die nach oben offen war und bei der
+ * UUP-Reihe (Spanne 114) 57 Linien produziert hat - Beschriftungen links und
+ * rechts verschmolzen zu einem unlesbaren Balken. Eine Spanne kann hier
+ * IMMER gross werden, weil die Achse sich an die Daten anpasst; also muss
+ * der Schritt aus der Spanne folgen statt aus einer Tabelle.
+ */
+function pcNiceStep(span,maxLinien){
+  const n=Math.max(1,maxLinien|0);
+  const roh=Math.abs(span)/n;
+  if(!(roh>0))return 1;
+  const p=Math.pow(10,Math.floor(Math.log10(roh)));
+  const m=roh/p;
+  return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;
+}
+/**
+ * Wie viele WERKTAGE liegen zwischen zwei ISO-Daten (beide exklusiv)?
+ * 0 = die beiden Punkte folgen luecklos aufeinander (auch ueber ein
+ * Wochenende hinweg). >0 = es fehlen Handelstage. Feiertage kann diese
+ * Rechnung nicht kennen - sie meldet dort eine Luecke, die keine ist. Das
+ * ist die bewusst sichere Richtung: lieber einmal zu viel "hier fehlt
+ * etwas" anzeigen als eine Linie ueber echte Loecher ziehen.
+ */
+function pcGapWorkdays(a,b){
+  const end=new Date(b);let n=0;
+  for(let d=new Date(new Date(a).getTime()+864e5);d<end;d=new Date(d.getTime()+864e5)){
+    const w=d.getUTCDay();if(w>=1&&w<=5)n++;
+  }
+  return n;
+}
+/** Gleitender Schnitt (SMA) ueber [datum,wert]-Paare -> [datum,wert]-Paare. */
+function pcSmoothSeries(ser,n){
+  const w=Math.max(1,n|0);
+  return ser.map((e,i)=>{
+    const a=ser.slice(Math.max(0,i-w+1),i+1);
+    return [e[0],a.reduce((s,x)=>s+(+x[1]),0)/a.length];
+  });
+}
+/** Die rohe Reihe der aktuellen Auswahl ('' = marktweit, sonst Asset-Id). */
+function pcRawSeries(D,id){
+  const src=id?(D&&D.putCallByAsset&&D.putCallByAsset[id]):(D&&D.putCall);
+  return ((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1]));
+}
+// Schwellen je Auswahl. ⚠ Bewusst aus der VOLLEN Reihe, nicht aus dem vom
+// Zeitraum-Regler gefilterten Ausschnitt: sonst verschoeben sich die Zonen,
+// sobald der Nutzer von "MAX" auf "1M" schaltet - derselbe Tag waere mal
+// extrem und mal normal. base = Achsen-Fallback fuer Reihen ohne Historie.
+// Signatur bleibt abwaertskompatibel (D optional -> SENTIMENT_DATA).
+function pcThresholds(id,D){
+  const data=D||(typeof SENTIMENT_DATA!=='undefined'?SENTIMENT_DATA:null);
+  const raw=pcRawSeries(data,id||'');
+  const idxLike=id==='SP500'||id==='NAS'||!id;
+  const base=idxLike?2.5:8.0;
+  if(raw.length<PC_MIN_HIST)return{HI:null,LO:null,base,n:raw.length,basis:'none',why:'short'};
+  const fenster=raw.slice(-PC_WINDOW);
+  // ── Quellqualitaet: am ROHWERT gemessen, nicht am geglaetteten (s.o.) ──
+  const rohSort=fenster.map(e=>+e[1]).sort((a,b)=>a-b);
+  const rohLO=pcQuantile(rohSort,PC_PCTL_LO),rohHI=pcQuantile(rohSort,PC_PCTL_HI);
+  const spread=rohLO>0?rohHI/rohLO:null;
+  if(!(spread>0)||spread>PC_MAX_SPREAD)
+    return{HI:null,LO:null,base,n:fenster.length,basis:'none',why:'noisy',spread};
+  // ── Schwellen: am GEGLAETTETEN, denn das ist die Linie, die gelesen wird ──
+  const sm=pcSmoothSeries(fenster,PC_SMOOTH).map(e=>+e[1]).sort((a,b)=>a-b);
+  const HI=pcQuantile(sm,PC_PCTL_HI),LO=pcQuantile(sm,PC_PCTL_LO);
+  // HI==LO hiesse: es gibt gar keine Streuung, also auch kein Extrem.
+  if(!(LO>0)||!(HI>LO))
+    return{HI:null,LO:null,base,n:sm.length,basis:'none',why:'flat',spread};
+  return{HI,LO,base,n:sm.length,basis:'pctl',spread};
+}
+/** Contrarian-Einordnung eines (geglaetteten) Werts. Ohne Schwellen: 'neu'. */
+function pcClassify(v,th){
+  if(!th||th.basis!=='pctl'||!isFinite(+v))return'neu';
+  return v>=th.HI?'bull':v<=th.LO?'bear':'neu';
+}
+/**
+ * Die eine Lesung, die Chart, Dashboard-Widget und sentEval() benutzen.
+ * Liefert null, wenn es fuer die Auswahl gar keine Reihe gibt.
+ * @returns {{raw:number,smooth:number,date:string,th:object,bias:string,
+ *            pctl:number|null,ageDays:number,stale:boolean,n:number}|null}
+ */
+function pcReading(D,id){
+  const data=D||(typeof SENTIMENT_DATA!=='undefined'?SENTIMENT_DATA:null);
+  const raw=pcRawSeries(data,id||'');
+  if(!raw.length)return null;
+  const sm=pcSmoothSeries(raw,PC_SMOOTH);
+  const lastRaw=raw[raw.length-1],lastSm=sm[sm.length-1];
+  const th=pcThresholds(id||'',data);
+  // Alter gegen den Stand der Datei messen, nicht gegen "jetzt": die Reihe
+  // haengt am REPORT-Datum der OCC, und die Datei kann selbst aelter sein.
+  const ref=(data&&data.updated)?String(data.updated).slice(0,10):todayStr();
+  const ageDays=Math.max(0,Math.round((new Date(ref)-new Date(lastRaw[0]))/864e5));
+  // Perzentilrang der heutigen Lesung in der eigenen Historie - beantwortet
+  // "ist das wirklich unueblich?" statt nur "ueber/unter der Linie".
+  let pctl=null;
+  if(th.basis==='pctl'){
+    const hist=sm.slice(-PC_WINDOW).map(e=>+e[1]).sort((a,b)=>a-b);
+    const below=hist.filter(x=>x<+lastSm[1]).length;
+    pctl=Math.round(below/hist.length*100);
+  }
+  return{
+    raw:+lastRaw[1],smooth:+lastSm[1],date:lastRaw[0],th,
+    bias:ageDays>PC_STALE_DAYS?'neu':pcClassify(+lastSm[1],th),
+    pctl,ageDays,stale:ageDays>PC_STALE_DAYS,n:raw.length,
+  };
 }
 function renderPutCallChart(D){
   const upd=D.updated?new Date(D.updated).toLocaleString():'–';
@@ -17592,61 +17792,154 @@ function renderPutCallChart(D){
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
   const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
-  const th=pcThresholds(perAsset?pcAsset:''); // Schwellen je Asset-Kategorie
-  const HI=th.HI,LO=th.LO;
+  const pcId=perAsset?pcAsset:'';
+  // ⚠ Die Glaettung laeuft auf der VOLLEN Reihe, erst DANACH wird der
+  // Zeitraum-Regler angewendet. Andersherum haette der erste sichtbare Tag
+  // keinen Vorlauf - der 10-Tage-Schnitt startete als Ein-Tages-Wert und
+  // haette links einen Knick erzeugt, der nicht in den Daten steht.
+  const smoothAll=pcSmoothSeries(rawSeries,PC_SMOOTH);
+  const smooth=smoothAll.filter(e=>filteredDates.has(e[0]));
+  const th=pcThresholds(pcId,D);
+  const HI=th.HI,LO=th.LO,hasZones=th.basis==='pctl';
   const W=760,H=360,padL=44,padR=54,padT=24,padB=46;
-  const vals=series.map(e=>+e[1]);
+  const vals=series.map(e=>+e[1]);          // Rohwerte (duenne Linie)
+  const sVals=smooth.map(e=>+e[1]);         // geglaettet (Hauptlinie)
   // Achse erweitert sich adaptiv nach oben UND unten: ~15% ueber dem hoechsten
   // bzw. unter dem tiefsten Wert, ABER mindestens so, dass zu den Extrem-
   // Schwellen (HI/LO) je >15% Abstand bleibt (Nutzer-Wunsch 2026-07-22). yMin
-  // nie unter 0 (Ratio ist nicht-negativ). Schwellen sind dadurch immer im Bild.
-  const maxV=vals.length?Math.max(...vals):HI;
-  const minV=vals.length?Math.min(...vals):LO;
-  const yMax=Math.max(maxV,HI)*1.15;
-  const yMin=Math.max(0,Math.min(minV,LO)*0.85);
+  // nie unter 0 (Ratio ist nicht-negativ). Schwellen sind dadurch immer im
+  // Bild - sofern es welche gibt; ohne genug Historie (th.basis==='none')
+  // spannt die Achse nur ueber die Daten.
+  const spanVals=vals.concat(sVals).concat(hasZones?[HI,LO]:[]).filter(isFinite);
+  const maxV=spanVals.length?Math.max(...spanVals):1;
+  const minV=spanVals.length?Math.min(...spanVals):0;
+  const yMax=maxV*1.15;
+  const yMin=Math.max(0,minV*0.85);
   const xOf=i=>padL+(series.length>1?i/(series.length-1):0)*(W-padL-padR);
   const yOf=v=>padT+(1-(v-yMin)/((yMax-yMin)||1))*(H-padT-padB);
-  // Stufenlinie (Werte gelten bis zum naechsten Datum)
-  let step='';
-  vals.forEach((v,i)=>{const x=xOf(i),y=yOf(v);step+=(i===0?`M ${x.toFixed(1)} ${y.toFixed(1)}`:` L ${x.toFixed(1)} ${(yOf(vals[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`);});
+  // ── Luecken ────────────────────────────────────────────────────────────
+  // ⚠ Vorher zog die Stufenlinie ueber fehlende Handelstage einfach durch -
+  // gemessen fehlten in der marktweiten Reihe 6 Werktage, die groesste
+  // Luecke lief vom 04.09. auf den 10.09. (3 Werktage). Eine durchgezogene
+  // Linie behauptet dort Daten, die es nicht gibt. Jetzt wird die Linie
+  // unterbrochen und die Luecke grau hinterlegt.
+  //
+  // ⚠ ERST AB ZWEI fehlenden Werktagen. pcGapWorkdays() kennt keine
+  // Feiertage - an der langen UUP-Reihe (291 Punkte ueber 14 Monate) wurde
+  // im Screenshot sichtbar, was das anrichtet: die US-Boerse hat rund zehn
+  // Feiertage im Jahr, fast alle EINZELN, und jeder davon erschien als
+  // Datenluecke. Das Ergebnis war ein Zebramuster aus Fehlalarmen, in dem
+  // die ECHTEN Loecher untergingen. Ein einzelner fehlender Werktag ist
+  // weit haeufiger ein Feiertag als ein Ausfall; ab zwei aufeinander
+  // folgenden ist es umgekehrt (zwei Feiertage in Folge gibt es an der NYSE
+  // praktisch nicht). Lieber eine echte Ein-Tages-Luecke nicht markieren
+  // als neun von zehn Markierungen falsch setzen.
+  const GAP_MIN=2;
+  const gapAfter=series.map((e,i)=>i<series.length-1&&pcGapWorkdays(e[0],series[i+1][0])>=GAP_MIN);
+  const gapRects=series.map((e,i)=>!gapAfter[i]?'':
+    `<rect x="${xOf(i).toFixed(1)}" y="${padT}" width="${(xOf(i+1)-xOf(i)).toFixed(1)}" height="${(H-padB-padT).toFixed(1)}" fill="var(--t3)" opacity="0.07"/>`).join('');
+  /** Stufenlinie, an Luecken unterbrochen. */
+  const stepPath=arr=>{
+    let d='',neu=true;
+    arr.forEach((v,i)=>{
+      const x=xOf(i),y=yOf(v);
+      if(neu){d+=`M ${x.toFixed(1)} ${y.toFixed(1)}`;neu=false;}
+      else d+=` L ${x.toFixed(1)} ${(yOf(arr[i-1])).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)}`;
+      if(gapAfter[i])neu=true;   // naechster Punkt beginnt einen neuen Zug
+    });
+    return d;
+  };
+  /** Weiche Linie (fuer den geglaetteten Verlauf), ebenfalls luecken-bewusst. */
+  const linePath=arr=>{
+    let d='',neu=true;
+    arr.forEach((v,i)=>{
+      const x=xOf(i),y=yOf(v);
+      d+=(neu?'M ':' L ')+x.toFixed(1)+' '+y.toFixed(1);
+      neu=false;
+      if(gapAfter[i])neu=true;
+    });
+    return d;
+  };
+  const step=stepPath(vals);
+  const smoothLine=linePath(sVals);
   // Gridlines mit Labels LINKS und RECHTS (beidseitige Y-Achse). Schritt an
   // die (jetzt variable) Achsenspanne angepasst, an runden Zahlen ausgerichtet.
   const span=yMax-yMin;
-  const gStep=span<=1?0.2:span<=2.5?0.5:span<=6?1:2;
+  // ⚠ GEMESSEN KAPUTT (Screenshot 2026-09-15, Auswahl USD/UUP): die alte
+  // Staffel endete bei "span>6 -> Schritt 2". Die UUP-Reihe spannt aber bis
+  // 114 (einzelne Tage mit fast keinem Call-Volumen) - das ergab 57 Gitter-
+  // linien, deren Beschriftungen links und rechts zu einem unlesbaren Balken
+  // verschmolzen. Eine feste Staffel kann das nicht auffangen, weil sie nach
+  // OBEN offen ist. pcNiceStep() rechnet den Schritt stattdessen aus der
+  // Spanne und deckelt die Zahl der Linien.
+  const gStep=pcNiceStep(span,6);
+  const nk=gStep<0.1?2:gStep<1?1:0;   // Nachkommastellen zum Schritt passend
   const gyVals=[];for(let t=Math.ceil(yMin/gStep)*gStep;t<=yMax+1e-6;t+=gStep)gyVals.push(+t.toFixed(4));
-  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(1)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(1)}</text>`).join('');
+  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(nk)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(nk)}</text>`).join('');
   // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr
   // ("16 Jul 26"); Rand-Labels linksbuendig/rechtsbuendig, damit sie nicht
   // in die Y-Achsen-Beschriftung laufen.
   let xlab='';
   if(series.length){const idxs=pcXTickIdx(series.length,7);idxs.forEach(i=>{const anch=i===0?'start':i===series.length-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});}
+  // Einordnung der aktuellen Lesung - dieselbe Funktion, die auch Dashboard
+  // und Score benutzen. Ohne sie stuenden hier wieder eigene Schwellen.
+  const rd=pcReading(D,pcId);
+  const zoneTxt=b=>b==='bull'?'high put volume → contrarian bullish'
+    :b==='bear'?'high call volume → contrarian bearish':'neutral range';
+  // Fuss-/Warnzeilen: erklaeren, WORAUF die Zonen beruhen, und melden eine
+  // veraltete Lesung. Beides fehlte vorher komplett.
+  const basisNote=hasZones
+    ? `Zones = outer ${Math.round(PC_PCTL_LO*100)}% of this series' own last ${th.n} readings (${PC_SMOOTH}-day average). Thresholds right now: <b>${LO.toFixed(2)}</b> / <b>${HI.toFixed(2)}</b>.`
+    : th.why==='noisy'
+    ? `<b>No extreme zones for this series</b> — its own readings scatter too far to mark an extreme honestly (top decile is ${th.spread?th.spread.toFixed(1):'many'}× the bottom one, anything above ${PC_MAX_SPREAD}× is dominated by thin-chain outliers: a day with a handful of calls produces a ratio of 20+). The line is shown, it is just not being called extreme.`
+    : `<b>No extreme zones yet</b> — they need ${PC_MIN_HIST} readings to be meaningful and this series has ${th.n}. The line is shown, it is just not being called extreme. (Fixed levels were the old behaviour and measured wrong.)`;
+  const staleNote=(rd&&rd.stale)
+    ? `<div style="color:var(--amber);font-size:var(--fs-xs);margin-top:6px">⚠ Latest reading is ${rd.ageDays} days old (${escH(fmtDayHdr(rd.date))}) — older than ${PC_STALE_DAYS} days, so it no longer counts as a current signal.</div>` : '';
   let chart;
   if(series.length===1){
-    const v=vals[0];
+    const v=vals[0],b=hasZones?pcClassify(v,th):'neu';
     chart=`<div style="text-align:center;padding:10px 6px 4px">
-        <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${v>=HI?BC.bull:v<=LO?BC.bear:'var(--t1)'}">${v.toFixed(2)}</div>
-        <div style="font-size:var(--fs-base);color:var(--t2);margin-top:2px">${v>=HI?'High put volume → contrarian bullish':v<=LO?'High call volume → contrarian bearish':'Neutral range'}</div>
-        <div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;margin-top:12px">Chart builds up one point per trading day (weekends/holidays carry the last value forward) — check back tomorrow for a trend line.</div>
+        <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${b==='neu'?'var(--t1)':BC[b]}">${v.toFixed(2)}</div>
+        <div style="font-size:var(--fs-base);color:var(--t2);margin-top:2px">${escH(zoneTxt(b).replace(/^./,c=>c.toUpperCase()))}</div>
+        <div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;margin-top:12px">Chart builds up one point per trading day — check back tomorrow for a trend line.</div>
       </div>`;
   }else if(series.length<2){
     chart=`<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;padding:16px 6px">Not enough put/call history yet — the series builds up one point per trading day. Tap the <b>i</b> to learn what this shows.</div>`;
   }else{
-    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${(yOf(HI)-padT).toFixed(1)}" fill="rgba(79,155,255,.08)"/>
-        <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${(H-padB-yOf(LO)).toFixed(1)}" fill="rgba(255,107,107,.08)"/>
-        ${gy}
+    // Zonen/Schwellenlinien nur zeichnen, wenn es sie wirklich gibt.
+    const zones=hasZones?`
+        <rect x="${padL}" y="${padT}" width="${W-padL-padR}" height="${Math.max(0,yOf(HI)-padT).toFixed(1)}" fill="rgba(79,155,255,.08)"/>
+        <rect x="${padL}" y="${yOf(LO).toFixed(1)}" width="${W-padL-padR}" height="${Math.max(0,H-padB-yOf(LO)).toFixed(1)}" fill="rgba(255,107,107,.08)"/>`:'';
+    const zoneLines=hasZones?`
         <line x1="${padL}" y1="${yOf(HI).toFixed(1)}" x2="${W-padR}" y2="${yOf(HI).toFixed(1)}" stroke="${BC.bull}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <line x1="${padL}" y1="${yOf(LO).toFixed(1)}" x2="${W-padR}" y2="${yOf(LO).toFixed(1)}" stroke="${BC.bear}" stroke-width="1.2" stroke-dasharray="5,4"/>
         <text x="${padL+6}" y="${(yOf(HI)-5).toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:${BC.bull}">High Put Volume</text>
         <text x="${padL+6}" y="${(yOf(LO)-5).toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:${BC.bear}">High Call Volume</text>
         <text x="${W-padR-4}" y="${padT+13}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">CONTRARIAN BULLISH ▲</text>
-        <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>
-        <path d="${step}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-linejoin="round"/>
+        <text x="${W-padR-4}" y="${(H-padB-5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">CONTRARIAN BEARISH ▼</text>`:'';
+    // ⚠ Reihenfolge: Rohwert DUENN und blass zuerst, geglaettete Linie
+    // darueber. Der Rohwert bleibt sichtbar, damit die Glaettung nichts
+    // versteckt - aber die Linie, an der die Zonen gelesen werden, ist die
+    // geglaettete, und die muss optisch fuehren.
+    const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+        ${zones}${gapRects}
+        ${gy}${zoneLines}
+        <path d="${step}" fill="none" stroke="var(--t3)" stroke-width="0.9" stroke-linejoin="round" opacity="0.55"/>
+        <path d="${smoothLine}" fill="none" stroke="var(--t0)" stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/>
         ${xlab}
       </svg>`;
-    const hpts=series.map((e,i)=>{const v=vals[i];const col=v>=HI?BC.bull:v<=LO?BC.bear:'#e8eef7';const zone=v>=HI?'contrarian bullish':v<=LO?'contrarian bearish':'neutral';return{fx:xOf(i)/W,fy:yOf(v)/H,col,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${v.toFixed(2)}</b> · ${zone}`};});
-    const latestVal=vals[vals.length-1];
-    chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${latestVal>=HI?BC.bull:latestVal<=LO?BC.bear:'var(--t1)'}">${latestVal.toFixed(2)}</b> — ${latestVal>=HI?'high put volume → contrarian bullish':latestVal<=LO?'high call volume → contrarian bearish':'neutral range'}</div>`;
+    const hpts=series.map((e,i)=>{
+      const v=vals[i],sv=sVals[i],b=pcClassify(sv,th);
+      const col=b==='neu'?'#e8eef7':BC[b];
+      const gapTip=gapAfter[i]?`<br><span style="opacity:.75">⚠ ${pcGapWorkdays(e[0],series[i+1][0])} trading day(s) missing after this point</span>`:'';
+      return{fx:xOf(i)/W,fy:yOf(sv)/H,col,
+        tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${sv.toFixed(2)}</b> (${PC_SMOOTH}d avg) · ${zoneTxt(b)}<br><span style="opacity:.75">raw ${v.toFixed(2)}</span>${gapTip}`};
+    });
+    const lastSm=sVals[sVals.length-1],lastB=pcClassify(lastSm,th);
+    const pctlTxt=(rd&&rd.pctl!=null)?` · <span style="color:var(--t3)">${rd.pctl}th percentile of its own history</span>`:'';
+    chart=chartHoverWrap(svg,hpts)+
+      `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${lastB==='neu'?'var(--t1)':BC[lastB]}">${lastSm.toFixed(2)}</b> (${PC_SMOOTH}d avg, raw ${vals[vals.length-1].toFixed(2)}) — ${zoneTxt(lastB)}${pctlTxt}</div>`+
+      `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">${basisNote}</div>`+staleNote;
   }
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
@@ -17665,17 +17958,45 @@ function renderNetFlowChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Net Options Flow${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put) · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Call/Put Balance${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put), vs. own median · volume-based, not buy/sell · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const s=rawSeries.filter(e=>filteredDates.has(e[0]));
-  // Net Options Flow = (Call - Put) / (Call + Put), direkt aus den EOD-
-  // Volumina. Da die gespeicherte Ratio r = Put/Call ist, gilt exakt
-  // (C-P)/(C+P) = (1 - r)/(1 + r) - ohne die Rohvolumina zu brauchen, und
-  // (anders als die frueher genutzte 5d-20d-MA-Differenz) sauber in [-1,+1]
-  // normiert (+1 = nur Calls, -1 = nur Puts). Danach optional geglaettet.
+  // ══ ⚠ ZWISCHENSTAND - DIESE KARTE WIRD ERSETZT ═══════════════════════
+  // Net Options Flow = (Call - Put) / (Call + Put), aus der gespeicherten
+  // Ratio r = Put/Call als (1-r)/(1+r). Rechnerisch korrekt, aber gemessen
+  // (2026-09-15) in ZWEI Punkten unbrauchbar als eigene Karte:
+  //
+  //  1. KEIN ZWEITER INDIKATOR. (1-r)/(1+r) ist streng monoton fallend in r
+  //     - die Rangfolge der Tage ist identisch zur Put/Call-Ratio, Spearman
+  //     -0.995. Zwei Reiter, eine Information.
+  //  2. DIE NULLLINIE LIEGT FALSCH. v<0 setzt r>1 voraus. Marktweit lag die
+  //     Ratio an 0 von 83 Tagen ueber 1 -> alle Balken blau, seit Mai kein
+  //     einziger bearischer Tag. Bei SPY/QQQ genau umgekehrt: 90% bzw. 89%
+  //     rot, weil Index-Absicherung strukturell ueber Puts laeuft. Die Karte
+  //     zeigte in jeder Ansicht eine Konstante, kein Signal.
+  //
+  // ⚠ Und der NAME verspricht etwas, das diese Daten nicht hergeben: "Net
+  // Options Flow" heisst in der Branche Kaeufe minus Verkaeufe (an Bid/Ask
+  // unterschieden), praemiengewichtet, meist delta-adjustiert. Hier steckt
+  // reines EOD-Kontraktvolumen dahinter - ein gekaufter und ein verkaufter
+  // Put zaehlen gleich.
+  //
+  // Nutzer-Entscheid 2026-09-15: den ECHTEN Flow bauen statt umbenennen.
+  // Dafuer laeuft .github/workflows/probe-options-flow-sources.yml, die
+  // misst, welche der drei Komponenten aus den vorhandenen Quellen wirklich
+  // berechenbar sind. Bis deren Ergebnis da ist, bleibt diese Karte - aber
+  // mit richtig gelegter Bezugslinie: der MEDIAN der eigenen Reihe statt der
+  // willkuerlichen Null. Damit sagt ein Balken "call-lastiger als bei diesem
+  // Markt ueblich" statt "call-lastiger als ein 50/50, das es hier nie gibt".
   const SMOOTH=5; // gleitender Tages-Schnitt gegen den Optionsketten-Noise
-  const raw=s.map(e=>{const r=+e[1];return{d:e[0],v:(1-r)/(1+r)};});
+  // ⚠ Bezugslinie aus der VOLLEN Reihe, nicht aus dem gefilterten Ausschnitt
+  // (gleiche Begruendung wie bei pcThresholds: sonst verschoebe der
+  // Zeitraum-Regler die Nulllinie und faerbte dieselben Tage anders).
+  const flowOf=r=>(1-r)/(1+r);
+  const alleFlows=rawSeries.map(e=>flowOf(+e[1])).sort((a,b)=>a-b);
+  const mid=alleFlows.length?pcQuantile(alleFlows,0.5):0;
+  const raw=s.map(e=>({d:e[0],v:flowOf(+e[1])-mid}));
   const ma=(arr,i,n)=>{const a=arr.slice(Math.max(0,i-n+1),i+1);return a.reduce((x,y)=>x+y.v,0)/a.length;};
   const net=raw.map((e,i)=>[e.d, ma(raw,i,SMOOTH)]);
   if(net.length<2){
@@ -17694,12 +18015,18 @@ function renderNetFlowChart(D){
   let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(net[i][0]))}</text>`;});
   const last=vals[vals.length-1];
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-    <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">Bullish options flow</text>
-    <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">Bearish options flow</text>
+    <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">More call-heavy than usual</text>
+    <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">More put-heavy than usual</text>
     ${gy}${bars}${xlab}
   </svg>`;
-  const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> · ${up?'bullish flow':'bearish flow'}`};});
-  const chart=chartHoverWrap(svg,hpts)+`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'call-heavy (bullish options flow)':'put-heavy (bearish options flow)'}</div>`;
+  const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> vs. this market's median · ${up?'more call-heavy than usual':'more put-heavy than usual'}`};});
+  // ⚠ Die Fusszeile nennt die Bezugslinie ausdruecklich. Ohne sie liest man
+  // "+0.03" als "3% mehr Calls als Puts" - es heisst aber "3 Punkte
+  // call-lastiger als der Normalzustand DIESES Marktes". Bei SPY liegt
+  // dieser Normalzustand deutlich im put-lastigen Bereich.
+  const chart=chartHoverWrap(svg,hpts)+
+    `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'more call-heavy than usual':'more put-heavy than usual'}</div>`+
+    `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), not against an even call/put split — that split never occurs in most options markets, so a fixed zero line would colour every bar the same way. <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data; that source check is running.</div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
@@ -20740,6 +21067,10 @@ Object.assign(window,{
   sentSymPriceSeries,sentSymLabel,sentSymWatched,sentFilterBar,pcUsableAssetIds,pcFilterBar,renderSentiment,
   pcRangeBarInChart,pcXLabel,pcXTickIdx,renderRetailBars,renderRetailHistory,retailNetChart,retailStackChart,
   PC_THIN_VOL,pcThinNote,pcThresholds,renderPutCallChart,renderNetFlowChart,AAII_SMOOTH_W,aaiiSmooth,renderAaiiCard,
+  // Put/Call-Schwellenmaschinerie (2026-09-15). ⚠ Muss exportiert bleiben:
+  // check/putcall.js prueft damit ohne Browser gegen die echte Reihe.
+  PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,
+  pcQuantile,pcNiceStep,pcGapWorkdays,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
   legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,autoFetchSeasonality,
   setSeasAsset,SEAS_MON,SEAS_ORDER,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,
   autoFetchRateProb,rateProbCcyData,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,
