@@ -217,11 +217,33 @@ function bondPick(series,target){
   for(let i=0;i<series.length;i++){const d=series[i];if(d&&d[0]<=target)pick=d;else if(d&&d[0]>target)break;}
   return pick;
 }
+// ⚠ IMMER ZWEI DEZIMALSTELLEN (Nutzer-Bildschirmfoto 2026-09-16).
+// Gemeldet wurde eine Inflation-Karte, in der die beiden Renditezeilen so
+// standen:
+//     2Y Bond Yield    4.67%   –   4.428%
+//    10Y Bond Yield    5.0%    –   4.819%
+// Also in EINER Spalte zwei verschiedene Genauigkeiten (4.67 neben 5.0) und
+// in "Previous" drei Stellen, wo "Actual" zwei hat - waehrend jede andere
+// Zeile derselben Tabelle eine Stelle fuehrt (3.4% / 2.4% / 5.4%).
+//
+// URSACHE war diese Funktion: toFixed(3) und dann die Nullen abschneiden
+// ergibt je nach Wert EINE bis DREI Stellen. Bei "Previous" kommt es
+// besonders deutlich heraus, weil dort gar kein Vorwert steht, sondern die
+// SMA21 - ein Mittelwert hat von Natur aus viele Stellen.
+//
+// ⚠ FEHLERKLASSE: die Genauigkeit der Quelle unveraendert durchreichen.
+// Dieselbe Klasse wie am 2026-09-14 in price_data.json, wo Yahoos
+// 102.01000213623047 die Datei verdoppelt hat - dort in der Datei, hier in
+// der Anzeige. Zwei Stellen sind am Anleihemarkt die uebliche Notation und
+// machen die Spalte gleich breit; mehr Stellen behaupten eine Genauigkeit,
+// die ein gleitender Durchschnitt nicht hat.
+//
+// ⚠ Der SCORE ist davon NICHT betroffen: der Bond-Bias kommt aus
+// bondSma()/BOND_DEAD_BAND auf der ROHEN Reihe (siehe applyBondDataFeed),
+// nicht aus diesen Zeichenketten. Von check/scorediff.js nachgewiesen.
 function fmtYield(v){
   const n=Number(v);if(!isFinite(n))return String(v);
-  let s=n.toFixed(3).replace(/0+$/,'').replace(/\.$/,'');
-  if(!/\./.test(s))s+='.0';
-  return s+'%';
+  return n.toFixed(2)+'%';
 }
 function applyBondDataFeed(){
   if(!BOND_DATA_FEED)return false;

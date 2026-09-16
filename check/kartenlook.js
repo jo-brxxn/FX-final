@@ -228,6 +228,68 @@ const MIN_SCHATTEN_LAGEN = 3;
   }
   await p.setViewportSize({ width: 1500, height: 1000 });
 
+  // ── 4) "Go to <Kategorie>" an JEDER Karte ────────────────────────────
+  // Nutzer-Wunsch 2026-09-16: "fueg bei den karten unten rechts in klein
+  // hinzu go to und dann der name und dann oeffnet sich die kategorie und
+  // man hat das back zeichen."
+  //
+  // ⚠ Geprueft wird nicht nur, DASS der Knopf da ist, sondern WO er sitzt.
+  // Beim Bauen sass er in den drei Makro-Karten 1px, 95px und 102px ueber
+  // dem Kartenboden - in derselben Reihe drei verschiedene Hoehen, weil
+  // `.rub-card` keine Flex-Spalte war und margin-top:auto deshalb nicht
+  // griff. Ein "unten rechts", das je Karte woanders sitzt, ist keins.
+  const KARTEN_SEL = ['.rub-card', '.ab-ptile', '.ab-ntile', '.abc-cal', '.ab-tile'];
+  await p.evaluate(() => gotoSym('USD'));
+  await p.waitForTimeout(700);
+  const g = await p.evaluate(sel => {
+    const d = document.getElementById('detail');
+    const raus = { karten: 0, ohne: [], schief: [], ziele: [] };
+    sel.forEach(s2 => d.querySelectorAll(s2).forEach(k => {
+      const kr = k.getBoundingClientRect();
+      if (kr.height < 40) return;                 // eingeklappt
+      raus.karten++;
+      const kn = k.querySelectorAll(':scope > .ab-goto > .ab-goto-b, :scope .ab-goto > .ab-goto-b');
+      const name = (k.querySelector('.ab-tile-t,.rub-inp') || {});
+      const titel = (name.value || name.textContent || s2).toString().slice(0, 24);
+      if (kn.length !== 1) { raus.ohne.push(`${titel} (${s2}): ${kn.length} Go-to-Knoepfe`); return; }
+      const b2 = kn[0].getBoundingClientRect();
+      const untenAbstand = Math.round(kr.bottom - b2.bottom);
+      const rechtsAbstand = Math.round(kr.right - b2.right);
+      // Unten rechts heisst: in der unteren und in der rechten Haelfte.
+      if (untenAbstand < 2 || untenAbstand > 28 || rechtsAbstand < 2 || rechtsAbstand > 30)
+        raus.schief.push(`${titel}: ${untenAbstand}px vom Kartenboden, ${rechtsAbstand}px vom rechten Rand`);
+      const h = kn[0].getAttribute('onclick') || '';
+      const m = h.match(/assetQuickGo\('([a-z]+)'\)/);
+      raus.ziele.push(m ? m[1] : 'KEIN assetQuickGo: ' + h.slice(0, 40));
+    }));
+    return raus;
+  }, KARTEN_SEL);
+  if (!g.karten) fail('KEINE KARTEN', 'auf der Asset-Seite ist keine einzige Karte gefunden worden');
+  g.ohne.forEach(x => fail('KARTE OHNE GO-TO', `${x}. Jede Karte der Asset-Seite gehoert zu einer Kategorie und braucht genau einen Verweis dorthin.`));
+  g.schief.forEach(x => fail('GO-TO SITZT NICHT UNTEN RECHTS', `${x}. Gemessen waren es beim Bauen 1/95/102px - drei Hoehen in einer Reihe.`));
+  const ERLAUBTE_ZIELE = ['trends', 'data', 'cot', 'retail', 'seas', 'cal', 'news', 'rate', 'notes'];
+  g.ziele.forEach(z => { if (!ERLAUBTE_ZIELE.includes(z)) fail('GO-TO OHNE GUELTIGES ZIEL',
+    `"${z}" ist keine Kategorie, die assetQuickGo() kennt (${ERLAUBTE_ZIELE.join('/')}) - der Klick wuerde ins Leere fuehren.`); });
+
+  // ⚠ Und einmal WIRKLICH klicken: Ziel-Seite offen, Zurueck-Pille aktiv.
+  // Ohne das prueft man nur, dass ein Knopf gezeichnet wird.
+  const vorher = await p.evaluate(() => Object.entries(PAGE_IDS).find(([k, id]) => {
+    const e = document.getElementById(id); return e && getComputedStyle(e).display !== 'none'; })[0]);
+  try {
+    await p.click('#detail .ab-goto-b:has-text("Go to COT")', { timeout: 4000 });
+    await p.waitForTimeout(600);
+    const nach = await p.evaluate(() => ({
+      seite: Object.entries(PAGE_IDS).find(([k, id]) => {
+        const e = document.getElementById(id); return e && getComputedStyle(e).display !== 'none'; })[0],
+      zurueck: document.body.classList.contains('res-return-active'),
+    }));
+    if (nach.seite !== 'cot') fail('GO-TO NAVIGIERT NICHT',
+      `nach dem Klick auf "Go to COT" steht die Seite auf "${nach.seite}" (vorher "${vorher}")`);
+    if (!nach.zurueck) fail('KEIN ZURUECK-ZEICHEN',
+      'nach dem Go-to fehlt die Zurueck-Pille (res-return-active) - der Nutzer hat ausdruecklich "und man hat das back zeichen" verlangt.');
+  } catch (e) { fail('GO-TO NICHT KLICKBAR', String(e.message).split('\n')[0].slice(0, 110)); }
+  global._goto = g;
+
   await b.close();
   if (perr.length) fail('SEITENFEHLER', perr.slice(0, 3).join(' | '));
   if (F.length) {
@@ -237,5 +299,6 @@ const MIN_SCHATTEN_LAGEN = 3;
   console.log(`[kartenlook] ok (Karte gegen Seitengrund ${(global._kontrast || 0).toFixed(2)}:1 am Pixel, `
     + `Schattenkante ${(global._schatten || 0).toFixed(2)}:1, `
     + `${Object.values(schatten)[0].lagen} gestapelte Schattenlagen, EINE Kartenflaeche fuer alle Karten; `
+    + `${(global._goto||{}).karten||0} Karten mit Go-to (unten rechts, Ziel gueltig, Klick navigiert mit Zurueck-Pille); `
     + `Asset-Seite auf ${kopfGeprueft} Kombinationen geprueft - keine Kopfleiste, ${mitStreifen} mit PRICE-Streifen in der Preis-Karte, ${ohneStreifen} ohne Preis-Karte)`);
 })().catch(e => { console.error('KARTEN-LOOK-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

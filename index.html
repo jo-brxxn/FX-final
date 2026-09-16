@@ -1530,6 +1530,40 @@ body.no-ui-anim #navSidebar{transition:none}
    40px gekostet, bei drei Reihen also 120px. So sind es 45px fuer alle
    drei, und die 51px des umgezogenen PRICE-Streifens zahlen das mehr als
    auf. */
+/* ── "Go to <Kategorie>" unten rechts in einer Karte ────────────────────
+   Nutzer-Wunsch 2026-09-16: "fueg bei den karten unten rechts in klein hinzu
+   go to und dann der name".
+   ⚠ margin-top:auto schiebt die Zeile an den KARTENFUSS, auch wenn der
+   Inhalt kuerzer ist als die Karte - ohne das klebte sie direkt unter dem
+   Inhalt und saesse in jeder Karte auf einer anderen Hoehe. Die Karten des
+   Rasters sind Flex-Spalten, deshalb greift auto hier.
+   ⚠ Bewusst KEINE Flaeche und kein Rahmen: der Knopf soll die Karte nicht
+   noch einmal unterteilen. Er ist Beschriftungs-Groesse (--fs-2xs) und
+   bekommt seine Auffaelligkeit erst beim Zeigen. */
+.ab-goto{margin-top:auto;padding-top:7px;display:flex;justify-content:flex-end}
+.ab-goto-b{background:none;border:none;cursor:pointer;padding:2px 0;
+  font:600 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);white-space:nowrap;
+  letter-spacing:.02em;transition:color .13s}
+@media (hover:hover){.ab-goto-b:hover{color:var(--accent);text-decoration:underline}}
+.ab-goto-b:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+/* In der Kalenderkarte liegt der Knopf auf der Karten-eigenen Klickflaeche -
+   dort etwas Luft nach unten, damit er nicht am Rand klebt. */
+.abc-cal .ab-goto{padding-top:5px}
+/* ⚠ GEMESSEN 2026-09-16: die drei Makro-Karten der Asset-Seite werden von
+   ihrer Flex-Zeile auf GLEICHE HOEHE gestreckt - 498px bei Inhalten von
+   323 bis 425px. `.rub-card` war aber display:block und padding:0, also
+   griff margin-top:auto nicht: der Knopf klebte direkt unter dem Inhalt und
+   sass dadurch in jeder der drei Karten auf einer ANDEREN Hoehe (gemessen
+   1px, 95px und 102px ueber dem Kartenboden) - und in der ersten Karte
+   1px vom Rand entfernt in der Ecke.
+   Die Flex-Spalte ist bewusst auf #detail gescoped: `.rub-card` gibt es auch
+   als `.news-card` und im Dashboard, und dort soll sich nichts bewegen. */
+#detail .rub-card{display:flex;flex-direction:column}
+#detail .rub-card>.rub-body{flex:1 1 auto;min-height:0}
+#detail .rub-card .ab-goto{padding:7px 13px 9px}
+/* Die Headlines-Karte teilt die .rub-card-Klasse, hat aber ihren eigenen
+   Koerper - der muss den Platz nehmen, damit der Knopf unten landet. */
+#detail .rub-card>.news-card-body{flex:1 1 auto;min-height:0}
 /* ══ REGIME RADAR (Nutzer-Wunsch 2026-09-15) ═══════════════════════════
    Bewusst dieselbe Kartensprache wie der Rest: --card, --bd, der gestapelte
    Schatten. Ein eigener Look haette den Tab wie eine fremde Anwendung
@@ -1559,8 +1593,14 @@ body.no-ui-anim #navSidebar{transition:none}
 .rg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .rg-hd-l{min-width:0}
 .rg-hd-r{text-align:right;flex:0 0 auto}
-.rg-name{font:700 var(--fs-base)/1.25 var(--ff-text);color:var(--t0)}
-.rg-kurz{font:500 var(--fs-xs)/1.45 var(--ff-text);color:var(--t2);margin-top:2px}
+/* ⚠ KARTENTITEL = --fs-md (15px). Nicht --fs-base: das ist die
+   FLIESSTEXT-Stufe, und die Skala reserviert --fs-md ausdruecklich fuer
+   Kartentitel ("bewusst groesser als der Fliesstext", docs/design-system.md).
+   Der erste Entwurf hatte den Szenario-Namen auf 13px - damit kam 15px im
+   ganzen Tab nicht vor, und der Titel sass auf derselben Stufe wie der
+   Text darunter. Dieselbe Stufe benutzen .cot-card-title und .wt-name. */
+.rg-name{font:700 var(--fs-md)/1.25 var(--ff-text);color:var(--t0)}
+.rg-kurz{font:500 var(--fs-sm)/1.45 var(--ff-text);color:var(--t2);margin-top:2px}
 .rg-grad{font:700 var(--fs-xl)/1 var(--ff-num)}
 .rg-zahl{font:600 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:3px;white-space:nowrap}
 .rg-bar{display:block;height:5px;border-radius:3px;background:var(--bg3);margin:9px 0 0;overflow:hidden}
@@ -1568,7 +1608,7 @@ body.no-ui-anim #navSidebar{transition:none}
 .rg-kern{font:600 var(--fs-2xs)/1.5 var(--ff-text);color:var(--due);
   background:rgba(var(--due-rgb),.10);border:1px solid rgba(var(--due-rgb),.30);
   border-radius:var(--rss);padding:5px 8px;margin-top:9px}
-.rg-lang{font:500 var(--fs-xs)/1.55 var(--ff-text);color:var(--t2);margin:9px 0 2px;
+.rg-lang{font:500 var(--fs-2xs)/1.6 var(--ff-text);color:var(--t2);margin:9px 0 2px;
   padding-bottom:9px;border-bottom:1px solid var(--bd)}
 .rg-rows{display:flex;flex-direction:column}
 .rg-row{display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--bd)}
@@ -1588,7 +1628,7 @@ body.no-ui-anim #navSidebar{transition:none}
   text-align:right;max-width:44%;overflow-wrap:anywhere}
 .rg-nein .rg-w{color:var(--t2);font-weight:600}
 .rg-nm{flex:0 0 auto;font:600 var(--fs-2xs)/1.45 var(--ff-text);color:var(--t3);white-space:nowrap}
-.rg-foot{font:500 var(--fs-xs)/1.6 var(--ff-text);color:var(--t3);
+.rg-foot{font:500 var(--fs-2xs)/1.65 var(--ff-text);color:var(--t3);
   margin-top:var(--gap-block);max-width:86ch}
 @media(max-width:560px){
   .rg-grid{grid-template-columns:1fr}
@@ -5264,11 +5304,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-522 - Put/Call und Net Options Flow waren falsch eingestellt, an mehr Stellen als der Bugreport vermutete. NACHGERECHNET an der echten OCC-Reihe statt aus dem Code abgeleitet: die Score-Schwelle 'ab 1.0 bullish' wurde an 0 von 83 Handelstagen erreicht, weil das Maximum der Reihe bei 0.93 liegt - die bullische Zone war tot. Die Chart-Schwelle 1.8 erst recht. Umgekehrt traf 'bis 0.7 bearish' an 26.5% der Tage und die Chart-Schwelle 0.8 an 66.3%: ein Extrem, das zwei Drittel der Zeit anschlaegt, ist der Normalfall. Und es gab ZWEI Schwellensaetze nebeneinander - einen im Chart, einen in sentEval fuer Score und Dashboard - die denselben Wert an 39.8% der Tage unterschiedlich einstuften: im Chart rot, im Score neutral. URSACHE: die festen Zahlen stammen aus der CBOE-Total-Welt mit Median um 0.95. Diese App summiert aber ueber die OCC alle US-Optionsboersen, also Equity, Index und ETF gemischt - deren Median liegt bei 0.76. Schwellen einer fremden Zeitreihe, auf die eigene geklebt. JETZT kommen sie aus der Reihe selbst: die aeusseren 10% ihrer eigenen letzten 252 Lesungen, gerechnet auf dem 10-Tage-Schnitt, wie es die Fachpraxis fuer Stimmungs-Extreme macht. Marktweit schlagen 10.8% bullisch und 10.8% bearisch an statt 0% und 26.5%. Chart, Dashboard und sentEval rufen dieselbe Funktion, ein Auseinanderlaufen ist nicht mehr moeglich. DIE GLAETTUNG war der zweite Verdacht und ist berechtigt, aber als SMA statt EMA: der 10-Tage-Schnitt senkt die Streuung um 36% und fuehrt jetzt im Chart, der Rohwert bleibt duenn dahinter sichtbar. ROBUSTHEITSGRENZE, beim Bauen gefunden und vom eigenen Waechter korrigiert: Perzentile helfen nichts, wenn die Ausreisser die Mehrheit stellen. Die duennen Waehrungs-ETFs streuen roh um Faktor 65 bis 210 zwischen ihren aeusseren Dezilen, gesunde Reihen nur um 1.4 bis 7.2 - ab Faktor 15 gibt es keine Zonen. Der erste Versuch mass diesen Faktor auf der geglaetteten Reihe; eine Gegenprobe zeigte, dass eine Reihe, die taeglich zwischen 0.5 und 40 springt, sich auf glatte 20 mittelt und bestanden haette. Genau die, die er aussperren soll. ZWEI weitere Luecken geschlossen: fehlende Handelstage werden nicht mehr uebermalt, sondern brechen die Linie und stehen als graues Band, und eine Lesung aelter als 5 Tage zaehlt nicht mehr als aktuelles Signal. DER NET OPTIONS FLOW war kein zweiter Indikator, sondern derselbe - Rangkorrelation -0.995 zur Put/Call-Ratio. Schlimmer, seine Nulllinie lag falsch: ein negativer Balken setzt eine Ratio ueber 1 voraus, die es marktweit an 0 von 83 Tagen gab. Alle Balken blau seit Mai. Bei SPY und QQQ dasselbe umgekehrt, 90% und 89% rot, weil Index-Absicherung ueber Puts laeuft - eine Strukturkonstante, als Tagessignal eingefaerbt. Die Karte heisst jetzt Call/Put Balance, misst gegen den Median ihres eigenen Marktes statt gegen ein 50/50, das dort nie vorkommt, und sagt ausdruecklich, dass sie aus Volumen gebaut ist und Kauf nicht von Verkauf unterscheiden kann. Was von einem echten Flow aus den vorhandenen Quellen berechenbar ist, misst probe-options-flow-sources.yml, bevor eine Zeile Sammelcode entsteht. WAECHTER: check/putcall.js prueft ohne Browser mit 34 Punkten und fuenf Gegenproben, dass es nur eine Schwellen-Wahrheit gibt, die Zonen an 3 bis 20% der Tage anschlagen, keine verrauschte Reihe Zonen bekommt und Wochenenden nicht als Luecke gelten. Alle drei zurueckgebauten Altfehler meldet er rot."check mal bitte ob noch alle funktionen wo man drauf klicken kann gehen - am ipad geht es aber am pc nicht mehr". Mit echten Mausklicks nachgestellt, nicht mit Handler-Aufrufen - die sehen so etwas nie. Gemessen: am PC oeffnete der History-Knopf weder beim ersten noch beim zweiten noch beim dritten Klick irgendetwas; am iPad wirkte wie vorgesehen der zweite; unter 760px der erste. Es war nicht dieser eine Knopf, sondern JEDES Bedienelement im ganzen Inhaltsbereich. Ursache ist der Schluck-Merker der Seitenleiste: der erste Klick in den Inhalt soll die ausgeklappte Leiste nur zuklappen und wird deshalb verworfen. Die Zeile setzte diesen Merker aber schon dann, wenn die Leiste offen WAR - und seit dem 13.09. bleibt sie am PC dauerhaft offen. Also war die Bedingung dort immer wahr und jeder Klick wurde verworfen, nicht nur der eine. FEHLERKLASSE: ein Merker, der eine Wirkung unterstellt, statt sie zu pruefen. Solange beide Regeln zusammenpassten, fiel es nicht auf; die Dauer-offen-Regel hat sie auseinandergezogen. Jetzt wird die Wirkung gemessen - kein Einklappen, kein Schlucken. Kein bestehender Waechter konnte das sehen: die Sidebar-Pruefungen testen die Leiste selbst, und alle anderen rufen die Funktionen direkt auf. check/nav.js klickt deshalb jetzt mit echter Maus auf einen Knopf IM INHALT, auf zwei PC-Breiten und auf dem iPad, und verlangt am PC Wirkung beim ERSTEN Klick - die Gegenprobe mit der alten Zeile meldet vier Fehler. DER RUECKBAU: die Kopfleiste vom Vortag ist wieder weg ("mach die leiste oben wieder weg und mach das wie vorher"). Titel und die schmale Zeile mit Next event und Knopfleiste stehen wieder nebeneinander, 1D/1W/1M/YTD wieder unten in der Preis-Karte; 123 Zeilen JS und 46 Zeilen CSS raus. Die Reihen-Ueberschriften bleiben - abgestimmt, die waren nicht gemeint. DER WIDERSPRUCH: zwei Bildschirmfotos nebeneinander, Sentiment-Tab "NZDJPY 95% long", JPY-Kachel daneben "5%". Beides war richtig gerechnet - die Kachel drehte jedes Paar auf die Asset-Seite - und trotzdem eine Falle, weil neben der 5 der echte Ticker NZD/JPY stand. Auf Ansage ("lass es doch richtig da stehen was fuer einen sinn hat es das zu drehen") zeigt die Kachel jetzt die Broker-Quote, unveraendert: 56 Zeilen ueber acht Assets gegen den Feed geprueft, 0 Abweichungen. Die Asset-Sicht ist nicht verschwunden, sie steht jetzt nur dort, wo sie hingehoert - in der Zusammenfassung und im Score, jedes Mal ausdruecklich mit dem Kuerzel beschriftet. Beides braucht es: bei USD steht das Asset mal vorn (USD/JPY) und mal hinten (EUR/USD), ein Mittelwert ueber ungedrehte Zeilen waere die Vermischung zweier Blickrichtungen. In welchem Paar das Asset auf welcher Seite steht, zeigt jetzt sein hervorgehobenes Kuerzel im Paarnamen.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-523 - ⚠ Diese Arbeit war als 522 gebaut; ein parallel laufender Lauf hatte die Nummer schon fuer die Put/Call-Schwellen ausgeliefert, deshalb 523. check/rules.js hat die Kollision gemeldet, weil er gegen origin/main vergleicht und nicht gegen den letzten eigenen Stand. Ein Rundgang ueber das Neue, zwei echte Bugs aus einem Bildschirmfoto und die Go-to-Verweise. ⚠ GOLD: BLAU STATT ROT. Gemeldet mit Bild: 2Y Bond Yield 4.67% stand auf der Gold-Seite in BLAU, also bullish - waehrend dieselbe Zeile bias=bear trug und -0,5 auf den Score gab. Anzeige und Rechnung widersprachen sich in einer Zeile. Ursache: applyBondDataFeed schreibt bondColor aus der RICHTUNG der Rendite und zwar fuer JEDES Asset, den Bias aber nur fuer FX; bei Nicht-FX dreht ihn die Spiegelung der Karte (inverse) - die Farbe wurde nie mitgedreht. Bei Waehrungen fallen Richtung und Bedeutung zusammen, deshalb ist es dort nie aufgefallen. FEHLERKLASSE: ein Feld, zwei Bedeutungen. Die beiden anderen Feeds leiten die Farbe richtig aus dem Bias ab (COT, Seasonality/Retail) - das hier war die einzige Kopie mit der Richtung. Jetzt folgt die Farbe dem Bias: Gold, Silber, BTC, Oel, S&P 500 und Nasdaq zeigen steigende Renditen rot, Waehrungen weiter blau. Denselben Fehler machte das Info-Fenster, es behauptete counting +0.5 wo -0,5 galt; es nennt jetzt den echten Beitrag und erklaert bei gedrehten Karten das Vorzeichen. ⚠ RENDITEN MIT DREI VERSCHIEDENEN GENAUIGKEITEN. Im selben Bild: 4.67% neben 5.0% in EINER Spalte, und in Previous 4.428%/4.819% mit drei Stellen, waehrend jede andere Zeile der Tabelle eine fuehrt. Ursache war fmtYield: toFixed(3) und dann Nullen abschneiden ergibt eine bis drei Stellen, und bei Previous besonders deutlich, weil dort gar kein Vorwert steht, sondern die SMA21 - ein Mittelwert hat von Natur aus viele Stellen. Jetzt immer zwei Stellen, die uebliche Notation am Anleihemarkt. Dieselbe Fehlerklasse wie am 14.09. in price_data.json, wo Yahoos 102.01000213623047 die Datei verdoppelt hat: Quellgenauigkeit unveraendert durchreichen - dort in der Datei, hier in der Anzeige. GO-TO AN JEDER KARTE: unten rechts, klein, Go to und der Name der Kategorie - Klick oeffnet sie mit diesem Asset vorgewaehlt, das Zurueck-Zeichen fuehrt zurueck. Zehn Karten: drei Makro-Karten nach Data, Preis nach Trends, COT, Retail Sentiment, Seasonality, Headlines nach News, Kalender und Pinned notes nach Research. Nichts davon ist neu gebaut - assetQuickGo gab es schon und macht genau das; ein zweiter Navigationsweg daneben waere dieselbe Groesse in zwei Kopien. ⚠ GEMESSEN UND KORRIGIERT: in den drei Makro-Karten sass der Knopf zuerst 1, 95 und 102 Pixel ueber dem Kartenboden - drei Hoehen in einer Reihe, weil die Karten von ihrer Flex-Zeile auf gleiche Hoehe gestreckt werden (498px bei Inhalten von 323 bis 425), .rub-card aber display:block war und margin-top:auto deshalb nicht griff. Jetzt sitzen alle zehn 10 bis 11 Pixel vom Boden und 11 bis 14 vom rechten Rand. TYPOGRAFIE DES REGIME-TABS: der Kartentitel stand auf --fs-base, der FLIESSTEXT-Stufe - damit kam 15px, die im Design-System ausdruecklich fuer Kartentitel reservierte Stufe, im ganzen Tab nicht vor. Jetzt --fs-md wie .cot-card-title und .wt-name; Untertitel auf --fs-sm, Erklaerbloecke auf --fs-2xs, damit sie unter dem Bedingungstext liegen statt gleichauf. ⚠ UND DIE LUECKE DAHINTER: check/typo.js holte seine Liste aus .ov[id^=m], also ausschliesslich Fenstern - 34 Fenster mit 301 Textelementen, waehrend allein der Kalender 531 hat. Der Anlass der Regel nennt aber woertlich auch alle Seiten. Der neue Tab war von keiner Pruefung angesehen, und die 14 bestehenden Seiten seit dem 08.09. auch nicht mehr. Jetzt gehen 18 Seiten mit 3275 weiteren Textelementen durch dieselbe Pruefung; SVG-Beschriftungen sind ausgenommen (sie folgen der Chart-Geometrie), drei Bestandswerte namentlich mit Datum und Grund. Dabei fiel auf, dass docs/design-system.md --fs-xl als 22 fuehrte, waehrend der Token 24px ist - die Doku nannte eine Stufe, die es nicht gibt; 22px existiert nur als harter Wert an zwei Stellen und ist jetzt so dokumentiert. Waechter: check/kartenlook.js prueft jede Karte auf genau einen Go-to, seine Lage unten rechts, ein gueltiges Ziel und einen echten Klick samt Zurueck-Pille; zwei Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-522</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-523</span>
     </span>
   </div>
   <div class="hdr-r">

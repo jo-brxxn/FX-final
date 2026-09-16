@@ -2013,10 +2013,22 @@ function openTrendInfo(ri,ii){
     if(rr.bond&&rr.previous){
       html+=row('Latest close'+(rr.date?` (${escH(rr.date)})`:''),escH(rr.actual||'–'));
       html+=row(`${BOND_SMA_SLOW}-day average`+(rr.prevDate?` (since ${escH(rr.prevDate)})`:''),escH(rr.previous));
+      // ⚠ RICHTUNG UND WIRKUNG SIND ZWEI VERSCHIEDENE AUSSAGEN.
+      // `bondColor` traegt die RICHTUNG der Rendite (steigt/faellt) - die
+      // gilt fuer alle Assets gleich. Was sie fuer DIESES Asset BEDEUTET,
+      // steht im Bias der Zeile: bei Gold ist eine steigende Rendite
+      // bearish. Bis zum 2026-09-16 las dieser Absatz die Wirkung aus der
+      // Richtung und behauptete auf der Gold-Seite "counting +0.5", wo
+      // tatsaechlich -0,5 gezaehlt wurde (derselbe Fehler wie bei der
+      // Einfaerbung der Zelle, siehe dort).
       const d=rr.bondColor==='bond-up'?1:rr.bondColor==='bond-down'?-1:0;
+      const wirk=Math.round(indScore(ind,rub)*100)/100;
       html+=`<div style="margin-top:7px">${d===0
         ?`The ${BOND_SMA_FAST}-day average is within <b>${(BOND_DEAD_BAND*100).toFixed(0)} basis points</b> of the ${BOND_SMA_SLOW}-day average → treated as <b>no clear direction</b> (0).`
-        :`The ${BOND_SMA_FAST}-day average is <b>${d>0?'above':'below'}</b> the ${BOND_SMA_SLOW}-day average by more than ${(BOND_DEAD_BAND*100).toFixed(0)} basis points → yields are <b>${d>0?'rising':'falling'}</b>, counting <b>${d>0?'+':'−'}0.5</b> on this indicator's score.`}</div>`;
+        :`The ${BOND_SMA_FAST}-day average is <b>${d>0?'above':'below'}</b> the ${BOND_SMA_SLOW}-day average by more than ${(BOND_DEAD_BAND*100).toFixed(0)} basis points → yields are <b>${d>0?'rising':'falling'}</b>, counting <b>${wirk>0?'+':''}${wirk}</b> on this asset's score.`}</div>`
+        + (d!==0&&((d>0&&wirk<0)||(d<0&&wirk>0))
+          ? `<div style="margin-top:5px">Note the sign: this card mirrors ${escH(macroCcyFor(getSym().id)||'the source currency')} with the relationship <b>inverted</b>, because ${escH(getSym().name||getSym().id)} pays no yield of its own — rising yields raise the cost of holding it.</div>`
+          : '');
       html+=`<div style="margin-top:5px;color:var(--t3)">Two moving averages are compared instead of two single days, so one outlier day cannot flip the signal. The ${(BOND_DEAD_BAND*100).toFixed(0)}bp dead band filters out moves too small to mean anything. 2Y and 10Y each contribute ±0.5 (sharing the full ±1) but trigger independently.</div>`;
     }else html=`<div>Not enough yield history yet for the ${BOND_SMA_SLOW}-day average - it builds up one point per trading day.</div>`;
   }else{
@@ -6673,6 +6685,7 @@ function assetMonthCalHtml(c,gross){
       <div class="abc-foot">${von&&bis
         ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>.`
         :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>
+      ${abGoToHtml('cal',true)}
     </div>`;
 }
 
@@ -6765,10 +6778,47 @@ function renderAssetCalBody(){
 // das ist die Regel-4-Fassung von "keine Daten", nicht ein huebscher Balken
 // aus einem Pseudozufallsgenerator.
 
-function abTile(titel,zusatz,inhalt,extra){
+// ── "Go to <Kategorie>" klein unten rechts in einer Karte ───────────────
+// Nutzer-Wunsch 2026-09-16: "in den assets sind ja bei den assets karten zu
+// kategorien fueg bei den karten unten rechts in klein hinzu go to und dann
+// der name und dann oeffnet sich die kategorie und man hat das back zeichen."
+//
+// ⚠ NICHTS DAVON IST NEU GEBAUT. assetQuickGo() gibt es schon: es stellt den
+// Filter der Zielkategorie auf dieses Asset, setzt die Zurueck-Pille auf
+// "Back to <Asset>" und navigiert. Genau das benutzt die Schnellzugriff-Zeile
+// weiter oben. Ein zweiter Navigationsweg daneben waere dieselbe Groesse in
+// zwei Kopien - und zwei Kopien laufen irgendwann auseinander.
+//
+// ⚠ Das Ziel wird UEBERGEBEN, nicht aus dem Kartentitel geraten. Aus einem
+// Anzeigetext abzuleiten, wohin ein Knopf fuehrt, heisst: wer den Titel
+// umbenennt, verliert den Knopf still.
+const AB_GOTO_NAME={
+  trends:'Trends', data:'Data', cot:'COT', retail:'Retail Sentiment',
+  seas:'Seasonality', cal:'Calendar', news:'News', rate:'Rate Probabilities',
+  notes:'Research',
+};
+// `stopp` fuer Karten, die SELBST einen onclick tragen (die Kalenderkarte
+// oeffnet als Ganze ein Fenster) - ohne stopPropagation wuerde ein Klick auf
+// den Knopf beides ausloesen: das Fenster UND die Navigation.
+function abGoToHtml(ziel,stopp){
+  if(!ziel)return'';
+  const name=AB_GOTO_NAME[ziel];
+  if(!name)return'';
+  const h=(stopp?'event.stopPropagation();':'')+`assetQuickGo('${ziel}')`;
+  return`<div class="ab-goto"><button class="ab-goto-b" onclick="${h}" title="Open ${escH(name)} with this asset already selected — the back arrow at the top brings you straight back here">Go to ${escH(name)} →</button></div>`;
+}
+// ⚠ Das Ziel steht VORNE, damit die acht Aufrufstellen unangetastet bleiben:
+// sie sind mehrzeilig mit verschachtelten Template-Literalen, und nur den
+// Funktionsnamen zu tauschen ist sehr viel sicherer, als achtmal eine
+// Argumentliste bis zur passenden Klammer umzuschreiben.
+function abTileZ(ziel,titel,zusatz,inhalt,extra){
+  return abTile(titel,zusatz,inhalt,extra,ziel);
+}
+function abTile(titel,zusatz,inhalt,extra,ziel){
   return`<div class="ab-tile${extra||''}">
     <div class="ab-tile-hd"><span class="ab-tile-t">${titel}</span>${zusatz||''}</div>
     <div class="ab-tile-bd">${inhalt}</div>
+    ${abGoToHtml(ziel)}
   </div>`;
 }
 // Ein Wort in Bias-Farbe - fuer die Kopfzeilen der Yield-Charts.
@@ -7539,11 +7589,11 @@ function abGrafikHtml(art,c){
     // naechsten Abruf gehalten. Wer die Karte mit allen Bedienelementen
     // braucht, findet sie unveraendert im COT-Tab.
     const id=abCotId(c.id);
-    if(!id)return abTile('COT Positioning','',
+    if(!id)return abTileZ('cot','COT Positioning','',
       AB_LEER(`The CFTC publishes futures contracts, and there is none for ${escH(c.name||c.id)}. Covered: the eight FX majors plus Gold, Silver, WTI, BTC, S&amp;P 500 and Nasdaq.`));
     const s=COT_DATA.symbols[id];
     const m=cotMetrics(s);
-    if(!m)return abTile('COT Positioning','',AB_LEER('The latest COT report carries no usable long/short figures for this contract.'));
+    if(!m)return abTileZ('cot','COT Positioning','',AB_LEER('The latest COT report carries no usable long/short figures for this contract.'));
     const ch=abCotChart(s.history);
     const stand=COT_DATA.report_date?fmtDayHdr(COT_DATA.report_date):'–';
     // Nutzer 2026-09-13: "ganz unten in der karte steht einfach long: ...
@@ -7558,16 +7608,16 @@ function abGrafikHtml(art,c){
         <span class="ab-foot-hl" title="Week-over-week change of the long share — the value that moves">
           <span class="ab-foot-l">w/w change</span> <b style="color:${cotColor(m.dNetPct)}">${cotPct(m.dNetPct,true).replace('%','pp')}</b></span>
       </div>`;
-    return abTile('COT Positioning',
+    return abTileZ('cot','COT Positioning',
       `<span class="ab-tile-s">as of ${escH(stand)}</span>`,
       `${ch.html}${fuss}
        <div class="ab-note">Large speculators (CFTC Legacy, non-commercial). Blue = long contracts, red = short, black line = long share.${ch.leer?'':` ${ch.berichte} weekly reports.`}</div>`);
   }
   if(art==='retail'){
     const zeilen=abRetailZeilen(c.id);
-    if(zeilen===null)return abTile('Retail Positioning','',
+    if(zeilen===null)return abTileZ('retail','Retail Positioning','',
       AB_LEER('Retail positioning has not loaded yet — it is written hourly into sentiment_data.json.'));
-    if(!zeilen.length)return abTile('Retail Positioning','',
+    if(!zeilen.length)return abTileZ('retail','Retail Positioning','',
       AB_LEER(`No retail book for ${escH(c.name||c.id)}. The broker feed carries the FX majors plus Gold, Silver, BTC and Nasdaq — nothing is filled in for the rest.`));
     // ⚠ DIE ZEILEN ZEIGEN DIE BROKER-QUOTE, UNGEDREHT (Nutzer 2026-09-14,
     // nach zwei Bildschirmfotos nebeneinander: "lass es doch richtig da
@@ -7605,7 +7655,7 @@ function abGrafikHtml(art,c){
     const kurzSeitig=zeilen.filter(z=>z.langAsset<=40).length;
     const mehrfach=zeilen.length>1;
     let rb=null;try{rb=retailBiasFor(c.id);}catch(e){}
-    return abTile('Retail Positioning',
+    return abTileZ('retail','Retail Positioning',
       `<span class="ab-tile-s">${zeilen.length===1?'1 book':zeilen.length+' pairs'}</span>`,
       `<div class="ab-big" style="color:${biasCss(schnitt>=60?'bear':schnitt<=40?'bull':'neu')}" title="The same book seen from ${escH(c.id)}'s own side — this is what the score reads. The rows below are the broker's quote, unchanged.">${schnitt}% long ${escH(c.id)}</div>
        <div class="ab-bars">${kopf}${bars}</div>
@@ -7621,7 +7671,7 @@ function abGrafikHtml(art,c){
   // ── Seasonality ───────────────────────────────────────────────────────
   const D=SEASONALITY_DATA;
   const A=D&&D.assets?D.assets[c.id]:null;
-  if(!A||!Array.isArray(A.months)||!A.months.length)return abTile('Seasonality','',
+  if(!A||!Array.isArray(A.months)||!A.months.length)return abTileZ('seas','Seasonality','',
     AB_LEER(D&&D.assets
       ?`No long-run price proxy for ${escH(c.name||c.id)}. Seasonality is computed from 15+ years of ETF history — where there is none, there is no average to show.`
       :'Seasonality has not loaded yet — it is computed once a day into seasonality_data.json.'));
@@ -7660,7 +7710,7 @@ function abGrafikHtml(art,c){
   // Doppelbedingung hier als eigener Ausdruck mit fest eingetippten 60/40.
   let sb=null;try{sb=seasBiasFor(c.id);}catch(e){}
   const stark=!!(sb&&sb.einig);
-  return abTile('Seasonality',
+  return abTileZ('seas','Seasonality',
     `<span class="ab-tile-s">${escH(A.proxy||'')} · ${cur?cur[3]:'–'}y</span>`,
     `<div class="ab-big" style="color:${cur?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${cur?`${+cur[1]>0?'+':''}${(+cur[1]).toFixed(2)}% in ${SEAS_MON[jetzt-1]}`:'–'}</div>
      ${chartHoverWrap(`<div class="ab-seas">${balken}</div>`,hp,'flex:1 1 auto;display:flex;min-height:64px')}
@@ -7818,6 +7868,7 @@ function abPinnedHtml(c){
       <button class="btn g" onclick="abNoteAdd('${escJH(c.id)}',true)">＋</button>
     </div>
     <div class="ab-nt-list">${zeilen}</div>
+    ${abGoToHtml('notes')}
   </div>`;
 }
 
@@ -7964,6 +8015,7 @@ function assetPreisKarteHtml(c){
     <div class="ab-pk-chart">${ch.html}</div>
     ${fuss}
     ${assetPerfStripHtml(c)}
+    ${abGoToHtml('trends')}
   </div>`;
 }
 
@@ -8006,6 +8058,7 @@ function renderRub(rub,ri,total){
       <!-- INDICATORS -->
       ${renderIndsTable(rub,ri)}
     </div>
+    ${abGoToHtml('data')}
   </div>`;}
 
 
@@ -8096,7 +8149,26 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>`;
   }else if(ind.research){
     const r=ind.research;
-    const ac=r.bond?r.bondColor:(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},getSym().id);
+    // ⚠ DIE FARBE FOLGT DEM BIAS DER ZEILE, NICHT DER RICHTUNG DER RENDITE.
+    // Nutzer-Bildschirmfoto 2026-09-16, GOLD-Seite: "das ist nicht bullish
+    // fuer gold das muss rot sein". Gemessen stand dort 2Y Bond Yield 4.67%
+    // in BLAU, waehrend dieselbe Zeile bias='bear' trug und -0,5 auf den
+    // Score gab. Anzeige und Rechnung widersprachen sich in einer Zeile.
+    //
+    // URSACHE: applyBondDataFeed schreibt `bondColor` aus der RICHTUNG der
+    // Rendite (SMA5 ueber SMA21 -> 'bond-up'), und zwar fuer JEDES Asset.
+    // Den Bias setzt es dagegen nur fuer FX (`if(fx&&...)`); bei Nicht-FX
+    // dreht ihn die Spiegelung der Karte ('inverse', siehe pushForInd) - ein
+    // heisser US-Wert ist fuer Gold bearish. Die Farbe wurde dabei nie
+    // mitgedreht. Bei FX fallen Richtung und Bedeutung zusammen, deshalb ist
+    // es dort nie aufgefallen.
+    //
+    // ⚠ FEHLERKLASSE: EIN Feld, ZWEI Bedeutungen (Richtung und Bewertung).
+    // Die beiden anderen Feeds machen es richtig und leiten die Farbe aus
+    // dem Bias ab - applyCotDataFeed und applySeasRetailFeed. Dieses hier
+    // war die einzige Kopie mit der Richtung.
+    const biasFarbe=b=>(b==='bull'||b==='sbull')?'bond-up':(b==='bear'||b==='sbear')?'bond-down':'bond-flat';
+    const ac=r.bond?biasFarbe(ind.bias):(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},getSym().id);
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
@@ -16874,6 +16946,7 @@ function newsAssetSectionHtml(sym){
     <div class="rub-hdr"><span class="rub-name-static">Headlines</span>
       <span class="news-card-n">${newsForAsset(sym.id).length}</span></div>
     <div class="news-card-body">${zeilen}</div>
+    ${abGoToHtml('news')}
   </div>`;
 }
 // ══ EDGE: traegt der Score ueberhaupt? ═══════════════════════════════════

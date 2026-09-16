@@ -14794,3 +14794,160 @@ Der braucht drei Komponenten, die das Volumenmaß nicht hat — Richtung
 `.github/workflows/probe-options-flow-sources.yml` misst das, bevor eine
 Zeile Sammelcode entsteht — dasselbe Vorgehen wie bei der OHLC-Quellensuche,
 in der drei von vier Kandidaten durchfielen. Schreibt nichts ins Repo.
+## 2026-09-16 — VERSION-CHECK-523: zwei Bugs aus einem Screenshot, Go-to-Verweise, Typo-Lücke
+
+⚠ **Diese Arbeit war als 522 gebaut und ist beim Rebase auf 523 gerueckt:**
+ein PARALLEL laufender Lauf hatte dieselbe Nummer schon ausgeliefert
+(Put/Call-Schwellen, Eintrag direkt darueber). `check/rules.js` hat es
+gemeldet — „Nummer nicht hochgezaehlt (vorher 522, jetzt 522)" — und genau
+dafuer vergleicht er gegen `origin/main` und nicht gegen den letzten
+eigenen Stand. Merksatz: vor dem Bumpen `git fetch`, sonst kollidieren
+zwei Sitzungen auf derselben Nummer.
+
+### ⚠ Bug 1: auf der Gold-Seite standen steigende Renditen in BLAU
+
+Gemeldet mit Bild: *„das ist nicht bullish für gold das muss rot sein."*
+
+Gemessen über alle 24 Assets — und der **Score war von Anfang an richtig**:
+
+| Asset | bias | Score-Beitrag | `bondColor` | Farbe im DOM |
+|---|---|---|---|---|
+| USD | `bull` | +0,5 | `bond-up` | blau ✓ |
+| **GOLD** | `bear` | **−0,5** | `bond-up` | **blau ✗** |
+| SILVER / BTC / OIL / SP500 / NAS | `bear` | −0,5 | `bond-up` | blau ✗ |
+
+Anzeige und Rechnung widersprachen sich **in derselben Zeile**.
+
+**Ursache:** `applyBondDataFeed` schreibt `bondColor` aus der **Richtung** der
+Rendite (SMA5 über SMA21 → `bond-up`), und zwar für *jedes* Asset. Den Bias
+setzt es dagegen nur für FX (`if(fx&&…)`); bei Nicht-FX dreht ihn die
+Spiegelung der Karte (`inverse`, siehe `pushForInd`) — ein heißer US-Wert ist
+für Gold bearish. **Die Farbe wurde dabei nie mitgedreht.** Bei Währungen
+fallen Richtung und Bedeutung zusammen, deshalb ist es dort nie aufgefallen.
+
+⚠ **Fehlerklasse: ein Feld, zwei Bedeutungen** (Richtung *und* Bewertung). Die
+beiden anderen Feeds machen es richtig und leiten die Farbe aus dem Bias ab
+(`applyCotDataFeed`, `applySeasRetailFeed`) — dieses hier war die einzige
+Kopie mit der Richtung.
+
+Nach dem Fix: Gold / Silber / BTC / Öl / S&P 500 / Nasdaq **rot**, Währungen
+weiter blau — Farbe und Score stimmen in jeder Zeile überein.
+
+**Derselbe Fehler steckte im Info-Fenster:** es las die Score-Wirkung aus der
+Richtung und behauptete auf der Gold-Seite *„counting +0.5"*, wo −0,5 galt.
+Es nennt jetzt den echten Beitrag aus `indScore()` und erklärt bei
+gespiegelten Karten zusätzlich das Vorzeichen.
+
+### ⚠ Bug 2: Renditen mit drei verschiedenen Genauigkeiten
+
+Im selben Bild: **4.67 %** neben **5.0 %** in *einer* Spalte, und in
+„Previous" **4.428 % / 4.819 %** mit drei Stellen — während jede andere Zeile
+derselben Tabelle eine Stelle führt (3.4 % / 2.4 % / 5.4 %).
+
+Ursache war `fmtYield()`: `toFixed(3)` und dann die Nullen abschneiden ergibt
+**eine bis drei** Stellen. Bei „Previous" besonders deutlich, weil dort gar
+kein Vorwert steht, sondern die **SMA21** — ein Mittelwert hat von Natur aus
+viele Stellen.
+
+Jetzt fest zwei Stellen (Marktnotation): `4.65 / 5.00 / 4.43 / 4.82`, über
+alle acht Währungen geprüft.
+
+⚠ **Dieselbe Fehlerklasse wie am 2026-09-14** in `price_data.json`, wo Yahoos
+`102.01000213623047` die Datei verdoppelt hat: **Quellgenauigkeit unverändert
+durchreichen** — dort in der Datei, hier in der Anzeige.
+
+⚠ Der Score ist davon **nicht** betroffen: der Bond-Bias kommt aus
+`bondSma()`/`BOND_DEAD_BAND` auf der rohen Reihe, nicht aus diesen
+Zeichenketten. `scorediff` bestätigt es.
+
+### Go-to an jeder Karte
+
+*„füg bei den karten unten rechts in klein hinzu go to und dann der name und
+dann öffnet sich die kategorie und man hat das back zeichen."*
+
+Zehn Karten, jede mit ihrer Kategorie:
+
+| Karte | Ziel |
+|---|---|
+| Inflation / Labour Market / Economic Growth | Data |
+| Price | Trends |
+| COT Positioning | COT |
+| Retail Positioning | Retail Sentiment |
+| Seasonality | Seasonality |
+| Headlines | News |
+| Kalender | Calendar |
+| Pinned notes | Research |
+
+⚠ **Nichts davon ist neu gebaut.** `assetQuickGo()` gab es schon: es setzt den
+Filter der Zielkategorie auf dieses Asset, setzt die Zurück-Pille auf „Back to
+&lt;Asset&gt;" und navigiert. Ein zweiter Navigationsweg daneben wäre dieselbe
+Größe in zwei Kopien.
+
+⚠ Das Ziel wird **übergeben**, nicht aus dem Kartentitel geraten — wer sonst
+den Titel umbenennt, verliert den Knopf still.
+
+**Gemessen und korrigiert:** in den drei Makro-Karten saß der Knopf zuerst
+**1 px, 95 px und 102 px** über dem Kartenboden — drei Höhen in einer Reihe.
+Grund: die Karten werden von ihrer Flex-Zeile auf gleiche Höhe **gestreckt**
+(498 px bei Inhalten von 323–425 px), `.rub-card` war aber `display:block`,
+also griff `margin-top:auto` nicht. Jetzt sitzen alle zehn 10–11 px vom Boden
+und 11–14 px vom rechten Rand.
+
+### Typografie des Regime-Tabs — und die Lücke dahinter
+
+Der **Kartentitel** stand auf `--fs-base` (13 px), der *Fließtext*-Stufe.
+Damit kam **15 px** — die im Design-System ausdrücklich für Kartentitel
+reservierte Stufe — im ganzen Tab nicht vor. Jetzt `--fs-md` wie
+`.cot-card-title` und `.wt-name`; Untertitel auf `--fs-sm`, Erklärblöcke auf
+`--fs-2xs`, damit sie *unter* dem Bedingungstext liegen statt gleichauf.
+
+| | vorher | jetzt |
+|---|---|---|
+| Stufen im Tab | 24 / 17 / 16 / **13** / 12 / 11 / 10 | 24 / 17 / 16 / **15** / 12 / 11 / 10 |
+| freie Größen | 0 | 0 |
+| zu nahe Paare | 0 | 0 |
+
+⚠ **Und die eigentliche Lücke:** `check/typo.js` holte seine Liste aus
+`.ov[id^="m"]` — **ausschließlich Fenstern**. 34 Fenster mit 301
+Textelementen, während allein der Kalender 531 hat. Der Anlass der Regel nennt
+aber wörtlich *„und generell allen Seiten"*. Der neue Tab war von keiner
+Prüfung angesehen, und die 14 bestehenden Seiten seit dem 2026-09-08 auch
+nicht mehr.
+
+Jetzt gehen **18 Seiten mit 3275 weiteren Textelementen** durch dieselbe
+Prüfung. Ausgenommen: SVG-Beschriftungen (folgen der Chart-Geometrie, gemessen
+6,5 / 9 / 26 px) und drei Bestandswerte namentlich mit Datum und Grund
+(`.atitle`, `.rterm-title-big`, `.btn`).
+
+Dabei fiel ein Doku-Fehler auf: `docs/design-system.md` führte `--fs-xl` als
+**22**, der Token ist aber **24px**. Die Doku nannte damit eine Stufe, die es
+nicht gibt. 22 px existiert tatsächlich, aber nur als **harter Wert an zwei
+Stellen** (Trends-Seitenkopf, `.rub-inp` in einer Media Query) — jetzt so
+dokumentiert und als benannte Ausnahme geführt.
+
+### Wächter + Gegenproben
+
+`check/kartenlook.js`, Abschnitt 4: jede Karte genau **einen** Go-to, seine
+Lage unten rechts (2–28 px vom Boden, 2–30 px vom Rand), ein Ziel, das
+`assetQuickGo()` kennt, und ein **echter Klick** mit Prüfung, dass die
+Zielseite offen und die Zurück-Pille aktiv ist.
+
+| Eingriff | Meldung |
+|---|---|
+| Go-to aus der Seasonality-Kachel entfernt | KARTE OHNE GO-TO |
+| `#detail .rub-card` wieder `display:block` | 2 × GO-TO SITZT NICHT UNTEN RECHTS (104 px / 111 px) |
+
+⚠ **Die erste Gegenprobe lief zuerst grün und war damit ungültig:** ich hatte
+den *Leerfall*-Zweig der Seasonality-Kachel getroffen, der bei USD gar nicht
+ausgeführt wird. Am echten Aufruf meldet sie rot. Beim Entschärfen für eine
+Gegenprobe muss man den Zweig treffen, der auf den Testdaten auch läuft.
+
+### Was ich gefunden, aber NICHT angefasst habe
+
+**DAX und GER 100 haben gar keine Ableitungsregeln** (`effDeriveRules` liefert
+`{}`), während GOLD/SP500/NAS `Inflation: inverse` tragen. Folge: dort steht
+2Y Bond Yield auf `bull` und 10Y auf `bear` — dasselbe Asset, entgegengesetzte
+Vorzeichen, weil der Bias bei fehlender Regel einfach der gespeicherte Stand
+bleibt. Das ist eine **Score-Frage**, nicht ein Anzeigefehler: sie bräuchte
+`SCORE_MODEL_VERSION` und eine Entscheidung, ob DAX/GER 100 (wie SP500/NAS)
+auf `inverse` gehören. Vorgelegt, nicht eigenmächtig geändert.

@@ -36,8 +36,21 @@ Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn automatisch.
 ## ⚠️ TYPOGRAFISCHE SKALA (Dashboard)
 
 Sieben feste Stufen als CSS-Variablen statt frei gewaehlter Werte:
-`--fs-hero` 30 · `--fs-xl` 22 · `--fs-lg` 17 · `--fs-md` 15 (KARTENTITEL) ·
+`--fs-hero` 30 · `--fs-xl` **24** · `--fs-lg` 17 · `--fs-md` 15 (KARTENTITEL) ·
 `--fs-base` 13 · `--fs-sm` 12 · `--fs-xs` 11 · `--fs-2xs` 10.
+
+⚠ **Korrigiert am 2026-09-16:** hier stand `--fs-xl` 22 — im Code ist der
+Token aber `24px`. Die Doku nannte damit eine Stufe, die es nicht gibt. 22px
+existiert tatsächlich, aber als **harter Wert an zwei Stellen** (Seitenkopf
+von Trends, und `.rub-inp/.nc-inp/.pcc-name` in einer Media Query), nicht als
+Token — in `check/typo.js` entsprechend als benannte Ausnahme geführt.
+
+⚠ **Achtung, `.ab-cards` bildet die ganze Skala kleiner ab**
+(`--fs-hero:24 · --fs-xl:17 · --fs-lg:15 · --fs-md:13 · --fs-base:12 ·
+--fs-sm:11 · --fs-xs:10`). Ein `var(--fs-md)` bedeutet dort also 13px, nicht
+15px. Wer eine Karte AUSSERHALB der Asset-Seite baut, bekommt die globale
+Skala — beim Kopieren einer Regel aus dem Asset-Bereich ändert sich damit
+still die Größe.
 
 Vor dem Umbau kamen 33 verschiedene Groessen/Gewichts-Kombinationen vor
 (8 bis 32px, dazwischen 9,5 / 10,5 / 11,5 / 12,5) - keine Skala, sondern
@@ -57,6 +70,55 @@ Karten-Abschluss: NICHTS wird gestreckt, um Luecken zu fuellen
 Flex-Spalten — siehe "Loch im Dashboard" in `docs/navigation.md`). Die
 Spalten duerfen unterschiedlich hoch enden wie Zeitungsspalten; eine
 Haarlinie ueber der Fussleiste zieht den Schlussstrich.
+
+## ⚠️ Karten-Farbe: sie folgt dem BIAS, nie einer anderen Größe (seit 2026-09-16)
+
+Anlass: auf der Gold-Seite stand „2Y Bond Yield 4.67 %" in **blau** (bullish),
+während dieselbe Zeile `bias: bear` trug und **−0,5** auf den Score gab.
+Ursache war ein Feld mit **zwei Bedeutungen**: `bondColor` hielt die
+*Richtung* der Rendite (steigt/fällt), wurde aber als *Bewertung* eingefärbt.
+Bei Währungen fallen beide zusammen, bei Gold/Öl/Indizes nicht.
+
+**Dauerregel:** was farblich eine Aussage macht (bullish/bearish/neutral),
+wird aus dem **Bias der Zeile** abgeleitet — nicht aus der Rohrichtung, nicht
+aus dem Vorzeichen einer Veränderung, nicht aus einem zweiten Feld. Wo eine
+Richtung *zusätzlich* gezeigt wird (der Erklärtext im Info-Fenster), ist sie
+ausdrücklich als Richtung beschriftet und die Score-Wirkung kommt aus
+`indScore()`.
+
+⚠ Gilt genauso für erklärende Texte: das Info-Fenster behauptete
+„counting +0.5" aus der Richtung, wo −0,5 galt.
+
+## ⚠️ Zahlen-Genauigkeit: die Quelle bestimmt sie NICHT (seit 2026-09-16)
+
+`fmtYield()` machte `toFixed(3)` und schnitt dann die Nullen ab — je nach Wert
+**eine bis drei** Stellen. In einer Spalte stand dadurch `4.67 %` neben
+`5.0 %`, und in „Previous" (das ist die SMA21, ein Mittelwert) drei Stellen.
+
+**Dauerregel:** eine Spalte hat **eine** feste Anzahl Dezimalstellen. Renditen
+zwei (Marktnotation). Wer eine Quelle anzapft, formatiert am Rand — nie „so
+genau, wie es gerade kommt". Dieselbe Klasse wie das Gleitkomma-Rauschen in
+`price_data.json` (2026-09-14), nur in der Anzeige statt in der Datei.
+
+## „Go to <Kategorie>" unten rechts in jeder Karte (seit 2026-09-16)
+
+Nutzer-Wunsch: *„füg bei den karten unten rechts in klein hinzu go to und
+dann der name und dann öffnet sich die kategorie und man hat das back
+zeichen."*
+
+- **Ein Baustein:** `abGoToHtml(ziel[,stopp])`. Das Ziel wird **übergeben**,
+  nicht aus dem Kartentitel abgeleitet — sonst verliert ein Umbenennen den
+  Knopf still.
+- **Navigation nicht nachbauen:** `assetQuickGo(tab)` setzt Filter,
+  Zurück-Pille und Seite. Ein zweiter Weg wäre dieselbe Größe in zwei Kopien.
+- `stopp` (stopPropagation) für Karten, die selbst einen `onclick` tragen —
+  die Kalenderkarte öffnet als Ganze ein Fenster.
+- **Lage:** `margin-top:auto` am Kartenfuß. ⚠ Das setzt eine **Flex-Spalte**
+  voraus. In den Makro-Karten (`display:block`) saß der Knopf dadurch 1 px,
+  95 px und 102 px über dem Boden — drei Höhen in einer Reihe, weil die Karten
+  von ihrer Zeile auf gleiche Höhe gestreckt werden.
+- Geprüft von `check/kartenlook.js` (genau einer je Karte, Lage, gültiges
+  Ziel, echter Klick mit Zurück-Pille).
 
 ## ⚠️ GRUNDSATZ: wiederkehrende UI-Bausteine müssen einheitlich sein
 
