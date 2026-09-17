@@ -1629,10 +1629,18 @@ function renderSymHistoryPanel(id){
 // histRange eine Variable ist und nicht zwei.
 function abHistorieKarteHtml(c){
   _histSymId=c.id;
+  // ⚠ Der Verweis auf die Vollansicht sitzt unten rechts wie bei jeder
+  // anderen Karte (.ab-goto), nicht als Sonderzeichen im Kopf. Grund:
+  // check/kartenlook.js hat die Karte zurecht als "0 Go-to-Knoepfe"
+  // gemeldet - der Nutzer hat gelernt, dass der Weg aus einer Karte heraus
+  // unten rechts steht, und ein ⤢ im Kopf ist eine zweite Konvention fuer
+  // dieselbe Sache. Ziel ist hier aber KEINE Kategorie-Seite (die Historie
+  // hat keine), sondern das eigene Fenster - der Waechter kennt diesen Fall
+  // jetzt ausdruecklich und klickt ihn nach.
   return`<div class="ab-htile ab-ntile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">History</span>
-      <button class="ab-nt-qc" onclick="openHistModal('${escJH(c.id)}')" title="Open the full history window — same content, the whole screen">⤢</button></div>
+    <div class="ab-tile-hd"><span class="ab-tile-t">History</span></div>
     <div class="ab-htile-bd" id="abHistBody">${renderSymHistoryPanel(c.id)}</div>
+    <div class="ab-goto"><button class="ab-goto-b" onclick="openHistModal('${escJH(c.id)}')" title="Open the full history window — the same content on the whole screen, with room for about eleven days at once instead of three">Open full history →</button></div>
   </div>`;
 }
 function openHistModal(id){

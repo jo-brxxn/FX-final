@@ -692,7 +692,8 @@ svg.ic{vertical-align:-2px;flex:none}
    nichts. 420px ist knapp ueber der natuerlichen Reihenhoehe, damit die
    Reihe stabil bleibt, und die Liste scrollt darin. */
 .ab-htile{max-height:420px;--histl-h:100px}
-.ab-htile-bd{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 10px 10px}
+.ab-htile-bd{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 10px 0}
+.ab-htile>.ab-goto{margin-top:0;padding:6px 11px 8px}
 .ab-htile-bd>.histp{flex:1 1 auto;min-height:0}
 /* ⚠ GEMESSEN: die Karte ist 368px hoch (die Reihe streckt sie auf die
    hoechste Schwester), der Inhalt braucht 4198. Mit 182px Chart plus
@@ -3952,7 +3953,12 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .aaii-gloss dl{margin:8px 0 0;font-size:var(--fs-xs);line-height:1.55}
 .aaii-gloss dt{color:var(--t1);font-weight:700;margin-top:7px}
 .aaii-gloss dd{margin:1px 0 0;color:var(--t2)}
-.histp-range{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+/* ⚠ KEIN margin-bottom mehr. Der Regler stand frueher allein und trug 12px
+   Abstand nach unten; seit er in der zentrierten Flex-Zeile .histp-bar sitzt,
+   verschiebt ihn dieses Margin um 6px gegen seinen Nachbarn (gemessen von
+   check/layout.js: "Kind verrutscht 6px durch Margin"). Der Abstand nach
+   unten gehoert jetzt der Leiste selbst. */
+.histp-range{display:flex;gap:5px;flex-wrap:wrap}
 .histp-rbtn{border:1px solid var(--bd2);background:var(--bg1);color:var(--t2);border-radius:var(--rss);font:700 var(--fs-xs)/1 var(--ff-text);padding:7px 13px;cursor:pointer}
 .histp-rbtn.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 @media(hover:hover){.histp-rbtn:hover{border-color:var(--accent);color:var(--accent)}.histp-rbtn.on:hover{color:var(--on-accent)}}

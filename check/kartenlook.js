@@ -260,7 +260,14 @@ const MIN_SCHATTEN_LAGEN = 3;
         raus.schief.push(`${titel}: ${untenAbstand}px vom Kartenboden, ${rechtsAbstand}px vom rechten Rand`);
       const h = kn[0].getAttribute('onclick') || '';
       const m = h.match(/assetQuickGo\('([a-z]+)'\)/);
-      raus.ziele.push(m ? m[1] : 'KEIN assetQuickGo: ' + h.slice(0, 40));
+      // ⚠ ZWEITE ZIELART, seit 2026-09-17: eine Karte, deren Vollansicht ein
+      // FENSTER ist und keine Kategorie-Seite. Die Historie ist der Fall -
+      // sie hat keinen Tab, ihr "mehr davon" ist openHistModal(). Die Regel
+      // bleibt dieselbe (ein Verweis, unten rechts, und er muss wirken); nur
+      // die erlaubte Zielart ist jetzt zweigeteilt, und der Klicktest unten
+      // prueft fuer diese Art, dass das Fenster wirklich aufgeht.
+      const mm = h.match(/open([A-Za-z]+)Modal\(/);
+      raus.ziele.push(m ? m[1] : mm ? 'modal:' + mm[1] : 'KEIN gueltiges Ziel: ' + h.slice(0, 40));
     }));
     return raus;
   }, KARTEN_SEL);
@@ -268,8 +275,30 @@ const MIN_SCHATTEN_LAGEN = 3;
   g.ohne.forEach(x => fail('KARTE OHNE GO-TO', `${x}. Jede Karte der Asset-Seite gehoert zu einer Kategorie und braucht genau einen Verweis dorthin.`));
   g.schief.forEach(x => fail('GO-TO SITZT NICHT UNTEN RECHTS', `${x}. Gemessen waren es beim Bauen 1/95/102px - drei Hoehen in einer Reihe.`));
   const ERLAUBTE_ZIELE = ['trends', 'data', 'cot', 'retail', 'seas', 'cal', 'news', 'rate', 'notes'];
-  g.ziele.forEach(z => { if (!ERLAUBTE_ZIELE.includes(z)) fail('GO-TO OHNE GUELTIGES ZIEL',
-    `"${z}" ist keine Kategorie, die assetQuickGo() kennt (${ERLAUBTE_ZIELE.join('/')}) - der Klick wuerde ins Leere fuehren.`); });
+  // Karten, deren Vollansicht ein Fenster ist (siehe Kommentar oben).
+  const ERLAUBTE_FENSTER = ['modal:Hist'];
+  g.ziele.forEach(z => { if (!ERLAUBTE_ZIELE.includes(z) && !ERLAUBTE_FENSTER.includes(z))
+    fail('GO-TO OHNE GUELTIGES ZIEL',
+    `"${z}" ist weder eine Kategorie, die assetQuickGo() kennt (${ERLAUBTE_ZIELE.join('/')}), noch ein erlaubtes Fenster (${ERLAUBTE_FENSTER.join('/')}) - der Klick wuerde ins Leere fuehren.`); });
+  // ⚠ Und fuer die Fenster-Art einmal WIRKLICH klicken. Ohne das ist die
+  // neue Zielart nur eine Lockerung der Regel und kein geprueftes Verhalten.
+  const fenster = await p.evaluate(async () => {
+    const d = document.getElementById('detail');
+    const b2 = [...d.querySelectorAll('.ab-goto > .ab-goto-b')]
+      .find(e => /openHistModal\(/.test(e.getAttribute('onclick') || ''));
+    if (!b2) return { keiner: true };
+    b2.click();
+    await new Promise(r => setTimeout(r, 700));
+    const ov = document.getElementById('mHist');
+    const sicht = ov ? getComputedStyle(ov).display !== 'none' : false;
+    const tage = document.querySelectorAll('#mHist .hw-day').length;
+    try { closeM('mHist'); } catch (e) {}
+    return { sicht, tage };
+  });
+  if (fenster.keiner) fail('FENSTER-GO-TO FEHLT', 'keine Karte mit openHistModal() gefunden, obwohl modal:Hist als Ziel erlaubt ist');
+  else if (!fenster.sicht) fail('FENSTER-GO-TO OEFFNET NICHT', 'der Klick auf "Open full history" laesst #mHist auf display:none stehen');
+  else if (!fenster.tage) fail('FENSTER-GO-TO OEFFNET LEER', 'das Historie-Fenster geht auf, enthaelt aber keine einzige Tageszeile');
+  else console.log(`  ✓ Fenster-Go-to: Klick oeffnet #mHist mit ${fenster.tage} Tageszeilen`);
 
   // ⚠ Und einmal WIRKLICH klicken: Ziel-Seite offen, Zurueck-Pille aktiv.
   // Ohne das prueft man nur, dass ein Knopf gezeichnet wird.
