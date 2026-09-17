@@ -636,7 +636,7 @@ svg.ic{vertical-align:-2px;flex:none}
    BEHAELTERS, deshalb dieselben Stufen noch einmal als @container.
    Die Media-Fassungen bleiben unveraendert stehen: auf dem Telefon ist
    beides schmal, und andere Stellen der App haengen an ihnen. */
-.ab-cards .ab-col{container-type:inline-size}
+.ab-cards .ab-col,.ab-cards .ab-orow .ab-col{container-type:inline-size}
 /* ⚠ Die eigentlichen @container-Stufen stehen weiter unten, direkt hinter
    den @media-Stufen der Tabelle. Hier oben haben sie die Kaskade verloren:
    gleiche Spezifitaet wie .ind-table, aber weiter vorn in der Datei - also
@@ -675,6 +675,44 @@ svg.ic{vertical-align:-2px;flex:none}
    beginnt - der Nutzer sieht genau das als Luecke. Gefuellt wird NICHT durch
    Strecken einer Karte (das war ausdruecklich ausgeschlossen), sondern indem
    die Grafik den Platz bekommt: sie soll ohnehin mittelgross sein. */
+/* ── Kopfreihe der Asset-Seite: VIER Karten (Nutzer 2026-09-17) ──────────
+   Price · Pinned notes · Calendar · History. Eigenes Unterraster ueber die
+   volle Breite, damit die Makro-Reihe darunter bei drei Spalten bleibt.
+   Der Nutzer wusste, dass es enger wird ("dann ist das zwar enger aber egal
+   will mal gucken nur") - deshalb bricht es unterhalb 1180px auf 2x2 und
+   unterhalb 640px auf eine Spalte, statt vier Karten auf 90px zu quetschen. */
+.ab-cards>.ab-orow{grid-column:1/-1;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
+@media(max-width:1180px){.ab-cards>.ab-orow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.ab-cards>.ab-orow{grid-template-columns:minmax(0,1fr)}}
+/* ⚠ HARTE OBERGRENZE, und zwar mit Grund. Ohne sie bestimmt der Inhalt die
+   Zeilenhoehe: mit 30 Tagen Detail zog die Historie die Kopfreihe von 368px
+   auf 4150px, also alle vier Karten (gemessen). Ein Rasterelement mit
+   `auto`-Zeile sizet auf max-content, daran aendert min-height:0 im Flex
+   nichts. 420px ist knapp ueber der natuerlichen Reihenhoehe, damit die
+   Reihe stabil bleibt, und die Liste scrollt darin. */
+.ab-htile{max-height:420px;--histl-h:100px}
+.ab-htile-bd{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 10px 10px}
+.ab-htile-bd>.histp{flex:1 1 auto;min-height:0}
+/* ⚠ GEMESSEN: die Karte ist 368px hoch (die Reihe streckt sie auf die
+   hoechste Schwester), der Inhalt braucht 4198. Mit 182px Chart plus
+   Reglerleiste plus Spaltenkopf blieb fuer die Tagesliste NICHTS - man sah
+   einen Tabellenkopf ohne Tabelle. Jetzt: Chart 100px, und die Liste nimmt
+   den Rest und scrollt darin. */
+/* ⚠ CONTAINER-Query, nicht Media-Query: die Karte ist 315px breit, das
+   FENSTER 1500 - eine Media-Query sieht das Problem nie. Gemessen ohne sie:
+   die vierte Spalte "What moved it" war auf 315px Kartenbreite abgeschnitten,
+   die Spaltenkoepfe standen ueber leerer Flaeche. .ab-col traegt schon
+   container-type:inline-size, also greift @container hier direkt. */
+@container (max-width:470px){
+  .ab-htile .hw-cols,.ab-htile .hw-day{grid-template-columns:minmax(78px,1fr) 52px 44px;gap:6px}
+  .ab-htile .hw-cols span:nth-child(4){display:none}
+  .ab-htile .hw-d4{grid-column:1/-1;margin-top:2px}
+  .ab-htile .hw-d4 .histp-evt{grid-template-columns:10px minmax(0,1fr) auto auto;gap:5px}
+  .ab-htile .hw-d4 .histp-time{display:none}
+}
+.ab-htile .hw-list{margin-top:8px;gap:8px}
+.ab-htile .histp-bar{margin-bottom:6px}
 .ab-col{min-width:0;display:flex;flex-direction:column;gap:8px}
 .ab-col>.rub-card,.ab-col>.ab-ntile,.ab-col>.abc-cal,.ab-col>.aql-col{flex:1 1 auto}
 .ab-col>.ab-tile{flex:1 1 auto;display:flex;flex-direction:column}
@@ -3679,7 +3717,18 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hist-day.hist-today .hist-dot{box-shadow:0 0 0 2px var(--bg2),0 0 0 3px var(--bd2)}
 .hist-dn{font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num)}
 /* ── HISTORY-FENSTER (ausklappbar, Tage untereinander wie im Kalender) ── */
-.histp{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);max-height:340px;overflow-y:auto;padding:4px}
+/* ⚠ Die 340px waren der Kern der Beschwerde: bei 30 geladenen Tagen waren
+   zwei sichtbar. Im Fenster (.m-gross) bekommt die Liste jetzt die Resthoehe,
+   in der Karte auf der Asset-Seite bleibt sie bewusst kurz. */
+.histp{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);overflow-y:auto;padding:4px}
+.m-gross{height:92vh;display:flex;flex-direction:column}
+.m-gross>#histBody,.m-gross>#mBtBody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.m-gross .histp{flex:1 1 auto;min-height:0}
+/* Im Backtester scrollt die TABELLE, nicht das ganze Fenster - sonst
+   verschwindet die Steuerleiste beim Blaettern nach oben aus dem Bild. */
+.m-gross .bt-scroll{flex:1 1 auto;min-height:0;overflow:auto}
+.m-gross .bt-table thead th{position:sticky;top:0;z-index:2}
+.ab-htile .histp{border:none;background:transparent;padding:0}
 .histp-day{padding:7px 8px;border-bottom:1px solid var(--bd)}
 .histp-day:last-child{border-bottom:none}
 .histp-day.histp-today{background:rgba(var(--blue-rgb),.06)}
@@ -3937,21 +3986,56 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .hw-day:last-child{border-bottom:none}
 .hw-day.hw-today{background:rgba(var(--blue-rgb),.05)}
 .hw-wd{font:600 var(--fs-sm)/1.3 var(--ff-text);color:var(--t0)}
-.hw-dt{display:block;font:500 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);margin-top:1px}
+.hw-dt{display:block;font:600 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
+.hw-now{display:inline-block;margin-top:2px;font:800 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.4px;text-transform:uppercase;color:var(--blue);background:rgba(var(--blue-rgb),.1);border-radius:4px;padding:0 5px}
 .hw-d2,.hw-d3{text-align:right}
-.hw-sc{font:800 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0)}
+/* Der Tages-Score sitzt in derselben Pille wie im Seitenkopf - er traegt
+   dieselbe Aussage und soll nicht in zwei Formen auftreten. */
+.hw-sc{display:inline-block;font:800 var(--fs-sm)/1.3 var(--ff-num);color:var(--t0);border:1px solid var(--bd);border-radius:20px;padding:1px 7px;white-space:nowrap}
 .hw-dl{font:700 var(--fs-xs)/1.3 var(--ff-num)}
-.hw-d4{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+/* ⚠ Die Ursachen-Spalte ist seit 2026-09-17 eine SPALTE, kein Etiketten-
+   Knaeuel: eine Zeile je Ursache, damit Name, Wert und Beitrag
+   untereinander stehen und der Blick sie vergleichen kann. Vorher lagen sie
+   als flex-wrap-Chips nebeneinander, und bei drei Ursachen brach der Text
+   an beliebigen Stellen um. */
+.hw-d4{display:flex;flex-direction:column;gap:3px;min-width:0}
+.hw-d4 .histp-evt{display:grid;grid-template-columns:34px 12px minmax(0,1fr) auto auto;gap:7px;align-items:baseline;padding:2px 0;border:none}
+.hw-d4 .histp-brk{display:flex;flex-wrap:wrap;gap:5px;margin-top:3px}
 .hw-c{font:700 var(--fs-2xs)/1.4 var(--ff-num);border:1px solid var(--bd);border-radius:5px;padding:1px 6px;white-space:nowrap;cursor:help}
-.hw-e{font:500 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t2);background:var(--bg4);border-radius:5px;padding:1px 6px;cursor:help;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.hw-e.hw-more{color:var(--t3)}
-.hw-m{font:700 var(--fs-2xs)/1.4 var(--ff-num);color:var(--purple);background:rgba(var(--purple-rgb),.09);border-radius:5px;padding:1px 6px;cursor:help}
-.hw-none{font:500 var(--fs-2xs)/1.4 var(--ff-num);color:var(--t3);font-style:italic}
+.hw-none{font:500 var(--fs-xs)/1.45 var(--ff-num);color:var(--t3);font-style:italic}
+/* Alterungs-Zeile: gehoert sichtbar zu den Ursachen, ist aber keine
+   Veroeffentlichung - deshalb bernsteinfarben abgesetzt statt in Bias-Farbe
+   ueber die ganze Zeile. */
+.histp-age{background:rgba(var(--amber-rgb),.07);border-radius:5px;padding:2px 6px!important}
+.histp-agetag{font:800 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.3px;text-transform:uppercase;color:var(--amber);background:rgba(var(--amber-rgb),.12);border-radius:4px;padding:0 4px;margin-left:5px;white-space:nowrap}
 @media(max-width:640px){
   .hw-cols,.hw-day{grid-template-columns:minmax(90px,1fr) 54px 48px;}
   .hw-cols span:nth-child(4){display:none}
   .hw-d4{grid-column:1/-1}
 }
+/* ── Historie: Kopfleiste, Score-Linie, klebende Spaltenkoepfe ────────────
+   Nutzer 2026-09-17: mehr Detail, einfacher, mehr Uebersicht. Gemessen am
+   alten Stand: Fenster 870x440, Inhalt scrollte in 340px Hoehe - von 30
+   Tagen waren 2 gleichzeitig sichtbar. Das Fenster ist jetzt nahezu
+   Vollbild, die Liste hat den ganzen Rest. */
+.histp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.histp-agebtn{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t2);background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.histp-agebtn.on{color:var(--amber);border-color:var(--amber);background:rgba(var(--amber-rgb),.08)}
+.histl{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:4px 6px}
+.histl-empty{font:500 var(--fs-xs)/1.5 var(--ff-num);color:var(--t3);font-style:italic;padding:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
+/* ⚠ ZWEI Klebe-Ebenen, nicht eine. Mit nur der Spaltenzeile klebend
+   verschwand der Wochenkopf beim Scrollen zur Haelfte hinter ihr und sah
+   kaputt aus (im Bildschirmfoto nachgesehen, nicht vermutet). Jetzt klebt
+   der Wochenkopf direkt UNTER der Spaltenzeile - 29px ist ihre gemessene
+   Hoehe - und bleibt damit beim Durchscrollen einer Woche lesbar. */
+.hw-cols{position:sticky;top:0;z-index:3;background:var(--bg3)}
+.hw-hd{position:sticky;top:29px;z-index:2}
+.hw-week{overflow:visible}
+.hw-day.hw-jump{background:rgba(var(--blue-rgb),.12);box-shadow:inset 3px 0 0 var(--blue)}
+/* Die Zeitspalte bleibt schmal, aber ein Platzhalter-Strich in JEDER Zeile
+   ist keine Auskunft - Bond-, COT- und Sentiment-Zeilen haben nie eine
+   Uhrzeit. Leer statt "—". */
+.hw-d4 .histp-time:empty{visibility:hidden}
 .tr-carrynote{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--accent);border-radius:var(--rs);padding:8px 11px;margin-bottom:9px;color:var(--t2);font-size:var(--fs-xs);line-height:1.5}
 .tr-modelnote{color:var(--t3);font-size:var(--fs-xs);line-height:1.5;padding:9px 11px;margin:0 0 10px;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
 .histp-eff{font-size:var(--fs-2xs);font-weight:800;padding:1px 6px;border-radius:20px;border:1px solid;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
@@ -4887,11 +4971,19 @@ button.rate-watch{background:none;border:none;padding:0;cursor:pointer;font:inhe
 .bt-rate{font:500 var(--fs-2xs)/1 var(--ff-num);color:var(--t3)}
 .bt-rate b{color:var(--t1);font-weight:700}
 .bt-cell{font-family:var(--ff-num)}
-.bt-arrow{display:inline-block;width:13px;font-size:var(--fs-xs);color:var(--t3);margin-right:5px}
-.bt-arrow.bt-up{color:var(--blue)}
-.bt-arrow.bt-down{color:var(--red)}
-.bt-arrow.bt-flat{color:var(--t3)}
+/* ⚠ Der Trendpfeil (.bt-arrow) ist am 2026-09-17 entfallen. Er verglich den
+   juengsten mit dem aeltesten von drei Werten und presste den Verlauf damit
+   in ein einziges Zeichen. An seiner Stelle steht jetzt eine echte
+   Mini-Verlaufslinie ueber sieben Releases (.bt-spark) - dieselbe Aussage,
+   nur nachvollziehbar. */
+.bt-spark{display:inline-block;vertical-align:middle;margin-right:7px;opacity:.9}
 .bt-vals{display:inline-flex;align-items:baseline;gap:4px}
+/* Die Ueberraschungsfarbe der Bereichswerte kommt aus actualColor() -
+   dieselben Klassen wie auf der Karte und in der Historie, damit derselbe
+   Release nicht an drei Orten drei Farben hat. */
+.bt-v.act-good{color:var(--blue)}
+.bt-v.act-bad{color:var(--red)}
+.bt-v.bt-v-now.act-good,.bt-v.bt-v-now.act-bad{font-weight:800}
 .bt-v{font:500 var(--fs-xs)/1.3 var(--ff-num);color:var(--t3)}
 .bt-v.bt-v-now{font-weight:800;font-size:var(--fs-sm);color:var(--t0)}
 .bt-sep{color:var(--bd);font-size:var(--fs-2xs)}
@@ -4905,6 +4997,44 @@ button.rate-watch{background:none;border:none;padding:0;cursor:pointer;font:inhe
 .bt-whyc{vertical-align:top;position:relative;white-space:normal!important;min-width:210px}
 .bt-why{width:100%;box-sizing:border-box;resize:vertical;min-height:44px;background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:6px 8px;font:500 var(--fs-2xs)/1.45 var(--ff-text);color:var(--t0)}
 .bt-why::placeholder{color:var(--t3);font-style:italic}
+/* ── Backtester, Neubau 2026-09-17 ──────────────────────────────────────
+   Steuerleiste, Zinspfad, Hold-Zeilen, Kursreaktion. Nutzer-Wuensche:
+   Waehrungs-Umschalter im Fenster, Filter Hike/Cut/Jahr, Holds zuschaltbar,
+   zwei Banken im Pfad. */
+.bt-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-bottom:12px;
+  padding:9px 11px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
+.bt-ctl-g{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.bt-ctl-l{font:700 var(--fs-2xs)/1 var(--ff-num);letter-spacing:.5px;text-transform:uppercase;color:var(--t3);margin-right:2px}
+.bt-cb{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t2);background:var(--bg3);border:1px solid var(--bd);
+  border-radius:6px;padding:5px 8px;cursor:pointer}
+.bt-cb.sm{font-size:var(--fs-2xs);padding:4px 6px;color:var(--t3)}
+.bt-cb.on{color:#fff;background:var(--accent);border-color:var(--accent)}
+.bt-cb.sm.on{color:var(--t0);background:var(--bd2);border-color:var(--t3)}
+.bt-fb{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t2);background:var(--bg3);border:1px solid var(--bd);
+  border-radius:20px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.bt-fb.on{color:var(--accent);border-color:var(--accent);background:rgba(var(--blue-rgb),.07)}
+.bt-sel{font:600 var(--fs-xs)/1 var(--ff-num);color:var(--t1);background:var(--bg3);border:1px solid var(--bd);
+  border-radius:6px;padding:5px 7px;cursor:pointer}
+.bt-pfad{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:4px 6px;margin-bottom:12px;position:relative}
+.bt-pfad-leg{position:absolute;top:6px;right:10px;display:flex;gap:10px;font:600 var(--fs-2xs)/1 var(--ff-num);color:var(--t3);z-index:1}
+.bt-leg-s,.bt-leg-d{display:inline-block;width:14px;height:0;border-top:2px solid var(--accent);margin-right:4px;vertical-align:middle}
+.bt-leg-d{border-top-style:dashed;border-top-color:var(--t3)}
+.bt-sum-of{font-size:var(--fs-2xs);font-weight:600;color:var(--t3);margin-left:3px}
+/* Hold-Zeilen sind bewusst leiser: sie sind Kontext ("die Bank sass still"),
+   nicht das Ereignis. Ohne diese Daempfung verschwinden die 20 echten
+   Entscheide zwischen 88 Holds. */
+.bt-tag.bt-hold{color:var(--t3);background:var(--bd2)}
+.bt-table tr.bt-holdrow td{background:rgba(var(--t3-rgb,85,97,122),.03)}
+.bt-table tr.bt-holdrow .bt-date{font-weight:500;color:var(--t2)}
+.bt-table tr.bt-jump td{background:rgba(var(--blue-rgb),.1)}
+.bt-table tr.bt-jump .bt-date{box-shadow:inset 3px 0 0 var(--blue)}
+.bt-rk{min-width:132px}
+.bt-rk-i{display:inline-flex;align-items:baseline;gap:3px;margin-right:8px;cursor:help}
+.bt-rk-n{font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--t3)}
+.bt-rk-v{font:700 var(--fs-xs)/1 var(--ff-num)}
+.bt-empty{font-size:var(--fs-xs);color:var(--t2);line-height:1.6;margin-top:11px;padding:10px 12px;
+  background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--amber);border-radius:var(--rs)}
+@media(max-width:700px){.bt-ctl{gap:6px 10px}.bt-ctl-l{display:none}}
 .bt-why:focus{outline:none;border-color:var(--blue);background:var(--bg2)}
 /* Recherchierter Text sieht anders aus als ein selbst geschriebener - man
    soll auf einen Blick sehen, was von der App kam und was von einem selbst. */
@@ -5304,7 +5434,7 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-523 - ⚠ Diese Arbeit war als 522 gebaut; ein parallel laufender Lauf hatte die Nummer schon fuer die Put/Call-Schwellen ausgeliefert, deshalb 523. check/rules.js hat die Kollision gemeldet, weil er gegen origin/main vergleicht und nicht gegen den letzten eigenen Stand. Ein Rundgang ueber das Neue, zwei echte Bugs aus einem Bildschirmfoto und die Go-to-Verweise. ⚠ GOLD: BLAU STATT ROT. Gemeldet mit Bild: 2Y Bond Yield 4.67% stand auf der Gold-Seite in BLAU, also bullish - waehrend dieselbe Zeile bias=bear trug und -0,5 auf den Score gab. Anzeige und Rechnung widersprachen sich in einer Zeile. Ursache: applyBondDataFeed schreibt bondColor aus der RICHTUNG der Rendite und zwar fuer JEDES Asset, den Bias aber nur fuer FX; bei Nicht-FX dreht ihn die Spiegelung der Karte (inverse) - die Farbe wurde nie mitgedreht. Bei Waehrungen fallen Richtung und Bedeutung zusammen, deshalb ist es dort nie aufgefallen. FEHLERKLASSE: ein Feld, zwei Bedeutungen. Die beiden anderen Feeds leiten die Farbe richtig aus dem Bias ab (COT, Seasonality/Retail) - das hier war die einzige Kopie mit der Richtung. Jetzt folgt die Farbe dem Bias: Gold, Silber, BTC, Oel, S&P 500 und Nasdaq zeigen steigende Renditen rot, Waehrungen weiter blau. Denselben Fehler machte das Info-Fenster, es behauptete counting +0.5 wo -0,5 galt; es nennt jetzt den echten Beitrag und erklaert bei gedrehten Karten das Vorzeichen. ⚠ RENDITEN MIT DREI VERSCHIEDENEN GENAUIGKEITEN. Im selben Bild: 4.67% neben 5.0% in EINER Spalte, und in Previous 4.428%/4.819% mit drei Stellen, waehrend jede andere Zeile der Tabelle eine fuehrt. Ursache war fmtYield: toFixed(3) und dann Nullen abschneiden ergibt eine bis drei Stellen, und bei Previous besonders deutlich, weil dort gar kein Vorwert steht, sondern die SMA21 - ein Mittelwert hat von Natur aus viele Stellen. Jetzt immer zwei Stellen, die uebliche Notation am Anleihemarkt. Dieselbe Fehlerklasse wie am 14.09. in price_data.json, wo Yahoos 102.01000213623047 die Datei verdoppelt hat: Quellgenauigkeit unveraendert durchreichen - dort in der Datei, hier in der Anzeige. GO-TO AN JEDER KARTE: unten rechts, klein, Go to und der Name der Kategorie - Klick oeffnet sie mit diesem Asset vorgewaehlt, das Zurueck-Zeichen fuehrt zurueck. Zehn Karten: drei Makro-Karten nach Data, Preis nach Trends, COT, Retail Sentiment, Seasonality, Headlines nach News, Kalender und Pinned notes nach Research. Nichts davon ist neu gebaut - assetQuickGo gab es schon und macht genau das; ein zweiter Navigationsweg daneben waere dieselbe Groesse in zwei Kopien. ⚠ GEMESSEN UND KORRIGIERT: in den drei Makro-Karten sass der Knopf zuerst 1, 95 und 102 Pixel ueber dem Kartenboden - drei Hoehen in einer Reihe, weil die Karten von ihrer Flex-Zeile auf gleiche Hoehe gestreckt werden (498px bei Inhalten von 323 bis 425), .rub-card aber display:block war und margin-top:auto deshalb nicht griff. Jetzt sitzen alle zehn 10 bis 11 Pixel vom Boden und 11 bis 14 vom rechten Rand. TYPOGRAFIE DES REGIME-TABS: der Kartentitel stand auf --fs-base, der FLIESSTEXT-Stufe - damit kam 15px, die im Design-System ausdruecklich fuer Kartentitel reservierte Stufe, im ganzen Tab nicht vor. Jetzt --fs-md wie .cot-card-title und .wt-name; Untertitel auf --fs-sm, Erklaerbloecke auf --fs-2xs, damit sie unter dem Bedingungstext liegen statt gleichauf. ⚠ UND DIE LUECKE DAHINTER: check/typo.js holte seine Liste aus .ov[id^=m], also ausschliesslich Fenstern - 34 Fenster mit 301 Textelementen, waehrend allein der Kalender 531 hat. Der Anlass der Regel nennt aber woertlich auch alle Seiten. Der neue Tab war von keiner Pruefung angesehen, und die 14 bestehenden Seiten seit dem 08.09. auch nicht mehr. Jetzt gehen 18 Seiten mit 3275 weiteren Textelementen durch dieselbe Pruefung; SVG-Beschriftungen sind ausgenommen (sie folgen der Chart-Geometrie), drei Bestandswerte namentlich mit Datum und Grund. Dabei fiel auf, dass docs/design-system.md --fs-xl als 22 fuehrte, waehrend der Token 24px ist - die Doku nannte eine Stufe, die es nicht gibt; 22px existiert nur als harter Wert an zwei Stellen und ist jetzt so dokumentiert. Waechter: check/kartenlook.js prueft jede Karte auf genau einen Go-to, seine Lage unten rechts, ein gueltiges Ziel und einen echten Klick samt Zurueck-Pille; zwei Gegenproben melden rot.""><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-524 - Historie und Backtester komplett neu gebaut, dazu die Jahreszahl-Regel endlich erzwungen. ⚠ HISTORIE: der Anlass war "ich finde nicht gut wie das da aussieht und was da fuer daten gezeigt werden". Gemessen am Vorzustand: Fenster 870x440, der Inhalt scrollte in 340px Hoehe - von 30 Tagen waren ZWEI gleichzeitig sichtbar. Die Grafik oben waren fuenf blaue Kloetze ohne Achse, Skala und Nulllinie, obwohl der Score im gezeigten Zeitraum von -2,7 bis +3,8 lief - alle fuenf zeigten nach oben, weil es WOCHEN-Differenzen waren. Die Kopfzeile DAY/SCORE/DELTA wiederholte sich pro Woche (viermal im 1M-Bereich), der Wochentag stand doppelt ("Thursday" und "Thu, Sep 17, 26"), und von 30 Tagen trugen 11 nur Fuelltext ("no recorded cause", "moved +0.1, recorded before the breakdown existed"). JETZT: Fenster nahezu Vollbild, 11 Tage gleichzeitig sichtbar statt 2; Score-Linie mit echter Achse und Nulllinie, oberhalb blau, unterhalb rot, an der Nulllinie beschnitten (Farbwechsel exakt bei 0, nicht am naechsten Datenpunkt), Luecken unterbrechen die Linie statt ueberbrueckt zu werden; Punkte an Ursachentagen, Klick springt in die Zeile; eine klebende Kopfzeile statt vier. Je Tageszeile steht jetzt die volle Ursache: Wert, Forecast, Vorwert und der Beitrag in Punkten, der Actual in Bias-Farbe sobald er vom Forecast abweicht - buchstaeblich dieselbe Funktion wie auf der Karte (actualColor), keine zweite Faerbelogik. ⚠ UND DIE ALTERUNG, der eigentliche Gewinn: "es bewegt sich ja durch den zeitfaktor immer was". Genau so ist es - IND_STALE_CYCLES=2 ist eine harte Kante, und an dem Tag, an dem ein Indikator sie ueberschreitet, bewegt sich der Score ohne jede Veroeffentlichung. Bisher stand dort "no recorded cause". Jetzt nennt die Zeile den Indikator, sein letztes Release, die Ueberfaelligkeit in eigenen Zyklen und den Beitrag, den er verloren hat. Nichts daran ist geschaetzt: Release und Zyklus stehen in den Daten, der verlorene Beitrag ist dieselbe Rechnung ohne die Nullsetzung (indScoreParts mit einem Schalter, der den Standardpfad bitgenau unberuehrt laesst - von check/scorediff.js nachgewiesen). Gemessen: 6 echte Wechsel in 90 Tagen, 362 von 559 Indikatoren sind ueberhaupt alterungsfaehig. Tage ohne Release sagen jetzt "No data released" - keine Sammelzeile, jeder Tag einzeln, so verlangt. Die Historie steht zusaetzlich als vierte Karte in der Kopfreihe neben Price, Pinned notes und Calendar ("will mal gucken"); ⚠ gemessen kostet das 52px Reihenhoehe (368 -> 420), weil die Karte sonst mit 30 Tagen Detail die ganze Reihe auf 4150px zog. ⚠ BACKTESTER: "Grafik oben, Liste unten". Der Zinspfad ist jetzt eine echte Treppe - ein Leitzins springt an der Sitzung und liegt dazwischen fest, eine schraege Verbindung behauptete Zwischenwerte, die es nie gab. Klick auf einen Marker springt in die Zeile. Je Entscheid sieben Releases statt drei, mit Mini-Verlaufslinie; die Ueberraschung gegenueber dem Forecast als Farbe je Wert (490 von 707 Werten tragen einen Forecast, die uebrigen bleiben farblos - eine Ueberraschung ohne Erwartung gibt es nicht); die Kursreaktion nach +1/+5/+20 HANDELSTAGEN, in Datenpunkten der Reihe gezaehlt, damit kein Wochenende als Tag zaehlt; und die 2Y-Rendite als vierter Bereich. ⚠ Dass die Ueberraschungs-Spalte echt ist und nicht eine umbenannte Previous-Spalte, steht im Erzeuger: ind_data.json fuehrt historyFull als [Datum, Actual, Forecast] (.github/workflows/update-ff-calendar.yml:1537). Der Vorgaenger las ind.chartHist, das nur [Datum, Wert] kennt - deshalb konnte er keinen Forecast zeigen. Steuerung im Fenster: Waehrungs-Umschalter (vorher musste man schliessen, das Asset wechseln und neu oeffnen), Filter Hikes/Cuts/Jahr, Holds zuschaltbar (76 fuer USD, der Vorgaenger warf sie weg) und eine zweite Bank als gestrichelte Vergleichskurve. Von 108 USD-Sitzungen zurueck bis Mai 13 sind damit alle erreichbar statt 31. ⚠ JAHRESZAHL, ZWEITE RUNDE: die Regel stand seit dem 05.09. in js/calendar.js und war an 13 Stellen unterlaufen - 8x fehlte das Jahr ganz (Kerzen-Hover, zwei Chart-Achsen, Zinspfad-Kacheln), 5x stand es vierstellig da (Sicherungen, Papierkorb, Cloud-Status, drei "updated"-Zeilen, alle ueber toLocaleString() ohne Optionen - genau die Aufrufform, die man beim Schreiben nicht als Datumsformat wahrnimmt). Statt 13 Einzelkorrekturen gibt es jetzt VIER Formatierer und check/datum.js, der jeden weiteren Aufruf rot meldet. fmtMonShort setzt den Apostroph ("May '13"), weil die Monatsform die Verwechslung sonst durch die Hintertuer zurueckbringt - auf der Zinspfad-Achse stand "May 13" fuer den Mai 2013. fmtResearchDateFull stand als "11. June 2026" da: deutsche Ordinalstellung auf englischer Oberflaeche UND vierstellig. Ausgenommen sind Nachrichten-Ueberschriften - das ist Fremdtext von Marketaux, ein zitiertes Datum umzuschreiben waere eine Faelschung der Quelle. ⚠ DREI EIGENE MESSFEHLER, gefunden von den Gegenproben und nicht vom Nachdenken: (1) check/datum.js Stufe 3 rief go(seite) - eine Funktion, die es nicht gibt (sie heisst showTab) - und hat elfmal dasselbe Dashboard gemessen, auf dem gar kein Datum mit Monatsnamen steht: 1640 Elemente, 0 Treffer, gruen weil leer. Zusaetzlich war SVG-Text ausgeschlossen, wo die Chart-ACHSEN der Hauptfundort sind. (2) check/historie.js suchte die Alterungszeilen ueber den Anzeigenamen in ind_data.json, meldete 6 Wechsel und rechnete 0 davon nach - nachgemessen kommen diese Indikatoren im Feed gar nicht vor (EUR "JOLTS Job Openings" hat chartHist.length 0 und lebt von research.date plus dem Intervalltext). Der Waechter rechnet jetzt Zyklus, Release, Grenze UND den Wechseltag unabhaengig nach. (3) check/backtester.js ordnete Zellen ueber den Spaltenindex zu und lag nach dem Einschieben der "Price after"-Spalte um eins daneben: 310 gemeldete Vorzeichenfehler gehoerten alle dem Waechter. Alle drei Waechter tragen Gegenproben, die rot melden."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
@@ -5701,7 +5831,12 @@ function introLogin(){
   </div>
 </div>
 <div class="ov" id="mHist" style="display:none">
-  <div class="modal" style="max-width:min(900px,94vw)">
+  <!-- ⚠ Nahezu Vollbild (Nutzer 2026-09-17: "mehr detail ... mit mehr
+       uebersicht"). Gemessen am Vorzustand: 870x440 aussen, der Inhalt
+       scrollte in 340px - von 30 Tagen waren 2 gleichzeitig sichtbar. Die
+       Klasse m-gross traegt die Hoehe; die Breite bleibt hier inline, weil
+       sie fensterabhaengig ist. -->
+  <div class="modal m-gross" style="max-width:min(1500px,96vw)">
     <h3 id="mHistTitle">History</h3>
     <div id="histBody"></div>
     <div class="m-btns"><button class="btn g" onclick="closeM('mHist')">Done</button></div>
@@ -6057,7 +6192,11 @@ function introLogin(){
 </div>
 <!-- MODAL: Backtester - Zinsschritte gegen die Datenlage (Nutzer-Wunsch 2026-09-06) -->
 <div class="ov" id="mBt" style="display:none" onclick="if(event.target===this)closeM('mBt')">
-  <div class="modal modal-wide">
+  <!-- ⚠ Nahezu Vollbild (Neubau 2026-09-17). Der Backtester traegt jetzt
+       Zinspfad, Steuerleiste, Kennzahlen und eine sieben Spalten breite
+       Tabelle - in der alten Breite haetten Grafik und Liste einander die
+       Hoehe weggenommen. m-gross traegt die Hoehe, die Liste scrollt darin. -->
+  <div class="modal modal-wide m-gross" style="max-width:min(1620px,97vw)">
     <h3 id="mBtTitle">Rate decisions vs. data</h3>
     <div id="mBtBody"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mBt')">Close</button></div>

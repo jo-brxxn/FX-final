@@ -684,12 +684,22 @@ function awaitingIndicators(){
   out.sort((a,b)=>b.days-a.days);
   return out;
 }
-function indScoreParts(ind,rub,symId){
+// ⚠ `ohneAltersgrenze` ist KEINE Score-Aenderung. Der Standardpfad (Aufruf mit
+// drei Argumenten, wie ueberall im Code) rechnet bitgenau wie vorher - der
+// Schalter existiert nur fuer die Historie: sie will benennen koennen, WAS ein
+// Indikator beigetragen hat, BEVOR ihn die Altersgrenze auf 0 gesetzt hat
+// (Nutzer-Wunsch 2026-09-17: "es bewegt sich ja durch den zeitfaktor immer
+// was ... mach das man dann ueberall immer einbleden kann was durch das alter
+// den score veraendert hat"). Ohne diesen Schalter muesste die Historie die
+// Formel biasScore x Gewicht x Normierung neben dieser Funktion ein zweites
+// Mal hinschreiben - und zwei Kopien laufen irgendwann auseinander.
+// Nachgewiesen von check/scorediff.js: kein Score veraendert sich.
+function indScoreParts(ind,rub,symId,ohneAltersgrenze){
   if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return{w:0,base:0,trend:0,rev:0,total:0,zero:true,noTrend:false,norm:1};
   // Veralteter Wert: traegt 0, bleibt aber vollstaendig sichtbar (eigener
   // Hinweis an der Zeile + Dashboard-Meldung). Bewusst VOR jeder weiteren
   // Rechnung, damit auch Gewicht/Normierung gar nicht erst greifen.
-  if(indIsStale(ind))return{w:0,base:0,trend:0,rev:0,total:0,zero:false,stale:true,noTrend:false,norm:1};
+  if(!ohneAltersgrenze&&indIsStale(ind))return{w:0,base:0,trend:0,rev:0,total:0,zero:false,stale:true,noTrend:false,norm:1};
   const w=indBaseWeight(ind,rub);
   // norm ist im Standardmodus IMMER exakt 1 - der klassische Score bleibt
   // damit bitgenau unveraendert. Nur bei scoreMode==='normalized' greift die
@@ -1571,7 +1581,14 @@ function pairScore(pairName){
   return Math.round((symScoreCmp(bSym)-symScoreCmp(qSym)+pairCarryAdj(pairName))*10)/10;
 }
 function rowScore(n,title,color,oc){return`<span class="row-score"${oc?` onclick="event.stopPropagation();${oc}" role="button"`:''} style="color:${color||scoreColor(n)}${oc?';cursor:pointer':''}" title="${escH(title||'Score')}">${n>0?'+':''}${n}</span>`;}
-function fmtDate(s){try{const d=new Date(s+'T00:00:00');return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase()};}catch(e){return{day:'',mo:''};}}
+// ⚠ MIT JAHR, zweistellig (Nutzer-Regel 2026-09-17). Die Zinspfad-Achse zeigt
+// vergangene und kuenftige Sitzungen ueber mehrere Jahre nebeneinander - ohne
+// Jahr stand "17 SEP" zweimal identisch auf derselben Achse.
+function fmtDate(s){try{const d=new Date(s+'T00:00:00');
+  // datum-ok: das Jahr kommt als eigenes Feld `yr` dazu, weil die Achse Tag,
+  // Monat und Jahr getrennt setzt (Grossbuchstaben-Monat, eigene Schriftgroesse).
+  return{day:d.getDate(),mo:d.toLocaleString('en',{month:'short'}).toUpperCase(),
+    yr:String(d.getFullYear()).slice(-2)};}catch(e){return{day:'',mo:'',yr:''};}}
 
 
 export {

@@ -32,6 +32,7 @@ const PRUEFUNGEN = [
   { n: 'runtime',   d: 'alle Tabs, Modals und Zustaende ohne JS-Fehler',         f: 'check/runtime.js',   args: [],           browser: true },
   { n: 'quickcap',  d: 'Schnellerfassung: Zerlegung an echten Beispielen',    f: 'check/quickcapture.js', args: [],     browser: false },
   { n: 'putcall',   d: 'Put/Call: eine Schwellen-Wahrheit, passend zur eigenen Reihe', f: 'check/putcall.js', args: [], browser: false },
+  { n: 'datum',     d: 'Jedes Datum mit Jahr, und zwar zweistellig', f: 'check/datum.js', args: [], browser: true },
   { n: 'notizen',   d: 'Notizen ueberleben Sync/Undo/Import mit Text und Ordnern', f: 'check/notizen.js',  args: [],           browser: true },
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
@@ -51,6 +52,8 @@ const PRUEFUNGEN = [
   { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
   { n: 'kartenlook',d: 'Kartenoptik und Kopfleiste der Asset-Seite', f: 'check/kartenlook.js', args: [], browser: true },
   { n: 'regime',     d: 'Regime Radar: Zahlen gegen die Rohdaten, Nenner, Kernbedingung',  f: 'check/regime.js',    args: [],           browser: true },
+  { n: 'historie',   d: 'Historie: Score-Linie, Alterung nachgerechnet, jeder Tag einzeln', f: 'check/historie.js',  args: [],           browser: true },
+  { n: 'backtester', d: 'Backtester: Sitzungen, Releases, Kursreaktion gegen die Rohdaten', f: 'check/backtester.js',args: [],           browser: true },
   { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 

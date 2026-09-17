@@ -14951,3 +14951,214 @@ Vorzeichen, weil der Bias bei fehlender Regel einfach der gespeicherte Stand
 bleibt. Das ist eine **Score-Frage**, nicht ein Anzeigefehler: sie bräuchte
 `SCORE_MODEL_VERSION` und eine Entscheidung, ob DAX/GER 100 (wie SP500/NAS)
 auf `inverse` gehören. Vorgelegt, nicht eigenmächtig geändert.
+
+## 2026-09-17 — Historie und Backtester neu gebaut, Jahreszahl erzwungen (VERSION-CHECK-524)
+
+Nutzer-Auftrag, wörtlich: *„bau die backtester funktion komplett neu um ich
+finde nicht gut wie das da aussieht und was da für daten gezeigt werden bzw
+wie die gezeigt werden ich will da mehr detail und es simpler mit mehr
+übersicht. bitte mach das frag mich was ich will und dann fang an"* — plus,
+mitten in der Fragerunde die Korrektur: *„in assets ich hatte mich vertan ich
+meine historie aber überarbeite den aktuellen backtester auch nochmal"*. Also
+beide, und die **Historie** war das eigentliche Ziel.
+
+### Der Vorzustand, gemessen (nicht aus dem Code geschlossen)
+
+**Historie:**
+- Fenster **870 × 440 px**, der Inhalt scrollte in **340 px** Höhe — von 30
+  geladenen Tagen waren **2** gleichzeitig sichtbar.
+- Die „Grafik" oben waren **fünf blaue Klötze** ohne Achse, Skala und
+  Nulllinie. Der Score lief im gezeigten Zeitraum von **−2,7 bis +3,8**, und
+  alle fünf Balken zeigten nach oben — weil es WOCHEN-Differenzen waren, nicht
+  der Verlauf. Ein Score von −2,7 sah aus wie einer von +3,8.
+- Die Kopfzeile `DAY · SCORE · Δ · WHAT MOVED IT` wiederholte sich **pro
+  Woche** (4× im 1M-Bereich).
+- Der Wochentag stand **doppelt**: „Thursday" und darunter „Thu, Sep 17, 26".
+- Von 30 Tagen trugen **11** nur Fülltext: „score model changed — not
+  compared", „no recorded cause", „moved +0.1, recorded before the breakdown
+  existed".
+- Die Ursachenspalte zeigte nur **Namen** als Etiketten. Wert, Forecast und
+  Beitrag standen nur in der Detailkarte — hinter **zwei** Klicks
+  (Wochenbalken → Tagesbalken → Karte).
+
+**Backtester:** eine Tabelle, sonst nichts. Der Zinspfad — die Größe, um die
+es geht — existierte nur als Textspalte „4% → 3.75%"; bei 31 Entscheiden ist
+der Zyklus daraus nicht ablesbar. Drei Werte je Bereich, ohne Datum am Wert,
+ohne Forecast, ohne Marktreaktion. Kein Filter, kein Währungswechsel: für EUR
+musste man schließen, das Asset wechseln und neu öffnen. Holds fehlten ganz.
+
+### Was der Nutzer gewählt hat
+
+Historie: Fenster **behalten** und zusätzlich als Karte in die Zeile von
+Price/Pinned notes/Calendar (*„dann ist das zwar enger aber egal will mal
+gucken nur"*); **Score-Linie mit Nulllinie**; je Tageszeile Beitrag in
+Punkten, der Wert selbst, und *„den actual in bias farbe wenn er nicht gleich
+forecast ist also genau so wie er auf der karte stehen würde"*; **jeden Tag
+einzeln**, bei leeren Tagen *„no data released"* — und: *„es bewegt sich ja
+durch den zeitfaktor immer was … mach das man dann überall immer einbleden
+kann was durch das alter den score verändert hat"*.
+
+Backtester: Grafik oben/Liste unten; mehr Releases + Mini-Verlauf;
+Kursreaktion; Überraschung ggü. Forecast; Renditen als vierter Bereich;
+Währungs-Umschalter, Filter, Holds, zwei Banken.
+
+### Die Alterung — der eigentliche Gewinn
+
+Der Nutzer hat die richtige Frage gestellt. `IND_STALE_CYCLES = 2` ist eine
+**harte Kante**: ein Release, das mehr als zwei EIGENE Zyklen überfällig ist,
+trägt 0. An dem Tag, an dem ein Indikator sie überschreitet, bewegt sich der
+Score, **obwohl nichts veröffentlicht wurde** — und die Historie sagte dazu
+„no recorded cause", eine Nicht-Auskunft.
+
+Jetzt nennt die Zeile den Indikator, sein letztes Release, die Überfälligkeit
+in eigenen Zyklen und den verlorenen Beitrag. **Nichts daran ist geschätzt:**
+
+| Größe | Woher |
+|---|---|
+| damals aktuelles Release | letzter `chartHist`-Eintrag ≤ Stichtag, sonst `research.date` |
+| eigener Zyklus | `indCycleDays` (Median der echten Abstände) bzw. der erklärte Intervalltext |
+| verlorener Beitrag | `indScoreParts(…, ohneAltersgrenze)` — dieselbe Rechnung ohne die Nullsetzung |
+
+Der letzte Punkt ist exakt und nicht geraten: ein Indikator, der durch die
+Altersgrenze gefallen ist, hat per Definition **kein neues Release** bekommen
+— sein gespeichertes `research` IST also genau das, das gealtert ist.
+
+⚠ `indScoreParts` hat dafür einen vierten, optionalen Parameter bekommen. Der
+Standardpfad (Aufruf mit drei Argumenten, wie überall im Code) rechnet
+**bitgenau** wie vorher; `check/scorediff.js` weist nach, dass kein Score sich
+ändert. Die Alternative wäre gewesen, die Formel `biasScore × Gewicht ×
+Normierung` ein zweites Mal daneben hinzuschreiben — zwei Kopien laufen
+irgendwann auseinander.
+
+**Gemessen:** 6 echte Wechsel in 90 Tagen über alle Assets; 362 von 559
+Indikatoren sind überhaupt alterungsfähig (Bond/COT/Sentiment laufen
+kontinuierlich, manuelle haben kein Release-Konzept, bei geratenem Zyklus
+weiß niemand, wann der nächste Termin wäre). Beispiel EUR 2026-09-15:
+*Job Vacancy Rate aged out, letztes Release Mar 18, 26, Zyklus ~90 Tage,
+2 Zyklen überfällig, −1*.
+
+### Historie nachher, gemessen
+
+| | vorher | nachher |
+|---|---|---|
+| Tage gleichzeitig sichtbar | 2 | **11** (1500 px), 3 auf 390 px |
+| Grafik | 5 Klötze, keine Skala | Score-Linie, Achse, Nulllinie, 11 Klickpunkte |
+| Spaltenköpfe | 4 (pro Woche) | **1**, klebend |
+| Ursachenzeile | nur Name | Wert · Forecast · Vorwert · Beitrag, Actual in Bias-Farbe |
+| leere Tage | „no recorded cause" | „No data released" |
+
+Die Actual-Farbe kommt aus **`actualColor()`** — buchstäblich dieselbe
+Funktion wie auf der Karte, keine zweite Färbelogik daneben. Gemessen:
+`act-good` = `rgb(11,95,204)`, `act-bad` = `rgb(197,15,26)`, neutral grau wo
+Actual = Forecast.
+
+Die Farbe der Linie ist die **Bias**-Palette, nicht die Kerzen-Tokens: ein
+Score über Null ist eine Aussage über das *Asset* (docs/design-system.md,
+Kerzen-Regel 3). Meine eigene Vorschau an den Nutzer hatte hier „schwarz"
+stehen und lag damit auf der falschen Seite dieser Trennung — korrigiert und
+im Code begründet.
+
+Die Karte in der Kopfreihe kostet **52 px Reihenhöhe** (368 → 420): ohne harte
+Obergrenze zog die Historie mit 30 Tagen Detail die ganze Reihe auf **4150 px**
+(ein Rasterelement mit `auto`-Zeile sizet auf max-content, daran ändert
+`min-height:0` im Flex nichts). Die schmale Karte schaltet über eine
+**Container**-Query um — eine Media-Query sieht das Problem nie, die Karte ist
+315 px breit und das Fenster 1500.
+
+Der Zeitstrahl-Drill-down (Wochenbalken → Tagesbalken → Detailkarte, vom
+2026-08-31) ist **entfallen**, samt `histExpandWeek/histExpandDay/
+toggleHistWeek/toggleHistDay/histTimelineChart`: die Tagesliste ist jetzt flach
+und vollständig offen, damit gibt es nichts mehr aufzuklappen — und drei
+Klick-Ebenen, von denen zwei ins Leere führen, sind schlimmer als keine.
+
+### Backtester nachher, gemessen
+
+- **Zinspfad als Treppe**, nicht als Linie: ein Leitzins springt an der Sitzung
+  und liegt dazwischen fest, eine schräge Verbindung behauptete
+  Zwischenwerte. Gemessen: 218 Punkte, **0** schräge Verbindungen, 32 Marker.
+- **108 Sitzungen** für USD zurück bis Mai '13 (davon 76 Holds) statt 31.
+- **7 Releases** je Bereich statt 3, mit Mini-Verlaufslinie; 97 Sparklines.
+- **Überraschung ggü. Forecast** als Farbe je Wert: 490 von 707 Werten tragen
+  einen Forecast, die übrigen bleiben farblos — eine Überraschung ohne
+  Erwartung gibt es nicht.
+  ⚠ Dass das echt ist und nicht eine umbenannte Previous-Spalte, steht im
+  **Erzeuger**: `ind_data.json` führt `historyFull` als
+  `[Datum, Actual, Forecast]`
+  (`.github/workflows/update-ff-calendar.yml:1537`, Kommentar dort wörtlich
+  „Actual+Forecast"). Der Vorgänger las `ind.chartHist`, das nur
+  `[Datum, Wert]` kennt — deshalb *konnte* er keinen Forecast zeigen.
+- **Kursreaktion** +1/+5/+20, in **Datenpunkten** der Preisreihe gezählt, damit
+  kein Wochenende als Tag zählt. Leer, wo die Reihe nicht so weit reicht.
+- **2Y-Rendite** als vierter Bereich (wöchentlich abgegriffen — sieben
+  aufeinanderfolgende Handelstage sagen über eine Sitzung nichts).
+- Steuerung im Fenster: Währung, Hikes/Cuts/Jahr, Holds zuschaltbar, zweite
+  Bank als gestrichelte Vergleichskurve.
+- „Price after" steht **hinter „Decision"**, nicht am rechten Rand: sie ist
+  eine Aussage über den Entscheid, und als letzte Spalte lag sie bei 1600 px
+  Fenster außerhalb des Bildes (im Bildschirmfoto nachgesehen).
+
+### Jahreszahl, zweite Runde
+
+Nutzer-Regel *„bei allen grafiken oder tabellen oder überall wo datums stehen
+will ich das dort auch die jahreszahl steht aber nicht zb 2026 sonder 26"* —
+**dieselbe** Regel wie am 2026-09-05, erneut gemeldet. Sie stand seit damals in
+`js/calendar.js` und war an **13 Stellen** unterlaufen: 8× fehlte das Jahr ganz
+(Kerzen-Hover, zwei Chart-Achsen, Zinspfad-Kacheln), 5× stand es vierstellig
+da (Sicherungen, Papierkorb, Cloud-Status, drei „updated"-Zeilen) — durchweg
+über `toLocaleString()` **ohne Optionen**, also genau die Aufrufform, die man
+beim Schreiben nicht als Datumsformat wahrnimmt.
+
+Lehre: eine Regel, die an 20 Aufrufstellen einzeln hängt, hält nicht. Jetzt
+vier Formatierer (`fmtDayHdr`, `fmtDayShort`, `fmtMonShort`, `fmtStamp`) und
+**`check/datum.js`**. Details: `docs/design-system.md`.
+
+`fmtMonShort` setzt den Apostroph („May '13"), weil die Monatsform die
+Verwechslung sonst durch die Hintertür zurückbringt — auf der Zinspfad-Achse
+stand „May 13" für den **Mai 2013**. `fmtResearchDateFull` stand als
+„11. June 2026" da: deutsche Ordinalstellung auf englischer Oberfläche **und**
+vierstellig; jetzt „June 11, 26".
+
+### ⚠ Drei eigene Messfehler — alle von Gegenproben gefunden, nicht vom Nachdenken
+
+1. **`check/datum.js` Stufe 3 war leer-grün.** Sie rief `go(seite)` — eine
+   Funktion, die es nicht gibt (sie heißt `showTab`) — und hat damit **elfmal
+   dasselbe Dashboard** gemessen, auf dem gar kein Datum mit Monatsnamen steht:
+   1640 Blatt-Elemente, 0 Treffer. Grün, weil leer. Zusätzlich war SVG-Text
+   ausgeschlossen (aus `check/typo.js` übernommen, wo das richtig ist) — für
+   Datumsangaben sind die Chart-**Achsen** der Hauptfundort. Und das Muster
+   verlangte den Monatsnamen direkt vor dem Jahr und übersah dadurch genau das
+   Format, das die App benutzt („Mar 4, 2026").
+2. **`check/historie.js` Abschnitt C meldete 6 Wechsel und rechnete 0 nach.**
+   Er suchte sie über den Anzeigenamen in `ind_data.json` — nachgemessen
+   kommen diese Indikatoren im Feed **gar nicht vor**: EUR „JOLTS Job
+   Openings" (angezeigt als „Job Vacancy Rate") hat `chartHist.length` 0 und
+   lebt von `research.date` plus dem Intervalltext („quarterly" → 90 Tage),
+   denselben Eingaben, aus denen auch der Produktivpfad `indOverdueCycles`
+   seine OUT-OF-DATE-Marke bildet. Der Wächter rechnet jetzt Zyklus, Release,
+   Grenze **und den Wechseltag** unabhängig nach — 6 von 6.
+   Nebenbefund: `IND_DATA_FEED`/`BOND_DATA_FEED`/`PRICE_DATA_FEED` lagen nicht
+   auf `window`, und ein `typeof X !== 'undefined'`-Test darauf ist eine Falle
+   — er ist einfach `false`, die Prüfung läuft leer durch und bestätigt nichts.
+3. **`check/backtester.js` ordnete Zellen über den Spaltenindex zu** und lag
+   nach dem Einschieben der „Price after"-Spalte um eins daneben: er verglich
+   Inflationswerte gegen den Labour-Kopf und wendete damit „niedriger ist
+   besser" auf CPI an. **310 gemeldete Vorzeichenfehler gehörten alle dem
+   Wächter**, nicht der Anzeige. Jetzt Zuordnung über `BT_AREAS`.
+
+Fehlerklasse dahinter, dreimal dieselbe: **eine Prüfung, die nichts findet,
+ist nicht dasselbe wie eine Prüfung, die nichts zu finden hat.** Jeder der drei
+Wächter zählt deshalb jetzt mit, WIE VIELE Fälle er wirklich nachgerechnet hat,
+und meldet rot, wenn das 0 ist.
+
+### Gegenproben
+
+- `check/datum.js`: `fmtDayShort` auf `year:'numeric'` → Stufen 1, 2 und 3 rot.
+- `check/historie.js`: Altersgrenze im Historie-Pfad auf 1 → 156 Funde.
+  Lücken-Überbrückung → erst grün (USD hat in 30 Tagen keine Lücke, die Prüfung
+  war unbelastet), dann mit einer **erzwungenen Lücke in der Mitte des
+  Fensters** rot. ⚠ Am Rand des Fensters unterscheidet die Prüfung nichts —
+  führende Nullwerte ergeben „ein Lauf" und „überbrückt" dasselbe Bild.
+- `check/backtester.js`: Datumsgrenze der Releases entfernt → „Wert vom
+  2026-03-11 lag zur Sitzung 2025-12-10 in der ZUKUNFT" (der schwerste
+  denkbare Fehler in einem Rückblick); Treppe zur Schräge → 31 Funde; Holds
+  wieder weggeworfen → 76 fehlende Sitzungen.

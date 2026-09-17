@@ -508,6 +508,7 @@ import {
 } from './score.js';
 import {
   evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,countdownHtml,fmtDayHdr,
+  fmtDayShort,fmtMonShort,fmtStamp,
   LOWER_IS_BETTER_RE,parseNumLike,actualColor,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,
   calTableHtml,calWindowDatesFor,updCalHighBtn,normCompactLevel,COMPACT_TITLES,applyCompactView,
   updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,
@@ -861,27 +862,15 @@ const HIST_DAYS=10;
 const HIST_RANGES=[['1W',7],['2W',14],['1M',30],['2M',60],['3M',90]];
 const HIST_MAX_RANGE=90;
 let histRange=30,_histSymId=null;
-// Zeitstrahl-Drill-down (Nutzer-Wunsch 2026-08-31: "Historie als Zeitstrahl
-// von links nach rechts... wenn man [eine Woche] anklickt erscheint
-// darunter ein weiterer Zeitstrahl") - histExpandWeek = Wochenanfang
-// (Montag-Datum) der gerade aufgeklappten Woche, histExpandDay = Datum des
-// gerade aufgeklappten Tages INNERHALB dieser Woche. Beide null = nur der
-// oberste Wochen-Zeitstrahl ist sichtbar.
-let histExpandWeek=null,histExpandDay=null;
+// ⚠ Der Zeitstrahl-Drill-down (Wochenbalken -> Tagesbalken -> Detailkarte,
+// Nutzer-Wunsch 2026-08-31) ist am 2026-09-17 ENTFALLEN, samt histExpandWeek/
+// histExpandDay/toggleHistWeek/toggleHistDay/histTimelineChart. Grund: die
+// Tagesliste ist jetzt flach und vollstaendig offen ("jeden tag einzeln"),
+// damit gibt es nichts mehr aufzuklappen - und drei Klick-Ebenen, von denen
+// zwei ins Leere fuehren, sind schlimmer als keine.
 function setHistRange(d){
   histRange=+d||30;
-  histExpandWeek=null;histExpandDay=null;
-  const el=document.getElementById('histBody');
-  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
-}
-function toggleHistWeek(ws){
-  histExpandWeek=(histExpandWeek===ws)?null:ws;
-  histExpandDay=null;
-  const el=document.getElementById('histBody');
-  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
-}
-function toggleHistDay(d){
-  histExpandDay=(histExpandDay===d)?null:d;
+  histAktivTag=null;
   const el=document.getElementById('histBody');
   if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
 }
@@ -1183,45 +1172,210 @@ function histDeltaParts(date,prevDate,delta,histMap,histRub,histCmp,histRaw,name
 // passt; am Tag eines Modellwechsels wurde dadurch eine Formel-Umstellung
 // als echte Score-Bewegung ausgegeben).
 function histTagsComparable(a,b){return a!=null&&b!=null&&a===b;}
-// Horizontaler Balken-Zeitstrahl fuer die History (Nutzer-Wunsch
-// 2026-08-31: "Historie als Zeitstrahl von links nach rechts... wenn man
-// [eine Woche] anklickt erscheint darunter ein weiterer Zeitstrahl") -
-// diverging bar chart (Nulllinie mittig, positiv gruen nach oben, negativ
-// rot nach unten), gleiches Grundmuster wie seasBarChart(), hier aber mit
-// Klick-Handler je Balken (ruft onClickFn(key) auf) und einem
-// Hervorhebungs-Rahmen fuer den Balken, dessen Zeitraum gerade aufgeklappt
-// ist (activeKey). items: [{key,label,sub,val,tip}], val=null -> kein
-// aufgezeichneter Wert (duenner grauer Strich auf der Nulllinie statt
-// Balken). Items MUESSEN bereits chronologisch aufsteigend sortiert sein
-// (aeltester zuerst) - "links nach rechts" ist explizit der Nutzer-Wunsch.
-function histTimelineChart(items,onClickFn,activeKey){
-  if(!items.length)return'';
-  const iw=68,padT=10,padB=32,padL=6,padR=6,H=104;
-  const W=padL+padR+iw*items.length;
-  const vals=items.map(i=>i.val).filter(v=>v!=null);
-  const maxAbs=Math.max(0.5,...vals.map(Math.abs));
-  const yOf=v=>padT+(1-(v+maxAbs)/(2*maxAbs))*(H-padT-padB);
-  const y0=yOf(0);
-  const parts=[];
-  items.forEach((it,i)=>{
-    const cx=padL+(i+.5)*iw;
-    const active=it.key===activeKey;
-    const tip=`<title>${escH(it.tip||it.label)}</title>`;
-    if(active)parts.push(`<rect x="${(padL+i*iw).toFixed(1)}" y="2" width="${iw.toFixed(1)}" height="${(H-2).toFixed(1)}" rx="6" fill="rgba(255,255,255,.07)"/>`);
-    if(it.val==null){
-      parts.push(`<g style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${tip}<rect x="${(cx-iw*.28).toFixed(1)}" y="${(y0-1.5).toFixed(1)}" width="${(iw*.56).toFixed(1)}" height="3" rx="1.5" fill="var(--t3)" opacity=".4"/></g>`);
-    }else{
-      const col=it.val>=0?BC.bull:BC.bear;
-      const yv=yOf(it.val),top=Math.min(y0,yv),h=Math.max(2,Math.abs(y0-yv));
-      parts.push(`<g style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${tip}<rect x="${(cx-iw*.28).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.56).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${active?.95:.82}"${active?' stroke="rgba(255,255,255,.85)" stroke-width="1.5"':''}/></g>`);
-    }
-    parts.push(`<text x="${cx.toFixed(1)}" y="${H-padB+16}" text-anchor="middle" font-size="11" font-weight="${active?'800':'600'}" fill="${active?'var(--t0)':'var(--t3)'}" style="cursor:pointer" onclick="${onClickFn}('${escJH(it.key)}')">${escH(it.label)}</text>`);
-    if(it.sub)parts.push(`<text x="${cx.toFixed(1)}" y="${H-padB+29}" text-anchor="middle" font-size="9.5" fill="var(--t3)">${escH(it.sub)}</text>`);
+// ══ ALTERUNG: WAS HAT SICH ALLEIN DURCHS ALTER GEAENDERT? ═══════════════
+// Nutzer-Wunsch 2026-09-17, woertlich: "jeden tag einzeln aber mach wenn es
+// da nichts gab dann schreib no data released aber es bewegt sich ja durch
+// den zeitfaktor immer was also fast mach das man dann ueberall immer
+// einbleden kann was durch das alter den score veraendert hat".
+//
+// Der Nutzer hat damit genau die richtige Frage gestellt: an einem Tag ohne
+// Veroeffentlichung bewegte sich der Score, und die Historie sagte dazu "no
+// recorded cause" - eine Nicht-Auskunft. Die Ursache ist die Altersgrenze
+// (IND_STALE_CYCLES = 2, siehe docs/score-model.md): ein Release, das mehr
+// als zwei EIGENE Zyklen ueberfaellig ist, traegt 0. Das ist eine harte
+// Kante, und an dem Tag, an dem ein Indikator sie ueberschreitet, aendert
+// sich der Score, obwohl nichts veroeffentlicht wurde.
+//
+// ⚠ NICHTS DARAN IST GESCHAETZT (Regel 4). Der Stichtag wird nicht
+// "zurueckgerechnet", sondern aus Daten gelesen, die ohnehin dastehen:
+//   - das damals aktuelle Release   -> letzter chartHist-Eintrag <= Stichtag
+//   - der eigene Zyklus             -> indCycleDays (Median der echten Abstaende)
+//   - der verlorene Beitrag         -> indScoreParts(..., ohneAltersgrenze)
+// Der letzte Punkt ist deshalb exakt und nicht geraten: ein Indikator, der
+// durch die Altersgrenze gefallen ist, hat per Definition KEIN neues Release
+// bekommen - sein gespeichertes `research` IST also genau das, das gealtert
+// ist. Der Beitrag, den er vor der Kante hatte, ist damit dieselbe Rechnung
+// mit demselben Wert, nur ohne die Nullsetzung.
+//
+// Nicht alle Indikatoren altern: Bond/COT/Sentiment laufen kontinuierlich,
+// manuelle/qualitative haben kein Release-Konzept, und bei geratenem Zyklus
+// (indCycleIsGuess) weiss niemand, wann der naechste Termin waere. Alle drei
+// Faelle gibt indAltAm() als null zurueck, statt eine Kante zu behaupten.
+// Das ist dieselbe Ausschlussliste wie in indOverdueCycles - bewusst, denn
+// eine zweite daneben wuerde irgendwann abweichen.
+function histLetztesRelease(ind,datum){
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  let best=null;
+  h.forEach(e=>{
+    if(!Array.isArray(e)||!e[0])return;
+    const d=String(e[0]).slice(0,10);
+    if(d>datum)return;
+    if(parseNumLike(e[1])==null)return;
+    if(best==null||d>best)best=d;
   });
-  return`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMinYMid meet" style="display:block;height:${H}px;min-width:${W}px">
-    <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
-    ${parts.join('')}
+  // Ohne Historie bleibt das gespeicherte Release - aber nur, wenn es am
+  // Stichtag schon existierte.
+  const r=ind.research;
+  if(best==null&&r&&r.date&&String(r.date).slice(0,10)<=datum)best=String(r.date).slice(0,10);
+  return best;
+}
+// Ueberfaelligkeit eines Indikators AM STICHTAG, in eigenen Zyklen.
+// null = altert nicht bzw. nicht bewertbar (siehe Kommentarblock oben).
+function histIndAltAm(ind,datum){
+  if(!ind)return null;
+  if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return null;
+  const r=ind.research;
+  if(!r)return null;
+  if(r.bond||r.cot||r.sent)return null;
+  if(indCycleIsGuess(ind))return null;
+  const cyc=indCycleDays(ind);
+  if(!isFinite(cyc)||cyc<=0)return null;
+  const rel=histLetztesRelease(ind,datum);
+  if(!rel)return null;
+  const age=(new Date(datum)-new Date(rel))/86400000;
+  if(!isFinite(age)||age<0)return null;
+  return{zyklen:age/cyc,release:rel,cyc};
+}
+// Welche Indikatoren haben die Altersgrenze ZWISCHEN prevDatum und datum
+// ueberschritten - und was haben sie dabei an Beitrag verloren?
+// Rueckgabe: [{name, wirkung, release, zyklen}] , wirkung = der Beitrag, der
+// an diesem Tag auf 0 gegangen ist (also die Bewegung, die er verursacht hat).
+function histAlterungsWechsel(sym,datum,prevDatum){
+  if(!sym||!datum||!prevDatum)return[];
+  const out=[];
+  (sym.rubrics||[]).forEach(rub=>{
+    if(!rub.indicators)return;
+    (rub.indicators||[]).forEach(ind=>{
+      const a=histIndAltAm(ind,prevDatum),b=histIndAltAm(ind,datum);
+      if(!a||!b)return;
+      const warFrisch=a.zyklen<=IND_STALE_CYCLES;
+      const istVeraltet=b.zyklen>IND_STALE_CYCLES;
+      if(!(warFrisch&&istVeraltet))return;
+      // Der Beitrag VOR der Kante - dieselbe Rechnung, nur ohne Nullsetzung.
+      let wirkung=0;
+      try{const ps=indScoreParts(ind,rub,sym.id,true);wirkung=+(ps&&ps.total||0);}catch(e){}
+      if(!wirkung)return;   // trug ohnehin 0 -> keine Bewegung zu erklaeren
+      // ⚠ `base` mit dazu, nicht nur der Anzeigename: EUR nennt
+      // "JOLTS Job Openings" auf der Oberflaeche "Job Vacancy Rate"
+      // (IND_DISPLAY_NAMES). check/historie.js sucht den Eintrag in
+      // ind_data.json und findet ihn unter dem Anzeigenamen NICHT - der
+      // erste Lauf des Waechters hat dadurch 6 Wechsel gemeldet und 0
+      // davon nachgerechnet, also leer-gruen bestanden.
+      out.push({name:indName(ind),base:stripPeriodSuffix(ind.name).base,
+        rubrik:rub.name,wirkung:-wirkung,
+        release:b.release,zyklen:Math.round(b.zyklen*10)/10,cyc:Math.round(b.cyc)});
+    });
+  });
+  return out.sort((a,b)=>Math.abs(b.wirkung)-Math.abs(a.wirkung));
+}
+// ══ SCORE-LINIE MIT NULLLINIE ═══════════════════════════════════════════
+// Nutzer-Entscheid 2026-09-17: "Score-Linie mit Nulllinie". Ersetzt den
+// Wochen-Balken-Zeitstrahl ueber der Liste.
+//
+// ⚠ Was an den alten fuenf Balken falsch war, gemessen und nicht vermutet:
+// sie zeigten die WOCHEN-Differenz ohne Achse und ohne Skala. Im 1M-Bereich
+// des USD lief der Score von -2,7 bis +3,8, und alle fuenf Balken zeigten
+// nach oben - weil alle fuenf Wochen netto positiv waren. Der Verlauf selbst,
+// also die Zahl, um die es geht, war aus dem Bild nicht ablesbar; ein
+// Score von -2,7 sah genauso aus wie einer von +3,8.
+//
+// ⚠ FARBEN: hier gilt die BIAS-Palette (BC.bull/BC.bear), NICHT die
+// Kerzen-Tokens. docs/design-system.md, Kerzen-Regel 3, trennt das genau:
+// --cndl-up/--cndl-dn sagen etwas ueber die Richtung eines TAGES, die
+// Bias-Farbe etwas ueber die Richtung des ASSETS. Ein Score ueber Null IST
+// eine Aussage ueber das Asset - also Bias-Blau darueber, Bias-Rot darunter.
+// (Meine eigene Vorschau hatte hier "schwarz" stehen und lag damit auf der
+// falschen Seite dieser Trennung.)
+const HIST_LINE_H=182;
+function histScoreLineChart(items,aktivDatum){
+  const mitWert=items.filter(i=>i.score!=null);
+  if(mitWert.length<2)return`<div class="histl-empty">Not enough recorded days in this range to draw a line yet — the series builds up day by day.</div>`;
+  const padT=14,padB=26,padL=34,padR=10,H=HIST_LINE_H,W=Math.max(320,items.length*13+padL+padR);
+  const vals=mitWert.map(i=>i.score);
+  // Null ist IMMER im Bild - eine Nulllinie, die ausserhalb liegt, ist keine.
+  const hi=Math.max(0.5,...vals,0),lo=Math.min(-0.5,...vals,0);
+  const span=(hi-lo)||1;
+  const yOf=v=>padT+(1-(v-lo)/span)*(H-padT-padB);
+  const xOf=i=>padL+(items.length<2?0:(i/(items.length-1))*(W-padL-padR));
+  const y0=yOf(0);
+  // Zusammenhaengende Abschnitte: ein Tag ohne aufgezeichneten Score
+  // unterbricht die Linie, statt ueber ihn hinweg eine Gerade zu ziehen, die
+  // Werte behauptet, die nie aufgezeichnet wurden.
+  const laeufe=[];let lauf=[];
+  items.forEach((it,i)=>{
+    if(it.score==null){if(lauf.length>1)laeufe.push(lauf);lauf=[];return;}
+    lauf.push([xOf(i),yOf(it.score)]);
+  });
+  if(lauf.length>1)laeufe.push(lauf);
+  const pfade=laeufe.map(l=>l.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' '));
+  // Zwei Kopien derselben Linie, oben und unten hart an der Nulllinie
+  // beschnitten - dadurch wechselt die Farbe exakt beim Nulldurchgang und
+  // nicht erst am naechsten Datenpunkt.
+  const uid='hl'+Math.random().toString(36).slice(2,8);
+  const linien=pfade.map(d=>
+    `<polyline points="${d}" fill="none" stroke="${BC.bull}" stroke-width="2" clip-path="url(#${uid}o)" vector-effect="non-scaling-stroke"/>`
+   +`<polyline points="${d}" fill="none" stroke="${BC.bear}" stroke-width="2" clip-path="url(#${uid}u)" vector-effect="non-scaling-stroke"/>`).join('');
+  // Punkte nur an Tagen mit Ursache - sonst waere jeder Tag ein Punkt und
+  // der Hinweis "hier ist etwas passiert" waere keiner mehr.
+  const punkte=items.map((it,i)=>{
+    if(it.score==null||!it.ursache)return'';
+    const aktiv=it.date===aktivDatum;
+    const col=it.score>=0?BC.bull:BC.bear;
+    return`<g style="cursor:pointer" onclick="histJumpDay('${escJH(it.date)}')">
+      <title>${escH(fmtDayHdr(it.date)+': '+(it.score>0?'+':'')+it.score+(it.delta?' ('+(it.delta>0?'+':'')+it.delta+' vs previous day)':'')+' — click to jump to this day')}</title>
+      <circle cx="${xOf(i).toFixed(1)}" cy="${yOf(it.score).toFixed(1)}" r="${aktiv?5:3.2}" fill="${col}" stroke="#fff" stroke-width="${aktiv?2:1.2}"/>
+    </g>`;
+  }).join('');
+  const marke=aktivDatum&&items.some(i=>i.date===aktivDatum)
+    ?`<line x1="${xOf(items.findIndex(i=>i.date===aktivDatum)).toFixed(1)}" y1="${padT-6}" x2="${xOf(items.findIndex(i=>i.date===aktivDatum)).toFixed(1)}" y2="${(H-padB+3).toFixed(1)}" stroke="var(--t2)" stroke-width="1.2" stroke-dasharray="3,3" opacity=".6"/>`:'';
+  const yLbl=[hi,0,lo].map(v=>
+    `<text x="${padL-6}" y="${(yOf(v)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--t3)">${(v>0?'+':'')+(Math.round(v*10)/10)}</text>`).join('');
+  // x-Achse: erster, mittlerer und letzter Tag - mit Jahr (Nutzer-Regel).
+  const xIdx=[0,Math.floor((items.length-1)/2),items.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+  const xLbl=xIdx.map(i=>
+    `<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${i===0?'start':i===items.length-1?'end':'middle'}" font-size="9.5" fill="var(--t3)">${escH(fmtDayShort(items[i].date))}</text>`).join('');
+  // ⚠ Hoehe ueber ein Token, nicht fest: dieselbe Linie steht im Fenster
+  // (182px) und in der schmalen Karte der Asset-Seite, wo sie 100px bekommt
+  // und der Tagesliste den Rest laesst. Ein !important-Ueberschreiben der
+  // inline-Hoehe waere die Alternative gewesen - ein Token ist ehrlicher.
+  return`<div class="histl"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:var(--histl-h,${H}px)">
+    <defs>
+      <clipPath id="${uid}o"><rect x="0" y="0" width="${W}" height="${y0.toFixed(1)}"/></clipPath>
+      <clipPath id="${uid}u"><rect x="0" y="${y0.toFixed(1)}" width="${W}" height="${(H-y0).toFixed(1)}"/></clipPath>
+    </defs>
+    <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1.2"/>
+    ${marke}${linien}${punkte}${yLbl}${xLbl}
   </svg></div>`;
+}
+// Klick auf einen Punkt der Linie: die zugehoerige Tageszeile hervorheben und
+// ins Bild holen. ⚠ Kein Neu-Rendern der ganzen Liste - das wuerde die
+// Scrollposition verlieren, also genau das zerstoeren, wofuer der Klick da ist.
+function histJumpDay(datum){
+  try{
+    histAktivTag=datum;
+    const wurzel=document.getElementById('histBody')||document;
+    wurzel.querySelectorAll('.hw-day.hw-jump').forEach(e=>e.classList.remove('hw-jump'));
+    const zeile=wurzel.querySelector('.hw-day[data-d="'+datum+'"]');
+    if(zeile){
+      zeile.classList.add('hw-jump');
+      zeile.scrollIntoView({block:'center',behavior:'smooth'});
+    }
+    // Den aktiven Punkt in der Linie mitziehen (nur das SVG neu zeichnen).
+    const halter=wurzel.querySelector('.histl-halter');
+    if(halter&&_histSymId)halter.innerHTML=histScoreLineChart(histLinienDaten,datum);
+  }catch(e){}
+}
+// Alterung ein-/ausblenden (Nutzer-Wunsch 2026-09-17: "mach das man dann
+// ueberall immer einbleden kann was durch das alter den score veraendert
+// hat"). ⚠ Wie histRange bewusst NICHT persistiert: es ist eine Ansicht des
+// Fensters, kein Zustand des Assets - dieselbe Behandlung wie beim
+// Zeitregler direkt daneben (CLAUDE.md Regel 1 greift fuer Zustand, der
+// erhalten bleiben SOLL).
+let histAgeShow=true,histAktivTag=null,histLinienDaten=[];
+function toggleHistAge(){
+  histAgeShow=!histAgeShow;
+  const el=document.getElementById('histBody');
+  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
 }
 function renderSymHistoryPanel(id){
   const today=todayStr();
@@ -1286,7 +1440,7 @@ function renderSymHistoryPanel(id){
         :ev.sent?''
         :`fc ${(ev.forecast!=null&&ev.forecast!=='')?escH(ev.forecast):'–'} · prev ${(ev.previous!=null&&ev.previous!=='')?escH(ev.previous):'–'}`;
       return`<div class="histp-evt">
-        <span class="histp-time">${escH(ev.time&&evtTimeValid(ev.time)?ev.time:'—')}</span>
+        <span class="histp-time">${ev.time&&evtTimeValid(ev.time)?escH(ev.time):''}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
         <span class="histp-name" title="${escH(ev.name)}">${escH(ev.name)}</span>
         <span class="histp-val">${acv} <span class="histp-fc">${fcLine}</span></span>
@@ -1362,40 +1516,32 @@ function renderSymHistoryPanel(id){
     // "No change" waere hier selbst wieder eine erfundene Aussage. Bei
     // UNBEKANNTER Herkunft (keinDelta, aber kein bekannter Tag-Unterschied -
     // die taglose Frühzeit) bleibt es dagegen wie bisher stumm.
-    const nothing=(!evs.length&&!manual.length)
-      ?(delta
-        ?(parts.length
-          ?`<div class="histp-noevt">Score moved ${dTxt} — no dated release. It breaks down as follows (the parts add up to ${dTxt}):</div>`
-          :`<div class="histp-noevt">Score moved ${dTxt} — no dated release, and this day was recorded before the breakdown existed, so it cannot be attributed to individual cards.</div>`)
-        :bekannteGrenze
-        ?`<div class="histp-noevt">The score model changed on this day (or the day before), so it isn’t compared to the previous day.</div>`
-        :`<div class="histp-noevt">No change.</div>`)
-      :'';
     const has=!!(evs.length||manual.length||delta||bekannteGrenze);
-    // Kompakte Ursachen-Spalte fuer die offene Wochenliste unten. Speist sich
-    // aus GENAU denselben Quellen wie die Detailkarte darueber - die
-    // numerische Zerlegung (parts), die datierten Releases (evs) und die
-    // manuellen/automatischen Aenderungen (manual). Keine zweite Herleitung
-    // daneben, die auseinanderlaufen koennte.
-    const causeChips=parts.map(pp=>
-      `<span class="hw-c" style="color:${pp.v>0?BC.bull:pp.v<0?BC.bear:'var(--t3)'}" title="${escH(pp.tip)}">${escH(pp.name)} ${(pp.v>0?'+':'')+pp.v}</span>`).join('');
-    const causeEvts=evs.slice(0,3).map(ev=>
-      `<span class="hw-e" title="${escH(ev.name)}${ev.actual?' — actual '+escH(ev.actual):''}">${escH(ev.name.length>34?ev.name.slice(0,33)+'…':ev.name)}</span>`).join('');
-    const mehrEvts=evs.length>3?`<span class="hw-e hw-more">+${evs.length-3} more</span>`:'';
-    const causeMan=manual.length?`<span class="hw-m" title="Manual or recorded automatic changes on this day">${manual.length}× ${manual.some(m=>m.kind!=='auto')?'edited':'auto'}</span>`:'';
-    const causes=(causeChips||causeEvts||causeMan)
-      ?causeChips+causeEvts+mehrEvts+causeMan
-      :(delta
-        ?`<span class="hw-none">moved ${dTxt}, recorded before the breakdown existed</span>`
-        :bekannteGrenze
-        ?`<span class="hw-none">score model changed — not compared</span>`
-        :dayScore==null?`<span class="hw-none">no score recorded</span>`:'');
-    return{date:d.date,score:dayScore,delta,has,causes,html:`<div class="histp-day${isToday?' histp-today':''}">
-      <div class="histp-dayhdr"><span class="histp-date">${hdrTxt}</span>
-        ${delta?`<span class="histp-delta" style="color:${dCol}">${dTxt}</span>`:''}
-        <span class="histp-net" style="color:${scoreCol};border-color:${scoreCol}" title="${scoreTip}">${scoreLbl}</span></div>
-      ${evHtml}${manHtml}${nothing}${brk}
-    </div>`};
+    // ── Was die Bewegung ALLEIN DURCHS ALTER verursacht hat ─────────────
+    // Nutzer-Wunsch 2026-09-17. Steht in JEDER Tageszeile, nicht nur an
+    // Tagen ohne Release: ein Indikator kann auch an einem Veroeffentlichungs-
+    // tag durch die Altersgrenze fallen, und dann sind es zwei Ursachen.
+    const alterung=histAgeShow&&prevDate?histAlterungsWechsel(sym,d.date,prevDate):[];
+    const ageHtml=alterung.map(a=>
+      `<div class="histp-evt histp-age">
+        <span class="histp-time">age</span>
+        <span class="histp-arrow" style="color:${a.wirkung>0?BC.bull:BC.bear}">${a.wirkung>0?'▲':'▼'}</span>
+        <span class="histp-name" title="${escH(a.name+' — last release '+fmtDayShort(a.release)+', its own cycle is about '+a.cyc+' days. On this day it passed '+IND_STALE_CYCLES+' overdue cycles ('+a.zyklen+' now), so it stopped counting. Nothing was estimated: the release and the cycle are both measured.')}">${escH(a.name)} <span class="histp-agetag">aged out</span></span>
+        <span class="histp-val"><span class="histp-fc">last release ${escH(fmtDayShort(a.release))} · ${a.zyklen} cycles overdue</span></span>
+        <span class="histp-eff" style="color:${a.wirkung>0?BC.bull:BC.bear};border-color:${a.wirkung>0?BC.bull:BC.bear}" title="Contribution this indicator lost when it passed the age limit">${(a.wirkung>0?'+':'')+(Math.round(a.wirkung*100)/100)}</span>
+      </div>`).join('');
+    // Nichts veroeffentlicht, nichts von Hand geaendert, nichts gealtert.
+    // ⚠ Der Nutzer wollte hier ausdruecklich "No data released" lesen und
+    // KEINE zusammengefasste Sammelzeile ("jeden tag einzeln"). Der Satz
+    // sagt genau das, was bekannt ist - und nicht "no recorded cause", was
+    // wie ein Fehler der App klingt, obwohl an dem Tag einfach nichts war.
+    const leer=(!evs.length&&!manual.length&&!alterung.length)
+      ?`<div class="hw-none">No data released${delta?` — but the score moved ${dTxt}`+(parts.length?', see the card split below':histAgeShow?'. Nothing crossed the age limit either, so this day predates the breakdown':'. Switch on "ageing" above to see whether the age limit caused it'):''}.</div>`
+      :'';
+    return{date:d.date,score:dayScore,delta,has,isToday,
+      ursache:!!(evs.length||manual.length||alterung.length),
+      scoreCol,scoreLbl,scoreTip,dCol,dTxt,bekannteGrenze,
+      detail:`${evHtml}${manHtml}${ageHtml}${leer}${brk}`};
   });
   // ── Nach Wochen gruppieren (Montag-Start) ──
   const weeks=[];
@@ -1413,86 +1559,81 @@ function renderSymHistoryPanel(id){
   // Woche auf; Klick auf einen Tag-Balken zeigt darunter dessen bestehende
   // Detail-Karte (Events/manuelle Aenderungen/Aufschluesselung) - inhaltlich
   // unveraendert, nur ueber den Zeitstrahl statt endloses Scrollen erreicht.
-  const weeksChrono=weeks.slice().reverse();
-  const weekItems=weeksChrono.map(w=>{
-    const scored=w.cards.filter(c=>c.score!=null);
-    const first=scored.length?scored[scored.length-1].score:null;   // Wochenanfang (w.cards ist neueste-zuerst)
-    const last=scored.length?scored[0].score:null;
-    const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
-    const end=dateAddStr(w.start,6);
-    const label=new Date(w.start+'T00:00:00').toLocaleDateString('en',{day:'numeric',month:'short',year:'2-digit'});
-    const tip=net!=null
-      ?`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: ${net>0?'+':''}${net} this week`
-      :`${fmtDayHdr(w.start)} – ${fmtDayHdr(end)}: no recorded change`;
-    return{key:w.start,label,val:net,tip};
-  });
-  const weekChart=histTimelineChart(weekItems,'toggleHistWeek',histExpandWeek);
-  let dayChart='',dayDetail='';
-  const expandedWeek=histExpandWeek?weeksChrono.find(w=>w.start===histExpandWeek):null;
-  if(expandedWeek){
-    const daysChrono=expandedWeek.cards.slice().reverse(); // aeltester Tag der Woche zuerst
-    const dayItems=daysChrono.map(c=>{
-      const wd=new Date(c.date+'T00:00:00').toLocaleDateString('en',{weekday:'short'});
-      const dn=new Date(c.date+'T00:00:00').toLocaleDateString('en',{day:'numeric'});
-      const tip=c.delta?`${fmtDayHdr(c.date)}: ${c.delta>0?'+':''}${c.delta} vs previous day`
-        :c.score!=null?`${fmtDayHdr(c.date)}: no change`
-        :`${fmtDayHdr(c.date)}: no recorded score`;
-      return{key:c.date,label:wd,sub:dn,val:c.delta||null,tip};
-    });
-    dayChart=`<div class="histp-daychart"><div class="histp-daychart-lbl">${escH(fmtDayHdr(expandedWeek.start))} – ${escH(fmtDayHdr(dateAddStr(expandedWeek.start,6)))}</div>${histTimelineChart(dayItems,'toggleHistDay',histExpandDay)}</div>`;
-    if(histExpandDay){
-      const dc=expandedWeek.cards.find(c=>c.date===histExpandDay);
-      dayDetail=dc?(dc.has?dc.html:`<div class="histp-weekempty">No score-driving events on ${escH(fmtDayHdr(dc.date))}.</div>`):'';
-    }
-  }
+  // ── Die Linie oben ──────────────────────────────────────────────────
+  // Chronologisch aufsteigend (links alt, rechts neu) - `dayCards` ist
+  // neueste-zuerst, weil die Liste darunter so gelesen wird.
+  histLinienDaten=dayCards.slice().reverse().map(c=>
+    ({date:c.date,score:c.score,delta:c.delta,ursache:c.ursache}));
+  const linie=`<div class="histl-halter">${histScoreLineChart(histLinienDaten,histAktivTag)}</div>`;
   // Fussnote nur, wenn tatsaechlich ein Tag aus einem frueheren Modell dabei
   // ist - sonst gar kein Hinweis (kein Rauschen im Normalfall).
   const tageAltesModell=days.filter(d=>histMap[d.date]!=null&&histOld[d.date]).length;
   const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
-  const bar=`<div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
-    `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>`;
-  // ── Offene Wochenabschnitte (Nutzer-Wunsch 2026-09-06) ──────────────
-  // "mach das man da schoen unterteilt sieht die Wochen und dann soll man pro
-  // Woche jeden Woche Tag sehen wo steht Score am Ende des Tages dann
-  // Scoreveraenderung zum Vortag und dann die Ursachen fuer diese
-  // Veraenderung".
-  //
-  // Inhaltlich stand das alles schon da - aber hinter ZWEI Klicks
-  // (Wochenbalken -> Tagesbalken -> Detailkarte). Der Zeitstrahl bleibt als
-  // Uebersicht (Nutzer-Wunsch 2026-08-31, nicht ersetzt), darunter steht
-  // jetzt jede Woche als offener Abschnitt mit einer Zeile je Tag.
-  // Wochenkopf traegt Zeitraum und Netto-Bewegung der Woche; die Tageszeile
-  // Score am Tagesende, Delta zum Vortag und die Ursachen. Tage ohne
-  // aufgezeichneten Score bleiben sichtbar und sagen das - sonst entstuende
-  // der Eindruck einer luekenlosen Reihe, die es nicht gibt.
+  const nAlterung=histAgeShow?dayCards.filter(c=>/histp-age/.test(c.detail)).length:0;
+  const bar=`<div class="histp-bar">
+    <div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
+      `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>
+    <button class="histp-agebtn${histAgeShow?' on':''}" onclick="toggleHistAge()" title="The score also moves on days with nothing published: a release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting (see the score model). With this on, every day that crossed that edge names the indicator and the contribution it lost.">${histAgeShow?'✓ ':''}Ageing${nAlterung?` · ${nAlterung}`:''}</button>
+  </div>`;
+  // ── Eine Zeile je Tag, flach, mit EINER Kopfzeile ───────────────────
+  // Nutzer-Wunsch 2026-09-17: "jeden tag einzeln". Was sich gegenueber der
+  // Vorversion aendert und warum:
+  //   - Die Kopfzeile `DAY SCORE Δ WHAT MOVED IT` stand PRO WOCHE da, im
+  //     1M-Bereich also viermal. Jetzt steht sie einmal und bleibt beim
+  //     Scrollen oben kleben (position:sticky).
+  //   - Der Wochentag stand DOPPELT ("Thursday" und darunter "Thu, Sep 17,
+  //     26"). fmtDayHdr traegt ihn schon - das lange Wort ist weg.
+  //   - Die Ursachenspalte zeigte nur NAMEN als Etiketten. Jetzt steht in
+  //     ihr die volle Zeile: Wert, Forecast, Vorwert und der Beitrag in
+  //     Punkten - der Actual in Bias-Farbe, sobald er vom Forecast abweicht
+  //     (Nutzer: "genau so wie er auf der karte stehen wuerde"). Das ist
+  //     buchstaeblich dieselbe Funktion wie auf der Karte (actualColor),
+  //     nicht eine zweite Faerbelogik daneben.
+  //   - Die Wochen bleiben als schmale Trennzeile mit der Wochensumme.
   const wochen=weeks.map(w=>{
     const scored=w.cards.filter(c=>c.score!=null);
     const first=scored.length?scored[scored.length-1].score:null;
     const last=scored.length?scored[0].score:null;
     const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
     const netCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
-    const zeilen=w.cards.map(c=>{
-      const wd=new Date(c.date+'T00:00:00').toLocaleDateString('en',{weekday:'long'});
-      const heute=c.date===today;
-      const dCol=c.delta==null?'var(--t3)':c.delta>0?BC.bull:c.delta<0?BC.bear:'var(--t3)';
-      const dTxt=c.delta==null?'·':(c.delta>0?'+':'')+c.delta;
-      const sTxt=c.score!=null?((c.score>0?'+':'')+c.score):'–';
-      const ursachen=c.causes||'<span class="hw-none">no recorded cause</span>';
-      return`<div class="hw-day${heute?' hw-today':''}">
-        <div class="hw-d1"><span class="hw-wd">${escH(wd)}</span><span class="hw-dt">${escH(fmtDayHdr(c.date))}</span></div>
-        <div class="hw-d2"><span class="hw-sc" title="Score at the end of this day">${escH(sTxt)}</span></div>
-        <div class="hw-d3"><span class="hw-dl" style="color:${dCol}" title="Change against the previous recorded day">${escH(dTxt)}</span></div>
-        <div class="hw-d4">${ursachen}</div>
-      </div>`;
-    }).join('');
+    const zeilen=w.cards.map(c=>
+      `<div class="hw-day${c.isToday?' hw-today':''}${c.date===histAktivTag?' hw-jump':''}" data-d="${escH(c.date)}">
+        <div class="hw-d1"><span class="hw-dt">${escH(fmtDayHdr(c.date))}</span>${c.isToday?'<span class="hw-now">Today</span>':''}</div>
+        <div class="hw-d2"><span class="hw-sc" style="color:${c.scoreCol};border-color:${c.scoreCol}" title="${escH(c.scoreTip)}">${escH(c.scoreLbl)}</span></div>
+        <div class="hw-d3"><span class="hw-dl" style="color:${c.dCol}" title="${c.bekannteGrenze?'The score model changed on this day (or the day before), so the two days are not compared':'Change against the previous recorded day'}">${escH(c.dTxt||(c.bekannteGrenze?'n/c':'·'))}</span></div>
+        <div class="hw-d4">${c.detail}</div>
+      </div>`).join('');
     return`<div class="hw-week">
-      <div class="hw-hd"><span class="hw-hd-r">${escH(fmtDayHdr(w.start))} – ${escH(fmtDayHdr(dateAddStr(w.start,6)))}</span>
+      <div class="hw-hd"><span class="hw-hd-r">${escH(fmtDayShort(w.start))} – ${escH(fmtDayShort(dateAddStr(w.start,6)))}</span>
         <span class="hw-hd-n" style="color:${netCol}" title="Net move across this week">${net==null?'no recorded change':((net>0?'+':'')+net+' this week')}</span></div>
-      <div class="hw-cols"><span>Day</span><span>Score</span><span>Δ</span><span>What moved it</span></div>
       ${zeilen}
     </div>`;
   }).join('');
-  return`<div class="histp">${bar}${weekChart}${dayChart}${dayDetail}<div class="hw-list">${wochen}</div>${fuss}</div>`;
+  return`<div class="histp">${bar}${linie}
+    <div class="hw-cols"><span>Day</span><span>Score</span><span>Δ</span><span>What moved it</span></div>
+    <div class="hw-list">${wochen}</div>${fuss}</div>`;
+}
+// ── Historie als KARTE in der Overview-Zeile ────────────────────────────
+// Nutzer-Wunsch 2026-09-17: "wie gewohnt das man es als fenster oeffnen kann
+// aber ich will auch mal gucken wie es aussieht wenn man das mit in die zeile
+// von price, pinned notes und kalender packt. dann ist das zwar enger aber
+// egal will mal gucken nur."
+//
+// Also BEIDES: das Fenster bleibt (unveraendert erreichbar ueber den
+// History-Knopf im Seitenkopf), und hier steht dasselbe noch einmal als
+// vierte Karte der Kopfreihe. ⚠ Es ist wirklich DASSELBE - dieselbe
+// renderSymHistoryPanel(), kein zweiter, schmaler Nachbau daneben. Ein
+// zweiter Nachbau waere dieselbe Groesse in zwei Kopien, und zwei Kopien
+// laufen auseinander (dieselbe Ueberlegung wie bei den Go-to-Knoepfen).
+// Der Zeitregler steht damit an beiden Orten und wirkt auf beide, weil
+// histRange eine Variable ist und nicht zwei.
+function abHistorieKarteHtml(c){
+  _histSymId=c.id;
+  return`<div class="ab-htile ab-ntile">
+    <div class="ab-tile-hd"><span class="ab-tile-t">History</span>
+      <button class="ab-nt-qc" onclick="openHistModal('${escJH(c.id)}')" title="Open the full history window — same content, the whole screen">⤢</button></div>
+    <div class="ab-htile-bd" id="abHistBody">${renderSymHistoryPanel(c.id)}</div>
+  </div>`;
 }
 function openHistModal(id){
   const c=syms.find(s=>s.id===id);if(!c)return;
@@ -2559,11 +2700,16 @@ const IND_RESEARCH_DATA={
 NONFX_IDS.forEach(id=>{IND_RESEARCH_DATA[id]=IND_RESEARCH_DATA.USD;});
 const RESEARCH_MONTHS_DE_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
 // Volles Datum für die Quellenangabe im aufklappbaren Indikator-Detail.
+// ⚠ Stand bis 2026-09-17 als "11. June 2026" da - zwei Regelbrueche in einer
+// Zeile: die deutsche Ordinalstellung auf einer englischen Oberflaeche, und
+// die vierstellige Jahreszahl. Jetzt "June 11, 26": langer Monatsname (der
+// war hier Absicht, es ist die Quellenzeile), englische Reihenfolge,
+// zweistelliges Jahr wie ueberall sonst.
 function fmtResearchDateFull(s){
   if(!s)return'';
   const d=new Date(s+'T00:00:00');
   if(isNaN(d))return'';
-  return`${d.getDate()}. ${RESEARCH_MONTHS_DE_FULL[d.getMonth()]} ${d.getFullYear()}`;
+  return`${RESEARCH_MONTHS_DE_FULL[d.getMonth()]} ${d.getDate()}, ${String(d.getFullYear()).slice(-2)}`;
 }
 // Kurzer, lesbarer Domainname für den "Quelle ↗"-Link.
 function srcLabel(url){
@@ -4955,7 +5101,7 @@ function openBackupM(){
     const el=document.getElementById('mBackupList');
     if(bs.length===0){el.innerHTML='<div style="color:var(--t3);font-size:var(--fs-base);padding:8px 0">No backups yet. Backups are created automatically before every cloud download and every 10 minutes.</div>';}
     else{el.innerHTML=bs.map((b,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
-      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:var(--fs-base)">${escH(b.label)}</div><div style="color:var(--t3);font-size:var(--fs-xs);font-family:'SF Mono',monospace">${new Date(b.ts).toLocaleString('en-GB')}</div></div>
+      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:var(--fs-base)">${escH(b.label)}</div><div style="color:var(--t3);font-size:var(--fs-xs);font-family:'SF Mono',monospace">${fmtStamp(b.ts)}</div></div>
       <button class="btn g" onclick="restoreLocalBackup(${i})" style="font-size:var(--fs-xs);flex-shrink:0">↩ Wiederherstellen</button>
     </div>`).join('');}
   }catch(e){}
@@ -4965,7 +5111,7 @@ function restoreLocalBackup(i){
   try{
     const bs=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
     const b=bs[i];if(!b)return;
-    if(!confirm('Restore state from '+new Date(b.ts).toLocaleString('en-GB')+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
+    if(!confirm('Restore state from '+fmtStamp(b.ts)+'?\n\nThe current data is saved as an undo step (press ↩ Undo to revert).'))return;
     pushU();_flipCauseTag='backup';applySnap(b.data);_flipCauseTag=null;
     processCalEvts();save();renderSidebar();rerender();updUB();
     closeM('mBackup');
@@ -4995,7 +5141,7 @@ function openTrashM(){
         return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
           <div style="flex:1;min-width:0">
             <div style="font-weight:700;color:var(--t0);font-size:var(--fs-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(trashEntryLabel(t))}</div>
-            <div style="color:var(--t3);font-size:var(--fs-xs)">${t.kind==='folder'?'Folder':'Note'} · ${daysLeft} day${daysLeft===1?'':'s'} left · deleted ${new Date(t.delAt).toLocaleDateString('en-GB')}</div>
+            <div style="color:var(--t3);font-size:var(--fs-xs)">${t.kind==='folder'?'Folder':'Note'} · ${daysLeft} day${daysLeft===1?'':'s'} left · deleted ${fmtDayShort(t.delAt)}</div>
           </div>
           <button class="btn g" onclick="restoreTrashItem('${t.id}')" style="font-size:var(--fs-xs);flex-shrink:0" title="Restore">↩</button>
           <button class="btn" onclick="permaDeleteTrashItem('${t.id}')" style="font-size:var(--fs-xs);flex-shrink:0" title="Delete permanently">✕</button>
@@ -5575,7 +5721,7 @@ function openCloudM(fromIntro){
   document.getElementById('cloudUrl').value=cfg.url||'';
   document.getElementById('cloudKey').value=cfg.key||'';
   document.getElementById('cloudSyncId').value=cfg.syncId||'';
-  setCloudStatus(cfg.url?'Connected with Sync ID "'+(cfg.syncId||'')+'". Last local change: '+(localStorage.getItem('fxpro_updated')?new Date(localStorage.getItem('fxpro_updated')).toLocaleString():'-'):'Not set up yet.');
+  setCloudStatus(cfg.url?'Connected with Sync ID "'+(cfg.syncId||'')+'". Last local change: '+(localStorage.getItem('fxpro_updated')?fmtStamp(localStorage.getItem('fxpro_updated')):'-'):'Not set up yet.');
   // Wenn vom Intro aus geöffnet, muss das Modal über dem Sperrbildschirm liegen.
   document.getElementById('mCloud').style.zIndex=fromIntro?'100001':'';
   openM('mCloud');
@@ -5822,7 +5968,7 @@ async function cloudPush(manual){
     // Sync-Ausfall mehr durch abweichende iPad/PC-Uhrzeiten.
     localStorage.setItem('fxpro_cloud_seen',sentUpdated);
     markUserSynced();
-    if(manual)setCloudStatus('✓ Uploaded: '+new Date().toLocaleString());
+    if(manual)setCloudStatus('✓ Uploaded: '+fmtStamp(Date.now()));
     return true;
   }catch(e){
     if(manual)setCloudStatus('✗ Error while uploading: '+e.message);
@@ -5980,7 +6126,7 @@ async function cloudPull(manual,forceOverwrite){
         markUserSynced();
       }
       renderSidebar();rerender();updUB();
-      if(manual)setCloudStatus('✓ Downloaded: '+new Date(cloudUpdated).toLocaleString());
+      if(manual)setCloudStatus('✓ Downloaded: '+fmtStamp(cloudUpdated));
     }else if(manual){
       setCloudStatus('Already up to date.');
     }
@@ -6933,12 +7079,9 @@ function ohneWochenende(reihe,assetId){
 // ⚠ timeZone:'UTC' ist Pflicht: das Datum wird als UTC-Mitternacht gelesen,
 // ohne diesen Zusatz benennt der Browser westlich von Greenwich den
 // VORTAG - der Hover zeigte dann Donnerstag ueber einer Freitagskerze.
-function tagMitWochentag(ymd){
-  try{
-    return new Date(String(ymd)+'T00:00:00Z')
-      .toLocaleDateString('en',{timeZone:'UTC',weekday:'short',day:'numeric',month:'short'});
-  }catch(e){return String(ymd);}
-}
+// Das Jahr gehoert dazu (Nutzer-Regel 2026-09-17): der Kerzen-Hover lief bis
+// zu drei Jahre zurueck und zeigte dort "Thu, Sep 17" ohne Jahr.
+function tagMitWochentag(ymd){return fmtDayHdr(String(ymd),true);}
 
 // ── Kerzen aus einer TAGESREIHE ─────────────────────────────────────────
 // Nutzer 2026-09-13: "mach bei den Charts das eine Kerze ein Tag ist" und
@@ -7109,7 +7252,7 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
     tage.forEach((x,j)=>{const dd=Math.abs(Date.parse(x+'T00:00:00Z')-t);if(dd<bd){bd=dd;best=j;}});
     return best*fach+fach/2;
   };
-  const fmt=d=>{try{return new Date(d+'T00:00:00Z').toLocaleDateString('en',{timeZone:'UTC',day:'numeric',month:'short'});}catch(e){return d;}};
+  const fmt=d=>fmtDayShort(d,true);   // mit Jahr (Nutzer-Regel 2026-09-17)
   const zahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):v.toFixed(3);
   let sv='';
   [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
@@ -7310,8 +7453,7 @@ function abCotChart(hist){
   sv+=`<polyline points="${linie.join(' ')}" fill="none" stroke="#000" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
   const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
   const achse=[h[0].date,h[h.length-1].date].map(d=>{
-    let t;try{t=new Date(d+'T00:00:00Z').toLocaleDateString('en',{timeZone:'UTC',day:'numeric',month:'short'});}catch(e){t=d;}
-    return`<span>${escH(t)}</span>`;
+    return`<span>${escH(fmtDayShort(d,true))}</span>`;   // mit Jahr (Nutzer-Regel 2026-09-17)
   }).join('');
   return{leer:false,berichte:h.length,html:`<div class="ab-plot">
     <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achse}</div></div>
@@ -7916,9 +8058,18 @@ function renderAssetBoard(c){
   return`<div class="ab-board">
     <div class="ab-cards">
       ${abReihenTitel('Overview')}
-      <div class="ab-col">${abQuickGridHtml(c)}</div>
-      <div class="ab-col">${abPinnedHtml(c)}</div>
-      <div class="ab-col">${assetMonthCalHtml(c)}</div>
+      ${/* ⚠ EIGENES Unterraster ueber alle Spalten (Nutzer 2026-09-17: die
+           Historie "mit in die zeile von price, pinned notes und kalender").
+           Die Kopfreihe hat damit VIER Karten, die Makro-Reihe darunter
+           weiter DREI - deshalb ein eigenes Raster statt einer vierten
+           Spalte im gemeinsamen. Eine vierte Spalte im gemeinsamen Raster
+           haette die drei Makro-Karten mit verschoben. */''}
+      <div class="ab-orow">
+        <div class="ab-col">${abQuickGridHtml(c)}</div>
+        <div class="ab-col">${abPinnedHtml(c)}</div>
+        <div class="ab-col">${assetMonthCalHtml(c)}</div>
+        <div class="ab-col">${abHistorieKarteHtml(c)}</div>
+      </div>
       ${/* ⚠ Eigene Reihe ueber alle drei Spalten (Nutzer 2026-09-14: "Mach
            die 4 quicklinks als Zeile unter die 3 oberen Karten"). Sie steht
            im SELBEN Raster statt in einem eigenen Block darueber oder
@@ -15821,6 +15972,8 @@ function indHistChart(ind,symId,opts){
 function fmtIndVal(v,unit){
   if(v==null||!isFinite(v))return'';
   const r=Math.round(v*100)/100;
+  // datum-ok: das ist ein ZAHLformat (Tausendertrenner auf einer Number),
+  // kein Datum - hier gibt es keine Jahreszahl, die fehlen koennte.
   return(Math.abs(r)>=1e4?r.toLocaleString('en-US'):String(r))+(unit||'');
 }
 // ══ BACKTESTER: WIE SAH DIE DATENLAGE BEI JEDEM ZINSSCHRITT AUS? ═══════
@@ -15841,69 +15994,372 @@ function fmtIndVal(v,unit){
 // Nur ECHTE Schritte (Hike/Cut), keine Holds - so gewuenscht. Non-FX-Assets
 // zeigen ueber macroCcyFor die Reihe ihrer verbundenen Waehrung, genau wie
 // ihre gespiegelte Makro-Karte.
-const BT_AREAS=[['Inflation','Inflation'],['Labour Market','Labour'],['Economic Growth','Growth']];
-const BT_LOOKBACK=3;   // so viele Releases VOR der Sitzung je Bereich
-// Alle Zinsschritte einer Waehrung, neueste zuerst. [] wenn der Feed fehlt -
-// dann meldet das Fenster das, statt eine Reihe zu erfinden.
-function btRateMoves(ccy){
+// ══ BACKTESTER (neu gebaut 2026-09-17) ═══════════════════════════════════
+// Nutzer 2026-09-17: "bau die backtester funktion komplett neu um ich finde
+// nicht gut wie das da aussieht und was da fuer daten gezeigt werden bzw wie
+// die gezeigt werden ich will da mehr detail und es simpler mit mehr
+// uebersicht."
+//
+// Gewaehlt hat der Nutzer: Grafik oben, Liste unten; je Entscheid mehr
+// Releases samt Mini-Verlauf, Kursreaktion danach, Ueberraschung gegenueber
+// Forecast und die Renditen als vierter Bereich; als Steuerung einen
+// Waehrungs-Umschalter im Fenster, Filter Hike/Cut/Zeitraum, Holds
+// zuschaltbar und zwei Banken nebeneinander.
+//
+// Was der Vorgaenger war und warum das nicht reichte:
+//   - eine Tabelle, sonst nichts. Der Zinspfad selbst - die Groesse, um die
+//     es geht - war nur als Textspalte "4% → 3.75%" da. Bei 31 Entscheiden
+//     ist der Zyklus daraus nicht ablesbar.
+//   - drei Werte je Bereich ohne Datum am Wert, kein Forecast, keine
+//     Marktreaktion. Ob die Bank auf eine UEBERRASCHUNG reagiert hat, war
+//     die naheliegendste Frage und nicht beantwortbar.
+//   - kein Filter, kein Waehrungswechsel: fuer EUR musste man das Fenster
+//     schliessen, das Asset wechseln und neu oeffnen.
+//
+// ⚠ ALLE Quellen sind bestehende. Neu ist KEINE Datenquelle, nur die
+// Auswertung:
+//   Sitzungen      -> rateSteps(ccy)  (IND_DATA_FEED['Central Bank Rate'].
+//                     historyFull, 108 Punkte fuer USD zurueck bis 2013 -
+//                     enthaelt AUCH die Holds, der Vorgaenger hat sie nur
+//                     uebersprungen)
+//   Releases       -> IND_DATA_FEED[ccy][base].historyFull
+//                     ⚠ Ein Eintrag ist [Datum, Actual, Forecast] - im
+//                     Erzeuger nachgesehen (.github/workflows/
+//                     update-ff-calendar.yml:1537, "Actual+Forecast"), nicht
+//                     geraten. Genau deshalb ist die Ueberraschungs-Spalte
+//                     echt und nicht eine umbenannte Previous-Spalte.
+//                     Der Vorgaenger las ind.chartHist, das nur [Datum, Wert]
+//                     fuehrt - daher konnte er keinen Forecast zeigen.
+//   Renditen       -> bondSeriesPts(ccy,'2Y|10Y Bond Yield')
+//   Kursreaktion   -> priceSeriesFor(sym.id)
+//   Ueberraschung  -> actualColor() mit einem synthetischen Event. Dieselbe
+//                     Funktion, die die Karte und die Historie faerben -
+//                     keine zweite Beat/Miss-Regel daneben.
+const BT_AREAS=[
+  ['Inflation','Inflation','CPI (Headline)'],
+  ['Labour Market','Labour','Unemployment Rate'],
+  ['Economic Growth','Growth','GDP Growth QoQ'],
+  // Vierter Bereich (Nutzer-Wunsch): was der MARKT vor der Sitzung schon
+  // eingepreist hatte. Keine Rubrik, sondern direkt die Bond-Reihe - deshalb
+  // die Sonderkennung '__bond'.
+  ['__bond','2Y Yield','2Y Bond Yield'],
+];
+const BT_LOOKBACK=7;       // war 3 (Nutzer: "6 bis 8")
+const BT_SPARK_MIN=3;      // unter 3 Punkten ist eine Verlaufslinie keine
+const BT_REAKT=[1,5,20];   // Kursreaktion nach dem Entscheid, in Datenpunkten
+let btCcy=null,btCmp=null,btFilter='all',btHolds=false,btJahrVon=null,btAktiv=null;
+// Alle Sitzungen einer Waehrung, neueste zuerst - MIT Holds. dir:
+// 'hike'|'cut'|'hold'. Der Vorgaenger (btRateMoves) warf Holds weg; sie sind
+// aber genau die Information "die Bank hat zugesehen und nichts getan", und
+// der Nutzer will sie zuschaltbar.
+function btMeetings(ccy){
   const pts=(typeof rateSteps==='function')?rateSteps(ccy):null;
   if(!Array.isArray(pts)||pts.length<2)return[];
   const out=[];
   for(let i=1;i<pts.length;i++){
     const prev=pts[i-1][1],now=pts[i][1];
-    if(prev==null||now==null||Math.abs(now-prev)<1e-9)continue;   // Hold
-    out.push({date:pts[i][0],rate:now,prev,delta:now-prev,dir:now>prev?'hike':'cut'});
+    if(prev==null||now==null)continue;
+    const delta=now-prev;
+    const dir=Math.abs(delta)<1e-9?'hold':(delta>0?'hike':'cut');
+    out.push({date:pts[i][0],rate:now,prev,delta,dir});
   }
   return out.reverse();
 }
-// Die letzten BT_LOOKBACK Werte eines Indikators bis EINSCHLIESSLICH datum,
-// aeltester zuerst. Kuerzer, wenn die Reihe an dem Tag noch nicht so weit
-// zurueckreichte - dann bleibt die Zelle entsprechend leer, statt einen Wert
-// zu extrapolieren (CLAUDE.md Regel 4).
-function btValuesBefore(ind,datum,n){
-  if(!ind)return[];
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
-  const pts=[];
-  h.forEach(e=>{
-    if(!Array.isArray(e)||!e[0])return;
-    const d=String(e[0]).slice(0,10);
+// Die letzten n Releases eines Indikators bis EINSCHLIESSLICH datum, aeltester
+// zuerst: [{date,actual,forecast}]. Kuerzer, wenn die Reihe damals nicht so
+// weit zurueckreichte - dann bleibt die Zelle entsprechend kurz, statt einen
+// Wert zu extrapolieren (CLAUDE.md Regel 4).
+function btReleases(ccy,base,datum,n){
+  if(base==='2Y Bond Yield'||base==='10Y Bond Yield'){
+    // Renditen: taegliche Reihe ohne Forecast-Begriff. Damit die Zelle nicht
+    // sieben aufeinanderfolgende Handelstage zeigt (die sagen ueber eine
+    // Sitzung nichts), wird woechentlich abgegriffen.
+    const ser=bondSeriesPts(ccy,base).filter(p=>p[0]<=datum);
+    const out=[];
+    for(let i=ser.length-1;i>=0&&out.length<n;i-=5)out.push({date:ser[i][0],actual:ser[i][1],forecast:null});
+    return out.reverse();
+  }
+  const feed=(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)?IND_DATA_FEED[ccy]:null;
+  const e=feed?feedEntryFor(feed,base):null;
+  const hf=e&&Array.isArray(e.historyFull)?e.historyFull:null;
+  if(!hf)return[];
+  const out=[];
+  hf.forEach(h=>{
+    if(!h||!h[0])return;
+    const d=String(h[0]).slice(0,10);
     if(d>datum)return;
-    const v=parseNumLike(e[1]);
-    if(v==null)return;
-    pts.push([d,v]);
+    const a=parseNumLike(h[1]);
+    if(a==null)return;
+    out.push({date:d,actual:a,forecast:h[2]==null?null:parseNumLike(h[2])});
   });
-  pts.sort((a,b)=>a[0].localeCompare(b[0]));
-  return pts.slice(-(n||BT_LOOKBACK));
+  out.sort((a,b)=>a.date.localeCompare(b.date));
+  return out.slice(-(n||BT_LOOKBACK));
 }
-// Anker-Indikator eines Bereichs auf dem gerade betrachteten Asset.
-function btAnchorInd(sym,rubName){
-  const rub=(sym.rubrics||[]).find(r=>r.name===rubName);
-  if(!rub)return null;
-  return findIndByBase(rub,RUB_ANCHOR_IND[rubName])||null;
+// Kursreaktion NACH dem Entscheid: Veraenderung nach 1/5/20 Datenpunkten.
+// ⚠ Gezaehlt werden DATENPUNKTE der Reihe, nicht Kalendertage - die Reihe
+// enthaelt nur Handelstage (bei Krypto alle sieben). "+5" ist damit eine
+// Handelswoche und nicht "5 Kalendertage, von denen zwei Wochenende waren".
+// null, wo die Reihe nicht so weit reicht: dann bleibt die Zelle leer statt
+// eine Reaktion zu behaupten (Regel 4).
+function btKursReaktion(symId,datum){
+  const ser=(typeof priceSeriesFor==='function')?priceSeriesFor(symId):null;
+  if(!Array.isArray(ser)||!ser.length)return null;
+  let i0=-1;
+  for(let i=0;i<ser.length;i++){const d=String(ser[i][0]).slice(0,10);if(d<=datum)i0=i;else break;}
+  if(i0<0)return null;
+  const p0=Number(ser[i0][1]);
+  if(!isFinite(p0)||!p0)return null;
+  return BT_REAKT.map(n=>{
+    const j=i0+n;
+    if(j>=ser.length)return{n,pct:null};
+    const p=Number(ser[j][1]);
+    if(!isFinite(p))return{n,pct:null};
+    return{n,pct:Math.round(((p/p0)-1)*10000)/100};
+  });
 }
-// Richtung der drei Werte (juengster gegen aeltesten) als Bias-Farbe. Benutzt
-// dieselbe Bedeutungsregel wie der Rest der App: bei Arbeitslosigkeit/
-// Erstantraegen ist WENIGER besser, sonst mehr (LOWER_IS_BETTER_RE).
-function btTrend(ind,pts){
-  if(!ind||pts.length<2)return{arrow:'',cls:''};
-  const a=pts[0][1],b=pts[pts.length-1][1];
-  if(Math.abs(b-a)<1e-9)return{arrow:'→',cls:'bt-flat'};
-  const up=b>a;
-  const gut=LOWER_IS_BETTER_RE.test(stripPeriodSuffix(ind.name).base)?!up:up;
-  return{arrow:up?'▲':'▼',cls:gut?'bt-up':'bt-down'};
+// Mini-Verlauf in der Zelle (Nutzer-Wunsch "plus eine kleine Verlaufslinie").
+// Bewusst ohne Achse: sie steht direkt neben ihren Zahlen und soll nur die
+// FORM zeigen. Farbe aus der Bedeutungsrichtung, nicht aus dem Vorzeichen -
+// bei der Arbeitslosenquote ist fallend die gute Richtung (LOWER_IS_BETTER_RE,
+// dieselbe Regel wie ueberall).
+function btSpark(rel,base){
+  if(!rel||rel.length<BT_SPARK_MIN)return'';
+  const vs=rel.map(r=>r.actual);
+  const lo=Math.min(...vs),hi=Math.max(...vs),sp=(hi-lo)||1;
+  const W=54,H=16;
+  const pts=vs.map((v,i)=>[(i/(vs.length-1))*W,H-1-((v-lo)/sp)*(H-2)]);
+  const gut=LOWER_IS_BETTER_RE.test(base)?(vs[vs.length-1]<vs[0]):(vs[vs.length-1]>vs[0]);
+  const col=Math.abs(vs[vs.length-1]-vs[0])<1e-9?BC.neu:(gut?BC.bull:BC.bear);
+  return`<svg class="bt-spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true"
+    ><polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>`;
 }
-// Eine Bereichs-Zelle: die drei Werte von alt nach neu, der juengste betont,
-// davor der Trendpfeil.
-function btCellHtml(sym,rubName,datum){
-  const ind=btAnchorInd(sym,rubName);
-  if(!ind)return`<td class="bt-cell"><span class="bt-none" title="This asset has no ${escH(RUB_ANCHOR_IND[rubName]||rubName)} indicator">–</span></td>`;
-  const pts=btValuesBefore(ind,datum,BT_LOOKBACK);
-  if(!pts.length)return`<td class="bt-cell"><span class="bt-none" title="No ${escH(indName(ind))} release on file before ${escH(datum)} — the series does not reach back that far. Nothing is estimated.">no data yet</span></td>`;
-  const t=btTrend(ind,pts);
-  const vals=pts.map((p,i)=>`<span class="bt-v${i===pts.length-1?' bt-v-now':''}" title="${escH(fmtDayHdr(p[0]))}">${escH(fmtIndVal(p[1]))}</span>`).join('<span class="bt-sep">›</span>');
-  const fehlt=pts.length<BT_LOOKBACK?`<span class="bt-short" title="Only ${pts.length} of ${BT_LOOKBACK} releases available before this meeting — the series starts later. The missing ones are left out rather than filled in.">${pts.length}/${BT_LOOKBACK}</span>`:'';
-  return`<td class="bt-cell"><span class="bt-arrow ${t.cls}">${t.arrow}</span><span class="bt-vals">${vals}</span>${fehlt}</td>`;
+// Eine Bereichszelle: die Releases von alt nach neu, der juengste betont, mit
+// Datum im Tooltip, Ueberraschungsfarbe je Wert und der Mini-Linie davor.
+function btCellHtml(sym,rubName,base,datum){
+  const ccy=macroCcyFor(sym.id);
+  const rel=btReleases(ccy,base,datum,BT_LOOKBACK);
+  if(!rel.length)return`<td class="bt-cell"><span class="bt-none" title="No ${escH(base)} release on file before ${escH(fmtDayShort(datum))} — the series does not reach back that far. Nothing is estimated.">no data yet</span></td>`;
+  const werte=rel.map((r,i)=>{
+    const letzte=i===rel.length-1;
+    // ⚠ Synthetisches Event fuer actualColor: GENAU dieselbe Faerbung wie auf
+    // der Karte und in der Historie. Ohne Forecast bleibt es farblos - eine
+    // Ueberraschung ohne Erwartung gibt es nicht.
+    const kl=r.forecast==null?'':actualColor({name:base,actual:String(r.actual),forecast:String(r.forecast)},sym.id);
+    const ue=r.forecast==null?'':(Math.abs(r.actual-r.forecast)<1e-9?'in line with forecast'
+      :(r.actual>r.forecast?'above':'below')+' forecast '+fmtIndVal(r.forecast));
+    const tip=fmtDayShort(r.date)+(ue?' · '+ue:' · no forecast on file for this release');
+    return`<span class="bt-v${letzte?' bt-v-now':''}${kl?' '+kl:''}" title="${escH(tip)}">${escH(fmtIndVal(r.actual))}</span>`;
+  }).join('<span class="bt-sep">›</span>');
+  const kurz=rel.length<BT_LOOKBACK?`<span class="bt-short" title="Only ${rel.length} of ${BT_LOOKBACK} releases available before this meeting — the series starts later. The missing ones are left out rather than filled in.">${rel.length}/${BT_LOOKBACK}</span>`:'';
+  return`<td class="bt-cell">${btSpark(rel,base)}<span class="bt-vals">${werte}</span>${kurz}</td>`;
 }
+// Kursreaktions-Zelle.
+function btReaktZelle(sym,datum){
+  const r=btKursReaktion(sym.id,datum);
+  if(!r)return`<td class="bt-cell bt-rk"><span class="bt-none" title="No price series on file for ${escH(sym.name||sym.id)} around this date — nothing is estimated.">–</span></td>`;
+  const inner=r.map(x=>x.pct==null
+    ?`<span class="bt-rk-i"><span class="bt-rk-n">+${x.n}</span><span class="bt-none" title="The price series does not reach ${x.n} data points past this meeting">–</span></span>`
+    :`<span class="bt-rk-i" title="${escH(sym.name||sym.id)} ${x.pct>0?'rose':x.pct<0?'fell':'was flat'} ${Math.abs(x.pct)}% over the ${x.n} trading day${x.n===1?'':'s'} after this decision. Counted in data points of the price series, so weekends are not counted as days.">
+        <span class="bt-rk-n">+${x.n}</span><span class="bt-rk-v" style="color:${x.pct>0?BC.bull:x.pct<0?BC.bear:'var(--t3)'}">${(x.pct>0?'+':'')+x.pct}%</span></span>`).join('');
+  return`<td class="bt-cell bt-rk">${inner}</td>`;
+}
+// ── Zinspfad als Treppenkurve ───────────────────────────────────────────
+// Nutzer-Entscheid: "Grafik oben, Liste unten ... Klick auf einen Marker
+// springt zur Zeile und umgekehrt".
+// ⚠ Treppe (stepAfter), nicht Linie: ein Leitzins bewegt sich nicht stetig
+// zwischen zwei Sitzungen, er SPRINGT an der Sitzung und liegt dazwischen
+// fest. Eine schraege Verbindung behauptete Zwischenwerte, die es nie gab -
+// dieselbe Ueberlegung wie bei der unterbrochenen Score-Linie in der Historie.
+const BT_PFAD_H=168;
+function btZinspfadChart(meetings,aktiv,ccy,vglMeetings,vglCcy){
+  const ms=meetings.slice().reverse();   // chronologisch aufsteigend
+  if(ms.length<2)return`<div class="histl-empty">Only ${ms.length} decision on file for ${escH(ccy)} — a path needs at least two.</div>`;
+  const padT=14,padB=28,padL=40,padR=10,H=BT_PFAD_H;
+  const W=Math.max(360,ms.length*15+padL+padR);
+  const alle=ms.map(m=>m.rate).concat(vglMeetings?vglMeetings.map(m=>m.rate):[]);
+  const hi=Math.max(...alle),lo=Math.min(...alle,0);
+  const sp=(hi-lo)||1;
+  const yOf=v=>padT+(1-(v-lo)/sp)*(H-padT-padB);
+  const t0=new Date(ms[0].date).getTime(),t1=new Date(ms[ms.length-1].date).getTime();
+  const xOf=d=>{const t=new Date(d).getTime();return padL+((t1===t0)?0:(t-t0)/(t1-t0))*(W-padL-padR);};
+  // Treppe: waagrecht bis zur naechsten Sitzung, dann senkrecht.
+  const treppe=reihe=>{
+    const d=[];
+    reihe.forEach((m,i)=>{
+      const x=xOf(m.date),y=yOf(m.rate);
+      if(i===0)d.push(`M ${padL.toFixed(1)} ${y.toFixed(1)}`);
+      d.push(`L ${x.toFixed(1)} ${d.length===1?y.toFixed(1):yOf(reihe[i-1].rate).toFixed(1)}`);
+      d.push(`L ${x.toFixed(1)} ${y.toFixed(1)}`);
+    });
+    const letzte=reihe[reihe.length-1];
+    d.push(`L ${(W-padR).toFixed(1)} ${yOf(letzte.rate).toFixed(1)}`);
+    return d.join(' ');
+  };
+  const vgl=(vglMeetings&&vglMeetings.length>1)
+    ?`<path d="${treppe(vglMeetings.slice().reverse())}" fill="none" stroke="var(--t3)" stroke-width="1.6" stroke-dasharray="4,3" opacity=".75" vector-effect="non-scaling-stroke"/>`:'';
+  const marker=ms.map(m=>{
+    if(m.dir==='hold')return'';
+    const x=xOf(m.date),y=yOf(m.rate),an=m.date===aktiv;
+    const col=m.dir==='hike'?BC.bull:BC.bear;
+    return`<g style="cursor:pointer" onclick="btJump('${escJH(m.date)}')">
+      <title>${escH(fmtDayHdr(m.date)+': '+m.dir.toUpperCase()+' '+Math.round(Math.abs(m.delta)*100)+' bp, '+fmtIndVal(m.prev,'%')+' → '+fmtIndVal(m.rate,'%')+' — click to jump to this row')}</title>
+      <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${an?5:3.2}" fill="${col}" stroke="#fff" stroke-width="${an?2:1.2}"/></g>`;
+  }).join('');
+  const yL=[hi,(hi+lo)/2,lo].map(v=>
+    `<text x="${padL-6}" y="${(yOf(v)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--t3)">${escH(fmtIndVal(Math.round(v*100)/100,'%'))}</text>`).join('');
+  const xL=[ms[0],ms[Math.floor((ms.length-1)/2)],ms[ms.length-1]].map((m,i)=>
+    `<text x="${xOf(m.date).toFixed(1)}" y="${H-padB+16}" text-anchor="${i===0?'start':i===2?'end':'middle'}" font-size="9.5" fill="var(--t3)">${escH(fmtMonShort(m.date))}</text>`).join('');
+  const legende=vgl?`<div class="bt-pfad-leg"><span><i class="bt-leg-s"></i>${escH(ccy)}</span><span><i class="bt-leg-d"></i>${escH(vglCcy)}</span></div>`:'';
+  return`<div class="bt-pfad">${legende}<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+    <line x1="${padL}" y1="${yOf(lo).toFixed(1)}" x2="${W-padR}" y2="${yOf(lo).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+    ${vgl}
+    <path d="${treppe(ms)}" fill="none" stroke="var(--accent)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
+    ${marker}${yL}${xL}
+  </svg></div>`;
+}
+// Klick auf einen Marker: Zeile hervorheben und ins Bild holen. Wie in der
+// Historie ohne Neu-Rendern der Liste - das wuerde die Scrollposition
+// verlieren, also genau das zerstoeren, wofuer der Klick da ist.
+function btJump(datum){
+  try{
+    btAktiv=datum;
+    const w=document.getElementById('mBtBody')||document;
+    w.querySelectorAll('tr.bt-jump').forEach(e=>e.classList.remove('bt-jump'));
+    const tr=w.querySelector('tr[data-d="'+datum+'"]');
+    if(tr){tr.classList.add('bt-jump');tr.scrollIntoView({block:'center',behavior:'smooth'});}
+    const halter=w.querySelector('.bt-pfad-halter');
+    if(halter&&btCcy)halter.innerHTML=btZinspfadChart(btMeetings(btCcy),datum,btCcy,
+      btCmp?btMeetings(btCmp):null,btCmp);
+  }catch(e){}
+}
+// ── Die Steuerung (alle vier Wuensche) ──────────────────────────────────
+// ⚠ Jeder dieser Setter rendert neu UND ist in der window-Bruecke - ein
+// Knopf, dessen Handler ins Leere zeigt, wirft beim Klick still ein
+// ReferenceError (CLAUDE.md Regel 6). Geprueft von check/backtester.js.
+function btNeu(){const el=document.getElementById('mBtBody');if(el)btRender();}
+function setBtCcy(c){btCcy=c;btAktiv=null;btNeu();}
+function setBtCmp(c){
+  // Dieselbe Bank zweimal in den Pfad zu zeichnen ergibt eine Legende
+  // "USD -- USD" und zwei deckungsgleiche Kurven. Die Knopfleiste bietet
+  // es nicht an; der Setter lehnt es trotzdem ab.
+  btCmp=(!c||btCmp===c||c===btCcy)?null:c;btNeu();
+}
+function setBtFilter(f){btFilter=f;btNeu();}
+function toggleBtHolds(){btHolds=!btHolds;btNeu();}
+function setBtJahr(j){btJahrVon=(j==='all')?null:+j;btNeu();}
+function btJahre(ms){
+  const js=[...new Set(ms.map(m=>+m.date.slice(0,4)))].sort((a,b)=>b-a);
+  return js;
+}
+function openBacktester(symId){
+  const sym=(syms||[]).find(s=>s.id===symId)||getSym();
+  if(!sym)return;
+  btCcy=macroCcyFor(sym.id)||btCcy;
+  btAktiv=null;btCmp=null;
+  _btSymId=sym.id;
+  btRender();
+  openM('mBt');
+}
+let _btSymId=null;
+function btRender(){
+  const sym=(syms||[]).find(s=>s.id===_btSymId)||getSym();
+  const el=document.getElementById('mBtBody');
+  if(!el||!sym)return;
+  const ccy=btCcy||macroCcyFor(sym.id);
+  const tt=document.getElementById('mBtTitle');
+  if(tt)tt.textContent='Rate decisions vs. data — '+ccy;
+  const alle=btMeetings(ccy);
+  const jahre=btJahre(alle);
+  // Filter anwenden. ⚠ Die Zaehlung im Kopf nennt IMMER beide Zahlen
+  // (gefiltert von gesamt) - sonst sieht ein Filter wie fehlende Daten aus.
+  let ms=alle.filter(m=>btHolds||m.dir!=='hold');
+  if(btFilter==='hike')ms=ms.filter(m=>m.dir==='hike');
+  if(btFilter==='cut')ms=ms.filter(m=>m.dir==='cut');
+  if(btJahrVon)ms=ms.filter(m=>+m.date.slice(0,4)>=btJahrVon);
+
+  // ── Steuerleiste ─────────────────────────────────────────────────────
+  const ccyKnoepfe=RG_CCYS.map(c=>
+    `<button class="bt-cb${c===ccy?' on':''}" onclick="setBtCcy('${c}')" title="Show ${c} decisions">${c}</button>`).join('');
+  const vglKnoepfe=RG_CCYS.filter(c=>c!==ccy).map(c=>
+    `<button class="bt-cb sm${c===btCmp?' on':''}" onclick="setBtCmp('${c}')" title="${c===btCmp?'Remove '+c+' from the chart':'Draw '+c+' into the rate path for comparison (dashed)'}">${c}</button>`).join('');
+  const filterKnoepfe=[['all','All'],['hike','Hikes'],['cut','Cuts']].map(([k,l])=>
+    `<button class="bt-fb${btFilter===k?' on':''}" onclick="setBtFilter('${k}')">${l}</button>`).join('');
+  const jahrWahl=`<select class="bt-sel" onchange="setBtJahr(this.value)" title="Only decisions from this year onwards">
+    <option value="all"${btJahrVon?'':' selected'}>All years</option>
+    ${jahre.map(j=>`<option value="${j}"${btJahrVon===j?' selected':''}>from ${String(j).slice(-2)}</option>`).join('')}</select>`;
+  const steuer=`<div class="bt-ctl">
+    <div class="bt-ctl-g"><span class="bt-ctl-l">Bank</span>${ccyKnoepfe}</div>
+    <div class="bt-ctl-g"><span class="bt-ctl-l">Compare</span>${vglKnoepfe}</div>
+    <div class="bt-ctl-g">${filterKnoepfe}
+      <button class="bt-fb${btHolds?' on':''}" onclick="toggleBtHolds()" title="Also list meetings that left the rate unchanged. They show how long the bank sat still before it moved — the previous version left them out entirely.">${btHolds?'✓ ':''}Holds</button>
+      ${jahrWahl}</div>
+  </div>`;
+
+  if(!alle.length){
+    el.innerHTML=steuer+`<div class="bt-empty">No rate decision on file for ${escH(ccy)}. The decision history comes from the live indicator feed (Central Bank Rate); nothing beyond the recorded decisions is inferred.</div>`;
+    return;
+  }
+
+  // ── Grafik oben ──────────────────────────────────────────────────────
+  const pfad=`<div class="bt-pfad-halter">${btZinspfadChart(alle,btAktiv,ccy,btCmp?btMeetings(btCmp):null,btCmp)}</div>`;
+
+  // ── Kennzahlen ───────────────────────────────────────────────────────
+  const hikes=alle.filter(m=>m.dir==='hike').length,cuts=alle.filter(m=>m.dir==='cut').length;
+  const holds=alle.filter(m=>m.dir==='hold').length;
+  const kennz=`<div class="bt-summary">
+    <div class="bt-sum-item"><span class="bt-sum-v">${ms.length}<span class="bt-sum-of">/ ${alle.length}</span></span><span class="bt-sum-l">shown / on file</span></div>
+    <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bull}">${hikes}</span><span class="bt-sum-l">hikes</span></div>
+    <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bear}">${cuts}</span><span class="bt-sum-l">cuts</span></div>
+    <div class="bt-sum-item"><span class="bt-sum-v" style="color:var(--t3)">${holds}</span><span class="bt-sum-l">holds</span></div>
+    <div class="bt-sum-item"><span class="bt-sum-v">${escH(fmtDayShort(alle[alle.length-1].date))}</span><span class="bt-sum-l">oldest on file</span></div>
+  </div>`;
+
+  // ── Tabelle ──────────────────────────────────────────────────────────
+  // ⚠ Reihenfolge: Meeting, Decision, PRICE AFTER, dann die vier Bereiche,
+  // dann der eigene Grund. "Price after" gehoert neben den Entscheid (es ist
+  // eine Aussage ueber IHN) und stand als letzte Spalte bei 1600px Fenster
+  // ausserhalb des Bildes - gemessen im Bildschirmfoto, die Tabelle reichte
+  // sichtbar nur bis "2Y Yield".
+  const kopf=`<th class="bt-th bt-th-rk"><span class="bt-th-l">Price after</span><span class="bt-th-s">${escH(sym.name||sym.id)} · ${BT_REAKT.map(n=>'+'+n).join(' / ')} days</span></th>`
+   +BT_AREAS.map(([rubName,label,base])=>
+    `<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(base)}</span></th>`).join('')
+   +`<th class="bt-th bt-th-why"><span class="bt-th-l">Decisive factor</span><span class="bt-th-s">yours to fill in</span></th>`;
+  const heute=todayStr();
+  const stufen=(typeof rateSteps==='function')?rateSteps(ccy):null;
+  const aktSatz=(Array.isArray(stufen)&&stufen.length)?stufen[stufen.length-1][1]:null;
+  const bewegt=alle.filter(m=>m.dir!=='hold');
+  const seit=bewegt.length?bewegt[0].date:null;
+  const jetzt=`<tr class="bt-now-row" data-d="${escH(heute)}">
+      <td class="bt-date">Today<span class="bt-now-d">${escH(fmtDayShort(heute))}</span></td>
+      <td class="bt-move"><span class="bt-tag bt-now">NOW</span>${aktSatz!=null?`<span class="bt-bp">${escH(fmtIndVal(aktSatz,'%'))}</span>`:'<span class="bt-rate">rate not on file</span>'}${seit?`<span class="bt-rate">since ${escH(fmtDayShort(seit))}</span>`:''}</td>
+      <td class="bt-cell bt-rk"><span class="bt-none" title="The next meeting has not happened, so there is no reaction to measure yet.">–</span></td>
+      ${BT_AREAS.map(([r,l,b])=>btCellHtml(sym,r,b,heute)).join('')}
+      ${btReasonCell(ccy,heute,'What you expect to decide the next meeting')}
+    </tr>`;
+  const zeilen=ms.map(m=>{
+    const cls=m.dir==='hike'?'bt-hike':m.dir==='cut'?'bt-cut':'bt-hold';
+    const bp=Math.round(Math.abs(m.delta)*100);
+    const tag=m.dir==='hold'?'HOLD':m.dir.toUpperCase();
+    return`<tr class="${m.dir==='hold'?'bt-holdrow':''}${m.date===btAktiv?' bt-jump':''}" data-d="${escH(m.date)}">
+      <td class="bt-date">${escH(fmtDayShort(m.date))}</td>
+      <td class="bt-move"><span class="bt-tag ${cls}">${tag}</span>${m.dir==='hold'
+        ?`<span class="bt-rate">unchanged at <b>${escH(fmtIndVal(m.rate,'%'))}</b></span>`
+        :`<span class="bt-bp">${bp} bp</span><span class="bt-rate">${escH(fmtIndVal(m.prev,'%'))} → <b>${escH(fmtIndVal(m.rate,'%'))}</b></span>`}</td>
+      ${btReaktZelle(sym,m.date)}
+      ${BT_AREAS.map(([r,l,b])=>btCellHtml(sym,r,b,m.date)).join('')}
+      ${btReasonCell(ccy,m.date,m.dir==='hold'?'Why it held':'What decided this meeting')}
+    </tr>`;
+  }).join('');
+  const spiegel=isNonFx(sym.id)?`<div class="bt-note">Macro data mirrored from <b>${escH(ccy)}</b>, the currency this asset is linked to — the same series its macro card uses. The price reaction column shows <b>${escH(sym.name||sym.id)}</b> itself.</div>`:'';
+  const leerHinweis=!ms.length?`<div class="bt-empty">No decision matches the current filter — ${alle.length} are on file. Clear the filter above to see them.</div>`:'';
+  el.innerHTML=steuer+spiegel+kennz+pfad+`
+    <div class="bt-scroll"><table class="bt-table">
+      <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
+      <tbody>${jetzt}${zeilen}</tbody>
+    </table></div>${leerHinweis}
+    <div class="bt-legend">The <b>rate path</b> is drawn as a staircase, not a line: a policy rate does not drift between meetings, it jumps at one and then sits still — a sloped join would claim rates that never existed. Every dot is a change; click one to jump to its row. The <b>top row is today</b>: the rate now in force and the latest readings, in the same grid as every past decision. It carries no hike/cut label — the next meeting has not happened, and a direction there would be guesswork. Each row below holds the last ${BT_LOOKBACK} releases <b>before that meeting</b>, oldest to newest, with the value the bank actually had in front of it on the right. A value is coloured only where a <b>forecast</b> was on file for that release — blue means it came in on the strong side of expectations for ${escH(ccy)}, red the weak side, and for the unemployment rate a fall is the strong side. <b>Price after</b> counts data points of the price series, so weekends never count as days; where the series does not reach that far the cell stays empty rather than being filled in. Decisions, releases, yields and prices all come from the live feeds.</div>`;
+}
+
 // ══ BACKTESTER: "Decisive factor" je Zinsentscheid ═══════════════════════
 // Nutzer-Wunsch 2026-09-06: "eine neue Tabellenspalte hat ganz rechts in die
 // man selber den Grund reinschreiben kann was der entscheidende Faktor war."
@@ -15969,70 +16425,6 @@ function btReasonCell(ccy,date,ph){
       onclick="event.stopPropagation()"
       onchange="setBtReason('${escJH(ccy)}','${escJH(date)}',this.value)">${escH(txt)}</textarea>${quelle}
   </td>`;
-}
-function openBacktester(symId){
-  const sym=(syms||[]).find(s=>s.id===symId)||getSym();
-  if(!sym)return;
-  const ccy=macroCcyFor(sym.id);
-  const moves=btRateMoves(ccy);
-  const el=document.getElementById('mBtBody');
-  const tt=document.getElementById('mBtTitle');
-  if(tt)tt.textContent='Rate decisions vs. data — '+(sym.name||sym.id);
-  const spiegel=isNonFx(sym.id)?`<div class="bt-note">Macro data mirrored from <b>${escH(ccy)}</b>, the currency this asset is linked to — the same series its macro card uses.</div>`:'';
-  const kopf=BT_AREAS.map(([rubName,label])=>{
-    const ind=btAnchorInd(sym,rubName);
-    return`<th class="bt-th"><span class="bt-th-l">${escH(label)}</span><span class="bt-th-s">${escH(ind?(indName(ind)):(RUB_ANCHOR_IND[rubName]||'–'))}</span></th>`;
-  }).join('')+`<th class="bt-th bt-th-why"><span class="bt-th-l">Decisive factor</span><span class="bt-th-s">yours to fill in</span></th>`;
-  // Kopfzeile "wo stehen wir jetzt" (Nutzer-Wunsch 2026-09-06: "mach ganz oben
-  // eine Zeile wo die aktuellen Daten stehen also alles ausser halt ob es ein
-  // hike oder cut ist"). Dieselben drei Bereichszellen wie jede historische
-  // Zeile, nur mit dem heutigen Datum als Stichtag - dadurch steht die
-  // aktuelle Datenlage im GLEICHEN Raster wie die Lage vor jedem vergangenen
-  // Schritt und ist direkt darunter vergleichbar.
-  // Kein Hike/Cut-Etikett: die naechste Sitzung hat noch nicht stattgefunden,
-  // eine Richtung dort waere geraten (CLAUDE.md Regel 4). Stattdessen der
-  // aktuell geltende Satz und seit wann er gilt.
-  const heute=todayStr();
-  const stufen=(typeof rateSteps==='function')?rateSteps(ccy):null;
-  const aktSatz=(Array.isArray(stufen)&&stufen.length)?stufen[stufen.length-1][1]:null;
-  const seit=moves.length?moves[0].date:null;
-  const jetztZeile=`<tr class="bt-now-row">
-      <td class="bt-date">Today<span class="bt-now-d">${escH(fmtDayHdr(heute))}</span></td>
-      <td class="bt-move"><span class="bt-tag bt-now">NOW</span>${aktSatz!=null?`<span class="bt-bp">${escH(fmtIndVal(aktSatz,'%'))}</span>`:'<span class="bt-rate">rate not on file</span>'}${seit?`<span class="bt-rate">since ${escH(fmtDayHdr(seit))}</span>`:''}</td>
-      ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,heute)).join('')}
-      ${btReasonCell(ccy,heute,'What you expect to decide the next meeting')}
-    </tr>`;
-  if(!moves.length){
-    if(el)el.innerHTML=spiegel+`<div class="bt-scroll"><table class="bt-table">
-      <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
-      <tbody>${jetztZeile}</tbody>
-    </table></div>
-    <div class="bt-empty">No rate change on file for ${escH(ccy)} — the top row shows where the data stands today, but there is nothing to compare it against. The decision history reaches back to about September 2023; if this central bank has only held since then, nothing beyond the recorded decisions is inferred.</div>`;
-    openM('mBt');return;
-  }
-  const zeilen=moves.map(m=>{
-    const cls=m.dir==='hike'?'bt-hike':'bt-cut';
-    const bp=Math.round(Math.abs(m.delta)*100);
-    return`<tr>
-      <td class="bt-date">${escH(fmtDayHdr(m.date))}</td>
-      <td class="bt-move"><span class="bt-tag ${cls}">${m.dir==='hike'?'HIKE':'CUT'}</span><span class="bt-bp">${bp} bp</span><span class="bt-rate">${escH(fmtIndVal(m.prev,'%'))} → <b>${escH(fmtIndVal(m.rate,'%'))}</b></span></td>
-      ${BT_AREAS.map(([rubName])=>btCellHtml(sym,rubName,m.date)).join('')}
-      ${btReasonCell(ccy,m.date,'What decided this meeting')}
-    </tr>`;
-  }).join('');
-  const hikes=moves.filter(m=>m.dir==='hike').length;
-  if(el)el.innerHTML=spiegel+`<div class="bt-summary">
-      <div class="bt-sum-item"><span class="bt-sum-v">${moves.length}</span><span class="bt-sum-l">rate changes on file</span></div>
-      <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bull}">${hikes}</span><span class="bt-sum-l">hikes</span></div>
-      <div class="bt-sum-item"><span class="bt-sum-v" style="color:${BC.bear}">${moves.length-hikes}</span><span class="bt-sum-l">cuts</span></div>
-      <div class="bt-sum-item"><span class="bt-sum-v">${escH(fmtDayHdr(moves[moves.length-1].date))}</span><span class="bt-sum-l">oldest decision on file</span></div>
-    </div>
-    <div class="bt-scroll"><table class="bt-table">
-      <thead><tr><th class="bt-th">Meeting</th><th class="bt-th">Decision</th>${kopf}</tr></thead>
-      <tbody>${jetztZeile}${zeilen}</tbody>
-    </table></div>
-    <div class="bt-legend">The <b>top row is today</b>: the rate now in force and the latest ${BT_LOOKBACK} readings, in the same grid as every past decision, so you can hold the current picture against the ones that made the bank move. It carries no hike/cut label — the next meeting has not happened, and a direction there would be guesswork. Every row below holds the last ${BT_LOOKBACK} releases <b>before that meeting</b>, oldest to newest, the value the bank actually had in front of it on the right. The arrow compares the newest against the oldest of those three and is coloured the way the app reads it everywhere else — for the unemployment rate a fall is the good direction. Only meetings that <b>changed</b> the rate are listed; holds are left out. Decisions and releases both come from the live feed, so a series that does not reach back far enough is shown short rather than filled in.</div>`;
-  openM('mBt');
 }
 const PRICE_MODES=[['candle','Candles'],['line','Line'],['step','Step']];
 let priceChartAsset=null,priceChartMode='candle';
@@ -17505,7 +17897,7 @@ function pcXTickIdx(n,cnt){
 // "All symbols") ODER Historie vs. Preis (sobald ein einzelnes Symbol im
 // Filter gewaehlt ist - Nutzer-Wunsch 2026-07-26, siehe renderRetailHistory).
 function renderRetailBars(D){
-  const upd=D.updated?new Date(D.updated).toLocaleString():'–';
+  const upd=D.updated?fmtStamp(D.updated):'–';
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
   const filt=sentFilterBar();
   const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
@@ -17850,7 +18242,7 @@ function pcReading(D,id){
   };
 }
 function renderPutCallChart(D){
-  const upd=D.updated?new Date(D.updated).toLocaleString():'–';
+  const upd=D.updated?fmtStamp(D.updated):'–';
   // Eine gespeicherte Auswahl kann auf ein inzwischen ausgeblendetes
   // (zu duennes) Asset zeigen - dann still auf markt-weit zurueckfallen,
   // statt die unbrauchbare Reihe doch noch anzuzeigen.
@@ -18020,7 +18412,7 @@ function renderPutCallChart(D){
 // abgeleitet, 5-Tage-geglaettet. >0 = call-lastiger Fluss (blau, bullish),
 // <0 = put-lastiger Fluss (rot, bearish). ──
 function renderNetFlowChart(D){
-  const upd=D.updated?new Date(D.updated).toLocaleString():'–';
+  const upd=D.updated?fmtStamp(D.updated):'–';
   // Eine gespeicherte Auswahl kann auf ein inzwischen ausgeblendetes
   // (zu duennes) Asset zeigen - dann still auf markt-weit zurueckfallen,
   // statt die unbrauchbare Reihe doch noch anzuzeigen.
@@ -18874,7 +19266,7 @@ function renderSeasonality(){
   const A=D.assets[seasAsset];
   const curMon=new Date().getMonth()+1;
   const cur=A.months.find(m=>m[0]===curMon);
-  const upd=D.updated?new Date(D.updated).toLocaleDateString():'–';
+  const upd=D.updated?fmtStamp(D.updated):'–';
   const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
   const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
   const curLine=cur?`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
@@ -19182,9 +19574,9 @@ function rateProbTimelineChart(pts,distTimeline,todayIdx,pastCount){
     if(i===todayIdx){txt='Today';col='var(--t0)';weight=800;}
     else if(i>todayIdx){
       if((i-todayIdx-1)%mtgStep!==0)return'';
-      const{day,mo}=fmtDate(p.date);txt=day+' '+mo;col='var(--red)';weight=700;fs=mtgFs;
+      const{day,mo,yr}=fmtDate(p.date);txt=day+' '+mo+" '"+yr;col='var(--red)';weight=700;fs=mtgFs;
     }
-    else if(i<pastCount){const{day,mo}=fmtDate(p.date);txt='✓ '+day+' '+mo;col='var(--t3)';weight=600;fs=mtgFs;}
+    else if(i<pastCount){const{day,mo,yr}=fmtDate(p.date);txt='✓ '+day+' '+mo+" '"+yr;col='var(--t3)';weight=600;fs=mtgFs;}
     else{const histPos=todayIdx-1-i;if(histPos%histStep!==0)return'';txt=p.label;col='var(--t3)';weight=600;}
     return`<text x="${xOf(i).toFixed(1)}" y="${H-padB+18}" text-anchor="middle" style="font-size:${fs.toFixed(1)}px;font-weight:${weight};fill:${col}">${escH(txt)}</text>`;
   }).join('');
@@ -20971,6 +21363,28 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
+  // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
+  // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
+  // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von
+  // ihnen still ein ReferenceError und sieht fuer den Nutzer einfach kaputt
+  // aus (Regel 6). Die Rechen-Bausteine stehen mit drin, damit
+  // check/backtester.js Releases, Kursreaktion und Sitzungsliste
+  // nachrechnen kann statt sie zu glauben.
+  setBtCcy,setBtCmp,setBtFilter,toggleBtHolds,setBtJahr,btJump,btRender,
+  btMeetings,btReleases,btKursReaktion,btZinspfadChart,BT_AREAS,BT_LOOKBACK,BT_REAKT,
+  // Historie: beide haengen an einem inline onclick= - ohne diese Zeile
+  // wirft der Klick still ein ReferenceError (Regel 6). histJumpDay ist der
+  // Klick auf einen Punkt der Score-Linie, toggleHistAge der Alterungs-
+  // Schalter. Die drei Rechen-Bausteine stehen mit in der Bruecke, damit
+  // check/historie.js die Altersgrenze nachrechnen kann statt sie zu glauben.
+  feedEntryFor,priceSeriesFor,bondSeriesPts,indCycleDays,indCycleIsGuess,
+  histJumpDay,toggleHistAge,histScoreLineChart,
+  histAlterungsWechsel,histIndAltAm,histLetztesRelease,
+  // Die vier Datumsformatierer (js/calendar.js). Nicht fuer inline-Handler,
+  // sondern damit check/datum.js sie in der Seite direkt aufrufen und gegen
+  // die Regel "immer mit Jahr, immer zweistellig" pruefen kann - eine Regel,
+  // die nur als Kommentar dasteht, war schon einmal an 13 Stellen unterlaufen.
+  fmtDayHdr,fmtDayShort,fmtMonShort,fmtStamp,
   // Regime Radar: setRegimeCcy haengt an einem inline onclick= - ohne
   // diese Zeile wirft der Klick still ein ReferenceError (Regel 6).
   // Die Rechen-Bausteine stehen bewusst mit in der Bruecke: check/regime.js
@@ -20992,7 +21406,7 @@ Object.assign(window,{
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   abReihenTitel,
-  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,
+  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,abHistorieKarteHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
   assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
@@ -21012,7 +21426,8 @@ Object.assign(window,{
   ilPressStart,ilPressEnd,ilClick,openIndLinkEdit,saveIndLink,resetIndLink,biasPressStart,biasPressEnd,eventSrcIds,
   setCompactViewVal,evtDismissKey,isEvtJustReleased,CAL_PAST_DAYS,INBOX_NOTIF_DAYS,setCalHighOnlyVal,
   setCalCcyFilterVal,calOpenDays,processCalEvts,getSymEventsAll,getSymEventsCompact,evtSectionOpen,toggleEvtSection,
-  indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,toggleHistWeek,toggleHistDay,histTimelineChart,
+  indDetailsOpen,HIST_DAYS,HIST_RANGES,HIST_MAX_RANGE,setHistRange,toggleHistAge,histJumpDay,histScoreLineChart,
+  histAlterungsWechsel,histIndAltAm,histLetztesRelease,
   histWeekStart,symScoreDrivingEventsByDate,
   histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,HIST_BRK_MAX_REST,histDeltaParts,
   histTagsComparable,renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,
@@ -21121,7 +21536,8 @@ Object.assign(window,{
   seedNoteId,setSeedNoteFlag,migrateSeedNotesOut,researchForSnap,applySeedNoteFlags,
   openRateWatchFor,RATE_WATCH_BANK,RATE_WATCH_SITE,
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
-  BT_AREAS,BT_LOOKBACK,btRateMoves,btValuesBefore,btAnchorInd,btTrend,btCellHtml,openBacktester,
+  BT_AREAS,BT_LOOKBACK,BT_REAKT,btMeetings,btReleases,btKursReaktion,btSpark,btCellHtml,btReaktZelle,
+  btZinspfadChart,btJump,btRender,setBtCcy,setBtCmp,setBtFilter,toggleBtHolds,setBtJahr,openBacktester,
   PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
   dataIndFor,setDataIndFor,relinkDataInd,setDataMode,dataIndGroupsOf,openDataIndPicker,closeDataIndPicker,
@@ -21176,9 +21592,27 @@ Object.defineProperty(window,'compactView',{get:()=>compactView,set:v=>{compactV
 Object.defineProperty(window,'calHighOnly',{get:()=>calHighOnly,set:v=>{calHighOnly=v;},configurable:true});
 Object.defineProperty(window,'calCcyFilter',{get:()=>calCcyFilter,set:v=>{calCcyFilter=v;},configurable:true});
 Object.defineProperty(window,'histRange',{get:()=>histRange,set:v=>{histRange=v;},configurable:true});
+// ⚠ defineProperty und nicht Object.assign: histLinienDaten ist ein `let`,
+// das bei jedem Rendern NEU zugewiesen wird. Object.assign wuerde den Wert
+// von JETZT kopieren (das leere Startarray) und check/historie.js saehe
+// dauerhaft null Tage - eine Pruefung, die leer-gruen laeuft.
+// ⚠ IND_DATA_FEED/BOND_DATA_FEED/PRICE_DATA_FEED liegen in js/data-feeds.js
+// und waren bisher NICHT auf window. Die Waechter brauchen sie, um die
+// Anzeige gegen die ROHEN Feed-Daten zu stellen - und ein `typeof X !==
+// 'undefined'`-Test darauf ist eine Falle: er ist einfach false, die Pruefung
+// laeuft leer durch und bestaetigt nichts. Genau so ist check/historie.js im
+// ersten Lauf 6 Alterungszeilen "nicht nachrechenbar" gemeldet worden,
+// obwohl die Daten dastanden.
+Object.defineProperty(window,'IND_DATA_FEED',{get:()=>IND_DATA_FEED,configurable:true});
+Object.defineProperty(window,'BOND_DATA_FEED',{get:()=>BOND_DATA_FEED,configurable:true});
+Object.defineProperty(window,'PRICE_DATA_FEED',{get:()=>PRICE_DATA_FEED,configurable:true});
+Object.defineProperty(window,'histLinienDaten',{get:()=>histLinienDaten,configurable:true});
+Object.defineProperty(window,'histAgeShow',{get:()=>histAgeShow,configurable:true});
+Object.defineProperty(window,'btCcy',{get:()=>btCcy,configurable:true});
+Object.defineProperty(window,'btCmp',{get:()=>btCmp,configurable:true});
+Object.defineProperty(window,'btFilter',{get:()=>btFilter,configurable:true});
+Object.defineProperty(window,'btHolds',{get:()=>btHolds,configurable:true});
 Object.defineProperty(window,'_histSymId',{get:()=>_histSymId,set:v=>{_histSymId=v;},configurable:true});
-Object.defineProperty(window,'histExpandWeek',{get:()=>histExpandWeek,set:v=>{histExpandWeek=v;},configurable:true});
-Object.defineProperty(window,'histExpandDay',{get:()=>histExpandDay,set:v=>{histExpandDay=v;},configurable:true});
 Object.defineProperty(window,'researchTreeOpen',{get:()=>researchTreeOpen,set:v=>{researchTreeOpen=v;},configurable:true});
 Object.defineProperty(window,'researchTreeSel',{get:()=>researchTreeSel,set:v=>{researchTreeSel=v;},configurable:true});
 Object.defineProperty(window,'researchFocusAsset',{get:()=>researchFocusAsset,set:v=>{researchFocusAsset=v;},configurable:true});

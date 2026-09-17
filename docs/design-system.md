@@ -89,6 +89,69 @@ ausdrücklich als Richtung beschriftet und die Score-Wirkung kommt aus
 ⚠ Gilt genauso für erklärende Texte: das Info-Fenster behauptete
 „counting +0.5" aus der Richtung, wo −0,5 galt.
 
+## ⚠️ Datum: immer mit Jahr, immer zweistellig — und es gibt VIER Formatierer
+
+Nutzer-Regel, **zweimal** gesetzt (2026-09-05 und 2026-09-17, wörtlich:
+*„bei allen grafiken oder tabellen oder überall wo datums stehen will ich das
+dort auch die jahreszahl steht aber nicht zb 2026 sonder 26"*).
+
+Der Grund, dass sie zweimal kommen musste: sie stand ab dem 05.09. als
+Kommentar in `js/calendar.js` — und war am 17.09. an **13 Stellen** unterlaufen.
+8× fehlte das Jahr ganz (Kerzen-Hover, zwei Chart-Achsen, Zinspfad-Kacheln),
+5× stand es vierstellig da (Sicherungen, Papierkorb, Cloud-Status, drei
+„updated"-Zeilen) — durchweg über `toLocaleString()` **ohne Optionen**, also
+genau die Aufrufform, die man beim Schreiben nicht als Datumsformat wahrnimmt.
+
+Deshalb gibt es jetzt genau **vier** Formatierer in `js/calendar.js`, und keine
+weiteren `toLocaleDateString`-Aufrufe mit Datumsanteil:
+
+| Formatierer | Ausgabe | wofür |
+|---|---|---|
+| `fmtDayHdr(d[,utc])` | `Wed, Mar 4, 26` | Tagesköpfe, Tooltips, Tageszeilen |
+| `fmtDayShort(d[,utc])` | `Mar 4, 26` | Chart-Achsen, Tabellenzellen |
+| `fmtMonShort(d[,utc])` | `Mar '26` | Achsen über ~400 Tage |
+| `fmtStamp(ts)` | `Mar 4, 26, 15:07` | Sicherungen, Cloud-Status, „updated" |
+
+**⚠ `fmtMonShort` setzt den Apostroph**, und das ist kein Schmuck: ohne ihn
+bringt die Monatsform die Verwechslung durch die Hintertür zurück — auf der
+Zinspfad-Achse des Backtesters stand `May 13` für den **Mai 2013** und war vom
+**13. Mai** nicht zu unterscheiden. Genau diese Verwechslung ist der
+ursprüngliche Anlass der Regel.
+
+**Ausgenommen sind Fremdtexte.** Nachrichten-Überschriften kommen von
+Marketaux („Gold price today, Thursday, September 17, 2026: …"). Ein zitiertes
+Datum umzuschreiben wäre eine Fälschung der Quelle — die Regel gilt für
+Datumsangaben, die die App **setzt**.
+
+Wer ein Datum anders formatieren muss, setzt `// datum-ok: <warum>` dazu und
+schreibt hin, woher das Jahr sonst kommt (z. B. `fmtDate()` in `js/score.js`
+gibt es als eigenes Feld `yr` zurück, weil die Achse Tag, Monat und Jahr
+getrennt setzt). Erzwungen von **`check/datum.js`** in drei Stufen: statisch
+über alle Quellen, die Ausgabe der vier Formatierer, und der sichtbare Text
+auf 17 Seiten inklusive SVG-Achsen.
+
+## ⚠️ Score-Vorzeichen ist eine BIAS-Aussage, keine Kerzen-Aussage
+
+`--cndl-up` / `--cndl-dn` gelten für die Richtung eines **Tages** (siehe
+Kerzen-Regel 3 weiter unten). Die Score-Linie der Historie liegt über oder
+unter Null, und das ist eine Aussage über das **Asset** — also `BC.bull`
+(blau) darüber, `BC.bear` (rot) darunter, nicht die Kerzen-Tokens.
+
+**⚠ Der Farbwechsel gehört an die Nulllinie, nicht an den nächsten
+Datenpunkt.** Umgesetzt mit zwei Kopien derselben Polyline, je eine an der
+Nulllinie beschnitten (`clipPath`). Ohne das springt die Farbe erst beim
+nächsten aufgezeichneten Tag um, und ein Nulldurchgang am Dienstag sieht aus
+wie einer am Mittwoch.
+
+**⚠ Eine Lücke unterbricht die Linie.** Ein Tag ohne aufgezeichneten Score
+wird nicht überbrückt — eine durchgezogene Gerade darüber behauptet Werte, die
+nie aufgezeichnet wurden (Regel 4). Dieselbe Überlegung trägt die Treppenkurve
+des Zinspfads: ein Leitzins springt an der Sitzung und liegt dazwischen fest,
+eine schräge Verbindung behauptete Zwischenwerte.
+
+Beides erzwungen von `check/historie.js` (A) und `check/backtester.js` (F),
+beide mit Gegenprobe.
+
 ## ⚠️ Zahlen-Genauigkeit: die Quelle bestimmt sie NICHT (seit 2026-09-16)
 
 `fmtYield()` machte `toFixed(3)` und schnitt dann die Nullen ab — je nach Wert

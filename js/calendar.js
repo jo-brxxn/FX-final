@@ -70,7 +70,49 @@ function countdownHtml(dateStr){
 // Historie, in der genau diese Verwechslung staendig auftritt. fmtDayHdr ist
 // der zentrale Tagesformatierer; wer hier das Jahr entfernt, entfernt es
 // appweit.
-function fmtDayHdr(dateStr){try{const d=new Date(dateStr+'T00:00:00');return d.toLocaleDateString('en',{weekday:'short',day:'numeric',month:'short',year:'2-digit'});}catch(e){return dateStr;}}
+//
+// ⚠ ZWEITE RUNDE, Nutzer-Regel 2026-09-17: "bei allen grafiken oder tabellen
+// oder ueberall wo datums stehen will ich das dort auch die jahreszahl steht
+// aber nicht zb 2026 sonder 26". Dieselbe Regel wie oben, erneut gemeldet -
+// weil sie zwar HIER stand, aber an 13 weiteren Stellen unterlaufen war: 8x
+// war das Jahr ganz weg (Chart-Achsen, Kerzen-Tooltip, Zinspfad-Kacheln), 5x
+// stand es vierstellig da (Sicherungen, Papierkorb, Cloud-Status,
+// "updated"-Zeilen ueber `toLocaleString()` ohne Optionen).
+//
+// Lehre daraus, und der Grund fuer die drei Geschwister hier drunter: eine
+// Regel, die an 20 Aufrufstellen EINZELN haengt, haelt nicht. Es gibt jetzt
+// genau vier Datumsformatierer, und `check/datum.js` meldet jeden weiteren
+// toLocaleDateString/toLocaleString-Aufruf mit Datumsanteil rot.
+function fmtDayHdr(dateStr,utc){try{const d=new Date(dateStr+(utc?'T00:00:00Z':'T00:00:00'));
+  const o={weekday:'short',day:'numeric',month:'short',year:'2-digit'};if(utc)o.timeZone='UTC';
+  return d.toLocaleDateString('en',o);}catch(e){return dateStr;}}
+// Ohne Wochentag - fuer Chart-Achsen und Tabellenzellen, wo "Thu, " nur Platz
+// kostet. MIT Jahr, wie alles andere auch.
+function fmtDayShort(dateStr,utc){try{const d=new Date(dateStr+(utc?'T00:00:00Z':'T00:00:00'));
+  const o={day:'numeric',month:'short',year:'2-digit'};if(utc)o.timeZone='UTC';
+  return d.toLocaleDateString('en',o);}catch(e){return dateStr;}}
+// Nur Monat + Jahr - fuer Achsen, die mehr als ~400 Tage zeigen und auf denen
+// ein Tagesdatum ohnehin nicht mehr lesbar waere.
+//
+// ⚠ MIT APOSTROPH: "May '13", nicht "May 13". Der Kommentar oben nennt genau
+// diese Verwechslung als Grund fuer die ganze Regel ("Ohne Jahr ist 'Mar 26'
+// nicht unterscheidbar von '26. Maerz'") - und in der Monatsform kommt sie
+// durch die Hintertuer zurueck: auf der Zinspfad-Achse des Backtesters stand
+// "May 13" fuer den Mai 2013 und war vom 13. Mai nicht zu unterscheiden.
+// Der Apostroph ist die uebliche Kurzform fuer ein Jahr und kostet ein Zeichen.
+function fmtMonShort(dateStr,utc){try{const d=new Date(dateStr+(utc?'T00:00:00Z':'T00:00:00'));
+  const o={month:'short'};if(utc)o.timeZone='UTC';
+  // datum-ok: die Jahreszahl wird hier bewusst selbst angehaengt, zweistellig
+  // und mit Apostroph - year:'2-digit' kann den Apostroph nicht setzen.
+  const jahr=utc?d.getUTCFullYear():d.getFullYear();
+  return d.toLocaleDateString('en',o)+" '"+String(jahr).slice(-2);}catch(e){return dateStr;}}
+// Zeitstempel (Sicherungen, Papierkorb, Cloud-Status, "updated"): Datum nach
+// derselben Regel, Uhrzeit 24h ohne Sekunden. Nimmt einen ISO-String ODER
+// einen ms-Zeitstempel - beides kommt im Code vor.
+function fmtStamp(ts){try{const d=new Date(ts);if(!isFinite(d.getTime()))return String(ts);
+  return d.toLocaleDateString('en',{day:'numeric',month:'short',year:'2-digit'})
+    +', '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }catch(e){return String(ts);}}
 
 // ── ECONOMIC CALENDAR: FF-STYLE TABLE ROWS ──
 // Vergleicht "Actual" ausschliesslich mit "Forecast" (kein Previous-Fallback
@@ -386,6 +428,7 @@ function updCalCcySel(){
 
 export {
   evtMatchesSym,todayStr,daysUntil,evtTimeValid,isEvtPast,dateAddStr,countdownLbl,countdownHtml,fmtDayHdr,
+  fmtDayShort,fmtMonShort,fmtStamp,
   LOWER_IS_BETTER_RE,parseNumLike,actualColor,evtIsCNY,evtImpact,calToolbarHtml,calRowHtml,
   calTableHtml,calWindowDatesFor,updCalHighBtn,normCompactLevel,COMPACT_TITLES,applyCompactView,
   updCompactSw,toggleCompactView,setCalCcyFilter,updCalCcySel,
