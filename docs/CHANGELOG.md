@@ -15162,3 +15162,76 @@ und meldet rot, wenn das 0 ist.
   2026-03-11 lag zur Sitzung 2025-12-10 in der ZUKUNFT" (der schwerste
   denkbare Fehler in einem Rückblick); Treppe zur Schräge → 31 Funde; Holds
   wieder weggeworfen → 76 fehlende Sitzungen.
+
+
+## 2026-09-18 — Textfetzen in der Kopfleiste: zerbrochenes Attribut (VERSION-CHECK-525)
+
+Nutzer-Bugreport mit Bildschirmfoto: *„Was ist das da oben mit String und so
+beheb das."* — in der Kopfleiste stand zwischen `Search assets…` und `Help`
+der Fetzen **«ueber toLocaleString() ohne Optionen – genau»**.
+
+### Reproduziert und gemessen
+
+Der Fetzen stammte aus **meinem eigenen** VERSION-CHECK-524-Bannertext. Im
+Rohtext von `index.html`:
+
+```
+title="VERSION-CHECK-524 - … ⚠ HISTORIE: der Anlass war "
+                                                        ^ hier endet das Attribut
+ich finde nicht gut wie das da aussieht …                ← ab hier: HTML-Inhalt
+```
+
+Der Bannertext enthielt **32 rohe doppelte Anführungszeichen**. Das erste
+schließt das `"`-begrenzte Attribut; alles danach liest der Parser als weitere
+Attribute und schließlich als Text. Im Browser gemessen:
+
+| | vorher | nachher |
+|---|---|---|
+| Attribute am `#verBanner` | **hunderte** (`sind=`, `ueberhaupt=`, `alterungsfaehig.=`, `(368=`) | **3** (class, id, title) |
+| Tooltip | bei 130 Zeichen abgerissen | **5903 Zeichen**, vollständig |
+| sichtbarer Fremdtext in der Kopfleiste | 1 Block (`420), weil die Karte sonst mit 30 Tagen Detail…`) | **0** |
+
+Der Fehler war vollständig meiner: er entstand beim Schreiben des 524er
+Banners am 17.09. und stand einen Tag lang auf `main`.
+
+### Wurzel-Fix
+
+Alle 32 Anführungszeichen im Bannertext sind jetzt **typografisch** (`„ "`).
+Die können ein Attribut nicht schließen und lesen sich im Tooltip besser.
+Das Escapen als `&quot;` wäre die Alternative gewesen — die typografische
+Variante ist die ehrlichere, weil sie das Problem gar nicht erst entstehen
+lässt.
+
+### Fehlerklasse gesucht
+
+- **Im DOM:** alle 17 Seiten, bis zu 12273 Elemente — **keine** weitere
+  Fundstelle. Der Banner war der einzige Bruch.
+- **Im Code:** **41 von 119** Attribut-Interpolationen in `js/*.js` haben kein
+  `escH`/`escJH` (`title="${nxTitle}"`, `title="${base}"`, `title="${r.n}"` …).
+  Die meisten tragen feste Zeichenketten; einige tragen freien Feed-Text
+  (Indikator-, Asset-, Ereignisnamen). Liefert eine Quelle je ein `"`, sieht es
+  genauso aus. Sie alle umzuschreiben ist eine eigene Aufgabe — der Wächter
+  setzt deshalb **am DOM** an und fängt jeden Bruch, unabhängig von der Quelle.
+
+### Wächter `check/html.js`
+
+Zwei Stufen: (1) statisch über `index.html` — endet ein
+`title`/`alt`/`placeholder`/`aria-label` mitten im Fließtext, ist es
+abgerissen; (2) im DOM über alle Seiten — kein Element darf einen
+Attributnamen tragen, den es in HTML/SVG/ARIA nicht gibt. **Der Browser IST
+der Parser**; ihn zu fragen ist verlässlicher, als selbst zu parsen.
+
+Gegenprobe (das eine Anführungszeichen wieder eingesetzt): Stufe 1 nennt
+`index.html:5443`, Stufe 2 meldet **255 Funde** am `#verBanner`.
+
+⚠ Zwei Fehlalarme der ersten Fassung waren **echte** SVG-Attribute
+(`maskContentUnits`, `pathLength`) — sie fehlten nur in der Liste. Und weil
+der Vergleich kleinschreibt, müssen camelCase-Namen dort **klein** stehen,
+sonst sind sie nie ein Treffer.
+
+⚠ Und noch einer, den der neue Wächter sofort an mir selbst gefangen hat: der
+**525er** Bannertext enthielt wieder ein rohes `"` (`ein "-begrenztes
+Attribut`) — 154 Funde. Meine Prüfzeile im Fix-Skript stand damals *nach* dem
+Schreiben, die Datei war also schon kaputt, als sie ansprang. Jetzt prüft sie
+vorher. Merksatz: eine Zusicherung, die erst nach dem Schreiben läuft, ist
+keine Zusicherung, sondern ein Obduktionsbericht.
