@@ -15386,3 +15386,116 @@ widerlegt — und dabei **zwei eigene Fehler** sichtbar gemacht:
   **keine** Zahl über die Formel.
 - **`rules.js` mit diesem Zustand** → *„check/scorediff.js konnte NICHT
   nachrechnen: … → erst wiederholen, bevor hier irgendetwas gebumpt wird."*
+
+---
+
+## 2026-09-18 — Karten schließen bündig ab, Erklärungen wandern hinter ein ⓘ
+
+Zwei Wünsche zur Asset-Kopfreihe: die History-Tabelle soll mehr Zeilen und
+Spalten gleichzeitig zeigen, und die Pinned-Notes-Karte soll unten mit den
+anderen abschließen.
+
+### Teil 1 — gleiche Kartenhöhen (gemessen)
+
+| | vorher | nachher |
+|---|---|---|
+| Reihe | 420 px | 420 px |
+| Price / Calendar / History | 420 px | 420 px |
+| **Pinned notes** | **320 px** (`max-height`) | **420 px** |
+| **Lücke unter Pinned notes** | **100 px** | **0 px** |
+
+Die 320 px waren eine Obergrenze für die Notizen-Karte **außerhalb** der
+Reihe; in der Reihe waren sie nur schädlich, weil `.ab-nt-list` ohnehin in
+sich scrollt. Neu: `.ab-orow .ab-ntile:not(.ab-htile){max-height:none}`.
+
+⚠ Das `:not(.ab-htile)` ist tragend. Die History-Karte trägt **beide**
+Klassen, und ihre eigene 420-px-Grenze ist das Einzige, was die Reihe davon
+abhält, auf Inhaltshöhe aufzugehen (mit 30 Tagen Detail gemessen: 4150 px für
+alle vier Karten). Ohne das `:not` hätte die neue Regel sie mit höherer
+Spezifität wieder ausgehebelt.
+
+### Teil 2 — warum die History-Tabelle nicht einfach mehr zeigen kann
+
+Bevor irgendetwas geändert wurde, wurde die Karte ausgemessen:
+
+| | |
+|---|---|
+| Karte | 340 × 420 px, Körper 316 × 339 px |
+| Reglerleiste (Zeitbereich + Ageing) | 60 px |
+| Chart | 110 px |
+| Spaltenkopf | 26 px |
+| **Rest für die Tagesliste** | **143 px** |
+| Was die Liste bräuchte | **2691 px** (30 Tage) |
+| Eine Tageszeile | 62–119 px |
+| **Voll sichtbare Tage** | **1** |
+| Vierte Spalte „What moved it" | ausgeblendet (`@container max-width:470px`) |
+| Wochenkasten-Köpfe | 33 px × 5 Wochen = **165 px** |
+
+Also: mehr Zeilen **und** mehr Spalten gehen auf 340 px Breite nicht ohne
+Gegenleistung. Vier Optionen wurden mit Zahlen vorgelegt (dichter packen /
+breiter / höher / beides).
+
+### Teil 3 — die Antwort war eine Dauerregel
+
+Nutzer, wörtlich: *„Auf der Karte steht eine Erklärung unten die nimmt viel
+Platz mach die Erklärung so das man sie sieht wenn man auf ein i mit einem
+Kreis herum drückt das steht neben dem Namen. Leg das auch als Regel fest und
+setz das überall um die Erklärung öffnet sich dann zentriert als Fenster und
+muss übersichtlich sein."*
+
+Umgesetzt über **einen** Baustein: `abTile(...,erkl)` bzw.
+`abInfoBtn(titel,erkl[,klasse])`, Fenster `#mCardInfo`. Betroffen:
+
+- **COT Positioning** (28 px Fußtext), **Retail Positioning** (70 px),
+  **Seasonality** (42 px) — die drei `.ab-note`-Absätze, zusammen 140 px
+  Kartenfläche.
+- **Calendar** (`.abc-foot`, 36 px) — das ⓘ sitzt neben dem Monatsnamen.
+- **History** (`.histp-modelnote`, 57 px).
+- **Dashboard** — dort gab es das ⓘ schon, es zeigte die Erklärung aber per
+  **`alert()`**, also gerade nicht als übersichtliches zentriertes Fenster.
+  Jetzt dasselbe Fenster wie überall; vier weitere `.dw-note`-Fußzeilen sind
+  mitgewandert.
+
+Gemessen danach: 5 ⓘ auf der Asset-Seite, 13 auf dem Dashboard, **alle 18
+öffnen ein zentriertes Fenster mit Text**, keine JS-Fehler, 0 verbliebene
+`.ab-note`/`.abc-foot`/`.histp-modelnote`.
+
+**Was NICHT hinter das ⓘ wandert:** Zustandsaussagen. „Nothing pinned yet",
+„Showing the majors", welcher Filter gerade greift — das sagt, was *gerade*
+gilt. Faustregel: ändert sich der Satz mit den Daten, ist er Inhalt; erklärt
+er, wie man die Karte liest, ist er Erklärung.
+
+### Zwei eigene Fehler, die erst die Prüfung gefunden hat
+
+1. **Doppelte id.** Das neue Fenster hieß zuerst `mInfo` — diese id gehört
+   seit jeher dem Indikator-Info-Fenster (`openInfoM`). `getElementById`
+   liefert das zuerst im Dokument stehende, also das neue; die
+   Indikator-Erklärungen wären stumm geworden. Der neue Wächter meldete es
+   beim ersten Lauf als *„[news] ⓘ #1: Fenster blieb zu"*. Jetzt `mCardInfo`.
+2. **Breite.** `.ci-modal{max-width:min(540px,94vw)}` blieb wirkungslos —
+   `.modal` setzt 720 px bei gleicher Spezifität und steht weiter unten in der
+   Datei. Gemessen: 720 px statt 540. Mit `.modal.ci-modal` stimmt es.
+   Dieselbe Falle ist bei `.modal.acm-modal` schon einmal dokumentiert.
+
+### ⚠ Was damit NICHT erreicht ist
+
+Die History-Tabelle zeigt **weiterhin einen Tag gleichzeitig**. Die Erklärung
+war dort nur 57 px von 420 — die Fläche kosten Chart (110 px), Reglerleiste
+(60 px) und die Wochenkästen (165 px). Die Entscheidung darüber steht noch
+aus.
+
+### Wächter `check/erklaerung.js`
+
+Drei Stufen: (1) statisch — die abgeschafften Klassen kommen im Code nicht
+mehr vor; (2) im DOM über neun Seiten — auch dort nicht; (3) **jedes ⓘ wird
+angeklickt** und muss genau *ein* zentriertes `.ov`-Fenster mit Text öffnen,
+die Karten-Erklärung zusätzlich mit Absätzen.
+
+⚠ Erste Fassung war selbst falsch: sie verlangte, dass **jedes** ⓘ ausgerechnet
+`#mCardInfo` öffnet. Es gibt aber drei Erklärwege mit demselben Knopf
+(`openCardInfo`, `openInfoM`, `openSentInfoM`). Die Regel lautet „zentriertes
+Fenster mit übersichtlichem Text", nicht „dieses eine Fenster".
+
+Ausserdem: `if(!geprueft.knoepfe) fehler.push(...)` — nichts geprüft ist kein
+Bestanden. Dieselbe Lehre wie bei `check/historie.js`, das einmal 6 Fälle
+meldete und 0 nachrechnete.

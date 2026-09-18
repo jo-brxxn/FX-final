@@ -221,6 +221,52 @@ zeichen."*
 - Geprüft von `check/kartenlook.js` (genau einer je Karte, Lage, gültiges
   Ziel, echter Klick mit Zurück-Pille).
 
+## ⓘ neben dem Kartennamen — Erklärungen stehen NIE im Kartenkörper (seit 2026-09-18)
+
+Nutzer-Regel, wörtlich: *„Auf der Karte steht eine Erklärung unten die nimmt
+viel Platz mach die Erklärung so das man sie sieht wenn man auf ein i mit
+einem Kreis herum drückt das steht neben dem Namen. Leg das auch als Regel
+fest und setz das überall um die Erklärung öffnet sich dann zentriert als
+Fenster und muss übersichtlich sein."*
+
+**Gilt für jede neue Karte, ohne Rückfrage.** Ein Erklärabsatz am Kartenfuß
+ist ab jetzt ein Fehler, kein Stilmittel.
+
+- **Ein Baustein:** `abTile(titel,zusatz,inhalt,extra,ziel,erkl)` bzw.
+  `abTileZ(ziel,titel,zusatz,inhalt,extra,erkl)`. `erkl` ist ein String oder
+  ein **Array von Absätzen** — ein Absatz je Gedanke, das ist das
+  „übersichtlich". Karten mit eigenem Kopf (History, Kalender, Dashboard)
+  rufen `abInfoBtn(titel,erkl[,klasse])` direkt auf.
+- **Der Text wird am Titel verschlüsselt** (`abInfoKey`), nicht hochgezählt:
+  Karten werden bei jeder Änderung neu gebaut, ein Zähler würde bei jedem
+  Rendern neue Einträge anlegen und die alten als Müll stehen lassen.
+- **Dynamischer Text** (Jahre, Anzahl Reports, Feed-Zeitraum) gehört genauso
+  hinter das ⓘ — die Erklärung wird bei jedem Rendern neu registriert.
+- **Was NICHT hinter das ⓘ gehört:** Zustandsaussagen. „Nothing pinned yet",
+  „Showing the majors", der Hinweis welcher Filter gerade greift — das sagt,
+  was *gerade* gilt, und ist keine Erklärung. Faustregel: ändert sich der Satz
+  mit den Daten, ist er Inhalt; erklärt er, wie man die Karte liest, ist er
+  Erklärung.
+- **stopPropagation ist Pflicht** — manche Karten tragen selbst einen
+  `onclick` (die Kalenderkarte öffnet das volle Fenster). `abInfoBtn` setzt es.
+- **Das Fenster:** `#mCardInfo`, Klasse `.modal.ci-modal`, 540 px statt der
+  720 px Standardbreite. ⚠ `.modal.ci-modal` schreiben, nicht `.ci-modal` —
+  bei gleicher Spezifität gewinnt sonst die weiter unten stehende
+  `.modal`-Regel (gemessen: 720 px statt 540 px; dieselbe Falle ist bei
+  `.modal.acm-modal` schon einmal dokumentiert).
+- ⚠ **`mInfo`/`mInfoTitle` sind vergeben** — sie gehören dem
+  Indikator-Info-Fenster (`openInfoM`). Die erste Fassung hat die id ein
+  zweites Mal vergeben; `getElementById` liefert dann das zuerst im Dokument
+  stehende, und die Indikator-Erklärungen wären stumm geworden.
+- Es gibt **drei** Erklärwege mit demselben ⓘ: `openCardInfo` (Karten),
+  `openInfoM` (Indikatoren), `openSentInfoM` (Sentiment). Alle drei öffnen ein
+  zentriertes `.ov`-Fenster. Ein `alert()` erfüllt die Regel **nicht** — das
+  Dashboard hatte genau das und wurde umgestellt.
+- Geprüft von `check/erklaerung.js`: die abgeschafften Klassen (`ab-note`,
+  `abc-foot`, `histp-modelnote`) dürfen weder im Code noch im DOM vorkommen,
+  und **jedes** ⓘ wird angeklickt — es muss genau ein zentriertes Fenster mit
+  Text öffnen.
+
 ## ⚠️ GRUNDSATZ: wiederkehrende UI-Bausteine müssen einheitlich sein
 
 **Nutzer-Wunsch 2026-07-12:** Elemente, die an mehreren Stellen der Webseite

@@ -861,7 +861,7 @@ const HIST_DAYS=10;
 // Zeitregler des History-Fensters (Nutzer-Wunsch 2026-08-23).
 const HIST_RANGES=[['1W',7],['2W',14],['1M',30],['2M',60],['3M',90]];
 const HIST_MAX_RANGE=90;
-let histRange=30,_histSymId=null;
+let histRange=30,_histSymId=null,_histErkl=[];
 // ⚠ Der Zeitstrahl-Drill-down (Wochenbalken -> Tagesbalken -> Detailkarte,
 // Nutzer-Wunsch 2026-08-31) ist am 2026-09-17 ENTFALLEN, samt histExpandWeek/
 // histExpandDay/toggleHistWeek/toggleHistDay/histTimelineChart. Grund: die
@@ -1627,7 +1627,15 @@ function renderSymHistoryPanel(id){
   // Fussnote nur, wenn tatsaechlich ein Tag aus einem frueheren Modell dabei
   // ist - sonst gar kein Hinweis (kein Rauschen im Normalfall).
   const tageAltesModell=days.filter(d=>histMap[d.date]!=null&&histOld[d.date]).length;
-  const fuss=tageAltesModell?`<div class="histp-modelnote">* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.</div>`:'';
+  // ⚠ Die Fussnote steht seit 2026-09-18 NICHT mehr im Kartenkoerper, sondern
+  // hinter dem ⓘ neben dem Kartennamen (Dauerregel, siehe abInfoBtn). Sie war
+  // 57px hoch in einer Karte, in der fuer die Tagesliste 143px uebrig waren.
+  // `_histErkl` wird hier gefuellt und von abHistorieKarteHtml/openHistModal
+  // gelesen - die beiden bauen die Kopfzeile, nicht diese Funktion.
+  _histErkl=['One row per day: the score at the end of that day, the change against the previous recorded day, and what moved it.',
+    'The line above is the same series. Days with no release still move, because a release more than '+IND_STALE_CYCLES+' of its own cycles overdue stops counting — switch on "Ageing" to see which indicator crossed that edge.'];
+  if(tageAltesModell)_histErkl.push(`* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.`);
+
   const nAlterung=histAgeShow?dayCards.filter(c=>/histp-age/.test(c.detail)).length:0;
   const bar=`<div class="histp-bar">
     <div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
@@ -1670,7 +1678,7 @@ function renderSymHistoryPanel(id){
   }).join('');
   return`<div class="histp">${bar}${linie}
     <div class="hw-cols"><span>Day</span><span>Score</span><span>Δ</span><span>What moved it</span></div>
-    <div class="hw-list">${wochen}</div>${fuss}</div>`;
+    <div class="hw-list">${wochen}</div></div>`;
 }
 // ── Historie als KARTE in der Overview-Zeile ────────────────────────────
 // Nutzer-Wunsch 2026-09-17: "wie gewohnt das man es als fenster oeffnen kann
@@ -1696,9 +1704,13 @@ function abHistorieKarteHtml(c){
   // dieselbe Sache. Ziel ist hier aber KEINE Kategorie-Seite (die Historie
   // hat keine), sondern das eigene Fenster - der Waechter kennt diesen Fall
   // jetzt ausdruecklich und klickt ihn nach.
+  // ⚠ Reihenfolge: erst das Panel bauen, dann die Kopfzeile. renderSymHistoryPanel()
+  // fuellt dabei _histErkl - wird die Kopfzeile vorher gebaut, traegt das ⓘ
+  // den Text des ZULETZT gerenderten Symbols.
+  const panel=renderSymHistoryPanel(c.id);
   return`<div class="ab-htile ab-ntile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">History</span></div>
-    <div class="ab-htile-bd" id="abHistBody">${renderSymHistoryPanel(c.id)}</div>
+    <div class="ab-tile-hd"><span class="ab-tile-t">History</span>${abInfoBtn('History',_histErkl)}</div>
+    <div class="ab-htile-bd" id="abHistBody">${panel}</div>
     <div class="ab-goto"><button class="ab-goto-b" onclick="openHistModal('${escJH(c.id)}')" title="Open the full history window — the same content on the whole screen, with room for about eleven days at once instead of three">Open full history →</button></div>
   </div>`;
 }
@@ -6856,6 +6868,13 @@ function assetMonthCalHtml(c,gross){
   const ersterWochentag=(new Date(jahr,monat,1).getDay()+6)%7;   // Montag zuerst
   const tageImMonat=new Date(jahr,monat+1,0).getDate();
 
+  const calErkl=[von&&bis
+      ?`The feed currently covers <b>${escH(fmtDayHdr(von))}</b> to <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days lie outside that window: they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
+      :'No calendar data has loaded for this asset yet.',
+    'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.']
+    .concat(calHighOnly?['The card is currently filtered to <b>high-impact</b> releases only.']:[]);
+  const infoSlot=abInfoBtn('Calendar',calErkl);
+
   let zellen='';
   for(let i=0;i<ersterWochentag;i++)zellen+='<span class="abc-d leer"></span>';
   for(let t=1;t<=tageImMonat;t++){
@@ -6880,9 +6899,12 @@ function assetMonthCalHtml(c,gross){
     zellen+=`<button class="${klassen.join(' ')}" onclick="event.stopPropagation();${tun}" title="${escH(titel)}">
       <span class="abc-n">${t}</span>${punkte}</button>`;
   }
+  // Das ⓘ sitzt neben dem Kartennamen - der Name der Kalenderkarte IST der
+  // Monat in der Kopfzeile (Dauerregel 2026-09-18, siehe abInfoBtn). Im
+  // grossen Fenster faellt es weg: dort steht die Erklaerung nicht im Weg.
   const raster=`<div class="abc-hd">
         <button class="abc-nav" onclick="event.stopPropagation();abCalShift(-1)" title="Previous month">‹</button>
-        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>
+        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>${gross?'':infoSlot}
         <button class="abc-nav" onclick="event.stopPropagation();abCalShift(1)" title="Next month">›</button>
       </div>
       <div class="abc-grid">
@@ -6890,14 +6912,16 @@ function assetMonthCalHtml(c,gross){
         ${zellen}
       </div>`;
   if(gross)return raster;
-  // ⚠ Die Fusszeile bleibt: der Feed reicht nur rund eine Woche voraus, ein
-  // leerer Tag heisst also fast nie "nichts los", sondern "weiss noch
-  // niemand". Ohne diesen Hinweis waere die Karte eine huebsche Luege.
+  // ⚠ Der Hinweis MUSS erreichbar bleiben: der Feed reicht nur rund eine
+  // Woche voraus, ein leerer Tag heisst also fast nie "nichts los", sondern
+  // "weiss noch niemand". Ohne ihn waere die Karte eine huebsche Luege.
+  // Seit 2026-09-18 steht er aber nicht mehr als Fusszeile im Kartenkoerper
+  // (gemessen 36px), sondern hinter dem ⓘ neben dem Kartennamen - Dauerregel,
+  // siehe abInfoBtn. Der gedaempfte Tag traegt seine Begruendung ausserdem
+  // weiterhin als eigenen title ("Not published yet ..."), der Hinweis ist
+  // also nicht die einzige Quelle.
   return`<div class="abc-cal" onclick="openAssetCal()" title="Open the full calendar for this asset">
       ${raster}
-      <div class="abc-foot">${von&&bis
-        ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days are <b>not published yet</b>.`
-        :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>
       ${abGoToHtml('cal',true)}
     </div>`;
 }
@@ -7024,12 +7048,57 @@ function abGoToHtml(ziel,stopp){
 // sie sind mehrzeilig mit verschachtelten Template-Literalen, und nur den
 // Funktionsnamen zu tauschen ist sehr viel sicherer, als achtmal eine
 // Argumentliste bis zur passenden Klammer umzuschreiben.
-function abTileZ(ziel,titel,zusatz,inhalt,extra){
-  return abTile(titel,zusatz,inhalt,extra,ziel);
+// ── Karten-Erklaerung hinter einem ⓘ ───────────────────────────────────
+// DAUERREGEL, Nutzer 2026-09-18: "Auf der Karte steht eine Erklaerung unten
+// die nimmt viel Platz mach die Erklaerung so das man sie sieht wenn man auf
+// ein i mit einem Kreis herum drueckt das steht neben dem Namen. Leg das auch
+// als Regel fest und setz das ueberall um die Erklaerung oeffnet sich dann
+// zentriert als Fenster und muss uebersichtlich sein."
+//
+// Also: KEIN Erklaerabsatz mehr im Kartenkoerper. Der Text sitzt hinter einem
+// ⓘ direkt neben dem Kartennamen und oeffnet sich als zentriertes Fenster.
+// Gemessen am Anlass (Asset-Seite USD): die drei .ab-note-Absaetze kosteten
+// 70 + 42 + 28 = 140px Kartenflaeche, ohne die man haeufiger scrollen musste
+// als man die Erklaerung las.
+//
+// ⚠ Der Schluessel ist ABSICHTLICH aus dem Titel abgeleitet und nicht
+// hochgezaehlt: Karten werden bei jeder Aenderung neu gebaut, ein Zaehler
+// wuerde bei jedem Rendern neue Eintraege anlegen und die alten als Muell
+// stehen lassen. So ueberschreibt ein Neuaufbau schlicht seinen eigenen
+// Eintrag.
+let _abInfo={},_dwErkl=[];
+function abInfoKey(titel){
+  return 'ci-'+String(titel||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
-function abTile(titel,zusatz,inhalt,extra,ziel){
+// erkl: entweder ein String (ein Absatz) oder ein Array von Absaetzen.
+function abInfoBtn(titel,erkl,kl){
+  if(!erkl||(Array.isArray(erkl)&&!erkl.length))return'';
+  const k=abInfoKey(titel);
+  _abInfo[k]={t:titel,b:Array.isArray(erkl)?erkl:[erkl]};
+  // ⚠ stopPropagation ist Pflicht, nicht Kosmetik: manche Karten tragen selbst
+  // einen onclick (die Kalenderkarte oeffnet das volle Fenster). Ohne das
+  // wuerde ein Klick auf das ⓘ beides ausloesen - Erklaerung auf, Karte weg.
+  return`<button class="${kl||'info-b'}" onclick="event.stopPropagation();openCardInfo('${escJH(k)}')" title="What this card shows and how to read it" aria-label="Explanation of ${escH(titel)}">i</button>`;
+}
+function openCardInfo(k){
+  const e=_abInfo[k];if(!e)return;
+  // ⚠ mCardInfo, NICHT mInfo: `mInfo`/`mInfoTitle` gehoeren seit jeher dem
+  // Indikator-Info-Fenster (openInfoM). Die erste Fassung dieses Fensters hat
+  // dieselbe id ein zweites Mal vergeben - getElementById liefert dann das
+  // ZUERST im Dokument stehende, also dieses hier, und die Indikator-
+  // Erklaerungen waeren stumm geworden. check/erklaerung.js hat es beim
+  // ersten Lauf gefunden ("[news] ⓘ #1: Fenster blieb zu").
+  const t=document.getElementById('mCardInfoTitle');if(t)t.textContent=e.t;
+  const b=document.getElementById('mCardInfoBody');
+  if(b)b.innerHTML=e.b.map(p=>`<p>${p}</p>`).join('');
+  openM('mCardInfo');
+}
+function abTileZ(ziel,titel,zusatz,inhalt,extra,erkl){
+  return abTile(titel,zusatz,inhalt,extra,ziel,erkl);
+}
+function abTile(titel,zusatz,inhalt,extra,ziel,erkl){
   return`<div class="ab-tile${extra||''}">
-    <div class="ab-tile-hd"><span class="ab-tile-t">${titel}</span>${zusatz||''}</div>
+    <div class="ab-tile-hd"><span class="ab-tile-t">${titel}</span>${abInfoBtn(titel,erkl)}${zusatz||''}</div>
     <div class="ab-tile-bd">${inhalt}</div>
     ${abGoToHtml(ziel)}
   </div>`;
@@ -7819,8 +7888,9 @@ function abGrafikHtml(art,c){
       </div>`;
     return abTileZ('cot','COT Positioning',
       `<span class="ab-tile-s">as of ${escH(stand)}</span>`,
-      `${ch.html}${fuss}
-       <div class="ab-note">Large speculators (CFTC Legacy, non-commercial). Blue = long contracts, red = short, black line = long share.${ch.leer?'':` ${ch.berichte} weekly reports.`}</div>`);
+      `${ch.html}${fuss}`,null,
+      ['Large speculators (CFTC Legacy, non-commercial) — the reporting group whose positioning the score reads.',
+       'Blue is long contracts, red is short, the black line is the long share.'+(ch.leer?'':` The chart covers ${ch.berichte} weekly reports.`)]);
   }
   if(art==='retail'){
     const zeilen=abRetailZeilen(c.id);
@@ -7874,8 +7944,10 @@ function abGrafikHtml(art,c){
          <span><span class="ab-foot-l">Short ${escH(c.id)}</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
          <span><span class="ab-foot-l">Average</span> <b>${schnitt}% long ${escH(c.id)}</b></span>
        </div>
-       ${abScoreZeile(c,RETAIL_IND_NAME,rb&&rb.grund)}
-       <div class="ab-note">The rows are the broker's own quote, exactly as published — the same numbers as the Sentiment tab.${mehrfach?` ${escH(c.id)} is highlighted in each pair so its side is visible; where it is the quote currency, long the pair means short ${escH(c.id)}. The figure above turns the whole book onto ${escH(c.id)}'s side.`:''} Read against the crowd: a one-sided retail book counts the other way. ${escH(retailRegelText())}</div>`);
+       ${abScoreZeile(c,RETAIL_IND_NAME,rb&&rb.grund)}`,null,
+      [`The rows are the broker's own quote, exactly as published — the same numbers as the Sentiment tab.`]
+        .concat(mehrfach?[`${escH(c.id)} is highlighted in each pair so its side is visible. Where it is the quote currency, long the pair means short ${escH(c.id)}; the figure at the top turns the whole book onto ${escH(c.id)}'s side.`]:[])
+        .concat([`Read against the crowd: a one-sided retail book counts the other way.`,escH(retailRegelText())]));
   }
   // ── Seasonality ───────────────────────────────────────────────────────
   const D=SEASONALITY_DATA;
@@ -7928,8 +8000,10 @@ function abGrafikHtml(art,c){
        <span><span class="ab-foot-l">Sample</span> <b>${cur?cur[3]:'–'}</b> <span class="ab-foot-n">years</span></span>
        <span><span class="ab-foot-l">Signal</span> <b style="color:${stark?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${stark?'aligned':'mixed'}</b></span>
      </div>
-     ${abScoreZeile(c,SEAS_IND_NAME,sb&&sb.grund)}
-     <div class="ab-note">Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}. "Aligned" means average return and hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}. ${escH(seasRegelText())}</div>`);
+     ${abScoreZeile(c,SEAS_IND_NAME,sb&&sb.grund)}`,null,
+    [`Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}.`,
+     `"Aligned" means the average return and the hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}.`,
+     escH(seasRegelText())]);
 }
 // ── Notizen-Karte: unbegrenzt, hervorhebbar, sortierbar ─────────────────
 // Nutzer 2026-09-13: "wo man dann ganz einfach eine neue Notiz reinschreiben
@@ -13015,8 +13089,11 @@ function perfRankingHtml(){
       <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.pct)/max*100).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.pct>0?'+':''}${r.pct.toFixed(2)}%</span>
     </div>`;}).join('');
-  return bar+`<div class="perf-list">${body}</div>`+
-    `<div class="dw-note">Actual price performance — compare against the score to spot where the market disagrees.${shortest?' Data from '+escH(shortest)+'.':''}</div>`;
+  // Erklaerung hinter das ⓘ statt als Fusszeile in die Karte (Dauerregel
+  // 2026-09-18, siehe abInfoBtn) - die Kopfzeile liest _dwErkl aus.
+  _dwErkl=['Actual price performance — compare it against the score to spot where the market disagrees.'
+    +(shortest?' Data from '+escH(shortest)+'.':'')];
+  return bar+`<div class="perf-list">${body}</div>`;
 }
 
 // ── 2. CARRY-RANKING (Vorbild: Bloomberg FXFA) ───────────────────────────
@@ -13043,9 +13120,9 @@ function carryRankingHtml(){
       <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.diff)/max*100).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.diff>0?'+':''}${r.diff.toFixed(2)}%</span>
     </div>`;};
+  _dwErkl=['Policy-rate differential per pair (base − quote). Positive means holding the pair long earns carry.'];
   return`<div class="carry-sec">Long pays most</div><div class="perf-list">${top.map(row).join('')}</div>`+
-    `<div class="carry-sec">Long costs most</div><div class="perf-list">${bot.map(row).join('')}</div>`+
-    `<div class="dw-note">Policy-rate differential per pair (base − quote). Positive = holding long earns carry.</div>`;
+    `<div class="carry-sec">Long costs most</div><div class="perf-list">${bot.map(row).join('')}</div>`;
 }
 
 // ── 3. KORRELATIONS-WARNUNG ──────────────────────────────────────────────
@@ -13121,11 +13198,14 @@ function corrWarnHtml(){
       <span class="perf-name" style="flex:1">${escH(p.a)} <span style="color:var(--t3)">↔</span> ${escH(p.b)}</span>
       <span class="perf-pct" style="color:${c}">${p.r>0?'+':''}${p.r.toFixed(2)}</span>
     </div>`;}).join('');
+  // Erklaerung hinter das ⓘ (Dauerregel 2026-09-18). Die Statuszeile `msg`
+  // bleibt im Koerper: sie sagt, was GERADE gilt, und ist keine Erklaerung.
+  _dwErkl=[(fallback?'Showing the majors — add watchlist pairs to see your own exposure instead. ':'')
+    +`Based on ${depth} common trading days — the number grows more reliable as price history builds.`];
   return`<div class="corr-head"><span class="corr-big" style="color:${col}">${avg.toFixed(2)}</span>
       <span class="corr-lbl">average absolute correlation<br><span style="color:var(--t3)">closest: ${escH(worst.a)} ↔ ${escH(worst.b)} (${worst.r>0?'+':''}${worst.r.toFixed(2)})</span></span></div>
     <div class="dw-note" style="margin:2px 0 8px">${msg}</div>
-    <div class="perf-list">${rows}</div>
-    <div class="dw-note">${fallback?'Showing the majors — add watchlist pairs to see your own exposure instead. ':''}Based on ${depth} common trading days — grows more reliable as price history builds.</div>`;
+    <div class="perf-list">${rows}</div>`;
 }
 
 // ── 4. ECONOMIC SURPRISE INDEX je Waehrung (Vorbild: Citi CESI) ──────────
@@ -13260,8 +13340,10 @@ function esiCardHtml(){
       <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
     </div>`;}).join('');
   const thin=rows.filter(r=>r.n<ESI_THIN_N);
-  return`<div class="perf-list">${body}</div>`+
-    `<div class="dw-note">Data vs. forecast in own standard deviations, weighted by age (45-day half-life) — positive = beating expectations lately. Averaged, not summed, so currencies with fewer indicators are not penalised.${thin.length?` <b>${thin.map(r=>escH(r.c)).join(', ')}</b> rest on fewer than ${ESI_THIN_N} indicators (count shown next to the code) — the same number is less reliable there.`:''}</div>`;
+  // Erklaerung hinter das ⓘ (Dauerregel 2026-09-18, siehe abInfoBtn).
+  _dwErkl=['Data vs. forecast in own standard deviations, weighted by age (45-day half-life) — positive means beating expectations lately. Averaged, not summed, so currencies with fewer indicators are not penalised.']
+    .concat(thin.length?[`<b>${thin.map(r=>escH(r.c)).join(', ')}</b> rest on fewer than ${ESI_THIN_N} indicators (the count is shown next to the code) — the same number is less reliable there.`]:[]);
+  return`<div class="perf-list">${body}</div>`;
 }
 
 function renderDash(){
@@ -13299,7 +13381,7 @@ function renderDash(){
   ['top','left','center','right','right2','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
   const zones={left:[],center:[],right:[],right2:[],bottom:[]};
   sorted.forEach((w)=>{
-    let content='';
+    let content='';_dwErkl=[];
     const zone=dashZoneOf(w.type);
     const mates=zoneMates[zone];
     const wi=mates.indexOf(w);
@@ -13626,7 +13708,7 @@ function renderDash(){
     // 2026-08-07 aber wieder - die Tabellen-Optik der Zeilen bleibt davon
     // unberuehrt.
     const hdrHtml=`<div class="dw-hdr">
-        <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${wt?`<button class="rinfo" onclick="event.stopPropagation();alert((W_TYPES.find(t=>t.type==='${w.type}')||{}).sub||'')" title="Info">i</button>`:''}</div>
+        <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${abInfoBtn(w.title||w.type,(wt&&wt.sub?[escH(wt.sub)]:[]).concat(_dwErkl),'rinfo')}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${w.type==='notification'?`<span class="dw-hdlink" onclick="window.open('https://www.forexfactory.com/calendar','_blank','noopener')">View FF</span>`:''}
         ${btnsHtml}
@@ -21487,6 +21569,11 @@ Object.assign(window,{
   // wirft der Klick still ein ReferenceError (CLAUDE.md Regel 6).
   openQuickNote,quickNoteForAsset,qcAnalyse,qcSpeichern,qcTogAsset,qcSetBias,qcTogTag,
   abReihenTitel,
+  // ⚠ openCardInfo haengt am onclick JEDES ⓘ neben einem Kartennamen - fehlt
+  // die Zeile hier, wirft der Klick still einen ReferenceError und die
+  // Erklaerung oeffnet sich nie (CLAUDE.md Regel 6). abInfoBtn steht mit
+  // dabei, damit die Waechter den Knopf ohne Nachbau erzeugen koennen.
+  openCardInfo,abInfoBtn,abInfoKey,
   renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,abHistorieKarteHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
   assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt

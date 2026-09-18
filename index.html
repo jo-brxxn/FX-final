@@ -681,6 +681,20 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-lower{display:block}
 .ab-ktile,.ab-ntile{display:flex;flex-direction:column}
 .ab-ntile{max-height:320px}
+/* ⚠ In der KOPFREIHE schliessen alle Karten unten buendig ab (Nutzer-Wunsch
+   2026-09-18: "damit die Karten in einer Reihe im gleich abschliessen mit dem
+   unteren Rand"). Die 320px eine Zeile darueber sind eine Obergrenze fuer die
+   Notizen-Karte AUSSERHALB der Reihe - in der Reihe sind sie schaedlich.
+   Gemessen: Zeile 420px, Preis/Kalender/History je 420px, "Pinned notes" 320px
+   -> 100px Nichts unter der Karte, waehrend die drei Schwestern bis unten
+   gingen. Die Notizenliste scrollt ohnehin in sich (.ab-nt-list hat
+   overflow-y:auto), die Karte darf also die volle Reihenhoehe nehmen.
+   ⚠ `:not(.ab-htile)` ist Absicht und darf NICHT wegvereinfacht werden: die
+   History-Karte traegt beide Klassen, und ihre eigene 420px-Grenze ist das
+   Einzige, was die Reihe davon abhaelt, auf Inhaltshoehe aufzugehen (mit 30
+   Tagen Detail gemessen: 4150px fuer alle vier Karten). Ohne das :not wuerde
+   diese Regel sie mit hoeherer Spezifitaet wieder aushebeln. */
+.ab-orow .ab-ntile:not(.ab-htile){max-height:none}
 /* ⚠ Die Grafik-Kachel fuellt den Rest ihrer Spalte. Ohne das stehen die
    Spalten unterschiedlich hoch da (gemessen 667/578/526px) und unter den
    beiden kuerzeren klafft 89 bzw. 141px Nichts, bevor die naechste Reihe
@@ -783,6 +797,34 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-bias{font:800 var(--fs-2xs)/1 var(--ff-text);margin-left:6px}
 .ab-big{font:800 var(--fs-lg)/1.1 var(--ff-num);margin-bottom:8px}
 .ab-note{font-size:var(--fs-2xs);color:var(--t3);margin-top:8px;line-height:1.4}
+/* ── ⓘ neben dem Kartennamen (Dauerregel 2026-09-18) ───────────────────
+   Der Erklaertext sitzt nicht mehr im Kartenkoerper, sondern hier dahinter.
+   Der Knopf ist bewusst klein und ruhig: er steht auf JEDER Karte und darf
+   den Kartennamen nicht ueberstimmen. Beruehrziel trotzdem 18px, damit er
+   auf dem Telefon treffbar bleibt. */
+.info-b{flex:0 0 auto;width:18px;height:18px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--bd2);border-radius:50%;background:transparent;color:var(--t3);cursor:pointer;
+  font:700 11px/1 var(--ff-num);font-style:italic;transition:color .12s,border-color .12s,background .12s}
+.info-b:hover{color:var(--blue);border-color:var(--blue);background:rgba(var(--blue-rgb),.08)}
+.info-b:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+/* ⚠ Im Kalenderkopf steht der Monatsname mit flex:1 zentriert zwischen den
+   beiden Pfeilen. Ein zusaetzliches Element in dieser Zeile verschiebt die
+   Mitte - deshalb sitzt das ⓘ hier NICHT in der Zeile, sondern absolut am
+   rechten Rand daneben, damit "SEPTEMBER" mittig bleibt. */
+.abc-hd{position:relative}
+.abc-hd .info-b{position:absolute;right:22px;top:50%;transform:translateY(-50%)}
+/* Das Fenster dazu: schmal, ruhig, ein Absatz je Gedanke.
+   ⚠ `.modal.ci-modal`, NICHT nur `.ci-modal`: die Basisregel `.modal` setzt
+   max-width auf min(720px,94vw) und hat dieselbe Spezifitaet - bei gleicher
+   Spezifitaet entscheidet die Reihenfolge, und `.modal` steht weiter unten in
+   der Datei. Gemessen mit der ersten Fassung: 720px statt 540px. Dieselbe
+   Falle steht ein paar Zeilen ueber `.modal` schon einmal dokumentiert
+   (.modal.acm-modal) - sie ist hier wieder zugeschnappt. */
+.modal.ci-modal{max-width:min(540px,94vw)}
+.ci-body{font:400 var(--fs-sm)/1.65 var(--ff-text);color:var(--t1)}
+.ci-body p{margin:0 0 11px}
+.ci-body p:last-child{margin-bottom:0}
+.ci-body b{color:var(--t0);font-weight:700}
 .ab-bars{display:flex;flex-direction:column;gap:5px}
 .ab-bar-row{display:flex;align-items:center;gap:6px;min-width:0}
 .ab-bar-n{flex:0 0 78px;font:700 var(--fs-2xs)/1 var(--ff-num);color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -5482,11 +5524,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-525 - Kopfleisten-Bug behoben: dort stand ein Textfetzen («ueber toLocaleString() ohne Optionen – genau»), gemeldet mit Bildschirmfoto. ⚠ URSACHE, gemessen: der VERSION-CHECK-524-Banner-Text stand in einem title=-Attribut und enthielt 32 rohe doppelte Anfuehrungszeichen. Das ERSTE davon schliesst das Attribut - alles danach liest der Parser als weitere Attribute und schliesslich als Textinhalt. Im DOM standen dadurch hunderte Pseudo-Attribute (sind=, ueberhaupt=, alterungsfaehig.=, (368=), und ein Rest wurde im .hdr-livebanner sichtbar. Der Fehler war komplett meiner: er entstand beim Schreiben des 524er Banners und stand einen Tag lang auf main. WURZEL-FIX: alle 32 Anfuehrungszeichen im Bannertext sind jetzt typografisch („ “) - die koennen ein Attribut nicht schliessen und lesen sich im Tooltip besser. Danach: Tooltip wieder 5903 Zeichen vollstaendig, 3 Attribute am Banner statt hunderten, 0 sichtbarer Fremdtext in der Kopfleiste. ⚠ FEHLERKLASSE gesucht und gemessen: der DOM der ganzen Seite ueber 17 Tabs und 12273 Elemente traegt sonst KEIN erfundenes Attribut - der Banner war die einzige Fundstelle. Im Code sind es 41 von 119 Attribut-Interpolationen in js/*.js ohne escH/escJH; die meisten tragen feste Zeichenketten, einige aber freien Feed-Text (Indikator-, Asset-, Ereignisnamen). Bricht eine Quelle je ein Anfuehrungszeichen mit, sieht es genauso aus - deshalb faengt der neue Waechter am DOM und nicht an der Schreibweise. WAECHTER check/html.js, zwei Stufen: (1) statisch ueber index.html - endet ein title/alt/placeholder/aria-label mitten im Fliesstext, ist es abgerissen; (2) im DOM ueber alle 17 Seiten - kein Element darf einen Attributnamen tragen, den es in HTML/SVG/ARIA nicht gibt. Der Browser IST der Parser, ihn zu fragen ist verlaesslicher als selbst zu parsen. Gegenprobe (das eine rohe Anfuehrungszeichen wieder eingesetzt): Stufe 1 nennt index.html:5443, Stufe 2 meldet 255 Funde am #verBanner. Zwei Fehlalarme der ersten Fassung waren echte SVG-Attribute (maskContentUnits, pathLength) - sie fehlten nur in der Liste, und weil der Vergleich kleinschreibt, muessen camelCase-Namen dort klein stehen."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-526 - Zwei Dinge auf der Asset-Kopfreihe. ERSTENS die Kartenhoehen: die Karte „Pinned notes“ war auf max-height:320px gedeckelt, waehrend die Reihe 420px hoch ist - gemessen 100px Nichts unter der Karte, waehrend Preis, Kalender und History bis unten gingen. Die Notizenliste scrollt ohnehin in sich, die Grenze war also nur schaedlich. Jetzt schliessen alle vier Karten der Reihe buendig ab (320 -> 420px, Luecke 100 -> 0px). Die 420px-Grenze der History-Karte bleibt bewusst stehen: sie ist das Einzige, was die Reihe davon abhaelt, auf Inhaltshoehe aufzugehen (mit 30 Tagen Detail gemessen: 4150px). ZWEITENS eine neue Dauerregel: Erklaerungen stehen nicht mehr im Kartenkoerper, sondern hinter einem ⓘ neben dem Kartennamen und oeffnen sich als zentriertes Fenster. Umgesetzt fuer COT Positioning, Retail Positioning, Seasonality, Calendar, History und die Dashboard-Karten - dort zeigte das vorhandene i die Erklaerung per alert(), also gerade nicht als uebersichtliches Fenster. Was NICHT dahinter wandert: Zustandsaussagen wie „Nothing pinned yet“ - die sagen, was gerade gilt, und sind keine Erklaerung. ⚠ Der erste Versuch vergab die id mInfo ein zweites Mal - die gehoert dem Indikator-Info-Fenster, und getElementById liefert das zuerst stehende; die Indikator-Erklaerungen waeren stumm geworden. Gefunden vom neuen Waechter check/erklaerung.js, der jedes ⓘ anklickt. ⚠ Ehrlich dazu: die History-Tabelle zeigt weiterhin nur EINEN Tag gleichzeitig. Die Erklaerung war dort nur 57px von 420 - die Flaeche kosten Chart (110px), Reglerleiste (60px) und die Wochenkaesten (33px Kopf je Woche)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-525</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-526</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -5888,6 +5930,17 @@ function introLogin(){
     <h3 id="mHistTitle">History</h3>
     <div id="histBody"></div>
     <div class="m-btns"><button class="btn g" onclick="closeM('mHist')">Done</button></div>
+  </div>
+</div>
+<!-- MODAL: Karten-Erklaerung hinter dem ⓘ (Dauerregel 2026-09-18).
+     Zentriert (.ov zentriert bereits), schmal statt breit: eine Erklaerung
+     liest sich in kurzen Zeilen, nicht ueber 700px hinweg. Ein Absatz je
+     Gedanke - "muss uebersichtlich sein" heisst hier Struktur, nicht Kuerze. -->
+<div class="ov" id="mCardInfo" style="display:none">
+  <div class="modal ci-modal">
+    <h3 id="mCardInfoTitle">About this card</h3>
+    <div id="mCardInfoBody" class="ci-body"></div>
+    <div class="m-btns"><button class="btn g" onclick="closeM('mCardInfo')">Done</button></div>
   </div>
 </div>
 <!-- MODAL: Add Pair -->
