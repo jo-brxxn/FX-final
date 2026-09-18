@@ -71,7 +71,9 @@ const gruen = (m) => console.log('  ✓ ' + m);
       nulllinieY: nl ? +nl.getAttribute('y1') : null,
       hoehe: vb[3] || null,
       clips,
-      punkte: sv.querySelectorAll('circle').length,
+      // ⚠ Die Punkte liegen seit 2026-09-18 als HTML-Knoepfe UEBER dem SVG,
+      // nicht mehr als <circle> darin: im gestreckten SVG waren sie Ellipsen.
+      punkte: (sv.closest('.cax') || document).querySelectorAll('.cax-p').length,
       achse: [...sv.querySelectorAll('text')].map(e => e.textContent),
     };
   });
@@ -120,12 +122,12 @@ const gruen = (m) => console.log('  ✓ ' + m);
   // ── B) Klick auf einen Punkt fuehrt zur Zeile ─────────────────────────
   console.log('\n── B) Klick auf einen Linienpunkt ──');
   const klick = await p.evaluate(async () => {
-    const g = document.querySelector('#mHist .histl svg circle');
+    const g = document.querySelector('#mHist .histl .cax-p');
     if (!g) return { keinPunkt: true };
     // Aus dem onclick-Attribut das Zieldatum lesen, damit geprueft werden
     // kann, ob DIE RICHTIGE Zeile markiert wird - nicht irgendeine.
-    const soll = (g.parentElement.getAttribute('onclick') || '').match(/'([\d-]{10})'/);
-    g.parentElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const soll = (g.getAttribute('onclick') || '').match(/'([\d-]{10})'/);
+    g.click();
     await new Promise(r => setTimeout(r, 400));
     const tr = document.querySelector('#mHist .hw-day.hw-jump');
     return { soll: soll ? soll[1] : null, ist: tr ? tr.getAttribute('data-d') : null };

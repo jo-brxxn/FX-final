@@ -563,25 +563,37 @@ svg.ic{vertical-align:-2px;flex:none}
   cursor:pointer;padding:2px 6px;border-radius:var(--rss)}
 @media(hover:hover){.abc-nav:hover{color:var(--accent);background:var(--bg3)}}
 .abc-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.abc-w{text-align:center;font:700 var(--fs-2xs)/1.6 var(--ff-num);color:var(--t2);padding-bottom:3px}
+.abc-w{text-align:center;font:700 var(--fs-sm)/1.6 var(--ff-num);color:var(--t2);padding-bottom:3px}
 .abc-w.we{color:var(--t3)}
 /* Die Tageszelle traegt Zahl UND Punkte, deshalb feste Hoehe statt
    aspect-ratio: sonst springt das Raster, sobald ein Tag Punkte bekommt. */
-/* 24 statt 30px: der Kalender soll deutlich kleiner sein. */
-.abc-d{position:relative;height:24px;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:1px;background:none;border:none;border-radius:50%;cursor:pointer;padding:0}
+/* ⚠ 2026-09-18, Nutzer mit Bildschirmfoto: „der Kalender die Zahlen sind zu
+   klein die füllen die Karte nicht aus". Das dreht die Vorgabe vom
+   2026-09-13 („deutlich kleiner", 24px) wieder um - und zwar zu Recht, weil
+   die Kopfreihe seit dem Historie-Umbau 420px hoch ist statt 368. GEMESSEN
+   im Vorzustand: das Raster hatte 312px Hoehe, die 5 Zellreihen nutzten 120
+   davon - 192px, also 62%, standen leer, bei 10px Schrift.
+   Jetzt fuellen die Zeilen die Rasterhoehe (grid-auto-rows:1fr, Zellhoehe
+   auto) und die Zahl steht auf --fs-lg. */
+.abc-cal .abc-grid{grid-auto-rows:minmax(26px,1fr)}
+.abc-d{position:relative;min-height:26px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:2px;background:none;border:none;cursor:pointer;padding:0}
 .abc-d.leer{cursor:default}
-.abc-n{font:600 var(--fs-2xs)/1 var(--ff-num);color:var(--t1)}
+/* ⚠ Die Markierung sitzt auf der ZAHL, nicht auf der Zelle. Die Zelle ist
+   jetzt hoeher als breit (40x50 gemessen) - ein border-radius:50% darauf
+   waere eine Ellipse. */
+.abc-n{font:600 var(--fs-lg)/1 var(--ff-num);color:var(--t1);
+  min-width:1.9em;height:1.9em;display:flex;align-items:center;justify-content:center;
+  border-radius:50%}
 .abc-d.we .abc-n{color:var(--t3)}
 /* "Noch nicht veroeffentlicht" ist NICHT dasselbe wie "nichts los" - dieser
    Unterschied muss sichtbar sein, sonst ist die Karte eine huebsche Luege. */
 .abc-d.unbekannt .abc-n{opacity:.38}
-.abc-d.gew{background:var(--bg4)}
-.abc-d.heute{background:var(--accent)}
-.abc-d.heute .abc-n{color:#fff;font-weight:800}
-@media(hover:hover){.abc-d:not(.leer):not(.heute):hover{background:var(--bg3)}}
-.abc-dots{display:flex;gap:2px;height:4px;align-items:center}
-.abc-dot{width:4px;height:4px;border-radius:50%;display:block}
+.abc-d.gew .abc-n{background:var(--bg4)}
+.abc-d.heute .abc-n{background:var(--accent);color:#fff;font-weight:800}
+@media(hover:hover){.abc-d:not(.leer):not(.heute):hover .abc-n{background:var(--bg3)}}
+.abc-dots{display:flex;gap:3px;height:5px;align-items:center}
+.abc-dot{width:5px;height:5px;border-radius:50%;display:block}
 .abc-dot.ih{background:var(--red)}
 .abc-dot.im{background:var(--amber)}
 .abc-dot.il{background:var(--t3)}
@@ -4027,6 +4039,36 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .histp-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .histp-agebtn{font:700 var(--fs-xs)/1 var(--ff-num);color:var(--t2);background:var(--bg2);border:1px solid var(--bd);border-radius:20px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .histp-agebtn.on{color:var(--amber);border-color:var(--amber);background:rgba(var(--amber-rgb),.08)}
+/* ── Chart-Achsen als HTML statt als SVG-Text ────────────────────────────
+   Nutzer-Bugreport 2026-09-18 („die Zahlen die sind so breit"). Ein SVG mit
+   preserveAspectRatio="none" streckt ALLES auf die Containerbreite, auch die
+   Schrift - gemessen 3,17x in der Score-Linie, 0,84x im Zinspfad, 1,43x im
+   Seasonality-Chart. Kurven und Balken SOLLEN die Breite fuellen, Buchstaben
+   nicht. Die Beschriftung liegt deshalb als HTML ueber dem SVG, prozentual an
+   derselben Stelle wie vorher - sie wandert beim Strecken mit, behaelt aber
+   ihre Groesse. Dasselbe Muster wie bei den Preis-Kacheln (.ab-chart +
+   .ab-xax), nur verallgemeinert. */
+.cax{position:relative}
+.cax-lbl{position:absolute;inset:0;pointer-events:none}
+.cax-y,.cax-x{position:absolute;font:500 var(--fs-2xs)/1 var(--ff-num);color:var(--t3);white-space:nowrap}
+.cax-y{left:0;text-align:right;padding-right:5px;transform:translateY(-50%)}
+.cax-x{transform:translateX(-50%)}
+.cax-x.cax-start{transform:none}
+.cax-x.cax-end{transform:translateX(-100%)}
+/* Seasonality: die Monatsnamen und Trefferquoten tragen ihre eigenen, vom
+   2026-07-12 bewusst gesetzten Groessen (17/14px) - die bleiben, nur
+   gestreckt werden sie nicht mehr. */
+.seas-mon{font:600 17px/1 var(--ff-num);color:var(--t3)}
+.seas-mon.on{font-weight:800;color:var(--t0)}
+.seas-hit{font:500 14px/1 var(--ff-num)}
+/* Klickpunkte: rund bleibt rund. Im gestreckten SVG waren sie Ellipsen. */
+.cax-pkt{position:absolute;inset:0;pointer-events:none}
+.cax-p{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;padding:0;
+  border-radius:50%;background:var(--pc);border:1.4px solid #fff;cursor:pointer;
+  pointer-events:auto;box-shadow:0 0 0 .5px rgba(0,0,0,.12)}
+.cax-p:hover{width:13px;height:13px;margin:-6.5px 0 0 -6.5px}
+.cax-p.on{width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-width:2px;
+  box-shadow:0 0 0 2px rgba(var(--blue-rgb),.3)}
 .histl{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs);padding:4px 6px}
 .histl-empty{font:500 var(--fs-xs)/1.5 var(--ff-num);color:var(--t3);font-style:italic;padding:14px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rs)}
 /* ⚠ ZWEI Klebe-Ebenen, nicht eine. Mit nur der Spaltenzeile klebend

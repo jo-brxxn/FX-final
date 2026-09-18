@@ -292,16 +292,19 @@ const satz = (v) => {
       const dx = Math.abs(pkt[i][0] - pkt[i - 1][0]), dy = Math.abs(pkt[i][1] - pkt[i - 1][1]);
       if (dx > 0.5 && dy > 0.5) schraeg++;
     }
-    const g = sv.querySelector('circle');
+    const g = document.querySelector('#mBtBody .bt-pfad .cax-p');
     let klick = null;
     if (g) {
-      const soll = (g.parentElement.getAttribute('onclick') || '').match(/'([\d-]{10})'/);
-      g.parentElement.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const soll = (g.getAttribute('onclick') || '').match(/'([\d-]{10})'/);
+      g.click();
       await new Promise(r => setTimeout(r, 400));
       const tr = document.querySelector('#mBtBody tr.bt-jump');
       klick = { soll: soll ? soll[1] : null, ist: tr ? tr.getAttribute('data-d') : null };
     }
-    return { punkte: pkt.length, schraeg, marker: sv.querySelectorAll('circle').length,
+    // Marker liegen seit 2026-09-18 als HTML-Knoepfe ueber dem SVG, nicht
+    // mehr als <circle> darin: im gestreckten SVG waren sie Ellipsen.
+    return { punkte: pkt.length, schraeg,
+      marker: document.querySelectorAll('#mBtBody .bt-pfad .cax-p').length,
       achse: [...sv.querySelectorAll('text')].map(e => e.textContent), klick };
   });
   if (!pfad) rot('Kein Zinspfad gezeichnet');

@@ -130,6 +130,44 @@ getrennt setzt). Erzwungen von **`check/datum.js`** in drei Stufen: statisch
 über alle Quellen, die Ausgabe der vier Formatierer, und der sichtbare Text
 auf 17 Seiten inklusive SVG-Achsen.
 
+## ⚠️ Beschriftung gehört NICHT in ein gestrecktes SVG
+
+Nutzer-Bugreport 2026-09-18 mit Bildschirmfoto: *„guck mal die Zahlen die sind
+so breit"*.
+
+`preserveAspectRatio="none"` streckt ein SVG auf die Containerbreite — und
+damit **alles** darin: Kurven, Balken, **Schrift und Kreise**. Für die Kurve
+ist das genau richtig (sie soll die Breite füllen), für Buchstaben nicht.
+
+Gemessen (Streckfaktor = Breite/viewBox-Breite ÷ Höhe/viewBox-Höhe):
+
+| Chart | viewBox | gerendert | Faktor |
+|---|---|---|---|
+| Historie, Score-Linie | 434 × 182 | 1374 × 182 | **3,17×** |
+| Backtester, Zinspfad | 1670 × 168 | 1399 × 168 | 0,84× |
+| Seasonality-Balken | 880 × 260 | 1256 × 260 | 1,43× |
+
+12 weitere SVGs mit Text waren unverzerrt, die 14 gestreckten **ohne** Text
+unproblematisch — betroffen ist genau die Kombination aus beidem.
+
+**Der Ausweg ist nicht, das Strecken zu lassen** (dann füllt der Chart die
+Breite nicht), sondern die Beschriftung als **HTML über das SVG** zu legen:
+`chartAchsenHtml(yL, xL, opt)` und `chartPunkteHtml(pkte)` in `js/main.js`.
+Beide positionieren prozentual, wandern also beim Strecken mit der Kurve mit
+und behalten trotzdem ihre Größe. Dasselbe Muster benutzen die Preis-Kacheln
+seit jeher (`.ab-chart` + `.ab-xax`) — es ist hier nur verallgemeinert.
+
+⚠ Zwei Fallen dabei, beide gemessen:
+- **Die y-Beschriftung braucht einen Streifen fester Breite**, keine Position.
+  Als Position mit `translateX(-100%)` ragte sie in der schmalen Karte der
+  Asset-Seite links aus dem Container und wurde von dessen `overflow:hidden`
+  abgeschnitten — aus `+4.9` wurde `4.9`.
+- **Kreise werden zu Ellipsen.** Die Klickpunkte der Score-Linie waren
+  sichtbar eiförmig. Sie liegen deshalb ebenfalls als HTML darüber; als echte
+  Knöpfe ist ihr Klickbereich sogar größer als ein 3-px-Kreis.
+
+Erzwungen von `check/html.js` Stufe 3, mit Gegenprobe.
+
 ## ⚠️ Score-Vorzeichen ist eine BIAS-Aussage, keine Kerzen-Aussage
 
 `--cndl-up` / `--cndl-dn` gelten für die Richtung eines **Tages** (siehe

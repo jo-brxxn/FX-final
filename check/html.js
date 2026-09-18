@@ -146,6 +146,69 @@ const PRAEFIX = /^(data-|aria-|on|xlink:|xmlns:|v-|:|@|_)/;
   // das ganze Dokument, Sichtbarkeit spielt keine Rolle.
   if (!treffer) gruen(`${SEITEN.length} Seiten, bis zu ${elemente} Elemente, 0 erfundene Attributnamen`);
 
+  // ── 3) Kein TEXT in einem gestreckten SVG ─────────────────────────────
+  // Nutzer-Bugreport 2026-09-18, zweites Bildschirmfoto: "guck mal die Zahlen
+  // die sind so breit". `preserveAspectRatio="none"` streckt ein SVG auf die
+  // Containerbreite - und zwar ALLES darin, auch Schrift und Kreise. Fuer
+  // Kurven und Balken ist das gewollt, fuer Buchstaben nicht.
+  //
+  // GEMESSEN beim Anlass (Streckfaktor = (Breite/viewBox-Breite) geteilt
+  // durch (Hoehe/viewBox-Hoehe), 1.0 = unverzerrt):
+  //   Historie, Score-Linie   viewBox 434 -> gerendert 1374   3,17x
+  //   Backtester, Zinspfad    viewBox 1670 -> gerendert 1399  0,84x
+  //   Seasonality-Balken      viewBox 880 -> gerendert 1256   1,43x
+  // 12 weitere SVGs mit Text waren unverzerrt, 14 gestreckte ohne Text
+  // unproblematisch - betroffen ist genau die Kombination.
+  //
+  // Der Weg heraus ist nicht "nicht mehr strecken" (dann fuellt der Chart die
+  // Breite nicht), sondern die Beschriftung als HTML darueber zu legen -
+  // chartAchsenHtml()/chartPunkteHtml() in js/main.js.
+  console.log('\n── 3) Kein Text in einem gestreckten SVG ──');
+  const streckScan = () => p.evaluate(() => {
+    const out = [];
+    document.querySelectorAll('svg').forEach(sv => {
+      if (!sv.querySelectorAll('text').length) return;
+      const vb = (sv.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+      const r = sv.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2 || vb.length < 4 || !vb[2] || !vb[3]) return;
+      const f = (r.width / vb[2]) / (r.height / vb[3]);
+      if (Math.abs(f - 1) <= 0.15) return;
+      out.push({ f: Math.round(f * 100) / 100,
+        klasse: String(sv.className && sv.className.baseVal !== undefined ? sv.className.baseVal : '') || '(ohne Klasse)',
+        vb: vb[2] + 'x' + vb[3], px: Math.round(r.width) + 'x' + Math.round(r.height),
+        txt: (sv.querySelector('text').textContent || '').slice(0, 16) });
+    });
+    return out;
+  });
+  let streckN = 0, svgN = 0;
+  const streckGesehen = new Set();
+  for (const s of SEITEN) {
+    await p.evaluate(x => { try { showTab(x); } catch (e) {} }, s);
+    await p.waitForTimeout(280);
+    const r = await streckScan();
+    svgN += await p.evaluate(() => [...document.querySelectorAll('svg')].filter(v => v.querySelectorAll('text').length).length);
+    r.forEach(x => {
+      const k = s + '|' + x.klasse + '|' + x.vb;
+      if (streckGesehen.has(k)) return; streckGesehen.add(k);
+      rot(`${s}: SVG .${x.klasse} (viewBox ${x.vb}, gerendert ${x.px}) streckt seinen Text um ${x.f}x — z.B. «${x.txt}». Beschriftung gehoert als HTML darueber (chartAchsenHtml), nicht ins gestreckte SVG.`);
+      streckN++;
+    });
+  }
+  // Und die beiden Fenster, in denen der Fehler gemeldet wurde.
+  await p.evaluate(() => { try { gotoSym('USD'); } catch (e) {} });
+  await p.waitForTimeout(400);
+  for (const [nm, fn] of [['mHist', 'openHistModal'], ['mBt', 'openBacktester']]) {
+    await p.evaluate(f => { try { window[f]('USD'); } catch (e) {} }, fn);
+    await p.waitForTimeout(1100);
+    (await streckScan()).forEach(x => {
+      rot(`${nm}: SVG .${x.klasse} (viewBox ${x.vb}, gerendert ${x.px}) streckt seinen Text um ${x.f}x — z.B. «${x.txt}».`);
+      streckN++;
+    });
+    await p.evaluate(n => { try { closeM(n); } catch (e) {} }, nm);
+    await p.waitForTimeout(250);
+  }
+  if (!streckN) gruen(`${svgN} SVGs mit Text ueber ${SEITEN.length} Seiten und 2 Fenster, keines verzerrt seine Schrift`);
+
   await b.close();
   console.log(fehler ? `\n✗ HTML: ${fehler} Fund(e)` : '\n✓ HTML: kein zerbrochenes Attribut');
   process.exit(fehler ? 1 : 0);

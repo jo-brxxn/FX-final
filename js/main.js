@@ -1286,6 +1286,60 @@ function histAlterungsWechsel(sym,datum,prevDatum){
 // eine Aussage ueber das Asset - also Bias-Blau darueber, Bias-Rot darunter.
 // (Meine eigene Vorschau hatte hier "schwarz" stehen und lag damit auf der
 // falschen Seite dieser Trennung.)
+// ══ ACHSENBESCHRIFTUNG GEHOERT NICHT INS GESTRECKTE SVG ═════════════════
+// Nutzer-Bugreport 2026-09-18 mit Bildschirmfoto: "guck mal die Zahlen die
+// sind so breit". Gemessen, ueber alle 17 Seiten und beide Fenster:
+//
+//   Historie, Score-Linie   viewBox 434 breit, gerendert 1374  -> Text 3,17x
+//   Backtester, Zinspfad    viewBox 1670,      gerendert 1399  -> Text 0,84x
+//   Seasonality-Balken      viewBox 880,       gerendert 1256  -> Text 1,43x
+//
+// URSACHE: `preserveAspectRatio="none"` streckt das SVG auf die
+// Containerbreite - und zwar ALLES darin, auch die Schrift. Fuer Kurven und
+// Balken ist das genau richtig (sie sollen die Breite fuellen), fuer
+// Buchstaben ist es falsch. 12 weitere SVGs mit Text sind unverzerrt, die 14
+// gestreckten OHNE Text sind unproblematisch - betroffen ist genau die
+// Kombination aus beidem.
+//
+// ⚠ Das Projekt hat dafuer laengst ein Muster: die Preis-Kacheln zeichnen die
+// Kurve als gestrecktes `.ab-chart` und setzen die Achse als HTML daneben
+// (`.ab-xax`). Genau das ist hier verallgemeinert. Die Alternative waere ein
+// Gegen-Transform je Textknoten gewesen - das braucht den Skalierungsfaktor,
+// den man erst NACH dem Layout kennt, also eine Messung im Rendern. HTML
+// braucht das nicht.
+//
+// ⚠ Die Beschriftung liegt GENAU dort, wo sie vorher im SVG lag - nur
+// unverzerrt. Deshalb bekommt der Baustein beide Achsen in Prozent der
+// jeweiligen Chart-Kante: so wandert sie beim Strecken mit der Kurve mit,
+// waehrend die Schrift ihre Groesse behaelt.
+//   yL: [{pct, txt}]     pct = Anteil der HOEHE (0 oben, 100 unten)
+//   xL: [{pct, txt, an}] pct = Anteil der BREITE, an = start|mid|end
+//   opt.yLeft / opt.xTop = wo die jeweilige Achse quer dazu sitzt, in Prozent
+function chartAchsenHtml(yL,xL,opt){
+  const o2=opt||{};
+  // ⚠ yLeft ist die BREITE des Beschriftungsstreifens, nicht die Position des
+  // Textes. Als Position (mit translateX(-100%)) ragte das Label in der
+  // schmalen Karte der Asset-Seite links aus dem Container und wurde von
+  // dessen overflow:hidden abgeschnitten - aus "+4.9" wurde "4.9". Als
+  // rechtsbuendiger Streifen fester Breite kann das nicht passieren.
+  const yLeft=(o2.yLeft==null?6:o2.yLeft);
+  const xTop=(o2.xTop==null?92:o2.xTop);
+  const y=(yL||[]).map(o=>
+    `<span class="cax-y" style="top:${o.pct.toFixed(2)}%;width:${yLeft.toFixed(2)}%">${escH(o.txt)}</span>`).join('');
+  const x=(xL||[]).map(o=>
+    `<span class="cax-x cax-${o.an||'mid'}" style="left:${o.pct.toFixed(2)}%;top:${xTop.toFixed(2)}%">${escH(o.txt)}</span>`).join('');
+  return`<div class="cax-lbl">${y}${x}</div>`;
+}
+// ⚠ Auch KREISE werden vom Strecken zu Ellipsen - im Bildschirmfoto vom
+// 2026-09-18 waren die Klickpunkte der Score-Linie sichtbar eiförmig. Sie
+// liegen deshalb ebenfalls als HTML ueber dem SVG: rund bleibt rund, und der
+// Klickbereich ist als echter Knopf sogar groesser als ein 3px-Kreis.
+//   pkte: [{xPct, yPct, farbe, aktiv, tip, klick}]
+function chartPunkteHtml(pkte){
+  return`<div class="cax-pkt">${(pkte||[]).map(o=>
+    `<button class="cax-p${o.aktiv?' on':''}" style="left:${o.xPct.toFixed(2)}%;top:${o.yPct.toFixed(2)}%;--pc:${o.farbe}"
+      title="${escH(o.tip||'')}" onclick="${o.klick}"></button>`).join('')}</div>`;
+}
 const HIST_LINE_H=182;
 function histScoreLineChart(items,aktivDatum){
   const mitWert=items.filter(i=>i.score!=null);
@@ -1317,35 +1371,40 @@ function histScoreLineChart(items,aktivDatum){
    +`<polyline points="${d}" fill="none" stroke="${BC.bear}" stroke-width="2" clip-path="url(#${uid}u)" vector-effect="non-scaling-stroke"/>`).join('');
   // Punkte nur an Tagen mit Ursache - sonst waere jeder Tag ein Punkt und
   // der Hinweis "hier ist etwas passiert" waere keiner mehr.
-  const punkte=items.map((it,i)=>{
-    if(it.score==null||!it.ursache)return'';
-    const aktiv=it.date===aktivDatum;
-    const col=it.score>=0?BC.bull:BC.bear;
-    return`<g style="cursor:pointer" onclick="histJumpDay('${escJH(it.date)}')">
-      <title>${escH(fmtDayHdr(it.date)+': '+(it.score>0?'+':'')+it.score+(it.delta?' ('+(it.delta>0?'+':'')+it.delta+' vs previous day)':'')+' — click to jump to this day')}</title>
-      <circle cx="${xOf(i).toFixed(1)}" cy="${yOf(it.score).toFixed(1)}" r="${aktiv?5:3.2}" fill="${col}" stroke="#fff" stroke-width="${aktiv?2:1.2}"/>
-    </g>`;
-  }).join('');
+  // Punkte als HTML (siehe chartPunkteHtml) - ein <circle> im gestreckten
+  // SVG waere ein Ei.
+  const punkteHtml=chartPunkteHtml(items.map((it,i)=>{
+    if(it.score==null||!it.ursache)return null;
+    return{xPct:xOf(i)/W*100,yPct:yOf(it.score)/H*100,
+      farbe:it.score>=0?BC.bull:BC.bear,aktiv:it.date===aktivDatum,
+      tip:fmtDayHdr(it.date)+': '+(it.score>0?'+':'')+it.score
+        +(it.delta?' ('+(it.delta>0?'+':'')+it.delta+' vs previous day)':'')
+        +' — click to jump to this day',
+      klick:`histJumpDay('${escJH(it.date)}')`};
+  }).filter(Boolean));
   const marke=aktivDatum&&items.some(i=>i.date===aktivDatum)
     ?`<line x1="${xOf(items.findIndex(i=>i.date===aktivDatum)).toFixed(1)}" y1="${padT-6}" x2="${xOf(items.findIndex(i=>i.date===aktivDatum)).toFixed(1)}" y2="${(H-padB+3).toFixed(1)}" stroke="var(--t2)" stroke-width="1.2" stroke-dasharray="3,3" opacity=".6"/>`:'';
-  const yLbl=[hi,0,lo].map(v=>
-    `<text x="${padL-6}" y="${(yOf(v)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--t3)">${(v>0?'+':'')+(Math.round(v*10)/10)}</text>`).join('');
-  // x-Achse: erster, mittlerer und letzter Tag - mit Jahr (Nutzer-Regel).
-  const xIdx=[0,Math.floor((items.length-1)/2),items.length-1].filter((v,i,a)=>a.indexOf(v)===i);
-  const xLbl=xIdx.map(i=>
-    `<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${i===0?'start':i===items.length-1?'end':'middle'}" font-size="9.5" fill="var(--t3)">${escH(fmtDayShort(items[i].date))}</text>`).join('');
+  // ⚠ Achsen als HTML, NICHT als SVG-Text: das SVG laeuft auf
+  // preserveAspectRatio="none" und wuerde die Schrift mitstrecken (gemessen
+  // 3,17x). Siehe chartAchsenHtml().
+  const achsen=chartAchsenHtml(
+    [hi,0,lo].map(v=>({pct:yOf(v)/H*100,txt:(v>0?'+':'')+(Math.round(v*10)/10)})),
+    [0,Math.floor((items.length-1)/2),items.length-1].filter((v,i,a)=>a.indexOf(v)===i)
+      .map((i,k,arr)=>({pct:xOf(i)/W*100,txt:fmtDayShort(items[i].date),
+        an:k===0?'start':k===arr.length-1?'end':'mid'})),
+    {yLeft:(padL-6)/W*100,xTop:(H-padB+10)/H*100});
   // ⚠ Hoehe ueber ein Token, nicht fest: dieselbe Linie steht im Fenster
   // (182px) und in der schmalen Karte der Asset-Seite, wo sie 100px bekommt
   // und der Tagesliste den Rest laesst. Ein !important-Ueberschreiben der
   // inline-Hoehe waere die Alternative gewesen - ein Token ist ehrlicher.
-  return`<div class="histl"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:var(--histl-h,${H}px)">
+  return`<div class="histl cax"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:var(--histl-h,${H}px)">
     <defs>
       <clipPath id="${uid}o"><rect x="0" y="0" width="${W}" height="${y0.toFixed(1)}"/></clipPath>
       <clipPath id="${uid}u"><rect x="0" y="${y0.toFixed(1)}" width="${W}" height="${(H-y0).toFixed(1)}"/></clipPath>
     </defs>
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1.2"/>
-    ${marke}${linien}${punkte}${yLbl}${xLbl}
-  </svg></div>`;
+    ${marke}${linien}
+  </svg>${punkteHtml}${achsen}</div>`;
 }
 // Klick auf einen Punkt der Linie: die zugehoerige Tageszeile hervorheben und
 // ins Bild holen. ⚠ Kein Neu-Rendern der ganzen Liste - das wuerde die
@@ -8073,9 +8132,11 @@ function renderAssetBoard(c){
            Spalte im gemeinsamen. Eine vierte Spalte im gemeinsamen Raster
            haette die drei Makro-Karten mit verschoben. */''}
       <div class="ab-orow">
+        ${/* ⚠ Reihenfolge 2026-09-18 auf Nutzer-Wunsch: „Tausch quicknotes und
+             Kalender also die Plätze" - Calendar steht jetzt vor Pinned notes. */''}
         <div class="ab-col">${abQuickGridHtml(c)}</div>
-        <div class="ab-col">${abPinnedHtml(c)}</div>
         <div class="ab-col">${assetMonthCalHtml(c)}</div>
+        <div class="ab-col">${abPinnedHtml(c)}</div>
         <div class="ab-col">${abHistorieKarteHtml(c)}</div>
       </div>
       ${/* ⚠ Eigene Reihe ueber alle drei Spalten (Nutzer 2026-09-14: "Mach
@@ -16205,25 +16266,27 @@ function btZinspfadChart(meetings,aktiv,ccy,vglMeetings,vglCcy){
   };
   const vgl=(vglMeetings&&vglMeetings.length>1)
     ?`<path d="${treppe(vglMeetings.slice().reverse())}" fill="none" stroke="var(--t3)" stroke-width="1.6" stroke-dasharray="4,3" opacity=".75" vector-effect="non-scaling-stroke"/>`:'';
-  const marker=ms.map(m=>{
-    if(m.dir==='hold')return'';
-    const x=xOf(m.date),y=yOf(m.rate),an=m.date===aktiv;
-    const col=m.dir==='hike'?BC.bull:BC.bear;
-    return`<g style="cursor:pointer" onclick="btJump('${escJH(m.date)}')">
-      <title>${escH(fmtDayHdr(m.date)+': '+m.dir.toUpperCase()+' '+Math.round(Math.abs(m.delta)*100)+' bp, '+fmtIndVal(m.prev,'%')+' → '+fmtIndVal(m.rate,'%')+' — click to jump to this row')}</title>
-      <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${an?5:3.2}" fill="${col}" stroke="#fff" stroke-width="${an?2:1.2}"/></g>`;
-  }).join('');
-  const yL=[hi,(hi+lo)/2,lo].map(v=>
-    `<text x="${padL-6}" y="${(yOf(v)+3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--t3)">${escH(fmtIndVal(Math.round(v*100)/100,'%'))}</text>`).join('');
-  const xL=[ms[0],ms[Math.floor((ms.length-1)/2)],ms[ms.length-1]].map((m,i)=>
-    `<text x="${xOf(m.date).toFixed(1)}" y="${H-padB+16}" text-anchor="${i===0?'start':i===2?'end':'middle'}" font-size="9.5" fill="var(--t3)">${escH(fmtMonShort(m.date))}</text>`).join('');
+  const markerHtml=chartPunkteHtml(ms.map(m=>{
+    if(m.dir==='hold')return null;
+    return{xPct:xOf(m.date)/W*100,yPct:yOf(m.rate)/H*100,
+      farbe:m.dir==='hike'?BC.bull:BC.bear,aktiv:m.date===aktiv,
+      tip:fmtDayHdr(m.date)+': '+m.dir.toUpperCase()+' '+Math.round(Math.abs(m.delta)*100)
+        +' bp, '+fmtIndVal(m.prev,'%')+' → '+fmtIndVal(m.rate,'%')+' — click to jump to this row',
+      klick:`btJump('${escJH(m.date)}')`};
+  }).filter(Boolean));
+  // Achsen als HTML (siehe chartAchsenHtml): das SVG streckt sonst die
+  // Schrift mit - hier gemessen 0,84x, also gestaucht.
+  const achsen=chartAchsenHtml(
+    [hi,(hi+lo)/2,lo].map(v=>({pct:yOf(v)/H*100,txt:fmtIndVal(Math.round(v*100)/100,'%')})),
+    [ms[0],ms[Math.floor((ms.length-1)/2)],ms[ms.length-1]].map((m,i)=>
+      ({pct:xOf(m.date)/W*100,txt:fmtMonShort(m.date),an:i===0?'start':i===2?'end':'mid'})),
+    {yLeft:(padL-6)/W*100,xTop:(H-padB+10)/H*100});
   const legende=vgl?`<div class="bt-pfad-leg"><span><i class="bt-leg-s"></i>${escH(ccy)}</span><span><i class="bt-leg-d"></i>${escH(vglCcy)}</span></div>`:'';
-  return`<div class="bt-pfad">${legende}<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+  return`<div class="bt-pfad cax">${legende}<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
     <line x1="${padL}" y1="${yOf(lo).toFixed(1)}" x2="${W-padR}" y2="${yOf(lo).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${vgl}
     <path d="${treppe(ms)}" fill="none" stroke="var(--accent)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
-    ${marker}${yL}${xL}
-  </svg></div>`;
+  </svg>${markerHtml}${achsen}</div>`;
 }
 // Klick auf einen Marker: Zeile hervorheben und ins Bild holen. Wie in der
 // Historie ohne Neu-Rendern der Liste - das wuerde die Scrollposition
@@ -19105,6 +19168,7 @@ function seasBarChart(months,curMon,curYear){
   // 2026-07-12, zweite Runde: das ganze Diagramm soll insgesamt groesser
   // sein, nicht nur die Mindestbreite) - 73px pro Monat, Labels 17px/14px.
   const W=880,H=260,padT=20,padB=64,padL=10,padR=10;
+  const seasLbl=[];   // Beschriftung liegt als HTML ueber dem SVG
   const iw=(W-padL-padR)/12;
   const cy=curYear||{};
   const cyVals=Object.values(cy).filter(v=>isFinite(v));
@@ -19125,8 +19189,11 @@ function seasBarChart(months,curMon,curYear){
     const col=avg>=0?BC.bull:BC.bear;
     const yv=yOf(avg),top=Math.min(y0,yv),h=Math.max(1.5,Math.abs(y0-yv));
     parts.push(`<rect x="${(cx-iw*.36).toFixed(1)}" y="${top.toFixed(1)}" width="${(iw*.72).toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}" opacity="${mon===curMon?.92:.8}"${mon===curMon?' stroke="rgba(255,255,255,.8)" stroke-width="1"':''}/>`);
-    parts.push(`<text x="${cx.toFixed(1)}" y="${monthLblY}" text-anchor="middle" font-size="17" font-weight="${mon===curMon?'800':'600'}" fill="${mon===curMon?'var(--t0)':'var(--t3)'}">${SEAS_MON[mon-1]}</text>`);
-    parts.push(`<text x="${cx.toFixed(1)}" y="${hitLblY}" text-anchor="middle" font-size="14" fill="${hit>=60?BC.bull:hit<=40?BC.bear:'var(--t3)'}">${hit}%</text>`);
+    // ⚠ Beschriftung als HTML, nicht als SVG-Text: das SVG laeuft auf
+    // preserveAspectRatio="none" und streckte die Schrift mit (gemessen
+    // 1,43x am 2026-09-18). Siehe chartAchsenHtml() - dort steht der
+    // ganze Befund.
+    seasLbl.push({cx,mon,hit,aktiv:mon===curMon});
     // Ein gemeinsamer Tooltip pro Monat statt zwei getrennter Hover-Punkte an
     // (fast) derselben Stelle - sonst zeigt attachChartHovers()s Naechster-
     // Punkt-Suche je nach Mausposition nur EINEN von beiden (dieselbe Lehre
@@ -19148,15 +19215,21 @@ function seasBarChart(months,curMon,curYear){
     const dots=cyMonths.map(mon=>{const x=padL+(mon-.5)*iw,y=yOf(cy[mon]);return`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="var(--t0)"/>`;}).join('');
     priceOverlay=`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--t0)" stroke-width="2" stroke-dasharray="6,4" opacity=".85"/>${dots}`;
   }
+  // Monatsnamen und Trefferquoten als HTML ueber dem SVG (chartAchsenHtml
+  // erklaert den Befund): gestreckt wurden sie mit 1,43x zu breit.
+  const lblHtml=`<div class="cax-lbl">`+seasLbl.map(o=>
+    `<span class="cax-x cax-mid seas-mon${o.aktiv?' on':''}" style="left:${(o.cx/W*100).toFixed(2)}%;top:${(monthLblY/H*100).toFixed(2)}%">${escH(SEAS_MON[o.mon-1])}</span>`
+   +`<span class="cax-x cax-mid seas-hit" style="left:${(o.cx/W*100).toFixed(2)}%;top:${(hitLblY/H*100).toFixed(2)}%;color:${o.hit>=60?BC.bull:o.hit<=40?BC.bear:'var(--t3)'}">${o.hit}%</span>`
+  ).join('')+`</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
     <line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${parts.join('')}
     ${priceOverlay}
-  </svg>`;
-  // Mindestbreite, damit Monats-Labels/%-Zahlen bei preserveAspectRatio="none"
-  // nie unter die native Groesse herunterskaliert werden (auf schmalen
-  // Bildschirmen wird die Karte stattdessen horizontal scrollbar, siehe
-  // overflow-x:auto am umschliessenden Card-Container in renderSeasonality).
+  </svg>${lblHtml}`;
+  // Mindestbreite: die Beschriftung sitzt jetzt zwar als HTML darueber und
+  // wird nicht mehr mitskaliert, aber unter 880px stehen zwoelf Monatsnamen
+  // so eng, dass sie sich beruehren - die Karte bleibt deshalb horizontal
+  // scrollbar (overflow-x:auto am Card-Container in renderSeasonality).
   return chartHoverWrap(svg,hpts,`min-width:${W}px`);
 }
 // ══ REGIME RADAR: DARSTELLUNG ══════════════════════════════════════════
