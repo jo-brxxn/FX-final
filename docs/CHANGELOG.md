@@ -15235,3 +15235,85 @@ Attribut`) — 154 Funde. Meine Prüfzeile im Fix-Skript stand damals *nach* dem
 Schreiben, die Datei war also schon kaputt, als sie ansprang. Jetzt prüft sie
 vorher. Merksatz: eine Zusicherung, die erst nach dem Schreiben läuft, ist
 keine Zusicherung, sondern ein Obduktionsbericht.
+
+---
+
+## 2026-09-18 — Die News-Einordnung lief zehn Tage ins Leere (Routine ohne Connector)
+
+`check/rules.js` meldete `news_ai.json` als tot: **zuletzt geschrieben am
+2026-09-08T20:45:53Z, 238 Stunden alt, erlaubt sind 40**. Das war der einzige
+rote Punkt der Suite und blockierte den Push von VERSION-CHECK-526.
+
+### Was gemessen wurde
+
+| Frage | Messung |
+|---|---|
+| Welcher Workflow schreibt die Datei? | **keiner** — kein `.github/workflows/*` nennt `news_ai.json`. Sie wird von einer geplanten Claude-Sitzung geschrieben (`quelle`-Feld in der Datei selbst), gelesen in `js/data-feeds.js:362 ff`. |
+| Wie viele Commits haben sie je angefasst? | **zwei**: `6de9816` (08.09.) und `869e9f8` (09.09.) — beide aus interaktiven Sitzungen, nicht aus der Routine. Der zweite hat `updated` nicht bewegt. |
+| Wie viel Rückstand? | **878 Schlagzeilen** in `news_data.json` sind neuer als der Wasserstand und haben keinen Eintrag unter `items`. |
+| Feuert die Routine überhaupt? | Ja, zuverlässig. `trig_017mFktyWqqnEgMijMigGKJ3`, zuletzt 2026-09-18T15:05:52 → 15:06:08, Status **SUCCEEDED**. |
+
+### Ursache
+
+Der Lauf dauerte **16 Sekunden**. Die Routine hat genau eine Aufgabe: einmal
+`mcp__Claude_Code_Remote__create_session` aufrufen. Ihr Feld
+`mcp_connections` ist aber **`[]`** — die gefeuerte Sitzung bekommt damit
+überhaupt keine Connector-Werkzeuge und kann diesen einen Aufruf nicht
+machen. Zum Vergleich: die Routine „FX Fundamentals Scanner" trägt
+`mcp_connections:[{name:"Claude_Code_Remote"}]`. Passend dazu existiert in der
+Sitzungsliste **keine einzige** Sitzung mit dem Titel „News-Einordnung
+(Lauf)". Die Routine meldete zehn Tage lang SUCCEEDED, weil das Feuern
+gelang — nicht, weil der Lauf etwas tat.
+
+⚠ Das ist dieselbe Falle wie am 11.09. beim Sentiment-Schritt: **ein grüner
+Lauf ist kein Beleg**, und die Laufzeit taugt ebenfalls nicht als Merkmal.
+Verlässlich ist nur das `updated`-Feld der Zieldatei.
+
+### Was versucht wurde - und was davon ging
+
+1. **Connector nachruesten** (der eigentlich richtige Fix: die Routine
+   behaelt den `create_session`-Umweg, bekommt aber das fehlende Werkzeug).
+   `create_trigger` lehnt das hier ab: *"the connectors parameter is not
+   available for this organization"*. **Aus einer Sitzung heraus ist dieser
+   Weg also gar nicht reparierbar** - nur ueber die Routinen-Oberflaeche auf
+   claude.ai.
+2. **Umweg weglassen, feste Arbeitssitzung wecken.** Neue Routine
+   `trig_019cqpXBtt5ZfC9wa4WfVEdN` mit
+   `persistent_session_id: session_011LBGj53E2C84GuCeLbZY67` - der Sitzung,
+   die seit 10.09. eine autorisierte Arbeitskopie hat und nur Bash/git
+   braucht, keinen Connector. Von Hand ausgeloest um 19:09:18 UTC.
+   **Ergebnis nach zehn Minuten: nichts.** Die Sitzung steht unveraendert auf
+   `updated_at 2026-09-10T15:21`, die Routine hat ueberhaupt keinen
+   `last_run`-Eintrag (die alte bekam ihren binnen 16 Sekunden), und auf
+   `origin/main` liegt kein Commit. Die geweckte Sitzung ist seit acht Tagen
+   `connection_status: disconnected`; offenbar wird ein kalter Container
+   dabei nicht neu bereitgestellt.
+
+⚠ Damit ist der Testlauf **fehlgeschlagen**, nicht offen. Beides ist
+dokumentiert, statt einen der Wege als repariert zu melden.
+
+### Was stattdessen getan wurde
+
+Der Rueckstand wurde **in dieser Sitzung von Hand aufgeholt** - die
+Arbeitskopie hier ist autorisiert, `news_ai.json` ist eine reine Datendatei:
+**60 Meldungen eingeordnet** (die nach `w` wichtigsten von 878 offenen; 8
+davon ohne Bezug zu einem gefuehrten Asset, also `a: []` ohne `sum`), **7
+verwaiste Eintraege entfernt**, **3 Notiz-Vorschlaege** (Fed-Erhoehung 16.09.,
+BoJ auf 1,25 % am 18.09., EZB-Erhoehung 10.09.). `items` 33 -> 86, `updated`
+auf 2026-09-18T19:22Z. Damit ist `check/rules.js` wieder gruen und die Zahlen
+in der App stimmen; die **Routine selbst bleibt kaputt**.
+
+### Was offen bleibt
+
+Die zweimal taegliche Automatik laeuft weiter ins Leere. Reparierbar ist sie
+nur dort, wo sich ein Connector anhaengen laesst: **claude.ai -> Routinen ->
+die Routine "News-Einordnung (KI, 08:00 + 17:00 DE)" neu anlegen und dabei
+den Connector `Claude_Code_Remote` anhaken.** Der Auftragstext von
+`trig_017mFktyWqqnEgMijMigGKJ3` kann unveraendert uebernommen werden - er ist
+richtig, ihm fehlte nur das Werkzeug.
+
+**Neu im Auftragstext (beide Fassungen):** auch ein Lauf, der **null** neue
+Meldungen findet, muss `updated` setzen, committen und pushen. Vorher stand
+dort "sind es null, committe nichts" - und ein solcher Lauf sieht von aussen
+exakt aus wie ein ausgefallener, weil `check/rules.js` genau dieses Feld
+misst.
