@@ -15499,3 +15499,14 @@ Fenster mit übersichtlichem Text", nicht „dieses eine Fenster".
 Ausserdem: `if(!geprueft.knoepfe) fehler.push(...)` — nichts geprüft ist kein
 Bestanden. Dieselbe Lehre wie bei `check/historie.js`, das einmal 6 Fälle
 meldete und 0 nachrechnete.
+
+**Nachtrag desselben Tages — die Trennlinie war beim ersten Anlauf falsch
+gezogen.** Die Kalender-Fußzeile lautete *„Covers Sep 15, 26 – Sep 28, 26.
+Dimmed days are not published yet."* — ein Satz, zwei Sorten. Ich hatte ihn
+komplett hinter das ⓘ geräumt; `check/display.js` meldete daraufhin für alle
+Assets *„Kalender-Fußzeile fehlt — Abdeckungszeitraum wird nicht genannt"*.
+Zu Recht: der Zeitraum ändert sich täglich, ist also nach der eigenen
+Faustregel **Inhalt**. Jetzt steht er wieder auf der Karte
+(`.abc-foot.abc-range`), nur der erklärende Teil ist hinter dem ⓘ.
+`check/erklaerung.js` unterscheidet das mit — verboten ist eine `.abc-foot`
+**ohne** die Marke `abc-range`, nicht die Klasse als solche.

@@ -247,6 +247,14 @@ ist ab jetzt ein Fehler, kein Stilmittel.
   was *gerade* gilt, und ist keine Erklärung. Faustregel: ändert sich der Satz
   mit den Daten, ist er Inhalt; erklärt er, wie man die Karte liest, ist er
   Erklärung.
+  ⚠ Diese Trennung ist beim ersten Anlauf schiefgegangen und wurde gefangen:
+  die Kalenderkarte trug unten *„Covers 15. Sep – 28. Sep. Dimmed days are not
+  published yet."* — ein Satz, zwei Sorten. Der **Zeitraum** ändert sich
+  täglich, ist also Inhalt und bleibt auf der Karte (`.abc-foot.abc-range`);
+  nur der erklärende Teil ist gewandert. `check/display.js` verlangt den
+  Zeitraum ausdrücklich, weil ein leerer Tag ohne ihn wie „nichts los"
+  aussieht statt wie „weiß noch niemand" — und hat den Rückbau prompt rot
+  gemeldet.
 - **stopPropagation ist Pflicht** — manche Karten tragen selbst einen
   `onclick` (die Kalenderkarte öffnet das volle Fenster). `abInfoBtn` setzt es.
 - **Das Fenster:** `#mCardInfo`, Klasse `.modal.ci-modal`, 540 px statt der

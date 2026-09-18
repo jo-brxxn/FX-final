@@ -6868,8 +6868,16 @@ function assetMonthCalHtml(c,gross){
   const ersterWochentag=(new Date(jahr,monat,1).getDay()+6)%7;   // Montag zuerst
   const tageImMonat=new Date(jahr,monat+1,0).getDate();
 
+  // ⚠ Der Abdeckungszeitraum bleibt SICHTBAR auf der Karte, die Erklaerung
+  // wandert hinter das ⓘ. Die Trennlinie ist die aus der Dauerregel: aendert
+  // sich der Satz mit den Daten, ist er Inhalt - erklaert er, wie man die
+  // Karte liest, ist er Erklaerung. Der Zeitraum aendert sich taeglich.
+  // Das war in der ersten Fassung falsch: die ganze Fusszeile war weg, und
+  // check/display.js hat es zu Recht gemeldet ("Abdeckungszeitraum wird nicht
+  // genannt") - ohne ihn sieht ein leerer Tag aus wie "nichts los", statt wie
+  // "weiss noch niemand".
   const calErkl=[von&&bis
-      ?`The feed currently covers <b>${escH(fmtDayHdr(von))}</b> to <b>${escH(fmtDayHdr(bis))}</b>. Dimmed days lie outside that window: they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
+      ?`Dimmed days lie outside the window the feed currently covers: they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
       :'No calendar data has loaded for this asset yet.',
     'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.']
     .concat(calHighOnly?['The card is currently filtered to <b>high-impact</b> releases only.']:[]);
@@ -6920,8 +6928,12 @@ function assetMonthCalHtml(c,gross){
   // siehe abInfoBtn. Der gedaempfte Tag traegt seine Begruendung ausserdem
   // weiterhin als eigenen title ("Not published yet ..."), der Hinweis ist
   // also nicht die einzige Quelle.
+  const zeitraum=`<div class="abc-foot abc-range">${von&&bis
+      ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>`
+      :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>`;
   return`<div class="abc-cal" onclick="openAssetCal()" title="Open the full calendar for this asset">
       ${raster}
+      ${zeitraum}
       ${abGoToHtml('cal',true)}
     </div>`;
 }

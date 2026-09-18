@@ -27,7 +27,17 @@ const WURZEL = path.join(__dirname, '..');
 // bewusst namentlich gelistet statt heuristisch gesucht: eine Heuristik
 // ("Text unten in einer Karte") trifft auch Datenzeilen, und ein Waechter mit
 // Fehlalarmen wird abgeschaltet.
-const VERBOTEN = ['ab-note', 'abc-foot', 'histp-modelnote'];
+// ⚠ `abc-foot` steht hier mit einem Zusatz: die Kalenderkarte traegt dort
+// weiterhin ihren ABDECKUNGSZEITRAUM, und der ist Inhalt, keine Erklaerung -
+// er aendert sich taeglich, und check/display.js verlangt ihn ausdruecklich.
+// Verboten ist nur eine abc-foot OHNE die Marke `abc-range`, also die alte
+// Erklaer-Fusszeile. Genau diese Unterscheidung ist die Dauerregel selbst:
+// aendert sich der Satz mit den Daten, ist er Inhalt.
+const VERBOTEN = [
+  { kl: 'ab-note',          sel: '.ab-note' },
+  { kl: 'abc-foot',         sel: '.abc-foot:not(.abc-range)' },
+  { kl: 'histp-modelnote',  sel: '.histp-modelnote' }
+];
 const SEITEN = ['dash', 'assets', 'trends', 'calendar', 'regime', 'news', 'sentiment', 'research'];
 
 const fehler = [];
@@ -39,9 +49,9 @@ for (const datei of ['js/main.js', 'js/score.js', 'js/calendar.js', 'js/data-fee
   if (!fs.existsSync(p)) continue;
   const txt = fs.readFileSync(p, 'utf8');
   txt.split('\n').forEach((z, i) => {
-    VERBOTEN.forEach(kl => {
-      if (z.includes('class="' + kl + '"') || z.includes("class='" + kl + "'")) {
-        fehler.push(`${datei}:${i + 1} baut noch eine Erklaerung als .${kl} in den Kartenkoerper. ` +
+    VERBOTEN.forEach(v => {
+      if (z.includes('class="' + v.kl + '"') || z.includes("class='" + v.kl + "'")) {
+        fehler.push(`${datei}:${i + 1} baut noch eine Erklaerung als .${v.kl} in den Kartenkoerper. ` +
           `Sie gehoert hinter das ⓘ: abTile(...,erkl) bzw. abInfoBtn(titel,erkl).`);
       }
       geprueft.statisch++;
@@ -62,7 +72,7 @@ for (const datei of ['js/main.js', 'js/score.js', 'js/calendar.js', 'js/data-fee
   const pruefeSeite = async (name) => {
     geprueft.dom++;
     // B) verbotene Klassen im DOM
-    const treffer = await p.evaluate(kl => kl.map(k => [k, document.querySelectorAll('.' + k).length]), VERBOTEN);
+    const treffer = await p.evaluate(v => v.map(x => [x.kl, document.querySelectorAll(x.sel).length]), VERBOTEN);
     treffer.forEach(([kl, n]) => {
       if (n) fehler.push(`[${name}] ${n}x .${kl} im DOM - Erklaerung steht noch im Kartenkoerper statt hinter dem ⓘ.`);
     });
