@@ -29,7 +29,7 @@ const path = require('path');
 const http = require('http');
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const { chromium } = require(PW);
-const { wartenBisDatenDa } = require('./warten.js');
+const { wartenBisDatenDa, FEEDS } = require('./warten.js');
 
 const BASE = process.argv[2] || process.env.CHECK_BASE || 'origin/main';
 const URL_NEU = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
@@ -118,6 +118,9 @@ const ERFASSEN = () => {
     o.pair[n] = pairScore(n);
     o.carry[n] = typeof pairCarryAdj === 'function' ? pairCarryAdj(n) : 0;
   });
+  // Welche Live-Feeds auf DIESER Seite wirklich Daten geliefert haben - siehe
+  // die Begruendung an `feedSig` weiter unten.
+  o.__feeds = (typeof DATA_LIVE_OK !== 'undefined') ? Object.assign({}, DATA_LIVE_OK) : null;
   return o;
 };
 
@@ -135,27 +138,68 @@ const ERFASSEN = () => {
   // im normalisierten Modus. Ein Diff-Waechter, der die Haelfte des Modells
   // nicht ansieht, beantwortet die Frage nicht, fuer die es ihn gibt.
   const ladenModus = async (url, modus) => {
+    // ⚠ Der Modus muss im localStorage DERSELBEN Herkunft stehen, die ihn
+    // liest. Hier stand das Setzen VOR dem goto - es lief damit noch auf der
+    // zuvor geladenen Seite. Basis und Arbeitsbaum liegen auf verschiedenen
+    // Ports und haben getrennte Speicher; in der alten Reihenfolge (zwei
+    // Ladevorgaenge je Herkunft hintereinander) ging das zufaellig auf, bei
+    // wechselnder Herkunft landet der Schalter zuverlaessig am falschen Ort.
+    // Gemessen 2026-09-18: 113 gemeldete Unterschiede, alle im Modus
+    // "normalized", bei voellig identischem Code auf beiden Seiten.
+    // Deshalb: erst hin, dann setzen, dann neu laden.
+    await p.goto(url, { waitUntil: 'domcontentloaded' });
     await p.evaluate(m => { try { localStorage.setItem('fxpro_score_mode', m); } catch (e) {} }, modus);
     await p.goto(url, { waitUntil: 'networkidle' });
     await p.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
     await wartenBisDatenDa(p);   // statt fester Frist - siehe check/warten.js
     return p.evaluate(ERFASSEN);
   };
-  // Beide Staende in beiden Modi: die Werte werden mit einem Praefix in EIN
-  // Objekt gelegt, damit der bestehende Vergleich unveraendert weiterlaeuft
-  // und ein Treffer sofort sagt, in WELCHEM Modus er steckt.
-  const beideModi = async (url) => {
-    const out = { sym:{}, symRaw:{}, rub:{}, staerke:{}, pair:{}, carry:{} };
-    for (const m of ['classic', 'normalized']) {
-      const r = await ladenModus(url, m);
-      Object.keys(out).forEach(k => Object.keys(r[k] || {}).forEach(id => { out[k][m + ':' + id] = r[k][id]; }));
-    }
-    return out;
-  };
-  let alt, neu, fehler = null;
+  // ⚠ WARUM DER FEED-AUSGANG MITGEMESSEN WIRD (Messung 2026-09-18).
+  // Die beiden Staende werden als ZWEI getrennte Seiten geladen und holen sich
+  // die acht Live-Feeds JE FUER SICH. `wartenBisDatenDa` wartet nur darauf,
+  // dass jeder Feed GEANTWORTET hat - ein Fehlschlag (false) zaehlt dabei
+  // ausdruecklich als Antwort. Liefert ein Feed also auf der einen Seite Daten
+  // und auf der anderen nicht, sind die Scores voellig zu Recht verschieden -
+  // und dieser Waechter meldete das bis heute als "die Score-Formel wurde
+  // geaendert". Gemessen: derselbe Arbeitsbaum ergab im vollen Lauf 5 von 48
+  // veraenderten Symbol-Scores und einzeln dreimal hintereinander 0 von 48;
+  // `check/rules.js` las dieses Ergebnis und verlangte einen
+  // SCORE_MODEL_VERSION-Bump, der die gesamte aufgezeichnete Historie
+  // faelschlich als "aus einem frueheren Modell" markiert haette.
+  // Stimmen die Seiten im Feed-Ausgang nicht ueberein, ist der Vergleich
+  // ungueltig - und ein ungueltiger Vergleich darf ueber die Formel gar nichts
+  // sagen, weder "geaendert" noch "unveraendert".
+  const feedSig = f => FEEDS.map(k => k + '=' + (f && f[k] === true ? 1 : 0)).join(' ');
+  const leer = () => ({ sym:{}, symRaw:{}, rub:{}, staerke:{}, pair:{}, carry:{} });
+  const BASIS_URL = `http://127.0.0.1:${PORT_ALT}/index.html`;
+  let alt = leer(), neu = leer(), fehler = null, unvergleichbar = null;
   try {
-    alt = await beideModi(`http://127.0.0.1:${PORT_ALT}/index.html`);
-    neu = await beideModi(URL_NEU);
+    // Modus aussen, Seite innen, und bei der ERSTEN Abweichung ist Schluss.
+    // ⚠ Hier stand zuerst eine Wiederholung (bis zu drei Anlaeufe je Modus).
+    // Die Gegenprobe hat sie widerlegt: ein Ladevorgang schreibt Zustand in den
+    // localStorage SEINER Herkunft, und der naechste Ladevorgang derselben
+    // Herkunft liest ihn wieder. Der zweite Anlauf lief also auf einer von der
+    // ersten, kaputten Runde verschmutzten Seite - gemessen 2026-09-18: Feeds
+    // im zweiten Anlauf wieder einig, und trotzdem 113 gemeldete Unterschiede,
+    // obwohl Basis und Arbeitsbaum derselbe Code waren. Eine Wiederholung auf
+    // einer verschmutzten Seite beantwortet die Frage nicht, sie erfindet eine
+    // neue Antwort.
+    for (const m of ['classic', 'normalized']) {
+      const a = await ladenModus(BASIS_URL, m);
+      const n = await ladenModus(URL_NEU, m);
+      if (feedSig(a.__feeds) !== feedSig(n.__feeds)) {
+        unvergleichbar = `Modus ${m}: die Live-Feeds haben auf den beiden Staenden unterschiedlich geantwortet.\n` +
+          `    Basis       : ${feedSig(a.__feeds)}\n` +
+          `    Arbeitsbaum : ${feedSig(n.__feeds)}\n` +
+          `    Damit vergleicht dieser Lauf nicht die RECHNUNG, sondern den Netzzugang - er sagt ueber die Formel nichts aus.\n` +
+          `    Noch einmal laufen lassen (node check/scorediff.js); bleibt es dabei, ist ein Feed wirklich kaputt.`;
+        break;
+      }
+      Object.keys(alt).forEach(k => Object.keys(a[k] || {}).forEach(id => {
+        alt[k][m + ':' + id] = a[k][id];
+        neu[k][m + ':' + id] = n[k][id];
+      }));
+    }
   } catch (e) { fehler = String(e); }
   await b.close();
   srv.close();
@@ -165,6 +209,14 @@ const ERFASSEN = () => {
     console.error('[scorediff] Vergleich nicht moeglich:', fehler);
     schreibe({ status: 'fehler', grund: fehler, basis: BASE });
     process.exit(1);
+  }
+  if (unvergleichbar) {
+    // Bewusst KEIN roter Lauf: ein Netz-Aussetzer ist kein Befund. Aber auch
+    // kein "ok" - `check/rules.js` nimmt nur status:"ok" als Nachweis an und
+    // faellt sonst auf die strenge Regel zurueck (fail-closed).
+    console.error('[scorediff] Vergleich nicht aussagekraeftig:\n    ' + unvergleichbar);
+    schreibe({ status: 'unvergleichbar', grund: unvergleichbar, basis: BASE, zeit: new Date().toISOString() });
+    process.exit(0);
   }
 
   const vergleich = (a, c) => {

@@ -139,11 +139,21 @@ const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s));
 //
 // Fail-closed: fehlt das Ergebnis oder ist es aelter als der Arbeitsbaum,
 // gilt weiter die strenge Regel.
+// ⚠ Der Grund fuer ein FEHLENDES Ergebnis gehoert in die Meldung (2026-09-18).
+// Meldet scorediff "unvergleichbar" (Live-Feeds haben auf den beiden Staenden
+// verschieden geantwortet), ist das etwas voellig anderes als "noch nie
+// gelaufen" - im ersten Fall waere ein Bump vermutlich FALSCH, im zweiten
+// weiss man es schlicht nicht. Wer das nicht auseinanderhaelt, bumpt auf
+// Verdacht und markiert die ganze Historie als aus einem frueheren Modell.
+let scorediffGrund = 'Kein Ergebnis von check/scorediff.js - mit "node check/all.js" laeuft es automatisch mit und rechnet nach.';
 function scorediffErgebnis() {
   try {
     const p = __dirname + '/.scorediff.json';
     if (!fs.existsSync(p)) return null;
     const o = JSON.parse(fs.readFileSync(p, 'utf8'));
+    if (o.status === 'unvergleichbar' && o.basis === BASE)
+      scorediffGrund = 'check/scorediff.js konnte NICHT nachrechnen: ' + o.grund +
+        ' -> erst wiederholen (node check/scorediff.js), bevor hier irgendetwas gebumpt wird.';
     if (o.status !== 'ok' || o.basis !== BASE) return null;
     // Aelter als index.html? Dann bezieht es sich auf einen anderen Stand.
     if (fs.statSync(p).mtimeMs < fs.statSync('index.html').mtimeMs) return null;
@@ -165,7 +175,7 @@ if (formelBeruehrt.length) {
       `${formelBeruehrt.length > 4 ? ', ...' : ''}), aber SCORE_MODEL_VERSION steht weiter auf ${jetzt}. ` +
       `Ohne Bump vergleichen History, Trends und die Staerke-Note still zwei verschiedene Rechnungen.` +
       (nachgerechnet ? ` check/scorediff.js hat nachgerechnet: der Symbol-Score hat sich an ${nachgerechnet.symbolGeaendert} Stellen geaendert.`
-                     : ` (Kein Ergebnis von check/scorediff.js - mit "node check/all.js" laeuft es automatisch mit und rechnet nach.)`));
+                     : ` (${scorediffGrund})`));
 }
 
 // ── Regel 3: Formulierungs-Logik geaendert -> SUMMARY_ENGINE_VERSION hoch ──

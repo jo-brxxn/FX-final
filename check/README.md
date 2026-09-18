@@ -163,6 +163,37 @@ in `check/.scorediff.json` (gitignored), `rules.js` liest es.
   Zahl der betroffenen Stellen.
 - **Kein Ergebnis vorhanden** (z.B. `--static`, oder aelter als `index.html`)
   -> es gilt die strenge Regel. Fail-closed, nie fail-open.
+- **`status: "unvergleichbar"`** -> ebenfalls strenge Regel, aber die Meldung
+  sagt jetzt WARUM (siehe naechster Absatz), statt eine Zahl zu behaupten.
+
+⚠ **Der Vergleich ist nur gueltig, wenn beide Seiten dieselben Feeds hatten**
+(2026-09-18). Basis und Arbeitsbaum werden als zwei getrennte Seiten geladen
+und holen sich die acht Live-Feeds JE FUER SICH; `warten.js` wartet nur
+darauf, dass jeder Feed *geantwortet* hat - ein Fehlschlag zaehlt dabei als
+Antwort. Reisst also auf einer Seite die 20-Sekunden-Frist eines Feeds
+(unter voller Last realistisch: mehrere Chromium-Instanzen auf derselben CPU,
+zwei verschiedene Server), rechnet diese Seite ohne die Daten - und der
+Vergleich meldete das als Formel-Aenderung. Gemessen: derselbe Arbeitsbaum
+ergab im vollen Lauf 5 von 48 veraenderten Symbol-Scores und einzeln dreimal
+hintereinander 0 von 48; `rules.js` verlangte daraufhin einen Bump, der die
+ganze Historie faelschlich als "aus einem frueheren Modell" markiert haette.
+`scorediff.js` misst den Feed-Ausgang deshalb MIT und erklaert den Lauf bei
+Abweichung fuer ungueltig (`status: "unvergleichbar"`, Rueckgabewert 0 - ein
+Netz-Aussetzer ist kein Befund und soll den Lauf nicht rot faerben).
+
+Zwei Dinge, die die Gegenprobe dazu aufgedeckt hat und die man nicht
+"aufraeumen" sollte:
+
+- **Nicht wiederholen.** Der erste Anlauf schreibt Zustand in den
+  `localStorage` SEINER Herkunft, den der zweite wieder liest - die
+  Wiederholung lief also auf einer verschmutzten Seite und erfand 113
+  Unterschiede bei identischem Code. Eine Abweichung beendet den Vergleich
+  sofort.
+- **Der Score-Modus muss NACH dem Navigieren gesetzt werden.** Basis und
+  Arbeitsbaum liegen auf verschiedenen Ports und haben damit getrennte
+  Speicher; ein `localStorage.setItem` vor dem `goto` landet noch auf der
+  vorigen Herkunft. Solange zwei Ladevorgaenge je Herkunft aufeinander
+  folgten, ging das zufaellig auf - bei wechselnder Herkunft nicht mehr.
 
 Anlass: der Carry-Fix vom 2026-08-23 fasste `pairCarryAdj`/`actualColor` an
 (beide in der Flaeche), liess aber 0 von 16 Symbol-Scores, 0 von 96

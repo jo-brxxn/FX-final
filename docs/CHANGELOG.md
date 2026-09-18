@@ -15317,3 +15317,72 @@ Meldungen findet, muss `updated` setzen, committen und pushen. Vorher stand
 dort "sind es null, committe nichts" - und ein solcher Lauf sieht von aussen
 exakt aus wie ein ausgefallener, weil `check/rules.js` genau dieses Feld
 misst.
+
+---
+
+## 2026-09-18 — Ein Wächter, der den Netzzugang für die Score-Formel hielt
+
+Nach dem News-Fix wurde `rules` in einem vollen Lauf rot mit: *„Die
+Score-Formel wurde angefasst (`IND_STALE_CYCLES=`) … der Symbol-Score hat sich
+an 5 Stellen geändert."* Der verlangte `SCORE_MODEL_VERSION`-Bump hätte die
+**gesamte aufgezeichnete Historie** als „aus einem früheren Modell" markiert.
+
+### Gemessen statt geglaubt
+
+| | Ergebnis |
+|---|---|
+| `check/scorediff.js` einzeln, dreimal hintereinander | **0 von 48** verändert |
+| `js/`+`index.html` auf `origin/main` seit dem Vergleichsstand | **0 Dateien** geändert |
+| derselbe Arbeitsbaum im vollen Lauf | **5 von 48** verändert |
+| zweiter voller Lauf | `rules` grün, dafür `score-cl` rot (`syms is not defined`) — einzeln grün, 2983 Fälle |
+
+Zwei verschiedene Wächter, in je einem vollen Lauf rot, einzeln grün: das ist
+kein Zufall, sondern Last.
+
+### Ursache
+
+`scorediff.js` lädt Basis und Arbeitsbaum als **zwei getrennte Seiten**, die
+sich die acht Live-Feeds **je für sich** holen (`fetch(…json, {signal:
+AbortSignal.timeout(20000)})`). `check/warten.js` wartet nur darauf, dass jeder
+Feed *geantwortet* hat — ein Fehlschlag zählt ausdrücklich als Antwort. Reißt
+die 20-Sekunden-Frist auf genau einer Seite, rechnet diese Seite ohne die
+Daten. Die Scores sind dann völlig zu Recht verschieden — und der Wächter
+schreibt das der Formel zu.
+
+### Fix
+
+`scorediff.js` erfasst `DATA_LIVE_OK` je Seite mit. Weichen die beiden
+Seiten ab, ist der Vergleich ungültig: `status: "unvergleichbar"` statt einer
+Zahl, Rückgabewert 0 (ein Netz-Aussetzer ist kein Befund). `rules.js` nimmt
+weiterhin nur `status: "ok"` als Nachweis an — nennt jetzt aber den **Grund**,
+statt „kein Ergebnis" zu sagen, damit niemand auf Verdacht bumpt.
+
+### Was die Gegenprobe zusätzlich aufgedeckt hat
+
+Die erste Fassung wiederholte einen abweichenden Ladevorgang bis zu dreimal.
+Die Gegenprobe (`bond_data.json` nur auf der Basis-Seite abgewürgt) hat sie
+widerlegt — und dabei **zwei eigene Fehler** sichtbar gemacht:
+
+1. **Wiederholen bringt nichts.** Der erste Anlauf schreibt Zustand in den
+   `localStorage` seiner Herkunft, den der zweite wieder liest. Im Test waren
+   die Feeds im zweiten Anlauf wieder einig — und trotzdem wurden **113**
+   Unterschiede gemeldet, bei identischem Code auf beiden Seiten. Die
+   Wiederholung ist ersatzlos raus.
+2. **Der Score-Modus landete auf der falschen Herkunft.** In `ladenModus`
+   stand `localStorage.setItem('fxpro_score_mode', m)` **vor** dem `goto` —
+   es lief damit noch auf der zuvor geladenen Seite. Basis (Port 8936) und
+   Arbeitsbaum (8935) haben getrennte Speicher. Solange zwei Ladevorgänge je
+   Herkunft aufeinanderfolgten, ging das zufällig auf; meine Umstellung auf
+   „Modus außen, Seite innen" hat es aufgedeckt: **alle 113** gemeldeten
+   Unterschiede lagen im Modus `normalized`, **kein einziger** in `classic`.
+   Jetzt: erst navigieren, dann setzen, dann neu laden.
+
+### Gegenprobe (beide Richtungen)
+
+- **Echtlauf, nichts blockiert** → `0 von 48`, `✓ Der SYMBOL-Score ist
+  unveraendert`.
+- **`bond_data.json` nur auf der Basis abgewürgt** → `status:
+  "unvergleichbar"`, die Meldung nennt `bond=0` gegen `bond=1` und behauptet
+  **keine** Zahl über die Formel.
+- **`rules.js` mit diesem Zustand** → *„check/scorediff.js konnte NICHT
+  nachrechnen: … → erst wiederholen, bevor hier irgendetwas gebumpt wird."*
