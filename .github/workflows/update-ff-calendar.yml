@@ -3142,6 +3142,24 @@ jobs:
           else
             echo "[debug] per-asset put/call: manual dispatch ($GITHUB_EVENT_NAME) - EOD gate bypassed for on-demand verification"
           fi
+          # ⚠ DIE WOCHENEND-SPERRE GILT IMMER, auch beim manuellen Lauf.
+          # Anlass (gemessen 2026-09-19): in ZWOELF von dreizehn Asset-Reihen
+          # lagen Punkte mit Samstags- und Sonntagsdatum, je 4 bis 8 Stueck,
+          # paarweise mit identischem Wert (Gold 11.07. Sa = 1.12, 12.07.
+          # So = 1.12). Ursache war genau die Zeile darueber: das Gate im
+          # schedule-Zweig fing den CRON ab, ein manueller Lauf umging es -
+          # und schrieb dabei die Freitagskette unter dem Wochenenddatum in
+          # die Reihe. Yahoo liefert am Wochenende schlicht den Freitagsstand.
+          # "Verifizieren" heisst nachsehen, nicht in die Zeitreihe schreiben:
+          # ein Punkt mit Wochenenddatum kann kein Handelstag sein, und er
+          # gibt dem Freitag in jeder Glaettung und jedem Perzentil das
+          # doppelte bis dreifache Gewicht. Der Fetch selbst laeuft weiter -
+          # nur geschrieben wird nicht.
+          DOW_ALL=$(date -u +%u)
+          if [ "$DOW_ALL" -ge 6 ]; then
+            echo "[debug] per-asset put/call: Wochenende (DOW $DOW_ALL) - US-Boersen zu, es wird KEIN Punkt geschrieben (auch nicht bei manuellem Lauf)."
+            exit 0
+          fi
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
           curl -sL --max-time 15 -A "$UA" -c ycookies.txt "https://fc.yahoo.com" -o /dev/null || true
           CRUMB=$(curl -sL --max-time 15 -A "$UA" -b ycookies.txt -c ycookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
@@ -3167,7 +3185,16 @@ jobs:
               }catch(e){}
             ' 2>/dev/null)
             rm -f "yopt_base.json"
-            CV=0; PV=0; NEXP=0
+            # ⚠ NFAIL zaehlt Verfaelle, deren Abruf fehlschlug. Vorher wurde ein
+            # gescheiterter Abruf still als "0 0" addiert und NEXP trotzdem
+            # hochgezaehlt - die Tagesratio entstand dann aus einer
+            # UNVOLLSTAENDIGEN Kette, ohne dass irgendwo etwas davon stand.
+            # Genau so entstehen die gemessenen Ausreisser (GLD-Ratio 4.2 /
+            # 5.0 / 5.9 bei einem Median von 0.72): faellt ein call-lastiger
+            # Verfall weg, springt die Ratio nach oben. Ein solcher Tag wird
+            # jetzt gar nicht erst geschrieben - Regel 4, lieber eine Luecke
+            # als ein falscher Wert.
+            CV=0; PV=0; NEXP=0; NFAIL=0
             for EXP in $EXPS; do
               # (b) jeden Verfall einzeln holen, Volumina aufsummieren
               curl -sL --max-time 20 -A "$UA" -b ycookies.txt -H "Accept: application/json" "https://query1.finance.yahoo.com/v7/finance/options/${SYM}?date=${EXP}&crumb=${CRUMB}" -o "yopt_exp.json" || true
@@ -3179,16 +3206,27 @@ jobs:
                   const calls=(opt&&opt.calls)||[],puts=(opt&&opt.puts)||[];
                   const cv=calls.reduce((s,c)=>s+(Number(c.volume)||0),0);
                   const pv=puts.reduce((s,c)=>s+(Number(c.volume)||0),0);
-                  console.log(cv+" "+pv);
-                }catch(e){console.log("0 0");}
+                  // ⚠ "OK" davor: eine LEERE Kette (0 0) ist ein gueltiges
+                  // Ergebnis, ein gescheiterter Abruf nicht. Ohne diese
+                  // Unterscheidung sehen beide gleich aus, und eine halbe
+                  // Kette wird als ganze verrechnet.
+                  console.log("OK "+cv+" "+pv);
+                }catch(e){console.log("FAIL");}
               ' 2>/dev/null)
               rm -f "yopt_exp.json"
-              [ -z "$VALS" ] && VALS="0 0"
-              CV=$((CV + ${VALS%% *})); PV=$((PV + ${VALS##* })); NEXP=$((NEXP+1))
+              if [ -z "$VALS" ] || [ "$VALS" = "FAIL" ]; then
+                NFAIL=$((NFAIL+1))
+              else
+                REST="${VALS#OK }"
+                CV=$((CV + ${REST%% *})); PV=$((PV + ${REST##* })); NEXP=$((NEXP+1))
+              fi
               sleep 0.25   # Yahoo nicht ueberrennen (jetzt ~alle Verfaelle)
             done
-            echo "[debug] $ASSET <- $SYM: $NEXP expiries summed, callVol=$CV putVol=$PV"
-            if [ "$CV" -gt 0 ] && [ "$PV" -gt 0 ]; then
+            echo "[debug] $ASSET <- $SYM: $NEXP expiries summed, $NFAIL failed, callVol=$CV putVol=$PV"
+            if [ "$NFAIL" -gt 0 ]; then
+              echo "[debug] $ASSET: $NFAIL von $((NEXP+NFAIL)) Verfaellen nicht abrufbar - Kette unvollstaendig, KEIN Punkt fuer heute."
+            fi
+            if [ "$NFAIL" -eq 0 ] && [ "$CV" -gt 0 ] && [ "$PV" -gt 0 ]; then
               [ "$first" -eq 0 ] && echo "," >> yopt_all.json
               echo "\"$ASSET\": {\"asset\":\"$ASSET\",\"proxy\":\"$SYM\",\"callVol\":$CV,\"putVol\":$PV,\"nExp\":$NEXP}" >> yopt_all.json
               first=0

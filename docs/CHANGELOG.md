@@ -15602,3 +15602,165 @@ GitHub-Actions-API nachgesehen: `probe-options-flow-sources.yml` hat
 statt einer Zustandsbehauptung: Prämien- und Delta-Gewichtung sind aus den
 vorhandenen Daten erreichbar, die Unterscheidung von Kauf und Verkauf nicht,
 weil dafür keine freie Quelle existiert.
+
+---
+
+## 2026-09-19 (später) — Phantom-Handelstage und halbe Optionsketten (VERSION-CHECK-528)
+
+**Anlass, wörtlich:** *„guck mal da ist bei beiden Bildern Gold ausgewählt und
+es ist ca der gleiche Zeitraum aber die Kurve und ausschlage bewegen sich
+nicht ansatzweise gleich also muss es einen Fehler in der Berechnung geben
+oder so"*
+
+Die Rechnung war richtig. Die **Daten** waren es nicht — zwei getrennte
+Fehler, beide mit Ursache im Sammellauf.
+
+### Fehler 1: Wochenendpunkte in 12 von 13 Reihen
+
+```
+GOLD    11.07. Sa = 1.12    12.07. So = 1.12
+EUR     25.07. Sa = 2.27    26.07. So = 2.27
+JPY     08.08. Sa = 0.34    09.08. So = 0.41
+```
+
+Je 4–8 Punkte pro Reihe, paarweise mit (fast) identischem Wert — Yahoo
+liefert am Wochenende den Freitagsstand. Gold trug dadurch **71 Punkte in
+einem Fenster mit 65 Werktagen**.
+
+**Ursache:** Das Wochenend-Gate in `update-ff-calendar.yml` stand nur im
+`schedule`-Zweig. Ein manueller `workflow_dispatch` umging es — und schrieb
+dabei in die Zeitreihe. Der Kommentar dort sagte „bypassed for on-demand
+verification": verifizieren heißt nachsehen, nicht schreiben.
+
+**Fix, zwei Ebenen:** die Sperre gilt jetzt unabhängig vom Event, und
+`pcRawSeries()` filtert zentral — beide Karten und alle Schwellen gehen durch
+diese eine Funktion. Dabei sind auch die beiden Charts umgestellt worden, die
+sich ihre Reihe bisher selbst zusammenbauten; sonst wäre es wieder eine
+zweite Wahrheit gewesen.
+
+### Fehler 2: Ratios aus halben Optionsketten
+
+Die Goldkette zeigt einzelne Tage mit Put/Call **4,2 / 5,0 / 5,9** bei einem
+Median von 0,72. Fünfmal mehr Puts als Calls auf einem liquiden ETF ist kein
+Marktereignis.
+
+**Wochentags-Median je Reihe, gemessen:**
+
+| Reihe | Mo | Di | Mi | **Do** | Fr | Do/Rest |
+|---|---|---|---|---|---|---|
+| GOLD | 0,75 | 0,71 | 0,63 | **0,98** | 0,69 | **1,41×** |
+| EUR | 0,93 | 0,64 | 1,08 | **1,35** | 0,86 | **1,54×** |
+| JPY | 0,28 | 0,23 | 0,23 | **0,54** | 0,34 | **2,00×** |
+| SP500 | 1,85 | 1,84 | 1,67 | 1,36 | 1,39 | 0,81× |
+| Market-wide | 0,78 | 0,80 | 0,76 | 0,77 | 0,74 | 1,00× |
+
+Ein echter Wochentagseffekt träfe alle Ketten. Dieser trifft nur die, die
+über viele Einzel-Verfälle summiert werden.
+
+**Ursache:** Der Sammellauf holt jeden Verfallstermin einzeln. Ein
+gescheiterter Abruf wurde still als `0 0` addiert und `NEXP` trotzdem
+hochgezählt — die Tagesratio entstand aus einer **unvollständigen** Kette,
+ohne Spur davon im Log. Fällt dabei ein call-lastiger Verfall weg, springt
+die Ratio nach oben.
+
+**Fix:** Das Node-Skript unterscheidet jetzt „leere Kette" (`OK 0 0`, gültig)
+von „Abruf gescheitert" (`FAIL`); `NFAIL` zählt mit, und bei `NFAIL > 0`
+wird für diesen Tag **gar kein Punkt** geschrieben. Regel 4: lieber eine
+Lücke als ein falscher Wert.
+
+### Glättung: gleitender Median statt Mittelwert
+
+Am Artefakt-Tag 16.07. gemessen:
+
+```
+Datum        Ratio   flow     5d-Mittel  5d-Median
+2026-07-15    3.19   -0.523   -0.185     -0.034
+2026-07-16    5.01   -0.667   -0.212     -0.034   ← Ausreißer
+2026-07-17    1.69   -0.257   -0.257     -0.257
+2026-07-20    1.40   -0.167   -0.304     -0.257
+```
+
+Der Mittelwert trägt den Tag fünf Sitzungen mit sich. Der Median ignoriert
+ihn — und erfindet nichts: jeder ausgegebene Wert ist ein **echter gemessener
+Tag** aus dem Fenster. Das ist der Unterschied zum Kappen oder Interpolieren,
+die beide gegen Regel 4 verstoßen würden.
+
+### Was es gebracht hat — und was offen bleibt
+
+Gemessen an den fünf Phasen, die im Vergleichsbild ablesbar sind:
+
+| Variante | Treffer |
+|---|---|
+| vorher (Wochenenden + Mittelwert + Median-Bezug) | **2 von 5** |
+| nachher, roh gegen Null | **4 von 5** |
+| nachher, mit Median-Bezug | 3 von 5 |
+
+⚠ **Der Median-Bezug kostet einen Treffer.** Das ist neu gemessen und
+korrigiert die Annahme vom 15.09.: bei Gold ist die rohe Nulllinie näher an
+der Referenz. Marktweit und bei SP500/NAS bleibt sie unbrauchbar (0 % bzw.
+97/98 % einfarbig) — die Frage nach einem Umschalter liegt beim Nutzer.
+
+Der verbleibende Rest liegt **nicht an der Rechnung**: das Vergleichsbild
+misst einen anderen Markt. Diese App liest die Optionen des **GLD-ETF**, weil
+es für die meisten Währungen und Rohstoffe keinen frei zugänglichen eigenen
+Optionsmarkt gibt. Ein Terminmarkt auf Gold hat andere Teilnehmer und andere
+Absicherungsmuster — dieselbe Kennzahl über ein anderes Universum.
+
+### Wächter
+
+`check/putcall.js` prüft zusätzlich, dass **kein** Wochenendpunkt mehr durch
+`pcRawSeries()` kommt (3096 Punkte, 0 Treffer), und rechnet an einem
+eingebauten Ausreißer nach, dass die Glättung ihn aushält — samt Gegenprobe,
+dass ein Mittelwert an derselben Stelle abweichen *würde*, damit der Testfall
+nicht zu harmlos ist. Beim Bauen fiel auf, dass die Extraktionsliste jede neu
+aufgerufene Funktion mitführen muss: `pcIstWochenende` fehlte und ließ die
+geschnittene Logik in ein ReferenceError laufen.
+
+### Nachtrag: Bezugslinie je Reihe, und eine Lücke im Prüfnetz
+
+**Bezugslinie automatisch** (Nutzer-Entscheid): Die Karte misst gegen die
+rohe Null, wenn deren Vorzeichen bei dieser Reihe überhaupt etwas trennt —
+sonst gegen den eigenen Median. Gemessener Anteil der schwächeren Seite bei
+roher Null:
+
+```
+unbrauchbar: marktweit 0,0%  SP500 2,0%  NAS 4,1%  SILVER 5,3%
+             JPY 13,7%  BTC 13,9%
+brauchbar:   GOLD 18,1%  CHF 20,0%  CAD 22,0%  OIL 25,8%
+             AUD 28,3%  USD 30,6%  GBP 38,9%  EUR 44,5%
+```
+
+Zwischen 13,9 % und 18,1 % liegt eine klare Lücke; `PC_FLOW_MIN_SEITE = 0.15`
+trennt sie mittig. Die Begründung ist nicht die Zahl, sondern was sie
+bedeutet: liegen weniger als ein Siebtel der Tage auf einer Seite, beschreibt
+das Vorzeichen eine **Eigenschaft des Marktes** (Indexabsicherung läuft über
+Puts, Silber-Optionen sind call-lastig), nicht die Stimmung des Tages.
+Kopfzeile, Bänder und Fußzeile nennen jeweils die geltende Linie.
+
+Nach der Entscheidung ist **jede** Reihe beidseitig — Minimum 18,1 % (Gold).
+`check/putcall.js` prüft genau das, plus zwei Gegenproben: eine künstlich
+einseitige Reihe muss in den Median-Modus fallen, eine beidseitige nicht.
+
+---
+
+### ⚠ `node --check` ist für ES-Module blind
+
+Beim Bauen entstand ein Syntaxfehler in `js/main.js` (ein überzähliger
+Backslash in einer Ternary-Verzweigung zwischen zwei Template-Literalen,
+Zeile 18856). Nachgestellt:
+
+```
+node --check js/main.js                       → EXIT 0, meldet OK
+node --input-type=module --check < js/main.js → findet ihn, mit Zeile
+Browser                                        → PAGEERROR
+```
+
+**Ursache:** `node --check <datei>` parst als CommonJS-Script; `js/main.js`
+ist ein ES-Modul. Das ist die schlimmste Sorte Prüfung — eine, die grün
+meldet, während die App gar nicht startet. Genau darauf hatte sich diese
+Sitzung nach jedem Edit verlassen; gefunden hat den Fehler erst der Browser.
+
+**Fix:** `check/syntax.js` prüft jetzt **alle** `js/*.js` (18 Module, vorher
+nur `js/rezept/` und die im falschen Modus) ausdrücklich über
+`--input-type=module`. Gegenprobe mit dem wieder eingebauten Fehler: meldet
+ihn mit Zeilennummer, Exit 1.

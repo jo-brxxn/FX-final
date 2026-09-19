@@ -17185,7 +17185,8 @@ const SENT_INFO={
      <p><b>Market-wide by default, per-asset via the filter:</b> with "Market-wide" selected, this reads total call/put volume across ALL U.S. options exchanges and underlyings - one broad "how scared is the market" reading, like the VIX. Pick a specific asset in the dropdown above to see its own reading instead, computed from the options volume of the closest liquid ETF tracking it (e.g. GLD for Gold, SPY for the S&amp;P 500, FXE for EUR) - a proxy, not literally an option on that exact instrument, since most FX pairs/commodities don't have their own retail-accessible options market. No ETF exists for NZD, so it isn't offered. Per-asset readings start as a single day's snapshot and build a trend day by day (no historical backfill possible for these, unlike the market-wide series).</p>`],
   netflow:['Call/Put Balance vs. its own normal',
     `<p><b>⚠ This card is being rebuilt — read what it actually is first.</b></p>
-     <p><b>What it is:</b> the balance between call and put <b>volume</b>, as <b>(call volume − put volume) ÷ (call volume + put volume)</b>, shown as the distance from this market's <b>own median</b>. Each bar is one day, smoothed with a 5-day average.</p>
+     <p><b>What it is:</b> the balance between call and put <b>volume</b>, as <b>(call volume − put volume) ÷ (call volume + put volume)</b>, shown as the distance from this market's <b>own median</b>. Each bar is one day, smoothed with a <b>5-day rolling median</b>.</p>
+     <p><b>Why a median and not an average:</b> the underlying option-chain data carries occasional single days that are not market events. On the gold chain (GLD), measured over its full history, individual days show a put/call ratio of 4.2, 5.0 and 5.9 against a median of 0.72 — five times more puts than calls on a liquid ETF in one session. They cluster on Thursdays (median 0.98 there against 0.63–0.75 on every other weekday) and the same pattern appears on the EUR, GBP and JPY chains, but not on SPY, QQQ or the market-wide figure. A rolling average drags such a day along for five sessions; a rolling median ignores it — and invents nothing, since every value it outputs is a real measured day from the window.</p>
      <ul><li><b style="color:${'#0B5FCC'}">Blue bar</b> — more <b>call-heavy</b> than normal for this market.</li>
      <li><b style="color:${'#C50F1A'}">Red bar</b> — more <b>put-heavy</b> than normal for this market.</li></ul>
      <p><b>Why the median and not zero:</b> a zero line assumes an even call/put split is the neutral state. It isn't. Measured over the recorded history, the market-wide series never once crossed it — every bar came out blue since May. SPY and QQQ sit on the opposite side: roughly 9 days out of 10 landed red, because index hedging is done with puts. A fixed zero line was therefore colouring a structural property of each options market as if it were a daily signal.</p>
@@ -18335,6 +18336,63 @@ function pcNiceDecimals(step){
   const i=s.indexOf('.');
   return i<0?0:Math.min(4,s.length-i-1);
 }
+// ══ BEZUGSLINIE DER CALL/PUT-BALANCE: JE REIHE ENTSCHIEDEN ══════════════
+//
+// ⚠ Hier hat sich die Einschaetzung vom 15.09. korrigiert, und zwar gemessen.
+// Damals bekam die Karte pauschal den MEDIAN der eigenen Reihe als Nulllinie,
+// weil die rohe Null marktweit an 0 von 88 Tagen unterschritten wurde - die
+// Karte war durchgehend blau. Das stimmt weiterhin. Aber der Nutzer hat am
+// 19.09. einen Gold-Chart eines fremden Tools danebengelegt, und der Vergleich
+// der fuenf dort ablesbaren Phasen zeigt: bei GOLD trifft die ROHE Null vier
+// von fuenf, der Median-Bezug nur drei. Eine pauschale Regel war also in beide
+// Richtungen falsch.
+//
+// Gemessen (Anteil der SCHWAECHEREN Seite bei roher Null, nach Wochenend-
+// filter, auf der geglaetteten Reihe):
+//     unbrauchbar: marktweit 0,0% · SP500 2,0% · NAS 4,1% · SILVER 5,3%
+//                  JPY 13,7% · BTC 13,9%
+//     brauchbar:   GOLD 18,1% · CHF 20,0% · CAD 22,0% · OIL 25,8%
+//                  AUD 28,3% · USD 30,6% · GBP 38,9% · EUR 44,5%
+// Zwischen 13,9% und 18,1% liegt eine klare Luecke; 15% trennt sie mittig.
+//
+// Die Begruendung ist nicht die Zahl, sondern was sie bedeutet: liegen
+// weniger als ein Siebtel der Tage auf einer Seite, trennt das Vorzeichen
+// nichts mehr - es beschreibt dann eine Eigenschaft des Marktes (Index-
+// absicherung laeuft ueber Puts, Silber-Optionen sind call-lastig), nicht
+// die Stimmung des Tages. Erst dort ist der Median die ehrlichere Null.
+const PC_FLOW_MIN_SEITE=0.15;
+// Glaettungsfenster der Balance-Karte. ⚠ Global, nicht lokal im Chart:
+// die Kopfzeile und pcFlowBezug() brauchen denselben Wert, und ein
+// hartcodiertes Duplikat waere wieder eine zweite Wahrheit.
+const PC_FLOW_SMOOTH=5;
+
+/** Gleitender Median ueber eine Zahlenreihe. Fenster n, linksseitig. */
+function pcRollMedian(werte,n){
+  const w=Math.max(1,n|0);
+  return werte.map((_,i)=>{
+    const f=werte.slice(Math.max(0,i-w+1),i+1).slice().sort((a,b)=>a-b);
+    const m=f.length>>1;
+    return f.length%2?f[m]:(f[m-1]+f[m])/2;
+  });
+}
+/** (Call-Put)/(Call+Put) aus der gespeicherten Ratio r = Put/Call. */
+function pcFlowOf(r){return(1-r)/(1+r);}
+/**
+ * Welche Nulllinie bekommt diese Reihe - die rohe oder ihr eigener Median?
+ * @returns {{mode:'zero'|'median', mid:number, anteil:number|null, n:number}}
+ */
+function pcFlowBezug(D,id,smooth){
+  const raw=pcRawSeries(D,id||'').map(e=>pcFlowOf(+e[1]));
+  if(raw.length<PC_MIN_HIST)return{mode:'zero',mid:0,anteil:null,n:raw.length};
+  // Auf der GEGLAETTETEN Reihe entschieden, denn die wird gezeichnet - und
+  // sie ist es, deren Vorzeichen der Nutzer sieht.
+  const sm=pcRollMedian(raw,smooth||5);
+  const neg=sm.filter(x=>x<0).length;
+  const anteil=Math.min(neg,sm.length-neg)/sm.length;
+  if(anteil>=PC_FLOW_MIN_SEITE)return{mode:'zero',mid:0,anteil,n:sm.length};
+  return{mode:'median',mid:pcQuantile(raw.slice().sort((a,b)=>a-b),0.5),anteil,n:sm.length};
+}
+
 /**
  * Symmetrische Achsen-Teilstriche um die Null, an runden Zahlen.
  * Liefert absteigend [+n, …, 0, …, -n]; der Rand selbst bekommt nur dann
@@ -18384,9 +18442,39 @@ function pcSmoothSeries(ser,n){
   });
 }
 /** Die rohe Reihe der aktuellen Auswahl ('' = marktweit, sonst Asset-Id). */
+/**
+ * Ist dieses ISO-Datum ein Samstag oder Sonntag?
+ * ⚠ UTC lesen, nicht lokal: new Date('2026-07-11') ist UTC-Mitternacht, und
+ * getDay() wuerde daraus in einer westlichen Zeitzone den Vortag machen.
+ */
+function pcIstWochenende(iso){
+  const w=new Date(String(iso)+'T00:00:00Z').getUTCDay();
+  return w===0||w===6;
+}
+/**
+ * Die rohe Reihe der aktuellen Auswahl ('' = marktweit, sonst Asset-Id).
+ *
+ * ⚠ WOCHENENDTAGE FLIEGEN RAUS. Die US-Optionsboersen haben samstags und
+ * sonntags zu - ein Punkt mit diesem Datum kann kein Handelstag sein.
+ * Gemessen 2026-09-19 lagen trotzdem welche in der Datei, in ZWOELF von
+ * dreizehn Asset-Reihen, je 4 bis 8 Stueck, und jedes Paar traegt beide Tage
+ * mit demselben Wert (Gold: 11.07. Sa = 1.12, 12.07. So = 1.12). Ursache im
+ * Workflow: das Wochenend-Gate des Sammelschritts greift nur beim
+ * schedule-Event; ein manueller Lauf umgeht es und schreibt dabei die
+ * Freitagskette unter dem Wochenenddatum in die Reihe.
+ * Die Folge ist nicht kosmetisch: die Reihe wird laenger als das Jahr
+ * Handelstage hat (Gold 71 Punkte in einem Fenster mit 65 Werktagen), und
+ * ein doppelt gezaehlter Freitag bekommt in jeder Glaettung und in jedem
+ * Perzentil das dreifache Gewicht.
+ * Hier zentral gefiltert statt in jedem Chart einzeln - pcThresholds(),
+ * pcReading(), der Put/Call-Chart und die Balance-Karte gehen alle durch
+ * diese Funktion, und damit kann keine Stelle die Phantomtage doch noch
+ * mitzaehlen. Dieselbe Regel gilt bei den Kerzen (docs/design-system.md,
+ * check/kerzen.js) - dort war der Feed schon einmal auffaellig.
+ */
 function pcRawSeries(D,id){
   const src=id?(D&&D.putCallByAsset&&D.putCallByAsset[id]):(D&&D.putCall);
-  return ((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  return ((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1])&&!pcIstWochenende(e[0]));
 }
 // Schwellen je Auswahl. ⚠ Bewusst aus der VOLLEN Reihe, nicht aus dem vom
 // Zeitraum-Regler gefilterten Ausschnitt: sonst verschoeben sich die Zonen,
@@ -18458,7 +18546,11 @@ function renderPutCallChart(D){
   const perAsset=(pcAsset&&pcUsableAssetIds(D).includes(pcAsset))?D.putCallByAsset[pcAsset]:null;
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
-  const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  // ⚠ Ueber pcRawSeries(), NICHT selbst zusammengebaut: sonst haette diese
+  // Karte wieder eine eigene Sicht auf dieselbe Reihe (Wochenendfilter
+  // dort, aber nicht hier) - genau das Muster, das beim Put/Call schon
+  // einmal zwei widerspruechliche Schwellensaetze erzeugt hat.
+  const rawSeries=pcRawSeries(D,perAsset?pcAsset:'');
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const series=rawSeries.filter(e=>filteredDates.has(e[0]));
   const scopeNote=perAsset
@@ -18626,14 +18718,22 @@ function renderNetFlowChart(D){
   // (zu duennes) Asset zeigen - dann still auf markt-weit zurueckfallen,
   // statt die unbrauchbare Reihe doch noch anzuzeigen.
   const perAsset=(pcAsset&&pcUsableAssetIds(D).includes(pcAsset))?D.putCallByAsset[pcAsset]:null;
+  const pcId=perAsset?pcAsset:'';
   const src=perAsset?('https://finance.yahoo.com/quote/'+perAsset.proxy+'/options'):(D.putCall&&D.putCall.source||SENT_SOURCE.putCall);
   const srcLabel=perAsset?(escH(perAsset.proxy)+' options ↗'):'OCC ↗';
   const scopeNote=perAsset
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)})${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Call/Put Balance${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put), vs. own median · volume-based, not buy/sell · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
-  const rawSeries=((perAsset?perAsset.series:D.putCall&&D.putCall.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  // ⚠ Die Bezugslinie steht schon in der Kopfzeile - sonst behauptet sie
+  // "vs. own median" auch dort, wo gegen die rohe Null gemessen wird.
+  const bezugKopf=pcFlowBezug(D,pcId,PC_FLOW_SMOOTH).mode==='median'?', vs. own median':', zero = even call/put split';
+  const hdr=`<div class="cot-card-title">Call/Put Balance${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put)${bezugKopf} · volume-based, not buy/sell · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  // ⚠ Ueber pcRawSeries(), NICHT selbst zusammengebaut: sonst haette diese
+  // Karte wieder eine eigene Sicht auf dieselbe Reihe (Wochenendfilter
+  // dort, aber nicht hier) - genau das Muster, das beim Put/Call schon
+  // einmal zwei widerspruechliche Schwellensaetze erzeugt hat.
+  const rawSeries=pcRawSeries(D,perAsset?pcAsset:'');
   const filteredDates=new Set(filterDatesByRange(rawSeries.map(e=>e[0]),pcRange,pcCustomFrom,pcCustomTo));
   const s=rawSeries.filter(e=>filteredDates.has(e[0]));
   // ══ ⚠ ZWISCHENSTAND - DIESE KARTE WIRD ERSETZT ═══════════════════════
@@ -18663,16 +18763,41 @@ function renderNetFlowChart(D){
   // mit richtig gelegter Bezugslinie: der MEDIAN der eigenen Reihe statt der
   // willkuerlichen Null. Damit sagt ein Balken "call-lastiger als bei diesem
   // Markt ueblich" statt "call-lastiger als ein 50/50, das es hier nie gibt".
-  const SMOOTH=5; // gleitender Tages-Schnitt gegen den Optionsketten-Noise
+  // ⚠ GLEITENDER MEDIAN, NICHT MITTELWERT. Anlass (Nutzer 2026-09-19, beim
+  // Vergleich mit einem fremden Gold-Chart): "die Kurve und ausschlage
+  // bewegen sich nicht ansatzweise gleich". Nachgemessen an der GLD-Reihe:
+  // sie enthaelt einzelne Tage mit einer Put/Call-Ratio von 4,2 / 5,0 / 5,9
+  // bei einem Median von 0,72 - fuenfmal so viele Puts wie Calls auf einem
+  // liquiden Gold-ETF ist kein Marktereignis, sondern ein Datenartefakt.
+  // Sie haeufen sich auffaellig donnerstags (Median 0,98 gegen 0,63-0,75 an
+  // allen anderen Tagen; 7 der 14 Tage ueber 2,0), und dasselbe Muster zeigt
+  // sich bei EUR 1,54x, GBP 1,64x, JPY 2,00x - aber NICHT bei SPY, QQQ, USO
+  // oder der marktweiten OCC-Zahl. Ein echter Wochentagseffekt wuerde alle
+  // Ketten treffen; dieser trifft die, die ueber viele Einzel-Verfaelle
+  // summiert werden.
+  //
+  // Ein gleitender MITTELWERT traegt so einen Tag fuenf Tage lang mit sich
+  // (gemessen am 16.07.: -0,212 statt -0,034 und das eine Woche lang). Ein
+  // gleitender MEDIAN ignoriert ihn - und erfindet dabei nichts: jeder Wert,
+  // den er ausgibt, ist ein ECHTER gemessener Tag aus dem Fenster. Das ist
+  // der Unterschied zum Kappen oder Interpolieren, die beide gegen Regel 4
+  // ("nie schaetzen") verstossen wuerden.
+  const SMOOTH=PC_FLOW_SMOOTH;
   // ⚠ Bezugslinie aus der VOLLEN Reihe, nicht aus dem gefilterten Ausschnitt
   // (gleiche Begruendung wie bei pcThresholds: sonst verschoebe der
   // Zeitraum-Regler die Nulllinie und faerbte dieselben Tage anders).
-  const flowOf=r=>(1-r)/(1+r);
-  const alleFlows=rawSeries.map(e=>flowOf(+e[1])).sort((a,b)=>a-b);
-  const mid=alleFlows.length?pcQuantile(alleFlows,0.5):0;
-  const raw=s.map(e=>({d:e[0],v:flowOf(+e[1])-mid}));
-  const ma=(arr,i,n)=>{const a=arr.slice(Math.max(0,i-n+1),i+1);return a.reduce((x,y)=>x+y.v,0)/a.length;};
-  const net=raw.map((e,i)=>[e.d, ma(raw,i,SMOOTH)]);
+  // ⚠ Die Nulllinie wird je Reihe ENTSCHIEDEN, nicht pauschal gesetzt -
+  // Begruendung und Messwerte bei PC_FLOW_MIN_SEITE. Eine Stelle, damit
+  // Chart und Fusszeile nicht auseinanderlaufen koennen.
+  const bezug=pcFlowBezug(D,pcId,SMOOTH);
+  const mid=bezug.mid;
+  // ⚠ Die Glaettung laeuft auf der VOLLEN Reihe, erst danach wird der
+  // Zeitraum gefiltert: sonst haette der erste sichtbare Tag keinen Vorlauf
+  // und der Median startete als Ein-Tages-Wert.
+  const alleWerte=rawSeries.map(e=>pcFlowOf(+e[1])-mid);
+  const alleGlatt=pcRollMedian(alleWerte,SMOOTH);
+  const sichtbar=new Set(s.map(e=>e[0]));
+  const net=rawSeries.map((e,i)=>[e[0],alleGlatt[i]]).filter(e=>sichtbar.has(e[0]));
   if(net.length<2){
     return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
@@ -18724,18 +18849,18 @@ function renderNetFlowChart(D){
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     ${gy}${bars}
     <path d="${umriss}" fill="none" stroke="var(--t0)" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
-    ${band(true,BC.bull,'More call-heavy than usual')}
-    ${band(false,BC.bear,'More put-heavy than usual')}
+    ${band(true,BC.bull,bezug.mode==='zero'?'Call-heavy (more calls than puts)':'More call-heavy than usual')}
+    ${band(false,BC.bear,bezug.mode==='zero'?'Put-heavy (more puts than calls)':'More put-heavy than usual')}
     ${xlab}
   </svg>`;
-  const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> vs. this market's median · ${up?'more call-heavy than usual':'more put-heavy than usual'}`};});
+  const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b>${bezug.mode==='zero'?'':" vs. this market's median"} · ${up?(bezug.mode==='zero'?'call-heavy':'more call-heavy than usual'):(bezug.mode==='zero'?'put-heavy':'more put-heavy than usual')}`};});
   // ⚠ Die Fusszeile nennt die Bezugslinie ausdruecklich. Ohne sie liest man
   // "+0.03" als "3% mehr Calls als Puts" - es heisst aber "3 Punkte
   // call-lastiger als der Normalzustand DIESES Marktes". Bei SPY liegt
   // dieser Normalzustand deutlich im put-lastigen Bereich.
   const chart=chartHoverWrap(svg,hpts)+
-    `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'more call-heavy than usual':'more put-heavy than usual'}</div>`+
-    `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), not against an even call/put split — that split never occurs in most options markets, so a fixed zero line would colour every bar the same way. <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data, which no free source provides.</div>`;
+    `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?(bezug.mode==='zero'?'call-heavy':'more call-heavy than usual'):(bezug.mode==='zero'?'put-heavy':'more put-heavy than usual')}</div>`+
+    `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">${SMOOTH}-day rolling median (it ignores the odd broken day in the option chain instead of averaging it in). ${bezug.mode==='zero'?`Zero means an even call/put split, which this market crosses often enough for the sign to mean something — ${Math.round((bezug.anteil||0)*100)}% of days fall on the thinner side.`:`⚠ Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), <b>not</b> against an even call/put split: only ${Math.round((bezug.anteil||0)*100)}% of days would land on the thinner side of a plain zero line, so it would colour nearly every bar the same way. That is a property of this options market — index hedging runs through puts — not a daily signal.`} <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data, which no free source provides.</div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
@@ -21818,7 +21943,8 @@ Object.assign(window,{
   // Put/Call-Schwellenmaschinerie (2026-09-15). ⚠ Muss exportiert bleiben:
   // check/putcall.js prueft damit ohne Browser gegen die echte Reihe.
   PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,
-  pcQuantile,pcNiceStep,pcNiceDecimals,pcNiceTicks,pcGapWorkdays,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
+  pcQuantile,pcNiceStep,pcNiceDecimals,pcNiceTicks,pcGapWorkdays,
+  PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH,pcRollMedian,pcFlowOf,pcFlowBezug,pcIstWochenende,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
   legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,autoFetchSeasonality,
   setSeasAsset,SEAS_MON,SEAS_ORDER,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,
   autoFetchRateProb,rateProbCcyData,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,

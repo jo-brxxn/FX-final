@@ -678,3 +678,76 @@ volumenbasiert ist.
 
 Gemessen wird das von `.github/workflows/probe-options-flow-sources.yml`,
 bevor Sammelcode entsteht — dasselbe Vorgehen wie bei der OHLC-Quellensuche.
+
+
+---
+
+## ⚠️ Optionsketten: zwei Fallen, die stille falsche Werte erzeugen (2026-09-19)
+
+Beide beim Vergleich eines Gold-Charts mit einem fremden Tool gefunden
+(„die Kurve und ausschlage bewegen sich nicht ansatzweise gleich"). Beide
+erzeugen **keinen Fehler im Log** — die Reihe sieht vollständig aus.
+
+### 1. Ein Gate im falschen Zweig schreibt Phantom-Handelstage
+
+Der Sammelschritt hatte eine Wochenend-Sperre, aber nur im `schedule`-Zweig:
+
+```bash
+if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+  DOW=$(date -u +%u); if [ "$DOW" -ge 6 ]; then exit 0; fi   # ⚠ nur hier
+else
+  echo "manual dispatch - EOD gate bypassed for verification"
+fi
+```
+
+Ein manueller Lauf umging sie **und schrieb dabei**. Ergebnis: in 12 von 13
+Reihen lagen Samstags- und Sonntagspunkte, paarweise mit demselben Wert
+(Yahoo liefert am Wochenende den Freitagsstand). Gold trug 71 Punkte in
+einem Fenster mit 65 Werktagen.
+
+**Regel:** Ein Gate, das eine Zeitreihe schützt, darf nicht vom Auslöser
+abhängen. *Verifizieren heißt nachsehen, nicht schreiben* — der Fetch darf
+bei einem Testlauf gern durchlaufen und loggen, der Schreibpfad nicht.
+
+**Und auf der Leseseite absichern:** `pcRawSeries()` filtert Wochenendtage
+zentral, damit eine Altlast in der Datei nirgends mehr in eine Rechnung
+eingeht. Dieselbe Klasse wie bei den Kerzen (`check/kerzen.js`) — auch dort
+trugen die Feeds Wochenendtage mit wiederholtem Freitagswert.
+
+### 2. Ein gescheiterter Teil-Abruf wird als Null mitgezählt
+
+Die Kette wird pro Verfallstermin geholt und aufsummiert. Vorher:
+
+```bash
+VALS=$(node -e '…catch(e){console.log("0 0");}')   # ⚠ Fehler sieht aus wie leer
+CV=$((CV + ${VALS%% *})); NEXP=$((NEXP+1))
+```
+
+Ein fehlgeschlagener Abruf war von einer legitim leeren Kette **nicht
+unterscheidbar**. Die Tagesratio entstand dann aus einer halben Kette. Fällt
+ein call-lastiger Verfall weg, springt sie nach oben — so entstanden die
+GLD-Ratios von 4,2 / 5,0 / 5,9 bei einem Median von 0,72, gehäuft an einem
+Wochentag (Do-Median 0,98 gegen 0,63–0,75 sonst; dasselbe bei EUR 1,54×,
+GBP 1,64×, JPY 2,00×, aber **nicht** bei SPY/QQQ/USO).
+
+**Regel:** Wo über mehrere Teil-Abrufe summiert wird, muss „leer" von
+„gescheitert" unterscheidbar sein, und ein unvollständiger Satz darf **gar
+keinen** Punkt erzeugen. Ein Teilergebnis, das wie ein Gesamtergebnis
+aussieht, ist schlimmer als eine Lücke.
+
+### Auswertung: gleitender Median, nicht Mittelwert
+
+Wo die Quelle solche Artefakte enthalten *kann*, ist ein gleitender **Median**
+dem Mittelwert vorzuziehen: er ignoriert einen Einzelausreißer, statt ihn
+über das ganze Fenster zu verschleppen — und er erfindet nichts, denn jeder
+ausgegebene Wert ist ein echter gemessener Tag. Kappen oder Interpolieren
+wären dagegen geschätzte Werte und damit nach Regel 4 ausgeschlossen.
+
+### ETF-Proxy ist ein anderer Markt, nicht dieselbe Zahl
+
+Ein Vergleich mit fremden Tools geht oft schon daran schief: diese App liest
+die Optionen des **ETF** (GLD für Gold, SPY für den S&P, FXE für den Euro),
+weil es für die meisten Währungen und Rohstoffe keinen frei zugänglichen
+eigenen Optionsmarkt gibt. Ein Terminmarkt auf dasselbe Underlying hat andere
+Teilnehmer und andere Absicherungsmuster. Gleiche Kennzahl, anderes
+Universum — eine Abweichung ist dort zu erwarten und kein Rechenfehler.

@@ -22,6 +22,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fxcheck-'));
 // bei der Modul-Aufteilung schon einmal passiert ist (siehe check/README.md).
 const SEITEN = ['index.html', 'rezept.html'].filter(f => fs.existsSync(f));
 let bloecke = [];
+let module0 = 0;
 SEITEN.forEach(datei => {
   const html = fs.readFileSync(datei, 'utf8');
   const teil = [...html.matchAll(/<script((?:\s[^>]*)?)>([\s\S]*?)<\/script>/g)]
@@ -34,14 +35,31 @@ SEITEN.forEach(datei => {
   try { execSync(`node --check ${js}`, { stdio: 'pipe' }); }
   catch (e) { F.push(datei + ' JS: ' + String(e.stderr || e.message).slice(0, 600)); }
 });
-// Die ES-Module der Rezept-App (eigenes Verzeichnis, wird von der
-// js/*.js-Schleife der uebrigen Waechter nicht miterfasst).
-if (fs.existsSync('js/rezept')) {
-  fs.readdirSync('js/rezept').filter(f => f.endsWith('.js')).forEach(f => {
-    try { execSync(`node --check js/rezept/${f}`, { stdio: 'pipe' }); }
-    catch (e) { F.push(`js/rezept/${f}: ` + String(e.stderr || e.message).slice(0, 600)); }
+// ── JEDES js/*.js ALS MODUL PRUEFEN ────────────────────────────────────
+//
+// ⚠ GEMESSENE LUECKE (2026-09-19): `node --check js/main.js` meldet EXIT 0
+// fuer eine Datei, die der Browser mit "Invalid or unexpected token"
+// ablehnt. Nachgestellt mit einem echten Fehler an Zeile 18856 (ein
+// ueberzaehliger Backslash in einer Ternary-Verzweigung zwischen zwei
+// Template-Literalen):
+//     node --check js/main.js                 -> EXIT 0, meldet OK
+//     node --input-type=module --check < …    -> findet ihn, mit Zeile
+//     Browser                                  -> PAGEERROR
+// Grund: `node --check <datei>` parst als CommonJS-Script; js/main.js ist
+// aber ein ES-Modul. Die Folge ist die schlimmste Sorte Pruefung - eine,
+// die gruen meldet, waehrend die App gar nicht startet. Genau darauf hatte
+// sich die Sitzung verlassen, in der der Fehler entstand.
+//
+// Deshalb: ALLE js/*.js (nicht nur js/rezept/) und ausdruecklich als MODUL
+// ueber stdin, denn nur dieser Weg hat den Fehler gefunden.
+['js', 'js/rezept'].forEach(dir => {
+  if (!fs.existsSync(dir)) return;
+  fs.readdirSync(dir).filter(f => f.endsWith('.js')).forEach(f => {
+    const rel = dir + '/' + f;
+    try { execSync(`node --input-type=module --check < ${JSON.stringify(rel)}`, { stdio: 'pipe', shell: '/bin/bash' }); module0++; }
+    catch (e) { F.push(`${rel}: ` + String(e.stderr || e.message).slice(0, 600)); }
   });
-}
+});
 
 let yaml = null;
 try { yaml = require('js-yaml'); } catch (e) { /* Fallback ueber python3 */ }
@@ -76,4 +94,4 @@ if (fs.existsSync(wfDir)) {
 
 fs.rmSync(tmp, { recursive: true, force: true });
 if (F.length) { console.error('SYNTAX-FEHLER:\n'); F.forEach(x => console.error('  ' + x + '\n')); process.exit(1); }
-console.log(`[syntax] ok (${bloecke.length} Skript-Bloecke, ${bashBloecke} run-Bloecke)`);
+console.log(`[syntax] ok (${bloecke.length} Skript-Bloecke, ${bashBloecke} run-Bloecke, ${module0} ES-Module)`);

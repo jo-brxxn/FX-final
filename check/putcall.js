@@ -36,8 +36,14 @@ const pruefe = (was, bedingung, txt) => { geprueft++; if (!bedingung) { fehler++
 const src = fs.readFileSync(MAIN, 'utf8');
 
 // ── 1) Die Rechenlogik aus js/main.js holen ─────────────────────────────
-const NAMEN = ['pcQuantile', 'pcGapWorkdays', 'pcSmoothSeries', 'pcRawSeries',
-               'pcThresholds', 'pcClassify', 'pcReading'];
+// ⚠ Jede Funktion, die eine der anderen AUFRUFT, muss hier mit drin
+// stehen - sonst laeuft die geschnittene Logik in ein ReferenceError.
+// pcIstWochenende kam am 2026-09-19 dazu (Wochenendfilter in
+// pcRawSeries) und fehlte prompt.
+const NAMEN = ['pcQuantile', 'pcIstWochenende', 'pcGapWorkdays',
+               'pcSmoothSeries', 'pcRawSeries',
+               'pcThresholds', 'pcClassify', 'pcReading',
+               'pcRollMedian', 'pcFlowOf', 'pcFlowBezug'];
 function schneideLogik() {
   let code = '';
   for (const n of NAMEN) {
@@ -50,9 +56,11 @@ function schneideLogik() {
   }
   const konst = src.match(/const PC_MIN_HIST=[\s\S]*?const PC_MAX_SPREAD=[\d.]+;/);
   if (!konst) { fail('Extraktion', 'Konstantenblock PC_MIN_HIST…PC_MAX_SPREAD nicht gefunden.'); return null; }
-  const voll = konst[0] + '\nfunction todayStr(){return new Date().toISOString().slice(0,10);}\n' + code +
+  const konst2 = src.match(/const PC_FLOW_MIN_SEITE=[\s\S]*?const PC_FLOW_SMOOTH=\d+;/);
+  if (!konst2) { fail('Extraktion', 'Konstantenblock PC_FLOW_MIN_SEITE…PC_FLOW_SMOOTH nicht gefunden.'); return null; }
+  const voll = konst[0] + '\n' + konst2[0] + '\nfunction todayStr(){return new Date().toISOString().slice(0,10);}\n' + code +
     '\nmodule.exports={' + NAMEN.join(',') +
-    ',PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD};';
+    ',PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH};';
   const tmp = path.join(require('os').tmpdir(), 'pc_logic_check_' + process.pid + '.js');
   fs.writeFileSync(tmp, voll);
   try { const m = require(tmp); fs.unlinkSync(tmp); return m; }
@@ -181,6 +189,102 @@ const D = JSON.parse(fs.readFileSync(DATEN, 'utf8'));
   }
 }
 
+// ── 7b) KEINE PHANTOM-HANDELSTAGE ───────────────────────────────────────
+// Anlass (Nutzer 2026-09-19, Vergleich mit einem fremden Gold-Chart: "die
+// Kurve und ausschlage bewegen sich nicht ansatzweise gleich"). Gemessen:
+// in ZWOELF von dreizehn Asset-Reihen lagen Punkte mit Samstags- und
+// Sonntagsdatum, je 4 bis 8, paarweise mit identischem Wert (Gold 11.07. Sa
+// = 1.12, 12.07. So = 1.12). Die US-Optionsboersen haben dann zu - das sind
+// Freitagswerte unter falschem Datum. Folge: die Reihe wird laenger als das
+// Fenster Handelstage hat (Gold 71 Punkte in 65 Werktagen), und der Freitag
+// bekommt in jeder Glaettung und jedem Perzentil doppeltes Gewicht.
+// ⚠ Geprueft wird, was pcRawSeries() LIEFERT, nicht was in der Datei steht:
+// die Rohdatei darf ruhig noch Altlasten tragen, sie duerfen nur nirgends
+// mehr in eine Rechnung eingehen.
+{
+  const ids = [''].concat(Object.keys(D.putCallByAsset || {}).sort());
+  let we = 0, gesamt = 0;
+  ids.forEach(id => {
+    const r = L.pcRawSeries(D, id);
+    gesamt += r.length;
+    r.forEach(e => {
+      const w = new Date(String(e[0]) + 'T00:00:00Z').getUTCDay();
+      if (w === 0 || w === 6) { we++; if (we <= 3) fail('Phantom-Handelstag', `${id || 'marktweit'} ${e[0]} ist ein ${w === 6 ? 'Samstag' : 'Sonntag'} - die US-Optionsboersen haben zu.`); }
+    });
+  });
+  geprueft++;
+  if (we > 3) fail('Phantom-Handelstage', `insgesamt ${we} Wochenendpunkte kommen durch pcRawSeries().`);
+  else if (!we) ok();
+  console.log(`  Reihen-Punkte nach Filter: ${gesamt}, davon am Wochenende: ${we}`);
+}
+
+// ── 7c) DIE GLAETTUNG MUSS EINEN AUSREISSER AUSHALTEN ───────────────────
+// Die Optionsketten liefern einzelne Tage, die kein Marktereignis sind: auf
+// GLD Ratios von 4.2 / 5.0 / 5.9 bei einem Median von 0.72, gehaeuft
+// donnerstags (Median 0.98 gegen 0.63-0.75 sonst), und dasselbe Muster bei
+// EUR/GBP/JPY, aber nicht bei SPY/QQQ oder der marktweiten OCC-Zahl. Ein
+// gleitender MITTELWERT traegt so einen Tag ueber das ganze Fenster mit
+// sich; ein gleitender MEDIAN nicht. Hier wird genau das nachgerechnet -
+// nicht die Implementierung abgefragt, sondern ihr Verhalten.
+{
+  const basis = [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8];
+  const mitAusreisser = basis.slice(); mitAusreisser[3] = 6.0;
+  const alsSerie = a => a.map((v, i) => ['2026-03-' + String(i + 2).padStart(2, '0'), v]);
+  const flow = r => (1 - r) / (1 + r);
+  const medianFenster = (arr, i, n) => {
+    const w = arr.slice(Math.max(0, i - n + 1), i + 1).map(flow).sort((a, b) => a - b);
+    const m = w.length >> 1;
+    return w.length % 2 ? w[m] : (w[m - 1] + w[m]) / 2;
+  };
+  const mittelFenster = (arr, i, n) => {
+    const w = arr.slice(Math.max(0, i - n + 1), i + 1).map(flow);
+    return w.reduce((a, b) => a + b, 0) / w.length;
+  };
+  const sauber = flow(0.8);
+  const medNach = medianFenster(mitAusreisser, 5, 5);
+  const mitNach = mittelFenster(mitAusreisser, 5, 5);
+  geprueft++;
+  if (Math.abs(medNach - sauber) > 1e-9)
+    fail('Glaettung robust', `der gleitende Median laesst einen Ausreisser durch (${medNach.toFixed(3)} statt ${sauber.toFixed(3)}).`);
+  else ok();
+  // Gegenprobe im selben Atemzug: der Mittelwert MUSS hier abweichen,
+  // sonst ist der Testfall zu harmlos, um etwas zu beweisen.
+  geprueft++;
+  if (Math.abs(mitNach - sauber) < 0.05)
+    fail('Testfall zu harmlos', `auch der Mittelwert bleibt bei ${mitNach.toFixed(3)} - dieser Fall wuerde den Unterschied nicht zeigen.`);
+  else ok();
+  console.log(`  Ausreisser-Test: Median ${medNach.toFixed(3)} (sauber ${sauber.toFixed(3)}) vs. Mittelwert ${mitNach.toFixed(3)}`);
+}
+
+// ── 7d) DIE BEZUGSLINIE MUSS ZUR REIHE PASSEN ──────────────────────────
+// Nutzer-Entscheid 2026-09-19: je Reihe automatisch statt pauschal. Gemessen
+// gegen die rohe Null, WENN deren Vorzeichen ueberhaupt etwas trennt - sonst
+// gegen den eigenen Median. Geprueft wird nicht die Zahl 0.15, sondern die
+// Eigenschaft, die sie sichern soll: nach der Entscheidung darf KEINE Reihe
+// mehr faktisch einfarbig sein. Eine Karte mit nur einer Farbe zeigt eine
+// Struktureigenschaft des Marktes, kein Tagessignal - das war der
+// Ausgangsbefund vom 15.09. (marktweit 0 von 88 Tagen rot, SP500 97% rot).
+{
+  const ids = [''].concat(Object.keys(D.putCallByAsset || {}).sort());
+  const zeilen = [];
+  ids.forEach(id => {
+    const roh = L.pcRawSeries(D, id).map(e => L.pcFlowOf(+e[1]));
+    if (roh.length < L.PC_MIN_HIST) return;
+    const b = L.pcFlowBezug(D, id, L.PC_FLOW_SMOOTH);
+    const sm = L.pcRollMedian(roh.map(v => v - b.mid), L.PC_FLOW_SMOOTH);
+    const neg = sm.filter(x => x < 0).length;
+    const schwach = Math.min(neg, sm.length - neg) / sm.length;
+    zeilen.push(`${(id || 'marktweit').padEnd(12)} ${b.mode.padEnd(6)} schwaechere Seite ${(schwach * 100).toFixed(1)}%`);
+    geprueft++;
+    if (schwach < 0.10)
+      fail('Bezugslinie', `${id || 'marktweit'} bleibt mit "${b.mode}" praktisch einfarbig - nur ${(schwach * 100).toFixed(1)}% der Tage auf der schwaecheren Seite.`);
+    geprueft++;
+    if (b.mode === 'zero' && b.mid !== 0)
+      fail('Bezugslinie', `${id || 'marktweit'}: mode "zero", aber mid ist ${b.mid} statt 0.`);
+  });
+  console.log('  ' + zeilen.join('\n  '));
+}
+
 // ── 8) GEGENPROBEN ──────────────────────────────────────────────────────
 // Ein Waechter, der nur gruen kann, prueft nichts. Jede Kernaussage bekommt
 // hier kuenstlich kaputte Daten und MUSS daran scheitern.
@@ -222,6 +326,24 @@ const D = JSON.parse(fs.readFileSync(DATEN, 'utf8'));
   // (e) Luecken-Erkennung darf keine Luecke erfinden, wo keine ist.
   gegen('keine erfundene Luecke', L.pcGapWorkdays('2026-09-14', '2026-09-15') === 0,
     'Mo->Di wird als Luecke gemeldet.');
+
+  // (f) Bezugslinie: eine kuenstlich EINSEITIGE Reihe muss in den
+  // Median-Modus fallen, eine beidseitige nicht. Ohne diese zwei Faelle
+  // koennte pcFlowBezug() konstant eine Antwort geben und trotzdem gruen
+  // sein - dann wuerde Abschnitt 7d nichts beweisen.
+  const bauen = werte => ({ putCall: { series: werte.map((v, i) => {
+    const d = new Date(Date.UTC(2026, 0, 5) + i * 864e5);
+    const iso = d.toISOString().slice(0, 10);
+    return (d.getUTCDay() === 0 || d.getUTCDay() === 6) ? null : [iso, v];
+  }).filter(Boolean) } });
+  // Ratio immer unter 1 -> flow nie negativ -> einseitig
+  const bE = L.pcFlowBezug(bauen(Array.from({ length: 260 }, (_, i) => 0.5 + (i % 7) * 0.02)), '', L.PC_FLOW_SMOOTH);
+  gegen('einseitig -> median', bE.mode === 'median',
+    `eine Reihe, deren flow nie negativ wird, bekommt mode "${bE.mode}" statt "median" - die Karte waere durchgehend einfarbig.`);
+  // Ratio pendelt um 1 -> flow wechselt das Vorzeichen
+  const bB = L.pcFlowBezug(bauen(Array.from({ length: 260 }, (_, i) => i % 2 ? 0.6 : 1.7)), '', L.PC_FLOW_SMOOTH);
+  gegen('beidseitig -> zero', bB.mode === 'zero',
+    `eine beidseitige Reihe bekommt mode "${bB.mode}" statt "zero" - der Median-Versatz wuerde die Nulllinie unnoetig verschieben.`);
 }
 
 console.log(`\n"geprueft": ${geprueft}`);
