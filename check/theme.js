@@ -88,7 +88,6 @@ function pruefeTokensStatisch() {
   pruefeTokensStatisch();
   const browser = await chromium.launch();
   const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await p.addInitScript(() => { try { localStorage.setItem('dmfx_app_choice', 'fx'); } catch (e) {} });
   await p.goto(URL, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(800);
 

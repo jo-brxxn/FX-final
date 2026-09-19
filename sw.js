@@ -12,29 +12,26 @@
 // Manifest laeuft ueber den Cache-First-Zweig unten, wuerde also weiter aus
 // dem alten Cache kommen; erst der Versions-Bump erzwingt ein frisches
 // Einspielen der App-Shell.
-// v7 (2026-09-01): zweite App im selben Repo (Perfect Rezept, rezept.html +
-// js/rezept/*). Der Service Worker bedient jetzt BEIDE Seiten - rezept.html
-// gehoert deshalb in die App-Shell, und der Offline-Fallback fuer eine
-// fehlgeschlagene Navigation darf nicht mehr blind index.html liefern
-// (sonst bekommt man offline die falsche App zu sehen).
+// v7 (2026-09-01) bis v13: das Repo lieferte eine zweite App aus (Perfect
+// Rezept, rezept.html + js/rezept/*), die hier mitbedient wurde.
 // v11 (2026-09-02): ⚠ NUTZER-BUGREPORT "es ist wie davor". Die Ursache lag
-// NICHT in der App, sondern hier: js/rezept/*.js lief ueber den
+// NICHT in der App, sondern hier: die Skripte liefen ueber den
 // Cache-First-Zweig unten. Nach einem Push bekam das Geraet also weiter den
 // ALTEN Code - der neue wurde nur im Hintergrund nachgeladen und wirkte
 // fruehestens beim UEBERNAECHSTEN Oeffnen. Jede Code-Aenderung kam damit
 // eine Sitzung zu spaet beim Nutzer an, was von aussen exakt so aussieht,
 // als waere der Fehler nicht behoben worden. Skripte laufen ab jetzt ueber
 // den Netz-zuerst-Zweig (Cache nur als Offline-Rueckfall).
-const CACHE_VERSION = 'fxpro-v13';
+// v14 (2026-09-19): die zweite App ist auf Nutzer-Wunsch geloescht. Ihre
+// Dateien fliegen aus der App-Huelle, der Navigations-Rueckfall liefert
+// wieder eindeutig index.html. ⚠ Der Versions-Bump ist hier PFLICHT und
+// nicht Kosmetik: ohne ihn behielte jedes Geraet rezept.html und
+// js/rezept/* in seinem alten Cache und koennte die geloeschte App offline
+// weiter starten.
+const CACHE_VERSION = 'fxpro-v14';
 const APP_SHELL = [
   './',
   './index.html',
-  './rezept.html',
-  './js/rezept/app.js',
-  './js/rezept/store.js',
-  './js/rezept/import.js',
-  './js/rezept/groceries.js',
-  './js/rezept/cook.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -83,10 +80,8 @@ self.addEventListener('fetch', event => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // ⚠ rezept_feed.json gehoert dazu: der taegliche Lauf schreibt die Datei
-  // neu, und aus dem Cache saehe man die Vorschlaege von vorgestern.
-  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data|rezept_feed)\.json$/.test(url.pathname);
-  // ⚠ Der Programmcode BEIDER Apps gehoert zum Netz-zuerst-Zweig. Kaeme er
+  const isDataFile = /\/(ff_calendar|ind_data|bond_data|cot_data|price_data)\.json$/.test(url.pathname);
+  // ⚠ Der Programmcode gehoert zum Netz-zuerst-Zweig. Kaeme er
   // aus dem Cache, liefe nach einem Push weiter die alte Fassung - siehe
   // die Notiz zu v11 oben. Bilder, Icons und das Manifest bleiben
   // Cache-zuerst: die aendern sich selten und sollen sofort da sein.
@@ -109,7 +104,7 @@ self.addEventListener('fetch', event => {
           // als der Fehler selbst: der Browser wuerde sie als Skript
           // auswerten und die App bliebe weiss.
           if (req.mode !== 'navigate') return Response.error();
-          return caches.match(/rezept/.test(url.pathname) ? './rezept.html' : './index.html');
+          return caches.match('./index.html');
         })
       )
     );

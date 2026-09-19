@@ -17,10 +17,10 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'fxcheck-'));
 
 // ⚠ BEIDE Seiten dieses Repos pruefen, nicht nur index.html: seit dem
 // 2026-09-01 liegt hier eine zweite, eigenstaendige App (Perfect Rezept,
-// rezept.html + js/rezept/*). Ein Waechter, der nur index.html kennt, waere
+// eine zweite App im selben Repo). Ein Waechter, der nur index.html kennt, waere
 // fuer die Haelfte des ausgelieferten Codes blind - genau der Fehler, der
 // bei der Modul-Aufteilung schon einmal passiert ist (siehe check/README.md).
-const SEITEN = ['index.html', 'rezept.html'].filter(f => fs.existsSync(f));
+const SEITEN = ['index.html'].filter(f => fs.existsSync(f));
 let bloecke = [];
 let module0 = 0;
 SEITEN.forEach(datei => {
@@ -50,9 +50,9 @@ SEITEN.forEach(datei => {
 // die gruen meldet, waehrend die App gar nicht startet. Genau darauf hatte
 // sich die Sitzung verlassen, in der der Fehler entstand.
 //
-// Deshalb: ALLE js/*.js (nicht nur js/rezept/) und ausdruecklich als MODUL
+// Deshalb: ALLE js/*.js und ausdruecklich als MODUL
 // ueber stdin, denn nur dieser Weg hat den Fehler gefunden.
-['js', 'js/rezept'].forEach(dir => {
+['js'].forEach(dir => {
   if (!fs.existsSync(dir)) return;
   fs.readdirSync(dir).filter(f => f.endsWith('.js')).forEach(f => {
     const rel = dir + '/' + f;

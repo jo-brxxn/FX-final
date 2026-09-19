@@ -27,7 +27,7 @@ const { chromium } = require(PW);
       if (!erwartet && !/ERR_TUNNEL|ERR_NAME|Failed to load resource/.test(t)) rec('CONSOLE', t); } });
 
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
+  await page.evaluate(() => { ['introOv','lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
   await page.waitForTimeout(800);
   // dismiss any auto-opened modal
   await page.evaluate(() => { if (typeof closeM === 'function') { document.querySelectorAll('.mov,.mov2').forEach(m => { if (m.id) try { closeM(m.id); } catch(e){} }); } });
@@ -55,14 +55,14 @@ const { chromium } = require(PW);
         if (!b.offsetParent) continue;                    // invisible
         const oc = b.getAttribute('onclick') || '';
         if (/del|remove|reset|clear|Del|Remove|logout|Import|import/i.test(oc)) continue; // destructive
-        // ⚠ Navigations-Buttons ebenfalls ueberspringen. Diese Schleife
-        // klickt JEDEN sichtbaren Button - "Settings -> Apps -> Switch"
-        // (switchToRezept) verlaesst dabei index.html komplett, und jede
-        // spaetere page.evaluate() dieses Waechters lief danach in der
-        // Rezept-App auf: "ReferenceError: syms is not defined". Das ist
-        // kein App-Fehler (ein echter Klick SOLL die App wechseln), sondern
-        // eine Grenze dieser Klick-alles-Methode.
-        if (/switchToRezept|chooseApp/.test(oc)) continue;
+        // ⚠ LEHRE, die ueber die geloeschte zweite App hinaus gilt: diese
+        // Schleife klickt JEDEN sichtbaren Button. Bis 2026-09-19 lag hier
+        // "Settings -> Apps -> Switch" (switchToRezept), das index.html
+        // komplett verliess - jede spaetere page.evaluate() lief danach in
+        // der anderen App auf ("ReferenceError: syms is not defined"). Das
+        // war kein App-Fehler, sondern eine Grenze dieser Methode. Kommt je
+        // wieder ein Button dazu, der die Seite WECHSELT, gehoert er hier
+        // ausgenommen.
         try {
           if (b.tagName === 'SELECT') continue;
           b.click();

@@ -53,13 +53,12 @@ const satz = (v) => {
   const p = await b.newPage({ viewport: { width: 1600, height: 1000 } });
   await p.addInitScript(() => { try {
     localStorage.setItem('fxpro_help_seen', '1');
-    localStorage.setItem('dmfx_app_choice', 'fx');
     localStorage.setItem('fxpro_intro_anim_enabled', '0');
   } catch (e) {} });
   const perr = []; p.on('pageerror', e => perr.push(String(e)));
   await p.goto(URL);
   await wartenBisDatenDa(p);
-  await p.evaluate(() => { ['introOv', 'lockScreen', 'appChoiceOv'].forEach(id => {
+  await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => {
     const e = document.getElementById(id); if (e) e.remove(); }); });
   await p.evaluate(() => gotoSym('USD'));
   await p.waitForTimeout(500);

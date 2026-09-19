@@ -6,10 +6,10 @@ const MODE=process.argv[2]||'normalized';
 (async()=>{
  const b=await chromium.launch();
  const p=await b.newPage({viewport:{width:1600,height:1100}});
- await p.addInitScript(m=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('dmfx_app_choice','fx');localStorage.setItem('fxpro_score_mode',m);}catch(e){}},MODE);
+ await p.addInitScript(m=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('fxpro_score_mode',m);}catch(e){}},MODE);
  const perr=[];p.on('pageerror',e=>perr.push(String(e)));
  await p.goto(URL,{waitUntil:'networkidle'});
- await p.evaluate(()=>{['introOv','lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});});
+ await p.evaluate(()=>{['introOv','lockScreen'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});});
  // ⚠ Keine feste Frist mehr - siehe check/warten.js (Messung 2026-09-07:
  // die Leiste wird bei t=645ms noch mit den Werten VOR den Feeds gezeichnet).
  await wartenBisDatenDa(p);

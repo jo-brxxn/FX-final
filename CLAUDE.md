@@ -1,28 +1,26 @@
 # Projektkonventionen
 
-## ⚠ ZUERST: dieses Repo liefert ZWEI eigenständige Apps aus
+## Dieses Repo liefert EINE App aus
 
-Nutzer-Vorgabe 2026-09-01: *„es sind wirklich zwei verschiedene Apps, also
-zwei verschiedene Webseiten … wenn man am FX Analyst Pro arbeitet, sollen
-nicht die anderen ganzen Dateien durchgelesen werden und andersrum."*
+Bis zum 2026-09-19 waren es zwei (`index.html` = FX Analyst Pro,
+`rezept.html` = Perfect Rezept, mit einem Auswahlfenster davor). Die zweite
+App ist auf Nutzer-Wunsch komplett geloescht worden — App, Daten, Bilder,
+Doku, Waechter, Workflow und das Auswahlfenster. `index.html` startet seither
+direkt.
 
-| App | Einstieg | Code | Doku |
-|---|---|---|---|
-| **FX Analyst Pro** | `index.html` | `js/*.js` (main, score, calendar, globe, constants, data-feeds, asset-notes-seed) | diese Datei + `docs/*` |
-| **Perfect Rezept** | `rezept.html` | `js/rezept/*.js` | **nur** `docs/rezept.md` |
+⚠ Zwei Reste leben ausserhalb des Repos weiter und duerfen nicht als
+"erledigt" behandelt werden, solange nicht jedes Geraet die App einmal
+geoeffnet hat:
+- `localStorage['dmfx_app_choice']` — wird beim Start geloescht
+  (Kopf von `index.html`); ohne das landet ein Geraet auf einer 404-Seite.
+- Supabase-Zeilen `<syncId>:rez:*` in der GETEILTEN Tabelle `fx_sync` —
+  `purgeRezeptCloudRows()` in `js/main.js` raeumt sie einmalig auf.
+  ⚠ Die FX-Zeile ist der nackte `<syncId>` in DERSELBEN Tabelle. Jeder
+  Filter, der nicht exakt auf dem Praefix `<syncId>:rez:` steht, loescht den
+  kompletten FX-Stand samt aller Notizen mit.
 
-**Bei einer Rezept-Aufgabe: `docs/rezept.md` lesen und sonst nichts** aus der
-Tabelle unten — Score-Modell, Datenquellen, Navigation und State-Sync des FX
-Analyst Pro sind dort ohne Bedeutung. Umgekehrt genauso: bei einer
-FX-Aufgabe ist `docs/rezept.md`/`js/rezept/` irrelevant.
-
-Geteilt wird nur: Repo, `sw.js`, Icons/`manifest.json` und die
-Supabase-Zugangsdaten (`fxpro_cloud_cfg`). Welche App beim Öffnen startet,
-entscheidet das Auswahlfenster in `index.html`, gemerkt PRO GERÄT in
-`localStorage['dmfx_app_choice']` — bewusst nicht gesynct.
-
-**Alles auf der Oberfläche ist Englisch — in BEIDEN Apps** (Nutzer-Regel
-2026-09-01, ausdrücklich als Dauerregel gesetzt).
+**Alles auf der Oberflaeche ist Englisch** (Nutzer-Regel 2026-09-01,
+ausdruecklich als Dauerregel gesetzt).
 
 ---
 
@@ -54,7 +52,6 @@ betrifft.
 | **Regime Radar** (Szenarien, Bausteine, die drei Schutzregeln) | `docs/regime.md` |
 | Prüfskripte (`check/*.js`), was sie prüfen und warum | `check/README.md` |
 | Volle Änderungshistorie (jeder Bugfix/jede Iteration mit Datum) | `docs/CHANGELOG.md` |
-| **Perfect Rezept (die andere App)** — Trennung, Datenmodell, Bild-Budgets, Themes | `docs/rezept.md` |
 
 Bei einem Bugreport, der nach einem bekannten Muster riecht, oder um zu
 prüfen, ob eine Entscheidung schon bewusst getroffen wurde: gezielt in der
@@ -71,8 +68,7 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    Design-/Geschmacksentscheidungen ausdrücklich eingeschlossen. Sonst per
    `AskUserQuestion` mit konkreten Optionen nachfragen. Details:
    `docs/workflow.md`.
-3. **VERSION-CHECK-Nummer bei JEDER `index.html`-Änderung bumpen** (bzw.
-   **REZEPT-CHECK bei jeder Änderung an `rezept.html`/`js/rezept/*`**) — auch bei
+3. **VERSION-CHECK-Nummer bei JEDER `index.html`-Änderung bumpen** — auch bei
    kleinen Bugfixes ohne UI-Sichtbarkeit — und die neue Nummer als letzten
    Satz der Chat-Antwort nennen. Bei Score-Formel-Änderungen zusätzlich
    `SCORE_MODEL_VERSION`, bei Formulierungs-Logik `SUMMARY_ENGINE_VERSION`.
@@ -89,8 +85,7 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    `window`-Brücke. Ebenso gilt: **kein Speicher-/Schreibpfad ohne
    `try/catch` mit sichtbarer Meldung** — eine unbehandelte
    Promise-Rejection sieht für den Nutzer exakt aus wie „die App macht
-   nichts". Beides wird geprüft (`check/structure.js` für den FX Analyst
-   Pro, `check/rezept.js` für Perfect Rezept).
+   nichts". Geprüft von `check/structure.js`.
 7. **Immer auch auf `main` pushen** (das ist der Branch, der die
    Produktivadresse — ein Cloudflare Worker hinter Cloudflare Access,
    NICHT primär GitHub Pages — sowie den ungeschützten GitHub-Pages-Mirror
@@ -128,7 +123,7 @@ dokumentieren als auslassen. Faustregel für WOHIN:
 
 ## Sprache
 
-**Antworten auf Deutsch. Die Oberfläche beider Apps ist Englisch** — jeder
+**Antworten auf Deutsch. Die Oberfläche der App ist Englisch** — jeder
 neue Text, jedes neue Label, jede neue Meldung wird auf Englisch geschrieben,
 ohne Rückfrage (Nutzer-Regel 2026-09-01).
 

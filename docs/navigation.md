@@ -808,11 +808,32 @@ Ansichten, damit die Sprünge überall erreichbar sind. Bewusst nur an dieser
 einen Stelle — nicht zusätzlich in der Bias-&-Notes-Karte.
 
 Von der Zielseite führt die rote Zurück-Pille zu genau diesem Asset zurück
-(`_quickReturnAssetId`); ohne gesetzte Asset-ID geht sie ins Research-Terminal.
+(`_quickReturnAssetId`); ohne gesetzte Asset-ID geht sie ins Archive.
+
+## Archive (Umbau 2026-09-19, davor „Research Terminal")
+
+Zwei Spalten: **Ordnerbaum links** über die volle Höhe, **Inhalt der Auswahl
+rechts**. Der Baum ist `researchChildrenOf()`: Kategorie → Asset →
+`General Notes` (mit beliebig tiefen eigenen Unterordnern) + `Analysis`.
+
+Entfallen sind die Rubrik-Kartenreihe und die News-Timeline — beides
+Analyse-Bausteine, kein Archiv. ⚠ Kein Zugang ist dabei verlorengegangen:
+alle fünf Rubrik-Karten stehen weiterhin auf der Assets-Detailseite (die
+Lehre aus Bugreport 2026-08-07 sagt genau das), und die Event-Wecker der
+Timeline hängen unverändert an `mEvtAlertPicker`/`mEvtAlertList`.
+
+Eine Notiz öffnet **aus dem Archiv heraus als ganze Seite**
+(`resOpenNoteShell()` setzt `.res-note-page` auf `#mResNote`), von
+Asset-Seite und Watchlist weiterhin als Fenster.
+
+⚠ **Der Tab-Schlüssel bleibt `notes`.** Er steckt in gespeicherten
+`tabStacks` auf den Geräten des Nutzers — eine Umbenennung zerreißt die dort
+gemerkten Tab-Stapel. Umbenannt wurde nur, was der Nutzer sieht. Dasselbe
+gilt für die Präfixe `res*`/`research*` im Code.
 
 ### Notes-Ansicht (`curSub === 'notes'`)
 Ordner links, Notizen rechts — **dieselbe Datenbasis und derselbe Renderer wie
-im Research-Terminal** (`researchNotesFolderOptions` / `researchNotesPanelHtml`),
+im Archive** (`researchNotesFolderOptions` / `researchNotesPanelHtml`),
 kein zweiter Nachbau, keine zweite Speicherform. Ordner hängen unter der
 Wurzel `asset:<id>:gen`.
 
@@ -851,7 +872,7 @@ ein Pin-Platz frei, wird sie direkt angepinnt: sonst hätte man eine Notiz genau
 dort angelegt, wo sie danach nicht auftaucht.
 
 ⚠ `rerenderNotesHost()` kennt jetzt drei Ziele (Assets / Watchlist /
-Research-Terminal). Bei neuen Notiz-Aktionen immer diese Funktion nutzen, nie
+Archive). Bei neuen Notiz-Aktionen immer diese Funktion nutzen, nie
 `renderResearch()` fest verdrahten.
 
 ## History (2026-08-23)

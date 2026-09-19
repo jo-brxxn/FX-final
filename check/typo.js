@@ -58,12 +58,11 @@ const NAH = 1.0;           // Unterschied < 1px zwischen Nachbarn = zu nah
   const pg = await br.newPage({ viewport: { width: 1440, height: 960 } });
   await pg.addInitScript(() => { try {
     localStorage.setItem('fxpro_help_seen', '1');
-    localStorage.setItem('dmfx_app_choice', 'fx');
     localStorage.setItem('fxpro_intro_anim_enabled', '0');
   } catch (e) {} });
   await pg.goto(URL);
   await wartenBisDatenDa(pg);
-  await pg.evaluate(() => { ['introOv', 'lockScreen', 'appChoiceOv'].forEach(id => {
+  await pg.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => {
     const e = document.getElementById(id); if (e) e.remove(); }); });
 
   const ids = await pg.evaluate(() =>

@@ -27,24 +27,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>FX Analyst Pro</title>
-<!-- ══ APP-WEICHE (Nutzer-Wunsch 2026-09-01) ═════════════════════════════
-     Dieses Repo liefert ZWEI eigenstaendige Apps aus:
-       index.html   -> FX Analyst Pro
-       rezept.html  -> Perfect Rezept
-     Beim allerersten Oeffnen erscheint unten das Auswahlfenster
-     (#appChoiceOv); die Wahl wird PRO GERAET in localStorage gemerkt
-     (dmfx_app_choice) und bewusst NICHT per Cloud synchronisiert - sonst
-     wuerde das iPad dem Handy seine App aufzwingen. Gewechselt wird
-     jederzeit ueber Einstellungen -> Apps, in BEIDEN Apps.
-     ⚠ Diese Weiche muss VOR allem anderen laufen: sonst bootet erst der
-     komplette FX Analyst Pro (Module, Daten-Fetches, Intro), nur um
-     danach weggeworfen zu werden. -->
+<!-- ══ EINMALIGE AUFRAEUMUNG DER ZWEITEN APP (Nutzer-Wunsch 2026-09-19) ═══
+     Dieses Repo lieferte bis 2026-09-19 eine zweite eigenstaendige App aus
+     (rezept.html -> Perfect Rezept). Sie ist auf Nutzer-Wunsch komplett
+     geloescht. Zwei Hinterlassenschaften stecken aber in den BROWSERN der
+     Geraete und muessen dort aufgeraeumt werden, nicht im Repo:
+
+       1. dmfx_app_choice='rezept' - die gemerkte App-Wahl. Ohne diese Zeile
+          wuerde jedes Geraet, das zuletzt das Rezept gewaehlt hat, beim
+          Oeffnen auf eine 404-Seite umgeleitet: die App waere dort TOT.
+          ⚠ Deshalb muss das hier VOR allem anderen laufen.
+       2. rez_updated / rez_cloud_seen / rezept_sync_lock - lokale Marker
+          der geloeschten App.
+
+     Die Cloud-Zeilen (<syncId>:rez:*) raeumt purgeRezeptCloudRows() in
+     js/main.js auf - erst dort liegen die Zugangsdaten und ein Ort fuer
+     eine sichtbare Fehlermeldung.
+
+     Dieser Block darf weg, sobald jedes Geraet die App einmal geoeffnet
+     hat. Bis dahin kostet er nichts und rettet ein Geraet pro Zeile. -->
 <script>
 (function(){
   try{
-    if(localStorage.getItem('dmfx_app_choice')==='rezept'){
-      location.replace('rezept.html');
-    }
+    if(localStorage.getItem('dmfx_app_choice')==='rezept')localStorage.removeItem('dmfx_app_choice');
+    ['rez_updated','rez_cloud_seen','rezept_sync_lock'].forEach(function(k){
+      try{localStorage.removeItem(k);}catch(e){}
+    });
   }catch(e){}
 })();
 </script>
@@ -1042,7 +1050,8 @@ svg.ic{vertical-align:-2px;flex:none}
    es traegt KEIN [data-fx-theme]-Regelwerk. Damit landet ein Geraet mit
    einem unbekannten oder geloeschten Theme-Wert automatisch im vertrauten
    Design statt ohne eine einzige Farbvariable dazustehen (genau dieser
-   Fehler ist in der Rezept-App einmal passiert, siehe docs/rezept.md).
+   Fehler ist in der 2026-09-19 geloeschten zweiten App einmal passiert,
+   siehe docs/CHANGELOG.md).
    ⚠ FARBEN MIT BEDEUTUNG bleiben Bedeutung: --green ist in JEDER Vorlage
    ein Blau (bullish), --red ein Rot (bearish), --amber/--star ein neutrales
    Grau. Angepasst wird nur Helligkeit/Saettigung an die jeweilige Flaeche -
@@ -2306,22 +2315,24 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rtree-add,.rtree-del{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:var(--fs-base);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 @media(hover:hover){.rtree-add:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}.rtree-del:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}}
 .rtree-placeholder{padding:16px;background:var(--bg2);border:1px dashed var(--bd2);border-radius:var(--r);color:var(--t3);font-size:var(--fs-base);text-align:center}
-/* ── RESEARCH-TERMINAL (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots) ──
-   Sidebar bildet die linke Spalte ueber die VOLLE Hoehe (Nutzer-Korrektur:
-   "die Ordner... gehen bis ganz oben hin... die obere Leiste mit den Karten
-   [geht] nie bis ganz links") - .rterm-main buendelt Kartenreihe+Timeline-
-   Zeile als rechte Spalte daneben. Karten-Reihe wiederverwendet .ov-field2/
-   .ov2-* vom Overview-Grid ("im gleichen Style"). */
+/* ── ARCHIVE (Umbau 2026-09-19, davor "Research Terminal") ──────────────
+   ZWEI Spalten: Ordnerbaum links ueber die VOLLE Hoehe (Nutzer-Korrektur
+   2026-08-04: "die Ordner... gehen bis ganz oben hin"), Inhalt der Auswahl
+   rechts. Die frueheren Regeln der Kartenreihe (rterm-top, rterm-riskbox,
+   rterm-back-sm) und der gesamte Timeline-Block (rterm-tl-...) sind mit den
+   beiden Bausteinen entfallen.
+   ⚠ WARNUNG AN DEN NAECHSTEN, DER HIER SCHREIBT: in der ersten Fassung war
+   eine Regelgruppe als "rterm-top" plus Glob-Sternchen abgekuerzt - direkt
+   gefolgt von einem Schraegstrich. Diese zwei Zeichen BEENDEN den
+   CSS-Kommentar mitten im Satz. Der Resttext wurde danach als CSS gelesen,
+   .rterm-shell verlor sein display:flex, und die Seite stapelte beide
+   Spalten untereinander statt sie nebeneinanderzustellen. Gemessen im
+   Browser: shell display block statt flex, side 1286px breit statt 300px,
+   und kein einziges Stylesheet enthielt die Regel ueberhaupt noch.
+   Also: keine Glob-Sternchen vor einem Schraegstrich in CSS-Kommentaren. */
 .rterm-shell{display:flex;gap:14px;align-items:stretch}
 .rterm-side{flex:0 0 auto;display:flex;flex-direction:column}
 .rterm-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:10px}
-.rterm-top{display:flex;gap:8px;flex-wrap:wrap}
-.rterm-top .ov-field2{flex:1 1 150px;min-width:130px}
-.rterm-topexp{position:relative}
-.rterm-back-sm{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer;margin-bottom:8px}
-@media(hover:hover){.rterm-back-sm:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
-.rterm-riskbox{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px}
-.rterm-ownsc{margin-left:auto;font-size:var(--fs-sm);font-weight:800;font-family:var(--ff-num)}
 /* Ueberschrift + Fokus-Asset-Identitaet AUSSERHALB der geborderten Box
    (Nutzer-Korrektur 2026-08-04), deutlich groesser als die vorherige
    kleine Titel-/Chip-Variante innerhalb der Box. */
@@ -2341,28 +2352,10 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
 .rterm-shortcut{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border-radius:7px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer;text-align:left}
 .rterm-shortcut-lbl{font-size:var(--fs-sm);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(hover:hover){.rterm-shortcut:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
-.rterm-lower{display:flex;gap:14px;align-items:stretch;flex:1 1 auto}
 .rterm-mid{flex:1 1 auto;min-height:260px}
-.rterm-timeline{flex:0 0 220px;max-width:260px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px;max-height:640px;overflow-y:auto}
-.rterm-tl-hd{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}
-.rterm-tl-title{font-size:var(--fs-xs);font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t3)}
-.rterm-tl-filter{font-size:var(--fs-2xs);padding:4px 8px}
-.rterm-tl-list{position:relative;padding-left:14px;border-left:2px solid var(--bd2)}
-.rterm-tl-item{position:relative;padding-bottom:14px}
-.rterm-tl-item:last-child{padding-bottom:0}
-.rterm-tl-dot{position:absolute;left:-19px;top:2px;width:9px;height:9px;border-radius:50%;background:var(--blue);border:2px solid var(--bg2)}
-.rterm-tl-item.past .rterm-tl-dot{background:var(--t3)}
-.rterm-tl-item.past{opacity:.6}
-.rterm-tl-date{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--t2);display:flex;align-items:center;justify-content:space-between;gap:6px}
-.rterm-tl-bell{flex:0 0 auto;width:20px;height:20px;border-radius:5px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);display:flex;align-items:center;justify-content:center;cursor:pointer}
-.rterm-tl-bell.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.5);background:rgba(var(--blue-rgb),.18)}
-@media(hover:hover){.rterm-tl-bell:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
-.rterm-tl-name{font-size:var(--fs-sm);font-weight:600;color:var(--t1);margin:1px 0}
-.rterm-tl-vals{font-size:var(--fs-2xs);color:var(--t2);font-family:var(--ff-num)}
-.rterm-tl-empty{color:var(--t3);font-size:var(--fs-sm);text-align:center;padding:10px 4px}
-@media(max-width:900px){.rterm-shell{flex-direction:column}.rterm-side{flex-direction:row}.rterm-tree{width:100%}.rterm-side-collapsed{width:100%;flex-direction:row;flex-wrap:wrap}.rterm-lower{flex-direction:column}.rterm-timeline{flex:1 1 auto;max-width:none;max-height:280px}}
+@media(max-width:900px){.rterm-shell{flex-direction:column}.rterm-side{flex-direction:row}.rterm-tree{width:100%}.rterm-side-collapsed{width:100%;flex-direction:row;flex-wrap:wrap}}
 /* Rotes Zurueck-Symbol (Nutzer-Wunsch 2026-08-04): schwebt unten links auf
-   JEDER Seite, sobald ein Research-Terminal-Shortcut benutzt wurde. */
+   JEDER Seite, sobald ein Archiv-Shortcut benutzt wurde. */
 /* Zurueck-Leiste: steht oben rechts unter der Kopfleiste IM Seitenfluss
    (showTab haengt sie als erstes Kind in die aktive Seite) - sie schiebt den
    Inhalt herunter statt ihn zu ueberdecken. Vorher schwebte sie als
@@ -4221,6 +4214,29 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .modal.acm-modal{max-width:min(1020px,94vw)}
 .modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:var(--fs-md);font-weight:700;color:var(--t0);margin-bottom:12px}
+/* ── NOTIZ ALS VOLLSEITE (Nutzer-Entscheid 2026-09-19) ───────────────────
+   Aus dem Archiv heraus oeffnet eine Notiz NICHT mehr als kleines Fenster,
+   sondern als ganze Seite: das ist der Ort, an dem laengere Analysen
+   geschrieben werden, und ein 170px-Feld mitten in einem abgedunkelten
+   Hintergrund ist dafuer der falsche Rahmen.
+   ⚠ Der zweite, wichtigere Grund ist ein bekannter Datenverlust-Fall: am
+   2026-09-01 hat ein Klick NEBEN den Editor alles Getippte verworfen. Die
+   Nachfrage (MODAL_GUARDS/#mUnsaved) faengt das heute ab - eine Seite ohne
+   umgebende Klickflaeche laesst den Fall aber gar nicht erst entstehen.
+   Von der Asset-Seite und der Watchlist aus bleibt es bewusst ein Fenster:
+   dort ist die Notiz ein Seitenschritt, kein eigener Arbeitsplatz.
+   ⚠ .res-nbody statt eines inline style="min-height": ein Inline-Wert
+   schlaegt JEDE Regel hier und haette die Vollseite auf 170px festgenagelt. */
+.res-nbody{margin-bottom:8px;min-height:170px}
+/* ⚠ .res-note-modal statt style="max-width:640px" am Element: ein Inline-Wert
+   schlaegt JEDE Regel hier. Genau daran ist die Vollseite im ersten Anlauf
+   haengengeblieben - sie war ueber die ganze Hoehe da, aber weiter nur 640px
+   breit (gemessen: modal 640x1000 in einem 1500px-Fenster). */
+.res-note-modal{max-width:640px}
+.ov.res-note-page{background:var(--bg1);padding:0;align-items:stretch;justify-content:center;animation:none}
+.ov.res-note-page>.res-note-modal{max-width:min(980px,100%);width:100%;max-height:none;height:100dvh;border:0;border-radius:0;box-shadow:none;animation:none;padding:20px clamp(16px,5vw,56px) 24px}
+.ov.res-note-page .res-nbody{min-height:min(48vh,520px)}
+@media(max-width:700px){.ov.res-note-page>.modal{padding:16px 16px 20px}}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:var(--fs-base);outline:none;font-family:var(--ff-text);margin-bottom:10px}
 .dm-lbl{font-size:var(--fs-2xs);color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
@@ -5332,83 +5348,6 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 <body>
 
 
-<!-- ══ APP-AUSWAHL ════════════════════════════════════════════════════════
-     Erscheint NUR beim allerersten Oeffnen auf diesem Geraet (siehe die
-     Weiche im <head>). Liegt ueber Intro UND PIN-Sperre: die Auswahl ist
-     reines Routing und braucht keine Daten - erst danach entscheidet die
-     gewaehlte App, was sie verlangt.
-     Eigenes, gekapseltes CSS: das Fenster gehoert keiner der beiden Apps,
-     es steht davor. -->
-<style>
-#appChoiceOv{position:fixed;inset:0;z-index:100050;display:none;align-items:center;justify-content:center;padding:20px;
-  background:radial-gradient(ellipse 70% 55% at 30% 10%,rgba(60,42,32,.55),transparent 70%),
-             radial-gradient(ellipse 60% 50% at 80% 90%,rgba(20,32,60,.55),transparent 70%),#0f1219}
-#appChoiceOv.on{display:flex}
-.ac-box{width:100%;max-width:760px;text-align:center}
-.ac-h{font-size:var(--fs-sm);font-weight:800;letter-spacing:2.4px;text-transform:uppercase;color:#8b94a4;margin-bottom:8px}
-.ac-t{font-size:27px;font-weight:800;color:#f4f6fa;letter-spacing:-.3px;margin-bottom:26px}
-.ac-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:620px){.ac-grid{grid-template-columns:1fr}.ac-t{font-size:22px}}
-.ac-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px 20px;border-radius:16px;cursor:pointer;
-  border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.045);color:#e8ebf1;font-family:inherit;
-  transition:transform .16s ease,border-color .16s ease,background .16s ease}
-@media (hover:hover){.ac-card:hover{transform:translateY(-3px);background:rgba(255,255,255,.08)}}
-.ac-card-fx{--ac:#4F9BFF}
-.ac-card-rez{--ac:#D98A54}
-@media (hover:hover){.ac-card:hover{border-color:var(--ac)}}
-.ac-ic{width:60px;height:60px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--ac)}
-.ac-ic svg{width:29px;height:29px}
-.ac-nm{font-size:18px;font-weight:800;letter-spacing:.2px}
-.ac-ds{font-size:var(--fs-sm);color:#9aa3b2;line-height:1.5;max-width:230px}
-.ac-note{margin-top:22px;font-size:var(--fs-xs);color:#767f8e;line-height:1.6}
-</style>
-<div id="appChoiceOv">
-  <div class="ac-box">
-    <div class="ac-h">Jonathan Brinkmann</div>
-    <div class="ac-t">Which app do you want to open?</div>
-    <div class="ac-grid">
-      <button class="ac-card ac-card-fx" onclick="chooseApp('fx')">
-        <span class="ac-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 3 5-7"/><path d="M14 7h4v4"/><path d="M3 21h18"/></svg></span>
-        <span class="ac-nm">FX Analyst Pro</span>
-        <span class="ac-ds">Currency scoring, indicators, calendar, set-ups and research.</span>
-      </button>
-      <button class="ac-card ac-card-rez" onclick="chooseApp('rezept')">
-        <span class="ac-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h13a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2z"/><path d="M8 3v18"/><path d="M12 8h4"/><path d="M12 12h4"/></svg></span>
-        <span class="ac-nm">Perfect Rezept</span>
-        <span class="ac-ds">Your own recipes with photos, timings and preparation steps.</span>
-      </button>
-    </div>
-    <div class="ac-note">This device remembers your choice. Switch any time under Settings &#8594; Apps.</div>
-  </div>
-</div>
-<script>
-// Nur beim ALLERERSTEN Oeffnen sichtbar. Steht bereits eine Wahl fest, ist
-// entweder oben schon nach rezept.html umgeleitet worden oder es bleibt bei
-// dieser Seite - in beiden Faellen kommt das Fenster gar nicht erst hoch.
-(function(){
-  var choice=null;
-  try{choice=localStorage.getItem('dmfx_app_choice');}catch(e){}
-  if(!choice){
-    var ov=document.getElementById('appChoiceOv');
-    if(ov)ov.classList.add('on');
-  }
-})();
-function chooseApp(which){
-  try{localStorage.setItem('dmfx_app_choice',which);}catch(e){}
-  if(which==='rezept'){location.href='rezept.html';return;}
-  var ov=document.getElementById('appChoiceOv');
-  if(ov)ov.remove();
-}
-// Einstellungen -> Apps -> "Switch". Bewusst hier oben definiert (normales
-// Inline-Skript = globale Funktion): js/main.js ist ein ES-Modul, eine dort
-// deklarierte Funktion waere fuer das onclick-Attribut unsichtbar, ohne sie
-// eigens ueber die window-Bruecke zu exportieren.
-function switchToRezept(){
-  try{localStorage.setItem('dmfx_app_choice','rezept');}catch(e){}
-  location.href='rezept.html';
-}
-</script>
-
 <!-- INTRO-ANIMATION -->
 <!-- Nutzer-Wunsch 2026-08-04 (Foto+Beschreibung): der alte Klick-zum-
      Wegklicken-Shard-Effekt ist komplett ersetzt durch ein interaktives
@@ -5524,11 +5463,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-528 - Zwei echte Datenfehler in den Optionsreihen, gefunden ueber einen Bildvergleich: 'da ist bei beiden Bildern Gold ausgewaehlt und es ist ca der gleiche Zeitraum aber die Kurve und ausschlage bewegen sich nicht ansatzweise gleich'. ERSTENS PHANTOM-HANDELSTAGE. In ZWOELF von dreizehn Asset-Reihen lagen Punkte mit Samstags- und Sonntagsdatum, je vier bis acht, paarweise mit identischem Wert - Gold 11.07. Samstag 1.12, 12.07. Sonntag 1.12. Die US-Optionsboersen haben dann zu; das sind Freitagswerte unter falschem Datum. Gold trug damit 71 Punkte in einem Fenster mit 65 Werktagen, und jeder doppelt gezaehlte Freitag bekam in Glaettung und Perzentil das doppelte Gewicht. Ursache im Sammellauf: die Wochenend-Sperre stand nur im schedule-Zweig, ein manueller Lauf umging sie und schrieb dabei. Verifizieren heisst nachsehen, nicht in die Zeitreihe schreiben - die Sperre gilt jetzt immer, und die App filtert zusaetzlich an EINER zentralen Stelle, durch die beide Karten und alle Schwellen gehen. ZWEITENS AUSREISSER, DIE KEIN MARKTEREIGNIS SIND. Die Goldkette zeigt einzelne Tage mit einer Put/Call-Ratio von 4.2, 5.0 und 5.9 bei einem Median von 0.72 - fuenfmal so viele Puts wie Calls auf einem liquiden ETF in einer Sitzung. Sie haeufen sich donnerstags, Median dort 0.98 gegen 0.63 bis 0.75 an allen anderen Wochentagen, und dasselbe Muster zeigen EUR mit Faktor 1.54, GBP 1.64 und JPY 2.00 - aber NICHT SPY, QQQ, USO oder die marktweite OCC-Zahl. Ein echter Wochentagseffekt traefe alle Ketten. Ursache: der Sammellauf holt jeden Verfallstermin einzeln, und ein gescheiterter Abruf wurde still als null addiert - die Tagesratio entstand dann aus einer halben Kette, ohne dass irgendwo etwas davon stand. Faellt dabei ein call-lastiger Verfall weg, springt die Ratio nach oben. Solche Tage werden jetzt gar nicht erst geschrieben. DIE GLAETTUNG IST JETZT EIN GLEITENDER MEDIAN statt eines Mittelwerts. Ein Mittelwert traegt so einen Tag fuenf Sitzungen lang mit sich - am 16.07. gemessen minus 0.212 statt minus 0.034, und das eine Woche lang. Der Median ignoriert ihn und erfindet dabei nichts: jeder ausgegebene Wert ist ein echter gemessener Tag aus dem Fenster. Das ist der Unterschied zum Kappen oder Interpolieren, die beide gegen die Regel verstossen wuerden, nie zu schaetzen. WAS DAS GEBRACHT HAT, gemessen an den fuenf Phasen, die im Vergleichsbild abzulesen sind: vorher stimmten zwei davon, jetzt vier. Ein Rest bleibt und liegt nicht an der Rechnung - das Vergleichsbild misst einen anderen Markt. Diese App liest die Optionen des GLD-ETF, weil es fuer die meisten Waehrungen und Rohstoffe keinen eigenen frei zugaenglichen Optionsmarkt gibt; ein Terminmarkt fuer Gold hat andere Teilnehmer und andere Absicherungsmuster. WAECHTER: check/putcall.js prueft jetzt zusaetzlich, dass kein einziger Wochenendpunkt mehr in eine Rechnung eingeht, und rechnet an einem eingebauten Ausreisser nach, dass die Glaettung ihn wirklich aushaelt - samt Gegenprobe, dass ein Mittelwert an derselben Stelle abweichen WUERDE, damit der Testfall nicht zu harmlos ist. DIE NULLLINIE WIRD JETZT JE REIHE ENTSCHIEDEN statt pauschal gesetzt (Nutzer-Entscheid 19.09.). Gemessen wird, wie viele Tage bei roher Null auf der schwaecheren Seite liegen: marktweit 0,0 Prozent, SP500 2,0, NAS 4,1, Silber 5,3, JPY 13,7, BTC 13,9 - dort traegt das Vorzeichen nichts, dort gilt weiter der Median. Gold liegt bei 18,1, dazu CHF 20,0, CAD 22,0, Oel 25,8, USD 30,6, GBP 38,9 und EUR 44,5 - die bekommen die rohe Null, wie im Vergleichsbild. Zwischen 13,9 und 18,1 liegt eine klare Luecke, 15 Prozent trennt sie mittig. Kopfzeile, Baender und Fusszeile sagen jeweils, welche Linie gilt und warum. UND EINE LUECKE IM PRUEFNETZ, die diese Sitzung selbst aufgedeckt hat: node --check js/main.js meldet EXIT 0 fuer eine Datei, die der Browser mit Invalid or unexpected token ablehnt - nachgestellt mit einem ueberzaehligen Backslash an Zeile 18856. Der Grund ist, dass node --check als CommonJS-Skript parst, waehrend js/main.js ein ES-Modul ist. Das ist die schlimmste Sorte Pruefung: eine, die gruen meldet, waehrend die App gar nicht startet - und genau darauf hatte sich diese Sitzung verlassen. check/syntax.js prueft jetzt ALLE achtzehn js-Module ausdruecklich im Modul-Modus; die Gegenprobe mit dem wieder eingebauten Fehler meldet ihn mit Zeilennummer."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-529 - Die zweite App dieses Repos (Perfect Rezept) ist auf Nutzer-Wunsch komplett geloescht, und das Research Terminal ist zum Archive umgebaut. ERSTENS DIE LOESCHUNG. Weg sind rezept.html, js/rezept/ (7 Module), rezept_bilder/ (14 MB), rezept_feed.json, docs/rezept.md, check/rezept.js, tools/rezept-*, der taegliche Feed-Workflow, das Auswahlfenster beim Start, die Settings-Zeile und Regel 1b (REZEPT-CHECK) in check/rules.js. Zwei Hinterlassenschaften stecken aber nicht im Repo, sondern in den Browsern der Geraete, und genau die waeren beim blossen Loeschen uebersehen worden: dmfx_app_choice=rezept haette jedes Geraet, das zuletzt das Rezept gewaehlt hat, beim Oeffnen auf eine 404-Seite geleitet - die App waere dort tot gewesen; der Kopf von index.html loescht den Schluessel jetzt beim Start. Und die Rezeptdaten liegen in DERSELBEN Supabase-Tabelle wie der FX-Stand (public.fx_sync), unterschieden nur durch die Zeilen-Id: der nackte syncId ist FX, syncId:rez:* sind Rezepte. Ein DELETE ohne exakten Praefix-Filter haette also jede Notiz, jede Rubrik und jeden Bias mitgeloescht; purgeRezeptCloudRows() filtert deshalb auf like.syncId:rez:% und setzt seinen Erfolgsmarker NUR nach bestaetigter Antwort, damit ein fehlgeschlagener Lauf beim naechsten Start wiederholt wird statt still aufzugeben. ZWEITENS DAS ARCHIVE. Der Nutzer-Wunsch lautete, das Research Terminal zu entfernen und ein Archiv mit Ordnern zu allen Assets hinzusetzen, in dem man Notizen speichert - gemessen am Code war das Research Terminal aber genau das schon: researchChildrenOf baut Kategorie -> Asset -> Notizordner mit beliebig tiefen Unterordnern, die Notizen haben Titel, Text, Tags, Favoriten, Pin, Mehrfachablage und Papierkorb und sind cross-device gesynct. Neu gebaut wurde deshalb NUR die Oberflaeche; Datenmodell, Ordnerbaum und Sync sind unveraendert. Ein Neubau der Datenschicht haette die Fehlerklasse wiederholt, die in diesem Projekt DREIMAL zu Notiz-Datenverlust gefuehrt hat (check/notizen.js). Die Seite hat jetzt zwei Spalten statt drei: Ordnerbaum links, Inhalt rechts. Die Rubrik-Kartenreihe und die News-Timeline sind raus - beides Analyse-Bausteine, kein Archiv. Dass das gefahrlos ist, steht schon im Bugreport vom 2026-08-07: damals waren score-tragende Karten HIER nicht erreichbar, auf der Assets-Detailseite aber immer - dort stehen sie weiterhin alle, und die Event-Wecker der Timeline haengen unveraendert am eigenen Wecker-Waehler. Es ist also kein Zugang verlorengegangen, sondern ein doppelter weggefallen. Eine Notiz oeffnet aus dem Archiv heraus als GANZE SEITE statt als 170px-Feld in einem abgedunkelten Fenster; nebenbei kann der Datenverlust vom 2026-09-01 (Klick neben den Editor verwarf alles Getippte) dort gar nicht mehr entstehen, weil es keine umgebende Klickflaeche mehr gibt. Von der Asset-Seite und der Watchlist aus bleibt es bewusst ein Fenster. AUFGERAEUMT: 290 Zeilen toter Code - renderResearchFolders und renderResearchNotes samt Zustaenden wurden seit dem Umbau auf den Ordnerbaum von keinem Einstiegspunkt mehr aufgerufen, standen aber weiter in der window-Bruecke. Der Tab-Schluessel bleibt bewusst notes: er steckt in gespeicherten tabStacks, umbenannt wurde nur, was der Nutzer sieht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-528</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-529</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -5727,14 +5666,15 @@ function introLogin(){
     <button class="btn g" style="width:100%;padding:8px;justify-content:center" onclick="addCalEv()">＋ Add to Calendar</button>
   </div>
 </div>
-<!-- PAGE: RESEARCH (frueher "Notes", Nutzer-Wunsch 2026-08-02 - Tab-Schluessel
-     bleibt bewusst 'notes'/'pgNotes', damit bestehende, im localStorage
-     gespeicherte Tab-Stapel (tabStacks) weiter greifen; nur das Label heisst
-     jetzt "Research". Aufbau + Inhalt kommen aus rerenderNotesHost(). -->
+<!-- PAGE: ARCHIVE (frueher "Notes", dann "Research", seit 2026-09-19
+     "Archive" - alle drei Nutzer-Wunsch). ⚠ Der Tab-Schluessel bleibt bewusst
+     'notes'/'pgNotes', damit bestehende, im localStorage gespeicherte
+     Tab-Stapel (tabStacks) weiter greifen; umbenannt wurde nur das Label.
+     Aufbau + Inhalt kommen aus rerenderNotesHost(). -->
 <div class="pc" id="pgNotes" style="display:none" onpointerdown="resEditPressStart(event)" onpointermove="resEditPressMove(event)" onpointerup="resEditPressEnd()" onpointercancel="resEditPressEnd()" onpointerleave="resEditPressEnd()">
   <div id="resWrap"></div>
 </div>
-<!-- MODAL: RESEARCH NOTE -->
+<!-- MODAL: ARCHIVE NOTE -->
 <!-- Ungespeicherte Eingaben: zentrierte Nachfrage mit drei Wegen. Wird von
      closeMGuarded() geoeffnet, sobald ein in MODAL_GUARDS registriertes
      Fenster mit ungespeicherten Aenderungen geschlossen werden soll. Der
@@ -5806,11 +5746,11 @@ function introLogin(){
   </div>
 </div>
 <div class="ov" id="mResNote" style="display:none">
-  <div class="modal" style="max-width:640px">
-    <h3>📓 Research note</h3>
+  <div class="modal res-note-modal">
+    <h3>📓 Archive note</h3>
     <div id="resNMeta" style="font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <input class="finp" id="resNTitle" placeholder="Title — e.g. Core CPI surprised to the downside" style="margin-bottom:8px">
-    <textarea class="nbox" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…" style="margin-bottom:8px;min-height:170px"></textarea>
+    <textarea class="nbox res-nbody" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…"></textarea>
     <!-- Orte (Nutzer-Wunsch 2026-08-30): eine Notiz kann in mehreren
          Ordnern gleichzeitig liegen, auch ueber verschiedene Assets hinweg
          (z.B. CAD UND USD) - Asset+Ordner waehlen, "+ Add" haengt einen
@@ -6101,15 +6041,6 @@ function introLogin(){
          ("Data"), Nutzer-Wunsch per /goal ("pack data in die
          Einstellungen") - jetzt hier als erste Zeile, gleiches .set-row-
          Muster wie jede andere Einstellungs-Zeile in diesem Modal. -->
-    <!-- App-Wechsel: dieses Repo liefert zwei eigenstaendige Apps aus
-         (FX Analyst Pro = index.html, Perfect Rezept = rezept.html). Die
-         Wahl beim ersten Oeffnen wird pro Geraet gemerkt - diese Zeile ist
-         der Weg zurueck, damit man in keiner der beiden Apps feststeckt. -->
-    <div class="set-sec">Apps</div>
-    <div class="set-row" style="flex-wrap:wrap">
-      <span class="set-row-txt">Switch to Perfect Rezept<span class="set-row-sub">separate app in the same place — your recipes with photos and timings</span></span>
-      <button class="btn" onclick="switchToRezept()">Switch</button>
-    </div>
     <div class="set-sec">Data</div>
     <div class="set-row" style="flex-wrap:wrap">
       <span class="set-row-txt">Export, import &amp; local backups</span>
@@ -6317,7 +6248,7 @@ function introLogin(){
      Research-Baum benutzt wurde (researchShortcutGo), unabhaengig von der
      restlichen Tab-Rendering-Pipeline (body.res-return-active steuert die
      Sichtbarkeit rein per CSS). -->
-<div id="resBackBar"><button id="resBackPill" class="rterm-back-pill" onclick="researchBackFromShortcut()" title="Back to the Research Terminal"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button></div>
+<div id="resBackBar"><button id="resBackPill" class="rterm-back-pill" onclick="researchBackFromShortcut()" title="Back to the Archive"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button></div>
 
 <script type="module" src="js/main.js"></script>
 </body>

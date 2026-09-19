@@ -95,22 +95,10 @@ if (indexGeaendert) {
     fail('VERSION-CHECK', `Nummer nicht hochgezaehlt (vorher ${vorher}, jetzt ${jetzt}).`);
 }
 
-// ── Regel 1b: dasselbe fuer die ZWEITE App (Perfect Rezept) ──────────────
-// rezept.html + js/rezept/* sind eine eigenstaendige App im selben Repo
-// (siehe docs/rezept.md). Sie hat ein eigenes Banner (REZEPT-CHECK-<n>) und
-// dieselbe Pflicht: der Nutzer soll an der Nummer erkennen, dass eine neue
-// Fassung live ist. Ohne diese Regel waere die Rezept-App genau der blinde
-// Fleck, den Regel 1 fuer den FX Analyst Pro schliesst.
-const rezeptGeaendert = geaendert.some(f => f === 'rezept.html' || f.startsWith('js/rezept/'));
-if (rezeptGeaendert && fs.existsSync('rezept.html')) {
-  const jetztR = wertIn(fs.readFileSync('rezept.html', 'utf8'), /id="rezVerName">REZEPT-CHECK-(\d+)</);
-  let vorherR = null;
-  try { vorherR = wertIn(git(`show ${BASE}:rezept.html`), /id="rezVerName">REZEPT-CHECK-(\d+)</); }
-  catch (e) { /* Datei gab es im Basis-Stand noch nicht - erste Fassung */ }
-  if (jetztR == null) fail('REZEPT-CHECK', 'Banner-Nummer in rezept.html nicht gefunden.');
-  else if (vorherR != null && Number(jetztR) <= Number(vorherR))
-    fail('REZEPT-CHECK', `Nummer nicht hochgezaehlt (vorher ${vorherR}, jetzt ${jetztR}).`);
-}
+// ── Regel 1b (entfallen 2026-09-19) ─────────────────────────────────────
+// Hier stand die REZEPT-CHECK-Regel fuer die zweite App dieses Repos
+// (rezept.html + js/rezept/*). Die App ist auf Nutzer-Wunsch geloescht,
+// damit gibt es nur noch EIN Banner: VERSION-CHECK.
 
 // ── Regel 2: Score-Formel geaendert -> SCORE_MODEL_VERSION hochzaehlen ──
 // Grund (2026-08-16): die Formel wurde korrigiert, die Nummer blieb stehen -
@@ -284,7 +272,13 @@ if (neueScoreFnKandidaten.length) {
 // setupCcyFilter, calHighOnly, cmpCols, pinEnabled ...): ein Feld landet nur
 // im localStorage und kommt auf keinem anderen Geraet an. Pflicht sind:
 // Save-Funktion, cloudPush, cloudPull (mit prefPending-Schutz), Export/Import.
-const LOKAL_ERLAUBT = /(cloud|updated|seen|pending|cache|migrat|_v\d|intro|help|verbanner|score_mode|lastfetch)/i;
+// ⚠ `purge` steht bewusst drin (2026-09-19): fxpro_rez_purged /
+// fxpro_rez_purge_err merken sich, ob DIESES Geraet die Cloud-Zeilen der
+// geloeschten zweiten App schon aufgeraeumt hat. Gesyncht waere das falsch -
+// ein erfolgreicher Lauf auf dem iPad wuerde dem Handy vortaeuschen, es sei
+// fertig, und ein fehlgeschlagener Lauf wuerde auf allen Geraeten als Fehler
+// stehen. Der Lauf ist idempotent: findet er nichts, meldet Supabase 204.
+const LOKAL_ERLAUBT = /(cloud|updated|seen|pending|cache|migrat|purge|_v\d|intro|help|verbanner|score_mode|lastfetch)/i;
 const altHtmlFuerKeys = codeGeaendert ? basisCode() : '';
 const neueKeys = [...new Set([...diffText.matchAll(/^\+.*localStorage\.setItem\(\s*['"](fxpro_[\w]+)['"]/gm)]
   .map(m => m[1]))].filter(k => !LOKAL_ERLAUBT.test(k) && !altHtmlFuerKeys.includes(k));

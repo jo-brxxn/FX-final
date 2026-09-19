@@ -97,10 +97,10 @@ const ERFASSEN = () => {
   await new Promise(r => srv.listen(PORT_ALT, '127.0.0.1', r));
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1400, height: 900 } });
-  await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1');localStorage.setItem('dmfx_app_choice', 'fx'); } catch (e) {} });
+  await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1'); } catch (e) {} });
   const laden = async (url) => {
     await p.goto(url, { waitUntil: 'networkidle' });
-    await p.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
+    await p.evaluate(() => { ['introOv','lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
     await wartenBisDatenDa(p);   // statt fester Frist - siehe check/warten.js
     return p.evaluate(ERFASSEN);
   };

@@ -122,7 +122,6 @@ console.log(`  ${fehler ? '✗' : '✓'} ${geprueft} Datums-Aufrufe geprueft, ${
   const p = await b.newPage({ viewport: { width: 1400, height: 950 } });
   await p.addInitScript(() => { try {
     localStorage.setItem('fxpro_help_seen', '1');
-    localStorage.setItem('dmfx_app_choice', 'fx');
     localStorage.setItem('fxpro_intro_anim_enabled', '0');
   } catch (e) {} });
   await p.goto(process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html');

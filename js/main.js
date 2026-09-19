@@ -3956,11 +3956,7 @@ function researchFolderIdFor(id){
 }
 function researchAssetsIn(fid){return (syms||[]).filter(s=>researchFolderIdFor(s.id)===fid);}
 // ══ RESEARCH-ORDNERBAUM (Nutzer-Wunsch 2026-08-04) ══════════════════════
-// Ersetzt den bisherigen "Assets"/"Notes"-Umschalter (renderResearchFolders/
-// renderResearchNotes, beide bleiben als Code stehen, aber werden vom neuen
-// Einstiegspunkt nicht mehr aufgerufen - der Nutzer hat explizit angekuendigt,
-// als naechstes zu spezifizieren, was auf der rechten Seite erscheinen soll,
-// moeglicherweise unter Wiederverwendung dieser Funktionen) durch EINEN
+// Ersetzt den bisherigen "Assets"/"Notes"-Umschalter durch EINEN
 // durchgehenden, klappbaren Ordnerbaum wie im Windows-Explorer:
 //   Wurzel: die 5 festen RESEARCH_ASSET_FOLDERS-Kategorien + benutzerdefinierte
 //           Top-Level-Ordner (researchFolders mit parentId:null)
@@ -4079,12 +4075,9 @@ let researchTreeOpen={},researchTreeSel=null;
 // researchFocusAsset = das Asset, das die 5 Top-Karten + die Timeline-Spalte
 // zeigen (gesetzt durch Klick auf einen Asset-Ordner im Baum) - genau wie
 // dataAsset/seasAsset an anderer Stelle bewusst NICHT persistiert (reiner
-// Anzeige-Zustand, kein Nutzer-Inhalt). researchTopOpen haelt fest, welche
-// der 5 Karten gerade aufgeklappt ist (immer nur eine, wie ein Akkordeon -
-// sonst wuerde die Kartenreihe bei mehreren offenen Tabellen zu hoch/
-// unuebersichtlich). resTreeCollapsed klappt die Sidebar auf einen
-// schmalen Pfeil-Streifen ein.
-let researchFocusAsset=null,researchTopOpen=null,resTreeCollapsed=false,_resReturnActive=false;
+// Anzeige-Zustand, kein Nutzer-Inhalt). resTreeCollapsed klappt die Sidebar
+// auf einen schmalen Pfeil-Streifen ein.
+let researchFocusAsset=null,resTreeCollapsed=false,_resReturnActive=false;
 // Ziel der roten Zurueck-Pille (Nutzer-Wunsch 2026-08-23): null = zurueck ins
 // Research-Terminal (alter, alleiniger Fall), sonst eine Asset-ID = zurueck
 // auf die Assets-Detailseite dieses Assets (neuer Quick-Links-Weg von dort,
@@ -4104,10 +4097,8 @@ function researchSelectAsset(nodeId){
   researchTreeOpen[nodeId]=!researchTreeOpen[nodeId];
   researchFocusAsset=nodeId.slice(6); // 'asset:EUR' -> 'EUR'
   // renderRub()/getRub()/getSym() haengen an selId - synchron halten, damit
-  // die 1:1 wiederverwendete Rubrik-Karte (researchTopCardsHtml) exakt den
-  // Fokus-Asset trifft, sobald der Nutzer eine der 5 Karten aufklappt.
+  // jede von hier aus geoeffnete Asset-Ansicht denselben Asset trifft.
   selId=researchFocusAsset;
-  researchTopOpen=null;
   rerenderNotesHost();
 }
 // Notizen-Ordner (General-Notes-Wurzel + eigene Unterordner) sind gleich-
@@ -5790,6 +5781,54 @@ function getCloudCfg(){
 function cloudHeaders(cfg){
   return{'apikey':cfg.key,'Content-Type':'application/json'};
 }
+// ══ EINMALIGE CLOUD-AUFRAEUMUNG DER GELOESCHTEN ZWEITEN APP ═══════════
+// Nutzer-Wunsch 2026-09-19: "den Code zur Perfect Recipe App komplett
+// loeschen" - ausdruecklich einschliesslich der Cloud-Daten.
+//
+// ⚠ DER GEFAEHRLICHE TEIL, deshalb hier ausbuchstabiert: BEIDE Apps haben
+// sich EINE Supabase-Tabelle geteilt (public.fx_sync). Unterschieden wird
+// allein ueber die Zeilen-Id:
+//     <syncId>            -> der komplette FX-Analyst-Pro-Stand
+//     <syncId>:rez:index  -> Rezeptverzeichnis der geloeschten App
+//     <syncId>:rez:r:<id> -> ein einzelnes Rezept
+// Ein DELETE ohne exakten Praefix-Filter loescht also die FX-Zeile mit -
+// und damit jede Notiz, jede Rubrik, jeden Bias. Der Filter unten ist
+// deshalb like.<syncId>:rez:% und NICHT etwa like.%rez%.
+//
+// Laeuft genau einmal pro Geraet und nur bei eingerichtetem Cloud-Sync.
+// Der Erfolgsmarker wird NUR nach einer bestaetigten Antwort gesetzt -
+// schlaegt der Lauf fehl (offline, Timeout, 403), versucht es der naechste
+// Start erneut, statt still aufzugeben.
+const REZ_PURGE_KEY='fxpro_rez_purged';
+async function purgeRezeptCloudRows(){
+  try{
+    if(localStorage.getItem(REZ_PURGE_KEY)==='1')return;
+    const cfg=getCloudCfg();
+    if(!cfg||!cfg.url||!cfg.key||!cfg.syncId)return;   // nichts eingerichtet, nichts aufzuraeumen
+    const praefix=cfg.syncId+':rez:';
+    const res=await fetch(cfg.url+'/rest/v1/fx_sync?id=like.'+encodeURIComponent(praefix+'%'),{
+      method:'DELETE',headers:cloudHeaders(cfg),signal:AbortSignal.timeout(15000)
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    localStorage.setItem(REZ_PURGE_KEY,'1');
+    localStorage.removeItem('fxpro_rez_purge_err');
+  }catch(e){
+    // Sichtbar statt still: die Meldung steht beim naechsten Oeffnen der
+    // Einstellungen in der Cloud-Statuszeile (updCloudPurgeHint()), und der
+    // naechste Start probiert es noch einmal.
+    try{localStorage.setItem('fxpro_rez_purge_err',String(e&&e.message||e));}catch(_){}
+    console.warn('Rezept-Cloud-Aufraeumung fehlgeschlagen, wird beim naechsten Start erneut versucht:',e);
+  }
+}
+// Haengt den Hinweis an die bestehende Cloud-Statuszeile an, sobald der
+// Nutzer die Einstellungen oeffnet - ein eigener Banner waere ein zweiter
+// Meldeweg fuer denselben Zustand.
+function rezPurgeHintText(){
+  let err=null;
+  try{err=localStorage.getItem('fxpro_rez_purge_err');}catch(e){}
+  if(!err)return '';
+  return ' · ⚠ Could not delete the old recipe rows from the cloud ('+err+'). This is retried on every start.';
+}
 function openCloudM(fromIntro){
   try{updPinToggleBtn()}catch(e){}
   try{updIntroAnimToggleBtn()}catch(e){}
@@ -5800,7 +5839,7 @@ function openCloudM(fromIntro){
   document.getElementById('cloudUrl').value=cfg.url||'';
   document.getElementById('cloudKey').value=cfg.key||'';
   document.getElementById('cloudSyncId').value=cfg.syncId||'';
-  setCloudStatus(cfg.url?'Connected with Sync ID "'+(cfg.syncId||'')+'". Last local change: '+(localStorage.getItem('fxpro_updated')?fmtStamp(localStorage.getItem('fxpro_updated')):'-'):'Not set up yet.');
+  setCloudStatus((cfg.url?'Connected with Sync ID "'+(cfg.syncId||'')+'". Last local change: '+(localStorage.getItem('fxpro_updated')?fmtStamp(localStorage.getItem('fxpro_updated')):'-'):'Not set up yet.')+rezPurgeHintText());
   // Wenn vom Intro aus geöffnet, muss das Modal über dem Sperrbildschirm liegen.
   document.getElementById('mCloud').style.zIndex=fromIntro?'100001':'';
   openM('mCloud');
@@ -5945,7 +5984,7 @@ document.addEventListener('keydown',e=>{
 // die Liste. Greift NIE in einem Eingabefeld und nie mit Modifier-Taste.
 const KEY_TABS={d:['dash','Dashboard'],a:['cur','Assets'],n:['news','News'],
   c:['cal','Calendar'],s:['pairs','Set-ups'],w:['watch','Watchlist'],
-  t:['trends','Trends'],m:['mx','Matrix'],e:['edge','Edge'],r:['notes','Research'],
+  t:['trends','Trends'],m:['mx','Matrix'],e:['edge','Edge'],r:['notes','Archive'],
   y:['carry','Carry'],o:['cot','COT']};
 let _keyChord='',_keyChordT=0;
 function keyNavAktiv(e){
@@ -7044,7 +7083,7 @@ function renderAssetCalBody(){
 const AB_GOTO_NAME={
   trends:'Trends', data:'Data', cot:'COT', retail:'Retail Sentiment',
   seas:'Seasonality', cal:'Calendar', news:'News', rate:'Rate Probabilities',
-  notes:'Research',
+  notes:'Archive',
 };
 // `stopp` fuer Karten, die SELBST einen onclick tragen (die Kalenderkarte
 // oeffnet als Ganze ein Fenster) - ohne stopPropagation wuerde ein Klick auf
@@ -10476,15 +10515,15 @@ function povNotesHtml(name){
   const l=pairLegs(name);if(!l)return'';
   const list=resNotes().filter(n=>{const a=resNoteAssetIds(n);return a.includes(l.bId)||a.includes(l.qId);})
     .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||''))).slice(0,8);
-  if(!list.length)return povEmpty('No notes on either side yet. Write them in the Research Terminal — they show up here automatically.')+
-    `<div class="pov-note"><button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
-  return list.map(n=>{const a=resNoteAssetIds(n);return`<div class="pov-note-row" style="border-left:3px solid ${BC[n.bias||'neu']};padding-left:6px" onclick="showTab('notes')" title="Open in the Research Terminal">
+  if(!list.length)return povEmpty('No notes on either side yet. Write them in the Archive — they show up here automatically.')+
+    `<div class="pov-note"><button class="pov-link" onclick="showTab('notes')">Open Archive</button></div>`;
+  return list.map(n=>{const a=resNoteAssetIds(n);return`<div class="pov-note-row" style="border-left:3px solid ${BC[n.bias||'neu']};padding-left:6px" onclick="showTab('notes')" title="Open in the Archive">
       <span class="pov-nleg">${escH(a.includes(l.bId)?l.bc:l.qc)}</span>
       <span class="pov-ntitle">${escH(n.title||'(untitled)')}</span>
       ${noteBiasBadge(n)}
       <span class="pov-ndate">${escH(String(n.ts||'').slice(0,10))}</span>
     </div>`;}).join('')+
-    `<div class="pov-note">Notes from both currencies of this pair, newest first. <button class="pov-link" onclick="showTab('notes')">Open Research Terminal</button></div>`;
+    `<div class="pov-note">Notes from both currencies of this pair, newest first. <button class="pov-link" onclick="showTab('notes')">Open Archive</button></div>`;
 }
 
 // ── Block 9: Score-Verlauf gegen den Kurs ────────────────────────────────
@@ -11439,23 +11478,25 @@ import {
   _ccyEditWidgetId,openCcyCfgM,renderCcyCfgBody,toggleCcyAsset,updFFLastUpd,
 } from './data-feeds.js';
 // ══ NOTE CATS ════════════════════════════════════════════════════
-// ══ RESEARCH LIBRARY ═════════════════════════════════════════════
+// ══ ARCHIVE — NOTIZEN UND ORDNER ═════════════════════════════════
 // Ersetzt den frueheren Notes-Tab (renderNCs & Co., Nutzer-Wunsch
 // 2026-08-02). Die alten noteCats-Daten sind einmalig nach `research`
 // migriert (siehe migrateResearch) und bleiben zusaetzlich unveraendert in
 // snap() erhalten - kein Datenverlust.
-// Reine Ansichts-Zustaende (Auswahl/Suche/Sortierung) bleiben BEWUSST lokal
-// und ausserhalb von snap(): das ist kein Inhalt, sondern wo der Nutzer
-// gerade hinschaut - wie dataAsset/seasAsset/rateProbSel bei den anderen Tabs.
-let resSel='all';        // 'all' | 'fav' | 'f:<folderId>' | 'a:<assetId>'
-let resQuery='';
-let resTag='';
-let resSort='new';       // 'new' | 'old' | 'az'
-// Asset-Browser-Modus (Nutzer-Wunsch 2026-08-03) - zweiter View neben den
-// freien Notizen, standardmaessig aktiv. Rein transient wie resSel/resQuery.
-let resMode='folders';   // 'folders' | 'notes'
-let resFolderOpen=null;  // aktuell geoeffneter Asset-Kategorie-Ordner (fid) oder null
-let resExpandedRubs={};  // Klapp-Status der Rubrik-Karten im Asset-Detail (nach rub.id)
+//
+// ⚠ Die Praefixe heissen weiter res*/research* und der Tab-Schluessel weiter
+// 'notes'. Das ist Absicht und kein Versehen: der Schluessel steckt in
+// gespeicherten tabStacks auf den Geraeten des Nutzers, eine Umbenennung
+// wuerde dort die gemerkten Tab-Stapel zerreissen. Umbenannt wurde 2026-09-19
+// nur, was der Nutzer SIEHT ("Archive").
+//
+// Reine Ansichts-Zustaende (Auswahl/Suche) bleiben BEWUSST lokal und
+// ausserhalb von snap(): das ist kein Inhalt, sondern wo der Nutzer gerade
+// hinschaut - wie dataAsset/seasAsset/rateProbSel bei den anderen Tabs.
+// Die Zustaende der bis 2026-09-19 danebenstehenden zweiten Ansicht
+// (resSel/resQuery/resTag/resSort/resMode/resFolderOpen/resExpandedRubs)
+// sind mit ihr entfallen - gefiltert und gesucht wird jetzt ueber
+// resGlobalQuery/resGlobalTag bzw. researchNoteQuery.
 function resNotes(){return (research&&research.notes)||[];}
 function resFolders(){return (research&&research.folders)||[];}
 function resFolderName(fid){const f=resFolders().find(x=>x.id===fid);return f?f.name:'Unfiled';}
@@ -11473,19 +11514,6 @@ function resFmtDateParts(iso){
   const d=new Date(iso);if(isNaN(d))return{day:'',mon:'',year:'',time:''};
   const MM=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   return{day:d.getDate(),mon:MM[d.getMonth()],year:d.getFullYear(),time:String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
-}
-// Alle vergebenen Tags mit Haeufigkeit (fuer die Tag-Cloud), haeufigste zuerst.
-function resAllTags(){
-  const m=new Map();
-  resNotes().forEach(n=>(n.tags||[]).forEach(t=>m.set(t,(m.get(t)||0)+1)));
-  return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
-}
-// Assets, zu denen es tatsaechlich Notizen gibt (die ASSETS-Achse der
-// Bibliothek wird NICHT gepflegt, sondern aus den Notizen selbst abgeleitet).
-function resAssetCounts(){
-  const m=new Map();
-  resNotes().forEach(n=>{if(n.asset)m.set(n.asset,(m.get(n.asset)||0)+1);});
-  return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
 // ══ NOTIZ-RICHTUNG, EVENT-BEZUG UND TREFFERQUOTE ═════════════════════════
 // (Nutzer-Wunsch 2026-08-07, per 2026-08-30 wieder entfernt - siehe unten)
@@ -11527,55 +11555,20 @@ function noteEventOptions(assetId,sel){
   }).join('');
 }
 
-function resFilteredNotes(){
-  const q=resQuery.trim().toLowerCase();
-  let out=resNotes().filter(n=>{
-    if(resSel==='fav'&&!n.fav)return false;
-    if(resSel.startsWith('f:')&&n.fid!==resSel.slice(2))return false;
-    if(resSel.startsWith('a:')&&n.asset!==resSel.slice(2))return false;
-    if(resTag&&!(n.tags||[]).includes(resTag))return false;
-    if(q){
-      const hay=((n.title||'')+' '+(n.body||'')+' '+(n.tags||[]).join(' ')+' '+(n.asset||'')+' '+resFolderName(n.fid)).toLowerCase();
-      if(hay.indexOf(q)<0)return false;
-    }
-    return true;
-  });
-  const key=n=>n.up||n.ts||'';
-  if(resSort==='az')out.sort((a,b)=>String(a.title||'').localeCompare(String(b.title||'')));
-  else if(resSort==='old')out.sort((a,b)=>String(key(a)).localeCompare(String(key(b))));
-  else out.sort((a,b)=>String(key(b)).localeCompare(String(key(a))));
-  return out;
-}
-// ══ RESEARCH-TERMINAL (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots) ══
-// Ersetzt das vorherige Baum+Rechtspanel-Layout durch: eine Reihe aus 5
-// Karten oben (Inflation/Labour Market/Economic Growth/Interest Rates fuer
-// researchFocusAsset + eine 5. "Risk Environment"-Karte, die beim
-// Ausklappen 1:1 die Dashboard-Risk-Sentiment-Karte zeigt), darunter drei
-// Spalten: einklappbare Ordnerbaum-Sidebar (oder, eingeklappt, Shortcut-
-// Icons zu den 7 Insights-Tabs) - Mitte (bewusst leer, "da kommen spaeter
-// Sachen") - schmale Timeline-Spalte (10 vergangene + 10 kommende
-// Kalender-Events fuer die Waehrung des Fokus-Assets).
-// Bugreport 2026-08-07 ("bei GBP gibt es noch den Indikator Geopolitics, den
-// gibt es nicht mehr, also kann ich den nicht aendern, aber der zaehlt
-// immernoch in den Score"): der Terminal-Kartenreihe fehlte "COT Data"
-// komplett, und die Risk-Environment-Kachel zeigte statt der asset-eigenen
-// Karte nur den Dashboard-Regler (bewusst so, Nutzer-Korrektur 2026-08-04) -
-// dadurch waren ZWEI score-tragende Karten hier nicht erreichbar. Auf der
-// Assets-Detailseite war beides immer sichtbar (per Audit ueber alle Assets
-// bestaetigt), im Terminal - dem taeglichen Arbeitsplatz - aber nicht.
-// COT Data ist jetzt eine eigene Kachel; die Risk-Environment-Kachel behaelt
-// den Regler, haengt beim Aufklappen aber zusaetzlich die asset-eigene Karte
-// darunter (dort leben Risk Correlation + Geopolitics).
-const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest Rates','COT Data'];
-// Akkordeon (Nutzer-Korrektur 2026-08-04: "die Karte tauscht sich durch die
-// Tabelle aus... eins zu eins wie aus den Assets") - ein Klick ersetzt die
-// GESAMTE Kartenreihe durch die ECHTE, editierbare Rubrik-Karte (renderRub,
-// identisch zur Assets-Seite inkl. Bias-Picker/Umbenennen/Summary/Loeschen -
-// kein eigener Nur-Lese-Nachbau). researchSelectAsset() haelt selId synchron
-// mit researchFocusAsset, damit renderRub()s eingebettete onclick-Handler
-// (getRub/getSym-basiert) exakt denselben Rubrik-Eintrag treffen wie auf der
-// Assets-Seite. Ein kleiner Pfeil-Button oben links schaltet zurueck.
-// Mitte (Nutzer-Wunsch 2026-08-04 "füg in der Mitte Notiz Funktionen ein"):
+// ══ ARCHIVE-SEITE (Umbau 2026-09-19, davor "Research Terminal") ═══════
+// Aufbau seit dem Umbau: ZWEI Spalten - einklappbare Ordnerbaum-Sidebar
+// (oder, eingeklappt, Shortcut-Icons zu den 7 Insights-Tabs) links, Inhalt
+// der Auswahl rechts.
+//
+// Entfallen sind die Rubrik-Kartenreihe (RESEARCH_TOP_RUBS) und die
+// Kalender-Timeline (researchTimelineHtml). ⚠ Die Lehre aus Bugreport
+// 2026-08-07 gilt weiter und ist der Grund, warum das gefahrlos ist: damals
+// fehlte der Kartenreihe "COT Data", wodurch score-tragende Karten HIER
+// nicht erreichbar waren - erreichbar waren sie aber immer schon auf der
+// Assets-Detailseite, und genau dort stehen jetzt alle fuenf. Es ist also
+// kein Zugang verlorengegangen, sondern ein doppelter weggefallen.
+//
+// Rechte Spalte (Nutzer-Wunsch 2026-08-04 "füg in der Mitte Notiz Funktionen ein"):
 // zeigt die Notizen des Fokus-Assets - wiederverwendet researchNotesPanelHtml
 // (schon vorher fuer den Baum-Blattklick "General Notes" gebaut, bis jetzt
 // aber dormant/unbenutzt). Standardmaessig die "General Notes"-Wurzel;
@@ -11583,8 +11576,8 @@ const RESEARCH_TOP_RUBS=['Inflation','Labour Market','Economic Growth','Interest
 // zeigt die Mitte genau den (researchNotesContextFor loest researchTreeSel
 // dafuer auf) - ein Klick in einen Unterordner eines ANDEREN Assets wird
 // ignoriert (faellt zurueck auf die Wurzel), kann nicht vorkommen, da
-// researchSelectAsset() researchTopOpen aber nicht researchTreeSel zuruecksetzt;
-// der assetId-Abgleich schuetzt trotzdem vor einem veralteten Treffer.
+// researchSelectAsset() researchTreeSel nicht zuruecksetzt; der
+// assetId-Abgleich schuetzt trotzdem vor einem veralteten Treffer.
 // ── GLOBALE NOTIZ-SUCHE (Nutzer-Wunsch 2026-08-30) ──────────────────────
 // Eigenstaendig von der ordnergebundenen Suche in researchNotesPanelHtml:
 // durchsucht ALLE Notizen, unabhaengig von Asset/Ordner/Baum-Auswahl. Aktiv,
@@ -11630,81 +11623,9 @@ function researchMidHtml(){
   const use=(ctx&&ctx.assetId===researchFocusAsset)?ctx:{assetId:researchFocusAsset,fid:null};
   return researchNotesPanelHtml(use.assetId,use.fid);
 }
-function researchToggleTop(key){researchTopOpen=researchTopOpen===key?null:key;rerenderNotesHost();}
-function researchTopCardsHtml(){
-  const sym=researchFocusAsset?(syms||[]).find(s=>s.id===researchFocusAsset):null;
-  if(researchTopOpen&&sym){
-    const backBtn=`<button class="rterm-back-sm" onclick="researchToggleTop('${escJH(researchTopOpen)}')" title="Back to the card row">${icn('chevronRight',14)}</button>`;
-    if(researchTopOpen==='risk'){
-      // Nur noch die Dashboard-Karte mit dem Risiko-Index aus Marktpreisen.
-      // Die asset-eigene Risk-Environment-Rubrik, die frueher darunter stand,
-      // gibt es seit dem 2026-09-13 nicht mehr.
-      return`<div class="rterm-topexp">${backBtn}<div class="rterm-riskbox">${riskSentimentWidgetHtml('resRisk')}</div></div>`;
-    }
-    const ri=(sym.rubrics||[]).findIndex(r=>r.name===researchTopOpen);
-    if(ri>=0)return`<div class="rterm-topexp">${backBtn}${renderRub(sym.rubrics[ri],ri,sym.rubrics.length)}</div>`;
-  }
-  const cards=RESEARCH_TOP_RUBS.map(name=>{
-    const rub=sym?(sym.rubrics||[]).find(r=>r.name===name):null;
-    const sc=rub?rubScore(rub):0;
-    const bco=rub?BC[rub.bias]:'var(--t3)';
-    return`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('${name}')" title="${sym?'Show the full card':'Select an asset in the sidebar first'}">
-      <div class="ov2-titleline"><span class="ov2-title">${escH(name)}</span></div>
-      <div class="ov2-scoreline"><span class="ov2-score" style="color:${bco}">${rub?`${sc>0?'+':''}${sc}`:'–'}</span><span class="ov2-badge">${rub?BL[rub.bias]:''}</span></div>
-    </div>`;
-  }).join('');
-  // Die Kachel zeigt die Marktlage aus riskOnOffState() - eine reine
-  // Anzeige ohne Score-Wirkung. Der frueher hier ausgewiesene Beitrag der
-  // asset-eigenen Risk-Environment-Karte ist entfallen: die Karte gibt es
-  // seit dem 2026-09-13 nicht mehr.
-  const{pct,lbl,col}=riskOnOffState();
-  const riskCard=`<div class="ov-field2 rterm-topcard" onclick="researchToggleTop('risk')" title="Show the market risk index">
-    <div class="ov2-titleline"><span class="ov2-title">Risk Sentiment</span></div>
-    <div class="ov2-scoreline"><span class="ov2-score" style="color:${col}">${Math.round(pct)}/100</span><span class="ov2-badge">${escH(lbl)}</span></div>
-  </div>`;
-  return`<div class="rterm-top">${cards}${riskCard}</div>`;
-}
 // Timeline-Spalte: 10 vergangene + 10 kommende Kalender-Events fuer die
 // Waehrung des Fokus-Assets (macroCcyFor - dieselbe Ableitung, die auch
 // die automatischen Score-Events nutzt: FX-Symbole ihre eigene Waehrung,
-// Non-FX default USD, sofern nicht anders verknuepft). Standardmaessig nur
-// High-Impact-News (Nutzer-Wunsch "genau wie im Kalender") - eigener,
-// bewusst NICHT mit calHighOnly geteilter Zustand (rein transiente
-// Terminal-Anzeigepraeferenz, gleiches Muster wie researchFocusAsset).
-let resTlHighOnly=true;
-function toggleResTlHighOnly(){resTlHighOnly=!resTlHighOnly;rerenderNotesHost();}
-function researchTimelineHtml(){
-  if(!researchFocusAsset)return`<div class="rterm-tl-empty">Select an asset in the sidebar to see its news timeline.</div>`;
-  const ccy=macroCcyFor(researchFocusAsset);
-  let list=(calEvts||[]).filter(ev=>evtMatchesSym(ev,ccy));
-  if(resTlHighOnly)list=list.filter(ev=>evtImpact(ev)==='high');
-  list=list.sort((a,b)=>a.date===b.date?(a.time||'').localeCompare(b.time||''):a.date.localeCompare(b.date));
-  const past=list.filter(ev=>isEvtPast(ev)).slice(-10);
-  const upcoming=list.filter(ev=>!isEvtPast(ev)).slice(0,10);
-  const row=(ev,isPast)=>{
-    const val=v=>(v!=null&&v!=='')?escH(String(v)):'–';
-    // Glocke zum Anlegen eines News-Alarms (Nutzer-Wunsch 2026-08-04) - exakt
-    // dieselbe Funktion/Modal wie im Kalender (openEvtAlertM/eventAlerts),
-    // kein zweiter Alarm-Mechanismus. Nur fuer kommende Events mit gueltiger
-    // Uhrzeit (dieselbe Einschraenkung wie calRowHtml).
-    let bell='';
-    if(!isPast&&evtTimeValid(ev.time)){
-      const ekey=evtDismissKey(ev);
-      const hasAlert=eventAlerts.some(a=>a.evKey===ekey);
-      bell=`<button class="rterm-tl-bell${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="event.stopPropagation();openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Alert set — tap to edit or remove':'Set an alert for this event'}">${icn('bell',13)}</button>`;
-    }
-    return`<div class="rterm-tl-item${isPast?' past':''}">
-      <div class="rterm-tl-dot"></div>
-      <div class="rterm-tl-body">
-        <div class="rterm-tl-date">${fmtDayHdr(ev.date)}${bell}</div>
-        <div class="rterm-tl-name">${escH(ev.name)}</div>
-        <div class="rterm-tl-vals">A ${val(ev.actual)} · F ${val(ev.forecast)} · P ${val(ev.previous)}</div>
-      </div>
-    </div>`;
-  };
-  const items=[...past.map(ev=>row(ev,true)),...upcoming.map(ev=>row(ev,false))].join('');
-  return items||`<div class="rterm-tl-empty">No ${resTlHighOnly?'high-impact ':''}${escH(ccy)} events in the calendar yet.</div>`;
-}
 // Sidebar auf einen schmalen Pfeil-Streifen einklappen (Nutzer-Wunsch: "kein
 // Emoji", nur der Pfeil-Button bleibt) - eingeklappt erscheinen stattdessen
 // beschriftete Shortcut-Icons zu den 7 Insights-Tabs, plus (falls ein Asset
@@ -11729,7 +11650,7 @@ function researchShortcutGo(tabId){
   }
   _resReturnActive=true;_quickReturnAssetId=null;
   document.body.classList.add('res-return-active');
-  setBackPillTitle('Back to the Research Terminal');
+  setBackPillTitle('Back to the Archive');
   showTab(tabId);
   if(tabId==='carry'){const q=document.getElementById('carrySearch');if(q&&id){q.value=id;renderCarry();}}
 }
@@ -11832,7 +11753,8 @@ function applyAssetQuickFilter(tabId,id){
   // Konzepte (Zinserwartung, Kalender-Events sind an Waehrungen geknuepft,
   // nicht an einzelne Assets) - macroCcyFor(id) loest fuer eine FX-Waehrung
   // auf sich selbst auf, fuer jedes verknuepfte Nicht-FX-Asset (Gold/Indizes/
-  // Yields/...) auf seine Waehrung, exakt wie es researchTimelineHtml schon
+  // Yields/...) auf seine Waehrung, exakt wie es die bis 2026-09-19
+  // danebenstehende Archiv-Timeline schon
   // fuer die Research-Terminal-Timeline macht.
   else if(tabId==='rate')setRateProbCcy(macroCcyFor(id));
   else if(tabId==='cal')setCalCcyFilter(macroCcyFor(id));
@@ -12023,7 +11945,7 @@ function researchSideTitleHtml(){
     </div>`;
   })():'';
   return`<div class="rterm-side-title">
-    <div class="rterm-title-big">Research Terminal</div>
+    <div class="rterm-title-big">Archive</div>
     ${assetLine}
   </div>`;
 }
@@ -12059,28 +11981,34 @@ function rerenderNotesHost(){
   else if(curPage==='watch')renderWatchlistTab();   // Notizen stehen jetzt auch dort
   else renderResearch();
 }
+// ══ ARCHIVE (Nutzer-Wunsch 2026-09-19) ═══════════════════════════════
+// Bis dahin hiess diese Seite "Research Terminal" und trug neben dem
+// Ordnerbaum eine Reihe Rubrik-Karten und eine News-Timeline.
+//
+// ⚠ Der Nutzer-Wunsch lautete woertlich, das Research Terminal zu ENTFERNEN
+// und "ein Archiv" mit "Ordnern zu allen Assets" hinzusetzen, in dem man
+// "Notizen speichern" kann. Genau das war der Ordnerbaum aber schon
+// (researchChildrenOf: Kategorie -> Asset -> Notizordner). Neu gebaut wurde
+// deshalb NUR die Oberflaeche - Datenmodell, Ordnerbaum, Notizen, Papierkorb
+// und Cloud-Sync sind unveraendert. Ein Neubau der Datenschicht haette genau
+// die Fehlerklasse wiederholt, die in diesem Projekt DREIMAL zu
+// Notiz-Datenverlust gefuehrt hat (siehe check/notizen.js).
+//
+// Was wegfiel und warum: Rubrik-Kartenreihe und Timeline sind
+// Analyse-Bausteine, kein Archiv. Beide stehen unveraendert an ihrem
+// eigentlichen Platz (Asset-Seite bzw. Kalender/Overview), und die
+// Event-Wecker der Timeline sind weiter ueber den eigenen Wecker-Waehler
+// erreichbar (openEvtAlertM via mEvtAlertPicker/mEvtAlertList) - es ist
+// also KEINE Funktion unerreichbar geworden, nur dieser eine Zugang.
 function renderResearch(){
   const wrap=document.getElementById('resWrap');if(!wrap)return;
-  // Sidebar bildet die linke Spalte ueber die VOLLE Hoehe (Karten-Reihe +
-  // Timeline zusammen) - Nutzer-Korrektur 2026-08-04: "die obere Leiste mit
-  // den Karten [geht] nie bis ganz links", die Ordner reichen "bis ganz
-  // oben hin". .rterm-main buendelt daher Kartenreihe+Timeline-Zeile als
-  // rechte Spalte NEBEN der Sidebar, statt die Karten ueber die volle Breite
-  // laufen zu lassen.
+  // Zwei Spalten: Ordnerbaum links ueber die volle Hoehe, Inhalt der
+  // Auswahl rechts. Der Baum reicht weiterhin "bis ganz oben hin"
+  // (Nutzer-Korrektur 2026-08-04, gilt unveraendert).
   wrap.innerHTML=`<div class="rterm-shell">
     <div class="rterm-side">${researchSideTitleHtml()}${researchSidebarHtml()}</div>
     <div class="rterm-main">
-      ${researchTopCardsHtml()}
-      <div class="rterm-lower">
-        <div class="rterm-mid" id="rtermMid">${researchMidHtml()}</div>
-        <div class="rterm-timeline">
-          <div class="rterm-tl-hd">
-            <div class="rterm-tl-title">Timeline</div>
-            <button class="btn rterm-tl-filter${resTlHighOnly?' active':''}" onclick="toggleResTlHighOnly()" title="${resTlHighOnly?'Show all impacts':'Show only high-impact news'}">${icn('filter',12)} ${resTlHighOnly?'High-impact only':'All impacts'}</button>
-          </div>
-          <div class="rterm-tl-list">${researchTimelineHtml()}</div>
-        </div>
-      </div>
+      <div class="rterm-mid" id="rtermMid">${researchMidHtml()}</div>
     </div>
   </div>`;
   attachChartHovers(wrap);
@@ -12317,203 +12245,13 @@ function researchNotesPanelHtml(assetId,fid){
   </div>`;
 }
 // Wie newResNote(), aber mit explizitem Asset+Ordner statt aus dem alten
-// resSel-Zustand abzuleiten (der Baum kennt Asset/Ordner bereits genau).
+// entfallenen resSel-Zustand abzuleiten (der Baum kennt Asset und Ordner
+// bereits genau).
 function newResNoteIn(assetId,fid){
   _resEditId=null;
   resFillNoteModal({title:'',body:'',fids:[fid||researchGenFidFor(assetId)].filter(Boolean),tags:[],fav:false});
-  openM('mResNote');
+  resOpenNoteShell();
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
-}
-function renderResearchNotes(){
-  const wrap=document.getElementById('resWrap');if(!wrap)return;
-  const notes=resNotes(),folders=resFolders(),shown=resFilteredNotes();
-  const favN=notes.filter(n=>n.fav).length;
-  const tags=resAllTags(),assets=resAssetCounts();
-  const cnt=fid=>notes.filter(n=>n.fid===fid).length;
-  const selCls=k=>resSel===k?' on':'';
-  // ── Linke Bibliothek ──
-  // Topics-Liste zeigt jetzt die 5 festen Asset-Kategorie-Ordner (nicht mehr
-  // umbenennbar/loeschbar, siehe RESEARCH_ASSET_FOLDERS) - kein Long-Press,
-  // kein "+Add topic" mehr.
-  const lib=`<div class="res-lib-hd">Research Library</div>
-    <button class="res-libitem${selCls('all')}" onclick="resSelect('all')"><span class="res-li-ic">${icn('bars',13)}</span><span class="res-li-nm">All notes</span><span class="res-li-ct">${notes.length}</span></button>
-    <button class="res-libitem res-fav${selCls('fav')}" onclick="resSelect('fav')"><span class="res-li-ic">⭐</span><span class="res-li-nm">Favorites</span><span class="res-li-ct">${favN}</span></button>
-    <div class="res-lib-sec">Topics</div>
-    ${folders.map(f=>`<button class="res-libitem${selCls('f:'+f.id)}" onclick="resSelect('f:${f.id}')" title="${escH(f.name)}"><span class="res-li-ic">${icn(f.icon&&RESEARCH_FOLDER_ICONS.indexOf(f.icon)>=0?f.icon:'note',13)}</span><span class="res-li-nm">${escH(f.name)}</span><span class="res-li-ct">${cnt(f.id)}</span></button>`).join('')}
-    ${assets.length?`<div class="res-lib-sec">Assets</div>
-    ${assets.map(([a,c])=>`<button class="res-libitem${selCls('a:'+a)}" onclick="resSelect('a:${escJH(a)}')"><span class="res-li-ic">${icn('trendUp',13)}</span><span class="res-li-nm">${escH(a)}</span><span class="res-li-ct">${c}</span></button>`).join('')}`:''}`;
-  // ── Kopfbereich + Kennzahlen ──
-  const head=`<div class="res-head">
-      <div class="res-title-wrap">
-        <div class="res-title">Research Terminal</div>
-        <div class="res-sub">Notes · Insights · Market experience</div>
-      </div>
-      <input class="res-search" id="resSearchInp" placeholder="Search notes, assets, topics…" value="${escH(resQuery)}" oninput="resSetQuery(this.value)">
-      <button class="btn res-newbtn" onclick="openQuickNote()" title="Paste a text and let it be sorted out">⚡ Quick capture</button>
-      <button class="btn res-newbtn" onclick="openRecoverM()" title="Find notes that lost text or folders">🛟 Recover</button>
-      <button class="btn g res-newbtn" onclick="newResNote()">＋ New note</button>
-    </div>
-    <div class="res-stats">
-      <div class="res-stat"><div class="res-stat-v">${notes.length}</div><div class="res-stat-l">Notes</div></div>
-      <div class="res-stat"><div class="res-stat-v">${folders.length}</div><div class="res-stat-l">Topics</div></div>
-      <div class="res-stat"><div class="res-stat-v">${favN}</div><div class="res-stat-l">Favorites</div></div>
-      <div class="res-stat"><div class="res-stat-v">${tags.length}</div><div class="res-stat-l">Tags</div></div>
-    </div>`;
-  // ── Notizliste ──
-  const scopeLbl=resSel==='all'?'All notes':resSel==='fav'?'Favorites':resSel.startsWith('f:')?resFolderName(resSel.slice(2)):resSel.slice(2);
-  const rows=shown.length?shown.map(n=>{const dp=resFmtDateParts(n.up||n.ts);return`<div class="res-note" onclick="openResNote('${n.id}')">
-      <div class="res-note-datebox">
-        <div class="res-note-day">${dp.day}</div>
-        <div class="res-note-mon">${dp.mon}</div>
-        <div class="res-note-yr">${dp.year}</div>
-      </div>
-      <div class="res-note-body">
-        <div class="res-note-top">
-          ${n.asset?`<span class="res-note-as">${escH(n.asset)}</span>`:''}
-          <span class="res-note-ti">${escH(n.title||'Untitled note')}</span>
-        </div>
-        ${(n.tags||[]).length?`<div class="res-note-tags">${(n.tags||[]).map(t=>`<span class="res-tag" onclick="event.stopPropagation();resSetTag('${escJH(t)}')">#${escH(t)}</span>`).join('')}</div>`:''}
-        ${n.body?`<div class="res-note-ex">${escH(n.body.replace(/\s+/g,' ').slice(0,200))}${n.body.length>200?'…':''}</div>`:''}
-      </div>
-      <div class="res-note-side">
-        <div class="res-note-fold">${escH(resFolderName(n.fid))}</div>
-        <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="Pin to the asset page (max ${ASSET_PIN_MAX}) — also shows in the watchlist">${icn('pin',14)}</button>
-        <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">${icn('star',15)}</button>
-        <div class="res-note-dt">${dp.time}</div>
-      </div>
-    </div>`;}).join(''):`<div class="res-empty">${notes.length?'No notes match this filter.':'No notes yet — tap “＋ New note” to capture your first market observation.'}</div>`;
-  const list=`<div class="res-list-card">
-      <div class="res-list-hdr">
-        <span class="res-list-ti">${escH(scopeLbl)}</span>
-        ${resTag?`<button class="res-chip on" onclick="resSetTag('')">#${escH(resTag)} ✕</button>`:''}
-        <span class="res-list-ct">${shown.length}${shown.length!==notes.length?' / '+notes.length:''}</span>
-        <select class="res-sort" onchange="resSort=this.value;rerenderNotesHost()">
-          <option value="new"${resSort==='new'?' selected':''}>Newest</option>
-          <option value="old"${resSort==='old'?' selected':''}>Oldest</option>
-          <option value="az"${resSort==='az'?' selected':''}>A–Z</option>
-        </select>
-      </div>
-      <div class="res-list">${rows}</div>
-    </div>`;
-  // ── Rechte Leiste ──
-  const recent=notes.slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||''))).slice(0,6);
-  const rail=`<div class="res-rail-card">
-      <div class="res-rail-hd">Tag cloud</div>
-      ${tags.length?`<div class="res-tagcloud">${tags.slice(0,30).map(([t,c])=>`<span class="res-tag${resTag===t?' on':''}" onclick="resSetTag('${escJH(t)}')" title="${c} note${c===1?'':'s'}">#${escH(t)}</span>`).join('')}</div>`:'<div class="res-rail-empty">Add #tags to a note to build your tag cloud.</div>'}
-    </div>
-    <div class="res-rail-card">
-      <div class="res-rail-hd">Recently updated</div>
-      ${recent.length?recent.map(n=>`<button class="res-recent" onclick="openResNote('${n.id}')"><span class="res-recent-ti">${escH(n.title||'Untitled note')}</span><span class="res-recent-dt">${escH(resFmtDate(n.up||n.ts).split(' · ')[0])}</span></button>`).join(''):'<div class="res-rail-empty">Nothing yet.</div>'}
-    </div>`;
-  wrap.innerHTML=`${resModeToggleHtml()}<div class="res-wrap"><aside class="res-lib">${lib}</aside><div class="res-main">${head}${list}</div><aside class="res-rail">${rail}</aside></div>`;
-}
-function resModeToggleHtml(){
-  return`<div class="res-mode-toggle">
-    <button class="res-mode-btn${resMode==='folders'?' on':''}" onclick="setResMode('folders')">${icn('bars',13)} Assets</button>
-    <button class="res-mode-btn${resMode==='notes'?' on':''}" onclick="setResMode('notes')">${icn('note',13)} Notes</button>
-  </div>`;
-}
-function setResMode(m){resMode=m;rerenderNotesHost();}
-// ── ASSET-BROWSER (Nutzer-Wunsch 2026-08-03) ──────────────────────────
-// Ordner-Grid (FX/Indices/Commodities/Crypto/Stocks) -> Asset-Liste je
-// Ordner -> Asset-Detail rechts (Rubrik-Uebersichtskarten + Events). Die
-// Asset-Zuordnung ist rein abgeleitet (researchAssetsIn), es gibt keinen
-// eigenen Speicher/Sync-Zustand dafuer.
-function renderResearchFolders(){
-  const wrap=document.getElementById('resWrap');if(!wrap)return;
-  const toggle=resModeToggleHtml();
-  if(!resFolderOpen){
-    const tiles=resFolders().map(f=>{
-      const n=researchAssetsIn(f.id).length;
-      return`<button class="resf-tile" onclick="openResFolder('${f.id}')">
-        <span class="resf-tile-ic">${icn(f.icon,26)}</span>
-        <span class="resf-tile-nm">${escH(f.name)}</span>
-        <span class="resf-tile-ct">${n} asset${n===1?'':'s'}</span>
-      </button>`;
-    }).join('');
-    wrap.innerHTML=`${toggle}<div class="resf-grid">${tiles}</div>`;
-    return;
-  }
-  const f=resFolders().find(x=>x.id===resFolderOpen);
-  if(!f){resFolderOpen=null;renderResearchFolders();return;}
-  const assets=researchAssetsIn(f.id).slice().sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
-  const list=assets.length?assets.map(s=>{
-    const sc=symScoreCmp(s);
-    return`<button class="resf-asset-row${selId===s.id?' on':''}" onclick="resPickAsset('${s.id}')">
-      <span class="resf-asset-nm">${escH(s.name)}</span>
-      <span class="resf-asset-sc" style="color:${biasCss(s.bias)}">${sc>0?'+':''}${sc}</span>
-      <span style="color:${biasCss(s.bias)}">${s.bias==='bull'?'▲':s.bias==='bear'?'▼':'◆'}</span>
-    </button>`;
-  }).join(''):'<div class="dw-empty" style="padding:14px 8px">No assets in this folder yet.</div>';
-  const detail=(selId&&assets.some(s=>s.id===selId))?renderResAssetDetail(selId):`<div class="resf-empty-detail">Select an asset on the left to see its details.</div>`;
-  wrap.innerHTML=`${toggle}
-    <div class="resf-crumb"><button class="resf-back" onclick="openResFolder(null)">‹ Folders</button><span>${icn(f.icon,14)} ${escH(f.name)}</span></div>
-    <div class="resf-split">
-      <div class="resf-asset-list">${list}</div>
-      <div class="resf-detail">${detail}</div>
-    </div>`;
-}
-function openResFolder(fid){resFolderOpen=fid;renderResearchFolders();}
-// Waehlt ein Asset innerhalb des geoeffneten Ordners - setzt bewusst dieselbe
-// globale selId wie die Assets-Seite (getSym()/renderRub()/renderIndsTable()
-// haengen daran), damit diese Funktionen 1:1 wiederverwendet werden koennen.
-function resPickAsset(id){selId=id;renderResearchFolders();}
-function resToggleRubExpand(rid){resExpandedRubs[rid]=!resExpandedRubs[rid];renderResearchFolders();}
-// Rechte Detailansicht: Last Events (letzte 10 Tage, calEvts ist ohnehin auf
-// CAL_PAST_DAYS=10 gekappt) direkt ueber der langen Upcoming-Events-Karte,
-// darunter die Rubrik-Karten als kompakte Uebersicht (Name+Score+Bias), die
-// per Klick die volle Indikator-Tabelle aufklappen (renderIndsTable - gleiche
-// Komponente wie auf der Assets-Detailseite, inkl. aller dortigen Fixes).
-function renderResAssetDetail(id){
-  const s=(syms||[]).find(x=>x.id===id);if(!s)return'';
-  const all=getSymEventsAll(id);
-  const today=todayStr();
-  const past=all.filter(ev=>ev.date<today);
-  const upcoming=all.filter(ev=>ev.date>=today);
-  const pastHtml=past.length?calTableHtml(past,{compact:true,idPrefix:'respast-'}):'<div class="dw-empty" style="padding:8px 2px">No events in the last 10 days.</div>';
-  const upHtml=upcoming.length?calTableHtml(upcoming,{compact:true,idPrefix:'resup-'}):'<div class="dw-empty" style="padding:8px 2px">No upcoming events.</div>';
-  const rubs=s.rubrics||[];
-  const rubCards=rubs.map(rub=>{
-    const bco=BC[rub.bias];
-    const sc=rubScore(rub);
-    const open=!!resExpandedRubs[rub.id];
-    const ri=rubs.indexOf(rub);
-    return`<div class="resf-rub-card ${glowClass(rub.bias)}">
-      <div class="resf-rub-hd" onclick="resToggleRubExpand('${rub.id}')">
-        <button class="resf-rub-tog">${open?'▾':'▸'}</button>
-        <span class="resf-rub-nm">${escH(rub.name)}</span>
-        <span class="resf-rub-sc" style="color:${bco};border-color:${bco}">${sc>0?'+':''}${sc}</span>
-        <span class="bbadge" style="background:${bco}18;color:${bco}">${BL[rub.bias]}</span>
-      </div>
-      ${open?`<div class="resf-rub-body">${renderIndsTable(rub,ri)}</div>`:''}
-    </div>`;
-  }).join('')||'<div class="dw-empty">No categories yet for this asset.</div>';
-  return`<div class="resf-detail-hd">
-      ${assetIconHtml(s.id,26)?`<span class="atitle-flag">${assetIconHtml(s.id,26)}</span>`:''}
-      <span class="resf-detail-nm">${escH(s.name)}</span>
-      ${scoreBadge(symScoreCmp(s),'','resfd-'+s.id,null,s.bias)}
-      <span class="bbadge" style="background:${BC[s.bias]}18;color:${biasCss(s.bias)}">${BL[s.bias]}</span>
-    </div>
-    <div class="resf-detail-grid">
-      <div class="resf-detail-main">${rubCards}</div>
-      <div class="resf-detail-side">
-        <div class="resf-side-card"><div class="dw-t-txt">Last Events</div>${pastHtml}</div>
-        <div class="resf-side-card resf-side-tall"><div class="dw-t-txt">Upcoming Events</div>${upHtml}</div>
-      </div>
-    </div>`;
-}
-function resSelect(k){resSel=k;rerenderNotesHost();}
-function resSetTag(t){resTag=t;rerenderNotesHost();}
-function resSetQuery(v){
-  resQuery=v;
-  // Nur die Liste neu bauen waere aufwendiger als noetig - aber der Fokus im
-  // Suchfeld muss den Rebuild ueberleben (gleiches Muster wie die Quick-Note-
-  // Fokusrettung in renderDetail, siehe Kommentar dort).
-  const el=document.getElementById('resSearchInp');
-  const pos=el?el.selectionStart:null;
-  rerenderNotesHost();
-  const el2=document.getElementById('resSearchInp');
-  if(el2){el2.focus();if(pos!=null){try{el2.setSelectionRange(pos,pos);}catch(e){}}}
 }
 function togResFav(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
@@ -12531,10 +12269,21 @@ function resNoteSnapshot(){
 }
 function resNoteDirty(){return _resNoteBase!==null&&resNoteSnapshot()!==_resNoteBase;}
 registerModalGuard('mResNote',resNoteDirty,()=>saveResNote());
+// Nutzer-Entscheid 2026-09-19: aus dem Archiv heraus oeffnet eine Notiz als
+// ganze Seite, von der Asset-Seite und der Watchlist aus weiterhin als
+// Fenster (dort ist sie ein Seitenschritt, kein Arbeitsplatz). ⚠ Die Klasse
+// wird bei JEDEM Oeffnen neu gesetzt ODER entfernt - nur zu setzen und sich
+// auf das Schliessen zu verlassen, hinterliesse eine Vollseite, sobald das
+// Fenster einmal anders geschlossen wird (Nachfrage-Dialog, ESC, Sync).
+function resOpenNoteShell(){
+  const ov=document.getElementById('mResNote');
+  if(ov)ov.classList.toggle('res-note-page',curPage==='notes');
+  openM('mResNote');
+}
 function newResNote(){
   _resEditId=null;
   resFillNoteModal({title:'',body:'',fids:[],tags:[],fav:false});
-  openM('mResNote');
+  resOpenNoteShell();
   _resNoteBase=resNoteSnapshot();
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
@@ -12542,7 +12291,7 @@ function openResNote(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
   _resEditId=id;
   resFillNoteModal(n);
-  openM('mResNote');
+  resOpenNoteShell();
   _resNoteBase=resNoteSnapshot();
 }
 // 3-stufiger Bias statt der frueheren 2-stufigen "Richtung" (Nutzer-Wunsch
@@ -14110,11 +13859,10 @@ function riskOnOffState(){
   const lbl=net>0.8?'RISK-ON':net<-0.8?'RISK-OFF':'NEUTRAL',col=net>0.8?BC.bull:net<-0.8?BC.bear:BC.neu;
   return{on,off,net,pct,lbl,col};
 }
-// Ausgelagert aus dem Dashboard-Widget-Renderer (Nutzer-Wunsch 2026-08-04:
-// die "Risk Environment"-Karte im Research-Terminal zeigt beim Ausklappen
-// GENAU diese Karte vom Dashboard) - jetzt von renderDash() UND
-// researchTopCardsHtml() genutzt, exakt derselbe Markup/State (kein
-// zweiter, potenziell abweichender Nachbau).
+// Ausgelagert aus dem Dashboard-Widget-Renderer (Nutzer-Wunsch 2026-08-04).
+// Die zweite Aufrufstelle - die "Risk Environment"-Karte der frueheren
+// Research-Terminal-Kartenreihe - ist am 2026-09-19 mit dieser Reihe
+// entfallen; die Auslagerung bleibt, weil renderDash() sie nutzt.
 function riskSentimentWidgetHtml(gaugeKey){
   const ON_IDS=RISK_ON_IDS,OFF_IDS=RISK_OFF_IDS;
   // Nur Name + Wert (Referenz-Foto, Nutzer-Wunsch 2026-07-25 "1 zu 1"):
@@ -20274,7 +20022,7 @@ const TABS={
   // Historie) ALLE Assets (FX + Crypto + Metals + Energy + Indices), nicht
   // mehr nur Waehrungen - "FX" war dadurch irrefuehrend geworden. Schluessel
   // 'fx' und tab:'cur' bleiben bewusst (gespeicherte tabStacks/URLs halten),
-  // gleiches Muster wie beim 'notes'->'Research'-Umbenennen oben.
+  // gleiches Muster wie beim 'notes'->'Archive'-Umbenennen oben.
   fx:{label:'Assets',tab:'cur'},
   mx:{label:'Matrix',tab:'mx'},
   trends:{label:'Trends',tab:'trends'},
@@ -20297,9 +20045,10 @@ const TABS={
   // Stapel steht, automatisch als eigenen Top-Level-Button.
   watch:{label:'Watchlist',tab:'watch'},
   cal:{label:'Calendar',tab:'cal'},
-  // Label 2026-08-02 von 'Notes' auf 'Research' umbenannt (Nutzer-Wunsch);
+  // Label 2026-08-02 von 'Notes' auf 'Research' umbenannt, 2026-09-19 auf
+  // 'Archive' (beides Nutzer-Wunsch);
   // der Schluessel 'notes' bleibt bewusst, damit gespeicherte tabStacks halten.
-  notes:{label:'Research',tab:'notes'},
+  notes:{label:'Archive',tab:'notes'},
 };
 const TABSTACKS_KEY='fxpro_tabstacks';
 let tabStacks=[];           // [{id,name,members:[tabId,...]}]
@@ -21449,6 +21198,10 @@ function applyScoreHistServerFeed(){
   // Aenderung mit dem (unveraenderten) Cloud-Stand ueberschreiben. Der naechste
   // echte save() (cloudAutoSync) bzw. der naechste Boot versucht es erneut.
   if(!pushFailed)await cloudPull(false);
+  // Erst NACH Push/Pull: die Aufraeumung fasst zwar nur :rez:-Zeilen an,
+  // soll aber in keinem Fall mit dem eigentlichen Sync um dieselbe
+  // Verbindung konkurrieren.
+  purgeRezeptCloudRows();
   autoFetchFF();
   bootFetchScoreFeeds();
   autoFetchPriceData();
@@ -21873,10 +21626,10 @@ Object.assign(window,{
   removeEvtAlert,openEvtAlertCustom,saveCustomEvtAlert,removeCustomEvtAlert,EVT_ALERT_TTL_MS,pruneEventAlerts,
   currentPriceOf,priceAlertTargets,openPriceAlertM,createPriceAlert,delPriceAlert,renderPriceAlertList,
   checkPriceAlerts,FF_WINDOW_DAYS,FF_PAST_DAYS,fetchFFPeriod,ffLocalDate,ffEvKey,mergeFeedEvents,fetchFFLive,
-  fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,resFmtDateParts,resAllTags,
-  resAssetCounts,noteBiasBadge,noteEventOptions,resFilteredNotes,RESEARCH_TOP_RUBS,resSetGlobalQuery,resOpenGlobalTag,
-  resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,researchToggleTop,researchTopCardsHtml,
-  toggleResTlHighOnly,researchTimelineHtml,researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
+  fetchFFJson,fetchFF,autoFetchFF,resNotes,resFolders,resFolderName,resFmtDate,resFmtDateParts,
+  noteBiasBadge,noteEventOptions,resSetGlobalQuery,resOpenGlobalTag,
+  resClearGlobalSearch,researchGlobalSearchHtml,researchMidHtml,
+  researchToggleSidebar,RESEARCH_SHORTCUTS,researchShortcutGo,
   researchBackFromShortcut,setBackPillTitle,ASSET_QUICK_LINKS,SENT_QUICK_SUBLINKS,assetQuickGo,applyAssetQuickFilter,
   QUICK_LINK_REAL_TAB,feargreedEligible,retailSymFor,WATCH_QUICK_PAIR_DIRECT,
   watchQuickLinksHtml,watchAssetLinksHtml,watchQuickGo,watchQuickGoDirect,openLegPicker,legPickerChoose,closeLegPicker,legPickerOutside,
@@ -21885,9 +21638,9 @@ Object.assign(window,{
   rerenderNotesHost,renderResearch,researchAnKey,researchAnalysisFor,researchToggleAnOpen,researchSetAnBias,
   researchSetAnText,researchAnalysisPanelHtml,researchAnCardHtml,assetAnalysisHtml,researchNotesFolderOptions,
   researchFolderNameOf,researchSetNoteQuery,resSetSearchField,resSearchFieldPickerHtml,resNoteMatchesQuery,
-  resHighlight,resNoteRowHtml,researchNotesPanelHtml,newResNoteIn,renderResearchNotes,resModeToggleHtml,setResMode,
-  renderResearchFolders,openResFolder,resPickAsset,resToggleRubExpand,renderResAssetDetail,resSelect,resSetTag,
-  resSetQuery,togResFav,newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,
+  resHighlight,resNoteRowHtml,researchNotesPanelHtml,newResNoteIn,
+  
+  togResFav,newResNote,openResNote,resPickBias,resPaintBias,resPlaceLabel,resRenderPlaces,resAddPlace,
   resRemovePlace,resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
   awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
   AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
@@ -22001,7 +21754,6 @@ Object.defineProperty(window,'_histSymId',{get:()=>_histSymId,set:v=>{_histSymId
 Object.defineProperty(window,'researchTreeOpen',{get:()=>researchTreeOpen,set:v=>{researchTreeOpen=v;},configurable:true});
 Object.defineProperty(window,'researchTreeSel',{get:()=>researchTreeSel,set:v=>{researchTreeSel=v;},configurable:true});
 Object.defineProperty(window,'researchFocusAsset',{get:()=>researchFocusAsset,set:v=>{researchFocusAsset=v;},configurable:true});
-Object.defineProperty(window,'researchTopOpen',{get:()=>researchTopOpen,set:v=>{researchTopOpen=v;},configurable:true});
 Object.defineProperty(window,'resTreeCollapsed',{get:()=>resTreeCollapsed,set:v=>{resTreeCollapsed=v;},configurable:true});
 Object.defineProperty(window,'_resReturnActive',{get:()=>_resReturnActive,set:v=>{_resReturnActive=v;},configurable:true});
 Object.defineProperty(window,'_quickReturnAssetId',{get:()=>_quickReturnAssetId,set:v=>{_quickReturnAssetId=v;},configurable:true});
@@ -22075,16 +21827,8 @@ Object.defineProperty(window,'_evtAlertKey',{get:()=>_evtAlertKey,set:v=>{_evtAl
 Object.defineProperty(window,'_evtAlertCustomEditId',{get:()=>_evtAlertCustomEditId,set:v=>{_evtAlertCustomEditId=v;},configurable:true});
 Object.defineProperty(window,'_evtAlertPressTimer',{get:()=>_evtAlertPressTimer,set:v=>{_evtAlertPressTimer=v;},configurable:true});
 Object.defineProperty(window,'_evtAlertLongPressFired',{get:()=>_evtAlertLongPressFired,set:v=>{_evtAlertLongPressFired=v;},configurable:true});
-Object.defineProperty(window,'resSel',{get:()=>resSel,set:v=>{resSel=v;},configurable:true});
-Object.defineProperty(window,'resQuery',{get:()=>resQuery,set:v=>{resQuery=v;},configurable:true});
-Object.defineProperty(window,'resTag',{get:()=>resTag,set:v=>{resTag=v;},configurable:true});
-Object.defineProperty(window,'resSort',{get:()=>resSort,set:v=>{resSort=v;},configurable:true});
-Object.defineProperty(window,'resMode',{get:()=>resMode,set:v=>{resMode=v;},configurable:true});
-Object.defineProperty(window,'resFolderOpen',{get:()=>resFolderOpen,set:v=>{resFolderOpen=v;},configurable:true});
-Object.defineProperty(window,'resExpandedRubs',{get:()=>resExpandedRubs,set:v=>{resExpandedRubs=v;},configurable:true});
 Object.defineProperty(window,'resGlobalQuery',{get:()=>resGlobalQuery,set:v=>{resGlobalQuery=v;},configurable:true});
 Object.defineProperty(window,'resGlobalTag',{get:()=>resGlobalTag,set:v=>{resGlobalTag=v;},configurable:true});
-Object.defineProperty(window,'resTlHighOnly',{get:()=>resTlHighOnly,set:v=>{resTlHighOnly=v;},configurable:true});
 Object.defineProperty(window,'researchAnOpen',{get:()=>researchAnOpen,set:v=>{researchAnOpen=v;},configurable:true});
 Object.defineProperty(window,'researchNoteQuery',{get:()=>researchNoteQuery,set:v=>{researchNoteQuery=v;},configurable:true});
 Object.defineProperty(window,'resSearchField',{get:()=>resSearchField,set:v=>{resSearchField=v;},configurable:true});

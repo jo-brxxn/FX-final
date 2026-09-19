@@ -40,9 +40,6 @@ const PRUEFUNGEN = [
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
   { n: 'nav',       d: 'Sidebar-Klickregel, mit Maus UND mit Touch',          f: 'check/nav.js',       args: [],           browser: true },
-  // ⚠ Gehoert zur ZWEITEN App dieses Repos (Perfect Rezept, siehe
-  // docs/rezept.md). Prueft dort Handler, Buttons, den kompletten Ablauf,
-  // die Nachfrage bei ungespeicherten Eingaben und den Kontrast jeder Palette.
   // Design-Vorlagen des FX Analyst Pro: rechnet je Vorlage Kontrast und
   // Bedeutung nach. ⚠ Bedeutung wird ueber den FARBTON geprueft, nicht ueber
   // Helligkeit - Blau und Rot koennen gleich hell und trotzdem eindeutig sein.
@@ -52,12 +49,16 @@ const PRUEFUNGEN = [
   { n: 'kerzen',    d: 'Kerzen: ein Tag, kein Wochenende, eigene Farben, keine erfundenen Dochte', f: 'check/kerzen.js', args: [], browser: true },
   { n: 'seasretail',d: 'Saisonalitaet/Retail: Schwellen, Deckel, Monats-Markierung', f: 'check/seasretail.js', args: [], browser: true },
   { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
+  // Beide 2026-09-19 neu, beide aus einem Fehler DIESER Sitzung: ein
+  // CSS-Kommentar, der Regeln verschluckt hat, und ein Inline-style, der eine
+  // Zustandsregel wirkungslos machte. Statisch, deshalb im schnellen Teil.
+  { n: 'csskomm',   d: 'Kein CSS-Kommentar verschluckt Regeln',                  f: 'check/csskommentar.js', args: [], browser: false },
+  { n: 'inlinest',  d: 'Kein Inline-style, der eine Zustandsregel aushebelt',    f: 'check/inlinestyle.js',  args: [], browser: false },
   { n: 'kartenlook',d: 'Kartenoptik und Kopfleiste der Asset-Seite', f: 'check/kartenlook.js', args: [], browser: true },
   { n: 'regime',     d: 'Regime Radar: Zahlen gegen die Rohdaten, Nenner, Kernbedingung',  f: 'check/regime.js',    args: [],           browser: true },
   { n: 'historie',   d: 'Historie: Score-Linie, Alterung nachgerechnet, jeder Tag einzeln', f: 'check/historie.js',  args: [],           browser: true },
   { n: 'backtester', d: 'Backtester: Sitzungen, Releases, Kursreaktion gegen die Rohdaten', f: 'check/backtester.js',args: [],           browser: true },
   { n: 'erklaerung',d: 'Erklaerungen hinter dem ⓘ, zentriert, nicht in der Karte', f: 'check/erklaerung.js',args: [],        browser: true },
-  { n: 'rezept',    d: 'Rezept-App: jeder Button wirkt, Ablauf, Kontrast',      f: 'check/rezept.js',    args: [],           browser: true },
 ];
 
 function serverErreichbar() {

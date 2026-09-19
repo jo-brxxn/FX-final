@@ -15764,3 +15764,129 @@ Sitzung nach jedem Edit verlassen; gefunden hat den Fehler erst der Browser.
 nur `js/rezept/` und die im falschen Modus) ausdrücklich über
 `--input-type=module`. Gegenprobe mit dem wieder eingebauten Fehler: meldet
 ihn mit Zeilennummer, Exit 1.
+
+---
+
+## 2026-09-19 (später) — Perfect Rezept gelöscht, Research Terminal wird Archive (VERSION-CHECK-529)
+
+**Nutzer-Auftrag:** *„ich will das du den Code zur Perfect Recipe App
+komplett löschst und dann will ich das du mir hilfst. Ich will das Research
+Terminal entfernen und dafür ein Archiv hinmachen dort beiden sich Ordner zu
+allen Assets und man kann Notizen speichern wie könnte das aussehen"* —
+Rückfrage gestellt, Entscheidungen: Rezeptdaten **auch in der Cloud**
+löschen; Archiv-Layout **A+C** (Explorer-Spalten + Notiz als Vollseite);
+toten Code entfernen; überall „Archive" statt „Research"; Timeline und
+Rubrik-Karten **nicht** behalten.
+
+### Teil 1 — die zweite App ist weg
+
+Gelöscht: `rezept.html`, `js/rezept/` (7 Module, 338 KB), `rezept_bilder/`
+(~14 MB), `rezept_feed.json`, `docs/rezept.md`, `check/rezept.js` (138 KB),
+`tools/rezept-*`, `.github/workflows/rezept-feed.yml`, das Auswahlfenster
+beim Start, die Settings-Zeile „Switch to Perfect Rezept" und Regel 1b
+(`REZEPT-CHECK`) in `check/rules.js`.
+
+**Zwei Hinterlassenschaften stecken NICHT im Repo, sondern in den Browsern
+der Geräte** — beim bloßen Löschen wären sie übersehen worden:
+
+1. `localStorage['dmfx_app_choice']==='rezept'` hätte jedes Gerät, das
+   zuletzt das Rezept gewählt hat, beim Öffnen per `location.replace()` auf
+   eine 404-Seite geschickt: **die App wäre dort tot gewesen**, ohne Weg
+   zurück. Der Kopf von `index.html` löscht den Schlüssel jetzt beim Start,
+   vor allem anderen.
+2. **Beide Apps teilten sich EINE Supabase-Tabelle** (`public.fx_sync`),
+   unterschieden nur über die Zeilen-Id: der nackte `<syncId>` ist der
+   komplette FX-Stand, `<syncId>:rez:*` sind die Rezepte. Ein `DELETE` ohne
+   exakten Präfix-Filter hätte damit **jede Notiz, jede Rubrik und jeden
+   Bias mitgelöscht**. `purgeRezeptCloudRows()` filtert deshalb auf
+   `id=like.<syncId>:rez:%` und setzt seinen Erfolgsmarker **nur nach einer
+   bestätigten Antwort** — schlägt der Lauf fehl (offline, Timeout, 403),
+   versucht es der nächste Start erneut statt still aufzugeben; der Fehler
+   erscheint in der Cloud-Statuszeile der Einstellungen.
+
+`sw.js` auf `fxpro-v14` gebumpt. Ohne den Bump hätte jedes Gerät
+`rezept.html` und `js/rezept/*` im alten Cache behalten und die gelöschte
+App offline weiter starten können.
+
+### Teil 2 — Archive statt Research Terminal
+
+**Der Auftrag beschrieb, was schon existierte.** Gemessen am Code war das
+Research Terminal genau dieses Archiv: `researchChildrenOf()` baut
+**Kategorie → Asset → Notizordner** mit beliebig tiefen Unterordnern, die
+Notizen haben Titel, Text, Tags, Favoriten, Pin, Mehrfachablage über Assets
+hinweg und einen Papierkorb, und alles ist cross-device gesynct. Ein Neubau
+der Datenschicht hätte die Fehlerklasse wiederholt, die hier **dreimal** zu
+Notiz-Datenverlust geführt hat (`check/notizen.js`). **Neu gebaut wurde
+deshalb nur die Oberfläche; Datenmodell, Ordnerbaum, Papierkorb und Sync
+sind unverändert.**
+
+- **Zwei Spalten statt drei:** Ordnerbaum links über die volle Höhe, Inhalt
+  der Auswahl rechts. Rubrik-Kartenreihe und News-Timeline sind raus —
+  Analyse-Bausteine, kein Archiv.
+- **Kein Zugang ist verlorengegangen.** Die Lehre aus dem Bugreport
+  2026-08-07 sagt warum: damals waren score-tragende Karten *hier* nicht
+  erreichbar, auf der Assets-Detailseite aber immer — dort stehen weiterhin
+  alle fünf. Die Event-Wecker der Timeline hängen unverändert am eigenen
+  Wecker-Wähler (`mEvtAlertPicker`/`mEvtAlertList`).
+- **Notiz als Vollseite** aus dem Archiv heraus (von Asset-Seite und
+  Watchlist weiter als Fenster). Nebenbei kann der Datenverlust vom
+  2026-09-01 — Klick *neben* den Editor verwarf alles Getippte — dort gar
+  nicht mehr entstehen, weil es keine umgebende Klickfläche mehr gibt.
+- **290 Zeilen toter Code entfernt:** `renderResearchFolders` und
+  `renderResearchNotes` samt Zuständen (`resSel`/`resQuery`/`resTag`/
+  `resSort`/`resMode`/`resFolderOpen`/`resExpandedRubs`) wurden seit dem
+  Umbau auf den Ordnerbaum von keinem Einstiegspunkt mehr aufgerufen,
+  standen aber weiter in der `window`-Brücke.
+- Tab-Schlüssel bleibt bewusst `notes`: er steckt in gespeicherten
+  `tabStacks` auf den Geräten. Umbenannt wurde nur, was der Nutzer sieht.
+
+### Zwei Fehler dieser Sitzung, beide beim MESSEN gefunden
+
+**1. Ein CSS-Kommentar hat das halbe Layout gekippt.** Im erklärenden
+Kommentar über dem Archiv-Block stand eine Regelgruppe als `rterm-top` plus
+Glob-Sternchen abgekürzt, direkt gefolgt von einem Schrägstrich — diese zwei
+Zeichen **beenden den CSS-Kommentar mitten im Satz**. Der Resttext wurde als
+CSS gelesen und hat die folgenden Regeln mitgerissen. Gemessen im Browser:
+`.rterm-shell` stand auf `display:block` statt `flex`, `.rterm-side` war
+1286px breit statt 300px, beide Spalten stapelten untereinander — und eine
+Aufzählung aller Stylesheets fand die Regel **überhaupt nicht mehr**. Beim
+ersten Reparaturversuch habe ich die kaputte Zeichenfolge im Warntext
+wörtlich zitiert und damit exakt denselben Fehler nochmal ausgelöst; erst
+die zweite Messung war grün. Der Warnhinweis steht jetzt ohne die Zeichen
+im Code.
+
+**2. Inline-`style` schlägt jede Regel — zweimal.** Die Notiz-Vollseite war
+über die ganze Höhe da, blieb aber 640px breit (gemessen: `modal` 640×1000
+in einem 1500px-Fenster), weil `style="max-width:640px"` am Element stand.
+Dasselbe beim Textfeld mit `style="min-height:170px"`. Beide Werte liegen
+jetzt in Klassen (`.res-note-modal`, `.res-nbody`). Nachgemessen: 980×1000,
+Textfeld 868×480.
+
+### Zwei neue Wächter (`check/`)
+
+Für beide Fehlerklassen gibt es jetzt einen roten Lauf statt eines Absatzes,
+jeweils mit Gegenprobe (`--gegenprobe`):
+
+- **`check/csskommentar.js`** ahmt den Browser nach (Kommentar endet am
+  ersten Terminator) und verlangt, dass jeder Text vor einem `{` wirklich ein
+  Selektor ist: kein Semikolon, kein Fließtext, keine 300 Zeichen ohne Komma.
+  ⚠ Beim Bau selbst zwei Iterationen gebraucht: der erste Walker übersprang
+  `@media`-Blöcke und zog deren schließende Klammer in den nächsten
+  „Selektor" — 42 Fehlalarme wie `} .profile-btn`. Jetzt ein Durchlauf mit
+  Tiefenzähler.
+- **`check/inlinestyle.js`** meldet einen Inline-Wert, den eine
+  **Zustandsregel** ändern will — erkennbar daran, dass eine Klasse des
+  Selektors in keinem Markup vorkommt und damit nur per JavaScript gesetzt
+  werden kann. ⚠ Die erste Fassung meldete *jede* Überlagerung: 23 Befunde,
+  praktisch nur Lärm. Ein Wächter, der so etwas rot meldet, bringt niemandem
+  bei hinzusehen, sondern bei wegzusehen. ⚠ Und die zweite Fassung behielt je
+  Eigenschaft nur die zuerst gefundene Regel — das war die Grundregel, die
+  Zustandsregel fiel weg, und die **Gegenprobe blieb grün, obwohl der Fehler
+  drin war**. Ein Wächter, der seinen eigenen Anlassfall nicht findet, ist
+  wertlos; erst die Gegenprobe hat das aufgedeckt.
+
+**Nachgemessen nach dem Umbau** (1500×1000, Chromium): Titel „Archive",
+Tab-Label „Archive", Shell zweispaltig — Sidebar x=192 w=300, Inhalt x=506
+w=972; Kartenreihe und Timeline nicht mehr im DOM; Baum klappt FX auf
+8 Assets auf, EUR auf General Notes + Analysis; Notizliste des Assets mit
+„+ New note"; keine Page-Errors.

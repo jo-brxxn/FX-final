@@ -71,10 +71,10 @@ function achsenBefunde(werte) {
 (async () => {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1500, height: 1000 } });
-  await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1'); localStorage.setItem('dmfx_app_choice', 'fx'); } catch (e) {} });
+  await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1'); } catch (e) {} });
   const perr = []; p.on('pageerror', e => perr.push(String(e)));
   await p.goto(URL, { waitUntil: 'networkidle' });
-  await p.evaluate(() => { ['introOv', 'lockScreen', 'appChoiceOv'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
+  await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
   await wartenBisDatenDa(p);
 
   const F = [], ok = [];

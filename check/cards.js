@@ -38,9 +38,9 @@ const WATCHLIST_FUELLEN=()=>{try{
   const fehler=[];
   for(const [w,h] of [[1920,1080],[1440,900],[1180,820],[820,1180],[390,844]]){
     const p=await b.newPage({viewport:{width:w,height:h}});
-    await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('dmfx_app_choice','fx');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
+    await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
     await p.goto(URL,{waitUntil:'networkidle'});
-    await p.evaluate(()=>{['lockScreen','appChoiceOv'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});document.querySelectorAll('.ov').forEach(o=>o.style.display='none');});
+    await p.evaluate(()=>{['lockScreen'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();});document.querySelectorAll('.ov').forEach(o=>o.style.display='none');});
     await p.waitForTimeout(1000);
     await p.evaluate(()=>{document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none');});
     await p.evaluate(s=>{eval('('+s+')()');},WATCHLIST_FUELLEN.toString());

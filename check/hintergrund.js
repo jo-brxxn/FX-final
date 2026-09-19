@@ -66,7 +66,6 @@ function kontrast(a, b) {
   // gemessen wird.
   await pg.addInitScript(() => { try {
     localStorage.setItem('fxpro_help_seen', '1');
-    localStorage.setItem('dmfx_app_choice', 'fx');
     localStorage.setItem('fxpro_intro_anim_enabled', '0');
   } catch (e) {} });
   const fehler = [], zeilen = [], basis = {}, vorbestand = [];
@@ -80,7 +79,7 @@ function kontrast(a, b) {
       }, [th, bg]);
       await pg.reload();
       await wartenBisDatenDa(pg);
-      await pg.evaluate(() => { ['introOv','lockScreen','appChoiceOv'].forEach(id => {
+      await pg.evaluate(() => { ['introOv','lockScreen'].forEach(id => {
         const e = document.getElementById(id); if (e) e.remove(); }); });
 
       const ziele = await pg.evaluate(() => {
