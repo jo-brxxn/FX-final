@@ -17186,6 +17186,7 @@ const SENT_INFO={
   netflow:['Call/Put Balance vs. its own normal',
     `<p><b>⚠ This card is being rebuilt — read what it actually is first.</b></p>
      <p><b>What it is:</b> the balance between call and put <b>volume</b>, as <b>(call volume − put volume) ÷ (call volume + put volume)</b>, shown as the distance from this market's <b>own median</b>. Each bar is one day, smoothed with a <b>5-day rolling median</b>.</p>
+     <p><b>Why thin days are dropped:</b> this number is a <i>share</i>, and a share cannot see how many contracts were behind it — 10 calls against 2 puts gives exactly the same value as 10,000 against 2,000. On a day where barely anything traded, a single order therefore looks like a market. Measured: one 80-contract block shifts the result by <b>1.33</b> on a 40-contract day (the sign flips), by 0.07 at 1,500, and by 0.004 at 30,000. So a day needs at least <b>${'5,000'}</b> contracts to be drawn at all, and an asset needs that much to appear in the filter — which is why the thin currency ETFs are not listed (FXA trades around 288 contracts a day; there it really is five people).</p>
      <p><b>Why a median and not an average:</b> the underlying option-chain data carries occasional single days that are not market events. On the gold chain (GLD), measured over its full history, individual days show a put/call ratio of 4.2, 5.0 and 5.9 against a median of 0.72 — five times more puts than calls on a liquid ETF in one session. They cluster on Thursdays (median 0.98 there against 0.63–0.75 on every other weekday) and the same pattern appears on the EUR, GBP and JPY chains, but not on SPY, QQQ or the market-wide figure. A rolling average drags such a day along for five sessions; a rolling median ignores it — and invents nothing, since every value it outputs is a real measured day from the window.</p>
      <ul><li><b style="color:${'#0B5FCC'}">Blue bar</b> — more <b>call-heavy</b> than normal for this market.</li>
      <li><b style="color:${'#C50F1A'}">Red bar</b> — more <b>put-heavy</b> than normal for this market.</li></ul>
@@ -18214,7 +18215,27 @@ function retailStackChart(series){
 // JPY 807 vs. OIL 9437+). Unter der Schwelle ist die Tages-Ratio potenziell
 // ein einzelner Ausreisser statt ein echtes Signal - das wird sichtbar
 // gekennzeichnet statt es gleichwertig neben liquiden Maerkten zu zeigen.
-const PC_THIN_VOL=1000;
+// ⚠ 5000 STATT 1000 (Nutzer-Einwand 2026-09-19: "wenn an einem Tag ganz
+// wenig Optionen gehandelt wird koennen einzelne Kaeufe sich ja extrem
+// auswirken das ist ja Rauschen ... wenn zB 5 Leute gehandelt haben und 4 ein
+// paar calls gekauft haben und der andere doppelt so viele puts").
+// Der Einwand trifft genau den wunden Punkt der Kennzahl: (C-P)/(C+P) ist ein
+// ANTEIL, und ein Anteil kennt die Stueckzahl nicht. 10 Calls gegen 2 Puts
+// ergibt exakt denselben Wert wie 10.000 gegen 2.000 - naemlich 0.667. Ein
+// einzelner Trade sieht damit aus wie ein Markt.
+// Gemessen, Verschiebung durch EINEN 80er-Block je nach Tagesvolumen:
+//        40 -> 1.333 (Vorzeichen dreht)   1.500 -> 0.068 (sichtbar)
+//       300 -> 0.281                      7.500 -> 0.014
+//     1.000 -> 0.068                     30.000 -> 0.004 (unsichtbar)
+// Ab ~5000 liegt der Einfluss unter der Strichstaerke des Charts.
+// ⚠ PREIS, bewusst in Kauf genommen: die Waehrungs-ETFs fallen damit raus.
+// Gemessen am 19.09.: FXA 288 Kontrakte/Tag, FXF 515, FXC 1377, FXB 1691,
+// UUP 4499 - dort sind es wirklich "fuenf Leute". Von dreizehn Assets
+// bleiben acht. Lieber fuenf Reihen weniger als fuenf Reihen, die einzelne
+// Trader als Marktstimmung zeigen (Regel 4).
+// ⚠ MUSS zu VOL_CUTOFF im Sammellauf passen - zwei verschiedene Schwellen
+// hiessen, dass die App Tage anzeigt, die der Workflow fuer Rauschen haelt.
+const PC_THIN_VOL=5000;
 function pcThinNote(perAsset){
   if(!perAsset)return'';
   const tot=(+perAsset.callVol||0)+(+perAsset.putVol||0);
@@ -18474,7 +18495,21 @@ function pcIstWochenende(iso){
  */
 function pcRawSeries(D,id){
   const src=id?(D&&D.putCallByAsset&&D.putCallByAsset[id]):(D&&D.putCall);
-  return ((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1])&&!pcIstWochenende(e[0]));
+  return ((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1])&&!pcIstWochenende(e[0])
+    // ⚠ Drittes Feld = Tagesvolumen, seit 2026-09-19. Ein EINZELNER duenner
+    // Tag in einer sonst liquiden Reihe (Feiertag, halber Handelstag) traegt
+    // sonst denselben Ausschlag wie ein normaler - der Anteil (C-P)/(C+P)
+    // sieht die Stueckzahl nicht. Aeltere Punkte haben das Feld nicht; die
+    // gelten als "unbekannt" und bleiben drin, sonst waere die ganze
+    // bisherige Historie weg. Neue Tage werden geprueft.
+    && !(e.length > 2 && isFinite(+e[2]) && +e[2] < PC_THIN_VOL));
+}
+/** Wie viele Punkte der Reihe tragen ein bekanntes Tagesvolumen? */
+function pcVolBekannt(D,id){
+  const src=id?(D&&D.putCallByAsset&&D.putCallByAsset[id]):(D&&D.putCall);
+  const alle=((src&&src.series)||[]).filter(e=>e&&isFinite(+e[1]));
+  const mit=alle.filter(e=>e.length>2&&isFinite(+e[2]));
+  return{mit:mit.length,gesamt:alle.length};
 }
 // Schwellen je Auswahl. ⚠ Bewusst aus der VOLLEN Reihe, nicht aus dem vom
 // Zeitraum-Regler gefilterten Ausschnitt: sonst verschoeben sich die Zonen,
@@ -21944,7 +21979,7 @@ Object.assign(window,{
   // check/putcall.js prueft damit ohne Browser gegen die echte Reihe.
   PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,
   pcQuantile,pcNiceStep,pcNiceDecimals,pcNiceTicks,pcGapWorkdays,
-  PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH,pcRollMedian,pcFlowOf,pcFlowBezug,pcIstWochenende,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
+  PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH,pcRollMedian,pcFlowOf,pcFlowBezug,pcIstWochenende,pcVolBekannt,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
   legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,autoFetchSeasonality,
   setSeasAsset,SEAS_MON,SEAS_ORDER,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,
   autoFetchRateProb,rateProbCcyData,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,

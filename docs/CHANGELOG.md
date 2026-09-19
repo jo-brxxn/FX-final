@@ -15764,3 +15764,88 @@ Sitzung nach jedem Edit verlassen; gefunden hat den Fehler erst der Browser.
 nur `js/rezept/` und die im falschen Modus) ausdrücklich über
 `--input-type=module`. Gegenprobe mit dem wieder eingebauten Fehler: meldet
 ihn mit Zeilennummer, Exit 1.
+
+---
+
+## 2026-09-19 (spät) — Dünne Handelstage zählen nicht mehr mit (VERSION-CHECK-529)
+
+**Nutzer-Einwand, wörtlich:** *„Aber wenn an einem Tag ganz wenig Optionen
+gehandelt wird können einzelne Käufe sich ja extrem auswirken das ist ja
+Rauschen"* und präziser: *„wenn zB 5 Leute gehandelt haben und 4 ein paar
+calls gekauft haben und der andere doppelt so viele puts"*.
+
+Der Einwand trifft den wunden Punkt der Kennzahl und war mir vorher nicht
+klar genug: `(C−P)/(C+P)` ist ein **Anteil**, und ein Anteil kennt die
+Stückzahl nicht.
+
+```
+    10 Calls,     2 Puts  →  0,667   |  Differenz      8 Kontrakte
+   100 Calls,    20 Puts  →  0,667   |  Differenz     80
+ 1.000 Calls,   200 Puts  →  0,667   |  Differenz    800
+10.000 Calls, 2.000 Puts  →  0,667   |  Differenz  8.000
+```
+
+**Identischer Balken in allen vier Zeilen.** Ein Tag mit 12 gehandelten
+Kontrakten sieht aus wie einer mit 12.000.
+
+Sein Beispiel durchgerechnet: vier Leute kaufen je 10 Calls (40), einer
+kauft 80 Puts → **−0,333**. Sieht aus wie klare Put-Dominanz, obwohl 4 von 5
+Teilnehmern bullisch waren.
+
+### Wie stark ein einzelner 80er-Block verschiebt
+
+| Tagesvolumen | Verschiebung |
+|---|---|
+| 40 | **1,333** — Vorzeichen dreht |
+| 300 | 0,281 |
+| 1.500 | 0,068 — auf der Achse sichtbar |
+| 7.500 | 0,014 |
+| 30.000 | 0,004 — unsichtbar |
+
+Die alten Schwellen: `VOL_CUTOFF = 500` im Sammellauf, `PC_THIN_VOL = 1000`
+in der App. Dort durfte also ein Tag in die Reihe, an dem ein einziger Trade
+das Vorzeichen bestimmt.
+
+### Fix: 5.000 an beiden Enden
+
+Dort liegt der Einfluss eines Einzelblocks bei **0,016** — unter der
+Strichstärke des Charts.
+
+**Preis, bewusst in Kauf genommen** (Tagesvolumen am 19.09.):
+
+```
+raus:   FXA    288    FXF    515    FXC  1.377    FXB  1.691    UUP  4.499
+bleibt: FXE  6.772    FXY  7.713    USO 314.147   SLV 422.187   GLD 460.909
+        IBIT 1,33 Mio   QQQ 7,42 Mio   SPY 10,37 Mio
+```
+
+Von 13 Assets bleiben **8**. Lieber fünf Reihen weniger als fünf Reihen, die
+einzelne Trader als Marktstimmung zeigen (Regel 4). Eine gespeicherte
+Auswahl auf einem ausgeblendeten Asset fällt still auf marktweit zurück —
+im Browser gegengeprüft, keine Fehler.
+
+### Der Sammellauf schreibt jetzt das Tagesvolumen mit
+
+Bisher stand in der Reihe nur `[Datum, Ratio]`. Dadurch konnte die App
+rückwirkend **nicht wissen, welche einzelnen Tage dünn waren** — ein sonst
+liquides Asset kann an einem Feiertag einbrechen, und genau dieser Tag trägt
+dann den Ausschlag. Neu: `[Datum, Ratio, Volumen]`, und ein zu dünner Tag
+wird übersprungen statt gezeichnet.
+
+Ältere Punkte haben das dritte Feld nicht und gelten als **unbekannt** — sie
+bleiben drin, sonst wäre die gesamte bisherige Historie weg (3.096 Punkte).
+Der Marketdata-Backfill liefert es ebenfalls mit, damit nachgetragene Tage
+dieselbe Form haben wie frische.
+
+### Wächter
+
+`check/putcall.js`, Abschnitt 7e:
+
+1. **Schwellen-Gleichstand**: liest `VOL_CUTOFF` direkt aus der Workflow-YAML
+   und vergleicht sie mit `PC_THIN_VOL`. Zwei verschiedene Schwellen hießen,
+   dass die App Tage zeigt, die der Sammellauf für Rauschen hält — „zwei
+   Wahrheiten" war in diesem Projekt schon zweimal die Ursache.
+2. **Kein Tag mit bekanntem, zu dünnem Volumen** kommt durch `pcRawSeries()`.
+3. **Die Verzerrung selbst nachgerechnet**: an der Schwelle muss ein 80er-
+   Block unter 0,02 bleiben (ist 0,0157). Gegenprobe: bei der alten Schwelle
+   1.000 sind es 0,074 — der Test schlägt dort an, ist also nicht zu lasch.

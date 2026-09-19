@@ -54,13 +54,15 @@ function schneideLogik() {
     if (end < 0) { fail('Extraktion', `Ende von ${n}() nicht gefunden.`); return null; }
     code += rest.slice(0, end + 3) + '\n';
   }
+  const konstThin = src.match(/const PC_THIN_VOL=\d+;/);
+  if (!konstThin) { fail('Extraktion', 'PC_THIN_VOL nicht gefunden.'); return null; }
   const konst = src.match(/const PC_MIN_HIST=[\s\S]*?const PC_MAX_SPREAD=[\d.]+;/);
   if (!konst) { fail('Extraktion', 'Konstantenblock PC_MIN_HIST…PC_MAX_SPREAD nicht gefunden.'); return null; }
   const konst2 = src.match(/const PC_FLOW_MIN_SEITE=[\s\S]*?const PC_FLOW_SMOOTH=\d+;/);
   if (!konst2) { fail('Extraktion', 'Konstantenblock PC_FLOW_MIN_SEITE…PC_FLOW_SMOOTH nicht gefunden.'); return null; }
-  const voll = konst[0] + '\n' + konst2[0] + '\nfunction todayStr(){return new Date().toISOString().slice(0,10);}\n' + code +
+  const voll = konstThin[0] + '\n' + konst[0] + '\n' + konst2[0] + '\nfunction todayStr(){return new Date().toISOString().slice(0,10);}\n' + code +
     '\nmodule.exports={' + NAMEN.join(',') +
-    ',PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH};';
+    ',PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,PC_FLOW_MIN_SEITE,PC_FLOW_SMOOTH,PC_THIN_VOL};';
   const tmp = path.join(require('os').tmpdir(), 'pc_logic_check_' + process.pid + '.js');
   fs.writeFileSync(tmp, voll);
   try { const m = require(tmp); fs.unlinkSync(tmp); return m; }
@@ -285,6 +287,55 @@ const D = JSON.parse(fs.readFileSync(DATEN, 'utf8'));
   console.log('  ' + zeilen.join('\n  '));
 }
 
+// ── 7e) DUENNE TAGE UND DUENNE REIHEN ──────────────────────────────────
+// Nutzer-Einwand 2026-09-19: "wenn an einem Tag ganz wenig Optionen
+// gehandelt wird koennen einzelne Kaeufe sich ja extrem auswirken das ist ja
+// Rauschen ... wenn zB 5 Leute gehandelt haben und 4 ein paar calls gekauft
+// haben und der andere doppelt so viele puts".
+// Trifft genau: (C-P)/(C+P) ist ein ANTEIL und kennt die Stueckzahl nicht -
+// 10 gegen 2 ergibt denselben Wert wie 10.000 gegen 2.000.
+// Geprueft wird die SCHWELLE AN BEIDEN ENDEN (App und Sammellauf muessen
+// dieselbe benutzen) und dass kein Tag mit bekanntem, zu duennem Volumen
+// noch in eine Rechnung geraet.
+{
+  // (i) App-Schwelle und Workflow-Schwelle muessen uebereinstimmen. Zwei
+  // verschiedene hiessen: die App zeigt Tage an, die der Workflow fuer
+  // Rauschen haelt - oder umgekehrt.
+  geprueft++;
+  const wf = fs.readFileSync(path.join(WURZEL, '.github/workflows/update-ff-calendar.yml'), 'utf8');
+  const mCut = wf.match(/const VOL_CUTOFF=(\d+);/);
+  if (!mCut) fail('Schwelle', 'VOL_CUTOFF im Sammellauf nicht gefunden.');
+  else if (Number(mCut[1]) !== L.PC_THIN_VOL)
+    fail('Schwelle', `Sammellauf schreibt ab ${mCut[1]} Kontrakten, die App zeigt ab ${L.PC_THIN_VOL} - zwei Massstaebe fuer dieselbe Reihe.`);
+  else ok();
+
+  // (ii) Kein Tag mit BEKANNTEM Volumen unter der Schwelle darf durchkommen.
+  // Punkte ohne drittes Feld sind Altbestand und gelten als unbekannt.
+  const ids = [''].concat(Object.keys(D.putCallByAsset || {}).sort());
+  let zuDuenn = 0, mitVol = 0, ohneVol = 0;
+  ids.forEach(id => {
+    L.pcRawSeries(D, id).forEach(e => {
+      if (e.length > 2 && isFinite(+e[2])) { mitVol++; if (+e[2] < L.PC_THIN_VOL) zuDuenn++; }
+      else ohneVol++;
+    });
+  });
+  geprueft++;
+  if (zuDuenn) fail('Duenne Tage', `${zuDuenn} Tage mit bekanntem Volumen unter ${L.PC_THIN_VOL} kommen durch pcRawSeries().`);
+  else ok();
+  console.log(`  Punkte mit bekanntem Tagesvolumen: ${mitVol}, ohne (Altbestand): ${ohneVol}`);
+
+  // (iii) Und die Verzerrung selbst nachrechnen: an der Schwelle muss ein
+  // einzelner Block das Ergebnis um weniger als eine Strichstaerke bewegen.
+  geprueft++;
+  const anteil = (c, p) => (c - p) / (c + p);
+  const halb = L.PC_THIN_VOL / 2;
+  const verschiebung = Math.abs(anteil(halb, halb + 80) - anteil(halb, halb));
+  if (verschiebung > 0.02)
+    fail('Schwelle zu niedrig', `bei ${L.PC_THIN_VOL} Kontrakten verschiebt ein einzelner 80er-Block das Ergebnis noch um ${verschiebung.toFixed(3)} - sichtbar auf der Achse.`);
+  else ok();
+  console.log(`  Verzerrung durch einen 80er-Block an der Schwelle: ${verschiebung.toFixed(4)}`);
+}
+
 // ── 8) GEGENPROBEN ──────────────────────────────────────────────────────
 // Ein Waechter, der nur gruen kann, prueft nichts. Jede Kernaussage bekommt
 // hier kuenstlich kaputte Daten und MUSS daran scheitern.
@@ -342,6 +393,13 @@ const D = JSON.parse(fs.readFileSync(DATEN, 'utf8'));
     `eine Reihe, deren flow nie negativ wird, bekommt mode "${bE.mode}" statt "median" - die Karte waere durchgehend einfarbig.`);
   // Ratio pendelt um 1 -> flow wechselt das Vorzeichen
   const bB = L.pcFlowBezug(bauen(Array.from({ length: 260 }, (_, i) => i % 2 ? 0.6 : 1.7)), '', L.PC_FLOW_SMOOTH);
+  // (g) Die alte Schwelle muss am Verzerrungstest scheitern - sonst
+  // beweist Abschnitt 7e(iii) nichts.
+  const anteilG = (c, p) => (c - p) / (c + p);
+  const vAlt = Math.abs(anteilG(500, 580) - anteilG(500, 500));
+  gegen('alte Schwelle faellt durch', vAlt > 0.02,
+    `bei der alten Schwelle 1000 verschiebt ein 80er-Block nur um ${vAlt.toFixed(3)} - dann ist der Test in 7e(iii) zu lasch.`);
+
   gegen('beidseitig -> zero', bB.mode === 'zero',
     `eine beidseitige Reihe bekommt mode "${bB.mode}" statt "zero" - der Median-Versatz wuerde die Nulllinie unnoetig verschieben.`);
 }
