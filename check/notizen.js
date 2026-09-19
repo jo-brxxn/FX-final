@@ -77,6 +77,44 @@ const { wartenBisDatenDa } = require('./warten.js');
       ok.roundtrip.textErhalten=nach.title===TITEL;
     }
   }
+  // ── 4) ARCHIVIERT-ZUSTAND UEBERLEBT DEN SYNC ─────────────────────
+  // Nutzer-Wunsch 2026-09-19: jede Notiz ist entweder in "Current" oder in
+  // "Archived" (n.arch). Der Zustand haengt am Notiz-Objekt und faehrt damit
+  // im bestehenden snap()/mergeResearchNotes-Sync mit.
+  //
+  // ⚠ Fuer die MITGELIEFERTEN Verhaltensnotizen gilt das NICHT automatisch:
+  // applySeedNoteFlags() setzt deren Schalter bei jedem applySnap auf den
+  // Standard zurueck, weil die 1.440 Seed-Notizen jedes Mal neu entstehen.
+  // Ohne einen Eintrag in seedNoteFlags waere jede archivierte Seed-Notiz
+  // nach einem Cloud-Sync wieder in Current - genau die Fehlerklasse vom
+  // 2026-09-08, nur mit einem anderen Feld. Geprueft wird deshalb BEIDES:
+  // eine eigene Notiz und eine Seed-Notiz.
+  {
+    const eigen=research.notes.find(n=>n&&!n.seed);
+    const seed=research.notes.find(n=>n&&n.seed);
+    const faelle=[['eigene Notiz',eigen],['Seed-Notiz',seed]].filter(x=>x[1]);
+    faelle.forEach(([was,n])=>{
+      if(typeof archiveResNote!=='function'){add('archiveResNote fehlt in der window-Bruecke',{was});return;}
+      const id=n.id;
+      archiveResNote(id,true);
+      const vor=research.notes.find(x=>x.id===id);
+      if(!vor||!vor.arch){add('Archivieren hat gar nicht gewirkt',{was,id});return;}
+      applySnap(snap());
+      const nach=research.notes.find(x=>x.id===id);
+      if(!nach)add('Archivierte Notiz nach dem Sync verschwunden',{was,id});
+      else if(!nach.arch)add('Archiviert-Zustand beim Sync verloren - Notiz ist wieder in Current',{was,id,seed:!!nach.seed});
+      else ok['arch_'+was.split(' ')[0]]='ueberlebt';
+      // Aufraeumen, damit der Waechter den Stand nicht veraendert zurueklaesst
+      const zurueck=research.notes.find(x=>x.id===id);
+      if(zurueck)archiveResNote(id,false);
+    });
+    // Ein Pin und "archiviert" zugleich waere ein Widerspruch: die
+    // Asset-Seite zeigt Pins als "das ist gerade wichtig".
+    const widerspruch=research.notes.filter(n=>n&&n.pin&&n.arch).map(n=>n.id);
+    if(widerspruch.length)add('Notizen sind gleichzeitig angeheftet UND archiviert',{ids:widerspruch.slice(0,5)});
+    ok.pinUndArchiv=widerspruch.length;
+  }
+
   return {fehler:F.length,F:F.slice(0,20),ok};
  });
  console.log('pageerrors',perr.length,perr.slice(0,2));

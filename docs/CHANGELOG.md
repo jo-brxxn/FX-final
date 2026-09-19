@@ -15975,3 +15975,84 @@ Tab-Label „Archive", Shell zweispaltig — Sidebar x=192 w=300, Inhalt x=506
 w=972; Kartenreihe und Timeline nicht mehr im DOM; Baum klappt FX auf
 8 Assets auf, EUR auf General Notes + Analysis; Notizliste des Assets mit
 „+ New note"; keine Page-Errors.
+
+---
+
+## 2026-09-19 (noch später) — Notizen: Current / Archived je Asset (VERSION-CHECK-531)
+
+**Nutzer-Auftrag, wörtlich:** *„Füg noch die Funktion ein bei Notizen das das
+nach Datum sortiert ist und es soll so sein das man bei einem Asset ein
+Archiv hat und bevor eine Notiz dort landet soll sie in einem Vorstadium sein
+das sich aktuell nennt und nur aktuell relevante Notizen anzeigt. Dann kann
+ich selber die Notiz löschen oder ins Archiv verschieben ich kann auch
+Notizen wieder aus dem Archiv in aktuell verschieben und in aktuell stehen
+ganz oben die Notizen die ich angeheftet habe die dann auch im Asset als
+angeheftet angezeigt werden"* — plus auf Rückfrage: Tab bleibt „Archive",
+Stufen heißen **Current/Archived**; Löschen geht in den Papierkorb;
+Aufräumen **nur von Hand, aber mit Hinweis**; und: *„ich will das man mehr
+als 3 Notizen anheften kann"*.
+
+### Was davon schon existierte
+
+Vor dem Bauen nachgesehen statt losgelegt: die **Sortierung nach Datum**
+(`researchNotesPanelHtml` sortierte bereits nach `up||ts`) und das
+**Anheften samt Anzeige auf Asset-Seite und Watchlist** (`assetPinnedNotes`,
+schon cross-device gesynct) waren fertig. Neu war die Stufentrennung, die
+Pin-Gruppe oben und die Zeilen-Aktionen.
+
+### Neu
+
+- **Zwei Stufen je Asset** über `n.arch`: Current → `Archive` →
+  Archived → `↩ Restore`. Zähler stehen an beiden Umschaltern, damit man
+  sieht, dass im Archiv etwas liegt, ohne hinzuklicken.
+- **Pins oben in Current**, darunter eine Trennlinie („By date") und der Rest
+  nach Datum. Ohne die Linie ist nicht erkennbar, wo das Anheften aufhört und
+  die Sortierung anfängt.
+- **Löschen direkt aus der Liste** (`resNoteToTrash`) → Papierkorb, 30 Tage
+  wiederherstellbar. ⚠ `trashResNote()` legt nur *in* den Papierkorb, es
+  entfernt die Notiz nicht aus `research.notes` und erwartet das
+  Notiz-**Objekt**, nicht die Id — beides ist Sache des Aufrufers.
+- **Hinweis ab 30 Tagen** (`RES_STALE_TAGE`) an nicht angehefteten Notizen in
+  Current. Ausdrücklich nur ein Hinweis, verschoben wird nichts von selbst.
+- **Pin-Limit aufgehoben.** `ASSET_PIN_MAX=3` ist weg; eine neue feste Zahl
+  wäre nur die nächste willkürliche Wand gewesen, an die derselbe Wunsch
+  wieder stößt. Begrenzt wird die **Anzeige**: die Asset-Karte zeigt die
+  `ASSET_PIN_SHOW` (5) neuesten Pins und verweist mit „+N more" in die
+  Notizansicht — die Karte kann nicht ins Unendliche wachsen, ohne dass dem
+  Nutzer etwas verboten wird.
+- **Angeheftet und archiviert schließen sich aus.** `archiveResNote()` löst den
+  Pin beim Verschieben: angeheftet heißt „das ist gerade wichtig", archiviert
+  sagt das Gegenteil — beides zugleich hätte die Asset-Seite dem Nutzer
+  angezeigt.
+
+### ⚠ Der gefährliche Teil war der Sync — und er betraf nur die Seed-Notizen
+
+`n.arch` hängt am Notiz-Objekt und fährt damit **ohne eine Zeile neuen
+Sync-Code** im bestehenden `snap()`/`mergeResearchNotes`-Abgleich mit. Für die
+**1.440 mitgelieferten Verhaltensnotizen gilt das aber nicht:**
+`applySeedNoteFlags()` setzt deren Schalter bei jedem `applySnap` auf den
+Standard zurück, weil diese Notizen jedes Mal neu entstehen. Ohne einen
+Eintrag in `seedNoteFlags` wäre **jede archivierte Seed-Notiz nach dem
+nächsten Cloud-Sync wieder in Current gewesen** — exakt die Fehlerklasse vom
+2026-09-08, nur mit einem anderen Feld.
+
+`check/notizen.js` prüft das jetzt für eine **eigene und eine Seed-Notiz**,
+plus: keine Notiz darf gleichzeitig angeheftet und archiviert sein.
+**Gegenprobe** mit wieder ausgebautem Flag: meldet genau die Seed-Notiz rot
+(`Archiviert-Zustand beim Sync verloren`, `sd_USD_macro_bull_1`), danach
+wieder 0 Fehler.
+
+### Ein Fehler, den erst das Nachmessen gezeigt hat
+
+Die zwei neuen Knöpfe liefen im ersten Anlauf als eigene Zeilen in die
+bestehende Spalten-Anordnung der Notizzeile (`.res-note-side`,
+`flex-direction:column`) und haben **jede Zeile von ~80 auf ~130 Pixel
+aufgebläht** — bei fünf Notizen ein Bildschirm statt einer Liste. Im
+Screenshot sofort sichtbar, im Code nicht. Nach dem Umbau auf eine gemeinsame
+Aktionsreihe (`.res-note-acts`) gemessen: **75, 75, 75, 75, 74 px**, und kein
+Element verlässt die Karte.
+
+**Nachgemessen** (1500×1000, Chromium): Current 5 / Archived 0 → anheften →
+archivieren → Current 4 / Archived 1, Pin steht oben, Trennlinie erscheint;
+Umschalten zeigt die archivierte Notiz mit `↩ Restore`; nach Restore wieder
+Current 5 / Archived 0. Keine Page-Errors.

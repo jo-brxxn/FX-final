@@ -2946,7 +2946,7 @@ function openQuickNote(vorbelegung,assetVor){
 // danach nicht auftaucht.
 function quickNoteForAsset(assetId){
   openQuickNote('',assetId);
-  _resAutoPin=(assetPinnedNotes(assetId).length<ASSET_PIN_MAX)?assetId:null;
+  _resAutoPin=assetId;
 }
 
 function qcAnalyse(){
@@ -3025,7 +3025,6 @@ function qcSpeichern(){
     // Dieselbe Anpin-Regel wie beim manuellen Formular (saveResNote): wurde
     // die Notiz auf der Watchlist begonnen, soll sie dort auch erscheinen.
     const pinNeu=!!(_resAutoPin&&fids.length
-      &&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX
       &&resNoteAssetIds({fids}).includes(_resAutoPin));
     pushU();
     research.notes.push({
@@ -3033,7 +3032,7 @@ function qcSpeichern(){
       title:String(titel||'Quick note').slice(0,120),
       body:String(_qcStand.body||''),
       tags:_qcStand.tags.slice(0,5),
-      fav:false,pin:pinNeu,ts:jetzt,up:jetzt,
+      fav:false,pin:pinNeu,arch:false,ts:jetzt,up:jetzt,
       bias:_qcStand.bias||'neu',
       // Ohne Ordner haengt die Notiz sonst nirgends - dasselbe Verhalten wie
       // bei den Notiz-Vorschlaegen aus den Nachrichten.
@@ -4402,9 +4401,16 @@ function applySeedNoteFlags(){
   research.notes.forEach(n=>{
     if(!n||!n.seed)return;
     const f=seedNoteFlags[n.id];
-    if(!f){n.pin=false;n.fav=false;return;}
+    // ⚠ 'arch' gehoert hier MIT HINEIN (Nutzer-Wunsch 2026-09-19,
+    // Current/Archived). Ein Feld nur am Notiz-Objekt zu fuehren reicht bei
+    // Seed-Notizen NICHT: diese Zeile setzt die Schalter bei jedem
+    // applySnap auf den Standard zurueck, weil die 1.440 mitgelieferten
+    // Verhaltensnotizen jedes Mal neu entstehen. Ohne den Eintrag waere
+    // jede archivierte Seed-Notiz nach einem Cloud-Sync wieder in Current -
+    // exakt die Fehlerklasse vom 2026-09-08 (siehe check/notizen.js).
+    if(!f){n.pin=false;n.fav=false;n.arch=false;return;}
     if(f.del){weg.push(n.id);return;}
-    n.pin=!!f.pin;n.fav=!!f.fav;
+    n.pin=!!f.pin;n.fav=!!f.fav;n.arch=!!f.arch;
   });
   if(weg.length)research.notes=research.notes.filter(n=>!(n&&n.seed&&weg.includes(n.id)));
 }
@@ -4414,7 +4420,7 @@ function setSeedNoteFlag(id,feld,wert){
   if(!seedNoteFlags[id])seedNoteFlags[id]={};
   seedNoteFlags[id][feld]=wert;
   const f=seedNoteFlags[id];
-  if(!f.pin&&!f.fav&&!f.del)delete seedNoteFlags[id];
+  if(!f.pin&&!f.fav&&!f.del&&!f.arch)delete seedNoteFlags[id];
 }
 // ⚠ EINMALIGE UEBERNAHME fuer Geraete, die die 1.440 Seed-Notizen noch
 // gespeichert haben. Sie werden entfernt (sie entstehen ja neu) - aber
@@ -6792,40 +6798,84 @@ function assetQuickRowHtml(c){
   return`<div class="aqr"><div class="aqr-links">${links}${notizKnopf}</div></div>`;
 }
 // Hoechstens so viele Notizen darf man pro Asset anpinnen.
-const ASSET_PIN_MAX=3;
+// ⚠ KEINE Obergrenze mehr fuers Anpinnen (Nutzer-Wunsch 2026-09-19: "ich
+// will das man mehr als 3 Notizen anheften kann"). Bis dahin galt
+// ASSET_PIN_MAX=3 und ein Klick darueber hinaus wurde mit einem alert()
+// abgewiesen. Eine neue feste Zahl (10, 20, ...) waere nur die naechste
+// willkuerliche Wand, an die derselbe Wunsch wieder stoesst.
+// Begrenzt wird stattdessen die ANZEIGE: die Asset-Karte zeigt die
+// ASSET_PIN_SHOW neuesten Pins und verweist mit "+N more" auf die
+// Notizansicht. Damit kann die Karte nicht ins Unendliche wachsen, ohne
+// dass dem Nutzer dafuer etwas verboten wird.
+const ASSET_PIN_SHOW=5;
 // Angepinnte Notizen eines Assets, neueste zuerst. Der Pin haengt als Feld
 // am Notiz-Objekt (wie n.fav) und liegt damit automatisch im bestehenden
 // Cross-Device-Sync - keine zweite Speicherform noetig.
+// ⚠ Archivierte Notizen sind hier RAUS: das Archiv ist die Ablage fuer
+// "nicht mehr aktuell", eine angeheftete Notiz von dort wuerde der
+// Asset-Seite das Gegenteil erzaehlen. Beim Archivieren wird der Pin
+// deshalb mitgeloescht (archiveResNote), das hier ist nur der zweite Riegel.
 function assetPinnedNotes(assetId){
-  return resNotes().filter(n=>n&&n.pin&&resNoteAssetIds(n).includes(assetId))
-    .sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')))
-    .slice(0,ASSET_PIN_MAX);
+  return resNotes().filter(n=>n&&n.pin&&!n.arch&&resNoteAssetIds(n).includes(assetId))
+    .sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
 }
 function togResPin(id){
   const n=resNotes().find(x=>x.id===id);if(!n)return;
-  // Eine Notiz in mehreren Assets (Nutzer-Wunsch 2026-08-30) zaehlt beim
-  // Anpinnen fuer JEDES davon - blockiert, sobald AUCH NUR EINES bereits
-  // am Limit ist, statt das Limit fuer dieses Asset stillschweigend zu
-  // ueberschreiten.
-  if(!n.pin&&resNoteAssetIds(n).some(a=>assetPinnedNotes(a).length>=ASSET_PIN_MAX)){
-    alert('At most '+ASSET_PIN_MAX+' notes can be pinned per asset — unpin one first.');return;
-  }
   pushU();n.pin=!n.pin;n.up=new Date().toISOString();if(n.seed)setSeedNoteFlag(n.id,'pin',n.pin);save();rerenderNotesHost();
+}
+// ── CURRENT / ARCHIVED (Nutzer-Wunsch 2026-09-19) ──────────────────────
+// Woertlich: "bevor eine Notiz dort landet soll sie in einem Vorstadium
+// sein das sich aktuell nennt und nur aktuell relevante Notizen anzeigt.
+// Dann kann ich selber die Notiz loeschen oder ins Archiv verschieben ich
+// kann auch Notizen wieder aus dem Archiv in aktuell verschieben".
+//
+// Auf der Oberflaeche heisst das "Current" und "Archived" - der TAB heisst
+// bereits "Archive", und drei gleichnamige Ebenen uebereinander waeren
+// nicht mehr eindeutig (Nutzer-Entscheid auf Rueckfrage).
+//
+// Umgesetzt als EIN Feld n.arch am Notiz-Objekt, genau wie n.pin/n.fav:
+// damit liegt der Zustand ohne eine Zeile neuen Sync-Code im bestehenden
+// Cross-Device-Abgleich (snap/researchForSnap/mergeResearchNotes).
+// ⚠ Fuer Seed-Notizen zusaetzlich in seedNoteFlags, siehe dort.
+function archiveResNote(id,rein){
+  const n=resNotes().find(x=>x.id===id);if(!n)return;
+  pushU();
+  n.arch=!!rein;
+  // Ins Archiv verschieben loest den Pin: angeheftet heisst "das ist
+  // gerade wichtig", archiviert heisst das Gegenteil. Beides zugleich
+  // waere ein Widerspruch, den die Asset-Seite dem Nutzer anzeigen wuerde.
+  if(rein&&n.pin){n.pin=false;if(n.seed)setSeedNoteFlag(n.id,'pin',false);}
+  n.up=new Date().toISOString();
+  if(n.seed)setSeedNoteFlag(n.id,'arch',n.arch);
+  save();rerenderNotesHost();
+}
+// Wann gilt eine Notiz in Current als alt? Nutzer wollte einen HINWEIS,
+// ausdruecklich keine Automatik ("nur von Hand aber Hinweis") - es wird
+// also nichts verschoben, es steht nur dran.
+const RES_STALE_TAGE=30;
+function resNoteIstAlt(n){
+  const t=Date.parse(n&&(n.up||n.ts)||'');
+  if(!t)return false;
+  return (Date.now()-t)/86400000>RES_STALE_TAGE;
 }
 // Die Notes-Karte: laenglich nach unten, zeigt die angepinnten Notizen direkt.
 // Ohne Pins steht dort ein Platzhalter statt einer leeren Flaeche.
 function assetNotesCardHtml(c){
   const pins=assetPinnedNotes(c.id);
   const on=curSub==='notes';
+  // Angezeigt werden die ASSET_PIN_SHOW neuesten; angeheftet werden duerfen
+  // beliebig viele, der Rest steht als "+N more" darunter (fuehrt in die
+  // Notizansicht, wo alle stehen).
+  const zeig=pins.slice(0,ASSET_PIN_SHOW),rest=pins.length-zeig.length;
   const body=pins.length
-    ? pins.map(n=>`<button class="aqn-n" style="border-left:3px solid ${BC[n.bias||'neu']}" onclick="openResNote('${escJH(n.id)}')">
+    ? zeig.map(n=>`<button class="aqn-n" style="border-left:3px solid ${BC[n.bias||'neu']}" onclick="openResNote('${escJH(n.id)}')">
         <span class="aqn-n-ti">${escH(n.title||'Untitled note')}</span>
         ${n.body?`<span class="aqn-n-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,72))}</span>`:''}
-      </button>`).join('')
-    : `<div class="aqn-empty">No pinned notes yet.<br>Pin up to ${ASSET_PIN_MAX} in the Notes view — they then show up here and in the watchlist.</div>`;
+      </button>`).join('')+(rest>0?`<button class="aqn-more" onclick="setSub('notes')">+${rest} more pinned</button>`:'')
+    : `<div class="aqn-empty">No pinned notes yet.<br>Pin a note in the Notes view — it then shows up here and in the watchlist.</div>`;
   return`<div class="aqn">
     <div class="aqn-hd">${icn('note',13)}<span class="aqn-t">Notes</span>
-      <span class="aqn-cnt">${pins.length}/${ASSET_PIN_MAX}</span>
+      <span class="aqn-cnt">${pins.length} pinned</span>
       <button class="aqn-open${on?' on':''}" onclick="setSub('${on?'specific':'notes'}')">${on?'Close':'Open'}</button>
     </div>
     <div class="aqn-list">${body}</div>
@@ -8110,7 +8160,7 @@ function abNoteAdd(assetId,anpinnen){
     // ord kleiner als alles Vorhandene: neue Notizen stehen oben.
     const min=Math.min(0,...abNotizen(assetId).map(n=>typeof n.ord==='number'?n.ord:0));
     research.notes.push({id:uid(),fids:[fid].filter(Boolean),
-      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:!!anpinnen,hl:false,
+      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:!!anpinnen,arch:false,hl:false,
       ord:min-1,ts:jetzt,up:jetzt,bias:'neu',asset:fid?'':assetId});
     if(inp)inp.value='';
     save();rerenderNotesHost();
@@ -10789,7 +10839,7 @@ function watchInvolvedAssets(name){
 let _resAutoPin=null;
 function newResNoteForAsset(assetId){
   newResNoteIn(assetId,'');
-  _resAutoPin=(assetPinnedNotes(assetId).length<ASSET_PIN_MAX)?assetId:null;
+  _resAutoPin=assetId;
 }
 // Die angepinnten Notizen je beteiligtem Asset - dieselbe Quelle wie die
 // Notes-Karte auf der Assets-Seite (assetPinnedNotes), kein zweiter Nachbau.
@@ -10809,7 +10859,7 @@ function watchAssetNotesHtml(name){
     return`<div class="wt-pinasset">
       <div class="wt-pinhd">
         <span class="wt-pinid" onclick="event.stopPropagation();gotoSym('${escJH(id)}')" title="Open ${escH(sym?sym.name:id)}">${escH(sym?sym.name:id)}</span>
-        <span class="wt-pincnt">${pins.length}/${ASSET_PIN_MAX} pinned${total?' · '+total+' total':''}</span>
+        <span class="wt-pincnt">${pins.length} pinned${total?' · '+total+' total':''}</span>
         <button class="wt-pinadd" onclick="event.stopPropagation();quickNoteForAsset('${escJH(id)}')" title="Paste a text for ${escH(sym?sym.name:id)} — direction and topics are picked out for you">⚡ Quick</button>
         <button class="wt-pinadd" onclick="event.stopPropagation();newResNoteForAsset('${escJH(id)}')" title="Add a note for ${escH(sym?sym.name:id)} — it is stored on the asset itself">＋ Note</button>
       </div>${rows}
@@ -12210,12 +12260,22 @@ function resNoteRowHtml(n,showPlaces,q){
         ${n.body?`<div class="res-note-ex">${hlBody?resHighlight(n.body.replace(/\s+/g,' ').slice(0,160),q):escH(n.body.replace(/\s+/g,' ').slice(0,160))}${n.body.length>160?'…':''}</div>`:''}
       </div>
       <div class="res-note-side">
-        <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="Pin to the asset page (max ${ASSET_PIN_MAX}) — also shows in the watchlist">${icn('pin',14)}</button>
+        <button class="res-note-star${n.pin?' on':''}" onclick="event.stopPropagation();togResPin('${n.id}')" title="${n.pin?'Unpin':'Pin to the asset page — also shows in the watchlist'}">${icn('pin',14)}</button>
         <button class="res-note-star${n.fav?' on':''}" onclick="event.stopPropagation();togResFav('${n.id}')" title="Favorite">${icn('star',15)}</button>
+        <div class="res-note-acts">${n.arch
+          ? `<button class="res-note-act" onclick="event.stopPropagation();archiveResNote('${n.id}',false)" title="Move back to Current">↩ Restore</button>`
+          : `<button class="res-note-act" onclick="event.stopPropagation();archiveResNote('${n.id}',true)" title="Move to Archived">Archive</button>
+             <button class="res-note-act res-note-act-del" onclick="event.stopPropagation();resNoteToTrash('${n.id}')" title="Move to the trash — recoverable">✕</button>`}</div>
         <div class="res-note-dt">${dp.time}</div>
       </div>
     </div>`;
 }
+// ── CURRENT / ARCHIVED ────────────────────────────────────────────────
+// Rein transienter Anzeige-Zustand (welche Stufe schaue ich gerade an),
+// bewusst NICHT in snap(): das ist kein Inhalt, sondern wo der Nutzer
+// hinschaut - gleiches Muster wie researchFocusAsset/resTreeCollapsed.
+let resStufe='current';   // 'current' | 'arch'
+function setResStufe(v){resStufe=(v==='arch')?'arch':'current';rerenderNotesHost();}
 function researchNotesPanelHtml(assetId,fid){
   const sym=(syms||[]).find(s=>s.id===assetId);
   const scopeFid=fid||researchGenFidFor(assetId);
@@ -12226,15 +12286,42 @@ function researchNotesPanelHtml(assetId,fid){
   // den Ordner UND alle Unterordner ein (Nutzer-Wunsch 2026-08-30) - sonst
   // muesste man jeden Unterordner einzeln durchsuchen.
   const scope=q?researchDescendantFolderIds(scopeFid):[scopeFid];
-  const notes=resNotes().filter(n=>{
+  const alle=resNotes().filter(n=>{
     if(!resNoteAssetIds(n).includes(assetId))return false;
     if(!(n.fids||[]).some(f=>scope.includes(f)))return false;
     return resNoteMatchesQuery(n,q);
-  }).slice().sort((a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||'')));
-  const rows=notes.length?notes.map(n=>resNoteRowHtml(n,false,q)).join(''):`<div class="dw-empty">No notes here yet.</div>`;
+  });
+  // ⚠ Die ZAEHLER stehen an den Umschaltern und muessen deshalb aus der
+  // vollen Menge kommen, nicht aus der gerade gezeigten - sonst zeigte
+  // "Archived" immer 0, solange man in Current steht.
+  const nCur=alle.filter(n=>!n.arch).length,nArch=alle.length-nCur;
+  const imArchiv=resStufe==='arch';
+  // Sortierung (Nutzer-Wunsch 2026-09-19: "das das nach Datum sortiert ist"
+  // und "in aktuell stehen ganz oben die Notizen die ich angeheftet habe"):
+  // in Current zuerst die angehefteten, INNERHALB beider Gruppen nach Datum
+  // absteigend. Im Archiv gibt es keine Pins (archiveResNote loest sie),
+  // dort also rein nach Datum.
+  const nachDatum=(a,b)=>String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||''));
+  const notes=alle.filter(n=>!!n.arch===imArchiv).sort((a,b)=>{
+    if(!imArchiv&&!!a.pin!==!!b.pin)return a.pin?-1:1;
+    return nachDatum(a,b);
+  });
   const scopeName=fid?escH(researchFolderNameOf(fid)):'General Notes';
+  // Trennlinie zwischen angehefteten und dem Rest - ohne sie ist nicht
+  // erkennbar, wo die Pin-Gruppe aufhoert und die Datumsliste anfaengt.
+  const ersterOhnePin=imArchiv?-1:notes.findIndex(n=>!n.pin);
+  const rows=notes.length?notes.map((n,k)=>{
+    const trenner=(k===ersterOhnePin&&k>0)?`<div class="ranl-sep">By date</div>`:'';
+    const alt=(!imArchiv&&!n.pin&&resNoteIstAlt(n))
+      ? `<div class="ranl-stale" title="Older than ${RES_STALE_TAGE} days — move it to Archived if it is no longer current">${icn('clock',10)} Older than ${RES_STALE_TAGE} days</div>`:'';
+    return trenner+(alt?`<div class="ranl-row-wrap">${alt}${resNoteRowHtml(n,false,q)}</div>`:resNoteRowHtml(n,false,q));
+  }).join(''):`<div class="dw-empty">${imArchiv?'Nothing archived here yet. Notes you move out of Current land here.':'No notes here yet.'}</div>`;
   return`<div class="ranl-wrap">
     <div class="ranl-title">${escH(sym?sym.name:assetId)} — ${scopeName}</div>
+    <div class="ranl-stufen">
+      <button class="ranl-stufe${imArchiv?'':' on'}" onclick="setResStufe('current')" title="Notes that are currently relevant">Current <span class="ranl-ct">${nCur}</span></button>
+      <button class="ranl-stufe${imArchiv?' on':''}" onclick="setResStufe('arch')" title="Notes you have moved out of Current">Archived <span class="ranl-ct">${nArch}</span></button>
+    </div>
     <div class="rterm-noterow">
       <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search in ${scopeName} and its subfolders…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
       ${resSearchFieldPickerHtml()}
@@ -12380,12 +12467,26 @@ function saveResNote(){
     const n=resNotes().find(x=>x.id===_resEditId);
     if(n){if(n.seed&&!n.replacesSeed)n.replacesSeed=n.id;n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
   }else{
-    if(_resAutoPin&&assetPinnedNotes(_resAutoPin).length<ASSET_PIN_MAX&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
-    research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
+    if(_resAutoPin&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
+    research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,arch:false,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
   }
   _resAutoPin=null;
   _resNoteBase=null;
   save();closeM('mResNote');rerenderNotesHost();
+}
+// Loeschen DIREKT aus der Notizliste (Nutzer-Wunsch 2026-09-19: "Dann kann
+// ich selber die Notiz loeschen oder ins Archiv verschieben") - bis dahin
+// ging Loeschen nur ueber den geoeffneten Editor.
+// ⚠ trashResNote() LEGT NUR IN DEN PAPIERKORB, es entfernt die Notiz nicht
+// aus research.notes und erwartet das Notiz-OBJEKT, nicht die Id. Beides
+// zusammen zu erledigen ist Sache des Aufrufers - genau wie in delResNote().
+function resNoteToTrash(id){
+  const n=resNotes().find(x=>x.id===id);if(!n)return;
+  if(!confirm('Move "'+(n.title||'Untitled note')+'" to the trash?\n\nYou can restore it for 30 days under Settings → Trash.'))return;
+  pushU();
+  trashResNote(n);
+  research.notes=resNotes().filter(x=>x.id!==id);
+  save();rerenderNotesHost();
 }
 function delResNote(){
   if(!_resEditId)return;
@@ -17191,7 +17292,7 @@ function newsNoteAnnehmen(u){
       title:String(h.note.title||h.t||'').slice(0,120),
       body:String(h.note.body||'')+'\n\n---\nSource: '+(h.s||'?')+' ('+String(h.d||'').slice(0,10)+')\n'+String(h.u||''),
       tags:Array.isArray(h.note.tags)?h.note.tags.slice(0,6):[],
-      fav:false,pin:false,ts:now,up:now,bias:h.note.bias||'neu',
+      fav:false,pin:false,arch:false,ts:now,up:now,bias:h.note.bias||'neu',
       asset:fids.length?'':(ids[0]||'')});
     h.noteId=id;
     save();
@@ -21632,7 +21733,7 @@ Object.assign(window,{
   cloudPull,cloudAutoSync,getSym,openM,closeM,CLS_CAT,computeSbCats,getSbIds,moveSbSym,moveSbCat,scrollIntoNav,
   sbPressStart,sbPressEnd,sbClick,sbCatPressStart,sbCatPressEnd,miniSparklineSvg,indSparklineSvg,renderSidebar,
   setSbEdit,renderDetail,masonryCols,masonryHTML,ovCols,renderOverviewCard,goToRubCard,assetQuickRowHtml,
-  ASSET_PIN_MAX,assetPinnedNotes,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,
+  ASSET_PIN_SHOW,assetPinnedNotes,archiveResNote,resNoteIstAlt,resNoteToTrash,setResStufe,togResPin,assetNotesCardHtml,setAssetNoteFid,assetNotesFoldersHtml,renderSpecTab,
   assetPerfStripHtml,renderRub,IND_PAIR_GROUPS,indPairGroupPositions,renderIndsTable,renderIndRow,toggleIndDetailRow,
   updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,
   openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,delRub,mvRub,addRub,

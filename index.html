@@ -2494,6 +2494,42 @@ body.res-return-active #resBackBar{display:flex}
 @media(hover:hover){.asec-link:hover{background:var(--chrome-line);color:var(--on-accent);border-color:var(--accent)}}
 .ranl-wrap{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:var(--gap-block)}
 .ranl-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);margin-bottom:10px}
+/* ── CURRENT / ARCHIVED (Nutzer-Wunsch 2026-09-19) ──────────────────────
+   Zwei Stufen je Asset: eine Notiz landet erst in Current und wandert von
+   Hand ins Archiv. Der Umschalter traegt die Zaehler, damit man sieht, dass
+   im Archiv etwas liegt, ohne hinzuklicken.
+   ⚠ Keine Glob-Sternchen vor einem Schraegstrich in diesem Kommentar -
+   das beendet ihn vorzeitig und verschluckt die folgenden Regeln
+   (Fehler vom 2026-09-19, siehe check/csskommentar.js). */
+.ranl-stufen{display:flex;gap:6px;margin-bottom:10px}
+.ranl-stufe{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:var(--fs-sm);font-weight:600;font-family:inherit;cursor:pointer;transition:color .12s,border-color .12s,background .12s}
+.ranl-stufe.on{color:var(--blue);border-color:rgba(var(--blue-rgb),.45);background:rgba(var(--blue-rgb),.12)}
+@media (hover:hover){.ranl-stufe:not(.on):hover{color:var(--t1);border-color:var(--bd)}}
+.ranl-ct{font-family:var(--ff-num);font-size:var(--fs-xs);font-weight:700;color:var(--t3);background:var(--bg2);border-radius:999px;padding:1px 7px;min-width:20px;text-align:center}
+.ranl-stufe.on .ranl-ct{color:var(--blue)}
+/* Trennlinie zwischen der Pin-Gruppe und der Datumsliste - ohne sie ist
+   nicht erkennbar, wo das Anheften aufhoert und die Sortierung anfaengt. */
+.ranl-sep{font-size:var(--fs-2xs);font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:12px 0 4px;padding-top:8px;border-top:1px solid var(--bd2)}
+.ranl-row-wrap{position:relative}
+.ranl-stale{display:flex;align-items:center;gap:4px;font-size:var(--fs-2xs);color:var(--t3);padding:2px 0 0 10px}
+/* Aktionen in der Notizzeile: Archivieren/Zurueckholen/Papierkorb. Ruhig
+   gehalten, erst beim Ueberfahren der Zeile deutlich - sie stehen neben
+   JEDER Notiz und duerfen den Titel nicht ueberschreien. */
+.res-note-act{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--bg3);color:var(--t3);font-size:var(--fs-2xs);font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;opacity:.65;transition:opacity .12s,color .12s,border-color .12s}
+.res-note:hover .res-note-act{opacity:1}
+@media (hover:hover){.res-note-act:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}
+  .res-note-act-del:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4)}}
+/* ⚠ Die Notiz-Seitenspalte traegt jetzt zwei Knoepfe mehr. Im ersten Anlauf
+   liefen sie als eigene Zeilen in die bestehende Spalten-Anordnung und haben
+   JEDE Notizzeile von ~80px auf ~130px aufgeblaeht - bei fuenf Notizen ein
+   Bildschirm statt einer Liste. Die Aktionen stehen deshalb nebeneinander in
+   einer eigenen Reihe, Pin und Stern bleiben daneben. */
+.res-note-side{width:auto;min-width:96px;max-width:210px;flex-direction:row;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px}
+.res-note-acts{display:flex;align-items:center;gap:4px}
+/* "+N more pinned" auf der Asset-Karte: seit dem Wegfall der Obergrenze
+   kann es mehr Pins geben, als die Karte sinnvoll zeigt. */
+.aqn-more{width:100%;margin-top:4px;padding:6px 8px;border-radius:var(--rs);border:1px dashed var(--bd2);background:none;color:var(--t3);font-size:var(--fs-2xs);font-weight:600;font-family:inherit;cursor:pointer}
+@media (hover:hover){.aqn-more:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
 .ranl-quick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .ranl-quickbtn{display:flex;align-items:center;gap:5px;font-size:var(--fs-xs);padding:6px 10px;border-radius:var(--rs);border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer}
 @media(hover:hover){.ranl-quickbtn:hover{color:var(--blue);border-color:rgba(var(--blue-rgb),.4)}}
@@ -5463,11 +5499,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-530 - (529 war der Put/Call-Schwellenwechsel auf main, siehe docs/CHANGELOG.md.) Die zweite App dieses Repos (Perfect Rezept) ist auf Nutzer-Wunsch komplett geloescht, und das Research Terminal ist zum Archive umgebaut. ERSTENS DIE LOESCHUNG. Weg sind rezept.html, js/rezept/ (7 Module), rezept_bilder/ (14 MB), rezept_feed.json, docs/rezept.md, check/rezept.js, tools/rezept-*, der taegliche Feed-Workflow, das Auswahlfenster beim Start, die Settings-Zeile und Regel 1b (REZEPT-CHECK) in check/rules.js. Zwei Hinterlassenschaften stecken aber nicht im Repo, sondern in den Browsern der Geraete, und genau die waeren beim blossen Loeschen uebersehen worden: dmfx_app_choice=rezept haette jedes Geraet, das zuletzt das Rezept gewaehlt hat, beim Oeffnen auf eine 404-Seite geleitet - die App waere dort tot gewesen; der Kopf von index.html loescht den Schluessel jetzt beim Start. Und die Rezeptdaten liegen in DERSELBEN Supabase-Tabelle wie der FX-Stand (public.fx_sync), unterschieden nur durch die Zeilen-Id: der nackte syncId ist FX, syncId:rez:* sind Rezepte. Ein DELETE ohne exakten Praefix-Filter haette also jede Notiz, jede Rubrik und jeden Bias mitgeloescht; purgeRezeptCloudRows() filtert deshalb auf like.syncId:rez:% und setzt seinen Erfolgsmarker NUR nach bestaetigter Antwort, damit ein fehlgeschlagener Lauf beim naechsten Start wiederholt wird statt still aufzugeben. ZWEITENS DAS ARCHIVE. Der Nutzer-Wunsch lautete, das Research Terminal zu entfernen und ein Archiv mit Ordnern zu allen Assets hinzusetzen, in dem man Notizen speichert - gemessen am Code war das Research Terminal aber genau das schon: researchChildrenOf baut Kategorie -> Asset -> Notizordner mit beliebig tiefen Unterordnern, die Notizen haben Titel, Text, Tags, Favoriten, Pin, Mehrfachablage und Papierkorb und sind cross-device gesynct. Neu gebaut wurde deshalb NUR die Oberflaeche; Datenmodell, Ordnerbaum und Sync sind unveraendert. Ein Neubau der Datenschicht haette die Fehlerklasse wiederholt, die in diesem Projekt DREIMAL zu Notiz-Datenverlust gefuehrt hat (check/notizen.js). Die Seite hat jetzt zwei Spalten statt drei: Ordnerbaum links, Inhalt rechts. Die Rubrik-Kartenreihe und die News-Timeline sind raus - beides Analyse-Bausteine, kein Archiv. Dass das gefahrlos ist, steht schon im Bugreport vom 2026-08-07: damals waren score-tragende Karten HIER nicht erreichbar, auf der Assets-Detailseite aber immer - dort stehen sie weiterhin alle, und die Event-Wecker der Timeline haengen unveraendert am eigenen Wecker-Waehler. Es ist also kein Zugang verlorengegangen, sondern ein doppelter weggefallen. Eine Notiz oeffnet aus dem Archiv heraus als GANZE SEITE statt als 170px-Feld in einem abgedunkelten Fenster; nebenbei kann der Datenverlust vom 2026-09-01 (Klick neben den Editor verwarf alles Getippte) dort gar nicht mehr entstehen, weil es keine umgebende Klickflaeche mehr gibt. Von der Asset-Seite und der Watchlist aus bleibt es bewusst ein Fenster. AUFGERAEUMT: 290 Zeilen toter Code - renderResearchFolders und renderResearchNotes samt Zustaenden wurden seit dem Umbau auf den Ordnerbaum von keinem Einstiegspunkt mehr aufgerufen, standen aber weiter in der window-Bruecke. Der Tab-Schluessel bleibt bewusst notes: er steckt in gespeicherten tabStacks, umbenannt wurde nur, was der Nutzer sieht."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-531 - Notizen haben jetzt zwei Stufen je Asset: CURRENT und ARCHIVED. Nutzer-Wunsch woertlich: bevor eine Notiz im Archiv landet soll sie in einem Vorstadium sein das sich aktuell nennt und nur aktuell relevante Notizen anzeigt; man kann sie selbst loeschen oder ins Archiv verschieben und aus dem Archiv wieder zurueckholen; in aktuell stehen ganz oben die angehefteten Notizen, die dann auch im Asset als angeheftet erscheinen. WAS DAVON SCHON DA WAR: die Sortierung nach Datum und das Anheften samt Anzeige auf Asset-Seite und Watchlist. NEU IST die Stufentrennung, die Pin-Gruppe oben mit Trennlinie darunter, Archivieren/Zurueckholen/Loeschen direkt in der Zeile und ein Hinweis an Notizen, die aelter als 30 Tage sind - ausdruecklich nur ein HINWEIS, verschoben wird nichts von selbst. DAS PIN-LIMIT VON DREI IST WEG (Nutzer-Wunsch "ich will das man mehr als 3 Notizen anheften kann"). Eine neue feste Zahl waere nur die naechste willkuerliche Wand gewesen; begrenzt wird stattdessen die ANZEIGE - die Asset-Karte zeigt die fuenf neuesten Pins und verweist mit "+N more" in die Notizansicht, damit die Karte nicht ins Unendliche waechst, ohne dem Nutzer etwas zu verbieten. DER GEFAEHRLICHE TEIL WAR DER SYNC. Der Zustand haengt als Feld n.arch am Notiz-Objekt und faehrt damit ohne eine Zeile neuen Sync-Code im bestehenden Abgleich mit - fuer die 1440 MITGELIEFERTEN Verhaltensnotizen gilt das aber NICHT: applySeedNoteFlags setzt deren Schalter bei jedem applySnap auf den Standard zurueck, weil diese Notizen jedes Mal neu entstehen. Ohne Eintrag in seedNoteFlags waere also jede archivierte Seed-Notiz nach dem naechsten Cloud-Sync wieder in Current gewesen - exakt die Fehlerklasse vom 2026-09-08, nur mit einem anderen Feld. check/notizen.js prueft das jetzt fuer eine eigene UND eine Seed-Notiz; die Gegenprobe mit wieder ausgebautem Flag meldet genau die Seed-Notiz rot. Geprueft wird ausserdem, dass keine Notiz gleichzeitig angeheftet UND archiviert ist - das waere ein Widerspruch, den die Asset-Seite dem Nutzer anzeigen wuerde; archiveResNote loest den Pin deshalb beim Verschieben. UND EIN FEHLER, DEN ERST DAS NACHMESSEN GEZEIGT HAT: die zwei neuen Knoepfe liefen im ersten Anlauf als eigene Zeilen in die bestehende Spalten-Anordnung der Notizzeile und haben JEDE Zeile von rund 80 auf rund 130 Pixel aufgeblaeht - bei fuenf Notizen ein Bildschirm statt einer Liste. Gemessen und nach dem Umbau auf eine gemeinsame Aktionsreihe wieder bei 75 Pixel, nichts laeuft aus der Karte."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-530</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-531</span>
     </span>
   </div>
   <div class="hdr-r">

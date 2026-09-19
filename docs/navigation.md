@@ -826,6 +826,39 @@ Eine Notiz öffnet **aus dem Archiv heraus als ganze Seite**
 (`resOpenNoteShell()` setzt `.res-note-page` auf `#mResNote`), von
 Asset-Seite und Watchlist weiterhin als Fenster.
 
+### Current / Archived je Asset (2026-09-19)
+
+Jede Notiz eines Assets steht in genau einer von zwei Stufen, umgeschaltet
+über den Zweifach-Knopf oben in der Notizliste (`setResStufe`):
+
+- **Current** — das Vorstadium. Ganz oben die **angehefteten** Notizen, darunter
+  eine Trennlinie („By date") und der Rest nach Datum absteigend. Pro Zeile:
+  `Archive` (verschiebt) und `✕` (Papierkorb, 30 Tage wiederherstellbar).
+- **Archived** — was du aus Current herausgenommen hast, nach Datum. Pro Zeile
+  `↩ Restore`.
+
+⚠ **Es wird nichts automatisch verschoben** (Nutzer-Entscheid: „nur von Hand
+aber Hinweis"). Notizen in Current, die älter als `RES_STALE_TAGE` (30) sind
+und nicht angeheftet, bekommen nur einen Hinweis.
+
+⚠ **Der Zustand ist `n.arch` am Notiz-Objekt** — dadurch liegt er ohne eine
+Zeile neuen Sync-Code im bestehenden `snap()`/`mergeResearchNotes`-Abgleich.
+**Für Seed-Notizen reicht das NICHT:** `applySeedNoteFlags()` setzt deren
+Schalter bei jedem `applySnap` zurück, weil die 1.440 mitgelieferten
+Verhaltensnotizen jedes Mal neu entstehen. `arch` muss deshalb zusätzlich in
+`seedNoteFlags`. Geprüft von `check/notizen.js` (mit Gegenprobe).
+
+⚠ **Angeheftet und archiviert schließen sich aus.** `archiveResNote()` löst
+den Pin beim Verschieben — die Asset-Seite zeigt Pins als „das ist gerade
+wichtig", das Archiv sagt das Gegenteil.
+
+### Anheften ohne Obergrenze (2026-09-19)
+
+`ASSET_PIN_MAX=3` ist weg (Nutzer-Wunsch: „mehr als 3"). Eine neue feste Zahl
+wäre nur die nächste willkürliche Wand gewesen. Begrenzt wird stattdessen die
+**Anzeige**: die Asset-Karte zeigt die `ASSET_PIN_SHOW` (5) neuesten Pins und
+verweist mit „+N more" in die Notizansicht.
+
 ⚠ **Der Tab-Schlüssel bleibt `notes`.** Er steckt in gespeicherten
 `tabStacks` auf den Geräten des Nutzers — eine Umbenennung zerreißt die dort
 gemerkten Tab-Stapel. Umbenannt wurde nur, was der Nutzer sieht. Dasselbe
