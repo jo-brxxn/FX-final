@@ -33,6 +33,7 @@ const PRUEFUNGEN = [
   { n: 'quickcap',  d: 'Schnellerfassung: Zerlegung an echten Beispielen',    f: 'check/quickcapture.js', args: [],     browser: false },
   { n: 'putcall',   d: 'Put/Call: eine Schwellen-Wahrheit, passend zur eigenen Reihe', f: 'check/putcall.js', args: [], browser: false },
   { n: 'datum',     d: 'Jedes Datum mit Jahr, und zwar zweistellig', f: 'check/datum.js', args: [], browser: true },
+  { n: 'achsen',    d: 'Achsen: gleiche Abstaende, runde Zahlen, spiegelgleich um die Null', f: 'check/achsen.js', args: [], browser: true },
   { n: 'html',      d: 'Kein zerbrochenes HTML-Attribut (rohes " im Attributtext)', f: 'check/html.js', args: [], browser: true },
   { n: 'notizen',   d: 'Notizen ueberleben Sync/Undo/Import mit Text und Ordnern', f: 'check/notizen.js',  args: [],           browser: true },
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },

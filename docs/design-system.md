@@ -894,3 +894,44 @@ sobald eine Achse eine blanke Länge ist, darf die andere kein Schlüsselwort mi
 Offset mehr sein. Der Browser wirft die ganze Deklaration weg und fällt auf
 `0% 0%` zurück. Gemessen: die Variable stand korrekt auf 422 px, das Motiv
 klebte trotzdem links. Zwei-Wert-Form (`var(--x) 6px`) behebt es.
+
+
+---
+
+## ⚠️ Achsen: der Schritt bestimmt die Beschriftung, nicht umgekehrt (2026-09-19)
+
+**Regel aus einem Bildvergleich des Nutzers** („das aktuelle ist irgendwie
+schlecht und falsch"): Eine Y-Achse wird **nie** durch Halbieren des größten
+Werts aufgeteilt. Das Muster
+
+```js
+[maxA, maxA/2, 0, -maxA/2, -maxA]   // ⚠ so nicht
+```
+
+erzeugt nur bei geradem `maxA` runde Zahlen — in jedem anderen Fall steht
+dort etwas, das man nicht ablesen kann, und mit `Math.round()` werden die
+Abstände zwischen den Strichen sogar **ungleich**. Gemessen, vor dem Fix:
+
+```
+Retail-Netto EURUSD   +67%  +33%  0%  -33%  -67%
+Retail-Netto GBPUSD   +81%  +40%  0%  -40%  -80%   ← oben 81, unten 80
+```
+
+Die zweite Zeile ist der Grund, warum das keine Geschmacksfrage ist: bei
+`maxA = 80,5` rundet die obere Hälfte auf 81 und die untere auf −80.
+
+**Stattdessen, in dieser Reihenfolge:**
+
+1. **Schritt** aus der Spanne: `pcNiceStep(spanne, zielLinien)` → 1/2/5/10
+   mal einer Zehnerpotenz. **Ohne 2,5** — das ergab auf einer realen Reihe
+   den Schritt 0,025, und zwei Nachkommastellen machen daraus
+   `+0,13 +0,10 +0,07` (`0.075` rundet in JS auf `0.07`).
+2. **Achsengrenze** auf ein Vielfaches dieses Schritts aufrunden, damit auch
+   der Rand rund ist.
+3. **Nachkommastellen** aus dem Schritt ableiten: `pcNiceDecimals(step)`.
+   Eine feste Stellenzahl ist immer irgendwo falsch.
+4. Bei einer Achse mit Nulllinie: `pcNiceTicks(maxA, ziel)` — liefert die
+   Teilstriche symmetrisch, also garantiert spiegelgleich.
+
+Geprüft von `check/achsen.js` über alle Ansichten mit Zahlenachse; eine neue
+Grafik, die das alte Muster kopiert, fällt dort auf.

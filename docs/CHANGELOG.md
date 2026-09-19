@@ -15510,3 +15510,95 @@ Faustregel **Inhalt**. Jetzt steht er wieder auf der Karte
 (`.abc-foot.abc-range`), nur der erklärende Teil ist hinter dem ⓘ.
 `check/erklaerung.js` unterscheidet das mit — verboten ist eine `.abc-foot`
 **ohne** die Marke `abc-range`, nicht die Klasse als solche.
+
+---
+
+## 2026-09-19 — Achsen: eine Fehlerklasse an vier Stellen (VERSION-CHECK-527)
+
+**Anlass, wörtlich:** *„Ich will das es so aussieht wie auf dem anderen Bild
+also das aktuelle ist irgendwie schlecht und falsch beheb das"* — dazu zwei
+Screenshots: ein fremdes Tool („Net Options Volume, Call-Put Volume Spread",
+Gold) und die eigene Call/Put-Balance-Karte.
+
+### Was das Vergleichsbild besser machte (gemessen, nicht geschätzt)
+
+| Referenz | Eigener Stand |
+|---|---|
+| Achse 0,3 / 0,2 / 0,1 / 0 in Zehnerschritten | **+0,48 / +0,24 / 0,00 / −0,24 / −0,48** |
+| Umrisslinie über den Balkenspitzen | fehlte |
+| Richtungs-Beschriftung als farbiges Band | freier Text, von Balken überlaufbar |
+| Balken dicht an dicht | 28 % Luft dazwischen |
+
+Ursache der krummen Achse: `maxA = größter Betrag × 1,15`, dann halbiert.
+Das ergibt **nie** runde Zahlen. Jetzt kommt der Schritt aus der Spanne
+(`pcNiceStep`) und die Achsengrenze ist ein Vielfaches dieses Schritts —
+damit sind Grenze **und** jede Linie dazwischen rund.
+
+### Die Fehlerklasse (Regel 8.4)
+
+Dasselbe Muster `[maxA, maxA/2, 0, -maxA/2, -maxA]` stand an **vier**
+Stellen. Im Browser gemessen, vor dem Fix:
+
+```
+Retail-Netto EURUSD   +67%  +33%  0%  -33%  -67%
+Retail-Netto XAUUSD   +44%  +22%  0%  -22%  -44%
+Retail-Netto GBPUSD   +81%  +40%  0%  -40%  -80%
+```
+
+⚠ **Die letzte Zeile ist der Beleg, dass es kein Schönheitsfehler war:** bei
+`maxA = 80,5` rundet `Math.round` die obere Hälfte auf 81 und die untere auf
+−80. Dieselbe Achse trägt zwei verschiedene Zahlen für denselben Abstand.
+Dazu zwei Score-Trendcharts mit `scale/2` und `Math.round` — bei ungeradem
+`scale` ebenso ungleichmäßig. Alle vier laufen jetzt über `pcNiceTicks()`.
+
+Zusätzlich fiel die **2,5er-Stufe** in `pcNiceStep` weg: sie erzeugte auf der
+marktweiten Balance-Reihe den Schritt 0,025, und mit zwei Nachkommastellen
+wurde daraus `+0,13 +0,10 +0,07 +0,05 +0,03` — ungleichmäßig, und `0.075`
+rundet in JS sogar auf `0.07` statt `0.08`. Neu: 1/2/5/10, plus
+`pcNiceDecimals()`, das die Stellenzahl aus dem Schritt ableitet, statt sie
+fest zu verdrahten.
+
+### Der Wächter fand zwei Fehler in sich selbst
+
+`check/achsen.js` prüft jede gerenderte Y-Achse auf gleiche Abstände, doppelte
+Beschriftungen und Spiegelgleichheit um die Null (8 Ansichten, 25 Prüfungen,
+3 Gegenproben mit den gemessenen Altwerten). Beim Bauen:
+
+1. **Toleranz zu grob.** Erste Fassung nahm 2 % der Achsenspanne — die alte
+   GBPUSD-Achse (Abstände 41, 40, 40, 40) lag damit *innerhalb* der Toleranz
+   und wäre durchgewunken worden. Genau der Fehler, den er finden soll. Jetzt
+   0,5 % des mittleren Abstands: lässt Fließkomma-Reste durch
+   (`0.5−0.4 = 0.0999…`), fängt einen ganzen Zähler.
+2. **Symmetrieregel zu weit.** Sie prüfte „enthält die Achse die Null" und
+   meldete damit die Put/Call-Achse (`100 80 60 40 20 0`) rot — eine Ratio
+   wird nie negativ, dort ist einseitig der richtige Zustand. Jetzt nur bei
+   echter beidseitiger Achse.
+
+Und ein drittes Mal dieselbe Lektion wie beim Put/Call: Hauptlauf und
+Gegenprobe hatten **getrennte Toleranzrechnungen**. Als die eine nachgeschärft
+wurde, prüfte die andere weiter mit der alten und meldete die echten
+Altfehler als „nicht erkannt". Beide laufen jetzt über `achsenBefunde()`.
+
+### Was NICHT geändert wurde, und warum
+
+Die Bezugslinie der Balance-Karte bleibt der **Median des jeweiligen
+Marktes**, nicht die rohe Null. Nachgerechnet, Anteil roter Balken ohne ihn:
+
+```
+Market-wide   0%      SP500  97%      NAS  98%
+SILVER        6%      JPY    11%      GOLD 17%
+```
+
+Ohne Median wäre die Karte marktweit wieder durchgehend blau und bei
+S&P/Nasdaq durchgehend rot — exakt der Zustand, der am 15.09. gemeldet wurde.
+Das Vergleichsbild zeigt Gold, wo die rohe Skala zufällig noch funktioniert;
+in der Standardansicht tut sie es nicht.
+
+### Eine Behauptung der App über sich selbst entfernt
+
+In der Fußzeile stand *„that source check is running"*. Über die
+GitHub-Actions-API nachgesehen: `probe-options-flow-sources.yml` hat
+**null Läufe** — sie wurde nie gestartet. Dort steht jetzt der Sachstand
+statt einer Zustandsbehauptung: Prämien- und Delta-Gewichtung sind aus den
+vorhandenen Daten erreichbar, die Unterscheidung von Kauf und Verkauf nicht,
+weil dafür keine freie Quelle existiert.

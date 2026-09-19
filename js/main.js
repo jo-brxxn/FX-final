@@ -14668,10 +14668,10 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   const xOf=i=>leftPad+i*PD+PD/2;
   const yOf=v=>yMid-(v/scale)*(chartH/2);
   let svg=`<svg class="tr-svg" width="${w}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
-  [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
+  pcNiceTicks(scale,3).forEach(t=>{
     const y=yOf(t),mid=t===0;
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
-    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${t.toFixed(pcNiceDecimals(t))}</text>`;
   });
   // Bias-eingefaerbte Linie nur bei GENAU EINER Linie sinnvoll ("All assets"/
   // "FX only" brauchen unterscheidbare Farben je Asset) UND nur beim Gesamt-
@@ -14750,10 +14750,10 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   const xOf=i=>leftPad+i*PD+PD/2;
   const yOfScore=v=>yMid-(v/scale)*(chartH/2);
   let svg=`<svg class="tr-svg" width="${w}" height="${h}" viewBox="0 0 ${w.toFixed(0)} ${h}">`;
-  [scale,scale/2,0,-scale/2,-scale].forEach(t=>{
+  pcNiceTicks(scale,3).forEach(t=>{
     const y=yOfScore(t),mid=t===0;
     svg+=`<line x1="${leftPad}" y1="${y.toFixed(1)}" x2="${(w-rightPad).toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--t3)" stroke-width="${mid?1.2:0.6}"${mid?'':' stroke-dasharray="2,3"'} opacity="${mid?0.55:0.3}"/>`;
-    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${Math.round(t)}</text>`;
+    svg+=`<text x="${leftPad-7}" y="${(y+4).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-xs);fill:var(--t3)">${t>0?'+':''}${t.toFixed(pcNiceDecimals(t))}</text>`;
   });
   const col=colorOverride||'#888';
   const useBiasColor=!!colorOverride&&!!biasMap;
@@ -17192,7 +17192,7 @@ const SENT_INFO={
      <h4>What this is not</h4>
      <p>In the industry, <b>"net options flow" means buys minus sells</b> — trades classified against the bid/ask, weighted by premium paid and usually by delta. This card is built from end-of-day <b>contract volume</b>, where a bought put and a sold put count exactly the same. It therefore cannot tell you whether someone was <i>buying</i> downside protection or <i>selling</i> it, which are opposite positions.</p>
      <p>It is also <b>not independent of the Put/Call Ratio</b> above: the two are the same number on a different scale (rank correlation −0.995). Reading both is reading one thing twice.</p>
-     <p>A source check (<code>probe-options-flow-sources.yml</code>) is measuring which of the three real components — premium weighting, delta weighting, buy/sell classification — can be built from the data available here. This card is replaced by whatever that check shows is honestly computable.</p>`],
+     <p>Of the three components a real flow needs, two are within reach from the data this app already fetches — <b>premium weighting</b> (the option chain carries a price per contract) and <b>delta weighting</b> (computable from implied volatility, though only going forward, as historical Greeks are not stored by the source). The third, <b>buy/sell classification</b>, needs trade-by-trade data with the bid/ask at the time of each trade; no free source provides it. Until that is settled this card stays what it is, honestly labelled.</p>`],
   feargreed:['Fear & Greed / VIX',
     `<p><b>Fear & Greed Index (0–100):</b> a single number that blends several market signals into one mood reading. <b>Low = fear</b> (everyone scared), <b>high = greed</b> (everyone euphoric). Read contrarian: extreme fear (≤25) is often a buying opportunity (bullish), extreme greed (≥75) a warning (bearish). There is one for crypto (drives BTC) and one for US stocks.</p>
      <p><b>VIX (the "fear gauge"):</b> the market's expected swing size for the S&P 500 over the next 30 days. A <b>spike (≥28)</b> means panic — often near a bottom (contrarian bullish); a <b>very low reading (≤13)</b> means calm/complacency — often near a top (contrarian bearish).</p>
@@ -18174,7 +18174,7 @@ function retailNetChart(series,priceSeries){
       priceLineSvg=`<polyline points="${ptsStr}" fill="none" stroke="${PRICE_LINE_COL}" stroke-width="1.75" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`;
     }
   }
-  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+Math.round(t)}%</text>`).join('');
+  const gy=pcNiceTicks(maxA,5).map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${(W-padR).toFixed(1)}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${(padL-6).toFixed(1)}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+t.toFixed(pcNiceDecimals(t))}%</text>`).join('');
   const bars=net.map((v,i)=>{const y=yOf(v),up=v>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y-y0),1).toFixed(1)}" fill="${up?BC.bull:BC.bear}"/>`;}).join('');
   let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(series[i][0]))}</text>`;});
   // Preis-Linie GANZ AM ENDE angehaengt (Nutzer-Wunsch 2026-07-27: "soll
@@ -18314,7 +18314,51 @@ function pcNiceStep(span,maxLinien){
   if(!(roh>0))return 1;
   const p=Math.pow(10,Math.floor(Math.log10(roh)));
   const m=roh/p;
-  return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;
+  // ⚠ 1/2/5/10, BEWUSST OHNE 2.5. Gemessen 2026-09-19 an der marktweiten
+  // Balance-Reihe: dort ergab die 2.5er-Stufe den Schritt 0.025, und mit
+  // zwei Nachkommastellen wird daraus die Achse "+0.13 +0.10 +0.07 +0.05
+  // +0.03" - krumm, ungleichmaessig und nicht im Kopf ablesbar (0.075
+  // rundet in JS sogar auf 0.07 statt 0.08). 1/2/5/10 laesst sich in JEDER
+  // Zehnerpotenz sauber beschriften; das ist auch der Schritt, den jede
+  // Finanzgrafik benutzt.
+  return (m<=1?1:m<=2?2:m<=5?5:10)*p;
+}
+
+/**
+ * Wie viele Nachkommastellen braucht dieser Achsenschritt, damit zwei
+ * benachbarte Linien nie dieselbe Beschriftung tragen? Sicherheitsnetz
+ * hinter pcNiceStep: eine feste Stellenzahl ist immer irgendwo falsch -
+ * 0.1 braucht eine, 0.02 zwei, ein ganzzahliger Schritt keine.
+ */
+function pcNiceDecimals(step){
+  const s=String(+Math.abs(step).toFixed(10));
+  const i=s.indexOf('.');
+  return i<0?0:Math.min(4,s.length-i-1);
+}
+/**
+ * Symmetrische Achsen-Teilstriche um die Null, an runden Zahlen.
+ * Liefert absteigend [+n, …, 0, …, -n]; der Rand selbst bekommt nur dann
+ * einen Strich, wenn er auf ein Vielfaches des Schritts faellt.
+ *
+ * ⚠ Ersetzt das Muster [maxA, maxA/2, 0, -maxA/2, -maxA], das an vier
+ * Stellen stand und GEMESSEN falsche Achsen erzeugt hat (2026-09-19):
+ *   Retail-Netto EURUSD  +67% +33% 0 -33% -67%
+ *   Retail-Netto XAUUSD  +44% +22% 0 -22% -44%
+ *   Retail-Netto GBPUSD  +81% +40% 0 -40% -80%   ← oben 81, unten 80
+ * Die letzte Zeile ist der Beleg, dass es kein Schoenheitsfehler ist: bei
+ * maxA = 80,5 rundet Math.round die obere Haelfte auf 81 und die untere auf
+ * -80. Dieselbe Achse, zwei verschiedene Zahlen fuer denselben Abstand.
+ * Halbierung liefert ausserdem grundsaetzlich nur bei geradem maxA runde
+ * Werte - bei jedem anderen steht dort eine Zahl, die man nicht ablesen
+ * kann, und die Abstaende zwischen den Strichen sind ungleich.
+ */
+function pcNiceTicks(maxA,ziel){
+  const m=Math.abs(maxA);
+  if(!(m>0))return[0];
+  const step=pcNiceStep(m,Math.max(1,ziel|0));
+  const oben=[];
+  for(let t=step;t<=m+1e-9;t+=step)oben.push(+t.toFixed(10));
+  return oben.slice().reverse().concat([0],oben.map(t=>-t));
 }
 /**
  * Wie viele WERKTAGE liegen zwischen zwei ISO-Daten (beide exklusiv)?
@@ -18503,7 +18547,7 @@ function renderPutCallChart(D){
   // OBEN offen ist. pcNiceStep() rechnet den Schritt stattdessen aus der
   // Spanne und deckelt die Zahl der Linien.
   const gStep=pcNiceStep(span,6);
-  const nk=gStep<0.1?2:gStep<1?1:0;   // Nachkommastellen zum Schritt passend
+  const nk=pcNiceDecimals(gStep);   // Nachkommastellen zum Schritt passend
   const gyVals=[];for(let t=Math.ceil(yMin/gStep)*gStep;t<=yMax+1e-6;t+=gStep)gyVals.push(+t.toFixed(4));
   const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="0.6"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(nk)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${t.toFixed(nk)}</text>`).join('');
   // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr
@@ -18633,21 +18677,56 @@ function renderNetFlowChart(D){
     return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
   const W=760,H=360,padL=48,padR=48,padT=22,padB=48;
-  const vals=net.map(e=>e[1]),maxA=Math.max(0.05,...vals.map(Math.abs))*1.15; // 15% Kopf-/Fussraum
-  const n=net.length,bw=Math.max(2,(W-padL-padR)/n*0.72);
+  // ══ ACHSE: RUNDE ZAHLEN, KEIN VERSCHENKTER PLATZ ═══════════════════════
+  // ⚠ Nutzer-Bildvergleich 2026-09-19 ("das aktuelle ist irgendwie schlecht
+  // und falsch"): die Achse stand auf [maxA, maxA/2, 0, -maxA/2, -maxA] mit
+  // maxA = groesster Betrag mal 1,15. Das ergibt IMMER krumme Beschriftungen
+  // - im gezeigten Gold-Chart +0.48 / +0.24 / 0.00 / -0.24 / -0.48, wo jede
+  // andere Finanzgrafik 0.1er-Schritte zeigt. Krumme Achsenwerte sind nicht
+  // nur haesslich: man kann eine Balkenhoehe nicht mehr im Kopf ablesen.
+  // Jetzt derselbe Weg wie im Put/Call-Chart: Schritt aus der Spanne
+  // (pcNiceStep), danach die Achsengrenze auf ein Vielfaches DIESES Schritts
+  // aufrunden - dadurch sind Grenze UND jede Linie dazwischen rund.
+  const vals=net.map(e=>e[1]);
+  const maxAbs=Math.max(0.02,...vals.map(Math.abs));
+  const gStep=pcNiceStep(maxAbs,5);
+  const maxA=Math.ceil(maxAbs*1.05/gStep)*gStep;   // 5% Luft, dann aufrunden
+  const nk=pcNiceDecimals(gStep);
+  const n=net.length;
+  // Balken dichter an dicht (0.88 statt 0.72) - im Vergleichsbild bilden sie
+  // eine geschlossene Flaeche; mit 28% Luft dazwischen zerfaellt die Form in
+  // Striche, sobald der Zeitraum laenger als ein paar Wochen ist.
+  const bw=Math.max(2,(W-padL-padR)/n*0.88);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const yOf=v=>padT+(1-(v+maxA)/(2*maxA))*(H-padT-padB);
   const y0=yOf(0);
   const bars=net.map((e,i)=>{const y=yOf(e[1]),up=e[1]>=0;return`<rect x="${(xOf(i)-bw/2).toFixed(1)}" y="${(up?y:y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.abs(y-y0).toFixed(1)}" fill="${up?BC.bull:BC.bear}" opacity="0.9"/>`;}).join('');
+  // ── Umrisslinie ueber den Balkenspitzen ──────────────────────────────
+  // Macht den VERLAUF lesbar, den eine reine Balkenreihe verschweigt: wo
+  // dreht die Stimmung, wie steil, wie lange haelt ein Niveau. Im
+  // Vergleichsbild ist sie weiss, weil der Chart dort auf Schwarz liegt -
+  // hier waere Weiss unsichtbar, also die Textfarbe der App.
+  const umriss=net.map((e,i)=>`${i?'L':'M'} ${xOf(i).toFixed(1)} ${yOf(e[1]).toFixed(1)}`).join(' ');
   // Gridlines mit Labels LINKS und RECHTS (beidseitige Y-Achse).
-  const gy=[maxA,maxA/2,0,-maxA/2,-maxA].map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${t===0?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>0?'+':'')+t.toFixed(2)}</text>`).join('');
+  const gyVals=[];for(let t=-maxA;t<=maxA+1e-9;t+=gStep)gyVals.push(+t.toFixed(6));
+  const gy=gyVals.map(t=>`<line x1="${padL}" y1="${yOf(t).toFixed(1)}" x2="${W-padR}" y2="${yOf(t).toFixed(1)}" stroke="var(--bd)" stroke-width="${Math.abs(t)<1e-9?1:0.5}"/><text x="${padL-6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>1e-9?'+':'')+t.toFixed(nk)}</text><text x="${W-padR+6}" y="${(yOf(t)+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${(t>1e-9?'+':'')+t.toFixed(nk)}</text>`).join('');
   // X-Achse: bis zu ~7 gleichmaessig verteilte Datumslabels mit Jahr.
   let xlab='';const idxs=pcXTickIdx(n,7);idxs.forEach(i=>{const anch=i===0?'start':i===n-1?'end':'middle';xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-padB+16}" text-anchor="${anch}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(pcXLabel(net[i][0]))}</text>`;});
   const last=vals[vals.length-1];
+  // ── Beschriftungs-Baender statt freistehender Text ────────────────────
+  // Vorher standen die beiden Richtungs-Beschriftungen frei im Diagramm und
+  // wurden von Balken ueberlaufen. Als farbige Streifen am oberen/unteren
+  // Rand sind sie immer lesbar und benennen zugleich die Bedeutung der
+  // jeweiligen Haelfte - dieselbe Loesung wie im Vergleichsbild.
+  const BH=15; // Bandhoehe
+  const band=(oben,farbe,txt)=>`<rect x="${padL}" y="${(oben?padT:H-padB-BH).toFixed(1)}" width="${W-padL-padR}" height="${BH}" fill="${farbe}" opacity="0.92"/>`+
+    `<text x="${W-padR-7}" y="${(oben?padT+BH-4.5:H-padB-4.5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:#fff">${escH(txt)}</text>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
-    <text x="${W-padR}" y="${padT+2}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bull}">More call-heavy than usual</text>
-    <text x="${W-padR}" y="${H-padB-3}" text-anchor="end" style="font-size:var(--fs-2xs);font-weight:800;fill:${BC.bear}">More put-heavy than usual</text>
-    ${gy}${bars}${xlab}
+    ${gy}${bars}
+    <path d="${umriss}" fill="none" stroke="var(--t0)" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>
+    ${band(true,BC.bull,'More call-heavy than usual')}
+    ${band(false,BC.bear,'More put-heavy than usual')}
+    ${xlab}
   </svg>`;
   const hpts=net.map((e,i)=>{const v=e[1];const up=v>=0;return{fx:xOf(i)/W,fy:(up?yOf(v):y0)/H,col:up?BC.bull:BC.bear,tip:`<div class="chv-tip-d">${escH(fmtDayHdr(e[0]))}</div><b>${(v>0?'+':'')+v.toFixed(3)}</b> vs. this market's median · ${up?'more call-heavy than usual':'more put-heavy than usual'}`};});
   // ⚠ Die Fusszeile nennt die Bezugslinie ausdruecklich. Ohne sie liest man
@@ -18656,7 +18735,7 @@ function renderNetFlowChart(D){
   // dieser Normalzustand deutlich im put-lastigen Bereich.
   const chart=chartHoverWrap(svg,hpts)+
     `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?'more call-heavy than usual':'more put-heavy than usual'}</div>`+
-    `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), not against an even call/put split — that split never occurs in most options markets, so a fixed zero line would colour every bar the same way. <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data; that source check is running.</div>`;
+    `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), not against an even call/put split — that split never occurs in most options markets, so a fixed zero line would colour every bar the same way. <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data, which no free source provides.</div>`;
   return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
@@ -21739,7 +21818,7 @@ Object.assign(window,{
   // Put/Call-Schwellenmaschinerie (2026-09-15). ⚠ Muss exportiert bleiben:
   // check/putcall.js prueft damit ohne Browser gegen die echte Reihe.
   PC_MIN_HIST,PC_WINDOW,PC_SMOOTH,PC_STALE_DAYS,PC_PCTL_LO,PC_PCTL_HI,PC_MAX_SPREAD,
-  pcQuantile,pcNiceStep,pcGapWorkdays,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
+  pcQuantile,pcNiceStep,pcNiceDecimals,pcNiceTicks,pcGapWorkdays,pcSmoothSeries,pcRawSeries,pcClassify,pcReading,
   legende,absAaiiH,renderFearGreedCards,cotPct3yOf,cotPct3yCell,renderCot,fetchSeasonalityData,autoFetchSeasonality,
   setSeasAsset,SEAS_MON,SEAS_ORDER,seasSortIds,seasCurYearReturns,seasBarChart,renderSeasonality,fetchRateProbData,
   autoFetchRateProb,rateProbCcyData,RATEPROB_CCYS,RATEPROB_NO_CURVE,RATEPROB_CCY_REFLABEL,RATEPROB_CCY_MEETLABEL,
