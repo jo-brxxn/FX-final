@@ -3239,7 +3239,24 @@ jobs:
             const today=new Date().toISOString().slice(0,10);
             const out=JSON.parse(fs.readFileSync("sentiment_data.json","utf8"));
             const byAsset=out.putCallByAsset||{};
-            const VOL_CUTOFF=500; // Mindestvolumen (Calls+Puts) fuer einen neuen Punkt
+            // ⚠ 5000 STATT 500 (Nutzer-Einwand 2026-09-19, woertlich: "wenn an
+            // einem Tag ganz wenig Optionen gehandelt wird koennen einzelne
+            // Kaeufe sich ja extrem auswirken das ist ja Rauschen ... wenn zB
+            // 5 Leute gehandelt haben und 4 ein paar calls gekauft haben und
+            // der andere doppelt so viele puts").
+            // Genau nachgerechnet: die Kennzahl ist (C-P)/(C+P), also ein
+            // ANTEIL - ein Tag mit 12 gehandelten Kontrakten erzeugt damit
+            // exakt denselben Balken wie einer mit 12.000. Wie stark ein
+            // EINZELNER 80er-Block das Ergebnis verschiebt:
+            //        40 Kontrakte/Tag -> 1.333   (Vorzeichen dreht)
+            //       300               -> 0.281
+            //     1.500               -> 0.068   (auf der Achse sichtbar)
+            //     7.500               -> 0.014
+            //    30.000               -> 0.004   (unsichtbar)
+            // Bei der alten Schwelle 500 durfte also ein Tag in die Reihe,
+            // an dem ein einziger Trade das Vorzeichen bestimmt. Ab ~5000
+            // liegt der Einfluss unter 0.02 und damit unter der Strichstaerke.
+            const VOL_CUTOFF=5000; // Mindestvolumen (Calls+Puts) fuer einen neuen Punkt
             let n=0,skipped=0;
             Object.keys(raw).forEach(asset=>{
               const e=raw[asset];
@@ -3253,7 +3270,13 @@ jobs:
               }
               const ratio=Math.round(e.putVol/e.callVol*100)/100;
               let s=(byAsset[asset]&&Array.isArray(byAsset[asset].series)?byAsset[asset].series:[]).filter(x=>x&&x[0]!==today);
-              s.push([today,ratio]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+              // ⚠ DRITTES FELD: das Tagesvolumen. Bisher stand in der Reihe nur
+              // [Datum, Ratio] - dadurch konnte die App rueckwirkend nicht
+              // wissen, welche EINZELNEN Tage duenn waren. Ein sonst liquides
+              // Asset kann an einem Feiertag einbrechen, und genau dieser Tag
+              // traegt dann den Ausschlag. Alte Punkte haben das Feld nicht;
+              // die App behandelt sie als "unbekannt" und zeichnet sie weiter.
+              s.push([today,ratio,total]);s.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
               byAsset[asset]={value:ratio,proxy:e.proxy,callVol:e.callVol,putVol:e.putVol,series:s.slice(-400)};
               n++;
             });
@@ -3326,10 +3349,18 @@ jobs:
                     // Volume-Cutoff wie beim taeglichen Yahoo-Schritt: unter
                     // 500 Kontrakten (Calls+Puts) keinen Punkt nachtragen
                     // (illiquide Tage erzeugen sonst Extrem-Spikes).
-                    if(cv>0&&pv>0&&(cv+pv)>=500)console.log(Math.round(pv/cv*100)/100);
+                    // ⚠ DIESELBE Schwelle wie im Yahoo-Schritt (VOL_CUTOFF).
+                    // Zwei verschiedene Mindestvolumina wuerden bedeuten, dass
+                    // ein nachgetragener Tag Rauschen enthaelt, das der
+                    // taegliche Lauf aussortiert haette - dieselbe Reihe mit
+                    // zwei Massstaeben. Volumen wird mitgeschrieben, damit
+                    // nachgetragene Tage dieselbe Form haben wie frische.
+                    if(cv>0&&pv>0&&(cv+pv)>=5000)console.log(Math.round(pv/cv*100)/100+" "+(cv+pv));
                   }catch(e){}
                 ')
                 rm -f md_resp.json
+                # $RATIO traegt seit 2026-09-19 zwei Felder ("<ratio> <volumen>"),
+                # deshalb entstehen hier vier Spalten statt drei.
                 if [ -n "$RATIO" ]; then echo "$ASSET $D $RATIO" >> md_series_all.txt; N=$((N+1)); else F=$((F+1)); fi
               done
               echo "[debug] marketdata $ASSET <- $SYM: $N days filled, $F no-data/skipped"
@@ -3342,8 +3373,15 @@ jobs:
               try{lines=fs.readFileSync("md_series_all.txt","utf8").trim().split("\n").filter(Boolean);}catch(e){}
               const byA={};
               lines.forEach(l=>{
+                // Zeile ist "<Asset> <Datum> <Ratio> <Volumen>" - das vierte
+                // Feld kam am 2026-09-19 dazu, damit nachgetragene Tage
+                // dieselbe Form haben wie frische. Faellt es weg (alte
+                // Zeile), bleibt der Punkt zweistellig und gilt als
+                // "Volumen unbekannt".
                 const p=l.split(" ");
-                (byA[p[0]]=byA[p[0]]||[]).push([p[1],Number(p[2])]);
+                const punkt=[p[1],Number(p[2])];
+                if(p[3]!==undefined&&isFinite(Number(p[3])))punkt.push(Number(p[3]));
+                (byA[p[0]]=byA[p[0]]||[]).push(punkt);
               });
               let totalNew=0;
               Object.keys(byA).forEach(a=>{

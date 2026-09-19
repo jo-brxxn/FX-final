@@ -751,3 +751,39 @@ weil es für die meisten Währungen und Rohstoffe keinen frei zugänglichen
 eigenen Optionsmarkt gibt. Ein Terminmarkt auf dasselbe Underlying hat andere
 Teilnehmer und andere Absicherungsmuster. Gleiche Kennzahl, anderes
 Universum — eine Abweichung ist dort zu erwarten und kein Rechenfehler.
+
+
+---
+
+## ⚠️ Ein Anteil kennt die Stückzahl nicht (2026-09-19)
+
+**Regel aus einem Nutzer-Einwand**, der genauer war als meine Erklärung:
+*„wenn an einem Tag ganz wenig Optionen gehandelt wird können einzelne Käufe
+sich ja extrem auswirken"*.
+
+Jede Kennzahl der Form `(A−B)/(A+B)` — Call/Put-Balance, Retail-Netto,
+Bull-Bear-Spread — ist ein **Anteil** und damit unabhängig von der Größe der
+Stichprobe. `10:2` ergibt exakt denselben Wert wie `10.000:2.000`.
+
+Das ist beim Vergleich über Zeit erwünscht (sonst misst man Aktivität statt
+Richtung), erzeugt aber eine Falle: **an einem dünnen Tag misst die Zahl
+einzelne Teilnehmer, sieht aber aus wie ein Markt.** Gemessen an der
+Options-Balance, Verschiebung durch einen einzelnen 80-Kontrakt-Block:
+
+| Tagesvolumen | Verschiebung |
+|---|---|
+| 40 | 1,333 — Vorzeichen dreht |
+| 1.500 | 0,068 — sichtbar |
+| 30.000 | 0,004 — unsichtbar |
+
+**Regel:** Wo eine Anteilszahl aus einer zählbaren Grundgesamtheit entsteht,
+gehört eine **Mindestgröße** dazu, und die muss an *beiden* Enden dieselbe
+sein — im Sammellauf (schreibt den Punkt gar nicht erst) und in der App
+(zeigt ihn nicht an). Bei den Optionsreihen sind das `VOL_CUTOFF` und
+`PC_THIN_VOL`, beide 5.000; `check/putcall.js` vergleicht sie miteinander.
+
+**Und die Grundgesamtheit muss mitgespeichert werden.** Wer nur das
+Verhältnis ablegt, kann später nicht mehr unterscheiden, ob hinter einem
+Wert 12 oder 12.000 Kontrakte standen — und ein sonst liquides Asset kann an
+einem Feiertag einbrechen. Die Options-Reihen tragen deshalb seit dem
+19.09. ein drittes Feld: `[Datum, Ratio, Volumen]`.
