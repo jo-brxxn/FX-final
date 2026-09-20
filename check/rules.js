@@ -118,6 +118,19 @@ if (indexGeaendert) {
   if (a >= 0) {
     const b = html.indexOf('><span class="hlb-dot-wrap"', a);
     if (b > a) {
+      // ⚠ ZUERST: schliesst das Attribut ueberhaupt? Die erste Fassung dieser
+      // Regel hat NUR nach zusaetzlichen Anfuehrungszeichen gesucht - und
+      // genau deshalb den naechsten Fehler nicht gesehen: beim Neuschreiben
+      // des Banner-Textes wurde das SCHLIESSENDE Anfuehrungszeichen mit
+      // abgeschnitten. Der Browser las danach class="hlb-dot-wrap" als Teil
+      // des Titels und machte aus `hlb-dot-wrap"` einen Attributnamen.
+      // Gefunden hat das wieder erst check/html.js nach fuenf Minuten.
+      // Eine Regel, die nur die Haelfte einer Fehlerklasse kennt, ist eine
+      // halbe Regel.
+      if (html[b - 1] !== '"')
+        fail('VERSION-CHECK-Text',
+          'Das title-Attribut des Banners wird nicht geschlossen - vor dem <span class="hlb-dot-wrap"> fehlt das Anfuehrungszeichen. ' +
+          'Der Browser liest den Rest der Zeile dann als Attributnamen. Zuletzt gesehen: ...' + html.slice(Math.max(0, b - 40), b));
       const wert = html.slice(a + 'title="'.length, b - 1);
       const zahl = (wert.match(/"/g) || []).length;
       if (zahl)

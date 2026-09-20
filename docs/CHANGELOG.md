@@ -16165,3 +16165,19 @@ Der Ausfall liegt außerhalb des Repos. Quittung deshalb befristet bis
 **2026-09-23** verlängert (Grundsatz des Wächters: „ein kaputter Zulieferer
 darf laut sein, aber er darf nicht die Werkstatt abschließen"). Läuft die
 Routine bis dahin nicht wieder, wird der Wächter von selbst wieder hart rot.
+
+### Nachtrag gleichen Tages — dieselbe Zeile, die andere Hälfte des Fehlers
+
+Der Prüflauf war erneut rot, wieder am Versionsbanner — diesmal mit dem
+Attributnamen `hlb-dot-wrap"`. Ursache war mein eigener Ersetzungs-Schnitt:
+beim Neuschreiben des Banner-Textes wurde das **schließende**
+Anführungszeichen des `title`-Attributs mit abgeschnitten. Der Browser las
+danach `class="hlb-dot-wrap"` als Teil des Titels.
+
+⚠ **Die am Vortag gebaute Regel 1a hat das nicht gesehen.** Sie suchte nur
+nach *zusätzlichen* Anführungszeichen im Attributwert — ein *fehlendes*
+schließendes fällt dabei nicht auf, im Gegenteil: der Wert wirkt dadurch
+besonders sauber. Eine Regel, die nur die Hälfte einer Fehlerklasse kennt,
+ist eine halbe Regel. Sie prüft jetzt zuerst, ob das Attribut überhaupt
+geschlossen wird. Gegenprobe mit entferntem Anführungszeichen: rot samt
+Fundstelle.
