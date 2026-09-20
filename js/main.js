@@ -10103,21 +10103,55 @@ function stampRubOwners(){
     try{Object.defineProperty(r,'_symId',{value:s.id,writable:true,enumerable:false,configurable:true});}catch(e){}
   }));
 }
+// ── Letzter EINGESCHWUNGENER Score je Asset ────────────────────────────
+// Nutzer-Bugreport 2026-09-20 (Screenshot CHF-History): "Die Scores aendern
+// sich wegen irgendwelchen Syncs das kann nicht sein."
+//
+// Reproduziert und gemessen: das Adoptieren eines IDENTISCHEN Standes
+// (applySnap(snap()) mit _flipCauseTag='sync') liess die Scores unveraendert -
+// schrieb aber ELF History-Eintraege, die Bewegungen von bis zu 5,8 Punkten
+// behaupteten (GOLD -2,8, JPYIELD +5,8, GBYIELD +3,9 ...).
+//
+// URSACHE, am Messpunkt nachgemessen: `before` wurde HIER gezogen, also
+// mitten im Aufbau. reapplyLiveFeeds() hat unmittelbar davor die abgeleiteten
+// Indikator-Biasse zurueckgesetzt - bei GOLD standen in diesem Moment PPI,
+// PCE, Inflation Expectations, 2Y/10Y Bond Yield und NFP alle auf 'neu',
+// Score +0,4. Danach baut genau diese Funktion sie wieder auf: alle 'bear',
+// Score -2,4. Die Differenz von -2,8 ist also die Differenz zu einem
+// Zwischenzustand, den der Nutzer NIE gesehen hat, kein echter Score-Sprung.
+//
+// ⚠ Das betraf NICHT nur den Sync. Bei cot/sentiment/bond/seasonality laeuft
+// der Feed ebenfalls VOR dem Setzen des Tags (siehe autoFetchCot & Co.), also
+// dieselbe Klasse - jeder automatische Feed-Lauf hat aufgeblaehte Deltas
+// protokolliert.
+//
+// FIX AN DER WURZEL statt an sechs Aufrufstellen: verglichen wird nicht mehr
+// gegen einen frisch gezogenen Zwischenstand, sondern gegen den letzten
+// EINGESCHWUNGENEN Score - den, der zuletzt wirklich auf dem Bildschirm
+// stand. Gefuellt wird er am ENDE jedes Durchlaufs, also genau dann, wenn der
+// Zustand fertig ist. Damit ist das Delta immer "sichtbar -> sichtbar" und
+// kann von keinem Zwischenzustand mehr verfaelscht werden.
+let _lastSettledScores=null;
 function recomputeAuto(){
-  const before=_flipCauseTag?_scoreSnapForLog():null;
+  // Rueckfall auf das alte Verhalten nur beim allerersten Durchlauf (Boot),
+  // wo es noch keinen eingeschwungenen Stand gibt - dort ist _flipCauseTag
+  // ohnehin null und es wird nichts protokolliert.
+  const before=_flipCauseTag?(_lastSettledScores||_scoreSnapForLog()):null;
   stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();
-  if(before)_logAutoScoreShifts(before);
+  const after=_scoreSnapForLog();
+  _lastSettledScores=after;
+  if(before)_logAutoScoreShifts(before,after);
 }
 function _scoreSnapForLog(){
   const m={};try{(syms||[]).forEach(sy=>{m[sy.id]=symScoreCmp(sy);});}catch(e){}
   return m;
 }
-function _logAutoScoreShifts(before){
+function _logAutoScoreShifts(before,after){
   const txt=FLIP_CAUSE_TXT[_flipCauseTag];
   if(!txt)return;                    // ohne bekannte Ursache wird nichts behauptet
   try{
     (syms||[]).forEach(sy=>{
-      const a=before[sy.id],b=symScoreCmp(sy);
+      const a=before[sy.id],b=(after&&after[sy.id]!=null)?after[sy.id]:symScoreCmp(sy);
       if(a==null||b==null||Math.abs(b-a)<0.05)return;
       logScoreChange(sy.id,{kind:'auto',cause:_flipCauseTag,txt:txt.replace(/^Cause: /,''),delta:Math.round((b-a)*10)/10});
     });

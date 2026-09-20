@@ -489,7 +489,21 @@ try {
 const heuteStr = new Date().toISOString().slice(0, 10);
 const FRISCHE = [
   // Datei,                Stunden, Takt,                                   quittiert bis
-  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-17'],
+  // ⚠ QUITTUNG 2026-09-20 VERLAENGERT - mit Diagnose, nicht blind.
+  // Gemessen an diesem Tag: news_ai.json ist 43,4 h alt (letzter Commit
+  // c562a43 vom 18.09. 19:43). Die Routine "News-Einordnung (KI, 08:00 +
+  // 17:00 DE)" ist AKTIV und hat heute um 06:02:30 UTC gefeuert - sie meldet
+  // SUCCEEDED nach 16 Sekunden. Das ist genau die Falle, vor der ihr eigener
+  // Prompt warnt: die Routine startet nur eine Arbeitssitzung, "erfolgreich"
+  // heisst also bloss, dass der ANSTOSS geklappt hat. Eine Arbeitssitzung von
+  // heute frueh existiert nicht, und es gibt seit dem 18.09. keinen Commit.
+  // Der create_session-Aufruf im Anstoss kommt also nicht durch.
+  // Der Ausfall liegt AUSSERHALB dieses Repos und hat mit dem Code nichts zu
+  // tun - deshalb die befristete Quittung statt eines blockierten Pushes
+  // ("ein kaputter Zulieferer darf laut sein, aber er darf nicht die
+  // Werkstatt abschliessen", siehe oben). Bewusst kurz: laeuft die Routine
+  // bis dahin nicht wieder, wird der Waechter von selbst wieder hart rot.
+  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-23'],
   ['sentiment_data.json',       30, 'stuendlicher Workflow',                '2026-09-13'],
   ['news_data.json',            30, 'stuendlicher Workflow',                null],
   ['seasonality_data.json',     30, 'stuendlicher Workflow',                null],

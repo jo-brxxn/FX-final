@@ -16076,3 +16076,92 @@ Banner schon zerbrochen war. Und diese eine Zeile wird laut Regel 1 bei
 **roh aus der Datei geschnitten**, nicht per `title="([^"]*)"` — so eine
 Regex hört am ersten Anführungszeichen auf, also an genau dem, das das
 Problem ist. Gegenprobe mit wieder eingebautem `"`: rot samt Fundstelle.
+
+---
+
+## 2026-09-20 — Sync bewegte die Scores nicht, behauptete es aber (VERSION-CHECK-532)
+
+**Nutzer-Bugreport mit Screenshot der CHF-History:** *„Die Scores ändern sich
+wegen irgendwelchen Syncs das kann nicht sein Check das"* — in der Historie
+standen Zeilen wie „state adopted from another tab/device (sync). auto +0.1"
+als Ursache einer Score-Bewegung.
+
+### Reproduziert und gemessen (nicht aus dem Code abgeleitet)
+
+Ein **identischer** Stand adoptiert (`applySnap(snap())` mit
+`_flipCauseTag='sync'`):
+
+| | Ergebnis |
+|---|---|
+| Score-Änderung | **keine** — alle 24 Assets unverändert |
+| geschriebene History-Einträge | **11** |
+| behauptete Bewegungen | GOLD −2,8 · JPYIELD +5,8 · GBYIELD +3,9 · USYIELD +3,0 · CHYIELD +2,3 … |
+
+### Ursache, am Messpunkt selbst nachgemessen
+
+`recomputeAuto()` zog seinen Vergleichswert **mitten im Aufbau**.
+`reapplyLiveFeeds()` hatte unmittelbar davor die abgeleiteten
+Indikator-Biasse zurückgesetzt. Gemessen an GOLD in genau diesem Moment:
+
+- **Beim Messen:** PPI, PCE, Inflation Expectations, 2Y + 10Y Bond Yield und
+  NFP alle auf `neu` → Score **+0,4**
+- **Nach dem Aufbau:** dieselben Indikatoren `bear` → Score **−2,4**
+
+Die protokollierten −2,8 waren also die Differenz zu einem Zwischenzustand,
+den der Nutzer **nie zu sehen bekommt** — kein echter Score-Sprung.
+
+⚠ Zwei Verdachtsmomente wurden vorher gemessen und **widerlegt**, statt sie
+zu „fixen": der nicht-enumerierbare `_symId`-Stempel (Entfernen ändert im
+Classic-Modus nichts) und die Reihenfolge `reapplyLiveFeeds`/`recomputeAuto`
+(steht bereits richtig).
+
+### Die Fehlerklasse war größer als der gemeldete Fall
+
+Bei `cot`, `sentiment`, `bond` und `seasonality` läuft der Feed **ebenfalls
+vor** dem Setzen der Ursache (`autoFetchCot` & Co.) — also hat auch **jeder
+automatische Feed-Lauf** aufgeblähte Deltas protokolliert, nicht nur der Sync.
+
+### Behoben an der Wurzel, nicht an sechs Aufrufstellen
+
+Verglichen wird nicht mehr gegen einen frisch gezogenen Zwischenstand,
+sondern gegen den letzten **eingeschwungenen** Score (`_lastSettledScores`) —
+den, der zuletzt wirklich auf dem Bildschirm stand. Gefüllt wird er am
+**Ende** jedes Durchlaufs, also genau dann, wenn der Zustand fertig ist.
+Damit ist das Delta immer „sichtbar → sichtbar".
+
+**Nachgemessen:** identischer Sync zweimal hintereinander → Score
+unverändert, **0 Einträge**. Echte Strukturänderung → Score −2,4 auf 0,
+**genau ein** Eintrag mit Delta 2,4.
+
+### Wächter `check/historie.js` Stufe G — und was die Gegenprobe aufdeckte
+
+Geprüft werden **beide Hälften**, und die zweite ist die wichtigere: ein
+Wächter, der nur „keine Einträge" verlangt, wäre auch dann grün, wenn die
+Protokollierung komplett kaputt ist.
+
+Genau das hat die Gegenprobe gezeigt. Mit wieder eingebautem Fehler meldet
+Stufe G **zwei** Funde:
+
+```
+✗ Ein Sync OHNE jede Zustandsaenderung hat 22 History-Eintraege geschrieben
+✗ Echte Aenderung (2.4) erzeugte 0 Eintraege statt genau einem
+```
+
+Der alte Code war also **in beide Richtungen** falsch: Phantom-Einträge, wo
+nichts passierte — und **null** Einträge, wo wirklich etwas passierte.
+
+### Nebenbefund: die News-Routine liefert nicht mehr
+
+`check/rules.js` meldete `news_ai.json` als 43,4 h alt (Grenze 40). Nach
+`git pull` weiterhin rot, also kein veralteter Arbeitsstand. Diagnose: die
+Routine „News-Einordnung (KI, 08:00 + 17:00 DE)" ist aktiv, feuerte heute
+06:02:30 UTC und meldet **SUCCEEDED nach 16 Sekunden** — genau die Falle, vor
+der ihr eigener Prompt warnt: sie startet nur eine Arbeitssitzung,
+„erfolgreich" heißt also bloß, dass der *Anstoß* lief. Eine Arbeitssitzung von
+heute früh existiert nicht, letzter Commit ist `c562a43` vom 18.09. 19:43 —
+der `create_session`-Aufruf kommt nicht durch.
+
+Der Ausfall liegt außerhalb des Repos. Quittung deshalb befristet bis
+**2026-09-23** verlängert (Grundsatz des Wächters: „ein kaputter Zulieferer
+darf laut sein, aber er darf nicht die Werkstatt abschließen"). Läuft die
+Routine bis dahin nicht wieder, wird der Wächter von selbst wieder hart rot.
