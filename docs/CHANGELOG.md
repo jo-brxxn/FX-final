@@ -16056,3 +16056,23 @@ Element verlässt die Karte.
 archivieren → Current 4 / Archived 1, Pin steht oben, Trennlinie erscheint;
 Umschalten zeigt die archivierte Notiz mit `↩ Restore`; nach Restore wieder
 Current 5 / Archived 0. Keine Page-Errors.
+
+### Nachtrag 2026-09-20 — das Versionsbanner hat sein eigenes Attribut zerrissen
+
+Der volle Prüflauf vor dem Push auf `main` war **rot**: `check/html.js`
+meldete am `#verBanner` dutzende „Attribute" namens `die`, `naechste`,
+`willkuerliche`, `wand` … Ursache war ein rohes `"` im `title`-Text des
+Banners — ein wörtliches Nutzer-Zitat und das UI-Label `"+N more"`. Das
+beendet `title="…"` mitten im Satz, der Rest wird als Attributname gelesen.
+
+Behoben (Zitate ohne Anführungszeichen, Label als `plus-N-more`
+umschrieben). **Zusätzlich neu als Regel 1a in `check/rules.js`**, obwohl
+`html.js` den Fehler gefunden hat: `html.js` braucht einen Browser und läuft
+erst nach rund fünf Minuten — ein `--static`-Lauf war grün, während das
+Banner schon zerbrochen war. Und diese eine Zeile wird laut Regel 1 bei
+*jeder* Änderung angefasst, ist also die wahrscheinlichste Fundstelle.
+
+⚠ Beim Bau selbst der naheliegende Fehler vermieden: der Attributwert wird
+**roh aus der Datei geschnitten**, nicht per `title="([^"]*)"` — so eine
+Regex hört am ersten Anführungszeichen auf, also an genau dem, das das
+Problem ist. Gegenprobe mit wieder eingebautem `"`: rot samt Fundstelle.

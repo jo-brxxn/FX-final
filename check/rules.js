@@ -95,6 +95,41 @@ if (indexGeaendert) {
     fail('VERSION-CHECK', `Nummer nicht hochgezaehlt (vorher ${vorher}, jetzt ${jetzt}).`);
 }
 
+// ── Regel 1a: der Banner-TEXT darf das Attribut nicht zerreissen ────────
+// Anlass 2026-09-20: der title-Text des Versionsbanners enthielt ein rohes
+// Anfuehrungszeichen (ein woertliches Nutzer-Zitat und ein UI-Label). Das
+// BEENDET das title="..."-Attribut mitten im Satz - der Rest des Textes
+// wurde vom Browser als Attributnamen gelesen. Der Waechter check/html.js
+// hat das gefunden und gemeldet.
+//
+// ⚠ Warum die Regel TROTZDEM zusaetzlich hierher gehoert: html.js braucht
+// einen Browser und laeuft erst nach rund fuenf Minuten. Ein Lauf mit
+// --static war deshalb gruen, waehrend das Banner schon zerbrochen war.
+// Und diese eine Zeile wird laut Regel 1 bei JEDER Aenderung angefasst -
+// sie ist damit die wahrscheinlichste Fundstelle fuer genau diesen Fehler.
+// Hier kostet die Pruefung 0 Sekunden und meldet sofort.
+if (indexGeaendert) {
+  // Den Attributwert ROH aus der Datei schneiden. Eine Regex wie
+  // title="([^"]*)" haette genau den Fehler gar nicht sehen koennen: sie
+  // hoert am ersten Anfuehrungszeichen auf - also an dem, das hier das
+  // Problem IST.
+  const html = aktuellerCode();
+  const a = html.indexOf('title="VERSION-CHECK-');
+  if (a >= 0) {
+    const b = html.indexOf('><span class="hlb-dot-wrap"', a);
+    if (b > a) {
+      const wert = html.slice(a + 'title="'.length, b - 1);
+      const zahl = (wert.match(/"/g) || []).length;
+      if (zahl)
+        fail('VERSION-CHECK-Text',
+          `Der Banner-Text enthaelt ${zahl} rohe(s) Anfuehrungszeichen. Das beendet das title="..."-Attribut ` +
+          `mitten im Satz; der Rest wird als Attributname gelesen. Zitate ohne Anfuehrungszeichen schreiben ` +
+          `(oder &quot; verwenden). Gefunden bei: ` +
+          wert.split('"').slice(0, 2).map(x => '...' + x.slice(-45)).join(' | '));
+    }
+  }
+}
+
 // ── Regel 1b (entfallen 2026-09-19) ─────────────────────────────────────
 // Hier stand die REZEPT-CHECK-Regel fuer die zweite App dieses Repos
 // (rezept.html + js/rezept/*). Die App ist auf Nutzer-Wunsch geloescht,
