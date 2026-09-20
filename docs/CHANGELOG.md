@@ -16364,3 +16364,88 @@ dort fehlte: der Nachmittagslauf um **15:02:09 UTC** verhält sich identisch
 
 Zwei Sitzungen desselben Tages sind hier unabhängig auf denselben Befund
 gestoßen und haben ihn unabhängig gleich bewertet.
+---
+
+## 2026-09-20 (später) — Die Historie behauptete wieder Sync-Bewegungen (VERSION-CHECK-534)
+
+Nutzer-Screenshot der USD-History um 18:00, direkt nach dem Ausrollen von
+VERSION-CHECK-533: zwei Sync-Zeilen, `auto +0.2` und `auto −0.9`. Dazu die
+Frage *„Das ergibt kein Sinn hast du das eben nicht gecheckt?"* — berechtigt.
+Ich hatte geprüft, dass der Score **stimmt**, nicht, was die Historie über
+seine **Bewegung behauptet**. Es ist ein Folgefehler von 533.
+
+**Reproduziert** (Playwright, identischen Stand adoptiert, `applySnap(snap())`
+mit `_flipCauseTag='sync'`):
+
+```
+echte Score-Änderung:   0 von 24 Assets
+protokolliert:         20 Einträge, USD +0,2  ← exakt die Zahl im Foto
+```
+
+Gegenprobe im selben Lauf: ein `recomputeAuto()` **ohne** Ursache unmittelbar
+davor (das den eingeschwungenen Vergleichsstand auffrischt) → **0 Einträge**.
+
+### Ursache
+
+`_lastSettledScores` war **veraltet**, nicht falsch gemessen. Er wird nur am
+Ende von `recomputeAuto()` gefüllt — der Score kann sich aber auch **ohne**
+`recomputeAuto` ändern, nämlich sobald ein Feed eintrifft. Konkret der
+Preis-Feed: seit die Marktrelevanz nicht mehr eingefroren ist
+(`SCORE_MODEL_VERSION` 13), verändert das Eintreffen von `price_data.json`
+jeden Score im Modus `normalized` — und `fetchPriceData` steht **nicht** in
+`bootFetchScoreFeeds`, es folgt also kein Durchlauf, der den Vergleichsstand
+nachzieht. Der nächste Durchlauf mit einer Ursache bekam die komplette
+Feed-Bewegung angehängt.
+
+⚠ **Zum dritten Mal an einem Tag dieselbe Fehlerklasse** (nach
+`_mktWeightCache` und `_sigCache`/`_cycCache`): eine abgeleitete Größe wird
+aufbewahrt, und niemand erklärt sie für ungültig, wenn ihre Quelle sich
+ändert.
+
+### Fix
+
+Dieselbe Lösung wie dort: der aufbewahrte Stand trägt die **Identität seiner
+Quellen** mit (`_feedStamp()` über `IND_DATA_FEED`, `PRICE_DATA_FEED`,
+`BOND_DATA_FEED`, `COT_DATA`, `SENTIMENT_DATA`, `SEASONALITY_DATA`). Jeder
+Feed wird beim Eintreffen komplett **ersetzt**, ein `===`-Vergleich erkennt
+eine neue Lieferung also exakt und kostet nichts.
+
+⚠ Der Vergleich ist bewusst **feiner** als „irgendwas hat sich geändert": bei
+`cot`/`sentiment`/`bond`/`seasonality` **ist** die Lieferung die genannte
+Ursache — dort wäre Verschweigen genauso falsch wie Erfinden. `FEED_ERKLAERT_VON`
+hält fest, welche Feed-Änderung welche Ursache erklären darf; `ind` und
+`price` stehen bewusst nicht drin, weil es für sie gar keinen Ursachen-Tag
+gibt. Nur eine Feed-Änderung, die die Ursache nicht benennt, macht die
+Bewegung unzuschreibbar — dann wird nichts behauptet.
+
+Keine Score-Änderung: gerechnet wird unverändert, nur die Protokoll-
+Entscheidung ist anders. `check/scorediff.js` bestätigt es, kein
+`SCORE_MODEL_VERSION`-Bump.
+
+### ⚠ Zweiter Befund — der Wächter selbst war blind, und zwar doppelt
+
+Stufe G des Historie-Wächters (am Vormittag genau für diese Fehlerklasse
+gebaut) war **grün, während der Fehler live war**. Zwei Gründe gleichzeitig:
+
+1. **Zu spät.** Sie prüft erst nach den Abschnitten A–F. Bis dahin sind
+   etliche `recomputeAuto()`-Durchläufe gelaufen und haben den
+   Vergleichsstand aufgefrischt. Der Fehler lebt aber genau in dem Fenster,
+   das der Nutzer erwischt: zwischen dem letzten Boot-Durchlauf und dem
+   ersten Sync danach.
+2. **Falscher Modus.** Der ganze Wächter setzt `fxpro_score_mode` nirgends,
+   läuft also durchgehend in `classic`. Dort ist `indNormFactor()` per
+   Definition 1 — die Marktrelevanz spielt keine Rolle, der Preis-Feed bewegt
+   keinen Score, und der Fehler **kann** gar nicht auftreten. Der Nutzer fährt
+   `normalized`.
+
+Neue Stufe **G0** lädt deshalb ausdrücklich neu **und** ausdrücklich in
+`normalized`. Gegenproben gefahren: ohne den Fix meldet sie 20
+Phantom-Einträge mit `USD 0.2`; **ohne** die Modus-Zeile bleibt sie auch dann
+grün — beide Hälften waren nötig. Neue Stufe **G2** belegt die Gegenrichtung
+(eine echte COT-Lieferung wird weiterhin benannt); Gegenprobe mit aus
+`FEED_ERKLAERT_VON` entferntem `cot`: 0 Einträge, rot.
+
+**Merksatz, im Wächter vermerkt:** eine Prüfung, die den Zustand erst
+warmläuft, prüft nicht mehr den Zustand des Nutzers. Und wer eine Stufe
+ergänzt, die an der Normierung hängt, muss den Modus ausdrücklich setzen —
+in `classic` wäre sie grün, ohne je etwas geprüft zu haben.

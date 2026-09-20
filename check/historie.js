@@ -16,6 +16,17 @@
 //   E) Tage ohne Veroeffentlichung sagen "No data released" und werden NICHT
 //      zusammengefasst (Nutzer-Vorgabe "jeden tag einzeln").
 //   F) Kein Ueberlauf auf fuenf Fensterbreiten, Kopfzeile klebt.
+//   G0/G/G2) Was die Historie ueber URSACHEN behauptet: ein Sync ohne
+//      Zustandsaenderung schreibt nichts (G0 zusaetzlich direkt nach dem
+//      Boot UND im Modus "normalized" - siehe dort, warum beides noetig
+//      ist), eine echte Aenderung schreibt genau einen Eintrag, und eine
+//      Feed-Ursache wird weiterhin benannt statt mitverschluckt.
+//
+// ⚠ A bis G laufen im Standardmodus "classic". Wer hier eine Stufe
+// ergaenzt, die an der Normierung haengt (Marktrelevanz, Alters-Faktor,
+// Ueberraschungsgroesse), MUSS den Modus wie in G0 ausdruecklich setzen -
+// in "classic" ist indNormFactor() immer 1 und die Stufe waere gruen, ohne
+// je etwas geprueft zu haben.
 //
 // ⚠ Was dieser Waechter NICHT prueft: ob die Zahlen des Scores stimmen. Das
 // macht check/score.js / check/scorediff.js. Hier geht es allein darum, dass
@@ -329,6 +340,61 @@ const gruen = (m) => console.log('  ✓ ' + m);
   // Aenderung im selben Lauf weiterhin genau EINEN Eintrag mit dem
   // RICHTIGEN Delta erzeugen.
   await p.setViewportSize({ width: 1500, height: 1000 });
+
+  // ── G0) DASSELBE, ABER DIREKT NACH DEM BOOT ────────────────────────
+  // ⚠ Nutzer-Screenshot 2026-09-20 18:00, VERSION-CHECK-533: in der
+  // USD-History standen schon wieder zwei Sync-Zeilen ("auto +0.2",
+  // "auto -0.9") - obwohl Stufe G unten gruen war. Der Waechter hat den
+  // Fall nicht gesehen, weil er ihn zu SPAET prueft: bis Abschnitt G sind
+  // in A-F laengst etliche recomputeAuto()-Durchlaeufe gelaufen und haben
+  // den eingeschwungenen Vergleichsstand aufgefrischt.
+  //
+  // Der Fehler lebt aber genau in dem Fenster, das der Nutzer erwischt:
+  // zwischen dem letzten recomputeAuto() des Bootvorgangs und dem ersten
+  // Sync danach trifft der PREIS-Feed ein. Seit die Marktrelevanz nicht
+  // mehr eingefroren ist (SCORE_MODEL_VERSION 13), veraendert das jeden
+  // Score im Modus normalized - und fetchPriceData steht nicht in
+  // bootFetchScoreFeeds, es folgt also kein Durchlauf, der den
+  // Vergleichsstand nachzieht. Der naechste Sync bekam die ganze
+  // Feed-Bewegung angehaengt. Gemessen vor dem Fix: 0 echte Aenderungen,
+  // 20 protokollierte Eintraege, USD +0,2 - exakt die Zahl im Foto.
+  //
+  // ⚠ MERKSATZ FUER KUENFTIGE STUFEN: eine Pruefung, die den Zustand erst
+  // warmlaeuft, prueft nicht mehr den Zustand des Nutzers. Deshalb laedt
+  // diese hier ausdruecklich NEU und misst als Allererstes.
+  // ⚠⚠ UND IM MODUS "normalized" - das ist der zweite Grund, warum Stufe G
+  // den Fall nicht gesehen hat. Dieser Waechter setzt fxpro_score_mode
+  // nirgends, laeuft also durchgehend in "classic". Dort ist indNormFactor()
+  // per Definition 1: die Marktrelevanz spielt keine Rolle, der Preis-Feed
+  // bewegt keinen Score, und der Fehler KANN nicht auftreten. Der Nutzer
+  // fuehrt die App aber in "normalized" - genau dort, wo es passiert.
+  // Gegenprobe beim Einbau: ohne diese Zeile bleibt G0 auch mit wieder
+  // ausgebautem Fix gruen, mit ihr meldet sie 20 Phantom-Eintraege.
+  console.log('\n── G0) Sync direkt nach dem Boot, Modus normalized ──');
+  await p.addInitScript(() => { try { localStorage.setItem('fxpro_score_mode', 'normalized'); } catch (e) {} });
+  await p.goto(URL);
+  await p.evaluate(() => { try { localStorage.setItem('fxpro_score_mode', 'normalized'); } catch (e) {} });
+  await p.goto(URL);
+  await wartenBisDatenDa(p);
+  await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.remove(); }); });
+  await p.waitForTimeout(3000);   // Preis-Feed nachlaufen lassen wie beim echten Nutzer
+  const g0 = await p.evaluate(() => {
+    const scores = () => { const m = {}; (syms || []).forEach(s => m[s.id] = symScoreCmp(s)); return m; };
+    const vor = scores(), n0 = (scoreLog || []).length;
+    _flipCauseTag = 'sync'; applySnap(snap()); _flipCauseTag = null;
+    const nach = scores();
+    const bewegt = Object.keys(vor).filter(k => Math.abs(nach[k] - vor[k]) > 0.05);
+    return { bewegt, phantom: (scoreLog || []).slice(n0).map(x => x.sym + ' ' + x.delta) };
+  });
+  if (g0.bewegt.length)
+    rot('Ein identischer Sync direkt nach dem Boot hat den Score veraendert: ' + g0.bewegt.join(', '));
+  else if (g0.phantom.length)
+    rot(`Sync direkt nach dem Boot: 0 echte Aenderungen, aber ${g0.phantom.length} History-Eintrag/Eintraege ` +
+        `(${g0.phantom.slice(0, 6).join(', ')}). Der eingeschwungene Vergleichsstand ist veraltet - ` +
+        `zwischen ihm und jetzt hat ein Feed geliefert, siehe _feedStamp() in recomputeAuto().`);
+  else gruen('Sync direkt nach dem Boot: Score unveraendert, kein History-Eintrag');
+
   console.log('\n── G) Sync ohne Aenderung schreibt nichts, echte Aenderung schon ──');
   const g = await p.evaluate(() => {
     const R = {};
@@ -369,6 +435,36 @@ const gruen = (m) => console.log('  ✓ ' + m);
   else if (Math.abs(g.echt.protokolliert[0] - g.echt.delta) > 0.15)
     rot(`Echte Aenderung: Score bewegte sich um ${g.echt.delta}, protokolliert wurde ${g.echt.protokolliert[0]}`);
   else gruen(`echte Aenderung: Score ${g.echt.delta}, genau ein Eintrag mit demselben Delta`);
+
+  // ── G2) DIE FEED-URSACHEN DUERFEN NICHT MITVERSCHLUCKT WERDEN ──────
+  // Die Feed-Stempel-Pruefung in recomputeAuto() unterdrueckt eine
+  // Bewegung, die eine fremde Lieferung verursacht hat. Bei cot/sentiment/
+  // bond/seasonality IST die Lieferung aber die genannte Ursache - dort
+  // waere Verschweigen genauso falsch wie Erfinden. Gegenprobe beim Einbau:
+  // 'cot' aus FEED_ERKLAERT_VON entfernt -> diese Stufe meldet 0 Eintraege.
+  console.log('\n── G2) Eine Feed-Ursache wird weiterhin benannt ──');
+  const g2 = await p.evaluate(() => {
+    const sc = () => { const s = (syms || []).find(x => x.id === 'USD'); return s ? symScoreCmp(s) : null; };
+    const sy = (syms || []).find(x => x.id === 'USD');
+    const rub = sy && (sy.rubrics || []).find(r => r.name === 'COT Data');
+    const ind = rub && (rub.indicators || [])[0];
+    if (!ind) return null;
+    const v = sc(), n = (scoreLog || []).length, alt = ind.bias;
+    ind.bias = (alt === 'bull') ? 'bear' : 'bull';
+    // Eine echte Lieferung ersetzt das Feed-Objekt - genau das nachstellen.
+    window.COT_DATA = Object.assign({}, window.COT_DATA || {});
+    _flipCauseTag = 'cot'; recomputeAuto(); _flipCauseTag = null;
+    const e = (scoreLog || []).slice(n).filter(x => x.sym === 'USD');
+    const r = { delta: +(sc() - v).toFixed(2), eintraege: e.length, cause: e[0] && e[0].cause, protokolliert: e[0] && e[0].delta };
+    ind.bias = alt; _flipCauseTag = 'cot'; recomputeAuto(); _flipCauseTag = null;
+    return r;
+  });
+  if (!g2) rot('Gegenprobe nicht ausfuehrbar - keine COT-Karte bei USD gefunden');
+  else if (Math.abs(g2.delta) < 0.1) rot('Gegenprobe untauglich: der COT-Bias-Wechsel bewegte den Score gar nicht');
+  else if (g2.eintraege !== 1 || g2.cause !== 'cot')
+    rot(`Eine COT-Lieferung bewegte den Score um ${g2.delta}, protokolliert wurden ${g2.eintraege} Eintraege ` +
+        `(Ursache ${g2.cause}) - die Feed-Stempel-Pruefung verschluckt eine echte Ursache.`);
+  else gruen(`COT-Lieferung: Score ${g2.delta}, genau ein Eintrag mit Ursache "cot"`);
 
   if (perr.length) { rot('Seitenfehler: ' + [...new Set(perr)].slice(0, 3).join(' | ')); }
   await b.close();

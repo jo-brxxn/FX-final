@@ -10168,15 +10168,75 @@ function stampRubOwners(){
 // stand. Gefuellt wird er am ENDE jedes Durchlaufs, also genau dann, wenn der
 // Zustand fertig ist. Damit ist das Delta immer "sichtbar -> sichtbar" und
 // kann von keinem Zwischenzustand mehr verfaelscht werden.
-let _lastSettledScores=null;
+// ⚠⚠ ZWEITE RUNDE, Nutzer-Screenshot 2026-09-20 18:00 (VERSION-CHECK-533):
+// in der USD-History standen erneut zwei Sync-Zeilen, "auto +0.2" und
+// "auto -0.9". Der eingeschwungene Stand allein reicht also NICHT.
+//
+// REPRODUZIERT UND GEMESSEN (Playwright, identischer Stand adoptiert,
+// applySnap(snap()) mit _flipCauseTag='sync'):
+//   echte Score-Aenderung:  0 von 24 Assets
+//   protokolliert:          20 Eintraege, USD +0,2 - exakt die Zahl im Foto
+// Gegenprobe im selben Lauf: ein recomputeAuto() OHNE Ursache unmittelbar
+// davor (das den eingeschwungenen Stand auffrischt) -> 0 Eintraege.
+//
+// URSACHE: _lastSettledScores war VERALTET, nicht falsch gemessen. Er wird
+// nur am Ende von recomputeAuto() gefuellt - der Score kann sich aber auch
+// OHNE recomputeAuto aendern, naemlich sobald ein Feed eintrifft. Konkret
+// der Preis-Feed: seit die Marktrelevanz nicht mehr eingefroren ist
+// (SCORE_MODEL_VERSION 13, siehe indMarketWeight), veraendert das
+// Eintreffen von price_data.json jeden Score im Modus normalized - und
+// fetchPriceData steht NICHT in bootFetchScoreFeeds, es folgt also kein
+// recomputeAuto. Der naechste Durchlauf mit einer Ursache bekam die
+// komplette Feed-Bewegung angehaengt.
+//
+// ⚠ Das ist zum DRITTEN Mal an einem Tag dieselbe Fehlerklasse (nach
+// _mktWeightCache und _sigCache/_cycCache): eine abgeleitete Groesse wird
+// aufbewahrt, und niemand erklaert sie fuer ungueltig, wenn ihre Quelle
+// sich aendert. Deshalb hier dieselbe Loesung wie dort - der aufbewahrte
+// Wert traegt die IDENTITAET seiner Quellen mit sich. Jeder Feed wird beim
+// Eintreffen komplett ERSETZT (nie an Ort und Stelle veraendert), ein
+// ===-Vergleich erkennt eine neue Lieferung also exakt und kostet nichts.
+//
+// ⚠ Und der Vergleich ist bewusst FEINER als "irgendwas hat sich geaendert":
+// bei cot/sentiment/bond/seasonality IST der Feed die genannte Ursache -
+// dort waere pauschales Verschweigen genauso falsch wie das Erfinden. Nur
+// eine Feed-Aenderung, die die Ursache NICHT benennt (Indikatoren, Preise -
+// oder ein fremder Feed bei Ursache "sync"/"manual"), macht die Bewegung
+// unzuschreibbar. Dann wird nichts behauptet.
+const _FEED_UNLESBAR={};   // Markierung, die nie zu sich selbst passt
+function _feedStamp(){
+  const o={};
+  const lies=(k,fn)=>{try{o[k]=fn();}catch(e){o[k]=_FEED_UNLESBAR;}};
+  lies('ind',()=>IND_DATA_FEED);
+  lies('price',()=>PRICE_DATA_FEED);
+  lies('bond',()=>BOND_DATA_FEED);
+  lies('cot',()=>COT_DATA);
+  lies('sent',()=>SENTIMENT_DATA);
+  lies('seas',()=>SEASONALITY_DATA);
+  return o;
+}
+// Welche Feed-Aenderung DARF welche Ursache erklaeren? 'ind' und 'price'
+// stehen bewusst nicht drin: fuer sie gibt es keinen Ursachen-Tag
+// (bootFetchScoreFeeds laesst ihn ausdruecklich null, damit flipCauseLines()
+// das konkrete Release nennen kann) - eine Bewegung aus diesen beiden darf
+// sich also keine andere Ursache anheften.
+const FEED_ERKLAERT_VON={bond:'bond',cot:'cot',sent:'sentiment',seas:'seasonality'};
+function _bewegungZuschreibbar(vorher,jetzt,tag){
+  if(!vorher||!jetzt)return false;
+  return Object.keys(jetzt).every(k=>jetzt[k]===vorher[k]||FEED_ERKLAERT_VON[k]===tag);
+}
+let _lastSettledScores=null,_lastSettledStamp=null;
 function recomputeAuto(){
-  // Rueckfall auf das alte Verhalten nur beim allerersten Durchlauf (Boot),
-  // wo es noch keinen eingeschwungenen Stand gibt - dort ist _flipCauseTag
-  // ohnehin null und es wird nichts protokolliert.
-  const before=_flipCauseTag?(_lastSettledScores||_scoreSnapForLog()):null;
+  const stamp=_feedStamp();
+  // `before` ist nur brauchbar, wenn der eingeschwungene Stand aus denselben
+  // Daten stammt - sonst steckt in der Differenz eine Feed-Lieferung, die
+  // mit der genannten Ursache nichts zu tun hat. Beim allerersten Durchlauf
+  // (Boot) gibt es noch gar keinen Stand; dort ist _flipCauseTag ohnehin null.
+  const before=(_flipCauseTag&&_lastSettledScores
+    &&_bewegungZuschreibbar(_lastSettledStamp,stamp,_flipCauseTag))?_lastSettledScores:null;
   stampRubOwners();invalidateCmpCache();recomputeRubricAutoBias();deriveMacroBiasAll();syncRubSummaries();recomputeAllSymBiases();recomputeAllPairBiases();syncAutoPairCats();
   const after=_scoreSnapForLog();
-  _lastSettledScores=after;
+  _lastSettledScores=after;_lastSettledStamp=stamp;
   if(before)_logAutoScoreShifts(before,after);
 }
 function _scoreSnapForLog(){
