@@ -16449,3 +16449,44 @@ grün — beide Hälften waren nötig. Neue Stufe **G2** belegt die Gegenrichtun
 warmläuft, prüft nicht mehr den Zustand des Nutzers. Und wer eine Stufe
 ergänzt, die an der Normierung hängt, muss den Modus ausdrücklich setzen —
 in `classic` wäre sie grün, ohne je etwas geprüft zu haben.
+
+---
+
+## 2026-09-20 (noch später) — Der Sync-Sprung war ECHT (VERSION-CHECK-535)
+
+Nutzer-Screenshot 18:57, USD-History: weiter `sync −0.9`. Version 534 lief da
+seit 18:30 — der Eintrag ist **25 Minuten danach** entstanden, also ein
+anderer Pfad als der in 534 behobene.
+
+**Reproduziert:** ein `applySnap`, während `SEASONALITY_DATA` /
+`SENTIMENT_DATA` noch nicht geladen sind:
+
+```
+USD  3.3 → 2.5
+Zeilen Seasonality + Retail Positioning:  beide WEG
+```
+
+**Ursache:** `reapplyLiveFeeds()` ruft `applySeasRetailFeed()` bei *jedem*
+`applySnap` auf. `seasBiasFor`/`retailBiasFor` liefern ohne geladene Quelle
+aber dasselbe leere Ergebnis wie für ein Asset, das wirklich keine Reihe hat —
+und `setOne()` hat die Zeile dann gelöscht. **„Quelle noch nicht geladen" ist
+nicht „keine Datenlage".** Der Score war echt um 0,8 kleiner, bis die Feeds
+nachkamen; die Historie hat das völlig korrekt als Sync-Bewegung
+protokolliert. Der Fehler lag also **nicht im Protokoll, sondern im Score** —
+meine beiden vorherigen Runden haben am falschen Ende gesucht.
+
+Dieselbe Überlegung wie bei `indIsStale()`, das bei `DATA_LIVE_OK.ind===false`
+keine `OUT OF DATE`-Marke setzt: ohne Grundlage kein Urteil. Fehlt die Quelle,
+bleibt alles unangetastet; entfernt wird nur, wenn die Quelle **da** ist und
+für dieses Asset nichts hergibt. Je Zeile getrennt geprüft — die beiden hängen
+an verschiedenen Dateien und kommen nicht zwingend zusammen an.
+
+### ⚠ Der neue Wächter war im ersten Anlauf selbst ein Blindgänger
+
+`check/seasretail.js` bekam zwei Hälften. Die zweite (Geisterzeilen-Regel muss
+weiter greifen) sah nur nach, ob ein Asset ohne Reihe eine Zeile trägt — das
+beweist nichts: es hatte nie eine, ein ausgebautes Löschen fällt dabei gar
+nicht auf. Die Gegenprobe blieb grün. Jetzt wird die Zeile **absichtlich
+eingesetzt** und muss wieder verschwinden. Beide Gegenproben feuern
+unabhängig: `quelleDa` raus → `USD 3.2 → 2.3`; Löschen raus → Geisterzeile
+bei NZD.

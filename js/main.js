@@ -7944,8 +7944,29 @@ const SEAS_IND_NAME='Seasonality', RETAIL_IND_NAME='Retail Positioning';
 function applySeasRetailFeed(){
   if(!Array.isArray(syms))return false;
   let changed=false;
-  const setOne=(rub,name,erg,quelle)=>{
+  const setOne=(rub,name,erg,quelle,quelleDa)=>{
     const idx=rub.indicators.findIndex(i=>i&&i.name===name);
+    // ⚠⚠ "Quelle noch nicht geladen" ist NICHT "keine Datenlage"
+    // (Nutzer-Screenshot 2026-09-20 18:57, VERSION-CHECK-534: USD-History
+    // zeigte "sync -0.9", und diesmal war die Bewegung ECHT).
+    //
+    // REPRODUZIERT: ein Sync, waehrend SEASONALITY_DATA/SENTIMENT_DATA noch
+    // nicht geladen sind, liess USD von 3,3 auf 2,5 fallen - beide Zeilen
+    // waren danach WEG. reapplyLiveFeeds() ruft applySeasRetailFeed() bei
+    // JEDEM applySnap auf, seasBiasFor/retailBiasFor liefern ohne geladene
+    // Quelle aber dasselbe leere Ergebnis wie bei einem Asset, fuer das es
+    // wirklich keine Reihe gibt - und der Zweig hier hat die Zeile dann
+    // geloescht. Der Score war echt um 0,8 kleiner, bis die Feeds nachkamen;
+    // die Historie hat das voellig korrekt als Sync-Bewegung protokolliert.
+    // Der Fehler lag also nicht im Protokoll, sondern im Score.
+    //
+    // Dieselbe Ueberlegung wie bei indIsStale(), das bei
+    // DATA_LIVE_OK.ind===false keine Marke setzt: ohne Grundlage wird kein
+    // Urteil gefaellt. Fehlt die QUELLE, bleibt alles unangetastet; entfernt
+    // wird nur, wenn die Quelle DA ist und fuer dieses Asset nichts hergibt
+    // (dann ist "keine Geisterzeile" die richtige Antwort, siehe
+    // docs/score-model.md).
+    if(!quelleDa)return;
     // Keine Datenlage -> Indikator raus (und weg ist auch sein Score).
     if(!erg||!erg.txt){
       if(idx>=0){rub.indicators.splice(idx,1);changed=true;}
@@ -7980,8 +8001,13 @@ function applySeasRetailFeed(){
     // der Kurshistorie des jeweiligen Proxys gerechnet; deshalb steht dort
     // der Proxy statt eines Links. Retail nennt den Broker.
     const proxy=SEASONALITY_DATA&&SEASONALITY_DATA.assets&&SEASONALITY_DATA.assets[c.id];
-    setOne(rub,SEAS_IND_NAME,s,proxy&&proxy.proxy?'seasonality_data.json · '+proxy.proxy:'seasonality_data.json');
-    setOne(rub,RETAIL_IND_NAME,rt,(SENTIMENT_DATA&&SENTIMENT_DATA.retailSource)||'https://www.myfxbook.com/community/outlook');
+    // ⚠ Je Zeile getrennt geprueft: die beiden haengen an VERSCHIEDENEN
+    // Dateien (seasonality_data.json bzw. sentiment_data.json) und kommen
+    // nicht zwingend zusammen an.
+    const seasDa=!!(SEASONALITY_DATA&&SEASONALITY_DATA.assets);
+    const retailDa=!!(SENTIMENT_DATA&&Array.isArray(SENTIMENT_DATA.retail)&&SENTIMENT_DATA.retail.length);
+    setOne(rub,SEAS_IND_NAME,s,proxy&&proxy.proxy?'seasonality_data.json · '+proxy.proxy:'seasonality_data.json',seasDa);
+    setOne(rub,RETAIL_IND_NAME,rt,(SENTIMENT_DATA&&SENTIMENT_DATA.retailSource)||'https://www.myfxbook.com/community/outlook',retailDa);
     // Karten-Bias wie in applyCotDataFeed direkt am Vorzeichen (die Karte
     // hat eine eigene, niedrigere Schwelle - rubAutoBiasNeeded schliesst
     // 'COT Data' aus).

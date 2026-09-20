@@ -279,6 +279,73 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
       fail('FUSSZEILE OHNE BLICKRICHTUNG', `${id}: die Fusszeile lautet "${r.fuss}" und nennt das Asset nicht.`);
   }
 
+  // ── EIN SYNC OHNE GELADENE QUELLE DARF DIE ZEILEN NICHT LOESCHEN ──
+  // Nutzer-Screenshot 2026-09-20 18:57 (VERSION-CHECK-534): USD-History
+  // zeigte "sync -0.9", und diesmal war die Bewegung ECHT. Gemessen: ein
+  // applySnap, waehrend SEASONALITY_DATA/SENTIMENT_DATA noch nicht geladen
+  // sind, liess USD von 3,3 auf 2,5 fallen - BEIDE Zeilen waren danach weg.
+  // reapplyLiveFeeds() ruft applySeasRetailFeed() bei jedem applySnap auf,
+  // und seasBiasFor/retailBiasFor liefern ohne geladene Quelle dasselbe
+  // leere Ergebnis wie fuer ein Asset, das wirklich keine Reihe hat - die
+  // Zeile wurde also geloescht, obwohl nur der Feed fehlte.
+  //
+  // ⚠ Die Pruefung hat ZWEI Haelften. Ohne die zweite waere ein Waechter
+  // gruen, der das Loeschen KOMPLETT ausgebaut hat - und dann staende bei
+  // NZD & Co. wieder eine Geisterzeile mit geschaetztem Nullwert.
+  // Gegenprobe beim Einbau: den quelleDa-Zweig entfernt -> erste Haelfte
+  // meldet USD 3,3 -> 2,5 und zwei fehlende Zeilen.
+  const sy = await p.evaluate(() => {
+    const usd = () => { const s = syms.find(x => x.id === 'USD'); return s ? symScoreCmp(s) : null; };
+    const zeilen = id => {
+      const s = syms.find(x => x.id === id); if (!s) return null;
+      const c = (s.rubrics || []).find(r => r.name === 'COT Data');
+      return (c && c.indicators || []).filter(i => i.name === 'Seasonality' || i.name === 'Retail Positioning').map(i => i.name);
+    };
+    const vorScore = usd(), vorZeilen = zeilen('USD');
+    // 1) Quellen wegnehmen (der Zustand frueh im Boot) und einen Stand adoptieren.
+    const sent = window.SENTIMENT_DATA, seas = window.SEASONALITY_DATA;
+    window.SENTIMENT_DATA = null; window.SEASONALITY_DATA = null;
+    _flipCauseTag = 'sync'; applySnap(snap()); _flipCauseTag = null;
+    const ohneQuelle = { score: usd(), zeilen: zeilen('USD') };
+    window.SENTIMENT_DATA = sent; window.SEASONALITY_DATA = seas;
+    // 2) Mit geladener Quelle muss die Geisterzeilen-Regel weiter greifen.
+    //    ⚠ Bloss NACHZUSEHEN, ob so ein Asset eine Zeile traegt, beweist
+    //    nichts: es hatte nie eine, also faellt ein ausgebautes Loeschen
+    //    dabei gar nicht auf (im ersten Anlauf genau so passiert - die
+    //    Gegenprobe blieb gruen). Die Zeile wird deshalb ABSICHTLICH
+    //    eingesetzt und muss wieder verschwinden.
+    const ohneReihe = (() => {
+      const d = window.SEASONALITY_DATA;
+      const id = (syms || []).map(x => x.id).find(x => !(d && d.assets && d.assets[x]));
+      if (!id) return null;
+      const s2 = syms.find(x => x.id === id);
+      const c = (s2.rubrics || []).find(r => r.name === 'COT Data');
+      if (!c) return null;
+      c.indicators.push({ id: 'geist', name: 'Seasonality', bias: 'bull', imp: false, date: '', interval: '',
+        research: { actual: '+9.99% · up in 99%', forecast: null, previous: null, source: 'waechter', cotColor: 'bond-up' } });
+      applySeasRetailFeed();
+      const uebrig = (zeilen(id) || []).filter(n => n === 'Seasonality');
+      c.indicators = c.indicators.filter(i => i.id !== 'geist');
+      applySeasRetailFeed();
+      return { id, zeilen: uebrig };
+    })();
+    return { vorScore, vorZeilen, ohneQuelle, ohneReihe, nachScore: usd() };
+  });
+  if (!sy.vorZeilen || sy.vorZeilen.length !== 2)
+    fail('PRUEFUNG UNTAUGLICH', `USD traegt vor dem Test ${(sy.vorZeilen || []).length} statt 2 Zeilen - der Sync-Test kann so nichts zeigen.`);
+  else if (sy.ohneQuelle.zeilen.length !== 2)
+    fail('SYNC OHNE QUELLE LOESCHT ZEILEN',
+      `Ein applySnap ohne geladenes SEASONALITY_DATA/SENTIMENT_DATA hat USD von ${sy.vorScore} auf ${sy.ohneQuelle.score} gedrueckt `
+      + `und ${2 - sy.ohneQuelle.zeilen.length} der beiden Zeilen entfernt (uebrig: ${sy.ohneQuelle.zeilen.join(', ') || 'keine'}). `
+      + `"Quelle noch nicht geladen" ist nicht "keine Datenlage" - siehe quelleDa in applySeasRetailFeed().`);
+  else if (Math.abs(sy.ohneQuelle.score - sy.vorScore) > 0.05)
+    fail('SYNC OHNE QUELLE BEWEGT DEN SCORE', `USD ${sy.vorScore} -> ${sy.ohneQuelle.score}, obwohl beide Zeilen stehen geblieben sind.`);
+  if (sy.ohneReihe && sy.ohneReihe.zeilen.length)
+    fail('GEISTERZEILE TROTZ FEHLENDER REIHE',
+      `${sy.ohneReihe.id} hat keine Saisonalitaets-Reihe im Feed, traegt die Zeile aber trotzdem. `
+      + `Eine eingesetzte Testzeile wurde bei geladener Quelle NICHT entfernt - die quelleDa-Pruefung darf das `
+      + `Entfernen nur aussetzen, solange die QUELLE fehlt, nicht generell.`);
+
   await b.close();
   if (perr.length) fail('SEITENFEHLER', perr.slice(0, 3).join(' | '));
   if (F.length) {
