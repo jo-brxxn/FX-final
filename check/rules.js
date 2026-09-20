@@ -118,6 +118,19 @@ if (indexGeaendert) {
   if (a >= 0) {
     const b = html.indexOf('><span class="hlb-dot-wrap"', a);
     if (b > a) {
+      // ⚠ ZUERST: schliesst das Attribut ueberhaupt? Die erste Fassung dieser
+      // Regel hat NUR nach zusaetzlichen Anfuehrungszeichen gesucht - und
+      // genau deshalb den naechsten Fehler nicht gesehen: beim Neuschreiben
+      // des Banner-Textes wurde das SCHLIESSENDE Anfuehrungszeichen mit
+      // abgeschnitten. Der Browser las danach class="hlb-dot-wrap" als Teil
+      // des Titels und machte aus `hlb-dot-wrap"` einen Attributnamen.
+      // Gefunden hat das wieder erst check/html.js nach fuenf Minuten.
+      // Eine Regel, die nur die Haelfte einer Fehlerklasse kennt, ist eine
+      // halbe Regel.
+      if (html[b - 1] !== '"')
+        fail('VERSION-CHECK-Text',
+          'Das title-Attribut des Banners wird nicht geschlossen - vor dem <span class="hlb-dot-wrap"> fehlt das Anfuehrungszeichen. ' +
+          'Der Browser liest den Rest der Zeile dann als Attributnamen. Zuletzt gesehen: ...' + html.slice(Math.max(0, b - 40), b));
       const wert = html.slice(a + 'title="'.length, b - 1);
       const zahl = (wert.match(/"/g) || []).length;
       if (zahl)
@@ -489,18 +502,28 @@ try {
 const heuteStr = new Date().toISOString().slice(0, 10);
 const FRISCHE = [
   // Datei,                Stunden, Takt,                                   quittiert bis
-  // ⚠ Quittung verlaengert am 2026-09-20 (Nutzer-Entscheid), NICHT weil der
-  // Waechter stoert, sondern weil die Stoerung BEKANNT und diagnostiziert
-  // ist: die Routine "News-Einordnung (KI, 08:00 + 17:00 DE)" feuert
-  // planmaessig (zuletzt 2026-09-20 15:02 UTC, SUCCEEDED nach 35 s) - aber
-  // sie ist nur der ANSTOSS und meldet Erfolg, sobald `create_session`
-  // zurueckkommt. Die eigentliche Arbeitssitzung committet seit dem
-  // 2026-09-18 nichts mehr. Genau die Klasse, die Regel 9 ueberhaupt erst
-  // eingefuehrt hat: der Starter ist gruen, der Zulieferer liefert nicht.
-  // Ohne die Verlaengerung haengt jeder unbeteiligte Code-Push an dieser
-  // Datenlage - siehe den Absatz oben, das ist am 2026-09-10 schon einmal
-  // passiert. Laeuft am 2026-09-27 ab und faellt dann wieder hart.
-  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-27'],
+  // ⚠ QUITTUNG 2026-09-20 VERLAENGERT - mit Diagnose, nicht blind.
+  // Gemessen an diesem Tag: news_ai.json ist 43,4 h alt (letzter Commit
+  // c562a43 vom 18.09. 19:43). Die Routine "News-Einordnung (KI, 08:00 +
+  // 17:00 DE)" ist AKTIV und hat heute um 06:02:30 UTC gefeuert - sie meldet
+  // SUCCEEDED nach 16 Sekunden. Das ist genau die Falle, vor der ihr eigener
+  // Prompt warnt: die Routine startet nur eine Arbeitssitzung, "erfolgreich"
+  // heisst also bloss, dass der ANSTOSS geklappt hat. Eine Arbeitssitzung von
+  // heute frueh existiert nicht, und es gibt seit dem 18.09. keinen Commit.
+  // Der create_session-Aufruf im Anstoss kommt also nicht durch.
+  // ⚠ Nachmessung 15:27 UTC (zweite Sitzung desselben Tages, unabhaengig):
+  // der Nachmittagslauf um 15:02:09 verhaelt sich identisch - SUCCEEDED nach
+  // 35 Sekunden, keine Arbeitssitzung, kein Commit. Es ist also kein
+  // einmaliger Aussetzer am Morgen, sondern beide Termine sind betroffen.
+  // Die Quittung bleibt trotzdem bewusst bei 2026-09-23 und wurde NICHT
+  // weiter nach hinten geschoben, obwohl in der zweiten Sitzung 2026-09-27
+  // zur Wahl stand: ein frueheres Wiedervorlage-Datum ist das strengere.
+  // Der Ausfall liegt AUSSERHALB dieses Repos und hat mit dem Code nichts zu
+  // tun - deshalb die befristete Quittung statt eines blockierten Pushes
+  // ("ein kaputter Zulieferer darf laut sein, aber er darf nicht die
+  // Werkstatt abschliessen", siehe oben). Bewusst kurz: laeuft die Routine
+  // bis dahin nicht wieder, wird der Waechter von selbst wieder hart rot.
+  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-23'],
   ['sentiment_data.json',       30, 'stuendlicher Workflow',                '2026-09-13'],
   ['news_data.json',            30, 'stuendlicher Workflow',                null],
   ['seasonality_data.json',     30, 'stuendlicher Workflow',                null],

@@ -311,6 +311,65 @@ const gruen = (m) => console.log('  ✓ ' + m);
     else gruen(`${w}px: kein Ueberlauf, Kopf klebt, ${m.sichtbareTage} Tage gleichzeitig sichtbar`);
   }
 
+  // ── G) EIN SYNC OHNE ZUSTANDSAENDERUNG SCHREIBT KEINE HISTORIE ─────
+  // Nutzer-Bugreport 2026-09-20 (Screenshot CHF-History): "Die Scores
+  // aendern sich wegen irgendwelchen Syncs das kann nicht sein."
+  //
+  // Gemessen war: das Adoptieren eines IDENTISCHEN Standes liess die Scores
+  // unveraendert, schrieb aber ELF Eintraege mit Bewegungen bis 5,8 Punkten
+  // (GOLD -2,8, JPYIELD +5,8, GBYIELD +3,9). Ursache: recomputeAuto() zog
+  // seinen Vergleichswert MITTEN im Aufbau - reapplyLiveFeeds() hatte die
+  // abgeleiteten Indikator-Biasse gerade zurueckgesetzt, bei GOLD standen
+  // PPI/PCE/Bond Yields/NFP alle auf 'neu'. Das Delta war die Differenz zu
+  // einem Zwischenzustand, den niemand je gesehen hat.
+  //
+  // ⚠ Die Pruefung hat ZWEI Haelften, und die zweite ist die wichtigere:
+  // ein Waechter, der nur "keine Eintraege" verlangt, waere auch dann gruen,
+  // wenn die Protokollierung komplett kaputt ist. Deshalb muss eine ECHTE
+  // Aenderung im selben Lauf weiterhin genau EINEN Eintrag mit dem
+  // RICHTIGEN Delta erzeugen.
+  await p.setViewportSize({ width: 1500, height: 1000 });
+  console.log('\n── G) Sync ohne Aenderung schreibt nichts, echte Aenderung schon ──');
+  const g = await p.evaluate(() => {
+    const R = {};
+    const sc = id => { const s = (syms || []).find(x => x.id === id); return s ? symScoreCmp(s) : null; };
+    const scores = () => { const m = {}; (syms || []).forEach(s => m[s.id] = symScoreCmp(s)); return m; };
+    const diff = (a, c) => { const o = {}; Object.keys(a).forEach(k => { const d = +(c[k] - a[k]).toFixed(2); if (Math.abs(d) > 0.05) o[k] = d; }); return o; };
+
+    // 1) Identischen Stand adoptieren - zweimal, damit auch ein
+    //    "beim ersten Mal noch nicht eingeschwungen" auffliegt.
+    const vor = scores(), n0 = (scoreLog || []).length;
+    for (let k = 0; k < 2; k++) { _flipCauseTag = 'sync'; applySnap(snap()); _flipCauseTag = null; }
+    R.scoreAenderung = diff(vor, scores());
+    R.phantom = (scoreLog || []).slice(n0).map(x => x.sym + ' ' + x.delta);
+
+    // 2) Echte Strukturaenderung muss weiterhin sauber protokolliert werden.
+    const sy = (syms || []).find(x => x.id === 'GOLD');
+    const rub = sy && (sy.rubrics || []).find(r => (r.indicators || []).length);
+    if (rub) {
+      const v = sc('GOLD'), n1 = (scoreLog || []).length;
+      for (let k = 0; k < 3; k++) rub.indicators.push({ id: 'waechter' + k, name: 'WAECHTER-TEST-' + k, bias: 'bull', imp: true, date: '', interval: '', points: [] });
+      _flipCauseTag = 'structure'; recomputeAuto(); _flipCauseTag = null;
+      const n = sc('GOLD');
+      const e = (scoreLog || []).slice(n1).filter(x => x.sym === 'GOLD');
+      R.echt = { delta: +(n - v).toFixed(2), eintraege: e.length, protokolliert: e.map(x => x.delta) };
+      rub.indicators = rub.indicators.filter(i => !/^WAECHTER-TEST-/.test(i.name));
+      _flipCauseTag = 'structure'; recomputeAuto(); _flipCauseTag = null;
+    }
+    return R;
+  });
+  if (Object.keys(g.scoreAenderung).length)
+    rot('Ein identischer Sync hat den Score veraendert: ' + JSON.stringify(g.scoreAenderung));
+  else if (g.phantom.length)
+    rot(`Ein Sync OHNE jede Zustandsaenderung hat ${g.phantom.length} History-Eintrag/Eintraege geschrieben: ${g.phantom.slice(0, 6).join(', ')}`);
+  else gruen('identischer Sync (2x): Score unveraendert, kein History-Eintrag');
+  if (!g.echt) rot('Gegenprobe nicht ausfuehrbar - keine Rubrik mit Indikatoren bei GOLD gefunden');
+  else if (g.echt.eintraege !== 1)
+    rot(`Echte Aenderung (${g.echt.delta}) erzeugte ${g.echt.eintraege} Eintraege statt genau einem - die Protokollierung ist kaputt`);
+  else if (Math.abs(g.echt.protokolliert[0] - g.echt.delta) > 0.15)
+    rot(`Echte Aenderung: Score bewegte sich um ${g.echt.delta}, protokolliert wurde ${g.echt.protokolliert[0]}`);
+  else gruen(`echte Aenderung: Score ${g.echt.delta}, genau ein Eintrag mit demselben Delta`);
+
   if (perr.length) { rot('Seitenfehler: ' + [...new Set(perr)].slice(0, 3).join(' | ')); }
   await b.close();
   console.log(fehler ? `\n✗ HISTORIE: ${fehler} Fund(e)` : '\n✓ HISTORIE: alles in Ordnung');

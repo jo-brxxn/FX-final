@@ -16079,7 +16079,109 @@ Problem ist. Gegenprobe mit wieder eingebautem `"`: rot samt Fundstelle.
 
 ---
 
-## 2026-09-20 — Prüfdurchgang Score-System („rechne wirklich alles nach")
+## 2026-09-20 — Sync bewegte die Scores nicht, behauptete es aber (VERSION-CHECK-532)
+
+**Nutzer-Bugreport mit Screenshot der CHF-History:** *„Die Scores ändern sich
+wegen irgendwelchen Syncs das kann nicht sein Check das"* — in der Historie
+standen Zeilen wie „state adopted from another tab/device (sync). auto +0.1"
+als Ursache einer Score-Bewegung.
+
+### Reproduziert und gemessen (nicht aus dem Code abgeleitet)
+
+Ein **identischer** Stand adoptiert (`applySnap(snap())` mit
+`_flipCauseTag='sync'`):
+
+| | Ergebnis |
+|---|---|
+| Score-Änderung | **keine** — alle 24 Assets unverändert |
+| geschriebene History-Einträge | **11** |
+| behauptete Bewegungen | GOLD −2,8 · JPYIELD +5,8 · GBYIELD +3,9 · USYIELD +3,0 · CHYIELD +2,3 … |
+
+### Ursache, am Messpunkt selbst nachgemessen
+
+`recomputeAuto()` zog seinen Vergleichswert **mitten im Aufbau**.
+`reapplyLiveFeeds()` hatte unmittelbar davor die abgeleiteten
+Indikator-Biasse zurückgesetzt. Gemessen an GOLD in genau diesem Moment:
+
+- **Beim Messen:** PPI, PCE, Inflation Expectations, 2Y + 10Y Bond Yield und
+  NFP alle auf `neu` → Score **+0,4**
+- **Nach dem Aufbau:** dieselben Indikatoren `bear` → Score **−2,4**
+
+Die protokollierten −2,8 waren also die Differenz zu einem Zwischenzustand,
+den der Nutzer **nie zu sehen bekommt** — kein echter Score-Sprung.
+
+⚠ Zwei Verdachtsmomente wurden vorher gemessen und **widerlegt**, statt sie
+zu „fixen": der nicht-enumerierbare `_symId`-Stempel (Entfernen ändert im
+Classic-Modus nichts) und die Reihenfolge `reapplyLiveFeeds`/`recomputeAuto`
+(steht bereits richtig).
+
+### Die Fehlerklasse war größer als der gemeldete Fall
+
+Bei `cot`, `sentiment`, `bond` und `seasonality` läuft der Feed **ebenfalls
+vor** dem Setzen der Ursache (`autoFetchCot` & Co.) — also hat auch **jeder
+automatische Feed-Lauf** aufgeblähte Deltas protokolliert, nicht nur der Sync.
+
+### Behoben an der Wurzel, nicht an sechs Aufrufstellen
+
+Verglichen wird nicht mehr gegen einen frisch gezogenen Zwischenstand,
+sondern gegen den letzten **eingeschwungenen** Score (`_lastSettledScores`) —
+den, der zuletzt wirklich auf dem Bildschirm stand. Gefüllt wird er am
+**Ende** jedes Durchlaufs, also genau dann, wenn der Zustand fertig ist.
+Damit ist das Delta immer „sichtbar → sichtbar".
+
+**Nachgemessen:** identischer Sync zweimal hintereinander → Score
+unverändert, **0 Einträge**. Echte Strukturänderung → Score −2,4 auf 0,
+**genau ein** Eintrag mit Delta 2,4.
+
+### Wächter `check/historie.js` Stufe G — und was die Gegenprobe aufdeckte
+
+Geprüft werden **beide Hälften**, und die zweite ist die wichtigere: ein
+Wächter, der nur „keine Einträge" verlangt, wäre auch dann grün, wenn die
+Protokollierung komplett kaputt ist.
+
+Genau das hat die Gegenprobe gezeigt. Mit wieder eingebautem Fehler meldet
+Stufe G **zwei** Funde:
+
+```
+✗ Ein Sync OHNE jede Zustandsaenderung hat 22 History-Eintraege geschrieben
+✗ Echte Aenderung (2.4) erzeugte 0 Eintraege statt genau einem
+```
+
+Der alte Code war also **in beide Richtungen** falsch: Phantom-Einträge, wo
+nichts passierte — und **null** Einträge, wo wirklich etwas passierte.
+
+### Nebenbefund: die News-Routine liefert nicht mehr
+
+`check/rules.js` meldete `news_ai.json` als 43,4 h alt (Grenze 40). Nach
+`git pull` weiterhin rot, also kein veralteter Arbeitsstand. Diagnose: die
+Routine „News-Einordnung (KI, 08:00 + 17:00 DE)" ist aktiv, feuerte heute
+06:02:30 UTC und meldet **SUCCEEDED nach 16 Sekunden** — genau die Falle, vor
+der ihr eigener Prompt warnt: sie startet nur eine Arbeitssitzung,
+„erfolgreich" heißt also bloß, dass der *Anstoß* lief. Eine Arbeitssitzung von
+heute früh existiert nicht, letzter Commit ist `c562a43` vom 18.09. 19:43 —
+der `create_session`-Aufruf kommt nicht durch.
+
+Der Ausfall liegt außerhalb des Repos. Quittung deshalb befristet bis
+**2026-09-23** verlängert (Grundsatz des Wächters: „ein kaputter Zulieferer
+darf laut sein, aber er darf nicht die Werkstatt abschließen"). Läuft die
+Routine bis dahin nicht wieder, wird der Wächter von selbst wieder hart rot.
+
+### Nachtrag gleichen Tages — dieselbe Zeile, die andere Hälfte des Fehlers
+
+Der Prüflauf war erneut rot, wieder am Versionsbanner — diesmal mit dem
+Attributnamen `hlb-dot-wrap"`. Ursache war mein eigener Ersetzungs-Schnitt:
+beim Neuschreiben des Banner-Textes wurde das **schließende**
+Anführungszeichen des `title`-Attributs mit abgeschnitten. Der Browser las
+danach `class="hlb-dot-wrap"` als Teil des Titels.
+
+⚠ **Die am Vortag gebaute Regel 1a hat das nicht gesehen.** Sie suchte nur
+nach *zusätzlichen* Anführungszeichen im Attributwert — ein *fehlendes*
+schließendes fällt dabei nicht auf, im Gegenteil: der Wert wirkt dadurch
+besonders sauber. Eine Regel, die nur die Hälfte einer Fehlerklasse kennt,
+ist eine halbe Regel. Sie prüft jetzt zuerst, ob das Attribut überhaupt
+geschlossen wird. Gegenprobe mit entferntem Anführungszeichen: rot samt
+Fundstelle.
+## 2026-09-20 — Prüfdurchgang Score-System („rechne wirklich alles nach", VERSION-CHECK-533)
 
 Nutzer-Auftrag: *„Schau dir das Score System an und versteh es dann schau was
 da alles zugehört also history set ups usw und schau ob das alles passt die
@@ -16243,13 +16345,22 @@ am 2026-09-18 19:22 geschrieben, bei einem 40-Stunden-Limit und
 zweimal-täglichem Takt. Die Arbeitskopie steht auf `origin/main`, es ist also
 **kein** veralteter Checkout, sondern ein echter Ausfall der KI-Einordnung.
 
-**Nachtrag gleichen Tages — Quittung für `news_ai.json` bis 2026-09-27.**
-Nutzer-Entscheid, nachdem der Prüflauf 31 von 32 grün war und allein dieser
-Datenausfall den Push blockiert hätte. Diagnostiziert, nicht weggeklickt: die
-Routine *„News-Einordnung (KI, 08:00 + 17:00 DE)"* feuert planmäßig (zuletzt
-2026-09-20 15:02 UTC, `SUCCEEDED` nach 35 Sekunden) — sie ist aber nur der
-**Anstoß** und meldet Erfolg, sobald `create_session` zurückkommt. Die
-eigentliche Arbeitssitzung committet seit dem 2026-09-18 nichts mehr. Genau
-die Klasse, für die Regel 9 gebaut wurde: der Starter ist grün, der Zulieferer
-liefert nicht. Ohne die Verlängerung hinge jeder unbeteiligte Code-Push an
-dieser Datenlage — das ist am 2026-09-10 schon einmal passiert.
+**Nachtrag gleichen Tages — `news_ai.json`, zweite unabhängige Messung.**
+Der Prüflauf war 31 von 32 grün, allein dieser Datenausfall hätte den Push
+blockiert. Der Nutzer hat der befristeten Quittung zugestimmt.
+
+⚠ Beim Merge auf `main` stellte sich heraus, dass die parallele Sitzung
+(Eintrag direkt darüber) am selben Tag **dieselbe Quittung schon auf
+2026-09-23 gesetzt** hatte — mit der besseren Diagnose: die Routine feuert,
+aber es existiert gar keine Arbeitssitzung, der `create_session`-Aufruf im
+Anstoß kommt also nicht durch. Ich hatte in der Rückfrage 2026-09-27
+angeboten und der Nutzer das gewählt; **beim Auflösen des Konflikts ist
+trotzdem das frühere Datum stehen geblieben**, weil ein früheres
+Wiedervorlage-Datum das strengere ist und die fremde Diagnose nicht durch
+meine ersetzt werden sollte. Hinzugefügt habe ich nur die eine Messung, die
+dort fehlte: der Nachmittagslauf um **15:02:09 UTC** verhält sich identisch
+(`SUCCEEDED` nach 35 s, keine Arbeitssitzung, kein Commit) — es sind also
+**beide** Termine betroffen, nicht nur der Morgenlauf.
+
+Zwei Sitzungen desselben Tages sind hier unabhängig auf denselben Befund
+gestoßen und haben ihn unabhängig gleich bewertet.
