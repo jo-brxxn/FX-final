@@ -489,7 +489,18 @@ try {
 const heuteStr = new Date().toISOString().slice(0, 10);
 const FRISCHE = [
   // Datei,                Stunden, Takt,                                   quittiert bis
-  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-17'],
+  // ⚠ Quittung verlaengert am 2026-09-20 (Nutzer-Entscheid), NICHT weil der
+  // Waechter stoert, sondern weil die Stoerung BEKANNT und diagnostiziert
+  // ist: die Routine "News-Einordnung (KI, 08:00 + 17:00 DE)" feuert
+  // planmaessig (zuletzt 2026-09-20 15:02 UTC, SUCCEEDED nach 35 s) - aber
+  // sie ist nur der ANSTOSS und meldet Erfolg, sobald `create_session`
+  // zurueckkommt. Die eigentliche Arbeitssitzung committet seit dem
+  // 2026-09-18 nichts mehr. Genau die Klasse, die Regel 9 ueberhaupt erst
+  // eingefuehrt hat: der Starter ist gruen, der Zulieferer liefert nicht.
+  // Ohne die Verlaengerung haengt jeder unbeteiligte Code-Push an dieser
+  // Datenlage - siehe den Absatz oben, das ist am 2026-09-10 schon einmal
+  // passiert. Laeuft am 2026-09-27 ab und faellt dann wieder hart.
+  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-27'],
   ['sentiment_data.json',       30, 'stuendlicher Workflow',                '2026-09-13'],
   ['news_data.json',            30, 'stuendlicher Workflow',                null],
   ['seasonality_data.json',     30, 'stuendlicher Workflow',                null],

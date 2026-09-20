@@ -16242,3 +16242,14 @@ den Yield-Assets).
 am 2026-09-18 19:22 geschrieben, bei einem 40-Stunden-Limit und
 zweimal-täglichem Takt. Die Arbeitskopie steht auf `origin/main`, es ist also
 **kein** veralteter Checkout, sondern ein echter Ausfall der KI-Einordnung.
+
+**Nachtrag gleichen Tages — Quittung für `news_ai.json` bis 2026-09-27.**
+Nutzer-Entscheid, nachdem der Prüflauf 31 von 32 grün war und allein dieser
+Datenausfall den Push blockiert hätte. Diagnostiziert, nicht weggeklickt: die
+Routine *„News-Einordnung (KI, 08:00 + 17:00 DE)"* feuert planmäßig (zuletzt
+2026-09-20 15:02 UTC, `SUCCEEDED` nach 35 Sekunden) — sie ist aber nur der
+**Anstoß** und meldet Erfolg, sobald `create_session` zurückkommt. Die
+eigentliche Arbeitssitzung committet seit dem 2026-09-18 nichts mehr. Genau
+die Klasse, für die Regel 9 gebaut wurde: der Starter ist grün, der Zulieferer
+liefert nicht. Ohne die Verlängerung hinge jeder unbeteiligte Code-Push an
+dieser Datenlage — das ist am 2026-09-10 schon einmal passiert.
