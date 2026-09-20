@@ -467,6 +467,136 @@ const gruen = (m) => console.log('  ✓ ' + m);
   else gruen(`COT-Lieferung: Score ${g2.delta}, genau ein Eintrag mit Ursache "cot"`);
 
   if (perr.length) { rot('Seitenfehler: ' + [...new Set(perr)].slice(0, 3).join(' | ')); }
+  // ── H) DIE ZAHL AM EVENT IST DIE TAGESWIRKUNG, KEIN STAND ──────────
+  // Nutzer-Bugreport 2026-09-20, dritter Anlauf ("Immernoch ergibt es keinen
+  // Sinn"): am Samstag standen zwei Zeilen mit +0,5 und +0,5, daneben ein
+  // Tagesdelta von -1,8. Ursache war, dass effOf() den HEUTIGEN Beitrag
+  // (indScoreParts) auf ein altes Datum stempelte - ein Stand neben einem
+  // Delta. Drei Haelften, jede mit eigener Gegenprobe:
+  //   1. Bei einem vergangenen Release muss die Zahl von indScoreParts(heute)
+  //      ABWEICHEN, sobald der Decay gewirkt hat. Sonst ist es wieder der Stand.
+  //   2. Laufende Zustaende (Bond/COT/Sentiment) fuehren keine Beitrags-Reihe
+  //      je Tag - sie duerfen KEINE Zahl behaupten, sondern zeigen einen Strich.
+  //   3. Die Zahl steht auf derselben Skala wie Delta und Kartenzerlegung
+  //      (roh x Fairness-Faktor). Sonst sind es wieder zwei Massstaebe.
+  // ⚠ Modus normalized, aus demselben Grund wie bei G0: ohne Decay ist der
+  // heutige Stand zufaellig gleich der Tageswirkung und Haelfte 1 waere blind.
+  console.log('\n── H) Event-Zahl = Tageswirkung, nicht heutiger Stand ──');
+  const h1 = await p.evaluate(() => {
+    const byD = symScoreDrivingEventsByDate('USD');
+    const heute = todayStr();
+    const rel = [], lauf = [];
+    Object.keys(byD).forEach(d => (byD[d] || []).forEach(e => {
+      const o = { d, n: e.name, sc: e.sc, wk: e.scWirkung, art: e.bond ? 'bond' : e.cot ? 'cot' : e.sent ? 'sent' : 'release' };
+      (o.art === 'release' ? rel : lauf).push(o);
+    }));
+    // Ein vergangenes Release mit spuerbarem Beitrag - dort muss der Decay
+    // zwischen "damals" und "heute" einen Unterschied machen.
+    const probe = rel.filter(o => o.d < heute && o.sc != null && Math.abs(o.sc) > 0.2);
+    const gleich = probe.filter(o => o.wk == null || Math.abs(o.wk - o.sc) < 0.01);
+    return { relN: rel.length, laufN: lauf.length, probeN: probe.length,
+      gleich: gleich.slice(0, 4), mitZahl: lauf.filter(o => o.wk != null).slice(0, 4) };
+  });
+  if (!h1.probeN) rot('Kein vergangenes Release mit Beitrag gefunden - Stufe H kann nichts zeigen');
+  else if (h1.gleich.length === h1.probeN)
+    rot(`Alle ${h1.probeN} vergangenen Releases zeigen exakt ihren HEUTIGEN Beitrag als Tageswirkung `
+      + `(${h1.gleich.map(o => o.n + ' ' + o.sc).join(', ')}) - die Zeile nennt wieder einen Stand statt einer Veraenderung.`);
+  else gruen(`${h1.probeN - h1.gleich.length} von ${h1.probeN} vergangenen Releases zeigen eine Tageswirkung, die vom heutigen Stand abweicht`);
+  // ⚠ AKTIV pruefen, nicht bloss nachsehen. Bond/COT/Sentiment haben heute
+  // gar keine chartHist - die Sperre in histIndBeitragAm ist damit bei den
+  // aktuellen Daten redundant, und ein blosses "traegt keine Zahl" waere auch
+  // mit ausgebauter Sperre gruen (im ersten Anlauf genau so gemessen).
+  // Deshalb bekommt eine Bond-Zeile hier eine Historie angehaengt: auch DANN
+  // darf keine Tageswirkung entstehen, denn der Beitrag einer laufenden
+  // Messung laesst sich daraus nicht rekonstruieren.
+  const h1b = await p.evaluate(() => {
+    const sy = syms.find(s => s.id === 'USD');
+    let ziel = null, rubZ = null;
+    (sy.rubrics || []).forEach(r => (r.indicators || []).forEach(i => {
+      const rr = i.research || {};
+      if (!ziel && (rr.bond || rr.cot || rr.sent)) { ziel = i; rubZ = r; }
+    }));
+    if (!ziel) return null;
+    const alt = ziel.chartHist;
+    const heute = todayStr();
+    const tag = n => { const d = new Date(heute); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+    ziel.chartHist = [[tag(40), '1', '0.9'], [tag(30), '1.1', '1'], [tag(20), '1.2', '1.1'],
+                      [tag(10), '1.3', '1.2'], [tag(2), '1.4', '1.3'], [tag(1), '1.5', '1.4']];
+    let wk = null; try { wk = histIndWirkungAm(ziel, rubZ, 'USD', tag(1)); } catch (e) { wk = 'ERR'; }
+    ziel.chartHist = alt;
+    return { name: ziel.name, wirkung: wk };
+  });
+  if (!h1b) rot('Kein laufender Zustand (Bond/COT/Sentiment) bei USD gefunden - Haelfte 2 laeuft ins Leere');
+  else if (h1b.wirkung != null)
+    rot(`"${h1b.name}" ist ein laufend gemessener Zustand, hat aber mit angehaengter Historie eine Tageswirkung `
+      + `von ${h1b.wirkung} behauptet. Bond/COT/Sentiment fuehren keine Beitrags-Reihe je Tag - dort gehoert `
+      + `ein Strich hin, keine Zahl.`);
+  else if (h1.mitZahl.length)
+    rot(`Laufende Zustaende behaupten eine Tageswirkung: ${h1.mitZahl.map(o => o.art + ' ' + o.n + ' = ' + o.wk).join(', ')}.`);
+  else gruen(`${h1.laufN} laufende Zustaende zeigen keine Tageswirkung - auch "${h1b.name}" nicht, als ihm testweise eine Historie angehaengt wurde`);
+
+  // 3) Skala: die angezeigte Zahl muss roh x Faktor sein, nicht roh.
+  const h2 = await p.evaluate(() => {
+    const div = document.createElement('div'); div.innerHTML = renderSymHistoryPanel('USD');
+    const byD = symScoreDrivingEventsByDate('USD');
+    const sym = syms.find(s => s.id === 'USD');
+    const f = symCmpFactor(sym);
+    const out = [];
+    [...div.querySelectorAll('.hw-day')].forEach(t => {
+      const d = t.getAttribute('data-d');
+      [...t.querySelectorAll('.histp-evt')].forEach(e => {
+        const nm = ((e.querySelector('.histp-name') || {}).textContent || '').trim();
+        const v = ((e.querySelector('.histp-eff') || {}).textContent || '').trim();
+        if (v === '–' || v === '') return;
+        const ev = (byD[d] || []).find(x => nm.indexOf(x.name) === 0);
+        if (!ev || ev.scWirkung == null || !ev.scWirkung) return;
+        out.push({ d, nm, gezeigt: parseFloat(v), roh: ev.scWirkung, erwartet: Math.round(ev.scWirkung * f * 100) / 100 });
+      });
+    });
+    return { faktor: f, zeilen: out };
+  });
+  const falscheSkala = h2.zeilen.filter(z => Math.abs(z.gezeigt - z.erwartet) > 0.06);
+  if (!h2.zeilen.length) rot('Keine bezifferte Event-Zeile gefunden - die Skalen-Pruefung laeuft ins Leere');
+  else if (falscheSkala.length)
+    rot(`${falscheSkala.length} Event-Zahl(en) stehen nicht auf der Vergleichsskala: `
+      + falscheSkala.slice(0, 3).map(z => `${z.nm} zeigt ${z.gezeigt}, erwartet ${z.erwartet} (roh ${z.roh} x ${h2.faktor})`).join('; ')
+      + ' - Delta und Kartenzerlegung rechnen mit dem Faktor, die Event-Zahl muss das auch.');
+  else gruen(`${h2.zeilen.length} Event-Zahl(en) auf derselben Skala wie Delta und Kartenzerlegung (Faktor ${h2.faktor})`);
+
+  // ── H2) DIE WOCHENSUMME FOLGT DERSELBEN VERGLEICHSREGEL ────────────
+  // Sie rechnete stur "letzter minus erster Tag" - quer ueber einen
+  // Modellwechsel, den die Tageszeile daneben mit "n/c" verweigert. Im
+  // gemeldeten Screenshot stand oben "+2,3 this week", waehrend die heutige
+  // Zeile sagte, sie sei mit gestern nicht vergleichbar.
+  console.log('\n── H2) Wochensumme und Tagesdelta folgen derselben Regel ──');
+  // ⚠ Geprueft werden die ENDEN der Woche, nicht jeder n/c-Tag darin: die
+  // Summe ist "letzter minus erster Tag", ein taglosen Tag in der MITTE macht
+  // diese beiden nicht unvergleichbar (erster Entwurf hat genau das
+  // faelschlich gemeldet). Ein Modellwechsel ZWISCHEN den Enden ist dagegen
+  // genau der Fall aus dem Bugreport: Sonntag unter Modell 13, Montag unter
+  // 12, und oben stand trotzdem "+2,3 this week".
+  // Sichtbares Merkmal: das Sternchen am Tagesscore markiert einen Eintrag aus
+  // einem FRUEHEREN Modell. Tragen die beiden Enden es unterschiedlich, liegt
+  // dazwischen ein Wechsel.
+  const h3 = await p.evaluate(() => {
+    const div = document.createElement('div'); div.innerHTML = renderSymHistoryPanel('USD');
+    return [...div.querySelectorAll('.hw-week')].map(w => {
+      const mitScore = [...w.querySelectorAll('.hw-day')]
+        .map(t => ((t.querySelector('.hw-sc') || {}).textContent || '').trim())
+        .filter(x => x && x !== '–');
+      return { summe: ((w.querySelector('.hw-hd-n') || {}).textContent || '').trim(),
+        erstesAlt: mitScore.length ? /\*/.test(mitScore[mitScore.length - 1]) : null,
+        letztesAlt: mitScore.length ? /\*/.test(mitScore[0]) : null,
+        n: mitScore.length };
+    });
+  });
+  const widerspruch = h3.filter(w => w.n >= 2 && w.erstesAlt !== w.letztesAlt && /this week/.test(w.summe));
+  if (widerspruch.length)
+    rot(`${widerspruch.length} Woche(n) nennen eine Summe ("${widerspruch[0].summe}"), obwohl ihre beiden Enden unter `
+      + `VERSCHIEDENEN Score-Modellen aufgezeichnet sind. Genau das stand im Bugreport: oben eine Wochensumme, `
+      + `unten "n/c" fuer denselben Uebergang.`);
+  else gruen(`${h3.length} Wochen: keine nennt eine Summe ueber einen Modellwechsel hinweg`);
+
   await b.close();
   console.log(fehler ? `\n✗ HISTORIE: ${fehler} Fund(e)` : '\n✓ HISTORIE: alles in Ordnung');
   process.exit(fehler ? 1 : 0);

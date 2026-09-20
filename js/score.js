@@ -1681,7 +1681,7 @@ export {
 // ⚠ indDecayWeight/indDecayExempt stehen hier fuer check/score.js: der
 // Waechter muss pruefen koennen, WELCHE Indikatoren einen Alters-Faktor
 // tragen - sonst faellt eine falsch gezogene Ausnahme erst dem Nutzer auf.
-if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,setScoreMode,setScoreModeVal,invalidateNormCache,indMarketWeight,symScore,symScoreCmp,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
+if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,setScoreMode,setScoreModeVal,invalidateNormCache,indMarketWeight,symScore,symScoreCmp,symCmpFactor,symTrackedCount,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
 // ⚠ scoreMode gehoert NICHT in das Object.assign darueber (Fund im
 // Pruefdurchgang 2026-09-20). Object.assign kopiert den WERT zum Zeitpunkt
 // des Modul-Starts - window.scoreMode war danach eine tote Momentaufnahme.

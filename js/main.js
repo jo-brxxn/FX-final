@@ -976,11 +976,30 @@ function symScoreDrivingEventsByDate(id){
     if(sc<-0.0001)return'bear';
     return'neu';
   };
+  // ⚠ WAS IN DER ZEILE STEHT, IST DIE TAGESWIRKUNG - NICHT DER HEUTIGE STAND
+  // (Nutzer-Bugreport 2026-09-20, dritter Anlauf). Bis dahin stand hier
+  // effOf() = indScoreParts von HEUTE, gestempelt auf ein altes Datum; der
+  // Tooltip gab es sogar zu ("Contribution of this release to the current
+  // score"). Neben dem Tagesdelta gelesen ergab das Widersprueche wie
+  // "+0,5 und +0,5" neben "-1,8". histIndWirkungAm() liefert stattdessen die
+  // Veraenderung gegen den Vortag, aus derselben Rechnung (siehe dort).
+  // `sc` bleibt der heutige Stand - er traegt weiterhin die OUT-OF-DATE- und
+  // Display-only-Begruendungen und steht im Tooltip.
   const pushForInd=(ind,lookupId,rub,scoreId,sign)=>{
     const r=ind.research;
-    const sc=effOf(ind,rub,scoreId,sign),sb=biasOf(ind,sc);
-    const meta={sc,scBias:sb,scZero:sc===0,scStale:(()=>{try{return !!indIsStale(ind);}catch(e){return false;}})(),
-      scDisplayOnly:(typeof SCORE_ZERO!=='undefined'&&SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))};
+    const sc=effOf(ind,rub,scoreId,sign);
+    const wirkungAm=d=>{
+      if(!d)return null;
+      let w=null;try{w=histIndWirkungAm(ind,rub,scoreId,String(d).slice(0,10));}catch(e){w=null;}
+      return w==null?null:(sign===-1?-w:w);
+    };
+    const mk=d=>{
+      const wk=wirkungAm(d);
+      return{sc,scWirkung:wk,scBias:biasOf(ind,wk==null?sc:wk),scZero:(wk==null?sc:wk)===0,
+        scStale:(()=>{try{return !!indIsStale(ind);}catch(e){return false;}})(),
+        scDisplayOnly:(typeof SCORE_ZERO!=='undefined'&&SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))};
+    };
+    const meta=mk(r&&r.date);
     if(r&&r.feed&&r.date&&r.actual!=null){
       const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:r.forecast,previous:r.previous},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
@@ -989,7 +1008,9 @@ function symScoreDrivingEventsByDate(id){
     const ev=lookupId?findIndEvent(lookupId,ind.name):null;
     // ⚠ Kopie: `ev` stammt direkt aus calEvts - die Felder dort anzureichern
     // wuerde den gemeinsamen Kalender-Datensatz veraendern.
-    if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(Object.assign({},ev,meta));return;}
+    // ⚠ Und die Wirkung gehoert zu SEINEM Datum, nicht zu dem des gespeicherten
+    // Releases - sonst stuende die Bewegung eines anderen Tages daneben.
+    if(ev){(byDate[ev.date]=byDate[ev.date]||[]).push(Object.assign({},ev,mk(ev.date)));return;}
     if(r&&r.bond&&r.date&&r.actual!=null&&r.previous!=null){
       const synth=Object.assign({name:indName(ind),date:r.date,time:'',actual:r.actual,forecast:r.previous,previous:r.previous,bond:true},meta);
       (byDate[r.date]=byDate[r.date]||[]).push(synth);
@@ -1050,6 +1071,13 @@ function histZeroReason(ev){
   if(ev.scDisplayOnly)return'Display only - this indicator never counts toward the score.';
   if(ev.scStale)return'Out of date - more than '+IND_STALE_CYCLES+' of its own release cycles overdue, so it no longer counts.';
   if(ev.bond)return'Inside the '+(BOND_DEAD_BAND*100)+'bp dead band between the 5-day and 21-day average - too small to count as a move.';
+  // ⚠ Seit 2026-09-20 ist die Zahl die TAGESWIRKUNG. Eine 0 heisst hier also
+  // nicht mehr "zaehlt nicht", sondern "hat an diesem Tag nichts verschoben" -
+  // der Indikator kann sehr wohl einen Beitrag leisten, er war nur schon
+  // vorher genauso eingestuft.
+  if(ev.scWirkung===0&&ev.sc!=null&&Math.abs(ev.sc)>0.0001)
+    return'This release did not move the score on this day - the indicator was already rated the same way before it. '
+      +'It contributes '+fmtHistEff(ev.sc)+' to the score.';
   return'No clear signal - the score counts this release as neutral.';
 }
 function symHistoryDays(id,days){
@@ -1218,6 +1246,117 @@ function histLetztesRelease(ind,datum){
   const r=ind.research;
   if(best==null&&r&&r.date&&String(r.date).slice(0,10)<=datum)best=String(r.date).slice(0,10);
   return best;
+}
+// ══ WAS HAT DIESER INDIKATOR AN DIESEM TAG BEWEGT? ═════════════════════
+// Nutzer-Bugreport 2026-09-20, dritter Anlauf: *"Immernoch ergibt es keinen
+// Sinn"*, Screenshot der USD-History. Am Samstag standen zwei Zeilen mit
+// **+0,5** und **+0,5**, daneben ein Tagesdelta von **-1,8** - und die
+// Kartenzerlegung nannte Karten (Economic Growth, COT), in denen die beiden
+// Zeilen gar nicht liegen.
+//
+// URSACHE, nicht vermutet sondern im Code belegt: `effOf()` in
+// symScoreDrivingEventsByDate ruft `indScoreParts(ind,rub,scoreId)` - das ist
+// der Beitrag, den der Indikator **HEUTE** leistet (der Tooltip sagte es
+// woertlich: "Contribution of this release to the current score"). Diese Zahl
+// stand in derselben Zeile neben dem Delta, das die Bewegung **an jenem Tag**
+// ist. Ein STAND neben einer VERAENDERUNG - das kann nur zufaellig
+// zusammenpassen. Gemessen an USD:
+//   Sa 19.09.  Events +0,5 und +0,5      Tagesdelta -1,8
+//   Di 15.09.  Events +0,5 / 0 / -1      COT-Karte  +0,8
+//   Do 17.09.  Claims +0,53              Labour Market +0,8
+// Der Unterschied bei den echten Releases ist ueberwiegend der Zeit-Decay:
+// der heutige Beitrag eines Releases vom 17. ist kleiner als der, den es am
+// 17. hatte.
+//
+// Diese Funktion liefert den Beitrag AM STICHTAG. ⚠ Sie stellt KEINE zweite
+// Formel neben den Score - sie baut einen Klon des Indikators mit dem
+// Release, das an dem Tag galt, und laesst dann `indScoreParts()` rechnen,
+// also exakt dieselbe Kette (Gewicht, Halbgewicht, Normierung, Altersgrenze).
+// Zwei Kniffe machen das moeglich:
+//   1. DATUMS-VERSCHIEBUNG. indScoreParts misst das Alter gegen HEUTE. Der
+//      Klon bekommt deshalb ein Datum, das heute genauso alt ist wie das
+//      echte Release am Stichtag war - damit stimmen Decay UND Altersgrenze.
+//   2. ABGESCHNITTENE HISTORIE. Der Massstab (indSurpriseScale) sieht nur,
+//      was an dem Tag schon bekannt war. Kein Blick in die Zukunft - dieselbe
+//      Vintage-Regel wie in docs/score-model.md.
+// null = nicht rekonstruierbar (laufende Zustaende wie Bond/COT/Sentiment
+// haben keine Beitrags-Reihe je Tag, und ohne chartHist gibt es nichts zu
+// rekonstruieren). Dann wird KEINE Zahl behauptet.
+// Memo. ⚠ Selbst-invalidierend nach demselben Muster wie _mktWeightCache:
+// der Eintrag merkt sich die chartHist-IDENTITAET und den Modus, aus denen er
+// entstanden ist. Ohne das waere es der vierte Cache an einem Tag, der seine
+// Quelle nicht kennt. Gebraucht wird er, weil jeder Aufruf einen Klon baut
+// und indMarketWeight dadurch die Preisreihe neu durchrechnet - ohne Memo
+// kostete renderSymHistoryPanel('USD') gemessen 88 ms.
+const _histBeitragMemo=new Map();
+function histIndBeitragAm(ind,rub,symId,datum){
+  if(!ind||!rub||!datum)return null;
+  const mk=symId+'|'+ind.name+'|'+datum;
+  const mv=_histBeitragMemo.get(mk);
+  if(mv&&mv.src===ind.chartHist&&mv.modus===scoreMode)return mv.val;
+  const base=stripPeriodSuffix(ind.name).base;
+  if(typeof SCORE_ZERO!=='undefined'&&SCORE_ZERO.has(base)){_histBeitragMemo.set(mk,{src:ind.chartHist,modus:scoreMode,val:0});return 0;}
+  const r=ind.research||{};
+  const merk=v=>{_histBeitragMemo.set(mk,{src:ind.chartHist,modus:scoreMode,val:v});return v;};
+  if(r.bond||r.cot||r.sent)return merk(null);    // laufender Zustand, keine Tagesreihe
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  if(!h.length)return merk(null);
+  const pts=h.map(e=>Array.isArray(e)?{d:String(e[0]||'').slice(0,10),a:e[1],f:(e.length>2?e[2]:null)}:null)
+             .filter(x=>x&&x.d&&x.a!=null&&x.a!=='')
+             .sort((x,y)=>x.d.localeCompare(y.d));
+  let i=-1;
+  for(let k=0;k<pts.length;k++){if(pts[k].d<=datum)i=k;else break;}
+  if(i<0)return merk(null);                      // an dem Tag gab es noch nichts
+  const cur=pts[i],prev=i>0?pts[i-1]:null;
+  const hatFc=cur.f!=null&&cur.f!=='';
+  // Bias: fuer das AKTUELLE Release die gelebte Einstufung (die respektiert
+  // eine manuelle Anheftung), fuer aeltere aus denselben Regeln nachgerechnet.
+  let bias;
+  if(r.date&&String(r.date).slice(0,10)===cur.d)bias=ind.bias;
+  else if(hatFc)bias=researchBias(indName(ind),cur.a,cur.f,prev?prev.a:null);
+  else{
+    const a=parseNumLike(cur.a),pv=prev?parseNumLike(prev.a):null;
+    if(a==null||pv==null||a===pv)bias='neu';
+    else bias=(LOWER_IS_BETTER_RE.test(indName(ind))?(a<pv):(a>pv))?'bull':'bear';
+  }
+  // Datum so verschieben, dass der Klon HEUTE so alt ist wie das Original am
+  // Stichtag (siehe Kniff 1 oben).
+  const alterTage=Math.max(0,Math.round((new Date(datum)-new Date(cur.d))/86400000));
+  const verschoben=dateAddStr(todayStr(),-alterTage);
+  const klon=Object.assign({},ind);
+  klon.research=Object.assign({},r,{actual:cur.a,forecast:hatFc?cur.f:null,
+    previous:prev?prev.a:null,date:verschoben});
+  klon.bias=bias;
+  klon.stepDriven=!hatFc;
+  klon.trendDriven=false;klon.trendBias='neu';klon.revBias=null;
+  klon.chartHist=pts.slice(0,i+1).map(x=>[x.d,x.a,x.f]);
+  // Die Klon-Caches duerfen die des Originals nicht erben.
+  delete klon._sigCache;delete klon._sigCacheSrc;delete klon._cycCache;delete klon._cycCacheSrc;
+  // ⚠ Der Klon traegt DENSELBEN Namen wie das Original - _mktWeightCache
+  // schluesselt auf `symId|name`, der Klon ueberschreibt dort also den
+  // Eintrag des echten Indikators. Falsch werden kann dadurch nichts (der
+  // Cache prueft seit VERSION-CHECK-533 die chartHist-Identitaet und rechnet
+  // bei einem Treffer aus der falschen Reihe einfach neu), aber jeder
+  // History-Render wuerde die Marktrelevanz aller beruehrten Indikatoren
+  // entwerten und den naechsten Dashboard-Durchlauf unnoetig teuer machen.
+  // Deshalb wird der echte Eintrag danach wieder gesetzt - ein Aufruf, der
+  // dank des Caches im Normalfall gratis ist.
+  let out=null;
+  try{const ps=indScoreParts(klon,rub,symId);out=ps?+(ps.total||0):null;}catch(e){out=null;}
+  try{indMarketWeight(ind,symId);}catch(e){}
+  if(_histBeitragMemo.size>4000)_histBeitragMemo.clear();
+  _histBeitragMemo.set(mk,{src:ind.chartHist,modus:scoreMode,val:out});
+  return out;
+}
+// Was hat dieser Indikator AN DIESEM TAG bewegt? Differenz seines Beitrags
+// gegen den Vortag - genau die Groesse, die neben einem Tagesdelta stehen
+// darf. null, wenn einer der beiden Tage nicht rekonstruierbar ist.
+function histIndWirkungAm(ind,rub,symId,datum){
+  const jetzt=histIndBeitragAm(ind,rub,symId,datum);
+  if(jetzt==null)return null;
+  const vor=histIndBeitragAm(ind,rub,symId,dateAddStr(datum,-1));
+  if(vor==null)return null;
+  return Math.round((jetzt-vor)*100)/100;
 }
 // Ueberfaelligkeit eines Indikators AM STICHTAG, in eigenen Zyklen.
 // null = altert nicht bzw. nicht bewertbar (siehe Kommentarblock oben).
@@ -1479,7 +1618,7 @@ function renderSymHistoryPanel(id){
       :altesModell?'Recorded under an earlier version of the score model, so it is not comparable to today’s value. The number is shown unchanged — it is what was recorded — but it was produced by a different calculation.'
       :(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
     const evHtml=evs.map(ev=>{
-      const b=histEvtBias(ev);
+      const b=histEvtBias(ev);   // Richtung folgt der Tageswirkung (siehe biasOf)
       const col=BC[b]||BC.neu;
       const arr=b==='bull'?'▲':b==='bear'?'▼':'◆';
       // Der EFFEKT ist der echte Score-Beitrag dieses Indikators, nicht ein
@@ -1487,8 +1626,31 @@ function renderSymHistoryPanel(id){
       // korrekt bei ±0,5, und im Modus `normalized` steckt der
       // Normierungsfaktor mit drin - genau die Zahl, die auch im Score-Fenster
       // fuer diesen Indikator steht.
-      const eff=ev.sc!=null?fmtHistEff(ev.sc):(b==='bull'?'+1':b==='bear'?'-1':'0');
-      const effTip=ev.sc!=null&&ev.sc===0?histZeroReason(ev):'Contribution of this release to the current score';
+      // ⚠ Die Zahl ist die WIRKUNG AN DIESEM TAG (Beitrag gegen den Vortag),
+      // nicht der heutige Stand - sonst stuende ein Stand neben einem Delta
+      // und die Zeile widerspraeche der Kartenzerlegung daneben. Wo sich das
+      // nicht rekonstruieren laesst (laufende Zustaende wie Bond/COT/
+      // Sentiment fuehren keine Beitrags-Reihe je Tag), steht ein Strich -
+      // eine Zahl waere dort eine Behauptung ohne Grundlage.
+      // ⚠ AUF DIESELBE SKALA wie das Tagesdelta und die Kartenzerlegung.
+      // histIndWirkungAm() liefert den ROHEN Beitrag; Delta und Split stehen
+      // dagegen auf der Vergleichsskala (roh x Fairness-Faktor). Ohne diese
+      // Umrechnung staende "+1,04" neben einem Delta von "+0,7" - wieder zwei
+      // Massstaebe in einer Zeile, nur anders herum als vorher. Genommen wird
+      // der Faktor DIESES Tages (aufgezeichnet seit 2026-08-23), sonst der
+      // heutige - derselbe Faktor, mit dem histDeltaParts rechnet.
+      const cmpTag=(histCmp[d.date]!=null&&histCmp[d.date]>0)?histCmp[d.date]
+                  :(sym?symCmpFactor(sym):1);
+      const effWert=ev.scWirkung==null?null:Math.round(ev.scWirkung*cmpTag*100)/100;
+      const eff=effWert!=null?fmtHistEff(effWert):'–';
+      const effTip=effWert==null
+        ? 'Continuously measured — it has no per-day contribution history, so no daily effect can be shown for it. '
+          +'The card split below carries this day\u2019s movement.'
+          +(ev.sc!=null?' Its contribution to today\u2019s score is '+fmtHistEff(ev.sc)+'.':'')
+        : effWert===0
+          ? histZeroReason(ev)
+          : 'How much this release moved the score on this day (its contribution here minus the day before). '
+            +(ev.sc!=null?'It contributes '+fmtHistEff(ev.sc)+' to today\u2019s score.':'');
       const ac=actualColor(ev,id);
       const acv=(ev.actual!=null&&ev.actual!=='')?`<b class="${ac}">${escH(ev.actual)}</b>`:'–';
       // Bond-Renditen haben kein echtes Forecast - "forecast" traegt hier nur
@@ -1671,10 +1833,23 @@ function renderSymHistoryPanel(id){
   //     nicht eine zweite Faerbelogik daneben.
   //   - Die Wochen bleiben als schmale Trennzeile mit der Wochensumme.
   const wochen=weeks.map(w=>{
+    // ⚠ Die Wochensumme muss DIESELBE Vergleichbarkeitsregel befolgen wie die
+    // Tageszeile (Nutzer-Bugreport 2026-09-20, dritter Anlauf). Sie rechnete
+    // bis dahin stur letzter minus erster Tag - quer ueber einen
+    // Modellwechsel hinweg, den die Tageszeile daneben mit "n/c" ausdruecklich
+    // VERWEIGERT. Im gemeldeten Screenshot stand oben "+2,3 this week",
+    // waehrend die heutige Zeile sagte, sie sei mit gestern nicht
+    // vergleichbar. Beides zugleich kann nicht stimmen.
     const scored=w.cards.filter(c=>c.score!=null);
-    const first=scored.length?scored[scored.length-1].score:null;
-    const last=scored.length?scored[0].score:null;
-    const net=(first!=null&&last!=null)?Math.round((last-first)*10)/10:null;
+    const first=scored.length?scored[scored.length-1]:null;
+    const last=scored.length?scored[0]:null;
+    const wochenTagsGleich=!!(first&&last&&histTagsComparable(histTag[first.date]!=null?histTag[first.date]:(first.isToday?SCORE_MODEL_TAG():null),
+                                                             histTag[last.date]!=null?histTag[last.date]:(last.isToday?SCORE_MODEL_TAG():null)));
+    const net=(first&&last&&wochenTagsGleich)?Math.round((last.score-first.score)*10)/10:null;
+    const netTip=net==null
+      ?(first&&last?'The score model changed during this week, so the two ends are not comparable - the same rule the daily change follows.'
+                   :'No recorded change across this week')
+      :'Net move across this week';
     const netCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
     const zeilen=w.cards.map(c=>
       `<div class="hw-day${c.isToday?' hw-today':''}${c.date===histAktivTag?' hw-jump':''}" data-d="${escH(c.date)}">
@@ -1685,7 +1860,7 @@ function renderSymHistoryPanel(id){
       </div>`).join('');
     return`<div class="hw-week">
       <div class="hw-hd"><span class="hw-hd-r">${escH(fmtDayShort(w.start))} – ${escH(fmtDayShort(dateAddStr(w.start,6)))}</span>
-        <span class="hw-hd-n" style="color:${netCol}" title="Net move across this week">${net==null?'no recorded change':((net>0?'+':'')+net+' this week')}</span></div>
+        <span class="hw-hd-n" style="color:${netCol}" title="${escH(netTip)}">${net==null?(wochenTagsGleich?'no recorded change':'not comparable'):((net>0?'+':'')+net+' this week')}</span></div>
       ${zeilen}
     </div>`;
   }).join('');
@@ -21860,7 +22035,7 @@ Object.assign(window,{
   histAlterungsWechsel,histIndAltAm,histLetztesRelease,
   histWeekStart,symScoreDrivingEventsByDate,
   histEvtBias,fmtHistEff,histZeroReason,symHistoryDays,renderSymHistory,HIST_BRK_MAX_REST,histDeltaParts,
-  histTagsComparable,renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,
+  histTagsComparable,histIndBeitragAm,histIndWirkungAm,renderSymHistoryPanel,openHistModal,mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,
   IND_EVENT_MATCHERS,IND_AUTO_RUBS,effLinkCcy,macroCcyFor,findIndEventHistory,findIndEvent,pushValHist,trackIndValues,
   reviseValHistArr,applyRevisionToValHist,adoptFeedHistory,adoptChartHist,indTrendProgress,fmtTrendVal,openTrendInfo,
   indBiasInputSig,indBiasPinned,applyTrendModel,indTrendBias,indStepBias,indBiasFromEvent,CAL_RESEARCH_MATCHERS,

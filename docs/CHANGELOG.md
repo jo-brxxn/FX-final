@@ -16490,3 +16490,80 @@ nicht auf. Die Gegenprobe blieb grün. Jetzt wird die Zeile **absichtlich
 eingesetzt** und muss wieder verschwinden. Beide Gegenproben feuern
 unabhängig: `quelleDa` raus → `USD 3.2 → 2.3`; Löschen raus → Geisterzeile
 bei NZD.
+
+---
+
+## 2026-09-20 (Nacht) — Ein Stand stand neben einer Veränderung (VERSION-CHECK-536)
+
+Nutzer, dritter Anlauf: *„Immernoch ergibt es keinen Sinn"*, danach *„find den
+blöden Fehler das sag ich dir jetzt zum dritten Mal"*. Er hatte recht — meine
+beiden Runden davor haben Symptome behandelt.
+
+**Was im Screenshot stand (USD):**
+
+| Tag | Events zeigten | Δ zeigte | Kartensplit |
+|---|---|---|---|
+| Sa 19.09. | 2Y **+0,5**, 10Y **+0,5** | **−1,8** | Economic Growth −0,5, COT −1,2 |
+| Di 15.09. | +0,5 / 0 / **−1** | +0,8 | COT Data **+0,8** |
+| Do 17.09. | Claims **+0,53** | +0,7 | Labour Market **+0,8** |
+
+**Ursache, im Code belegt:** `effOf()` in `symScoreDrivingEventsByDate` rief
+`indScoreParts(ind,rub,scoreId)` — den Beitrag von **heute** — und stempelte
+ihn auf ein altes Datum. Der Tooltip gab es wörtlich zu: *„Contribution of
+this release to the current score."* Damit stand ein **Stand** neben einer
+**Veränderung**; das kann nur zufällig zusammenpassen. Bei echten Releases ist
+der Unterschied überwiegend der Zeit-Decay (Claims: heute 0,53, Wirkung am Tag
+1,04), bei Bond/COT ist es komplett unzusammenhängend.
+
+### Der Fix
+
+`histIndBeitragAm()` rekonstruiert den Beitrag **am Stichtag** — ohne zweite
+Formel: es baut einen Klon des Indikators mit dem Release, das an dem Tag
+galt, und lässt `indScoreParts()` rechnen, also exakt dieselbe Kette (Gewicht,
+Halbgewicht, Normierung, Altersgrenze). Zwei Kniffe:
+
+1. **Datums-Verschiebung.** `indScoreParts` misst das Alter gegen heute. Der
+   Klon bekommt ein Datum, das heute genauso alt ist wie das echte Release am
+   Stichtag war → Decay **und** Altersgrenze stimmen.
+2. **Abgeschnittene Historie.** Der Maßstab (`indSurpriseScale`) sieht nur,
+   was an dem Tag bekannt war — kein Blick in die Zukunft, dieselbe
+   Vintage-Regel wie im Score-Modell.
+
+`histIndWirkungAm()` bildet daraus die Differenz zum Vortag. Und die Zahl geht
+**× Fairness-Faktor des jeweiligen Tages**, damit sie auf derselben Skala steht
+wie Δ und Kartenzerlegung — sonst wäre es wieder ein zweiter Maßstab, nur
+andersherum (im Zwischenstand gemessen: `+1,04` neben einem Δ von `+0,7`).
+
+**Ergebnis USD:** Claims **+0,78** bei Δ +0,7 und Labour Market +0,8. Retail
+Sales **+1,64** bei Δ +2 und Economic Growth +1,7. Die Zeile erklärt jetzt das
+Delta, statt ihm zu widersprechen.
+
+**Laufende Zustände zeigen einen Strich.** Bond, COT und Sentiment führen
+keine Beitrags-Reihe je Tag; dort war die Zahl früher *immer* der heutige
+Stand. Ein Strich sagt, was bekannt ist — eine Zahl wäre eine Behauptung.
+
+**Wochensumme:** rechnete stur letzter minus erster Tag, quer über einen
+Modellwechsel, den die Tageszeile daneben mit `n/c` verweigert — im Foto oben
+„+2,3 this week", unten „nicht vergleichbar". Folgt jetzt derselben Regel.
+
+**Performance:** jeder Aufruf baut einen Klon, `indMarketWeight` rechnete
+dadurch die Preisreihe neu. Memo mit selbst-invalidierendem Schlüssel (viertes
+Mal heute dasselbe Muster): `renderSymHistoryPanel` 88 → 67 ms, die
+Event-Sammlung 22,5 → 0,3 ms. Der Klon setzt außerdem den
+`_mktWeightCache`-Eintrag des echten Indikators danach wieder — sonst entwertet
+jeder History-Render die Gewichte für den nächsten Dashboard-Durchlauf.
+
+### Wächter, Stufen H und H2 — vier Hälften, jede mit Gegenprobe
+
+1. Ein vergangenes Release muss eine Tageswirkung zeigen, die vom heutigen
+   Stand **abweicht** (12 von 12). Gegenprobe: Stand zurück → rot.
+2. Laufende Zustände dürfen keine Zahl behaupten. ⚠ **Aktiv geprüft**: Bond
+   und COT haben heute gar keine Historie, ein bloßes Nachsehen wäre auch mit
+   ausgebauter Sperre grün gewesen (im ersten Anlauf genau so gemessen).
+   Deshalb bekommt eine Bond-Zeile testweise eine Historie angehängt und darf
+   auch dann nichts behaupten. Gegenprobe: Sperre raus → rot.
+3. Die Zahl steht auf der Vergleichsskala. Gegenprobe: roh statt skaliert → rot.
+4. Keine Wochensumme über einen Modellwechsel. ⚠ Geprüft werden die **Enden**
+   der Woche, nicht jeder `n/c`-Tag darin — ein tagloser Tag in der Mitte macht
+   die Enden nicht unvergleichbar (erster Entwurf hat genau das fälschlich
+   gemeldet). Gegenprobe: Regel raus → rot.
