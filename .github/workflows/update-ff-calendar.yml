@@ -3870,9 +3870,29 @@ jobs:
                 const arr=d[s.id]||(d[s.id]=[]);
                 const last=arr[arr.length-1];
                 const e=[today,s.score,s.infl||0,s.labour||0,s.growth||0,s.bias||"neu"];
-                if(tag)e.push(tag);
+                if(tag){
+                  e.push(tag);
+                  // Felder 8-12: Fairness-Faktor, Rohscore, Interest Rates,
+                  // COT Data und (Platzhalter) Risk Environment - GENAU die
+                  // Reihenfolge des client-seitigen Tupels in
+                  // recordScoreHist(). Ohne sie kann renderSymHistoryPanel()
+                  // die Tagesveraenderung nicht zerlegen (histDeltaParts
+                  // braucht Faktor UND Rohscore fuer BEIDE Tage) - gemessen
+                  // war die Aufschluesselung dadurch an JEDEM server-
+                  // ergaenzten Tag leer. Nur GESCHLOSSEN anhaengen: das
+                  // Format ist positionsbasiert, ein einzeln nachgereichtes
+                  // Feld wuerde an der falschen Stelle stehen. Fehlen sie
+                  // (aelterer Client), bleibt der Eintrag siebenstellig -
+                  // es wird NICHTS geraten, er faellt wie bisher nur aus
+                  // der Zerlegung.
+                  // Das 12. Feld ist fest 0: die Karte Risk Environment ist
+                  // seit dem 2026-09-13 entfernt, die Stelle bleibt trotzdem
+                  // besetzt, damit kein alter Eintrag verrutscht.
+                  if(typeof s.cmp==="number"&&typeof s.raw==="number")
+                    e.push(s.cmp,s.raw,s.ir||0,s.cot||0,0);
+                }
                 if(last&&last[0]===today){
-                  if(last[1]!==e[1]||last[2]!==e[2]||last[3]!==e[3]||last[4]!==e[4]||last[5]!==e[5]||last[6]!==e[6]){arr[arr.length-1]=e;changedN++;}
+                  if(JSON.stringify(last)!==JSON.stringify(e)){arr[arr.length-1]=e;changedN++;}
                 }else{arr.push(e);changedN++;}
                 if(arr.length>1100)arr.splice(0,arr.length-1100);
               });

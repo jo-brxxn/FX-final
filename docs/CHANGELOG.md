@@ -16076,3 +16076,169 @@ Banner schon zerbrochen war. Und diese eine Zeile wird laut Regel 1 bei
 **roh aus der Datei geschnitten**, nicht per `title="([^"]*)"` — so eine
 Regex hört am ersten Anführungszeichen auf, also an genau dem, das das
 Problem ist. Gegenprobe mit wieder eingebautem `"`: rot samt Fundstelle.
+
+---
+
+## 2026-09-20 — Prüfdurchgang Score-System („rechne wirklich alles nach")
+
+Nutzer-Auftrag: *„Schau dir das Score System an und versteh es dann schau was
+da alles zugehört also history set ups usw und schau ob das alles passt die
+Zusammenhänge rechne wirklich alles nach und prüf jedes Detail"*.
+
+**Methode:** die komplette Rechenkette einmal **unabhängig in Node
+nachgebaut** — aus `docs/score-model.md`, nicht aus dem Code kopiert — und
+gegen den per Playwright gedumpten App-Zustand gestellt: 559 Indikatoren ×
+24 Assets, 240 Karten-Scores, 28 Paare inkl. Carry-Staffel, Vergleichsfaktor,
+Stärke-Note, Saisonalität, Retail, Altersgrenze, Zyklusmessung, Historie.
+
+**Modus `classic`: 0 Abweichungen.** Jeder Indikator-Beitrag, jeder
+Karten-/Symbol-Score, `symTrackedCount`, `fxRefCount` (22,25),
+`symCmpFactor`, `symScoreCmp`, alle 28 Paar-Scores, alle 24 Saisonalitäts-
+und Retail-Biases — bitgenau wie dokumentiert. Die Doppelrundung (Indikator →
+Karte → Symbol) driftet um maximal **0,0153 Punkte** und ist so gewollt.
+
+### 1. Der Marktrelevanz-Faktor war eingefroren (Modus `normalized`)
+
+`indMarketWeight()` cachte unter `symId|indName`; geleert wurde nur von
+`invalidateNormCache()` — beim Modus-Wechsel und beim Import, **nicht** wenn
+ein Feed ankommt. Beim Boot läuft `recomputeAuto()` aber vor jeder
+Live-Feed-Korrektur, `ind.chartHist` ist dann leer, der Faktor liefert 1 —
+und das war für die Sitzung zementiert.
+
+Gemessen (Rückrechnung `norm / (mag × dec)` über alle nicht geklemmten Fälle):
+
+| | |
+|---|---|
+| Indikator/Asset-Paare mit eingefrorenem `mkt = 1` | **108** |
+| … mit dem echten gemessenen Wert | 74 |
+| … mit irgendetwas anderem | 0 |
+| Asset-Scores, die sich nach einer Cache-Leerung ändern | **24 von 24** |
+
+Es war ein Wettlauf gegen den Feed — welcher Schlüssel zuerst angefasst
+wurde, fror auf 1 ein. USD/JPY/BTC/GOLD/SP500/NAS praktisch komplett, die
+Yields größtenteils korrekt: **der Score mischte zwei Gewichtungen, und
+welches Asset welche bekam, hing an der Boot-Reihenfolge.**
+
+Am deutlichsten im Fenster *Data quality & weighting*, dessen Spalte
+„Impact" ausdrücklich *„Measured, not assigned"* verspricht — 18 von 19
+USD-Zeilen standen auf `1.00×`:
+
+```
+Fed Funds Rate        1.00×  ->  1.23×
+Nonfarm Payrolls      1.00×  ->  1.20×
+Avg Hourly Earnings   1.00×  ->  1.20×
+Manufacturing PMI     1.00×  ->  1.11×
+JOLTS Job Openings    1.00×  ->  0.92×
+```
+
+**Fix: Objekt-Identität statt Name.** Beide Eingaben werden beim Eintreffen
+neuer Daten komplett ersetzt — `adoptChartHist()` schreibt ein neues
+`chartHist`-Array (und nur, wenn der Inhalt sich wirklich geändert hat),
+`fetchPriceData()` ein neues `PRICE_DATA_FEED`-Objekt. Ein `===`-Vergleich
+erkennt das exakt und kostet nichts; keine Aufrufstelle kann es vergessen.
+Die Länge taugt hier **nicht** als Schlüssel: `priceSeriesFor()` baut bei
+invertierten Paaren die Reihe bei jedem Aufruf neu auf — sie vor dem
+Cache-Treffer aufzurufen wäre genau die Rechnung, die der Cache einspart.
+
+Dieselbe Behandlung für `_sigCache`/`_cycCache`, die auf die **Länge** der
+Historie schlüsselten: eine Revision, die den letzten Wert korrigiert ohne
+einen Punkt anzuhängen, blieb dort unbemerkt.
+
+**Wirkung** (`check/scorediff.js` gegen `origin/main`): 22 von 48 rohen und
+20 von 48 verglichenen Symbol-Scores, 52 von 240 Karten-Scores, 24 von 70
+Paar-Scores — **ausschließlich `normalized:`-Einträge, `classic` ist
+bitgenau unverändert**. Stärke-Note 0 von 48, Carry 0 von 70. Roh: USD
+3,93→4,19, JPY 6,15→6,40, GOLD −1,89→−2,15, USYIELD 3,43→3,69. Kein Asset
+kreuzt die ±3-Schwelle, es flippt also kein Bias. `SCORE_MODEL_VERSION`
+12 → 13.
+
+**Wächter neu: `check/score.js` Abschnitt E1d.** Zwei Richtungen, wie beim
+Alters-Faktor in E1b: (1) der Faktor muss streuen — **300 von 346**; (2) eine
+Cache-Leerung darf **keinen** Score bewegen — **0 von 24**. Gegenprobe mit
+dem alten Namens-Schlüssel gefahren: `streut: 0` und **20 von 24** Assets
+bewegt, beide Meldungen rot.
+
+### 2. Die Server-Historie trug die Felder 8–12 nicht
+
+Exakt derselbe Merksatz wie beim Modell-Tag 2026-08-09 — und exakt derselbe
+Fehler noch einmal, nur mit anderen Feldern. Der Client schreibt seit dem
+2026-08-23 ein zwölfstelliges Tupel (8 = Fairness-Faktor, 9 = Rohscore) und
+seit dem 2026-09-06 zusätzlich Interest Rates (10) und COT Data (11);
+`data.scoreSnapshot` in `cloudPush()` schickte weiter nur
+`score/bias/infl/labour/growth`, der Workflow konnte daraus höchstens sieben
+Felder schreiben.
+
+Gemessen an `score_hist.json`: **1295 server-ergänzte Einträge, davon 0 mit
+den Feldern 8–12.** `histDeltaParts()` braucht Faktor UND Rohscore für
+*beide* verglichenen Tage und liefert sonst nichts — die
+Ursachen-Aufschlüsselung der History („What moved it"), gebaut nach dem
+Bugreport 2026-08-23 *„Ergibt keinen sinn"*, war damit auf jedem Gerät für
+jeden Tag leer außer dem einen, den es selbst aufgezeichnet hat:
+
+```
+History-Panel EUR   15 Tage mit Δ, davon mit Aufschlüsselung:  0
+History-Panel JPY   18 Tage mit Δ, davon mit Aufschlüsselung:  0
+```
+
+Behoben an beiden Enden. Der Workflow hängt die Felder **geschlossen** an —
+das Format ist positionsbasiert, ein einzeln nachgereichtes Feld stünde an
+der falschen Stelle; fehlen sie (älterer Client), bleibt der Eintrag
+siebenstellig, es wird nichts geraten.
+
+Mit korrigiert: die Meldung an einem Tag ohne Aufschlüsselung lautete
+pauschal *„so this day predates the breakdown"* und behauptete damit eine
+Ursache (Alter), die für fast alle betroffenen Tage falsch war — auch für
+den Vortag von gestern. Sie nennt jetzt den echten Grund.
+
+### 3. Der ★-Bonus wurde an drei Stellen versprochen und nirgends gerechnet
+
+Entfernt am 2026-07-28, aber weiterhin behauptet in `docs/score-model.md`
+(als Bestandteil in der Tabelle „Was in den Score einfliesst"), im
+Standard-Tooltip **jeder** Score-Badge und im Hilfetext. Es gibt keinen
+★-Schalter an einem Indikator mehr; `ind.imp` ist bei **0 von 559**
+Indikatoren gesetzt und wird von `indBaseWeight()` nicht gelesen. Nutzer
+dazu: *„Wo kann man Sachen markieren mit additiv 0.5? Das gibt es doch nicht
+mehr"*. Alle drei bereinigt, plus der Kommentar über `indBaseWeight`, der
+die Rechnung noch beschrieb.
+
+### 4. `window.scoreMode` war eine tote Momentaufnahme — ein Wächter lief ins Leere
+
+`js/score.js` legte `scoreMode` per `Object.assign(window,{…})` als **Wert**
+ab. Gemessen: nach `setScoreMode('classic')` steht in localStorage `classic`
+und 356 von 559 Normierungsfaktoren fallen auf 1 — `window.scoreMode` liest
+weiter `"normalized"`.
+
+In der App folgenlos (ES-Module-Importe sind live gebunden), aber die
+Wächter lesen über `window`: `check/score.js` Abschnitt F3 wollte belegen,
+*„dass der Setter scoreMode wirklich setzt"*, war mit
+`typeof setScoreModeVal==='function'` abgesichert — und `setScoreModeVal`
+stand nicht auf der Brücke. Der Block lief **nie**, grün ohne zu prüfen.
+Jetzt Getter statt Kopie (Muster wie `scoreHist`/`syms` in `js/main.js`) und
+`setScoreModeVal`/`invalidateNormCache`/`indMarketWeight` auf der Brücke.
+
+### Was geprüft wurde und in Ordnung war
+
+- **Saisonalität**, 24 von 24: die Doppelbedingung greift, OIL im September
+  +0,27 % Schnitt bei 38 % gestiegenen Jahren → korrekt 0.
+- **Retail**, 24 von 24: Paar-Anteil bei Währungen, Buch-Anteil bei
+  Einzel-Assets, Schwellen 85/60 exakt. JPY 0/7 → `sbull` (+1), NZD 7/7 →
+  `sbear` (−1), NAS 98 % long → `sbear`.
+- **Alle 28 Paar-Scores** inkl. Carry-Staffel und automatischer
+  Bias-Einstufung der Set-ups-Spalten.
+- **Altersgrenze**: 6 veraltete Indikatoren, alle mit korrekt gemessenem
+  Zyklus; `symTrackedCount` überspringt sie wie vorgeschrieben.
+- **Surprise-Index** (`esiForCcy`) nutzt denselben MAD-Maßstab und war vom
+  Cache-Fehler nicht betroffen (er ruft `indMarketWeight` nicht auf).
+
+### Doku-Korrektur nebenbei
+
+`docs/score-model.md` sagte „Step-Signal … betrifft 38 Indikatoren" —
+gemessen sind es am aktuellen Stand **61** (die Zahl stammte aus der Zeit vor
+den Yield-Assets).
+
+### Offen, nicht Teil dieser Änderung
+
+`node check/all.js --static` ist weiterhin rot: `news_ai.json` wurde zuletzt
+am 2026-09-18 19:22 geschrieben, bei einem 40-Stunden-Limit und
+zweimal-täglichem Takt. Die Arbeitskopie steht auf `origin/main`, es ist also
+**kein** veralteter Checkout, sondern ein echter Ausfall der KI-Einordnung.

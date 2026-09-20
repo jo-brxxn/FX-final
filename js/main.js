@@ -1589,13 +1589,26 @@ function renderSymHistoryPanel(id){
         <span class="histp-val"><span class="histp-fc">last release ${escH(fmtDayShort(a.release))} · ${a.zyklen} cycles overdue</span></span>
         <span class="histp-eff" style="color:${a.wirkung>0?BC.bull:BC.bear};border-color:${a.wirkung>0?BC.bull:BC.bear}" title="Contribution this indicator lost when it passed the age limit">${(a.wirkung>0?'+':'')+(Math.round(a.wirkung*100)/100)}</span>
       </div>`).join('');
+    // ⚠ Warum eine Bewegung NICHT aufgeschluesselt ist, muss ehrlich
+    // benannt werden (Fund im Pruefdurchgang 2026-09-20). Hier stand bisher
+    // pauschal "so this day predates the breakdown" - eine Aussage ueber das
+    // ALTER des Tages. Sie war fuer die allermeisten Tage schlicht falsch:
+    // der haeufige Grund ist nicht das Alter, sondern dass der Eintrag vom
+    // SERVER stammt (Workflow-Schritt "Fetch score snapshot from cloud
+    // sync") und Faktor/Rohscore gar nicht mitgeschrieben bekam - das traf
+    // gemessen ALLE 1295 server-ergaenzten Eintraege und damit auch den
+    // Vortag von gestern. Die Ursache stand also im Text, war aber die
+    // falsche. `zerlegbar` sagt jetzt genau das, was bekannt ist: liegen die
+    // noetigen Kartenwerte fuer BEIDE Tage vor oder nicht.
+    const zerlegbar=prevDate!=null&&histCmp[d.date]!=null&&histRaw[d.date]!=null
+      &&histCmp[prevDate]!=null&&histRaw[prevDate]!=null;
     // Nichts veroeffentlicht, nichts von Hand geaendert, nichts gealtert.
     // ⚠ Der Nutzer wollte hier ausdruecklich "No data released" lesen und
     // KEINE zusammengefasste Sammelzeile ("jeden tag einzeln"). Der Satz
     // sagt genau das, was bekannt ist - und nicht "no recorded cause", was
     // wie ein Fehler der App klingt, obwohl an dem Tag einfach nichts war.
     const leer=(!evs.length&&!manual.length&&!alterung.length)
-      ?`<div class="hw-none">No data released${delta?` — but the score moved ${dTxt}`+(parts.length?', see the card split below':histAgeShow?'. Nothing crossed the age limit either, so this day predates the breakdown':'. Switch on "ageing" above to see whether the age limit caused it'):''}.</div>`
+      ?`<div class="hw-none">No data released${delta?` — but the score moved ${dTxt}`+(parts.length?', see the card split below':(!histAgeShow?'. Switch on "ageing" above to see whether the age limit caused it':zerlegbar?'. Nothing crossed the age limit either':'. One of the two days was recorded without the card values needed to split it, so the cause cannot be named for this day')):''}.</div>`
       :'';
     return{date:d.date,score:dayScore,delta,has,isToday,
       ursache:!!(evs.length||manual.length||alterung.length),
@@ -6065,11 +6078,35 @@ async function cloudPush(manual){
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
     // Nutzer-Wunsch 2026-07-20: Historie soll auch an Tagen weiterwachsen,
     // an denen KEIN Geraet die App geoeffnet hat) - die Score-Logik lebt nur
-    // im Browser, die Workflows lesen hier nur ab. infl/labour/growth
-    // zusaetzlich zu score/bias, damit score_hist.json dasselbe 6er-Tupel-
-    // Format wie das client-seitige scoreHist fuellen kann (Inflation/
-    // Labour/Growth-Karten im Trends-Tab, nicht nur Total Score).
-    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias,infl:rubScoreByName(s,'Inflation'),labour:rubScoreByName(s,'Labour Market'),growth:rubScoreByName(s,'Economic Growth')}));
+    // im Browser, die Workflows lesen hier nur ab. Die Kartenwerte kommen
+    // zusaetzlich zu score/bias mit, damit score_hist.json DASSELBE Tupel-
+    // Format wie das client-seitige scoreHist fuellen kann.
+    // ⚠⚠ DER SCHNAPPSCHUSS MUSS JEDES FELD TRAGEN, DAS scoreHist KENNT
+    // (Fund im Pruefdurchgang 2026-09-20). Genau derselbe Merksatz wie beim
+    // Modell-Tag eine Ebene tiefer - und genau derselbe Fehler noch einmal,
+    // nur mit anderen Feldern: der Client schreibt seit dem 2026-08-23 ein
+    // ZWOELFstelliges Tupel (Faktor, Rohscore) und seit dem 2026-09-06
+    // zusaetzlich Interest Rates / COT Data, der Schnappschuss schickte aber
+    // weiter nur score/bias/infl/labour/growth. Der Workflow konnte daraus
+    // hoechstens sieben Felder schreiben.
+    //
+    // Folge, gemessen an score_hist.json: von 1295 server-ergaenzten
+    // Eintraegen trug KEIN EINZIGER die Felder 8-12. histDeltaParts()
+    // braucht Faktor UND Rohscore fuer BEIDE verglichenen Tage und gibt
+    // sonst [] zurueck - die Ursachen-Aufschluesselung der History ("What
+    // moved it"), gebaut nach dem Bugreport 2026-08-23, war damit auf jedem
+    // Geraet fuer JEDEN Tag leer ausser dem einen, den es selbst
+    // aufgezeichnet hat. Nachgemessen im Fenster: EUR 15 Tage mit Delta,
+    // 0 mit Aufschluesselung; JPY 18 zu 0.
+    //
+    // ⚠ Die Reihenfolge der Felder ist die des client-seitigen Tupels in
+    // recordScoreHist() - sie ist POSITIONSBASIERT, ein verschobenes Feld
+    // verschiebt jeden alten Eintrag mit. Wer hier eins ergaenzt, ergaenzt
+    // es dort UND im Workflow-Schritt "Fetch score snapshot from cloud sync".
+    data.scoreSnapshot=syms.map(s=>({id:s.id,name:s.name,score:symScoreCmp(s),bias:s.bias,
+      infl:rubScoreByName(s,'Inflation'),labour:rubScoreByName(s,'Labour Market'),growth:rubScoreByName(s,'Economic Growth'),
+      cmp:symCmpFactor(s),raw:symScore(s),
+      ir:rubScoreByName(s,'Interest Rates'),cot:rubScoreByName(s,'COT Data')}));
     // ⚠ Unter WELCHEM Score-Modell diese Zahlen entstanden sind - der
     // Workflow schreibt es als 7. Tupel-Element nach score_hist.json.
     // Ohne das zaehlt KEIN server-ergaenzter Tag zur Staerke-Note

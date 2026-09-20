@@ -13,8 +13,7 @@ verschiedene Rechnungen.
 | Bestandteil | Gewicht | Bemerkung |
 |---|---|---|
 | Beat/Miss gegen Forecast | ±1 | Basis. Halbgewicht ±0,5 bei Core-Paaren, Bonds, COT-Netto, CB Tone (`IND_PAIR_GROUPS`/`indPairGroupPositions()` in `index.html` zeigt die Halbgewicht-Paare zusaetzlich als gemeinsam umrandete Box in der Indikator-Tabelle, wenn sie direkt benachbart stehen - Bias/Score bleiben pro Zeile eigenstaendig) |
-| Step-Signal (Actual vs. Previous) | ±0,5 | NUR wenn kein Forecast existiert - Ersatz fuer Beat/Miss, betrifft 38 Indikatoren |
-| ★ Wichtig | +0,5 additiv | Nutzer-Markierung |
+| Step-Signal (Actual vs. Previous) | ±0,5 | NUR wenn kein Forecast existiert - Ersatz fuer Beat/Miss. Betrifft am Stand 2026-09-20 **61** Indikator-Instanzen (die Zahl waechst mit jedem neuen Asset - sie stand hier lange auf 38, dem Stand vor den Yield-Assets) |
 | Normierung (nur Modus `normalized`) | ×0,4 bis ×1,8 | drei gemessene Faktoren, siehe unten |
 | **Saisonalitaet** | ±0,5 | seit 2026-09-14, siehe unten |
 | **Retail-Positionierung** | ±0,5 / ±1 | seit 2026-09-14, gegen die Menge, siehe unten |
@@ -64,6 +63,7 @@ in **beiden** Score-Modi).
 | 2-Schritt-Trend | 2026-08-08 | war als Bonus gedacht, war faktisch gleichrangiger Treiber (USD 47%, AUD 100% des Scores). Citis CESI hat aus demselben Grund keinen Trend-Term: Ueberraschung und Momentum wirken auf verschiedenen Zeithorizonten. Chip/Sparkline bleiben sichtbar. |
 | Revision des Previous | 2026-08-08 | kam unzuverlaessig an (TVs previous-Feld traegt sie nur ~3 Tage; bei geblocktem Workflow fuer immer weg) UND die Bonus-Dauer hing an der Frequenz (NZD GDP 91 Tage vs. GBP NFP 28). Anzeige + Bias-Faerbung bleiben. |
 | Veraltete Releases | 2026-08-08 | siehe Altersgrenze unten |
+| ★ Wichtig (+0,5 additiv) | 2026-07-28 | Auf Nutzer-Wunsch entfernt. ⚠ Stand bis 2026-09-20 trotzdem noch in DIESER Tabelle (als Bestandteil), im Tooltip jeder Score-Badge und im Hilfetext - drei Versprechen fuer eine Rechnung, die es nicht mehr gibt (`ind.imp` ist app-weit bei 0 von 559 Indikatoren gesetzt und wird von `indBaseWeight()` nicht gelesen; einen ★-Schalter am Indikator gibt es auch nicht mehr). Nutzer 2026-09-20: *„Wo kann man Sachen markieren mit additiv 0.5? Das gibt es doch nicht mehr"*. |
 | 2Y/10Y Spread | laenger | `SCORE_ZERO`, bewusst display-only |
 | **Risk Environment (ganze Karte)** | 2026-09-13 | Nutzer-Entscheid: *„loesch Risk Environment und alles was dazu gehoert bitte von der kompletten Webseite"*. ⚠ Gemessen VOR dem Entfernen: die Karte trug bei **allen 24 Assets exakt 0 Punkte** bei — `Risk Correlation` und `Geopolitics` standen durchgehend auf neutral. Trotzdem aendern sich **11 von 24 Scores**, weil ihre Indikatoren im Divisor mitzaehlten: BTC +3,6→+3,4, S&P −3,9→−3,6, Nasdaq −4,7→−4,4, JP Yield +7,7→+7,4, die uebrigen ±0,1. Die acht FX-Majors, DAX, GER 100, US Yield und CA Yield bleiben unveraendert. Mit entfernt: der Dashboard-Regler None/Half/Full, die Reaktionsrichtung je Asset, die speicherbaren Szenarien, das Konfigurationsfenster, die Sonntags-Erinnerung und der Accent-Token `--a-risk`. Der **Risiko-Index aus Marktpreisen** auf dem Dashboard bleibt — er ist reine Anzeige und haengt an keinem Score. |
 
@@ -103,6 +103,43 @@ mitpruefen.
 | Ueberraschungsgroesse | `indSurpriseMag` | \|Actual − Forecast\| / `indSurpriseScale` (der typischen Abweichung dieses Indikators), dann Wurzel. Erst dadurch sind NFP (Abweichungen in Zehntausenden) und CPI (in Hundertsteln eines Prozents) vergleichbar. Ab `NORM_MIN_OBS`=5 Beobachtungen, sonst neutral statt geraten. |
 | Zeit-Decay | `indDecayWeight` | Halbwertszeit = `DECAY_HALFLIFE_CYCLES`=1,5 EIGENE Zyklen. Bei einem 28-Tage-Zyklus also 42 Tage. Zyklus-relativ, damit Quartalswerte langsamer altern. |
 | Marktrelevanz | `indMarketWeight` | durchschnittliche Kursbewegung an den Release-Tagen dieses Indikators, geteilt durch die durchschnittliche Bewegung aller Tage. Wurzel-gedaempft. Gemessen, nicht zugewiesen. Braucht ≥60 Preistage und ≥5 Treffer. |
+
+### ⚠️ Der Marktrelevanz-Cache muss sich SELBST fuer ungueltig erklaeren (seit 2026-09-20)
+
+`indMarketWeight()` cached in `_mktWeightCache`. Der Schluessel war bis zum
+2026-09-20 nur `symId|indName`, geleert wurde ausschliesslich von
+`invalidateNormCache()` — also beim Modus-Wechsel und beim Import, **nicht**
+beim Eintreffen eines Feeds. Beim Boot laeuft `recomputeAuto()` aber VOR
+jeder Live-Feed-Korrektur: `ind.chartHist` ist dann leer, `indMarketWeight`
+liefert 1 — und dieser Wert war fuer die ganze Sitzung zementiert.
+
+Gemessen am echten Stand: von 182 wertbaren Indikator/Asset-Paaren trugen
+**108 die eingefrorene 1** und nur 74 den echten Wert; welches Asset welchen
+bekam, haengte allein an der Boot-Reihenfolge. Der Score mischte damit zwei
+verschiedene Gewichtungen. Nach einer Cache-Leerung aenderten sich **alle 24
+Asset-Scores** (USD roh 3,93→4,19, JPY 6,15→6,40, GOLD −1,89→−2,15). Im
+Fenster *Data quality & weighting* standen 18 von 19 USD-Zeilen auf
+`Impact 1.00×`, obwohl die Spalte ausdruecklich *„Measured, not assigned"*
+verspricht (echte Spanne 0,92× bis 1,23×).
+
+**Loesung: Objekt-Identitaet statt Name.** Beide Eingaben werden beim
+Eintreffen neuer Daten KOMPLETT ERSETZT — `adoptChartHist()` schreibt ein
+neues `chartHist`-Array (und zwar nur, wenn sich der Inhalt wirklich
+geaendert hat), `fetchPriceData()` ein neues `PRICE_DATA_FEED`-Objekt. Ein
+`===`-Vergleich erkennt das exakt und kostet nichts. Dieselbe Behandlung
+haben `_sigCache`/`_cycCache` bekommen: sie schluesselten auf die LAENGE der
+Historie, eine Revision ohne neuen Punkt blieb dadurch unbemerkt.
+
+**Merksatz:** eine Invalidierung, die an einer AUFRUFSTELLE haengt, wird beim
+naechsten neuen Feed vergessen — dieselbe Lehre wie bei `_fxRefCountCache`.
+Die Laenge taugt hier bewusst NICHT als Schluessel: `priceSeriesFor()` baut
+bei invertierten Paaren die Reihe bei jedem Aufruf neu auf, sie vor dem
+Cache-Treffer aufzurufen waere genau die Rechnung, die der Cache einspart.
+
+Geprueft von `check/score.js` Abschnitt **E1d**: (1) der Faktor muss
+streuen (300 von 346), (2) eine Cache-Leerung darf KEINEN Score bewegen
+(0 von 24). Gegenprobe mit dem alten Schluessel: beides rot, 0 streuend und
+20 von 24 Assets bewegt.
 
 Produkt geklemmt auf `SCORE_NORM_MIN`=0,4 bis `SCORE_NORM_MAX`=1,8 und um
 1,0 zentriert - die Schwellen ±2/±3 sind auf ±1-Einheiten kalibriert, ein
@@ -312,6 +349,31 @@ zusammenpassen. Bei jedem neuen Feld in `scoreHist` pruefen, ob der
 SERVER-Pfad (`cloudPush` → Workflow → `score_hist.json` → `mergeScoreHist`)
 es genauso mitfuehrt wie der Client-Pfad - sonst ist die Server-Historie
 fuer die neue Auswertung still wertlos.
+
+**⚠️ Und genau das ist danach noch einmal passiert — mit den Feldern 8-12**
+(Fund im Pruefdurchgang 2026-09-20). Der Client schreibt seit dem 2026-08-23
+ein ZWOELFstelliges Tupel (8 = Fairness-Faktor, 9 = Rohscore) und seit dem
+2026-09-06 zusaetzlich Interest Rates (10) und COT Data (11);
+`data.scoreSnapshot` in `cloudPush()` schickte aber weiter nur
+`score/bias/infl/labour/growth`. Der Workflow konnte daraus hoechstens
+sieben Felder schreiben.
+
+Gemessen an `score_hist.json`: von **1295 server-ergaenzten Eintraegen trug
+kein einziger** die Felder 8-12. `histDeltaParts()` braucht Faktor UND
+Rohscore fuer BEIDE verglichenen Tage und liefert sonst nichts — die
+Ursachen-Aufschluesselung der History („What moved it"), gebaut nach dem
+Bugreport 2026-08-23 *„Ergibt keinen sinn"*, war damit auf jedem Geraet fuer
+jeden Tag leer ausser dem einen, den es selbst aufgezeichnet hat.
+Nachgemessen im Fenster: EUR 15 Tage mit Delta, 0 mit Aufschluesselung;
+JPY 18 zu 0.
+
+Behoben an beiden Enden: `scoreSnapshot` traegt jetzt `cmp/raw/ir/cot`, der
+Workflow haengt sie GESCHLOSSEN an (das Format ist positionsbasiert, ein
+einzeln nachgereichtes Feld stuende an der falschen Stelle). Fehlen sie bei
+einem aelteren Client, bleibt der Eintrag siebenstellig — es wird nichts
+geraten. Mit korrigiert: die Meldung an einem Tag ohne Aufschluesselung sagte
+pauschal *„so this day predates the breakdown"* und behauptete damit eine
+Ursache (Alter), die fuer fast alle betroffenen Tage falsch war.
 
 **⚠️ Blinder Fleck in `scoreSurface.js` (2026-08-21):** `addSurveyInds`
 (eine WURZEL der Score-Oberflaeche) hatte einen Kommentar mit

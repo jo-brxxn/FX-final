@@ -166,6 +166,48 @@ const MODE = process.argv[2] || 'normalized';
     if(teile.total!==0)ok.seasRetail.mitBeitrag++;
   })));
 
+  // ── E1d) Die Marktrelevanz muss WIRKEN, und sie darf nicht einfrieren ──
+  // Anlass (Pruefdurchgang 2026-09-20, "rechne wirklich alles nach"): der
+  // dritte Normierungs-Faktor (indMarketWeight) stand app-weit auf 1, ohne
+  // dass irgendein Waechter das gemerkt haette. _mktWeightCache wurde beim
+  // Boot mit leerem chartHist gefuellt - also mit 1 - und NUR beim
+  // Modus-Wechsel/Import geleert, nicht beim Eintreffen der Feeds.
+  // Gemessen: 108 von 182 wertbaren Indikator/Asset-Paaren trugen die
+  // eingefrorene 1, alle 24 Asset-Scores aenderten sich nach einer
+  // Cache-Leerung.
+  //
+  // Geprueft wird deshalb die WIRKUNG in zwei Richtungen - genau wie beim
+  // Alters-Faktor in E1b darueber:
+  //   1. Der Faktor muss ueberhaupt streuen (sonst ist er wieder tot).
+  //   2. Eine Cache-Leerung darf KEINEN Score bewegen. Das ist der
+  //      eigentliche Test: er faengt die Fehlerklasse unabhaengig davon,
+  //      ueber welchen Mechanismus der Cache das naechste Mal veraltet.
+  // Gegenprobe beim Einbau: den alten Namens-Schluessel wieder eingesetzt ->
+  // Punkt 1 meldete 0 streuende Faktoren und Punkt 2 alle 24 Assets rot;
+  // mit der Identitaets-Pruefung beides gruen.
+  if(scoreMode==='normalized'){
+    let streut=0,mktGeprueft=0;
+    syms.forEach(sym=>(sym.rubrics||[]).forEach(rub=>(rub.indicators||[]).forEach(ind=>{
+      if(!Array.isArray(ind.chartHist)||!ind.chartHist.length)return;
+      let m=null;try{m=indMarketWeight(ind,sym.id);}catch(e){return;}
+      mktGeprueft++;
+      if(Math.abs(m-1)>1e-9)streut++;
+    })));
+    ok.marktrelevanz={geprueft:mktGeprueft,streut};
+    if(mktGeprueft>=50&&streut<20)add('Marktrelevanz wirkt nirgends',
+      {geprueft:mktGeprueft,streut,
+       hinweis:'Der dritte Normierungs-Faktor steht ueberall auf 1 - entweder haengt der Cache oder die Preisreihe fehlt.'});
+    // 2. Cache-Leerung darf nichts bewegen.
+    const vor={};syms.forEach(s2=>{vor[s2.id]=symScoreCmp(s2);});
+    try{invalidateNormCache();}catch(e){}
+    const bewegt=[];
+    syms.forEach(s2=>{const n=symScoreCmp(s2);if(Math.abs(n-vor[s2.id])>1e-9)bewegt.push({asset:s2.id,vor:vor[s2.id],nach:n});});
+    if(bewegt.length)add('Score aendert sich durch eine Cache-Leerung',
+      {anzahl:bewegt.length,bsp:bewegt.slice(0,6),
+       hinweis:'_mktWeightCache traegt einen Wert, der nicht mehr zu seinen Eingaben passt (siehe indMarketWeight).'});
+    ok.cacheStabil={geprueft:syms.length,bewegt:bewegt.length};
+  }
+
   // ── E2) OUT OF DATE nur bei BEKANNTEM Zyklus ───────────────────
   // Nutzer-Bugreport 2026-09-06 (AUD GDP, zweite Runde): ohne Historie UND
   // ohne ind.interval faellt indCycleDaysCalc auf pauschale 30 Tage zurueck.

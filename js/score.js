@@ -11,7 +11,7 @@
 // bestandenem Regressionstest freigegeben.
 // Bidirektional mit js/main.js verbunden (Muster: docs/module-split.md).
 import {BC,FX} from './constants.js';
-import {IND_DATA_FEED,priceSeriesFor} from './data-feeds.js';
+import {IND_DATA_FEED,PRICE_DATA_FEED,priceSeriesFor} from './data-feeds.js';
 import {DATA_LIVE_OK,IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,escH,evtMatchesSym,getSym,macroCcyFor,markLsUpdatedSeen,markPrefEdit,openM,parseNumLike,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,rerender,save,scoreHist,selId,setSuppressBiasFlipAlerts,stripPeriodSuffix,syms,todayStr} from './main.js';
 
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
@@ -106,8 +106,15 @@ function indBaseWeight(ind,rub){
   if(ind.stepDriven)return 0.5;
   return indIsHalfWeight(ind,rub)?0.5:1;
 }
-// "Wichtig" (★) erhöht den Betrag additiv um 0,5 (statt Multiplikation ×1,5):
-// normaler Indikator 1 -> 1,5; halber Indikator 0,5 -> 1,0.
+// ⚠ HIER STAND EINE RECHNUNG, DIE ES SEIT DEM 2026-07-28 NICHT MEHR GIBT:
+// "Wichtig (★) erhoeht den Betrag additiv um 0,5". Der Bonus ist auf
+// Nutzer-Wunsch komplett entfernt worden (siehe indScoreParts weiter unten),
+// es gibt an einem Indikator auch gar keinen ★-Schalter mehr - `ind.imp` ist
+// app-weit bei 0 von 559 Indikatoren gesetzt und wird von indBaseWeight()
+// nicht gelesen. Der Kommentar hat die Rechnung trotzdem drei Monate lang
+// weiter beschrieben, ebenso der Tooltip jeder Score-Badge, der Hilfetext
+// und docs/score-model.md (Nutzer 2026-09-20: "Wo kann man Sachen markieren
+// mit additiv 0.5? Das gibt es doch nicht mehr"). Alle vier sind bereinigt.
 // Net Bullish/Bearish Positioning zaehlen mit halbem Gewicht in den Score:
 // ihr Bias wird automatisch aus dem COT-Long%/Short% gesetzt und ist nur
 // dann nicht-neutral, wenn eine Seite klar dominiert (>=60%, siehe
@@ -269,12 +276,20 @@ const DECAY_HALFLIFE_CYCLES=1.5; // Halbwertszeit = 1,5 eigene Release-Zyklen
 // von 27 auf 56ms. Das Ergebnis haengt ausschliesslich an chartHist, der
 // Cache-Schluessel ist deshalb dessen Laenge (gleiches Muster wie _sigCache).
 // Nicht-enumerierbar, damit die Felder nicht in snap()/Cloud-Sync landen.
+// ⚠ Der Schluessel ist die ARRAY-IDENTITAET, nicht die Laenge (2026-09-20).
+// adoptChartHist() ist der einzige Schreiber und ersetzt das Array
+// (ind.chartHist=pts) - und zwar nur dann, wenn sich der INHALT wirklich
+// geaendert hat (JSON-Vergleich direkt davor). Die Identitaet wechselt damit
+// exakt bei einer echten Aenderung. Die Laenge tat das nicht: eine Revision,
+// die den letzten Wert korrigiert OHNE einen Punkt anzuhaengen, liess sie
+// unveraendert - der Cache blieb still auf dem alten Stand. Dieselbe
+// Fehlerklasse wie beim _mktWeightCache weiter unten, nur enger.
 function indCycleDays(ind){
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
-  if(ind._cycCache!==undefined&&ind._cycCacheLen===h.length)return ind._cycCache;
-  const out=indCycleDaysCalc(ind,h);
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:null;
+  if(ind._cycCache!==undefined&&ind._cycCacheSrc===h)return ind._cycCache;
+  const out=indCycleDaysCalc(ind,h||[]);
   try{Object.defineProperty(ind,'_cycCache',{value:out,writable:true,enumerable:false,configurable:true});
-      Object.defineProperty(ind,'_cycCacheLen',{value:h.length,writable:true,enumerable:false,configurable:true});}catch(e){}
+      Object.defineProperty(ind,'_cycCacheSrc',{value:h,writable:true,enumerable:false,configurable:true});}catch(e){}
   return out;
 }
 function indCycleTextDays(ind){
@@ -390,8 +405,11 @@ function indCycleDaysCalc(ind,h){
 // Einheitenaenderung - die Rangfolge der Indikatoren untereinander
 // verschiebt sich kaum.
 function indSurpriseScale(ind){
-  if(ind._sigCache!==undefined&&ind._sigCacheLen===(ind.chartHist||[]).length)return ind._sigCache;
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+  // Schluessel ist die ARRAY-IDENTITAET, nicht die Laenge - Begruendung bei
+  // indCycleDays weiter oben.
+  const src=Array.isArray(ind.chartHist)?ind.chartHist:null;
+  if(ind._sigCache!==undefined&&ind._sigCacheSrc===src)return ind._sigCache;
+  const h=src||[];
   const s=[];
   h.forEach(e=>{
     if(!Array.isArray(e)||e.length<3)return;
@@ -406,7 +424,7 @@ function indSurpriseScale(ind){
     if(isFinite(mad)&&mad>0)out=mad;
   }
   try{Object.defineProperty(ind,'_sigCache',{value:out,writable:true,enumerable:false,configurable:true});
-      Object.defineProperty(ind,'_sigCacheLen',{value:h.length,writable:true,enumerable:false,configurable:true});}catch(e){}
+      Object.defineProperty(ind,'_sigCacheSrc',{value:src,writable:true,enumerable:false,configurable:true});}catch(e){}
   return out;
 }
 // Wie gross war die AKTUELLE Ueberraschung, gemessen an der typischen
@@ -482,13 +500,49 @@ function indDecayWeight(ind,rub){
 // an den Release-Tagen dieses Indikators, relativ zum Ausschlag an allen
 // Tagen. >1 = der Markt reagiert auf diesen Indikator ueberdurchschnittlich.
 // Braucht ausreichend Preishistorie - sonst neutral 1 statt geraten.
+//
+// ⚠⚠ DER CACHE MUSS SICH SELBST FUER UNGUELTIG ERKLAEREN (Bugfix 2026-09-20,
+// Pruefdurchgang "rechne wirklich alles nach"). Er stand hier als reiner
+// Namens-Schluessel (symId|indName) und wurde NUR von invalidateNormCache()
+// geleert - also beim Modus-Wechsel und beim Import, NICHT wenn ein Feed
+// ankommt. Beim Boot laeuft recomputeAuto() aber VOR jeder Live-Feed-
+// Korrektur (siehe den Kommentar bei recordScoreHist): ind.chartHist ist da
+// noch leer, indMarketWeight liefert deshalb 1 - und dieser Wert war fuer
+// die ganze Sitzung zementiert.
+//
+// Gemessen am echten Stand: von 182 Indikator/Asset-Paaren mit einem
+// wertbaren Faktor trugen 108 eingefrorene 1 und nur 74 den echten Wert -
+// welches Asset welchen bekam, haengte allein an der Boot-Reihenfolge. Der
+// Score mischte damit zwei verschiedene Gewichtungen. Nach einem
+// Modus-Wechsel hin und zurueck (der den Cache leert) aenderten sich ALLE
+// 24 Asset-Scores, USD 3,93 -> 4,19 / JPY 6,15 -> 6,40 / GOLD -1,89 -> -2,15.
+// Im Fenster "Data quality & weighting" standen dadurch 18 von 19
+// USD-Zeilen auf "Impact 1.00x", obwohl die Spalte ausdruecklich
+// "Measured, not assigned" verspricht (echte Spanne: 0,92x bis 1,23x).
+//
+// Warum die Identitaets-Pruefung und kein Zaehler/kein Aufruf im Feed:
+// dieselbe Ueberlegung wie bei _fxRefCountCache weiter unten - eine
+// Invalidierung, die an einer AUFRUFSTELLE haengt, wird beim naechsten
+// neuen Feed vergessen. Beide Eingaben werden aber beim Eintreffen neuer
+// Daten KOMPLETT ERSETZT (applyIndDataFeed schreibt ein neues chartHist-
+// Array, fetchPriceData ein neues PRICE_DATA_FEED-Objekt), ein
+// ===-Vergleich auf die Objekt-Identitaet erkennt das also exakt und
+// kostet nichts.
+//
+// ⚠ Die Laenge taugt hier NICHT als Schluessel (anders als bei _sigCache/
+// _cycCache): priceSeriesFor() baut bei invertierten Paaren die Reihe bei
+// JEDEM Aufruf neu auf (map+filter ueber die volle Historie) - sie vor dem
+// Cache-Treffer aufzurufen, nur um an ihre Laenge zu kommen, waere genau
+// die Rechnung, die der Cache einsparen soll. Die Identitaet des ROHEN
+// Feeds ist gratis zu haben.
 function indMarketWeight(ind,symId){
   const key=symId+'|'+ind.name;
-  if(_mktWeightCache[key]!==undefined)return _mktWeightCache[key];
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:null;
+  const c=_mktWeightCache[key];
+  if(c&&c.h===h&&c.feed===PRICE_DATA_FEED)return c.val;
   let out=1;
   const ser=priceSeriesFor(macroCcyFor(symId))||priceSeriesFor(symId);
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
-  if(ser&&ser.length>=60&&h.length>=NORM_MIN_OBS){
+  if(ser&&ser.length>=60&&h&&h.length>=NORM_MIN_OBS){
     const px={};ser.forEach(e=>{if(e&&e[0]!=null&&e[1]!=null)px[e[0]]=Number(e[1]);});
     const dates=Object.keys(px).sort();
     const moves={};
@@ -509,7 +563,7 @@ function indMarketWeight(ind,symId){
       }
     }
   }
-  _mktWeightCache[key]=out;
+  _mktWeightCache[key]={h,feed:PRICE_DATA_FEED,val:out};
   return out;
 }
 let _mktWeightCache={};
@@ -1161,7 +1215,7 @@ function scoreBias(n){return n>=3?'bull':n<=-3?'bear':'neu';}
 // ohne eigenen Bias verhalten sich unveraendert.
 function scoreBadge(n,title,key,oc,bias){
   const col=BC[bias||scoreBias(n)];
-  return`<span class="score-badge"${key?` data-anim-score="${key}" data-sv="${n}"`:''}${oc?` onclick="${oc}" role="button"`:''} style="color:${col};border-color:${col}${oc?';cursor:pointer':''}" title="${escH(title||'Score = sum of the indicators (beat +1, miss −1, neutral 0; ★ important adds +0.5; an indicator with its own Core variant counts ±0.5 each; no forecast → scored against the previous value at ±0.5; a release more than 2 of its own cycles overdue counts 0)')}">${n>0?'+':''}${n}</span>`;
+  return`<span class="score-badge"${key?` data-anim-score="${key}" data-sv="${n}"`:''}${oc?` onclick="${oc}" role="button"`:''} style="color:${col};border-color:${col}${oc?';cursor:pointer':''}" title="${escH(title||'Score = sum of the indicators (beat +1, miss −1, neutral 0; an indicator with its own Core variant counts ±0.5 each, as do bond yields, COT net positioning, CB Tone, seasonality and retail positioning; no forecast → scored against the previous value at ±0.5; a release more than 2 of its own cycles overdue counts 0)')}">${n>0?'+':''}${n}</span>`;
 }
 // Animiert Score-/Bias-Wechsel: Score-Zahlen zaehlen fließend hoch/runter mit
 // Puls, Bias-Pfeile flippen. Vergleicht data-sv/data-bv mit dem zuletzt
@@ -1509,7 +1563,20 @@ function symScoreCmp(sym){
 // 63 von 70 Paar-Scores. Groesste Einzelbewegung NAS (-6 -> -7,5: -0,5
 // Saisonalitaet und -1 Retail bei 98% Long). Die Note 1-10 bleibt bei allen
 // 48 unveraendert. Aufgezeichnete Tage davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=12;
+// V13 (2026-09-20): der dritte Normierungs-Faktor (Marktrelevanz) war
+// eingefroren. _mktWeightCache wurde beim Boot mit leerem chartHist gefuellt -
+// also mit 1 - und nie wieder geleert, wenn die Feeds ankamen; 108 von 182
+// wertbaren Indikator/Asset-Paaren trugen dadurch dauerhaft 1 statt ihres
+// gemessenen Werts, welches Asset welchen bekam haengte an der
+// Boot-Reihenfolge. Nach dem Fix aendern sich ALLE 24 Asset-Scores
+// (roh: USD 3,93 -> 4,19, JPY 6,15 -> 6,40, GOLD -1,89 -> -2,15, USYIELD
+// 3,43 -> 3,69; auf der Vergleichsskala bis +/-0,3). Kein Asset kreuzt dabei
+// die +/-3-Schwelle der Bias-Einstufung, es flippt also kein Bias. Betrifft
+// NUR den Modus "normalized" - in "classic" ist indNormFactor() ohnehin 1.
+// Mit im Bump: _sigCache/_cycCache schluesseln jetzt ebenfalls auf die
+// Array-Identitaet statt auf die Laenge (eine Revision ohne neuen Punkt blieb
+// vorher unbemerkt). Aufgezeichnete Tage davor sind eine andere Rechnung.
+const SCORE_MODEL_VERSION=13;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.
@@ -1614,4 +1681,20 @@ export {
 // ⚠ indDecayWeight/indDecayExempt stehen hier fuer check/score.js: der
 // Waechter muss pruefen koennen, WELCHE Indikatoren einen Alters-Faktor
 // tragen - sonst faellt eine falsch gezogene Ausnahme erst dem Nutzer auf.
-if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,scoreMode,setScoreMode,symScore,symScoreCmp,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
+if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,setScoreMode,setScoreModeVal,invalidateNormCache,indMarketWeight,symScore,symScoreCmp,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
+// ⚠ scoreMode gehoert NICHT in das Object.assign darueber (Fund im
+// Pruefdurchgang 2026-09-20). Object.assign kopiert den WERT zum Zeitpunkt
+// des Modul-Starts - window.scoreMode war danach eine tote Momentaufnahme.
+// Gemessen: nach setScoreMode('classic') stand in localStorage 'classic' und
+// 356 von 559 Normierungsfaktoren fielen auf 1, window.scoreMode las aber
+// weiter 'normalized'.
+//
+// In der App selbst blieb das folgenlos (ES-Module-Importe sind live
+// gebunden) - die WAECHTER lesen aber ueber window: check/score.js Abschnitt
+// F3 wollte belegen, "dass der Setter scoreMode wirklich setzt", war mit
+// `typeof setScoreModeVal==='function'` abgesichert und lief deshalb NIE
+// (der Setter stand nicht auf der Bruecke). Ein gruener Waechter ohne
+// Pruefung. Beides ist jetzt behoben: setScoreModeVal steht oben mit drauf,
+// und scoreMode kommt als GETTER - dasselbe Muster wie bei scoreHist/syms
+// in js/main.js.
+if(typeof window!=="undefined")Object.defineProperty(window,'scoreMode',{get:()=>scoreMode,configurable:true});
