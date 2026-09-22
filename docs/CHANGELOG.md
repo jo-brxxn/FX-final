@@ -16646,3 +16646,83 @@ aus einem Bootzustand stammt, lässt sich nachträglich nicht sicher sagen
 
 Beide Gegenproben feuern: Sperre raus → „1,4 geschrieben, vor dem Boot stand
 dort 1,8"; Aufzeichnung ganz aus → „1,8 gegen 2,1".
+
+---
+
+## 2026-09-22 — Leitzins in die Inflation-Karte + dunkle Rahmen-Hierarchie (VERSION-CHECK-538, SCORE_MODEL_VERSION 13 → 14, SUMMARY_ENGINE_VERSION 13 → 14)
+
+Nutzer-Wunsch, wörtlich: *„Für mal bei der Inflationskarte ganz oben direkt
+den Indikator interest rate ein. Und ich will nochmal mehr Kontrast in die
+Webseite bringen durch dunkelblau Töne und generell einfach andere blau stufen
+die eher dunkel sind. Das soll bei Bedienungselementen verwendet werden also in
+der überschrift im Hintergrund und wo man zeit verstellen kann oder im dropdown
+Menü und dann der Inhalt bleibt hell. Aber das was den Inhalt eingerenzt
+dunkel."* Rückfragen per `AskUserQuestion`, Antworten: **Verschieben** (nicht
+nur anzeigen, nicht doppelt), **alle vier** Elementgruppen (Kartenköpfe,
+Zeitraum-Umschalter, Dropdowns/Filter, Kartenrahmen) mit *„einer Art
+Hierarchie, nach innen wird es heller, aber nicht zu große Farbunterschiede
+außen"*, **Navy wie die Kopfzeile**, **alle hellen Vorlagen**.
+
+### Teil 1: Central Bank Rate → Spitze der Inflation-Karte
+
+- Warum „verschieben" hier überhaupt etwas sichtbar macht: die Interest-Rates-
+  Karte wird auf der Asset-Seite seit dem 2026-09-13 nicht mehr gezeichnet.
+- `moveRateIndToInflation()` (Muster `moveYieldIndsToInflation`): das
+  Indikator-Objekt wird verschoben, nicht neu angelegt — Bias, Notizen,
+  Recherche, Historie bleiben. `unshift`, also ganz oben. Idempotent.
+  Gemessen am EUR-Profil mit zurückgebautem Altstand: Rate wandert nach oben,
+  Bias `bull` bleibt, Interest Rates behält `CB Tone | Next CB Move`,
+  **Gesamtscore −0,5 vorher = −0,5 nachher**, Interest-Rates-Karte 1 → 0.
+- `mkRubs()` (frische Profile) und die acht Seed-Zeilen in
+  `IND_RESEARCH_DATA` tragen die Rate jetzt unter `Inflation`.
+- **Score-Formel unverändert, Kartenaufteilung nicht:** die Rate war über
+  `NO_TREND_RUBS` (Karte Interest Rates) trendfrei. Damit das beim Umzug so
+  bleibt, gibt es `NO_TREND_INDS` (indikatorbezogen, wie `BOND_HALF_PT` bei den
+  Renditen 2026-07-20). Weil die aufgezeichneten Kartenwerte (Inflation, IR)
+  springen, ist `SCORE_MODEL_VERSION` 13 → 14 gebumpt — die Stärke-Note zeigt
+  dadurch einige Tage `–/10`, bis sich die Reihe neu aufgebaut hat.
+- `summarizeInterestRates()` sucht die Rate jetzt in allen Karten des Assets,
+  `rubSummarySig()` nimmt sie für Interest Rates mit auf (sonst würde der Text
+  bei einer neuen Zinsentscheidung nie neu erzeugt). `SUMMARY_ENGINE_VERSION`
+  13 → 14.
+
+### Teil 2: dunkle Rahmen-Hierarchie
+
+Stufen aus der Chrome-Farbe jeder hellen Vorlage (`tools/fx-themes.mjs
+--rahmen`): gleicher Farbton, Helligkeit +5/+9/+14/+19/+25 %, Sättigung auf
+42 % gedeckelt. Terminal Pro: Rahmen `#29375B`, Kopf `#2F3F69`, Bedienelement
+`#374A7A`, Hover `#3F548C`. Ohne den Deckel wurde Stripes hellste Stufe
+`#1B65AE` — praktisch die bullish-Farbe `#0B57B8`.
+
+⚠ **Der Generator ist gegenüber `index.html` schon vorher auseinandergelaufen**
+(bg-Stufen, `--card`, `--due`, `--a-risk`). Die Vorlagen-Blöcke deshalb NICHT
+neu erzeugen — nur `--rahmen` ausgeben und einsetzen.
+
+**Erster Wurf verworfen, gemessen:** die Regeln arbeiteten mit Rückfallwerten
+(`var(--frame-x, alter Wert)`), damit die dunklen Vorlagen unverändert bleiben.
+Ein Vergleich der berechneten Stile aller Köpfe/Knöpfe/Karten in den fünf
+dunklen Vorlagen gegen `HEAD` ergab **170 Abweichungen** — ein gemeinsamer
+Rückfallwert passt nicht zu jedem der unterschiedlichen alten Werte (z. B.
+`.ab-rg.on` vorher 12 %-Tönung, nachher volle Akzentfläche). Zweiter Wurf:
+jede Regel ausdrücklich an die fünf hellen Vorlagen gebunden. Danach **0**
+Stil-Abweichungen (einzig der neue Klassenname `cct-src`).
+
+**Lesbarkeit — gefunden vom neuen Wächter `check/rahmen.js`** (jeder Text in
+den Zonen gegen seinen echten Hintergrund, 10 Seiten × 5 Vorlagen):
+
+| Fund | vorher | Ursache → Lösung |
+|---|---|---|
+| „Headlines", Zähler, Meta-Zeilen im Kopf | 1,4–1,7:1 | erben `--t0..t3` (dunkel) → Textstufen im Kopf umgedreht, wie in `.hdr` |
+| „View Calendar", „Myfxbook ↗", „UUP ↗" | 1,7:1 | `--blue` bzw. Inline-`style` → Klasse `cct-src`, im Kopf hell |
+| Preisänderung „−0.99 %" im Preiskopf | ~1,5:1 | inline Bedeutungsfarbe → helle Insel (wie Score-Abzeichen) |
+| ⓘ der Kalenderkarte | unsichtbar | `--blue` → hell |
+| Leitzins-Pille im Kontext-Kopf | 1,1:1 | helle Insel mit umgedrehtem Text → Pille wird Teil des Kopfes |
+| dieselbe Pille in Notion Warm | 4,37:1 | auf `--frame-ctl` zu knapp → `--frame-bd` |
+
+Endstand: **1215 Texte in 620 Zonen, 0 Befunde**; Gegenprobe (roter Wert in
+einen Kopf eingebaut) wird gemeldet.
+
+⚠ **Kehrt eine dokumentierte Entscheidung um:** `.dw` (Dashboard-Widgets) war
+seit dem 2026-07-25 bewusst ohne Kopfleisten-Hintergrund. Der Nutzer hat bei
+der Rückfrage die Kartenköpfe aller Karten gewählt; die Option nannte diese
+Entscheidung ausdrücklich.

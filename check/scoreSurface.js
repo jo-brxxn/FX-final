@@ -29,7 +29,7 @@ const WURZELN = [
   // eine Waehrung gibt - sechs Waehrungen trugen dadurch je fuenf
   // Karteileichen im Divisor. Die Bereinigung verschob BTC von 3,8 auf 3,4.
   // Die Struktur-Migrationen gehoeren deshalb in die Score-Oberflaeche.
-  'addSurveyInds', 'migrateRubInds', 'moveYieldIndsToInflation',
+  'addSurveyInds', 'migrateRubInds', 'moveYieldIndsToInflation', 'moveRateIndToInflation',
   'migrateRiskEnvRub', 'stripGeopoliticsRub', 'mkRubs'
 ];
 const TIEFE = 2;

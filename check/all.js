@@ -38,6 +38,7 @@ const PRUEFUNGEN = [
   { n: 'notizen',   d: 'Notizen ueberleben Sync/Undo/Import mit Text und Ordnern', f: 'check/notizen.js',  args: [],           browser: true },
   { n: 'layout',    d: 'Ueberlauf ueber Viewports und Karten',                   f: 'check/layout.js',    args: [],           browser: true },
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
+  { n: 'rahmen',    d: 'dunkle Koepfe/Bedienelemente: jeder Text lesbar (5 helle Vorlagen)', f: 'check/rahmen.js', args: [], browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
   { n: 'nav',       d: 'Sidebar-Klickregel, mit Maus UND mit Touch',          f: 'check/nav.js',       args: [],           browser: true },
   // Design-Vorlagen des FX Analyst Pro: rechnet je Vorlage Kontrast und

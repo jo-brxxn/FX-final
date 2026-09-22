@@ -2847,6 +2847,7 @@ body.res-return-active #resBackBar{display:flex}
 .cot-meta b{color:var(--t1)}
 .cot-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .cot-card-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);padding:12px 15px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.cot-card-title .cct-src{color:var(--blue)}
 .cot-card-title small{font-weight:500;color:var(--t3);font-size:var(--fs-sm);font-family:var(--ff-num)}
 .cot-bars{padding:11px 15px}
 .cot-bar-row{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer}
@@ -5379,6 +5380,214 @@ body.anim-enter:not(.no-data-anim) #dashWidgets>.dash-zone>.dw:nth-child(4){anim
 
 /* Hintergrund-Fenster: jede Dauerschleife haelt an. */
 body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animation-play-state:paused!important}
+/* ══ DUNKLE RAHMEN-HIERARCHIE (Nutzer-Wunsch 2026-09-22) ══════════════════
+   Woertlich: "mehr Kontrast in die Webseite bringen durch dunkelblau Toene
+   ... bei Bedienungselementen also in der Ueberschrift im Hintergrund und wo
+   man Zeit verstellen kann oder im Dropdown Menue und dann der Inhalt bleibt
+   hell. Aber das was den Inhalt eingrenzt dunkel" - und: "nach innen wird es
+   heller aber nicht zu grosse Farbunterschiede aussen".
+   Stufen von aussen nach innen (Details: docs/design-system.md):
+     Kopfzeile/Sidebar --chrome-bg  >  Kartenrahmen --frame-bd  >
+     Kartenkopf --frame-hd  >  Bedienelement --frame-ctl (Hover --frame-hov)
+   Der INHALT (Tabellen, Texte, Charts, Formularfelder) bleibt hell.
+   Tokens erzeugt: node tools/fx-themes.mjs --rahmen.
+   ⚠ JEDE Regel hier ist ausdruecklich an die fuenf HELLEN Vorlagen gebunden
+   (:root ohne Vorlage = Terminal Pro, dazu linear/stripe/swiss/notion). Der
+   erste Wurf arbeitete mit Rueckfallwerten (var(--frame-x, alter Wert)) -
+   gemessen wich das in den dunklen Vorlagen an 170 Stellen vom bisherigen
+   Aussehen ab, weil ein gemeinsamer Rueckfallwert nicht zu JEDEM der
+   einzelnen alten Werte passt. Die dunklen Vorlagen bleiben so unberuehrt.
+   Lesbarkeit prueft check/rahmen.js. */
+:root:not([data-fx-theme]){--frame-bd:#29375B;--frame-hd:#2F3F69;--frame-ctl:#374A7A;--frame-hov:#3F548C;--frame-line:#4961A1;--frame-on:#F4F6FA;--frame-dim:#B9C3DF;--frame-sel:#EDF0F7;--frame-selfg:#212C49;}
+:root[data-fx-theme="linear"]{--frame-bd:#28292F;--frame-hd:#31333A;--frame-ctl:#3D3F48;--frame-hov:#484B55;--frame-line:#575A66;--frame-on:#F7F7F8;--frame-dim:#C8C9D0;--frame-sel:#F1F2F3;--frame-selfg:#1C1D21;}
+:root[data-fx-theme="stripe"]{--frame-bd:#1D3247;--frame-hd:#233C55;--frame-ctl:#2A4967;--frame-hov:#325579;--frame-line:#3A658F;--frame-on:#F4F7FB;--frame-dim:#B7CCE1;--frame-sel:#EDF2F8;--frame-selfg:#0A2540;}
+:root[data-fx-theme="swiss"]{--frame-bd:#1E1E1E;--frame-hd:#282828;--frame-ctl:#353535;--frame-hov:#414141;--frame-line:#515151;--frame-on:#F7F7F7;--frame-dim:#CCCCCC;--frame-sel:#F2F2F2;--frame-selfg:#111111;}
+:root[data-fx-theme="notion"]{--frame-bd:#45423B;--frame-hd:#504D44;--frame-ctl:#5E5A50;--frame-hov:#6B675C;--frame-line:#7C776A;--frame-on:#F8F8F7;--frame-dim:#D0CEC8;--frame-sel:#F3F3F1;--frame-selfg:#37352F;}
+/* ── 1) Kartenrahmen ── nur oben/rechts/unten: links traegt bei Makro-,
+   Watchlist- und Paar-Karten der Bias-Streifen (glow-*) seine Aussage. */
+:root:not([data-fx-theme]) :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card),
+:root[data-fx-theme="linear"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card),
+:root[data-fx-theme="stripe"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card),
+:root[data-fx-theme="swiss"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card),
+:root[data-fx-theme="notion"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card){border-top-color:var(--frame-bd);border-right-color:var(--frame-bd);border-bottom-color:var(--frame-bd)}
+:root:not([data-fx-theme]) :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc),
+:root[data-fx-theme="linear"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc),
+:root[data-fx-theme="stripe"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc),
+:root[data-fx-theme="swiss"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc),
+:root[data-fx-theme="notion"] :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc){border-left-color:var(--frame-bd)}
+/* Der 1D/1W/1M/YTD-Streifen IN der Preiskarte ist Inhalt, kein Rahmen. */
+:root:not([data-fx-theme]) :is(.ab-ptile .aperf),
+:root[data-fx-theme="linear"] :is(.ab-ptile .aperf),
+:root[data-fx-theme="stripe"] :is(.ab-ptile .aperf),
+:root[data-fx-theme="swiss"] :is(.ab-ptile .aperf),
+:root[data-fx-theme="notion"] :is(.ab-ptile .aperf){border-top-color:var(--bd)}
+/* ── 2) Kartenkoepfe ── */
+:root:not([data-fx-theme]) :is(.rub-hdr),
+:root[data-fx-theme="linear"] :is(.rub-hdr),
+:root[data-fx-theme="stripe"] :is(.rub-hdr),
+:root[data-fx-theme="swiss"] :is(.rub-hdr),
+:root[data-fx-theme="notion"] :is(.rub-hdr){background:var(--frame-hd);border-bottom-color:var(--frame-bd)}
+:root:not([data-fx-theme]) :is(.rub-card.imp .rub-hdr),
+:root[data-fx-theme="linear"] :is(.rub-card.imp .rub-hdr),
+:root[data-fx-theme="stripe"] :is(.rub-card.imp .rub-hdr),
+:root[data-fx-theme="swiss"] :is(.rub-card.imp .rub-hdr),
+:root[data-fx-theme="notion"] :is(.rub-card.imp .rub-hdr){background:var(--frame-hov)}
+:root:not([data-fx-theme]) :is(.rub-hdr .rub-inp),
+:root[data-fx-theme="linear"] :is(.rub-hdr .rub-inp),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .rub-inp),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .rub-inp),
+:root[data-fx-theme="notion"] :is(.rub-hdr .rub-inp){color:var(--frame-on)}
+:root:not([data-fx-theme]) :is(.rub-hdr .rub-inp::placeholder),
+:root[data-fx-theme="linear"] :is(.rub-hdr .rub-inp::placeholder),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .rub-inp::placeholder),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .rub-inp::placeholder),
+:root[data-fx-theme="notion"] :is(.rub-hdr .rub-inp::placeholder){color:var(--frame-dim)}
+:root:not([data-fx-theme]) :is(.rub-hdr .rub-tog,.rub-hdr .rmv,.rub-hdr .rdel),
+:root[data-fx-theme="linear"] :is(.rub-hdr .rub-tog,.rub-hdr .rmv,.rub-hdr .rdel),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .rub-tog,.rub-hdr .rmv,.rub-hdr .rdel),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .rub-tog,.rub-hdr .rmv,.rub-hdr .rdel),
+:root[data-fx-theme="notion"] :is(.rub-hdr .rub-tog,.rub-hdr .rmv,.rub-hdr .rdel){color:var(--frame-dim)}
+:root:not([data-fx-theme]) :is(.ab-tile-hd),
+:root[data-fx-theme="linear"] :is(.ab-tile-hd),
+:root[data-fx-theme="stripe"] :is(.ab-tile-hd),
+:root[data-fx-theme="swiss"] :is(.ab-tile-hd),
+:root[data-fx-theme="notion"] :is(.ab-tile-hd){background:var(--frame-hd);border-bottom-color:var(--frame-bd);margin:-10px -11px 8px;padding:7px 11px;border-radius:var(--rs) var(--rs) 0 0}
+:root:not([data-fx-theme]) :is(.ab-tile-hd .ab-tile-t),
+:root[data-fx-theme="linear"] :is(.ab-tile-hd .ab-tile-t),
+:root[data-fx-theme="stripe"] :is(.ab-tile-hd .ab-tile-t),
+:root[data-fx-theme="swiss"] :is(.ab-tile-hd .ab-tile-t),
+:root[data-fx-theme="notion"] :is(.ab-tile-hd .ab-tile-t){color:var(--frame-on)}
+:root:not([data-fx-theme]) :is(.ab-tile-hd .ab-tile-s),
+:root[data-fx-theme="linear"] :is(.ab-tile-hd .ab-tile-s),
+:root[data-fx-theme="stripe"] :is(.ab-tile-hd .ab-tile-s),
+:root[data-fx-theme="swiss"] :is(.ab-tile-hd .ab-tile-s),
+:root[data-fx-theme="notion"] :is(.ab-tile-hd .ab-tile-s){color:var(--frame-dim)}
+/* Kalenderkarte: der Monatskopf ist ihr Kartenkopf (Polster 9px 10px). */
+:root:not([data-fx-theme]) :is(.abc-cal>.abc-hd),
+:root[data-fx-theme="linear"] :is(.abc-cal>.abc-hd),
+:root[data-fx-theme="stripe"] :is(.abc-cal>.abc-hd),
+:root[data-fx-theme="swiss"] :is(.abc-cal>.abc-hd),
+:root[data-fx-theme="notion"] :is(.abc-cal>.abc-hd){background:var(--frame-hd);margin:-9px -10px 6px;padding:5px 7px;border-radius:var(--rs) var(--rs) 0 0}
+:root:not([data-fx-theme]) :is(.abc-cal>.abc-hd .abc-mon),
+:root[data-fx-theme="linear"] :is(.abc-cal>.abc-hd .abc-mon),
+:root[data-fx-theme="stripe"] :is(.abc-cal>.abc-hd .abc-mon),
+:root[data-fx-theme="swiss"] :is(.abc-cal>.abc-hd .abc-mon),
+:root[data-fx-theme="notion"] :is(.abc-cal>.abc-hd .abc-mon){color:var(--frame-on)}
+:root:not([data-fx-theme]) :is(.abc-cal>.abc-hd .abc-nav),
+:root[data-fx-theme="linear"] :is(.abc-cal>.abc-hd .abc-nav),
+:root[data-fx-theme="stripe"] :is(.abc-cal>.abc-hd .abc-nav),
+:root[data-fx-theme="swiss"] :is(.abc-cal>.abc-hd .abc-nav),
+:root[data-fx-theme="notion"] :is(.abc-cal>.abc-hd .abc-nav){color:var(--frame-dim)}
+@media(hover:hover){:root:not([data-fx-theme]) :is(.abc-cal>.abc-hd .abc-nav:hover),
+:root[data-fx-theme="linear"] :is(.abc-cal>.abc-hd .abc-nav:hover),
+:root[data-fx-theme="stripe"] :is(.abc-cal>.abc-hd .abc-nav:hover),
+:root[data-fx-theme="swiss"] :is(.abc-cal>.abc-hd .abc-nav:hover),
+:root[data-fx-theme="notion"] :is(.abc-cal>.abc-hd .abc-nav:hover){color:var(--frame-on);background:var(--frame-hov)}}
+/* Dashboard-Widgets (Polster 16px). ⚠ Kehrt die Entscheidung vom
+   2026-07-25 um ("Keine Ueberschrift einfach so" - .dw ohne Kopfleisten-
+   Hintergrund): der Nutzer hat am 2026-09-22 ausdruecklich die Kartenkoepfe
+   aller Karten gewaehlt, mit Hinweis auf genau diese Entscheidung. */
+:root:not([data-fx-theme]) :is(.dw-hdr),
+:root[data-fx-theme="linear"] :is(.dw-hdr),
+:root[data-fx-theme="stripe"] :is(.dw-hdr),
+:root[data-fx-theme="swiss"] :is(.dw-hdr),
+:root[data-fx-theme="notion"] :is(.dw-hdr){background:var(--frame-hd);margin:-16px -16px 11px;padding:9px 16px;border-radius:var(--r) var(--r) 0 0}
+:root:not([data-fx-theme]) :is(.dw-hdr .dw-t-txt),
+:root[data-fx-theme="linear"] :is(.dw-hdr .dw-t-txt),
+:root[data-fx-theme="stripe"] :is(.dw-hdr .dw-t-txt),
+:root[data-fx-theme="swiss"] :is(.dw-hdr .dw-t-txt),
+:root[data-fx-theme="notion"] :is(.dw-hdr .dw-t-txt){color:var(--frame-on)}
+:root:not([data-fx-theme]) :is(.dw-hdr .dw-btns),
+:root[data-fx-theme="linear"] :is(.dw-hdr .dw-btns),
+:root[data-fx-theme="stripe"] :is(.dw-hdr .dw-btns),
+:root[data-fx-theme="swiss"] :is(.dw-hdr .dw-btns),
+:root[data-fx-theme="notion"] :is(.dw-hdr .dw-btns){background:var(--frame-hd);right:12px}
+/* Karten der Insights-Seiten (Data, COT, Sentiment, Seasonality, ...). */
+:root:not([data-fx-theme]) :is(.cot-card-title),
+:root[data-fx-theme="linear"] :is(.cot-card-title),
+:root[data-fx-theme="stripe"] :is(.cot-card-title),
+:root[data-fx-theme="swiss"] :is(.cot-card-title),
+:root[data-fx-theme="notion"] :is(.cot-card-title){background:var(--frame-hd);border-bottom-color:var(--frame-bd);color:var(--frame-on)}
+/* ⚠ Textstufen im dunklen Kopf UMDREHEN - dasselbe Prinzip wie in .hdr/
+   #navSidebar. Ohne das stand alles, was im Kopf var(--t0..t3) benutzt,
+   dunkel auf Navy: gemessen 1,5:1 bei "Headlines", Meta-Zeilen und Zaehlern. */
+:root:not([data-fx-theme]) :is(.rub-hdr,.ab-tile-hd,.abc-cal>.abc-hd,.dw-hdr,.cot-card-title),
+:root[data-fx-theme="linear"] :is(.rub-hdr,.ab-tile-hd,.abc-cal>.abc-hd,.dw-hdr,.cot-card-title),
+:root[data-fx-theme="stripe"] :is(.rub-hdr,.ab-tile-hd,.abc-cal>.abc-hd,.dw-hdr,.cot-card-title),
+:root[data-fx-theme="swiss"] :is(.rub-hdr,.ab-tile-hd,.abc-cal>.abc-hd,.dw-hdr,.cot-card-title),
+:root[data-fx-theme="notion"] :is(.rub-hdr,.ab-tile-hd,.abc-cal>.abc-hd,.dw-hdr,.cot-card-title){--t0:var(--frame-on);--t1:var(--frame-on);--t2:var(--frame-dim);--t3:var(--frame-dim)}
+/* ⓘ stand in --blue: auf Navy unsichtbar. */
+:root:not([data-fx-theme]) :is(.rub-hdr .rinfo,.ab-tile-hd .info-b,.abc-cal>.abc-hd .info-b,.dw-hdr .rinfo,.dw-hdr .info-b,.cot-card-title .rinfo,.cot-card-title .info-b),
+:root[data-fx-theme="linear"] :is(.rub-hdr .rinfo,.ab-tile-hd .info-b,.abc-cal>.abc-hd .info-b,.dw-hdr .rinfo,.dw-hdr .info-b,.cot-card-title .rinfo,.cot-card-title .info-b),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .rinfo,.ab-tile-hd .info-b,.abc-cal>.abc-hd .info-b,.dw-hdr .rinfo,.dw-hdr .info-b,.cot-card-title .rinfo,.cot-card-title .info-b),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .rinfo,.ab-tile-hd .info-b,.abc-cal>.abc-hd .info-b,.dw-hdr .rinfo,.dw-hdr .info-b,.cot-card-title .rinfo,.cot-card-title .info-b),
+:root[data-fx-theme="notion"] :is(.rub-hdr .rinfo,.ab-tile-hd .info-b,.abc-cal>.abc-hd .info-b,.dw-hdr .rinfo,.dw-hdr .info-b,.cot-card-title .rinfo,.cot-card-title .info-b){color:var(--frame-on);border-color:var(--frame-dim)}
+/* Links und Aktionen im Kopf ("View Calendar", "Myfxbook ↗", "UUP ↗") waren
+   in --blue gesetzt: auf Navy 1,7:1. Hell = Link. Knoepfe im Kopf (.btn,
+   z.B. die Widget-Werkzeuge) sind Bedienelemente und bekommen deren Stufe. */
+:root:not([data-fx-theme]) :is(.rub-hdr a,.ab-tile-hd a,.abc-cal>.abc-hd a,.dw-hdr a,.cot-card-title a,.dw-hdr .dw-hdlink),
+:root[data-fx-theme="linear"] :is(.rub-hdr a,.ab-tile-hd a,.abc-cal>.abc-hd a,.dw-hdr a,.cot-card-title a,.dw-hdr .dw-hdlink),
+:root[data-fx-theme="stripe"] :is(.rub-hdr a,.ab-tile-hd a,.abc-cal>.abc-hd a,.dw-hdr a,.cot-card-title a,.dw-hdr .dw-hdlink),
+:root[data-fx-theme="swiss"] :is(.rub-hdr a,.ab-tile-hd a,.abc-cal>.abc-hd a,.dw-hdr a,.cot-card-title a,.dw-hdr .dw-hdlink),
+:root[data-fx-theme="notion"] :is(.rub-hdr a,.ab-tile-hd a,.abc-cal>.abc-hd a,.dw-hdr a,.cot-card-title a,.dw-hdr .dw-hdlink){color:var(--frame-on);text-decoration-color:var(--frame-dim)}
+:root:not([data-fx-theme]) :is(.rub-hdr .btn,.ab-tile-hd .btn,.dw-hdr .btn,.cot-card-title .btn),
+:root[data-fx-theme="linear"] :is(.rub-hdr .btn,.ab-tile-hd .btn,.dw-hdr .btn,.cot-card-title .btn),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .btn,.ab-tile-hd .btn,.dw-hdr .btn,.cot-card-title .btn),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .btn,.ab-tile-hd .btn,.dw-hdr .btn,.cot-card-title .btn),
+:root[data-fx-theme="notion"] :is(.rub-hdr .btn,.ab-tile-hd .btn,.dw-hdr .btn,.cot-card-title .btn){background:var(--frame-ctl);border-color:var(--frame-line);color:var(--frame-on)}
+/* Bias-Farben (bullish/bearish) sind auf Navy kaum lesbar (#0B5FCC auf
+   #2F3F69 ~1,6:1). Bedeutung bleibt Bedeutung: solche Werte stehen im Kopf
+   auf einer hellen Insel statt umgefaerbt zu werden - Score-Abzeichen und
+   inline in Bedeutungsfarbe gesetzte Werte (Preisaenderung der Preiskarte). */
+:root:not([data-fx-theme]) :is(.rub-hdr .rub-score,.dw-hdr .score-badge,.ab-tile-hd .score-badge,.ab-tile-hd .ab-tile-s[style*="color"]),
+:root[data-fx-theme="linear"] :is(.rub-hdr .rub-score,.dw-hdr .score-badge,.ab-tile-hd .score-badge,.ab-tile-hd .ab-tile-s[style*="color"]),
+:root[data-fx-theme="stripe"] :is(.rub-hdr .rub-score,.dw-hdr .score-badge,.ab-tile-hd .score-badge,.ab-tile-hd .ab-tile-s[style*="color"]),
+:root[data-fx-theme="swiss"] :is(.rub-hdr .rub-score,.dw-hdr .score-badge,.ab-tile-hd .score-badge,.ab-tile-hd .ab-tile-s[style*="color"]),
+:root[data-fx-theme="notion"] :is(.rub-hdr .rub-score,.dw-hdr .score-badge,.ab-tile-hd .score-badge,.ab-tile-hd .ab-tile-s[style*="color"]){background:var(--bg2);border-radius:var(--rss);padding-left:5px;padding-right:5px}
+/* Die Leitzins-Pille im Kontext-Kopf war eine helle Insel mit --t0-Text -
+   nach dem Umdrehen hell auf hell (1,1:1). Sie wird Teil des Kopfes. */
+:root:not([data-fx-theme]) :is(.ab-tile-hd .ab-rate),
+:root[data-fx-theme="linear"] :is(.ab-tile-hd .ab-rate),
+:root[data-fx-theme="stripe"] :is(.ab-tile-hd .ab-rate),
+:root[data-fx-theme="swiss"] :is(.ab-tile-hd .ab-rate),
+:root[data-fx-theme="notion"] :is(.ab-tile-hd .ab-rate){background:var(--frame-bd);border-color:var(--frame-line)}
+/* ── 3) Zeitraum-Umschalter ── eine Optik fuer alle (Grundsatz
+   "wiederkehrende Bausteine einheitlich"): dunkles Feld, gewaehlte Stufe
+   hell - umgekehrt wie der Inhalt, damit die Auswahl sofort ins Auge springt. */
+:root:not([data-fx-theme]) :is(.ab-rg,.histp-rbtn,.ind-hist-range-btn,.perf-win,.hl-tab),
+:root[data-fx-theme="linear"] :is(.ab-rg,.histp-rbtn,.ind-hist-range-btn,.perf-win,.hl-tab),
+:root[data-fx-theme="stripe"] :is(.ab-rg,.histp-rbtn,.ind-hist-range-btn,.perf-win,.hl-tab),
+:root[data-fx-theme="swiss"] :is(.ab-rg,.histp-rbtn,.ind-hist-range-btn,.perf-win,.hl-tab),
+:root[data-fx-theme="notion"] :is(.ab-rg,.histp-rbtn,.ind-hist-range-btn,.perf-win,.hl-tab){background:var(--frame-ctl);border-color:var(--frame-line);color:var(--frame-on)}
+@media (hover:hover){:root:not([data-fx-theme]) :is(.ab-rg:hover,.histp-rbtn:hover,.ind-hist-range-btn:hover,.perf-win:hover,.hl-tab:hover),
+:root[data-fx-theme="linear"] :is(.ab-rg:hover,.histp-rbtn:hover,.ind-hist-range-btn:hover,.perf-win:hover,.hl-tab:hover),
+:root[data-fx-theme="stripe"] :is(.ab-rg:hover,.histp-rbtn:hover,.ind-hist-range-btn:hover,.perf-win:hover,.hl-tab:hover),
+:root[data-fx-theme="swiss"] :is(.ab-rg:hover,.histp-rbtn:hover,.ind-hist-range-btn:hover,.perf-win:hover,.hl-tab:hover),
+:root[data-fx-theme="notion"] :is(.ab-rg:hover,.histp-rbtn:hover,.ind-hist-range-btn:hover,.perf-win:hover,.hl-tab:hover){background:var(--frame-hov)}}
+:root:not([data-fx-theme]) :is(.ab-rg.on,.histp-rbtn.on,.ind-hist-range-btn.on,.perf-win.on,.hl-tab.on),
+:root[data-fx-theme="linear"] :is(.ab-rg.on,.histp-rbtn.on,.ind-hist-range-btn.on,.perf-win.on,.hl-tab.on),
+:root[data-fx-theme="stripe"] :is(.ab-rg.on,.histp-rbtn.on,.ind-hist-range-btn.on,.perf-win.on,.hl-tab.on),
+:root[data-fx-theme="swiss"] :is(.ab-rg.on,.histp-rbtn.on,.ind-hist-range-btn.on,.perf-win.on,.hl-tab.on),
+:root[data-fx-theme="notion"] :is(.ab-rg.on,.histp-rbtn.on,.ind-hist-range-btn.on,.perf-win.on,.hl-tab.on){background:var(--frame-sel);border-color:var(--frame-sel);color:var(--frame-selfg);box-shadow:0 0 0 1px var(--frame-line)}
+/* ── 4) Dropdowns / Filter ── die aufgeklappte Liste bleibt HELL: iOS und
+   macOS ignorieren den option-Hintergrund, uebernehmen aber die Schrift-
+   farbe - helle Schrift waere dort weiss auf weiss. */
+:root:not([data-fx-theme]) :is(select.btn,.cot-filterbar select,.news-tools select,.px-panel-sel),
+:root[data-fx-theme="linear"] :is(select.btn,.cot-filterbar select,.news-tools select,.px-panel-sel),
+:root[data-fx-theme="stripe"] :is(select.btn,.cot-filterbar select,.news-tools select,.px-panel-sel),
+:root[data-fx-theme="swiss"] :is(select.btn,.cot-filterbar select,.news-tools select,.px-panel-sel),
+:root[data-fx-theme="notion"] :is(select.btn,.cot-filterbar select,.news-tools select,.px-panel-sel){background-color:var(--frame-ctl);border-color:var(--frame-line);color:var(--frame-on)}
+@media (hover:hover){:root:not([data-fx-theme]) :is(select.btn:hover:not(:disabled),.cot-filterbar select:hover:not(:disabled),.news-tools select:hover,.px-panel-sel:hover),
+:root[data-fx-theme="linear"] :is(select.btn:hover:not(:disabled),.cot-filterbar select:hover:not(:disabled),.news-tools select:hover,.px-panel-sel:hover),
+:root[data-fx-theme="stripe"] :is(select.btn:hover:not(:disabled),.cot-filterbar select:hover:not(:disabled),.news-tools select:hover,.px-panel-sel:hover),
+:root[data-fx-theme="swiss"] :is(select.btn:hover:not(:disabled),.cot-filterbar select:hover:not(:disabled),.news-tools select:hover,.px-panel-sel:hover),
+:root[data-fx-theme="notion"] :is(select.btn:hover:not(:disabled),.cot-filterbar select:hover:not(:disabled),.news-tools select:hover,.px-panel-sel:hover){background-color:var(--frame-hov);border-color:var(--frame-line);color:var(--frame-on)}}
+:root:not([data-fx-theme]) :is(select.btn option,.cot-filterbar select option,.news-tools select option,.px-panel-sel option),
+:root[data-fx-theme="linear"] :is(select.btn option,.cot-filterbar select option,.news-tools select option,.px-panel-sel option),
+:root[data-fx-theme="stripe"] :is(select.btn option,.cot-filterbar select option,.news-tools select option,.px-panel-sel option),
+:root[data-fx-theme="swiss"] :is(select.btn option,.cot-filterbar select option,.news-tools select option,.px-panel-sel option),
+:root[data-fx-theme="notion"] :is(select.btn option,.cot-filterbar select option,.news-tools select option,.px-panel-sel option){background:var(--bg2);color:var(--t1)}
+/* ══ ENDE DUNKLE RAHMEN-HIERARCHIE ══ */
 </style>
 </head>
 <body>
@@ -5499,11 +5708,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-537 - DER Fehler hinter allen vier Meldungen: die Historie hat Tageswerte aus dem BOOTZUSTAND aufgezeichnet. Aufgefallen an der NZD-History: in score_hist.json stand ein V - 14.09. 1,5 dann 15.09. 0,6 dann 16.09. 1,5, identisch rein und raus, und die Tageszeile behauptete dafuer ein Delta von minus 2 neben einer BULLISCHEN Veroeffentlichung. URSACHE: recordScoreHist lief im INIT direkt nach loadScoreHist, also VOR bootFetchScoreFeeds. Zu dem Zeitpunkt haben die Indikatoren kein research.date, die abgeleiteten Karten-Biasse sind nicht gerechnet, und vor allem stehen die getrackten Indikatorzahlen falsch - damit steht symCmpFactor daneben. GEMESSEN mit kuenstlich verzoegerten Feeds an NZD: beim Boot Faktor 0,71 roher Score 1,98 aufgezeichnet 1,4 - nach den Feeds Faktor 1,11 roher Score 2,01 aufgezeichnet 2,2. Der ROHE Score ist praktisch gleich, die aufgezeichnete Zahl liegt trotzdem 0,8 Punkte auseinander, allein ueber den Faktor. Bleibt die App lange offen, ueberschreibt ein spaeterer Lauf den Eintrag und alles ist gut. Wird sie kurz geoeffnet und wieder geschlossen, oder ist die Verbindung langsam, BLEIBT der Zwischenzustand als Tageswert stehen - und die ganze Historie rechnet danach mit ihm. Deshalb konnten Tagesdelta und Kartenzerlegung einer bullischen Veroeffentlichung widersprechen: eine der beiden Zahlen war schlicht Muell. FIX: scoreHistAufzeichenbar - es wird nichts aufgezeichnet, solange der Indikator-Feed dieser Sitzung nicht da ist, im normalisierten Modus zusaetzlich nicht ohne den Preis-Feed. Dieselbe Regel wie bei indIsStale und applySeasRetailFeed: ohne Grundlage kein Urteil. Damit der Tag trotzdem seinen Eintrag bekommt, zeichnet bootFetchScoreFeeds am Ende einmal auf, und autoFetchPriceData ebenfalls - der Preis-Feed laeuft ausserhalb des Boot-Bundles. Nachgemessen: vor den Feeds bleibt der Eintrag unveraendert, nach den Feeds entspricht er exakt dem Live-Score. WAECHTER check/historie.js Stufe I, zwei Haelften. Die zweite ist die wichtigere: ein Waechter, der nur verlangt dass vorher nichts geschrieben wird, waere auch dann gruen wenn ueberhaupt nichts mehr aufgezeichnet wird - nach den Feeds MUSS der Tageswert dem Live-Score entsprechen. Bezugspunkt der ersten Haelfte ist der Stand VOR dem Boot aus score_hist.json, nicht der Live-Score im selben Moment: der laeuft waehrend des Bootvorgangs weiter, und der erste Entwurf blieb deshalb auch mit ausgebauter Sperre gruen. Beide Gegenproben feuern."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-538 - Leitzins (Central Bank Rate) ganz oben in der Inflation-Karte (aus Interest Rates verschoben, Score-Summe unveraendert, SCORE_MODEL_VERSION 14). Dunkle Rahmen-Hierarchie in allen hellen Vorlagen: Kartenrahmen, Kartenkoepfe, Zeitraum-Umschalter und Dropdowns in Navy-Stufen, Inhalt bleibt hell."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-537</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-538</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -191,6 +191,9 @@ const SCORE_ZERO=new Set([]);
 // den Leitzins. Das Bias selbst (z.B. Bond 15-Tage-Vergleich, Beat/Miss der
 // Zinsentscheidung) bleibt unveraendert bestehen.
 const NO_TREND_RUBS=new Set(['Interest Rates']);
+// Indikatoren OHNE Trend-Anteil, unabhaengig von der Karte, in der sie stehen
+// (siehe noTrend in indScoreParts).
+const NO_TREND_INDS=new Set(['Central Bank Rate']);
 // Zerlegt den Score-Beitrag EINES Indikators in seine Bestandteile - die
 // einzige Quelle der Score-Arithmetik (indScore summiert nur noch total),
 // damit die Aufschluesselung im Score-Modal nie von der echten Rechnung
@@ -802,7 +805,11 @@ function indScoreParts(ind,rub,symId,ohneAltersgrenze){
   // sich auf die INDIKATOREN selbst, nicht auf die Karte, in der sie
   // gerade angezeigt werden. Deshalb zusaetzlich zur Rubrik-Pruefung direkt
   // ueber BOND_HALF_PT geprueft (indikator-spezifisch, kartenunabhaengig).
-  const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name))||BOND_HALF_PT.has(ind.name);
+  // ⚠ Dasselbe gilt seit 2026-09-22 fuer den Leitzins: er ist auf Nutzer-
+  // Wunsch ("bei der Inflationskarte ganz oben direkt den Indikator interest
+  // rate") aus Interest Rates an die Spitze der Inflation-Karte gewandert und
+  // behaelt dabei sein Verhalten - kein Trend-Anteil, kein Trend-Chip.
+  const noTrend=!!(rub&&NO_TREND_RUBS.has(rub.name))||BOND_HALF_PT.has(ind.name)||NO_TREND_INDS.has(ind.name);
   if(noTrend)return{w,base,trend:0,rev:0,total:base,zero:false,noTrend:true,norm};
   // Trend-Bonus ist IMMER additiv obendrauf, nie ein Ersatz:
   // - Mit Forecast bleibt Beat/Miss die Basis (ind.bias/w oben), der
@@ -1576,7 +1583,7 @@ function symScoreCmp(sym){
 // Mit im Bump: _sigCache/_cycCache schluesseln jetzt ebenfalls auf die
 // Array-Identitaet statt auf die Laenge (eine Revision ohne neuen Punkt blieb
 // vorher unbemerkt). Aufgezeichnete Tage davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=13;
+const SCORE_MODEL_VERSION=14;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

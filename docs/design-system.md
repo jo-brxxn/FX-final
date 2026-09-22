@@ -332,7 +332,9 @@ gerade dran gearbeitet wird):
   jedes Mal wieder verworfen (Details in `docs/CHANGELOG.md`, Stichwort
   "Glow") — **bei einem erneuten "Glow zurück"-Wunsch zuerst nachfragen**,
   welche Kartentypen genau gemeint sind, statt direkt umzusetzen.
-- **`.dw` (Dashboard-Widgets) bewusst OHNE Koyfin-Kopfleisten-Hintergrund**
+- ~~**`.dw` (Dashboard-Widgets) bewusst OHNE Koyfin-Kopfleisten-Hintergrund**~~
+  **⚠ Überholt am 2026-09-22** (dunkle Rahmen-Hierarchie oben: der Nutzer hat
+  die Kartenköpfe aller Karten gewählt). Ursprünglicher Text:
   gelassen — keine Lücke, sondern eine am 2026-07-25 explizit getroffene
   Nutzer-Entscheidung ("Keine Ueberschrift einfach so", Code-Kommentar bei
   `.dw-hdr`). Bei einem "Karten sehen nicht einheitlich aus"-Einwand zu
@@ -510,6 +512,43 @@ Platz). `.hdr-status` (Saved/Offline/LIVE/VERSION-CHECK) bekam `flex:1` +
 Platz. Bleibt ein echtes Flex-Kind im normalen Fluss — **keine** absolute
 Positionierung, das führte früher auf schmalen Screens zu Überlappungen mit
 Undo/Redo bzw. dem Alarm-Zähler.
+
+## ⚠️ Dunkle Rahmen-Hierarchie: der Rahmen ist dunkel, der Inhalt hell (seit 2026-09-22)
+
+Nutzer-Vorgabe: *„das was den Inhalt eingrenzt dunkel"*, *„nach innen wird es
+heller aber nicht zu große Farbunterschiede außen"*. Gilt in **allen fünf hellen
+Vorlagen**; die dunklen bleiben unberührt.
+
+| Stufe (außen → innen) | Token | Terminal Pro |
+|---|---|---|
+| Kopfzeile/Sidebar | `--chrome-bg` | `#212C49` |
+| Kartenrahmen | `--frame-bd` | `#29375B` |
+| Kartenkopf | `--frame-hd` | `#2F3F69` |
+| Bedienelement (Zeitraum, Dropdown) | `--frame-ctl` | `#374A7A` |
+| Hover | `--frame-hov` | `#3F548C` |
+| Text / gedämpft auf Rahmen | `--frame-on` / `--frame-dim` | `#F4F6FA` / `#B9C3DF` |
+| gewählte Stufe (hell) | `--frame-sel` / `--frame-selfg` | `#EDF0F7` / `#212C49` |
+
+- **Erzeugt, nicht getippt:** `node tools/fx-themes.mjs --rahmen` (Farbton der
+  Chrome-Farbe, Sättigung ≤ 42 % — sonst sieht die hellste Stufe aus wie die
+  bullish-Farbe). Der Block steht in `index.html` unter
+  `DUNKLE RAHMEN-HIERARCHIE`.
+- **Jede Regel ist an die hellen Vorlagen gebunden** (`:root:not([data-fx-theme])`
+  + `linear/stripe/swiss/notion`), nie per Rückfallwert — der erste Wurf so
+  wich in den dunklen Vorlagen an 170 Stellen vom alten Aussehen ab.
+- **Im dunklen Kopf werden die Textstufen umgedreht** (`--t0..t3` → hell),
+  genau wie in `.hdr`/`#navSidebar`.
+- **Bedeutungsfarben werden NICHT umgefärbt**, sondern stehen im Kopf auf einer
+  hellen Insel (`--bg2`): Score-Abzeichen, inline gefärbte Werte.
+- **Gewählte Stufe = hell auf dunklem Feld** — bei jedem Zeitraum-Umschalter
+  gleich (`.ab-rg`, `.histp-rbtn`, `.ind-hist-range-btn`, `.perf-win`, `.hl-tab`).
+- **Die aufgeklappte Dropdown-Liste bleibt hell:** iOS/macOS ignorieren den
+  `option`-Hintergrund, übernehmen aber die Schriftfarbe.
+- **Neuer Kartentyp oder neuer Kopf?** In die Listen des Blocks eintragen UND in
+  `ZONEN` von `check/rahmen.js` — der Wächter prüft jeden Text darin gegen
+  seinen echten Hintergrund (AA), in allen fünf hellen Vorlagen.
+- Ersetzt für `.dw` die Entscheidung vom 2026-07-25 („ohne Kopfleisten-
+  Hintergrund"), siehe unten.
 
 ## ⚠️ Badge neben schrumpfbarem Text: immer `flex-wrap` + Mindestbreite
 

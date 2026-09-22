@@ -416,6 +416,15 @@ zaehlte 21 geaenderte Stellen - die Indikatorenzahl in USDs Economic-Growth-
 Karte sinkt, das wirkt sich (Modus `normalized`) auch auf die vergleichende
 Staerke-Note ANDERER Waehrungen aus, nicht nur auf USD selbst.
 
+**13 → 14 (2026-09-22, Leitzins in die Inflation-Karte):** Nutzer-Wunsch
+*„bei der Inflationskarte ganz oben direkt den Indikator interest rate"*,
+ausdrücklich als Verschieben. `moveRateIndToInflation()` legt das
+Indikator-Objekt an die Spitze der Inflation-Karte. Die **Summe** ändert sich
+nicht (nachgemessen EUR: −0,5 vorher = −0,5 nachher) — die Rate bleibt über
+`NO_TREND_INDS` trendfrei, auch außerhalb von Interest Rates. Aber die
+**Kartenwerte** Inflation und Interest Rates, die `scoreHist` je Tag
+aufzeichnet, springen; deshalb der Bump.
+
 ### Altersgrenze: zwei Bedingungen, die sie NICHT stellen darf (seit 2026-09-06)
 
 `indIsStale()` ist eine harte Aussage ueber einen Indikator. Sie unterbleibt

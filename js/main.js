@@ -2749,7 +2749,7 @@ const IND_DISPLAY_NAMES={
 };
 const IND_RESEARCH_DATA={
   USD:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Upper: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-168'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'3.50%-3.75% (Upper: 3.75%)',forecast:'3.50%-3.75%',previous:'3.50%-3.75%',releaseDate:'2026-04-29',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-168'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.15%',forecast:null,previous:'4.16%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.53%',forecast:null,previous:'4.56%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2774,7 +2774,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'93.1 (Conference Board)',forecast:'91.9',previous:'93.8',releaseDate:'2026-05-26',interval:'monthly',source:'https://www.investing.com/economic-calendar/cb-consumer-confidence-48'},
   ]},
   EUR:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Deposit Rate) / 2.15% (Main Refi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'2.00% (Deposit Rate) / 2.15% (Main Refi)',forecast:'2.00%',previous:'2.00%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/deposit-facility-rate-1655'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'2.68% (Bund 2Y)',forecast:null,previous:'2.62%',releaseDate:'2026-06-03',interval:'daily',source:'https://www.investing.com/rates-bonds/germany-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'3.04% (Bund 10Y)',forecast:null,previous:'3.07%',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/germany-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2799,7 +2799,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-19.0 (EU-Kommission, Flash)',forecast:'-20.8',previous:'-20.6',releaseDate:'2026-05-21',interval:'monthly',source:'https://www.investing.com/economic-calendar/consumer-confidence-49'},
   ]},
   GBP:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-170'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'3.75%',forecast:'3.75%',previous:'3.75%',releaseDate:'2026-04-30',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-170'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.35% (UK Gilt 2Y)',forecast:null,previous:'4.34%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/uk-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.93% (UK Gilt 10Y)',forecast:null,previous:'4.95%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/uk-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2824,7 +2824,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-23 (GfK)',forecast:'-28',previous:'-25',releaseDate:'2026-05-22',interval:'monthly',source:'https://uk.investing.com/economic-calendar/gfk-consumer-confidence-330'},
   ]},
   CHF:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'every 3 months',source:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'0.00%',forecast:'0.00%',previous:'0.00%',releaseDate:'2026-03-19',interval:'every 3 months',source:'https://www.investing.com/economic-calendar/snb-interest-rate-decision-169'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'0.11%',forecast:null,previous:'0.11%',releaseDate:'2026-06-02',interval:'daily',source:'https://www.investing.com/rates-bonds/switzerland-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'0.44%',forecast:null,previous:'0.42%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/switzerland-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2852,7 +2852,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'-40 (SECO Konsumentenstimmung)',forecast:null,previous:'-43',releaseDate:'2026-05-08',interval:'quarterly',source:'https://www.investing.com/economic-calendar/seco-consumer-climate-362'},
   ]},
   JPY:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'0.75%',forecast:'0.75%',previous:'0.75%',releaseDate:'2026-04-28',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/boj-interest-rate-decision-165'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'1.35%-1.38% (JGB 2Y)',forecast:null,previous:'1.40% (Vortag)',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/japan-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'2.69% (JGB 10Y)',forecast:null,previous:'2.55% (vor 1 Monat)',releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/japan-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2882,7 +2882,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'32.2 (Cabinet Office, April 2026)',forecast:null,previous:'33.3 (March 2026)',releaseDate:'2026-05-13',interval:'monthly',source:'https://www.investing.com/economic-calendar/household-confidence-148'},
   ]},
   CAD:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-166'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-06-10',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-166'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'2.85%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'daily',source:'https://ca.investing.com/rates-bonds/canada-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'3.43%',forecast:null,previous:null,releaseDate:'2026-06-09',interval:'daily',source:'https://www.investing.com/rates-bonds/canada-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2907,7 +2907,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'45.6 (Conference Board, May 2026)',forecast:null,previous:'49.2 (April 2026)',releaseDate:'2026-06-10',interval:'monthly',source:'https://tradingeconomics.com/canada/consumer-confidence'},
   ]},
   AUD:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (hold expected)',previous:'4.10%',releaseDate:'2026-05-06',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-171'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'4.35%',forecast:'4.35% (hold expected)',previous:'4.10%',releaseDate:'2026-05-06',interval:'every 6-8 weeks',source:'https://www.investing.com/economic-calendar/interest-rate-decision-171'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'4.54%',forecast:null,previous:null,releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/australia-2-year-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.90%',forecast:null,previous:null,releaseDate:'2026-06-11',interval:'daily',source:'https://www.investing.com/rates-bonds/australia-10-year-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -2932,7 +2932,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Economic Growth',indicator:'Consumer Confidence',applicable:true,actual:'80.6 (Westpac-MI, June 2026)',forecast:null,previous:'83.0 (May)',releaseDate:'2026-06-09',interval:'monthly',source:'https://www.investing.com/economic-calendar/westpac-consumer-sentiment-364'},
   ]},
   NZD:{entries:[
-    {rubric:'Interest Rates',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167'},
+    {rubric:'Inflation',indicator:'Central Bank Rate',applicable:true,actual:'2.25%',forecast:'2.25%',previous:'2.25%',releaseDate:'2026-05-27',interval:'every 6-7 weeks',source:'https://www.investing.com/economic-calendar/rbnz-interest-rate-decision-167'},
     {rubric:'Inflation',indicator:'2Y Bond Yield',applicable:true,actual:'3.14%',forecast:null,previous:'3.10%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/new-zealand-2-years-bond-yield'},
     {rubric:'Inflation',indicator:'10Y Bond Yield',applicable:true,actual:'4.88%',forecast:null,previous:'4.69%',releaseDate:'2026-06-10',interval:'daily',source:'https://www.investing.com/rates-bonds/new-zealand-10-years-bond-yield'},
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
@@ -3361,8 +3361,8 @@ function applyIndResearch(sym){
 // ══ DEFAULT DATA ════════════════════════════════════════════════════
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
-  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield'])},
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CB Tone','Next CB Move'])},
+  {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['CB Tone','Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
@@ -3508,6 +3508,29 @@ function moveYieldIndsToInflation(rubrics){
     infl.indicators.push(ind);
   });
 }
+// Der Leitzins zieht aus Interest Rates an die SPITZE der Inflation-Karte
+// (Nutzer-Wunsch 2026-09-22: "bei der Inflationskarte ganz oben direkt den
+// Indikator interest rate", ausdruecklich als Verschieben, nicht als Kopie).
+// Grund dafuer, dass er sonst unsichtbar bliebe: die Interest-Rates-Karte
+// wird auf der Asset-Seite seit 2026-09-13 nicht mehr gezeichnet.
+// Muster wie moveYieldIndsToInflation: das Objekt wird verschoben (Bias,
+// Notizen, Recherche, Historie bleiben), idempotent - nach dem ersten Lauf
+// steht er nicht mehr in Interest Rates, ein zweiter Lauf tut nichts. Danach
+// darf der Nutzer ihn in der Karte frei umsortieren, ohne dass er zurueckspringt.
+// Score: dieselbe Summe, nur die Kartenaufteilung aendert sich (kein
+// Trend-Anteil ueber NO_TREND_INDS in js/score.js).
+function moveRateIndToInflation(rubrics){
+  if(!Array.isArray(rubrics))return;
+  const ir=rubrics.find(r=>r.name==='Interest Rates');
+  const infl=rubrics.find(r=>r.name==='Inflation');
+  if(!ir||!infl||!ir.indicators)return;
+  const idx=ir.indicators.findIndex(i=>stripPeriodSuffix(i.name).base==='Central Bank Rate');
+  if(idx<0)return;
+  const[ind]=ir.indicators.splice(idx,1);
+  infl.indicators=infl.indicators||[];
+  if(infl.indicators.some(i=>stripPeriodSuffix(i.name).base==='Central Bank Rate'))return;
+  infl.indicators.unshift(ind);
+}
 // Einmalige Bereinigung: das Zahnrad-Menue liess frueher faelschlich auch
 // COT Data/Risk Environment als same/inverse-Regel waehlbar (Nutzer-
 // Bugreport 2026-07-21: GOLDs COT-Bias wurde dadurch vom invertierten
@@ -3598,6 +3621,7 @@ function migrateRubInds(rubrics,sym){
   // migrateRiskEnvRub ist entfallen - die Karte wird nicht mehr umgebaut,
   // sondern entfernt (stripRiskEnvRub, aufgerufen aus addMacroRub).
   moveYieldIndsToInflation(rubrics);
+  moveRateIndToInflation(rubrics);
   addSurveyInds(rubrics,sym);
   cleanDeriveRules(sym);
   rubrics.forEach(rub=>{
@@ -10148,7 +10172,12 @@ function summarizeGrowth(sym,rub){
   return sentences.length?sentences.join('. ')+'.':noSignalFallback(sym,rub);
 }
 function summarizeInterestRates(sym,rub){
-  const rs=sumRawState(sym,findIndByBase(rub,'Central Bank Rate'));
+  // Der Leitzins steht seit 2026-09-22 in der Inflation-Karte (siehe
+  // moveRateIndToInflation) - deshalb zuerst in dieser Karte, dann in allen
+  // anderen Karten des Assets suchen. Sonst verlöre die Interest-Rates-
+  // Zusammenfassung ihren einzigen Anker still.
+  const rateInd=findIndByBase(rub,'Central Bank Rate')||(sym.rubrics||[]).map(r=>findIndByBase(r,'Central Bank Rate')).find(Boolean);
+  const rs=sumRawState(sym,rateInd);
   if(!rs)return noSignalFallback(sym,rub);
   if(rs.pNum==null||rs.aNum===rs.pNum)return`The policy rate is at ${rs.actual}, unchanged from the previous level.`;
   return`The policy rate is at ${rs.actual}, ${rs.aNum>rs.pNum?'up from':'down from'} the previous level of ${rs.previous}.`;
@@ -10286,7 +10315,7 @@ function summarizeRub(sym,rub){
 // Saisonalitaet, nicht aus der Positionierung, und der Satz behauptete das
 // Gegenteil. Ausserdem aendert sich das Schlusswort selbst an 8 Karten, weil
 // der Karten-Score ein anderer ist.
-const SUMMARY_ENGINE_VERSION=13;
+const SUMMARY_ENGINE_VERSION=14;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
@@ -10295,7 +10324,14 @@ const SUMMARY_ENGINE_VERSION=13;
 // Bug-Klasse wie bei SUMMARY_ENGINE_VERSION: die Signatur muss JEDEN Input
 // abdecken, der den erzeugten Text beeinflussen kann).
 function rubSummarySig(sym,rub){
-  return JSON.stringify([SUMMARY_ENGINE_VERSION,effDeriveRules(sym)[rub.name]||null,(rub.indicators||[]).map(i=>{
+  // Interest Rates liest den Leitzins aus der Inflation-Karte (siehe
+  // summarizeInterestRates) - er gehoert deshalb auch in DEREN Signatur.
+  const inds=(rub.indicators||[]).slice();
+  if(rub.name==='Interest Rates'&&!findIndByBase(rub,'Central Bank Rate')){
+    const ext=(sym.rubrics||[]).map(r=>findIndByBase(r,'Central Bank Rate')).find(Boolean);
+    if(ext)inds.push(ext);
+  }
+  return JSON.stringify([SUMMARY_ENGINE_VERSION,effDeriveRules(sym)[rub.name]||null,inds.map(i=>{
     const r=i.research||{};
     return[i.name,i.bias,r.actual,r.forecast,r.previous,r.revisedFrom];
   })]);
@@ -18292,7 +18328,7 @@ function renderRetailBars(D){
   const src=D.retailSource||'https://www.myfxbook.com/community/outlook';
   const filt=sentFilterBar();
   const scope=sentSym?` · ${escH(sentSymLabel(sentSym))}`:'';
-  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
+  const hdr=`<div class="cot-card-title">Retail Sentiment${iBtn('retail')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" class="cct-src">Myfxbook ↗</a> · ${escH(upd)}${scope}</small></div>`;
   if(sentSym)return renderRetailHistory(D,sentSym,hdr);
   let list=(D.retail||[]).filter(r=>r&&isFinite(+r.long)).map(r=>({sym:r.sym,long:Math.max(0,Math.min(100,+r.long))})).sort((a,b)=>b.long-a.long);
   if(!list.length){
@@ -18816,7 +18852,7 @@ function renderPutCallChart(D){
     ?`Proxy: <b>${escH(perAsset.proxy)}</b> ETF options (closest liquid options market for ${escH(COT_NAME[pcAsset]||pcAsset)}) — a market read, not literally ${escH(COT_NAME[pcAsset]||pcAsset)} options. Snapshot-based (today's chain), builds a trend day by day.${pcThinNote(perAsset)}`
     :`Market-wide (all U.S. options exchanges combined) — pick an asset above for a per-symbol read`;
   const filt=pcUsableAssetIds(D).length?pcFilterBar(D):'';
-  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Put-Call Ratio${iBtn('putcall')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Contrarian · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" class="cct-src">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   const pcId=perAsset?pcAsset:'';
   // ⚠ Die Glaettung laeuft auf der VOLLEN Reihe, erst DANACH wird der
   // Zeitraum-Regler angewendet. Andersherum haette der erste sichtbare Tag
@@ -18987,7 +19023,7 @@ function renderNetFlowChart(D){
   // ⚠ Die Bezugslinie steht schon in der Kopfzeile - sonst behauptet sie
   // "vs. own median" auch dort, wo gegen die rohe Null gemessen wird.
   const bezugKopf=pcFlowBezug(D,pcId,PC_FLOW_SMOOTH).mode==='median'?', vs. own median':', zero = even call/put split';
-  const hdr=`<div class="cot-card-title">Call/Put Balance${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put)${bezugKopf} · volume-based, not buy/sell · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" style="color:var(--blue)">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
+  const hdr=`<div class="cot-card-title">Call/Put Balance${iBtn('netflow')}${filt?`<span style="margin-left:auto">${filt}</span>`:''}<small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">(Call−Put)/(Call+Put)${bezugKopf} · volume-based, not buy/sell · source: <a href="${safeUrl(src)}" target="_blank" rel="noopener" class="cct-src">${srcLabel}</a> · ${escH(upd)} · ${scopeNote}</small></div>`;
   // ⚠ Ueber pcRawSeries(), NICHT selbst zusammengebaut: sonst haette diese
   // Karte wieder eine eigene Sicht auf dieselbe Reihe (Wochenendfilter
   // dort, aber nicht hier) - genau das Muster, das beim Put/Call schon
@@ -19906,7 +19942,7 @@ function renderSeasonality(){
   const cur=A.months.find(m=>m[0]===curMon);
   const upd=D.updated?fmtStamp(D.updated):'–';
   const filt=assetFilterSelect(ids,seasAsset,'setSeasAsset',null,'Pick an asset',null);
-  const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" style="color:var(--blue)">${escH(A.proxy)} ↗</a>`;
+  const proxyLink=`<a href="https://finance.yahoo.com/quote/${encodeURIComponent(A.proxy)}" target="_blank" rel="noopener" class="cct-src">${escH(A.proxy)} ↗</a>`;
   const curLine=cur?`<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:8px">${SEAS_MON[curMon-1]} (current month): <b style="color:${cur[1]>=0?BC.bull:BC.bear}">${cur[1]>0?'+':''}${cur[1].toFixed(2)}%</b> average return, up in <b>${cur[2]}%</b> of the last ${cur[3]} years${A.inv?' · pair inverted from a USD-first quote so the sign matches this side':''}</div>`:'';
   // "vs Price" (Nutzer-Wunsch 2026-08-12): dauerhaft aktive Ueberlagerung mit
   // dem tatsaechlichen Kursverlauf des laufenden Jahres, kein Toggle/keine
@@ -22093,7 +22129,7 @@ Object.assign(window,{
   _stripPeriodCache,stripPeriodSuffix,splitResearchVal,researchBias,applyIndResearch,mkInds,mkRubs,mkRubOrder,
   IND_INFO_DEFAULTS,applyRubOrder,ensureRiskEnvWeg,stripRiskEnvRub,RISK_ENV_ALTE_NAMEN,RUB_IND_REMOVE,RUB_IND_RENAME,OLD_NEWINDS_REMOVE,
   stripGeopoliticsRub,YIELD_INDS_TO_INFLATION,
-  moveYieldIndsToInflation,cleanDeriveRules,NEUE_UMFRAGEN_2026_08,UMFRAGE_NAMEN_2026_08,addSurveyInds,migrateRubInds,
+  moveYieldIndsToInflation,moveRateIndToInflation,cleanDeriveRules,NEUE_UMFRAGEN_2026_08,UMFRAGE_NAMEN_2026_08,addSurveyInds,migrateRubInds,
   mkR,CB_MAP,cbName,cbDat,ASSET_CLASS,enrichRubrics,DEF,
   MACRO_SYNC_RUBS,MACRO_DERIVE_RUBS,MACRO_DERIVE_RULES,invertBias,effDeriveRules,deriveMacroBiasAll,MACRO_RUB_INFO,
   MACRO_DATA,addMacroRub,mkPairCats,mkNCs,
