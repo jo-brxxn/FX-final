@@ -597,6 +597,85 @@ const gruen = (m) => console.log('  ✓ ' + m);
       + `unten "n/c" fuer denselben Uebergang.`);
   else gruen(`${h3.length} Wochen: keine nennt eine Summe ueber einen Modellwechsel hinweg`);
 
+  // ── I) KEIN TAGESWERT AUS DEM BOOTZUSTAND ──────────────────────────
+  // Nutzer-Bugreport 2026-09-22, vierter Anlauf am selben Thema, Screenshot
+  // der NZD-History. In score_hist.json stand ein V: 14.09. 1,5 -> 15.09. 0,6
+  // -> 16.09. 1,5, identisch rein und raus, und die Tageszeile behauptete
+  // dafuer ein Delta von -2 neben einer BULLISCHEN Veroeffentlichung.
+  //
+  // URSACHE: recordScoreHist() lief im INIT direkt nach loadScoreHist(), also
+  // VOR bootFetchScoreFeeds(). Zu dem Zeitpunkt haben die Indikatoren kein
+  // research.date, die abgeleiteten Karten-Biasse fehlen, und vor allem
+  // stehen die getrackten Indikatorzahlen falsch - damit symCmpFactor. Der
+  // aufgezeichnete Tageswert war ein Zwischenzustand, den niemand je auf dem
+  // Bildschirm hatte. Gemessen an NZD mit verzoegerten Feeds:
+  //   beim Boot      cmp 0,71  roh 1,98  aufgezeichnet 1,4
+  //   nach den Feeds cmp 1,11  roh 2,01  aufgezeichnet 2,2
+  // Der ROHE Score ist praktisch gleich - die aufgezeichnete Zahl liegt
+  // trotzdem 0,8 auseinander. Bleibt die App offen, ueberschreibt ein
+  // spaeterer Lauf das; wird sie kurz geoeffnet und geschlossen, bleibt der
+  // Muell als Tageswert stehen und die ganze Historie rechnet mit ihm.
+  //
+  // ⚠ ZWEI HAELFTEN, und die zweite ist die wichtigere: ein Waechter, der nur
+  // "vor den Feeds wird nichts geschrieben" verlangt, waere auch dann gruen,
+  // wenn ueberhaupt nichts mehr aufgezeichnet wird. Nach den Feeds MUSS der
+  // Tageswert dem Live-Score entsprechen.
+  console.log('\n── I) Kein Tageswert aus dem Bootzustand ──');
+  const pI = await b.newPage({ viewport: { width: 1400, height: 900 } });
+  await pI.addInitScript(() => { try {
+    localStorage.setItem('fxpro_help_seen', '1');
+    localStorage.setItem('fxpro_score_mode', 'normalized');
+  } catch (e) {} });
+  // Feeds verzoegern wie bei einer langsamen Verbindung.
+  await pI.route('**/ind_data.json*', async r => { await new Promise(x => setTimeout(x, 4000)); r.continue(); });
+  await pI.route('**/price_data.json*', async r => { await new Promise(x => setTimeout(x, 4500)); r.continue(); });
+  await pI.goto(URL, { waitUntil: 'domcontentloaded' });
+  await pI.waitForFunction(() => Array.isArray(window.syms) && window.syms.length, { timeout: 20000 });
+  await pI.waitForTimeout(600);
+  const iFrueh = await pI.evaluate(() => {
+    const s = syms.find(x => x.id === 'NZD') || syms[0];
+    const h = ((window.scoreHist || {})[s.id]) || [];
+    const heute = todayStr(), e = h.filter(x => x[0] === heute)[0] || null;
+    return { id: s.id, live: symScoreCmp(s), eintrag: e ? e[1] : null, cmp: e ? e[7] : null,
+      feeds: JSON.parse(JSON.stringify(window.DATA_LIVE_OK || {})) };
+  });
+  await wartenBisDatenDa(pI);
+  await pI.waitForTimeout(7000);
+  const iSpaet = await pI.evaluate(() => {
+    const s = syms.find(x => x.id === 'NZD') || syms[0];
+    const h = ((window.scoreHist || {})[s.id]) || [];
+    const heute = todayStr(), e = h.filter(x => x[0] === heute)[0] || null;
+    return { live: symScoreCmp(s), eintrag: e ? e[1] : null, cmp: e ? e[7] : null,
+      feeds: JSON.parse(JSON.stringify(window.DATA_LIVE_OK || {})) };
+  });
+  await pI.close();
+  // ⚠ Bezugspunkt ist der Stand VOR dem Boot, nicht der Live-Score im selben
+  // Moment: der laeuft waehrend des Bootvorgangs ohnehin weiter, ein Vergleich
+  // damit ist wertlos (erster Entwurf blieb deshalb auch mit ausgebauter
+  // Sperre gruen). Vor dem Boot gilt, was in score_hist.json steht - der
+  // Browser merged die Datei als Basis. Weicht der Eintrag davon ab, hat die
+  // App ihn in dieser Sitzung geschrieben, und zwar vor den Feeds.
+  let vorBoot = null;
+  try {
+    const H = JSON.parse(fs.readFileSync(path.join(WURZEL, 'score_hist.json'), 'utf8'));
+    const heute = new Date().toISOString().slice(0, 10);
+    const reihe = H[iFrueh.id] || [];
+    const tr = reihe.filter(x => x[0] === heute)[0];
+    vorBoot = tr ? tr[1] : null;
+  } catch (e) {}
+  if (iFrueh.feeds.ind === true)
+    rot('Der Indikator-Feed war schon beim ersten Messpunkt da - die Verzoegerung greift nicht, Stufe I prueft nichts.');
+  else if (iFrueh.eintrag != null && (vorBoot == null || Math.abs(iFrueh.eintrag - vorBoot) > 0.001))
+    rot(`Vor den Feeds wurde ein Tageswert geschrieben: ${iFrueh.eintrag}, vor dem Boot stand dort ${vorBoot}. `
+      + `Zu dem Zeitpunkt fehlen research.date, die abgeleiteten Karten-Biasse und damit symCmpFactor - `
+      + `ein kurz geoeffneter Tab friert so einen Zwischenstand als Tageswert ein. Siehe scoreHistAufzeichenbar().`);
+  else gruen(`vor den Feeds kein Tageswert geschrieben (Live stand bei ${iFrueh.live}, aufgezeichnet blieb ${iFrueh.eintrag})`);
+  if (iSpaet.eintrag == null)
+    rot('Nach den Feeds gibt es ueberhaupt keinen Tageswert - die Sperre greift zu weit, die Historie waechst nicht mehr.');
+  else if (Math.abs(iSpaet.eintrag - iSpaet.live) > 0.06)
+    rot(`Nach den Feeds weicht der aufgezeichnete Tageswert vom Live-Score ab: ${iSpaet.eintrag} gegen ${iSpaet.live}.`);
+  else gruen(`nach den Feeds entspricht der Tageswert dem Live-Score (${iSpaet.eintrag})`);
+
   await b.close();
   console.log(fehler ? `\n✗ HISTORIE: ${fehler} Fund(e)` : '\n✓ HISTORIE: alles in Ordnung');
   process.exit(fehler ? 1 : 0);

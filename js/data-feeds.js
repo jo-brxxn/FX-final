@@ -10,7 +10,7 @@
 // das allgemeine Muster) - dieses Modul exportiert deshalb weiter unten
 // die Namen, die main.js zurueck braucht.
 import {BC,FX} from './constants.js';
-import {DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,feedEntryFor,kanonIndName,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
+import {DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,feedEntryFor,kanonIndName,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,applyRevisionToValHist,applyTrendModel,checkPriceAlerts,curPage,escH,fmtDayHdr,indBiasInputSig,indBiasPinned,invalidateRateStepCache,isNonFx,macroCcyFor,openM,parseNumLike,pushU,recordScoreHist,renderDash,rerender,researchBias,resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,syms,todayStr,trackIndValues,widgets} from './main.js';
 
 // ── INDIKATOR-WERTE AUS ECHTER API-QUELLE (ind_data.json) ──
 // ind_data.json wird stündlich per GitHub Action aus TradingViews
@@ -338,7 +338,13 @@ async function fetchPriceData(){
   }catch(e){}
   priceDataLastFetch=Date.now();
 }
-function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();rerender();});}
+// ⚠ Nach dem Preis-Feed EINMAL aufzeichnen. Seit SCORE_MODEL_VERSION 13 wirkt
+// die Marktrelevanz wirklich, der Preis-Feed veraendert im Modus normalized
+// also jeden Score - und scoreHistAufzeichenbar() verweigert die Aufzeichnung
+// so lange, bis er da ist. Ohne diesen Aufruf bekaeme der Tag ueberhaupt
+// keinen Eintrag mehr, weil fetchPriceData ausserhalb von
+// bootFetchScoreFeeds laeuft und kein save() nach sich zieht.
+function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();try{recordScoreHist();}catch(e){}rerender();});}
 // ── FINANZ-SCHLAGZEILEN (news_data.json) ──────────────────────────
 // Nutzer-Wunsch 2026-08-06: eigene Dashboard-Karte ganz rechts mit den
 // neusten Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick,

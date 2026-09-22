@@ -12,7 +12,7 @@ import {RG_CCYS,REGIME_MIN_BED,regimeStand,rgKurve,rgRealzins,rgVix,rgVol,rgSpre
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
   DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,IND_RESEARCH_DATA,LOWER_IS_BETTER_RE,SB_CATS,adoptChartHist,adoptFeedHistory,
   applyRevisionToValHist,applyTrendModel,checkPriceAlerts,fmtDayHdr,indBiasInputSig,indBiasPinned,
-  invalidateRateStepCache,isNonFx,macroCcyFor,parseNumLike,pushU,renderDash,rerender,researchBias,
+  invalidateRateStepCache,isNonFx,macroCcyFor,parseNumLike,pushU,recordScoreHist,renderDash,rerender,researchBias,
   resetNonFxIndBias,resolvePairPriceSeries,save,stripPeriodSuffix,todayStr,trackIndValues,widgets,feedEntryFor,kanonIndName,
   IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,evtMatchesSym,getSym,markLsUpdatedSeen,
   markPrefEdit,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,scoreHist,selId,setSuppressBiasFlipAlerts,
@@ -14206,7 +14206,50 @@ function trendAssets(){
 // soll die Linienfarbe wechseln, sobald der Bias flippt). Alte Eintraege
 // ohne dieses Feld (vor diesem Feature) bleiben bewusst ohne Bias-Farbe,
 // statt sie zu erraten.
+// ⚠⚠ NICHTS AUFZEICHNEN, SOLANGE DIE DATEN NICHT DA SIND. DAS IST DER
+// FEHLER, DEN DER NUTZER VIERMAL GEMELDET HAT ("es ergibt keinen Sinn").
+//
+// recordScoreHist() lief beim Boot (INIT, direkt nach loadScoreHist()) - also
+// VOR bootFetchScoreFeeds(). Zu dem Zeitpunkt haben die Indikatoren noch kein
+// research.date aus dem Feed, die abgeleiteten Karten-Biasse sind nicht
+// gerechnet, und vor allem stehen die getrackten Indikatorzahlen falsch -
+// damit steht symCmpFactor daneben, und der AUFGEZEICHNETE Tageswert ist ein
+// Zwischenzustand, den niemand je auf dem Bildschirm hatte.
+//
+// GEMESSEN (Playwright, ind/price kuenstlich um 4 s verzoegert, NZD):
+//   beim Boot:     cmp 0,71   roh 1,98   aufgezeichnet 1,4   (gro 0, lab 0, cot 0)
+//   nach den Feeds:cmp 1,11   roh 2,01   aufgezeichnet 2,2   (gro 0,6, lab -0,1, cot -0,5)
+// Der ROHE Score ist praktisch gleich - die aufgezeichnete Zahl liegt
+// trotzdem 0,8 Punkte auseinander, allein ueber den Faktor.
+//
+// Bleibt die App lange offen, ueberschreibt ein spaeterer Lauf den Eintrag und
+// alles ist gut. Wird sie aber kurz geoeffnet und wieder geschlossen (oder ist
+// die Verbindung langsam), BLEIBT der Zwischenzustand als Tageswert stehen -
+// und die ganze Historie rechnet danach mit ihm. Genau so entstand das V in
+// NZD: 14.09. 1,5 -> 15.09. 0,6 -> 16.09. 1,5, identisch rein und raus. Die
+// Tagesdifferenz (-0,9 bzw. im Fenster -2) und ihre Kartenzerlegung
+// beschrieben eine Bewegung, die es nie gab - waehrend die Event-Zeile
+// daneben korrekt eine BULLISCHE Veroeffentlichung meldete. Zwei Zahlen, die
+// sich widersprechen mussten, weil eine davon Muell war.
+//
+// Deshalb: dieselbe Regel wie bei indIsStale() und applySeasRetailFeed() -
+// ohne Grundlage wird nichts behauptet. Kommt der Feed diese Sitzung gar
+// nicht an, entsteht fuer den Tag eben kein Eintrag; die server-seitige
+// Historie (update-ff-calendar.yml) fuellt solche Tage ohnehin, und die liest
+// den live gerechneten scoreSnapshot aus cloudPush, nicht diese Reihe.
+function scoreHistAufzeichenbar(){
+  if(typeof DATA_LIVE_OK==='undefined')return true;
+  // Der Indikator-Feed entscheidet ueber research.date, die abgeleiteten
+  // Biasse UND ueber symTrackedCount/symCmpFactor - ohne ihn ist jede Zahl
+  // hier ein Zwischenstand.
+  if(DATA_LIVE_OK.ind!==true)return false;
+  // Im normalisierten Modus haengt zusaetzlich die Marktrelevanz an den
+  // Preisen (seit SCORE_MODEL_VERSION 13 wirkt sie wirklich).
+  if(scoreMode==='normalized'&&DATA_LIVE_OK.price!==true)return false;
+  return true;
+}
 function recordScoreHist(){
+  if(!scoreHistAufzeichenbar())return;
   const t=todayStr();let changed=false;
   trendAssets().forEach(id=>{
     const sym=syms.find(s=>s.id===id);if(!sym)return;
@@ -21621,6 +21664,12 @@ async function bootFetchScoreFeeds(){
     _flipCauseTag=null;
     save();renderSidebar();
   }
+  // ⚠ IMMER einmal aufzeichnen, sobald die Feeds durch sind - nicht nur wenn
+  // sich etwas geaendert hat. Der Boot-Aufruf in INIT laeuft jetzt bewusst ins
+  // Leere (scoreHistAufzeichenbar), also braucht der Tag hier seinen Eintrag.
+  // Ohne das haette ein Tag, an dem die Feeds nichts Neues bringen, gar keinen
+  // aufgezeichneten Wert mehr.
+  try{recordScoreHist();}catch(e){}
   _lastFeedTs=Date.now();   // speist die "Last update"-Anzeige der Metazeile
   rerender();
 }

@@ -16567,3 +16567,82 @@ jeder History-Render die Gewichte für den nächsten Dashboard-Durchlauf.
    der Woche, nicht jeder `n/c`-Tag darin — ein tagloser Tag in der Mitte macht
    die Enden nicht unvergleichbar (erster Entwurf hat genau das fälschlich
    gemeldet). Gegenprobe: Regel raus → rot.
+
+---
+
+## 2026-09-22 — Die Historie zeichnete Tageswerte aus dem Bootzustand auf (VERSION-CHECK-537)
+
+Vierte Meldung am selben Thema (*„Es ergibt immernoch kein Sinn finde das
+Problem"*), Screenshot der NZD-History. Diesmal die Wurzel, die unter allen
+vorherigen lag.
+
+**Auffällig in `score_hist.json`:**
+
+```
+2026-09-14  tot 1.5   gro -0.4
+2026-09-15  tot 0.6   gro -1.2     ← V
+2026-09-16  tot 1.5   gro -0.4     ← identisch rein und raus
+2026-09-17  tot 2.6   gro  0.6
+```
+
+Die Tageszeile machte daraus ein Δ von **−2** — direkt neben einer
+**bullischen** Veröffentlichung (Westpac Consumer Sentiment, 89,5 gegen
+Vorwert 80,4).
+
+### Ursache
+
+`recordScoreHist()` lief im INIT direkt nach `loadScoreHist()`, also **vor**
+`bootFetchScoreFeeds()`. Zu dem Zeitpunkt haben die Indikatoren kein
+`research.date`, die abgeleiteten Karten-Biasse sind nicht gerechnet, und vor
+allem stehen die getrackten Indikatorzahlen falsch — damit `symCmpFactor`.
+
+**Gemessen** (Playwright, ind/price um 4 s verzögert, NZD):
+
+| | Faktor | roher Score | aufgezeichnet | gro / lab / cot |
+|---|---|---|---|---|
+| beim Boot | 0,71 | 1,98 | **1,4** | 0 / 0 / 0 |
+| nach den Feeds | 1,11 | 2,01 | **2,2** | 0,6 / −0,1 / −0,5 |
+
+Der **rohe** Score ist praktisch gleich — die aufgezeichnete Zahl liegt
+trotzdem 0,8 Punkte auseinander, allein über den Faktor.
+
+Bleibt die App lange offen, überschreibt ein späterer Lauf den Eintrag. Wird
+sie kurz geöffnet und wieder geschlossen, oder ist die Verbindung langsam,
+**bleibt der Zwischenzustand als Tageswert stehen** — und die ganze Historie
+rechnet danach mit ihm. Deshalb konnten Δ und Kartenzerlegung einer bullischen
+Veröffentlichung widersprechen: eine der beiden Zahlen war schlicht Müll. Die
+Event-Zeile war seit VERSION-CHECK-536 richtig, die Vergleichsbasis nicht.
+
+### Fix
+
+`scoreHistAufzeichenbar()`: es wird nichts aufgezeichnet, solange der
+Indikator-Feed dieser Sitzung nicht da ist — im Modus `normalized`
+zusätzlich nicht ohne den Preis-Feed (seit V13 wirkt die Marktrelevanz
+wirklich). Dieselbe Regel wie bei `indIsStale()` und `applySeasRetailFeed()`:
+ohne Grundlage kein Urteil.
+
+Damit der Tag trotzdem seinen Eintrag bekommt, zeichnet `bootFetchScoreFeeds()`
+am Ende einmal auf — und `autoFetchPriceData()` ebenfalls, weil der Preis-Feed
+außerhalb des Boot-Bundles läuft und sonst kein `save()` nach sich zieht.
+
+**Nachgemessen:** vor den Feeds bleibt der Eintrag unverändert (1,8 aus der
+Serverdatei, Live stand schon bei 2,3), nach den Feeds entspricht er exakt dem
+Live-Score (2,1).
+
+⚠ Alte Einträge bleiben stehen — sie sind echt aufgezeichnet, und welcher davon
+aus einem Bootzustand stammt, lässt sich nachträglich nicht sicher sagen
+(7-stellige Einträge tragen keinen Faktor). Sie wandern von selbst aus dem
+30-Tage-Fenster.
+
+### Wächter, Stufe I — zwei Hälften
+
+1. Vor den Feeds darf kein Tageswert geschrieben werden. ⚠ Bezugspunkt ist der
+   Stand **vor dem Boot** aus `score_hist.json`, nicht der Live-Score im
+   selben Moment: der läuft während des Bootvorgangs weiter, und der erste
+   Entwurf blieb deshalb auch mit ausgebauter Sperre grün.
+2. **Nach** den Feeds muss der Tageswert dem Live-Score entsprechen — sonst
+   wäre der Wächter auch dann grün, wenn überhaupt nichts mehr aufgezeichnet
+   wird.
+
+Beide Gegenproben feuern: Sperre raus → „1,4 geschrieben, vor dem Boot stand
+dort 1,8"; Aufzeichnung ganz aus → „1,8 gegen 2,1".
