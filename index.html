@@ -348,11 +348,14 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      der App (20,27,46). Ein grauer Schatten auf getoentem Grund sieht
      ausgewaschen aus - das ist Comeaus Hauptpunkt neben dem Stapeln.
      Vier Lagen: 1/2/4/8 px Versatz bei 2/4/10/20 px Weichzeichnung. */
+  /* 2026-09-22 Bild-Design: je Lage eine Spur kraeftiger - auf dem
+     getoenten Grund (#E9F0F8) mass die Schattenkante sonst nur 1,273:1
+     (check/kartenlook.js verlangt 1,28). */
   --shadow-card:
-    0 1px 2px rgba(20,27,46,.10),
-    0 2px 5px rgba(20,27,46,.085),
-    0 5px 12px rgba(20,27,46,.075),
-    0 10px 26px rgba(20,27,46,.065);
+    0 1px 2px rgba(20,27,46,.11),
+    0 2px 5px rgba(20,27,46,.095),
+    0 5px 12px rgba(20,27,46,.085),
+    0 10px 26px rgba(20,27,46,.075);
   /* Dieselbe Staffelung, eine Stufe hoeher - fuer alles, was ueber der
      Seite schwebt (Popups, Menues, Bias-Picker). */
   --shadow-pop:
@@ -5413,8 +5416,12 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    Farben kommen aus Tokens, damit die Vorlagen (auch die dunklen) greifen. */
 
 /* ── Kopfzeile ── */
-.hdr{background:var(--chrome-bg);border-bottom:1px solid var(--rail-edge);padding:9px 18px;gap:18px}
-.hdr-search{flex:0 1 380px;max-width:380px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);border-radius:var(--rs);padding:8px 14px}
+.hdr{background:var(--chrome-bg);border-bottom:1px solid var(--rail-edge)}
+.hdr-search{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);border-radius:var(--rs)}
+/* Abstaende und Suchbreite aus dem Bild nur ab Tablet-Breite - auf 390px
+   stand die Kopfzeile damit 11px ueber den Rand (check/cards.js). */
+@media(min-width:761px){.hdr{padding:9px 18px;gap:18px}
+  .hdr-search{flex:0 1 380px;max-width:380px;padding:8px 14px}}
 
 /* ── Feste Icon-Leiste: Symbol, darunter die Beschriftung ── */
 #navSidebar{width:76px;min-width:76px;max-width:76px;padding:10px 7px;gap:4px;
@@ -5514,7 +5521,7 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    aufgeklebtes Bild, gemessen im ersten Wurf. */
 .ahead-motif-flag{opacity:.17;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden}
 .atitle{font-weight:800;letter-spacing:-.6px}
-.atitle .score-badge{font-size:.72em;border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
+.atitle .score-badge{font-size:var(--fs-xl);border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
 .afull{font:500 var(--fs-md)/1.3 var(--ff-text);color:var(--t2);margin-top:4px}
 .dmeta{align-items:center}
 .dmeta-evic{display:inline-flex;align-self:center;color:var(--t1);padding-right:12px}

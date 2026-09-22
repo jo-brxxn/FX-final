@@ -16791,3 +16791,11 @@ brüllt mit offenem Maul (Zähne) und schlägt mit ausgefahrenen Krallen, die
 zweite Pranke erhoben. Zwei Korrekturen am Bild: die Hörner zeigten zuerst wie
 beim Nashorn nach hinten, die erhobene Pranke ragte oben aus dem Bild.
 Eine zusätzliche dunklere Stufe `MOTIV_DK` für Hörner, Krallen und Brauen.
+
+### Nachtrag: vier rote Wächter nach dem Umbau, alle behoben
+| Wächter | Befund | Ursache → Lösung |
+|---|---|---|
+| `kartenlook` | „Kopfleiste ist zurück" (30 Kombinationen) | Er suchte den Klassennamen `.ahead`. Abgelehnt war 2026-09-14 aber die Leiste **mit Kennzahlen**; die neue Kopfkarte aus dem Nutzerbild trägt nur Titel, Next event und Tabs. Wächter prüft jetzt: keine Kennzahlen oben, Titel in der Kopfkarte. Klassenname bewusst NICHT umbenannt, um am Wächter vorbeizukommen. |
+| `kartenlook` | Schattenkante 1,273:1 (verlangt 1,28) | dunklerer Grund → Schattenlagen je eine Spur kräftiger, jetzt 1,35:1 |
+| `typo` | Score-Abzeichen im Titel 27,36 px | `.72em` → `--fs-xl` (24 px) |
+| `cards` + `layout` | auf 390 px Seite 401 px breit | Kopfzeilen-Abstände/Suchbreite aus dem Bild galten auch auf dem Handy → nur ab 761 px |

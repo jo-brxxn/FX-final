@@ -161,7 +161,12 @@ const MIN_SCHATTEN_LAGEN = 3;
   });
 
   // ── 3) Was oben auf der Asset-Seite steht ────────────────────────────
-  // ⚠ DIE KOPFLEISTE IST WIEDER WEG. Sie stand genau eine Version lang da
+  // ⚠ STAND 2026-09-22: der Asset-Kopf ist wieder eine eigene Karte (.ahead),
+  // weil das Nutzerbild genau das zeigt - Titel, Next event, Tabs, Motiv.
+  // Das ist NICHT die abgelehnte Leiste von unten: die trug die Kennzahlen.
+  // Geprueft wird deshalb: keine Kennzahlen oben, Titel in der Kopfkarte.
+  //
+  // (Stand 2026-09-14:) DIE KOPFLEISTE IST WIEDER WEG. Sie stand genau eine Version lang da
   // (VERSION-CHECK-518) und ist am 2026-09-14 auf ausdrueckliche Ansage
   // abgeraeumt worden: "mach die leiste oben wieder weg und mach das wie
   // vorher". Die sechs Pruefungen auf .ahead sind mit ihr gegangen - ein
@@ -192,7 +197,12 @@ const MIN_SCHATTEN_LAGEN = 3;
         return {
           dmeta: !!d.querySelector('.dmeta'),
           knoepfe: d.querySelectorAll('.dmeta .dmeta-hist-btn').length,
-          ahead: !!d.querySelector('.ahead'),
+          // Seit 2026-09-22 gibt es wieder eine .ahead - als KARTE aus dem
+          // Nutzerbild (Titel + Next event + Tabs). Abgelehnt war 2026-09-14
+          // die Leiste MIT KENNZAHLEN (.ahk-*, 1D/1W/1M/YTD oben). Genau die
+          // wird jetzt gesucht, nicht der Klassenname.
+          kennzahlenOben: !!d.querySelector('.ahk, [class*="ahk-"], .ahead .aperf'),
+          titelInKopf: !!d.querySelector('.ahead .atitle'),
           ptile: !!ptile,
           // Der Streifen gehoert IN die Preis-Karte, nicht irgendwohin.
           streifenInKarte: !!(ptile && ptile.querySelector('.aperf')),
@@ -203,8 +213,10 @@ const MIN_SCHATTEN_LAGEN = 3;
         };
       });
       kopfGeprueft++;
-      if (r.ahead) fail('KOPFLEISTE IST ZURUECK',
-        `${id} bei ${w}px: es gibt wieder ein .ahead-Element. Die Leiste war ausdruecklich unerwuenscht ("mach die leiste oben wieder weg").`);
+      if (r.kennzahlenOben) fail('KENNZAHLEN-LEISTE IST ZURUECK',
+        `${id} bei ${w}px: im Asset-Kopf stehen wieder Kennzahlen (1D/1W/1M/YTD bzw. .ahk-*). Die Leiste war ausdruecklich unerwuenscht ("mach die leiste oben wieder weg").`);
+      if (!r.titelInKopf) fail('ASSET-TITEL FEHLT IM KOPF',
+        `${id} bei ${w}px: die Kopfkarte (.ahead) traegt keinen .atitle. Beim Rueckbau 2026-09-14 waere der Titel schon einmal fast verschwunden.`);
       if (!r.dmeta) fail('META-ZEILE FEHLT',
         `${id} bei ${w}px: keine .dmeta-Zeile. Das ist die Zeile mit "Next event" und der Knopfleiste - ohne sie sind Price chart, History, Backtester und Data quality gar nicht erreichbar.`);
       if (r.dmeta && r.knoepfe < 4) fail('KNOEPFE FEHLEN IN DER META-ZEILE',
