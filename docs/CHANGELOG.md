@@ -16649,7 +16649,7 @@ dort 1,8"; Aufzeichnung ganz aus → „1,8 gegen 2,1".
 
 ---
 
-## 2026-09-22 — Leitzins in die Inflation-Karte + dunkle Rahmen-Hierarchie (VERSION-CHECK-538, SCORE_MODEL_VERSION 13 → 14, SUMMARY_ENGINE_VERSION 13 → 14)
+## 2026-09-22 — Leitzins in die Inflation-Karte + dunkle Rahmen-Hierarchie (VERSION-CHECK-538, SUMMARY_ENGINE_VERSION 13 → 14, SCORE_MODEL_VERSION bewusst NICHT gebumpt)
 
 Nutzer-Wunsch, wörtlich: *„Für mal bei der Inflationskarte ganz oben direkt
 den Indikator interest rate ein. Und ich will nochmal mehr Kontrast in die
@@ -16678,9 +16678,10 @@ außen"*, **Navy wie die Kopfzeile**, **alle hellen Vorlagen**.
 - **Score-Formel unverändert, Kartenaufteilung nicht:** die Rate war über
   `NO_TREND_RUBS` (Karte Interest Rates) trendfrei. Damit das beim Umzug so
   bleibt, gibt es `NO_TREND_INDS` (indikatorbezogen, wie `BOND_HALF_PT` bei den
-  Renditen 2026-07-20). Weil die aufgezeichneten Kartenwerte (Inflation, IR)
-  springen, ist `SCORE_MODEL_VERSION` 13 → 14 gebumpt — die Stärke-Note zeigt
-  dadurch einige Tage `–/10`, bis sich die Reihe neu aufgebaut hat.
+  Renditen 2026-07-20). `SCORE_MODEL_VERSION` zuerst auf 14 gebumpt, dann
+  **zurückgenommen**: `check/scorediff.js` gegen `main` — 0/48 Symbol-Scores,
+  0/240 Kartenwerte verändert (die Rate steht heute überall auf „hold" = 0).
+  Der Bump hätte nur die Stärke-Note für ~10 Tage auf `–/10` gesetzt.
 - `summarizeInterestRates()` sucht die Rate jetzt in allen Karten des Assets,
   `rubSummarySig()` nimmt sie für Interest Rates mit auf (sonst würde der Text
   bei einer neuen Zinsentscheidung nie neu erzeugt). `SUMMARY_ENGINE_VERSION`
