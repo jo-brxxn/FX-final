@@ -16782,3 +16782,12 @@ Dauer-Unterstrich unter „Price chart" (die Tabs öffnen Fenster, es gibt keine
 aktiven Tab), Sonnen-Symbol am Schalter (Kompaktansicht, kein Hell/Dunkel),
 Glocke in der Kopfzeile (keine Funktion dahinter). Reihen-Überschrift
 „Overview" ausgeblendet (im Bild nicht vorhanden).
+
+### Nachtrag: Bulle & Bär „viel aggressiver" (Nutzer-Wunsch, gleicher Abend)
+Neu gezeichnet in der klassischen Börsen-Pose: der Bulle stürmt mit gesenktem
+Kopf, nach vorn gebogenen Hörnern, gespreizten Beinen, hochgepeitschtem Schwanz,
+Dampf aus den Nüstern und Staub hinter den Hufen; der Bär steht aufgerichtet,
+brüllt mit offenem Maul (Zähne) und schlägt mit ausgefahrenen Krallen, die
+zweite Pranke erhoben. Zwei Korrekturen am Bild: die Hörner zeigten zuerst wie
+beim Nashorn nach hinten, die erhobene Pranke ragte oben aus dem Bild.
+Eine zusätzliche dunklere Stufe `MOTIV_DK` für Hörner, Krallen und Brauen.

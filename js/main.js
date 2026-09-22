@@ -7446,8 +7446,13 @@ function openCardInfo(k){
 // nicht zu blass also wie im Bild", RECHTS HINTER den Tabs.
 // Selbst gezeichnet als SVG (keine Fotos: Groesse, offline, Rechte). Farben am
 // Nutzerbild gemessen (Berge #E3EDF8..#C8DAF0 auf #F1F6FC).
-const MOTIV_F1='#DCE8F6',MOTIV_F2='#C9DBF1',MOTIV_F3='#B4CBE9',MOTIV_ST='#9DB8DE';
-const ASSET_MOTIVE=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST;return {
+// Bulle & Baer auf Nutzer-Wunsch 2026-09-22 "viel aggressiver": der Bulle
+// stuermt mit gesenktem Kopf, Hoerner nach vorn, Dampf aus den Nuestern und
+// Staub hinter den Hufen; der Baer steht aufgerichtet, bruellt mit offenem
+// Maul und schlaegt mit ausgefahrenen Krallen. MOTIV_DK ist die eine dunklere
+// Stufe fuer Hoerner, Krallen, Augenbrauen.
+const MOTIV_F1='#DCE8F6',MOTIV_F2='#C9DBF1',MOTIV_F3='#B4CBE9',MOTIV_ST='#9DB8DE',MOTIV_DK='#86A6D2';
+const ASSET_MOTIVE=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST,DK=MOTIV_DK;return {
 coin:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
  <ellipse cx="300" cy="150" rx="104" ry="12" fill="${F1}"/>
  <g transform="translate(345 112)"><ellipse rx="44" ry="12" fill="${F3}"/><rect x="-44" y="-14" width="88" height="14" fill="${F2}"/><ellipse cy="-14" rx="44" ry="12" fill="${F1}" stroke="${ST}" stroke-width="2"/></g>
@@ -7467,13 +7472,19 @@ barrel:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
  <path d="M372 62 C372 62 350 94 350 108 A22 22 0 0 0 394 108 C394 94 372 62 372 62 Z" fill="${F3}" stroke="${ST}" stroke-width="2.5"/>
 </svg>`,
 bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
- <ellipse cx="250" cy="159" rx="170" ry="8" fill="${F1}"/>
- <path fill="${F2}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M52 146 C46 140 46 128 54 118 L66 104 C72 98 82 94 92 94 C100 82 110 70 124 62 C138 52 160 52 176 60 C196 66 216 68 230 76 C238 80 240 92 236 104 C234 116 230 124 226 128 L226 158 L215 158 L213 132 C211 136 207 136 205 132 L203 158 L192 158 L190 128 C176 132 160 132 146 128 L144 158 L133 158 L131 128 C129 130 125 130 123 128 L121 158 L110 158 L108 124 C100 124 92 130 86 138 C78 146 64 152 52 146 Z"/>
- <path fill="none" stroke="${ST}" stroke-width="4.6" stroke-linecap="round" d="M84 98 C74 88 62 84 50 88 C44 90 40 84 44 80 M96 94 C98 80 92 70 80 64 C76 62 76 56 82 56"/>
- <path fill="none" stroke="${ST}" stroke-width="2.4" stroke-linecap="round" d="M234 90 C246 100 248 118 244 134"/><circle cx="244" cy="138" r="4" fill="${ST}"/>
- <circle cx="74" cy="112" r="2.8" fill="${ST}"/><circle cx="54" cy="138" r="2" fill="${ST}"/>
- <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M262 128 C254 110 258 90 274 82 C290 74 314 72 334 76 C346 66 362 64 372 72 C380 76 384 80 386 84 C386 78 390 74 394 76 C398 78 398 84 396 88 C404 90 410 96 412 102 C414 106 412 110 406 112 C398 114 392 114 388 112 C384 118 380 122 376 126 L376 154 L364 154 L362 130 C360 132 356 132 354 130 L352 154 L340 154 L338 128 C322 132 300 132 290 128 L288 154 L276 154 L274 132 C270 132 266 130 262 128 Z"/>
- <circle cx="397" cy="98" r="2.6" fill="${ST}"/>
+ <ellipse cx="220" cy="160" rx="190" ry="7" fill="${F1}"/>
+ <g fill="${F1}"><circle cx="252" cy="152" r="6"/><circle cx="263" cy="146" r="4.5"/><circle cx="244" cy="146" r="3.5"/><ellipse cx="22" cy="122" rx="9" ry="5"/><ellipse cx="12" cy="112" rx="6" ry="3.5"/></g>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M40 128 C36 120 40 108 50 102 L66 92 C76 84 88 80 98 76 C104 60 114 48 132 44 C152 40 176 48 196 56 C212 62 224 66 230 76 C236 88 234 104 226 114 L248 146 L238 153 L214 124 L226 150 L213 155 L198 126 C178 132 150 132 128 126 L98 150 L86 146 L110 122 L80 146 L69 140 L98 116 C88 116 78 120 70 126 C62 132 50 136 40 128 Z"/>
+ <path fill="${DK}" d="M76 90 C68 72 64 60 46 54 C44 50 50 48 54 50 C72 54 82 66 88 84 Z M92 82 C90 64 84 50 68 42 C66 38 72 36 76 38 C92 44 98 60 100 78 Z"/>
+ <path fill="none" stroke="${ST}" stroke-width="2.6" stroke-linecap="round" d="M228 78 C246 64 250 48 242 34"/>
+ <path fill="${ST}" d="M242 34 l-7 -8 l10 3 l2 -9 l3 10 Z"/>
+ <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M56 102 L70 97"/>
+ <circle cx="64" cy="104" r="2.6" fill="${DK}"/><circle cx="45" cy="124" r="2" fill="${DK}"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M346 62 C342 48 344 32 350 20 C352 14 362 14 362 22 C360 36 356 50 356 64 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M322 156 L346 156 C350 140 352 128 356 118 L362 156 L388 156 C390 130 388 104 378 84 C372 64 358 48 342 42 C334 34 326 28 316 28 C314 21 307 19 303 24 C301 27 301 30 303 33 C296 33 290 35 286 39 L271 47 C265 49 265 55 271 57 L286 57 L276 68 L292 65 C298 67 302 71 305 75 C308 80 309 84 306 88 L270 88 C261 88 257 97 264 101 L306 103 C312 119 316 136 322 156 Z"/>
+ <path fill="#F4F8FD" d="M279 57 l2.5 5 l2.5 -5 Z M285 64 l2 -4 l2 4 Z"/>
+ <path fill="none" stroke="${DK}" stroke-width="2.4" stroke-linecap="round" d="M263 92 l-9 -4 M262 97 l-10 0 M263 102 l-9 4 M351 17 l-3 -8 M357 15 l1 -8 M362 20 l7 -4"/>
+ <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M291 37 L301 41"/><circle cx="296" cy="42" r="2.4" fill="${DK}"/>
 </svg>`};})();
 // Gruppe -> Motiv. FX: die grosse Flagge der Waehrung (derselbe Baustein wie
 // links neben dem Namen). Aktien und Renditen bekommen Bulle & Baer.
