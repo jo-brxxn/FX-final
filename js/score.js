@@ -1583,7 +1583,7 @@ function symScoreCmp(sym){
 // Mit im Bump: _sigCache/_cycCache schluesseln jetzt ebenfalls auf die
 // Array-Identitaet statt auf die Laenge (eine Revision ohne neuen Punkt blieb
 // vorher unbemerkt). Aufgezeichnete Tage davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=14;
+const SCORE_MODEL_VERSION=13;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

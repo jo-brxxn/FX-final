@@ -1074,6 +1074,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#2C51C7;--red-dk:#B02B26;
   --card:#E5E7EE;
+  --frame-bd:#28292F;--frame-hd:#31333A;--frame-ctl:#3D3F48;--frame-hov:#484B55;--frame-line:#575A66;--frame-on:#F7F7F8;--frame-dim:#C8C9D0;--frame-sel:#F1F2F3;--frame-selfg:#1C1D21;
 }
 [data-fx-theme="linear"] .hdr,[data-fx-theme="linear"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -1093,6 +1094,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#0B57B8;--red-dk:#B0322A;
   --card:#E2EAF3;
+  --frame-bd:#1D3247;--frame-hd:#233C55;--frame-ctl:#2A4967;--frame-hov:#325579;--frame-line:#3A658F;--frame-on:#F4F7FB;--frame-dim:#B7CCE1;--frame-sel:#EDF2F8;--frame-selfg:#0A2540;
 }
 [data-fx-theme="stripe"] .hdr,[data-fx-theme="stripe"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -1112,6 +1114,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#0B4BA8;--red-dk:#A81F17;
   --card:#E9E9E9;
+  --frame-bd:#1E1E1E;--frame-hd:#282828;--frame-ctl:#353535;--frame-hov:#414141;--frame-line:#515151;--frame-on:#F7F7F7;--frame-dim:#CCCCCC;--frame-sel:#F2F2F2;--frame-selfg:#111111;
 }
 [data-fx-theme="swiss"] .hdr,[data-fx-theme="swiss"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -1131,6 +1134,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#1461B0;--red-dk:#A93125;
   --card:#EBEAE5;
+  --frame-bd:#45423B;--frame-hd:#504D44;--frame-ctl:#5E5A50;--frame-hov:#6B675C;--frame-line:#7C776A;--frame-on:#F8F8F7;--frame-dim:#D0CEC8;--frame-sel:#F3F3F1;--frame-selfg:#37352F;
 }
 [data-fx-theme="notion"] .hdr,[data-fx-theme="notion"] #navSidebar{
   --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
@@ -5390,7 +5394,10 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
      Kopfzeile/Sidebar --chrome-bg  >  Kartenrahmen --frame-bd  >
      Kartenkopf --frame-hd  >  Bedienelement --frame-ctl (Hover --frame-hov)
    Der INHALT (Tabellen, Texte, Charts, Formularfelder) bleibt hell.
-   Tokens erzeugt: node tools/fx-themes.mjs --rahmen.
+   Tokens erzeugt: node tools/fx-themes.mjs --rahmen. Terminal Pro steht
+   direkt hier drunter; linear/stripe/swiss/notion tragen ihre Zeile IN ihrem
+   Vorlagen-Block oben (check/theme.js verlangt genau EINEN Block je Vorlage -
+   ein zweiter :root[data-fx-theme]-Block lief dort rot).
    ⚠ JEDE Regel hier ist ausdruecklich an die fuenf HELLEN Vorlagen gebunden
    (:root ohne Vorlage = Terminal Pro, dazu linear/stripe/swiss/notion). Der
    erste Wurf arbeitete mit Rueckfallwerten (var(--frame-x, alter Wert)) -
@@ -5399,10 +5406,6 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    einzelnen alten Werte passt. Die dunklen Vorlagen bleiben so unberuehrt.
    Lesbarkeit prueft check/rahmen.js. */
 :root:not([data-fx-theme]){--frame-bd:#29375B;--frame-hd:#2F3F69;--frame-ctl:#374A7A;--frame-hov:#3F548C;--frame-line:#4961A1;--frame-on:#F4F6FA;--frame-dim:#B9C3DF;--frame-sel:#EDF0F7;--frame-selfg:#212C49;}
-:root[data-fx-theme="linear"]{--frame-bd:#28292F;--frame-hd:#31333A;--frame-ctl:#3D3F48;--frame-hov:#484B55;--frame-line:#575A66;--frame-on:#F7F7F8;--frame-dim:#C8C9D0;--frame-sel:#F1F2F3;--frame-selfg:#1C1D21;}
-:root[data-fx-theme="stripe"]{--frame-bd:#1D3247;--frame-hd:#233C55;--frame-ctl:#2A4967;--frame-hov:#325579;--frame-line:#3A658F;--frame-on:#F4F7FB;--frame-dim:#B7CCE1;--frame-sel:#EDF2F8;--frame-selfg:#0A2540;}
-:root[data-fx-theme="swiss"]{--frame-bd:#1E1E1E;--frame-hd:#282828;--frame-ctl:#353535;--frame-hov:#414141;--frame-line:#515151;--frame-on:#F7F7F7;--frame-dim:#CCCCCC;--frame-sel:#F2F2F2;--frame-selfg:#111111;}
-:root[data-fx-theme="notion"]{--frame-bd:#45423B;--frame-hd:#504D44;--frame-ctl:#5E5A50;--frame-hov:#6B675C;--frame-line:#7C776A;--frame-on:#F8F8F7;--frame-dim:#D0CEC8;--frame-sel:#F3F3F1;--frame-selfg:#37352F;}
 /* ── 1) Kartenrahmen ── nur oben/rechts/unten: links traegt bei Makro-,
    Watchlist- und Paar-Karten der Bias-Streifen (glow-*) seine Aussage. */
 :root:not([data-fx-theme]) :is(.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.cot-card,.rub-card,.dw,.rg-card,.aperf,.aqn,.pov-card,.pcc,.wt-card),

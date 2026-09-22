@@ -416,14 +416,17 @@ zaehlte 21 geaenderte Stellen - die Indikatorenzahl in USDs Economic-Growth-
 Karte sinkt, das wirkt sich (Modus `normalized`) auch auf die vergleichende
 Staerke-Note ANDERER Waehrungen aus, nicht nur auf USD selbst.
 
-**13 → 14 (2026-09-22, Leitzins in die Inflation-Karte):** Nutzer-Wunsch
-*„bei der Inflationskarte ganz oben direkt den Indikator interest rate"*,
-ausdrücklich als Verschieben. `moveRateIndToInflation()` legt das
-Indikator-Objekt an die Spitze der Inflation-Karte. Die **Summe** ändert sich
-nicht (nachgemessen EUR: −0,5 vorher = −0,5 nachher) — die Rate bleibt über
-`NO_TREND_INDS` trendfrei, auch außerhalb von Interest Rates. Aber die
-**Kartenwerte** Inflation und Interest Rates, die `scoreHist` je Tag
-aufzeichnet, springen; deshalb der Bump.
+**KEIN Bump am 2026-09-22 (Leitzins in die Inflation-Karte) — bewusst:**
+Nutzer-Wunsch *„bei der Inflationskarte ganz oben direkt den Indikator
+interest rate"*, ausdrücklich als Verschieben. `moveRateIndToInflation()`
+legt das Indikator-Objekt an die Spitze der Inflation-Karte; über
+`NO_TREND_INDS` bleibt die Rate trendfrei wie vorher in Interest Rates. Die
+**Summe** kann sich dadurch nicht ändern (nachgemessen EUR mit Bias `bull`:
+−0,5 vorher = −0,5 nachher), `check/scorediff.js`: 0/48 Symbol-Scores,
+0/240 Kartenwerte verändert. Ein Bump hätte die Stärke-Note für ~10 Tage auf
+`–/10` gesetzt, ohne dass sich die Rechnung geändert hat. ⚠ Was sich ändert:
+an einem Tag mit Zinsentscheid wandert deren Beitrag in der „What moved
+it"-Aufschlüsselung von Interest Rates zu Inflation.
 
 ### Altersgrenze: zwei Bedingungen, die sie NICHT stellen darf (seit 2026-09-06)
 

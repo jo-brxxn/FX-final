@@ -148,6 +148,9 @@ function block(id, d) {
 // ⚠ Dieses Skript ist gegenueber index.html bereits vorher auseinander-
 // gelaufen (bg-Stufen, --card, --due) - die Vorlagen-Bloecke deshalb NICHT
 // neu erzeugen, nur die Rahmen-Zeilen:  node tools/fx-themes.mjs --rahmen
+// Einsetzen: die Terminal-Pro-Zeile in den Block DUNKLE RAHMEN-HIERARCHIE,
+// die --frame-*-Tokens jeder hellen Vorlage IN deren bestehenden Block
+// (check/theme.js verlangt genau einen Block je Vorlage).
 const hsl = h => { const [r,g,b] = hex2rgb(h).map(x => x/255); const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
   let hh = 0, s = 0; const l = (mx+mn)/2; const d = mx-mn;
   if (d) { s = l > .5 ? d/(2-mx-mn) : d/(mx+mn);
