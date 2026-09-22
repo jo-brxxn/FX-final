@@ -16727,3 +16727,58 @@ einen Kopf eingebaut) wird gemeldet.
 seit dem 2026-07-25 bewusst ohne Kopfleisten-Hintergrund. Der Nutzer hat bei
 der Rückfrage die Kartenköpfe aller Karten gewählt; die Option nannte diese
 Entscheidung ausdrücklich.
+
+---
+
+## 2026-09-22 (abends) — Bild-Design nach Nutzer-Vorlage (VERSION-CHECK-539)
+
+Nutzer mit Bild (iPad-Screenshot eines Entwurfs der Asset-Seite): *„Ich will
+das du die Webseite von Farben Aufteilung Formen usw so baust. Jedes Detail so
+frag bei Fragen es geht nur um Aussehen keine Funktion das bleibt alles
+erhalten"*. Drei Rückfragerunden (`AskUserQuestion`), Antworten:
+
+| Frage | Antwort |
+|---|---|
+| Navy-Köpfe von 538 oder wie im Bild? | **wie im Bild** (538 zurückgebaut) |
+| Wohin die Asset-Liste? | **Ausklapp-Panel** neben der Icon-Leiste |
+| Kopfreihe | **2×2** wie im Bild |
+| Zahlen | **Sans** wie im Bild |
+| Einträge der Leiste | **die heutigen** (nicht Home/Markets/…) |
+| Gruppen in der Leiste | *„Einschieben aber halt richtig klein"* |
+| Berge im Asset-Kopf? | *„was kann da anderes hin was mehr zu trading passt eine Bulle und bär und ein bitcoin und physisches Gold? … bei fx die Flaggen bei Non fx die Bilder dazu"* |
+| Stil / Lage der Motive | *„Blasse Zeichnung aber nicht zu blass also wie im Bild"*, rechts hinter den Tabs |
+| Umfang | **ganze App** |
+
+Hingewiesen vor dem Bau: die Motive gab es schon einmal (2026-09-14, am selben
+Tag entfernt) — trotzdem gewünscht.
+
+### Farben am Bildpixel gemessen (nicht geschätzt)
+Grund `#E9F0F8`, Karte `#F8FAFD` + Rand `#DBE5F3`, Kopfzeile/Leiste `#0D1B2F`
+mit Kante `#122B49`, aktive Kachel `#0B3C74`, Akzent `#0C75FD` → als
+`--ui-act` `#0B6BEA` (Weiß darauf 4,8:1 statt 4,2:1), Umschalter `#EAF0F9`.
+
+### Funktion: was sich zwangsläufig geändert hat
+- **Die Leiste klappt nicht mehr ein, die Zwei-Klick-Regel auf dem iPad ist
+  weg.** Eine feste Leiste mit Beschriftung hat nichts aufzuklappen. Jeder
+  erste Tipp wirkt. `check/nav.js` darauf umgestellt.
+- **Die Asset-Liste öffnet beim Wechsel auf die Asset-Seite nicht mehr von
+  selbst** (sie ist jetzt ein Panel über dem Inhalt).
+
+### Beim Bau gefunden und behoben (alle gemessen)
+1. Panel blieb nach Asset-Wahl offen, wenn man schon auf einer Asset-Seite war
+   — gefunden vom umgestellten `nav.js`, behoben in `sbClick`.
+2. Scores im Panel verschwunden — die Ausblende-Regel der Leiste griff auch
+   dort; auf direkte Leisteneinträge beschränkt.
+3. History-Karte zog die Reihe auf Tausende Pixel, weil ich ihre 420-px-Grenze
+   aufgehoben hatte — Grenze zurück (der Bestandskommentar warnte genau davor).
+4. Motive skalierten auf die Breite und ragten aus dem Kopf; Flagge als harter
+   Block — beides auf Höhe bzw. volle Breite mit Maske umgestellt.
+5. ⚡-Knopf 4,1–4,4:1 in den getönten Vorlagen (`check/rahmen.js`) → `--bg2`.
+6. `check/rahmen.js` prüfte mit aktivem Service Worker den ALTEN Stand — jetzt
+   `serviceWorkers:'block'` wie die anderen Wächter.
+
+### Bewusst nicht aus dem Bild übernommen
+Dauer-Unterstrich unter „Price chart" (die Tabs öffnen Fenster, es gibt keinen
+aktiven Tab), Sonnen-Symbol am Schalter (Kompaktansicht, kein Hell/Dunkel),
+Glocke in der Kopfzeile (keine Funktion dahinter). Reihen-Überschrift
+„Overview" ausgeblendet (im Bild nicht vorhanden).

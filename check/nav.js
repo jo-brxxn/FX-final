@@ -19,6 +19,12 @@ const URL=process.env.CHECK_URL||'http://127.0.0.1:8935/index.html';
 // iPad/Handy (kein Hover) bleibt der bestehende Zwei-Klick-Mechanismus.
 // Playwright-Kontexte ohne hasTouch melden matchMedia('(hover:hover) and
 // (pointer:fine)') wie ein echter Desktop mit Maus.
+// ⚠ REGELWECHSEL 2026-09-22 (Bild-Design, Nutzer-Entscheid per Rueckfrage):
+// die Leiste ist jetzt eine FESTE Icon-Leiste mit Beschriftung - sie klappt
+// nie mehr ein. Damit ist der Zwei-Klick-Mechanismus auf Touch Geschichte:
+// JEDER erste Tipp wirkt sofort, auf der Leiste wie im Inhalt. Der Waechter
+// prueft das jetzt mit echten Tipps UND Mausklicks, und dazu das neue
+// Asset-Panel (auf per Tipp, zu nach der Asset-Wahl und beim Tipp daneben).
 const {chromium}=require(PW);
 
 const REGEL='Erster Klick verstellt nur die Leiste, erst der zweite wirkt';
@@ -42,7 +48,10 @@ const ZIEL='#navSidebar .np[data-tip="Calendar"]';
 // laengsten Label ab und darf hier nicht geraten werden.
 const inhaltPunkt=p=>p.evaluate(()=>{
   const r=document.getElementById('navSidebar').getBoundingClientRect();
-  return {x:Math.round(r.right+30),y:700};
+  // Seit 2026-09-22 wirkt der erste Tipp im Inhalt sofort - der Punkt muss
+  // deshalb wirklich NEUTRAL sein: der Innenrand direkt neben der Leiste,
+  // vor der ersten Karte (bei +30px traf er auf dem Dashboard 'Add pair').
+  return {x:Math.round(r.right+5),y:700};
 });
 const zustand=p=>p.evaluate(()=>({page:curPage,
   collapsed:document.getElementById('navSidebar').classList.contains('nav-collapsed')}));
@@ -52,44 +61,19 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
   const fehler=[];
   const pruefe=(bed,text)=>{if(!bed)fehler.push(text);};
 
-  // ── A/B: Touch (iPad) ───────────────────────────────────────────────
+  // ── A/B: Touch (iPad): nichts klappt ein, der erste Tipp wirkt ───────
   {
     const ctx=await b.newContext({viewport:{width:1194,height:834},hasTouch:true});
     const p=await seite(ctx);
-    // Im Inhalt tippen: neutrale Stelle im Innenabstand, damit der Tipper
-    // nicht zufaellig einen Link in einer Karte trifft.
+    const breite0=await p.evaluate(()=>Math.round(document.getElementById('navSidebar').getBoundingClientRect().width));
     const tp=await inhaltPunkt(p);await p.touchscreen.tap(tp.x,tp.y);
     await p.waitForTimeout(300);
     const a1=await zustand(p);
-    pruefe(a1.collapsed,'Touch: Tippen im Inhalt klappt die Leiste nicht ein');
-
+    const breite1=await p.evaluate(()=>Math.round(document.getElementById('navSidebar').getBoundingClientRect().width));
+    pruefe(!a1.collapsed&&breite1===breite0,'Touch: Tippen im Inhalt veraendert die Leiste ('+breite0+' -> '+breite1+'px) - sie ist seit 2026-09-22 fest');
     await p.tap(ZIEL);await p.waitForTimeout(400);
     const a2=await zustand(p);
-    pruefe(a2.page===a1.page,REGEL+' - Touch: der erste Tipper auf die eingeklappte Leiste hat schon navigiert (nach "'+a2.page+'")');
-    pruefe(!a2.collapsed,'Touch: der erste Tipper hat die Leiste nicht ausgeklappt');
-
-    await p.tap(ZIEL);await p.waitForTimeout(400);
-    const a3=await zustand(p);
-    pruefe(a3.page!=='dash','Touch: der zweite Tipper navigiert nicht (haengt auf "'+a3.page+'")');
-
-    // Gegenrichtung: Leiste offen, Tipper im Inhalt klappt nur ein.
-    // Vorher zurueck aufs Dashboard - der Test oben ist im Kalender gelandet,
-    // dort gibt es keine .dw-Kachel.
-    await p.evaluate(()=>{try{showTab('dash');}catch(e){}});
-    await p.waitForTimeout(600);
-    let geklickt=await p.evaluate(()=>{window.__k=0;
-      const el=document.querySelector('.dw');if(el)el.addEventListener('click',()=>{window.__k++;});return true;});
-    await p.evaluate(()=>{document.getElementById('navSidebar').classList.remove('nav-collapsed');});
-    const kachel=await p.$('.dw');
-    if(kachel&&geklickt){
-      await kachel.tap();await p.waitForTimeout(300);
-      const b1=await p.evaluate(()=>({k:window.__k,collapsed:document.getElementById('navSidebar').classList.contains('nav-collapsed')}));
-      pruefe(b1.k===0,REGEL+' - Touch: der erste Tipper im Inhalt hat schon gewirkt, statt nur die Leiste einzuklappen');
-      pruefe(b1.collapsed,'Touch: Tippen im Inhalt klappt die Leiste nicht ein');
-      await kachel.tap();await p.waitForTimeout(300);
-      const b2=await p.evaluate(()=>window.__k);
-      pruefe(b2===1,'Touch: der zweite Tipper im Inhalt wirkt nicht');
-    }
+    pruefe(a2.page==='cal','Touch: der erste Tipp auf "Calendar" navigiert nicht (blieb auf "'+a2.page+'") - seit 2026-09-22 wirkt jeder erste Tipp');
     await ctx.close();
   }
 
@@ -109,7 +93,7 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     const p=await seite(ctx);
     const breite=()=>p.evaluate(()=>Math.round(document.getElementById('navSidebar').getBoundingClientRect().width));
     const offenBreite=await breite();
-    pruefe(offenBreite>100,'Maus: die Leiste startet gar nicht offen ('+offenBreite+'px) - alles Weitere waere wirkungslos');
+    pruefe(offenBreite>=60,'Maus: die Leiste ist nicht sichtbar ('+offenBreite+'px) - alles Weitere waere wirkungslos');
 
     const mp=await inhaltPunkt(p);await p.mouse.click(mp.x,mp.y);await p.waitForTimeout(350);
     const c1=await zustand(p);
@@ -140,21 +124,6 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     const d1=await zustand(p);
     pruefe(d1.page!=='dash','Maus: bei offener Leiste wurde der Klick faelschlich geschluckt');
 
-    // D2: schmal -> breit. Unter 760px darf sie einklappen; kommt das
-    // Fenster zurueck, muss sie von selbst wieder aufgehen. Ohne den
-    // resize-Zuhoerer bliebe sie dort fuer immer schmal, weil collapse()
-    // am PC gar nicht mehr laeuft und expand() niemand mehr ruft.
-    await p.setViewportSize({width:700,height:834});
-    await p.waitForTimeout(300);
-    await p.evaluate(()=>{const pa=document.getElementById('pageArea');
-      pa.dispatchEvent(new Event('scroll',{bubbles:true}));});
-    await p.waitForTimeout(350);
-    const d2=await zustand(p);
-    pruefe(d2.collapsed,'Schmaler Schirm: die Leiste klappt nicht mehr ein - dort ist die Breite echter Mangel');
-    await p.setViewportSize({width:1194,height:834});
-    await p.waitForTimeout(500);
-    const d3=await zustand(p);
-    pruefe(!d3.collapsed,'Nach dem Vergroessern bleibt die Leiste eingeklappt und geht von selbst nie wieder auf');
     await ctx.close();
   }
 
@@ -192,20 +161,32 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
       pruefe(!e1.aktiv,'Ein Tab-Stapel bleibt hervorgehoben, obwohl ein Tab ausserhalb gewaehlt wurde');
       pruefe(!e1.irgendeinerOffen,'Irgendein Stapel bleibt aufgeklappt, obwohl ein stapelfreier Tab gewaehlt wurde');
     }
-    // ── E2: der Assets-Stapel klappt beim Wechsel dorthin AUF ──────────
-    // Gegenprobe zu E: die Regel oben darf nicht dazu fuehren, dass der
-    // aktive Stapel zuklappt - sonst waere die Asset-Liste nach jedem
-    // Seitenwechsel verschwunden.
+    // ── E2: Asset-Panel (seit 2026-09-22) ───────────────────────────────
+    // Die Asset-Liste ist ein Panel UEBER dem Inhalt: der Wechsel auf die
+    // Asset-Seite darf es NICHT aufklappen (es wuerde den Inhalt verdecken),
+    // hervorgehoben bleibt der Eintrag trotzdem. Ein Tipp oeffnet es, die
+    // Asset-Wahl und ein Tipp daneben schliessen es.
     await p.evaluate(()=>{selectTab('fx');});
     await p.waitForTimeout(350);
     const e2=await p.evaluate(()=>({
-      offen:!!document.querySelector('#navSidebar .np-stack.np-assetstack.open'),
+      offen:!!document.querySelector('#sidebar.np-assets.open'),
       aktiv:!!document.querySelector('#navSidebar .np-stack.np-assetstack.has-active'),
-      assets:document.querySelectorAll('#sidebar .ab.np-asset').length,
     }));
-    pruefe(e2.offen,'Der Assets-Stapel klappt beim Wechsel auf die Assets-Seite nicht auf');
-    pruefe(e2.aktiv,'Der Assets-Stapel wird auf der Assets-Seite nicht hervorgehoben');
-    pruefe(e2.assets>0,'Im Assets-Stapel steht kein einziges Asset');
+    pruefe(!e2.offen,'Das Asset-Panel klappt beim Wechsel auf die Asset-Seite von selbst auf und verdeckt den Inhalt');
+    pruefe(e2.aktiv,'Der Assets-Eintrag wird auf der Assets-Seite nicht hervorgehoben');
+    await p.click('#navSidebar .np-assetstack');await p.waitForTimeout(350);
+    const e3=await p.evaluate(()=>{const w=document.getElementById('sidebar');const r=w.getBoundingClientRect();const n=document.getElementById('navSidebar').getBoundingClientRect();
+      return{offen:w.classList.contains('open'),sichtbar:getComputedStyle(w).visibility==='visible',neben:Math.abs(r.left-n.right)<=2,assets:w.querySelectorAll('.ab.np-asset').length};});
+    pruefe(e3.offen&&e3.sichtbar,'Ein Klick auf "Assets" oeffnet das Asset-Panel nicht');
+    pruefe(e3.neben,'Das Asset-Panel steht nicht direkt neben der Leiste');
+    pruefe(e3.assets>0,'Im Asset-Panel steht kein einziges Asset');
+    await p.click('#sidebar .ab.np-asset >> nth=2');await p.waitForTimeout(350);
+    const e4=await p.evaluate(()=>({offen:document.getElementById('sidebar').classList.contains('open'),tab:activeTabId}));
+    pruefe(e4.tab==='fx'&&!e4.offen,'Nach der Asset-Wahl bleibt das Panel offen oder die Asset-Seite erscheint nicht');
+    await p.click('#navSidebar .np-assetstack');await p.waitForTimeout(300);
+    await p.mouse.click(1000,30);await p.waitForTimeout(300);
+    const e5=await p.evaluate(()=>document.getElementById('sidebar').classList.contains('open'));
+    pruefe(!e5,'Ein Klick neben das Asset-Panel schliesst es nicht');
     await ctx.close();
   }
 
@@ -229,9 +210,8 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     for(const [name,opt,ersterKlickWirkt] of [
       ['PC 1920',{viewport:{width:1920,height:1080}},true],
       ['PC 1280',{viewport:{width:1280,height:900}},true],
-      // Touch behaelt den Zwei-Klick-Mechanismus: der erste Tipper klappt
-      // die Leiste zu und wird bewusst geschluckt.
-      ['iPad 1194 Touch',{viewport:{width:1194,height:834},hasTouch:true},false],
+      // Seit 2026-09-22 auch auf Touch: der erste Tipp wirkt.
+      ['iPad 1194 Touch',{viewport:{width:1194,height:834},hasTouch:true},true],
     ]){
       const ctx=await b.newContext(opt);
       const p=await seite(ctx);

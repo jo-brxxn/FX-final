@@ -6,6 +6,34 @@ Abstands-Skala, Klick-/Animationsregeln) inkl. der dabei gefundenen
 Layout-Bugs und Waechter-Erweiterungen. Für Schrift/Typo-Skala/generische
 UI-Bausteine siehe `docs/design-system.md`.
 
+## ⚠⚠ STAND SEIT 2026-09-22: feste Icon-Leiste + Asset-Panel (Bild-Design)
+
+**Gilt vor allem, was weiter unten zur Leiste steht** (Einklappen, Zwei-Klick-
+Regel, „am PC dauerhaft offen", Asset-Stapel inline). Nutzer-Vorlage per Bild,
+per Rückfrage festgelegt:
+
+- **Feste Icon-Leiste** (76 px, 64 px unter 760 px): Symbol, darunter die
+  Beschriftung. **Die heutigen Einträge** bleiben mit ihren Namen, Stapeln und
+  Umbenennungen erhalten — nichts wurde umbenannt oder umsortiert.
+- **Aktiver Eintrag = blaue Kachel** (`--rail-on`); ein Stapel, dessen
+  Mitglied aktiv ist (`.has-active`), sieht genauso aus.
+- **Gruppen (Insights, eigene Stapel) klappen inline auf, „richtig klein"**:
+  14-px-Symbol, Beschriftung in `--fs-2xs`, darunter eingeschoben.
+- **Die Asset-Liste ist ein Panel NEBEN der Leiste** (`#sidebar.np-assets`,
+  `position:fixed`, 250 px, Oberkante = `--nav-top`, von `syncNavExpanded()`
+  gemessen). Auf per Tipp auf „Assets", zu nach der Asset-Wahl (`sbClick`,
+  außer im Bearbeitungsmodus) und bei jedem Tipp außerhalb von Leiste/Panel.
+  **Der Wechsel auf die Asset-Seite öffnet es NICHT mehr** — es läge über dem
+  Inhalt. Keine Inline-Höhe für dieses Panel (`syncNavExpanded` überspringt es).
+- **Kein Einklappen, keine Zwei-Klick-Regel mehr** — auch nicht auf dem iPad.
+  `navBleibtOffen()` liefert immer `true`; die alte Maschinerie läuft darüber
+  ins Leere. Jeder erste Tipp wirkt, auf der Leiste wie im Inhalt.
+- Geprüft von `check/nav.js` (umgestellt): Touch und Maus, erster Tipp wirkt,
+  Leistenbreite unverändert nach Tippen/Scrollen, Panel auf/zu in allen drei
+  Wegen. Beim Umstellen gefunden: auf einer Asset-Seite blieb das Panel nach
+  der Wahl eines anderen Assets offen (dort läuft `showTab()` nicht durch) —
+  behoben in `sbClick`.
+
 ## ⚠ NAVIGATION: dunkle Koyfin-Sidebar statt horizontaler Tab-Leiste
 
 Nutzer-Wunsch per `/goal`, mit drei Koyfin.com-Screenshots als Referenz

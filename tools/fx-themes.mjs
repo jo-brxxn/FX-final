@@ -135,43 +135,7 @@ function block(id, d) {
   return L.join('\n');
 }
 
-// ── RAHMEN-STUFEN (Nutzer-Wunsch 2026-09-22) ──────────────────────────────
-// "mehr Kontrast ... durch dunkelblau Toene ... bei Bedienungselementen ...
-// das was den Inhalt eingrenzt dunkel", mit einer Hierarchie: "nach innen
-// wird es heller aber nicht zu grosse Farbunterschiede aussen".
-// Abgeleitet aus der Chrome-Farbe der jeweiligen HELLEN Vorlage: gleicher
-// Farbton, Helligkeit in kleinen Stufen hoeher. Die Saettigung ist auf 42 %
-// gedeckelt - sonst wird aus Stripes Navy (#0A2540, 73 %) in der hellsten
-// Stufe ein Blau, das neben der bullish-Farbe wie eine Bias-Aussage aussieht.
-// Dunkle Vorlagen bekommen KEINE Stufen: dort greifen die Rueckfallwerte der
-// Regeln, das bisherige Aussehen bleibt.
-// ⚠ Dieses Skript ist gegenueber index.html bereits vorher auseinander-
-// gelaufen (bg-Stufen, --card, --due) - die Vorlagen-Bloecke deshalb NICHT
-// neu erzeugen, nur die Rahmen-Zeilen:  node tools/fx-themes.mjs --rahmen
-// Einsetzen: die Terminal-Pro-Zeile in den Block DUNKLE RAHMEN-HIERARCHIE,
-// die --frame-*-Tokens jeder hellen Vorlage IN deren bestehenden Block
-// (check/theme.js verlangt genau einen Block je Vorlage).
-const hsl = h => { const [r,g,b] = hex2rgb(h).map(x => x/255); const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
-  let hh = 0, s = 0; const l = (mx+mn)/2; const d = mx-mn;
-  if (d) { s = l > .5 ? d/(2-mx-mn) : d/(mx+mn);
-    hh = mx === r ? ((g-b)/d + (g<b?6:0)) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4; hh /= 6; }
-  return [hh, s, l]; };
-const hex = (hh, s, l) => { const f = n => { const k = (n + hh*12) % 12, a = s*Math.min(l,1-l);
-  return Math.round((l - a*Math.max(-1, Math.min(k-3, 9-k, 1)))*255); };
-  return '#' + [f(0),f(8),f(4)].map(x => x.toString(16).padStart(2,'0').toUpperCase()).join(''); };
-export function rahmen(chrome) {
-  const [hh, s0, l0] = hsl(chrome), s = Math.min(s0, .42);
-  const st = dl => hex(hh, s, Math.min(1, l0 + dl)), ton = l => hex(hh, s, l);
-  return { bd: st(.05), hd: st(.09), ctl: st(.14), hov: st(.19), line: st(.25),
-           on: ton(.97), dim: ton(.80), sel: ton(.95), selfg: chrome };
-}
-const rahmenZeile = r => `--frame-bd:${r.bd};--frame-hd:${r.hd};--frame-ctl:${r.ctl};--frame-hov:${r.hov};--frame-line:${r.line};--frame-on:${r.on};--frame-dim:${r.dim};--frame-sel:${r.sel};--frame-selfg:${r.selfg};`;
-
-if (process.argv.includes('--rahmen')) {
-  console.log(`:root:not([data-fx-theme]){${rahmenZeile(rahmen('#212C49'))}}`);
-  for (const [id, d] of Object.entries(THEMES)) if (!d.dark)
-    console.log(`:root[data-fx-theme="${id}"]{${rahmenZeile(rahmen(d.chrome))}}`);
-} else if (process.argv.includes('--pruefe')) {
+if (process.argv.includes('--pruefe')) {
   for (const [id, d] of Object.entries(THEMES)) {
     const w = [];
     ['t0','t1','t2','t3'].forEach((k,i) => d.bg.slice(0,6).forEach((f,j) => {

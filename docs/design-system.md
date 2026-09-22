@@ -332,9 +332,9 @@ gerade dran gearbeitet wird):
   jedes Mal wieder verworfen (Details in `docs/CHANGELOG.md`, Stichwort
   "Glow") — **bei einem erneuten "Glow zurück"-Wunsch zuerst nachfragen**,
   welche Kartentypen genau gemeint sind, statt direkt umzusetzen.
-- ~~**`.dw` (Dashboard-Widgets) bewusst OHNE Koyfin-Kopfleisten-Hintergrund**~~
-  **⚠ Überholt am 2026-09-22** (dunkle Rahmen-Hierarchie oben: der Nutzer hat
-  die Kartenköpfe aller Karten gewählt). Ursprünglicher Text:
+- **`.dw` (Dashboard-Widgets) bewusst OHNE Koyfin-Kopfleisten-Hintergrund**
+  (gilt wieder seit dem Bild-Design 2026-09-22 - die Navy-Köpfe von
+  VERSION-CHECK-538 hatten es für einen halben Tag aufgehoben)
   gelassen — keine Lücke, sondern eine am 2026-07-25 explizit getroffene
   Nutzer-Entscheidung ("Keine Ueberschrift einfach so", Code-Kommentar bei
   `.dw-hdr`). Bei einem "Karten sehen nicht einheitlich aus"-Einwand zu
@@ -417,7 +417,7 @@ werden nicht frei erfunden** — immer diese Werte verwenden.
 | Fläche in der Karte | `#F2F3F9` | `--bg1` / `--bg3` |
 | Hover | `#EAECF4` | `--bg4` |
 | Auswahl / Betonung | `#DDE1EC` | `--bg5` |
-| Kopfzeile + Nav-Sidebar | `#212C49` | `--chrome-bg` |
+| Kopfzeile + Nav-Sidebar | `#0D1B2F` (seit 2026-09-22, vorher `#212C49`) | `--chrome-bg` |
 | Schnellzugriffe | `#2C3A5E` | fest in `.asec-link` |
 
 Kopfzeile und Sidebar bleiben **dunkel**, während der Inhalt hell ist
@@ -513,42 +513,64 @@ Platz. Bleibt ein echtes Flex-Kind im normalen Fluss — **keine** absolute
 Positionierung, das führte früher auf schmalen Screens zu Überlappungen mit
 Undo/Redo bzw. dem Alarm-Zähler.
 
-## ⚠️ Dunkle Rahmen-Hierarchie: der Rahmen ist dunkel, der Inhalt hell (seit 2026-09-22)
+## ⚠️ BILD-DESIGN: die gültige Optik seit 2026-09-22 (VERSION-CHECK-539)
 
-Nutzer-Vorgabe: *„das was den Inhalt eingrenzt dunkel"*, *„nach innen wird es
-heller aber nicht zu große Farbunterschiede außen"*. Gilt in **allen fünf hellen
-Vorlagen**; die dunklen bleiben unberührt.
+Nutzer mit einem Bild als Vorlage: *„Ich will das du die Webseite von Farben
+Aufteilung Formen usw so baust. Jedes Detail so … es geht nur um Aussehen keine
+Funktion das bleibt alles erhalten"*. Per Rückfrage festgelegt (alles „ganze
+App"):
 
-| Stufe (außen → innen) | Token | Terminal Pro |
-|---|---|---|
-| Kopfzeile/Sidebar | `--chrome-bg` | `#212C49` |
-| Kartenrahmen | `--frame-bd` | `#29375B` |
-| Kartenkopf | `--frame-hd` | `#2F3F69` |
-| Bedienelement (Zeitraum, Dropdown) | `--frame-ctl` | `#374A7A` |
-| Hover | `--frame-hov` | `#3F548C` |
-| Text / gedämpft auf Rahmen | `--frame-on` / `--frame-dim` | `#F4F6FA` / `#B9C3DF` |
-| gewählte Stufe (hell) | `--frame-sel` / `--frame-selfg` | `#EDF0F7` / `#212C49` |
+| Baustein | Regel |
+|---|---|
+| Seite | getönter Grund `--bg0` `#E9F0F8` |
+| Karte | fast weiß `--card` `#F8FAFD`, 1-px-Rand `--bd` `#DBE5F3`, Radius `--r` 14 px |
+| Kartenkopf | **Symbol + Titel** (`abTileIcon()`), kein eigener Hintergrund, keine Linie; Titel `--fs-md` 700 |
+| Zeitraum-Umschalter & neutrale Chips | hellgrau `--ctl-bg`, **aktiv = `--ui-act` gefüllt, weiße Schrift** |
+| Knöpfe/Dropdowns zweiter Ebene | Kartenfläche mit feinem Rand (wie „Aging" im Bild) |
+| Kopfzeile + Leiste | `--chrome-bg`/`--rail-bg` `#0D1B2F`, Kante `--rail-edge`, aktive Kachel `--rail-on` `#0B3C74` |
+| Schrift | **Zahlen in derselben Sans** (`--ff-num: var(--ff-text)`), gleich breite Ziffern über `tabular-nums` |
+| Asset-Kopf | eigene Karte `.ahead`; Motiv je Gruppe rechts hinter den Tabs (siehe unten) |
+| Asset-Kopfreihe | **2×2** (Price / Calendar, Pinned notes / History), globale Schriftskala |
 
-- **Erzeugt, nicht getippt:** `node tools/fx-themes.mjs --rahmen` (Farbton der
-  Chrome-Farbe, Sättigung ≤ 42 % — sonst sieht die hellste Stufe aus wie die
-  bullish-Farbe). Der Block steht in `index.html` unter
-  `DUNKLE RAHMEN-HIERARCHIE`.
-- **Jede Regel ist an die hellen Vorlagen gebunden** (`:root:not([data-fx-theme])`
-  + `linear/stripe/swiss/notion`), nie per Rückfallwert — der erste Wurf so
-  wich in den dunklen Vorlagen an 170 Stellen vom alten Aussehen ab.
-- **Im dunklen Kopf werden die Textstufen umgedreht** (`--t0..t3` → hell),
-  genau wie in `.hdr`/`#navSidebar`.
-- **Bedeutungsfarben werden NICHT umgefärbt**, sondern stehen im Kopf auf einer
-  hellen Insel (`--bg2`): Score-Abzeichen, inline gefärbte Werte.
-- **Gewählte Stufe = hell auf dunklem Feld** — bei jedem Zeitraum-Umschalter
-  gleich (`.ab-rg`, `.histp-rbtn`, `.ind-hist-range-btn`, `.perf-win`, `.hl-tab`).
-- **Die aufgeklappte Dropdown-Liste bleibt hell:** iOS/macOS ignorieren den
-  `option`-Hintergrund, übernehmen aber die Schriftfarbe.
-- **Neuer Kartentyp oder neuer Kopf?** In die Listen des Blocks eintragen UND in
-  `ZONEN` von `check/rahmen.js` — der Wächter prüft jeden Text darin gegen
-  seinen echten Hintergrund (AA), in allen fünf hellen Vorlagen.
-- Ersetzt für `.dw` die Entscheidung vom 2026-07-25 („ohne Kopfleisten-
-  Hintergrund"), siehe unten.
+Alle Werte am **Bildpixel gemessen**, nicht geschätzt. ⚠ Das Blau aus dem Bild
+(`#0C75FD`) hält mit weißer Schrift nur 4,2:1 — `--ui-act` ist `#0B6BEA`
+(4,8:1), sichtbar gleich.
+
+**Bedeutung bleibt Bedeutung:** Chips mit Bedeutungsfarbe (bull/bear-Segmente,
+Non-FX lila, Zinsschritte) bekommen den neutralen Aktivzustand NICHT. Bias-
+Werte im Kartenkopf (Score-Abzeichen, Preisänderung) stehen auf einer
+getönten Insel ihrer eigenen Farbe.
+
+**Bewusst NICHT aus dem Bild übernommen:**
+- der dauerhafte Unterstrich unter „Price chart": die vier Tabs öffnen
+  Fenster, einen aktiven Tab gibt es nicht. Unterstrich bei Hover/Fokus.
+- das Sonnen-Symbol am Schalter: der Schalter ist die Kompaktansicht, kein
+  Hell/Dunkel — ein Sonnen-Symbol würde etwas Falsches versprechen.
+- die Reihen-Überschrift „Overview" ist ausgeblendet (im Bild nicht vorhanden,
+  der Asset-Kopf ist jetzt selbst der Anfang); „Macro" bleibt.
+
+### Motive im Asset-Kopf (`assetMotivHtml`)
+Vorher schon einmal da (2026-09-14) und am selben Tag entfernt. Diesmal
+ausdrücklich gewünscht: **je Gruppe** — FX die große Flagge der Währung
+(`assetIconHtml(id,340)`, weht wie die kleine), Crypto ₿-Münze, Metalle Barren,
+Energie Ölfass, Indizes/Aktien/Renditen Bulle & Bär. Selbst gezeichnete SVGs in
+den Blautönen der Berge aus dem Bild (`MOTIV_F1..3`, `MOTIV_ST`), „nicht zu
+blass", **rechts hinter den Tabs** (Nutzerwahl, trotz der Ablehnung von Schrift
+auf Textur 2026-09-04). Nach links ausgeblendet per Maske.
+⚠ Beim Bau zweimal gemessen korrigiert: die Motive skalierten auf die BREITE
+(wurden höher als der Kopf) — jetzt auf die Höhe; die Flagge war 225 px breit
+und stand als harter Block da — jetzt 510 px, die Maske greift.
+
+### Vorlagen
+Die neuen Tokens (`--ctl-*`, `--ui-act*`, `--rail-*`) stehen in JEDEM
+Vorlagen-Block; die dunklen nehmen `--accent` als Aktivfarbe. Die Formen gelten
+überall, die Farben kommen aus der Vorlage.
+
+### Die Navy-Köpfe von VERSION-CHECK-538 sind zurückgebaut
+Am selben Tag davor gebaut (dunkle Kartenköpfe/Umschalter, `--frame-*`,
+`tools/fx-themes.mjs --rahmen`), durch das Bild abgelöst — Nutzerwahl „wie im
+Bild". Der Wächter `check/rahmen.js` bleibt: er prüft weiter jeden Text in
+Kartenkopf und Bedienelement gegen seinen echten Hintergrund.
 
 ## ⚠️ Badge neben schrumpfbarem Text: immer `flex-wrap` + Mindestbreite
 

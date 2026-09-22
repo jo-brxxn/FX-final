@@ -1,10 +1,14 @@
-// ── DUNKLE RAHMEN-HIERARCHIE: LESBARKEIT IN KOPF UND BEDIENELEMENT ─────
+// ── LESBARKEIT IN KARTENKOPF UND BEDIENELEMENT ─────────────────────────
 //
-// Nutzer-Wunsch 2026-09-22: Kartenrahmen, Kartenkoepfe, Zeitraum-Umschalter
-// und Dropdowns werden dunkel (Navy-Stufen aus der Chrome-Farbe), der Inhalt
-// bleibt hell. Details: docs/design-system.md, "Dunkle Rahmen-Hierarchie".
+// Entstanden 2026-09-22 fuer die Navy-Koepfe (VERSION-CHECK-538). Die sind
+// am selben Tag vom Bild-Design abgeloest worden (helle Koepfe, hellgraue
+// Umschalter, aktiv = kraeftiges Blau mit weisser Schrift) - der Waechter
+// bleibt, weil dieselbe Fehlerklasse weiterlebt: jeder Text, der seine Farbe
+// selbst setzt, kann auf einer neu eingefaerbten Flaeche verschwinden (weiss
+// auf hellem Aktiv-Ton, Bedeutungsfarbe auf Blau). Details:
+// docs/design-system.md, "Bild-Design".
 //
-// Die Fehlerklasse, die das mitbringt: alles, was vorher auf HELLEM Kopf
+// Die Fehlerklasse beim Bau der Navy-Koepfe: alles, was vorher auf HELLEM Kopf
 // stand und seine Farbe selbst setzt (Bias-Abzeichen, inline gefaerbte
 // Prozentwerte, das ⓘ in --blue), steht ploetzlich auf Navy. Gemessen beim
 // Bau: die Preisaenderung der Preiskarte (#C50F1A auf #2F3F69) und das ⓘ der
@@ -31,7 +35,11 @@ const ZONEN = ['.rub-hdr', '.ab-tile-hd', '.abc-cal>.abc-hd', '.dw-hdr', '.cot-c
 
 (async () => {
   const b = await chromium.launch();
-  const p = await b.newPage({ viewport: { width: 1500, height: 1000 } });
+  // ⚠ Service Worker blockieren (wie die anderen Waechter): sonst liefert er
+  // die GECACHTE Seite, und der Waechter prueft den alten Stand - beim Bau
+  // so passiert (ein behobener Befund blieb rot).
+  const ctx = await b.newContext({ viewport: { width: 1500, height: 1000 }, serviceWorkers: 'block' });
+  const p = await ctx.newPage();
   await p.addInitScript(() => { try {
     localStorage.setItem('fxpro_help_seen', '1');
     localStorage.setItem('fxpro_intro_anim_enabled', '0');
@@ -50,7 +58,7 @@ const ZONEN = ['.rub-hdr', '.ab-tile-hd', '.abc-cal>.abc-hd', '.dw-hdr', '.cot-c
     // Frueh-Weiche; der Speicherweg (setFxTheme) ist hier nicht Gegenstand.
     await p.evaluate(t => { t ? document.documentElement.setAttribute('data-fx-theme', t)
       : document.documentElement.removeAttribute('data-fx-theme'); }, th);
-    const tk = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--frame-hd').trim());
+    const tk = await p.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ui-act').trim());
     if (!tk) tokenFehlt.push(th || 'terminal');
     for (const s of SEITEN) {
       await p.evaluate(s => s.startsWith('sym:') ? gotoSym(s.slice(4)) : showTab(s), s);
@@ -96,7 +104,7 @@ const ZONEN = ['.rub-hdr', '.ab-tile-hd', '.abc-cal>.abc-hd', '.dw-hdr', '.cot-c
   }
   await b.close();
   const uniq = [...new Set(F)];
-  if (tokenFehlt.length) uniq.unshift(`Vorlage(n) ohne --frame-hd: ${tokenFehlt.join(', ')}`);
+  if (tokenFehlt.length) uniq.unshift(`Vorlage(n) ohne --ui-act: ${tokenFehlt.join(', ')}`);
   if (perr.length) uniq.push(...perr.map(e => 'PAGEERROR ' + e));
   if (!zonenGesehen) uniq.push('keine einzige Zone gefunden - Selektoren veraltet?');
   if (GEGENPROBE) {

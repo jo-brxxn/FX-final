@@ -28,7 +28,7 @@
 // nicht Kosmetik: ohne ihn behielte jedes Geraet rezept.html und
 // js/rezept/* in seinem alten Cache und koennte die geloeschte App offline
 // weiter starten.
-const CACHE_VERSION = 'fxpro-v14';
+const CACHE_VERSION = 'fxpro-v15';
 const APP_SHELL = [
   './',
   './index.html',

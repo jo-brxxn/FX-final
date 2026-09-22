@@ -1897,7 +1897,7 @@ function abHistorieKarteHtml(c){
   // den Text des ZULETZT gerenderten Symbols.
   const panel=renderSymHistoryPanel(c.id);
   return`<div class="ab-htile ab-ntile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">History</span>${abInfoBtn('History',_histErkl)}</div>
+    <div class="ab-tile-hd">${abTileIcon('History')}<span class="ab-tile-t">History</span>${abInfoBtn('History',_histErkl)}</div>
     <div class="ab-htile-bd" id="abHistBody">${panel}</div>
     <div class="ab-goto"><button class="ab-goto-b" onclick="openHistModal('${escJH(c.id)}')" title="Open the full history window — the same content on the whole screen, with room for about eleven days at once instead of three">Open full history →</button></div>
   </div>`;
@@ -6681,6 +6681,11 @@ function sbClick(id){
   // bleibt dabei an, damit man mehrere Eintraege nacheinander sortieren kann.
   if(curPage!=='cur')showTab('cur',null,'fx');
   selSym(id);
+  // Asset-Panel (seit 2026-09-22) nach der Wahl schliessen - auch wenn man
+  // schon auf der Asset-Seite war (dann laeuft showTab() nicht durch und
+  // schliesst es nicht). Im Bearbeitungsmodus bleibt es offen, damit man
+  // mehrere Eintraege nacheinander sortieren kann.
+  if(!sbEditMode&&expandedStack===ASSET_STACK_ID){expandedStack=null;syncNavExpanded();}
 }
 // Lang-Druck auf eine KATEGORIE-Überschrift blendet ▲/▼-Buttons ein, mit denen
 // die gesamte Kategorie (inkl. aller Assets) verschoben werden kann.
@@ -6845,8 +6850,8 @@ function renderDetail(){
          518er Umbau (Nutzer 2026-09-14: "mach das wie vorher"). Der Titel
          war in die Kopfleiste gewandert; ohne ihn hier haette die
          Asset-Seite ueberhaupt keine Ueberschrift mehr. */''}
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:var(--gap-block)">
-      <div><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor.','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
+    <div class="ahead">${assetMotivHtml(c.id)}
+      <div class="ahead-l"><div class="atitle">${assetIconHtml(c.id,34)?`<span class="atitle-flag">${assetIconHtml(c.id,34)}</span>`:''}${escH(c.name)}${scoreBadge(symScoreCmp(c),'Displayed score = raw sum of all indicators × fairness factor (Ø FX indicator count / own tracked count), so assets tracking fewer indicators can reach the same heights - tap for the full breakdown incl. the factor.','det-'+c.id,`openScoreInfoSym('${c.id}')`,c.bias)}</div><div class="afull">${escH(c.full)}</div></div>
       ${detailMetaHtml(c,nextLbl,dmetaControls)}
     </div>
     ${/* ⚠ Zugeklappt wird die Sektion GAR NICHT mehr gezeichnet: ihr
@@ -7235,10 +7240,11 @@ function assetMonthCalHtml(c,gross){
   // Das ⓘ sitzt neben dem Kartennamen - der Name der Kalenderkarte IST der
   // Monat in der Kopfzeile (Dauerregel 2026-09-18, siehe abInfoBtn). Im
   // grossen Fenster faellt es weg: dort steht die Erklaerung nicht im Weg.
+  // Bild-Design 2026-09-22: Kalender-Symbol + Monat links, beide Pfeile
+  // als eckige Knoepfe rechts (vorher: Pfeile links/rechts um den Monat).
   const raster=`<div class="abc-hd">
-        <button class="abc-nav" onclick="event.stopPropagation();abCalShift(-1)" title="Previous month">‹</button>
-        <span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>${gross?'':infoSlot}
-        <button class="abc-nav" onclick="event.stopPropagation();abCalShift(1)" title="Next month">›</button>
+        ${gross?'':abTileIcon('Calendar')}<span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>${gross?'':infoSlot}
+        <span class="abc-navs"><button class="abc-nav" onclick="event.stopPropagation();abCalShift(-1)" title="Previous month">‹</button><button class="abc-nav" onclick="event.stopPropagation();abCalShift(1)" title="Next month">›</button></span>
       </div>
       <div class="abc-grid">
         ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
@@ -7430,12 +7436,67 @@ function openCardInfo(k){
   if(b)b.innerHTML=e.b.map(p=>`<p>${p}</p>`).join('');
   openM('mCardInfo');
 }
+// ══ ASSET-MOTIV IM KOPF (Bild-Design, Nutzer-Wunsch 2026-09-22) ══════════
+// Woertlich: "was kann da anderes hin was mehr zu trading passt eine Bulle und
+// baer und ein bitcoin und physisches Gold? Das koennte auch je nach Asset
+// Gruppe anders sein bei fx die Flaggen bei Non fx die Bilder dazu".
+// ⚠ Motive gab es schon einmal (2026-09-14, am selben Tag wieder entfernt:
+// "Ja ne entfern die Bilder komplett wieder"). Diesmal ausdruecklich
+// gewuenscht, per Rueckfrage bestaetigt: je Gruppe, "blasse Zeichnung aber
+// nicht zu blass also wie im Bild", RECHTS HINTER den Tabs.
+// Selbst gezeichnet als SVG (keine Fotos: Groesse, offline, Rechte). Farben am
+// Nutzerbild gemessen (Berge #E3EDF8..#C8DAF0 auf #F1F6FC).
+const MOTIV_F1='#DCE8F6',MOTIV_F2='#C9DBF1',MOTIV_F3='#B4CBE9',MOTIV_ST='#9DB8DE';
+const ASSET_MOTIVE=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST;return {
+coin:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="300" cy="150" rx="104" ry="12" fill="${F1}"/>
+ <g transform="translate(345 112)"><ellipse rx="44" ry="12" fill="${F3}"/><rect x="-44" y="-14" width="88" height="14" fill="${F2}"/><ellipse cy="-14" rx="44" ry="12" fill="${F1}" stroke="${ST}" stroke-width="2"/></g>
+ <g transform="translate(345 90)"><ellipse rx="44" ry="12" fill="${F3}"/><rect x="-44" y="-14" width="88" height="14" fill="${F2}"/><ellipse cy="-14" rx="44" ry="12" fill="${F1}" stroke="${ST}" stroke-width="2"/></g>
+ <circle cx="250" cy="82" r="66" fill="${F2}"/><circle cx="246" cy="78" r="66" fill="${F1}" stroke="${ST}" stroke-width="3"/>
+ <circle cx="246" cy="78" r="52" fill="none" stroke="${F3}" stroke-width="3" stroke-dasharray="4 7"/>
+ <text x="246" y="104" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="76" fill="${F3}" stroke="${ST}" stroke-width="2">&#x20BF;</text>
+</svg>`,
+bars:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="290" cy="156" rx="130" ry="10" fill="${F1}"/>
+ ${[[190,150],[270,150],[350,150],[230,108],[310,108],[270,66]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M-40 0 L40 0 L30 -38 L-30 -38 Z" fill="${F2}" stroke="${ST}" stroke-width="2.2" stroke-linejoin="round"/><path d="M-30 -38 L30 -38 L24 -44 L-24 -44 Z" fill="${F1}" stroke="${ST}" stroke-width="2" stroke-linejoin="round"/><path d="M-18 -12 L18 -12 M-12 -22 L12 -22" stroke="${F3}" stroke-width="3" stroke-linecap="round"/></g>`).join('')}
+</svg>`,
+barrel:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="290" cy="158" rx="110" ry="9" fill="${F1}"/>
+ <g transform="translate(260 0)"><path d="M-56 30 Q-66 90 -56 150 L56 150 Q66 90 56 30 Z" fill="${F2}" stroke="${ST}" stroke-width="2.5"/><ellipse cy="30" rx="56" ry="13" fill="${F1}" stroke="${ST}" stroke-width="2.5"/><ellipse cy="30" rx="10" ry="3" fill="${F3}" transform="translate(24 0)"/>
+ <path d="M-62 68 Q0 82 62 68 M-62 112 Q0 126 62 112" fill="none" stroke="${ST}" stroke-width="3"/></g>
+ <path d="M372 62 C372 62 350 94 350 108 A22 22 0 0 0 394 108 C394 94 372 62 372 62 Z" fill="${F3}" stroke="${ST}" stroke-width="2.5"/>
+</svg>`,
+bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="250" cy="159" rx="170" ry="8" fill="${F1}"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M52 146 C46 140 46 128 54 118 L66 104 C72 98 82 94 92 94 C100 82 110 70 124 62 C138 52 160 52 176 60 C196 66 216 68 230 76 C238 80 240 92 236 104 C234 116 230 124 226 128 L226 158 L215 158 L213 132 C211 136 207 136 205 132 L203 158 L192 158 L190 128 C176 132 160 132 146 128 L144 158 L133 158 L131 128 C129 130 125 130 123 128 L121 158 L110 158 L108 124 C100 124 92 130 86 138 C78 146 64 152 52 146 Z"/>
+ <path fill="none" stroke="${ST}" stroke-width="4.6" stroke-linecap="round" d="M84 98 C74 88 62 84 50 88 C44 90 40 84 44 80 M96 94 C98 80 92 70 80 64 C76 62 76 56 82 56"/>
+ <path fill="none" stroke="${ST}" stroke-width="2.4" stroke-linecap="round" d="M234 90 C246 100 248 118 244 134"/><circle cx="244" cy="138" r="4" fill="${ST}"/>
+ <circle cx="74" cy="112" r="2.8" fill="${ST}"/><circle cx="54" cy="138" r="2" fill="${ST}"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M262 128 C254 110 258 90 274 82 C290 74 314 72 334 76 C346 66 362 64 372 72 C380 76 384 80 386 84 C386 78 390 74 394 76 C398 78 398 84 396 88 C404 90 410 96 412 102 C414 106 412 110 406 112 C398 114 392 114 388 112 C384 118 380 122 376 126 L376 154 L364 154 L362 130 C360 132 356 132 354 130 L352 154 L340 154 L338 128 C322 132 300 132 290 128 L288 154 L276 154 L274 132 C270 132 266 130 262 128 Z"/>
+ <circle cx="397" cy="98" r="2.6" fill="${ST}"/>
+</svg>`};})();
+// Gruppe -> Motiv. FX: die grosse Flagge der Waehrung (derselbe Baustein wie
+// links neben dem Namen). Aktien und Renditen bekommen Bulle & Baer.
+const MOTIV_JE_KLASSE={crypto:'coin',metal:'bars',energy:'barrel',index:'bullbear',stock:'bullbear',yield:'bullbear'};
+function assetMotivHtml(id){
+  const cls=assetCls(id);
+  let inner='';
+  if(cls==='fx'){const f=assetIconHtml(id,340);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}
+  else{const k=MOTIV_JE_KLASSE[cls];if(k)inner=ASSET_MOTIVE[k];}
+  return inner?'<div class="ahead-motif ahead-motif-'+(cls||'x')+'" aria-hidden="true">'+inner+'</div>':'';
+}
+// Icon vor dem Kartennamen (Bild-Design 2026-09-22: jede Karte traegt links
+// neben dem Titel ein Symbol). Zuordnung am Titel, nicht an der Stelle -
+// abTile() wird fuer viele Karten benutzt; unbekannte Titel bekommen ein
+// neutrales Balken-Symbol statt gar keins, damit alle Koepfe gleich stehen.
+const AB_TILE_ICONS={Price:'bars',History:'clock','Pinned notes':'note',Notes:'note',Context:'globe',Calendar:'calendar'};
+function abTileIcon(titel){return`<span class="ab-tile-ic" aria-hidden="true">${icn(AB_TILE_ICONS[titel]||'bars',18)}</span>`;}
 function abTileZ(ziel,titel,zusatz,inhalt,extra,erkl){
   return abTile(titel,zusatz,inhalt,extra,ziel,erkl);
 }
 function abTile(titel,zusatz,inhalt,extra,ziel,erkl){
   return`<div class="ab-tile${extra||''}">
-    <div class="ab-tile-hd"><span class="ab-tile-t">${titel}</span>${abInfoBtn(titel,erkl)}${zusatz||''}</div>
+    <div class="ab-tile-hd">${abTileIcon(titel)}<span class="ab-tile-t">${titel}</span>${abInfoBtn(titel,erkl)}${zusatz||''}</div>
     <div class="ab-tile-bd">${inhalt}</div>
     ${abGoToHtml(ziel)}
   </div>`;
@@ -7854,7 +7915,7 @@ function abKontextHtml(c){
   // Der Zeitfilter gilt fuer ALLE Kacheln gleichzeitig.
   const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart">${lbl}</button>`).join('');
   return`<div class="ab-ktile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">Context</span>${rate}
+    <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}
       <span class="ab-rgs">${regler}</span></div>
     <div class="ab-kgrid">${kacheln}</div>
   </div>`;
@@ -8401,7 +8462,7 @@ function abNotesHtml(c){
       </span>
     </div>`).join('')||`<div class="ab-nt-empty">No notes on ${escH(c.name)} yet. Write one above — it saves as you go.</div>`;
   return`<div class="ab-ntile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">Notes</span><span class="ab-tile-s">${list.length}</span>
+    <div class="ab-tile-hd">${abTileIcon('Notes')}<span class="ab-tile-t">Notes</span><span class="ab-tile-s">${list.length}</span>
       <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
     <div class="ab-nt-add">
       <input class="finp" id="abNoteInp" placeholder="New note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}')">
@@ -8507,7 +8568,7 @@ function abPinnedHtml(c){
       </span>
     </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. Write one below — new notes from here are pinned straight away.</div>`;
   return`<div class="ab-ntile">
-    <div class="ab-tile-hd"><span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>
+    <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>
       <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
     <div class="ab-nt-add">
       <input class="finp" id="abNoteInp" placeholder="New pinned note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}',true)">
@@ -8659,7 +8720,7 @@ function assetPreisKarteHtml(c){
   const ch=abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price');
   const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart on this page">${lbl}</button>`).join('');
   const kopf=`<div class="ab-tile-hd">
-    <span class="ab-tile-t">Price</span>
+    ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
     <span class="ab-rgs">${regler}</span></div>`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
@@ -13101,7 +13162,7 @@ function detailMetaHtml(c,nextLbl,extraControlsHtml){
   // in renderDetail()) - optional, damit detailMetaHtml() ohne dieses
   // Argument (falls je von woanders aufgerufen) unveraendert funktioniert.
   return`<div class="dmeta">
-    ${mi('Next event',nextLbl,'Next high-impact calendar event for this asset')}
+    <span class="dmeta-evic" aria-hidden="true">${icn('calendar',20)}</span>${mi('Next event',nextLbl,'Next high-impact calendar event for this asset')}
     ${extraControlsHtml||''}
   </div>`;
 }
@@ -20752,8 +20813,14 @@ function syncNavExpanded(){
   // ⚠ In der Icon-Leiste NIE eine Inline-Hoehe setzen: sie wuerde die
   // CSS-Regel schlagen, die Untereintraege dort ausblendet (Inline-Stile
   // gewinnen gegen jeden Selektor).
+  // Oberkante der Leiste = Oberkante des Asset-Panels (position:fixed).
+  try{bar.style.setProperty('--nav-top',Math.round(bar.getBoundingClientRect().top)+'px');}catch(e){}
   const iconLeiste=bar.classList.contains('nav-collapsed')||window.innerWidth<760;
   bar.querySelectorAll('.np-sub-wrap').forEach(w=>{
+    // Die Asset-Liste ist seit 2026-09-22 ein Ausklapp-PANEL neben der
+    // Leiste (position:fixed, Hoehe per CSS) - keine Inline-Hoehe setzen,
+    // sonst waere das Panel auf die gemessene Listenhoehe gedeckelt.
+    if(w.dataset.stack===ASSET_STACK_ID){w.classList.toggle('open',w.dataset.stack===expandedStack);w.style.maxHeight='';return;}
     const soll=!iconLeiste&&w.dataset.stack===expandedStack;
     w.classList.toggle('open',w.dataset.stack===expandedStack);
     if(iconLeiste){w.style.maxHeight='';return;}
@@ -20939,7 +21006,10 @@ function showTab(tab,btn,fxMode){
   // er soll sich beim Wechsel auf die Assets-Seite genauso aufklappen wie
   // jeder echte Stapel bei seinem aktiven Tab.
   const _st=stackOf(activeTabId);
-  expandedStack=(activeTabId==='fx')?ASSET_STACK_ID:(_st?_st.id:null);
+  // ⚠ Seit 2026-09-22 klappt die Asset-Liste beim Wechsel auf die Asset-
+  // Seite NICHT mehr auf: sie ist jetzt ein Panel UEBER dem Inhalt und
+  // schliesst nach der Asset-Wahl (die genau hier durchlaeuft).
+  expandedStack=(activeTabId==='fx')?null:(_st?_st.id:null);
   // syncNavExpanded()+syncNavActive() statt eines vollen renderTabBar():
   // ein Neuaufbau per innerHTML wuerde einen gerade offenen Stapel sofort
   // und OHNE Animation schliessen (Nutzer-Bugreport 2026-08-31), weil ein
@@ -21822,10 +21892,13 @@ updNetStatus();
 // Pruefung, die weiter unten schon fuer das Klick-Schlucken benutzt wird
 // (hover:hover + pointer:fine, statt pointer:coarse oder ontouchstart:
 // beide sind bei Touch-Displays mit angeschlossener Maus falsch).
-function navBleibtOffen(){
-  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
-    && window.innerWidth>=760;
-}
+// ⚠ Seit 2026-09-22 (Bild-Design, Nutzer-Entscheid): die Leiste ist eine
+// FESTE Icon-Leiste mit Beschriftung unter jedem Symbol - es gibt nichts
+// mehr auf- oder zuzuklappen. Damit entfallen das automatische Einklappen
+// und die Zwei-Klick-Regel (erster Tipp klappt nur aus) auf dem iPad; jeder
+// Tipp wirkt sofort. Die Maschinerie darunter bleibt stehen und laeuft ueber
+// diese eine Weiche ins Leere (collapse() kehrt sofort zurueck).
+function navBleibtOffen(){return true;}
 (function(){
   const pageArea=document.getElementById('pageArea');
   const nav=document.getElementById('navSidebar');
@@ -21968,6 +22041,15 @@ function navBleibtOffen(){
   if(navBleibtOffen())expand();
 })();
 
+// Das Asset-Panel (seit 2026-09-22) schliesst bei einem Tipp ausserhalb von
+// Leiste und Panel - wie jedes Ausklapp-Menue. Capture-Phase, damit es auch
+// dann greift, wenn der Inhalt den Klick selbst abfaengt.
+document.addEventListener('pointerdown',ev=>{
+  if(expandedStack!==ASSET_STACK_ID)return;
+  const nav=document.getElementById('navSidebar');
+  if(nav&&nav.contains(ev.target))return;
+  expandedStack=null;syncNavExpanded();
+},true);
 // ── EIGENE TOOLTIPS (Nutzer-Wunsch 2026-08-22) ──────────────────────────
 // Ersetzt die verzoegerten/uneinheitlichen Browser-title-Tooltips in der
 // eingeklappten Icon-Leiste durch ein eigenes, schneller erscheinendes
