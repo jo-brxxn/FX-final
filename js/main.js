@@ -155,6 +155,18 @@ function aiDefsSvg() {
         <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="${AI_WELLE_L} 0" dur="${AI_WELLE_T}s" repeatCount="indefinite"/>
       </linearGradient>
       <path id="aiRim" d="${aiWellenPfad(0)}" fill="none">${aiWellenAnim()}</path>
+      <!-- Gezeichnete Flagge (Nutzer 2026-09-23: Flaggen im Wisch und im
+           Asset-Kopf "ohne Farben also auch gezeichnet"): Graustufe, dann
+           dunkel -> MOTIV_DK, hell -> MOTIV_F1 - dieselbe Palette wie Barren,
+           Muenze, Bulle & Baer. Muster bleiben erkennbar, Farben weg. -->
+      <filter id="aiDuo" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+        <feColorMatrix type="saturate" values="0"/>
+        <feComponentTransfer>
+          <feFuncR type="table" tableValues="0.47 0.86"/>
+          <feFuncG type="table" tableValues="0.59 0.91"/>
+          <feFuncB type="table" tableValues="0.78 0.965"/>
+        </feComponentTransfer>
+      </filter>
       <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#fff" stop-opacity="0"/>
         <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
@@ -223,8 +235,9 @@ function aiEnsureDefs() {
   document.body.insertAdjacentHTML('afterbegin', aiDefsSvg());
 }
 
-/* Ein Icon. `size` ist die HOEHE in px; die Breite folgt aus 3:2. */
-function assetIconHtml(id, size) {
+/* Ein Icon. `size` ist die HOEHE in px; die Breite folgt aus 3:2.
+   `gezeichnet`: Flagge farblos in der Motiv-Palette (Wisch, Asset-Kopf). */
+function assetIconHtml(id, size, gezeichnet) {
   aiEnsureDefs();
   const h = size || 18, w = Math.round(h * 1.5 * 10) / 10;
   const isFlag = AI_FLAG_IDS.indexOf(id) !== -1;
@@ -236,13 +249,13 @@ function assetIconHtml(id, size) {
   // gemessen lief er von 107 px vor bis 100 px hinter einer 240-px-Flagge).
   // Darueber der feine Rand (.ai-rim) entlang derselben Welle.
   const inner = isFlag
-    ? `<g clip-path="url(#aiWave)"><use href="#ai-${id}"/>`
+    ? `<g clip-path="url(#aiWave)"><use href="#ai-${id}"${gezeichnet ? ' filter="url(#aiDuo)"' : ''}/>`
       + `<rect class="ai-fold" width="36" height="24" fill="url(#aiFoldG)"/>`
       + `<rect class="ai-shade" width="36" height="24" fill="url(#aiShadeG)"/>`
       + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/></g>`
       + `<use class="ai-rim" href="#aiRim"/>`
     : `<use href="#ai-${id}"/>`;
-  return `<span class="ai-wrap" style="width:${w}px;height:${h}px">`
+  return `<span class="ai-wrap${gezeichnet ? ' ai-gezeichnet' : ''}" style="width:${w}px;height:${h}px">`
        + `<svg class="ai-svg${isFlag ? ' ai-flag' : ''}" viewBox="0 0 36 24" width="${w}" height="${h}" aria-hidden="true">${inner}</svg>`
        + `</span>`;
 }
@@ -452,7 +465,9 @@ const ICONS={
   bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
   refresh:'<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
   clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-  gear:'<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  // Echtes Zahnrad (Nutzer 2026-09-23: "Tausch das settings Icon durch ein
+  // Zahnrad aus") - vorher standen hier drei Schieberegler.
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   search:'<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
   // Nutzer-Wunsch 2026-07-19 (Professionalitaets-Audit): weitere Emoji durch
@@ -514,13 +529,17 @@ const ICONS={
   eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
   layers:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
   alert:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  // Aus dem Nutzerbild 2026-09-23: Inflation = aufsteigende Balken,
+  // Economic Growth = Balken mit Pfeil nach oben.
+  barsUp:'<line x1="5" y1="20" x2="5" y2="16"/><line x1="10" y1="20" x2="10" y2="12"/><line x1="15" y1="20" x2="15" y2="8"/><line x1="20" y1="20" x2="20" y2="4"/>',
+  chartUp:'<line x1="4" y1="21" x2="4" y2="17"/><line x1="9" y1="21" x2="9" y2="14"/><line x1="14" y1="21" x2="14" y2="15"/><line x1="19" y1="21" x2="19" y2="11"/><polyline points="3 11 9 6 13 9 20 3"/><polyline points="16 3 20 3 20 7"/>',
   candles:'<path d="M9 4v5M9 15v5M15 2v5M15 13v5"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="7" width="4" height="6" rx="1"/>'
 };
 // Titel -> Symbol. Die ERSTE passende Regel gewinnt; spezifische Begriffe
 // stehen deshalb vor allgemeinen ("rate probabilit" vor "rate").
 const KARTEN_ICONS=[
   [/^price$/,'bars'],[/history/,'clock'],[/pinned|notes?$|archive/,'note'],[/context/,'globe'],[/calendar|event/,'calendar'],
-  [/inflation/,'thermo'],[/labou?r|employment|jobs/,'briefcase'],[/growth|gdp/,'sprout'],
+  [/inflation/,'barsUp'],[/labou?r|employment|jobs/,'briefcase'],[/growth|gdp/,'chartUp'],
   [/rate probabilit|rate expectation|interest|policy rate|central bank/,'percent'],
   [/cot|commitment|net long|positioning/,'landmark'],[/retail/,'users'],[/put.?call/,'scale'],
   [/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
@@ -7600,7 +7619,7 @@ const MOTIV_JE_KLASSE={crypto:'coin',metal:'bars',energy:'barrel',index:'bullbea
 function assetMotivHtml(id){
   const cls=assetCls(id);
   let inner='';
-  if(cls==='fx'){const f=assetIconHtml(id,340);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}
+  if(cls==='fx'){const f=assetIconHtml(id,340,true);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}
   else{const k=MOTIV_JE_KLASSE[cls];if(k)inner=ASSET_MOTIVE[k];}
   return inner?'<div class="ahead-motif ahead-motif-'+(cls||'x')+'" aria-hidden="true">'+inner+'</div>':'';
 }
@@ -9142,7 +9161,7 @@ function wischBildHtml(h){
   if(curPage==='cur'){
     const c=getSym();if(c){
       const cls=assetCls(c.id);
-      if(cls==='fx'){const f=assetIconHtml(c.id,Math.round(h*.78));if(f)return'<div class="wisch-flagge">'+f+'</div>';}
+      if(cls==='fx'){const f=assetIconHtml(c.id,Math.round(h*.96),true);if(f)return'<div class="wisch-flagge">'+f+'</div>';}
       const k=MOTIV_JE_KLASSE[cls];
       if(k)return'<div class="wisch-motiv">'+ASSET_MOTIVE[k].replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB[k]+'"')+'</div>';
     }
@@ -15761,7 +15780,7 @@ function cotMetrics(s){
   const dNetPct=longPct-prevLongPct; // WoW-Aenderung des Long%-Anteils (wie Drittanbieter-Tools)
   return{L,S,longPct,shortPct,net,netPct,dL,dS,dNet:dL-dS,dNetPct,prevLongPct,prevShortPct,oi:+s.oi||0,dOi:+s.dOi||0};
 }
-function cotColor(v){return v>0?'#0B5FCC':v<0?'#C50F1A':'var(--t3)';}
+function cotColor(v){return v>0?'#0B5FCC':v<0?'#DC2430':'var(--t3)';}
 // Kennzahlen fuer EINE Zeile der Verlaufstabelle, inkl. Woche-zu-Woche-Delta
 // gegen den direkt vorherigen History-Eintrag (statt der vom Feed gelieferten
 // dLong/dShort, die nur fuer den jeweils neuesten Report gelten).
@@ -16152,7 +16171,7 @@ function sentGauge(val,lo,hi,unit,maxW,key){
   const P=Math.PI;
   // Zonen: 0–25 extreme fear, 25–45 fear, 45–55 neutral, 55–75 greed, 75–100 extreme greed
   return`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${maxW||230}px;display:block;margin:0 auto">
-    ${arc(P,P*0.75,'#0B5FCC')}${arc(P*0.75,P*0.55,'#2E7BE0')}${arc(P*0.55,P*0.45,'#55617A')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#C50F1A')}
+    ${arc(P,P*0.75,'#0B5FCC')}${arc(P*0.75,P*0.55,'#2E7BE0')}${arc(P*0.55,P*0.45,'#55617A')}${arc(P*0.45,P*0.25,'#d98a5a')}${arc(P*0.25,0,'#DC2430')}
     <g${key?` data-gauge-key="${escH(key)}"`:''} data-gauge-ang="${rotDeg}" style="transform-origin:${cx}px ${cy}px;transform:rotate(${rotDeg}deg)">
       <line x1="${cx}" y1="${cy}" x2="${(cx+R).toFixed(1)}" y2="${cy}" stroke="var(--t0)" stroke-width="2.5" stroke-linecap="round"/>
       <circle cx="${cx}" cy="${cy}" r="4.5" fill="var(--t0)"/>
@@ -17685,7 +17704,7 @@ const SENT_INFO={
      <h4>Why it is read backwards</h4>
      <p>This is the classic gauge of the <b>retail mood in U.S. equities</b>, and like every other sentiment measure in this app it is read <b>contrarian</b>. The logic is mechanical, not psychological: if almost everyone is already bullish, most of them have already bought — there is little buying power left in reserve, and a disappointment hits a market that is fully invested. If almost everyone is bearish, the people who wanted out are already out. Historically the survey's extremes cluster near turning points, not in the middle of trends.</p>
      <ul><li><b style="color:#0B5FCC">Spread ≤ −20pp</b> — capitulation, far more bears than bulls → contrarian <b>bullish</b>.</li>
-     <li><b style="color:#C50F1A">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
+     <li><b style="color:#DC2430">Spread ≥ +20pp</b> — complacency, crowd heavily optimistic → contrarian <b>bearish</b>.</li>
      <li>In between — normal range, no signal at all.</li></ul>
      <p>The thresholds are <b>symmetric</b> at ±20pp. The card states the average and the share of weeks inside the band from the data actually recorded here, so that number can never go stale.</p>
 
@@ -17706,7 +17725,7 @@ const SENT_INFO={
     `<p><b>What it is:</b> the share of small retail traders at brokers who are currently <b>long</b> (betting the price rises, blue bar) versus <b>short</b> (betting it falls, red bar) in each market. The two always add up to 100%.</p>
      <p><b>Why it matters:</b> the retail crowd is, on average, on the wrong side at turning points — they buy into falling markets and short rallies. So this is read <b>contrarian</b>: when almost everyone is long, that is a warning the move up is crowded and a drop is more likely, and the other way round.</p>
      <p><b>How to read it here:</b> the coloured tag on the left is the <b>contrarian</b> signal, not the crowd's direction:</p>
-     <ul><li><b style="color:${'#C50F1A'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
+     <ul><li><b style="color:${'#DC2430'}">Red tag</b> — crowd is heavily <b>long</b> (≥60%) → contrarian <b>bearish</b>.</li>
      <li><b style="color:${'#0B5FCC'}">Blue tag</b> — crowd is heavily <b>short</b> (≥60%) → contrarian <b>bullish</b>.</li>
      <li><b style="color:${'#55617A'}">Grey/amber tag</b> — positioning is balanced (40–60%), no clear edge.</li></ul>
      <p>The list is sorted from most-long at the top to most-short at the bottom, so the strongest crowded trades sit at the ends.</p>
@@ -17715,7 +17734,7 @@ const SENT_INFO={
     `<p><b>What it is:</b> how many <b>put</b> options (bets on falling prices / downside hedges) are traded for every <b>call</b> option (bets on rising prices). A ratio of 1.0 means equal put and call volume; 1.4 means far more puts than calls; 0.6 means far more calls.</p>
      <p><b>Why it matters:</b> it is a direct read of fear vs. greed in the options market, and like other crowd gauges it is read <b>contrarian</b> at the extremes:</p>
      <ul><li><b>High ratio</b> (lots of puts, "high put volume", above the upper line) = heavy fear/hedging → often near a <b>bottom</b> → contrarian <b style="color:${'#0B5FCC'}">bullish</b>.</li>
-     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#C50F1A'}">bearish</b>.</li>
+     <li><b>Low ratio</b> (lots of calls, "high call volume", below the lower line) = complacency/greed → often near a <b>top</b> → contrarian <b style="color:${'#DC2430'}">bearish</b>.</li>
      <li>In between = no clear signal.</li></ul>
      <p><b>How to read the chart:</b> the thick line is the <b>${'10'}-day average</b> — that is the line the zones are read against, because a single hot daily print is mostly noise. The thin pale line behind it is the raw daily ratio, kept visible so the smoothing hides nothing. Grey vertical bands mark <b>missing trading days</b>: the line is broken there instead of drawn straight through data that does not exist.</p>
      <p><b>Where the thresholds come from:</b> not from a fixed number, but from <b>this series' own history</b> — the top and bottom ${'10'}% of its last ${'252'} readings. That matters because different options markets sit at completely different levels: the market-wide ratio hovers near 0.76, SPY and QQQ run well above 1.0 (index hedging is done with puts), a thin currency-ETF chain scatters far wider. A fixed level that fits one of them is wrong for the others. Until a series has ${'60'} readings, no zones are drawn at all and nothing is called extreme — an honest "not enough basis" instead of a made-up line.</p>
@@ -17727,7 +17746,7 @@ const SENT_INFO={
      <p><b>Why thin days are dropped:</b> this number is a <i>share</i>, and a share cannot see how many contracts were behind it — 10 calls against 2 puts gives exactly the same value as 10,000 against 2,000. On a day where barely anything traded, a single order therefore looks like a market. Measured: one 80-contract block shifts the result by <b>1.33</b> on a 40-contract day (the sign flips), by 0.07 at 1,500, and by 0.004 at 30,000. So a day needs at least <b>${'5,000'}</b> contracts to be drawn at all, and an asset needs that much to appear in the filter — which is why the thin currency ETFs are not listed (FXA trades around 288 contracts a day; there it really is five people).</p>
      <p><b>Why a median and not an average:</b> the underlying option-chain data carries occasional single days that are not market events. On the gold chain (GLD), measured over its full history, individual days show a put/call ratio of 4.2, 5.0 and 5.9 against a median of 0.72 — five times more puts than calls on a liquid ETF in one session. They cluster on Thursdays (median 0.98 there against 0.63–0.75 on every other weekday) and the same pattern appears on the EUR, GBP and JPY chains, but not on SPY, QQQ or the market-wide figure. A rolling average drags such a day along for five sessions; a rolling median ignores it — and invents nothing, since every value it outputs is a real measured day from the window.</p>
      <ul><li><b style="color:${'#0B5FCC'}">Blue bar</b> — more <b>call-heavy</b> than normal for this market.</li>
-     <li><b style="color:${'#C50F1A'}">Red bar</b> — more <b>put-heavy</b> than normal for this market.</li></ul>
+     <li><b style="color:${'#DC2430'}">Red bar</b> — more <b>put-heavy</b> than normal for this market.</li></ul>
      <p><b>Why the median and not zero:</b> a zero line assumes an even call/put split is the neutral state. It isn't. Measured over the recorded history, the market-wide series never once crossed it — every bar came out blue since May. SPY and QQQ sit on the opposite side: roughly 9 days out of 10 landed red, because index hedging is done with puts. A fixed zero line was therefore colouring a structural property of each options market as if it were a daily signal.</p>
      <h4>What this is not</h4>
      <p>In the industry, <b>"net options flow" means buys minus sells</b> — trades classified against the bid/ask, weighted by premium paid and usually by delta. This card is built from end-of-day <b>contract volume</b>, where a bought put and a sold put count exactly the same. It therefore cannot tell you whether someone was <i>buying</i> downside protection or <i>selling</i> it, which are opposite positions.</p>
@@ -20292,7 +20311,7 @@ SENT_INFO.news=['Headlines (free RSS feeds, no key)',
    <p><b>Limits:</b> the archive reaches back 35 days, but not evenly: the last 3 days are kept in depth, up to 10 days back only what rates MED or higher, and beyond that only HIGH. Holding all 35 days in full would be roughly 7000 headlines and 2.5 MB that your browser reloads on every visit — the older an item, the less likely you look for the small stuff. So an older day legitimately shows fewer entries than today. A single prolific feed is also capped, so its bulk output never crowds out the rest. A headline is never scored — this is context, not a signal. Where a headline lands on a day your score flipped, that is shown as a coincidence on the asset page, not as a cause.</p>`];
 SENT_INFO.seas=['Seasonality (15-year monthly pattern)',
   `<p><b>What it is:</b> for each calendar month, the <b>average return</b> of the asset over roughly the last 15 years and the <b>hit rate</b> — the share of those years in which the month closed higher. Computed from long-run monthly price history of a liquid ETF proxy (Yahoo Finance), refreshed once a day.</p>
-   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#0B5FCC">Blue up-bars</b> = the month was positive on average; <b style="color:#C50F1A">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
+   <p><b>How to read the chart:</b> each bar is one calendar month. <b style="color:#0B5FCC">Blue up-bars</b> = the month was positive on average; <b style="color:#DC2430">red down-bars</b> = negative on average. The small percentage under each month is the hit rate; the highlighted column is the current month. Hover or touch a bar for the exact numbers.</p>
    <p><b>Why it matters — and its limits:</b> some seasonal patterns are real and persistent (commodity demand cycles, fiscal-year flows, "sell in May"-type equity effects). But a 15-year monthly average is a weak, slow signal: a 60% hit rate still means the month fell in 4 of 10 years. That is why this layer is <b>display-only</b> — it never adds to or subtracts from any score. Use it as a tailwind/headwind check on ideas you already have from fundamentals, COT and sentiment, not as a reason to trade on its own.</p>
    <p><b>Note for FX:</b> currencies use liquid CurrencyShares ETFs (e.g. FXY for JPY, FXE for EUR) that are already quoted in the currency's own strength — no USD-first inversion needed. USD uses a dollar-index ETF (UUP) as proxy. Very young tickers without enough real history (e.g. spot-Bitcoin ETFs) are left out rather than shown with too little data.</p>`];
 // ══ RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20) ═══════════════════
@@ -20711,7 +20730,7 @@ function scrollRateProbTo(idx,animate){
 // Sitzung) - bisher wurden sie nur je Waehrung EINZELN gezeigt. Nebeneinander
 // gelegt ist die DIFFERENZ zweier Pfade die sauberste Erklaerung fuer eine
 // Paarbewegung, die es gibt.
-const TERM_FARBEN={USD:'#0B5FCC',EUR:'#9b8fd4',GBP:'#C50F1A',JPY:'#55617A',
+const TERM_FARBEN={USD:'#0B5FCC',EUR:'#9b8fd4',GBP:'#DC2430',JPY:'#55617A',
   CHF:'#4fa3c7',CAD:'#c78b4f',AUD:'#5fa87a',NZD:'#a05fa8'};
 function termStructureData(){
   const out=[];

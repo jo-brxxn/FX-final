@@ -220,7 +220,9 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      carbon 2,54 / midnight 2,66 / graphite 2,58 / solar 2,18 / nord 1,69 -
      alle unter WCAG AA (4,5). Aufgefallen war es dem Hintergrund-Waechter,
      der es als Vorbestand gemeldet hat, statt es zu verstecken. */
-  --bias-bull:#0B5FCC;--bias-bear:#C50F1A;--bias-neu:#55617A;
+  /* Bearish seit 2026-09-23 #DC2430 (Nutzerbild, Balkenrot #E0242C; vorher
+     #C50F1A). Auf --bg5 3,67:1 - ueber der 3:1-Grenze fuer Bedeutungsfarben. */
+  --bias-bull:#0B5FCC;--bias-bear:#DC2430;--bias-neu:#55617A;
   /* ══ KERZENFARBEN ══════════════════════════════════════════════════
      Nutzer 2026-09-13, mit zwei Farbflaechen geschickt: steigende Kerze im
      Blau, fallende im Schwarz. BEWUSST EIGENE TOKENS und nicht
@@ -287,8 +289,8 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      als die 4,91/4,93 von vorher auf der helleren Karte. Der Abstand zu
      --t1 (#33405C) bleibt erhalten, die Hierarchie also auch. */
   --t0:#141B2E;--t1:#33405C;--t2:#505C77;--t3:#515C74;
-  --green:#0B5FCC;--red:#C50F1A;--amber:#55617A;--due:#B45309;--due-rgb:180,83,9;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
-  --green-rgb:11,95,204;--red-rgb:197,15,26;--amber-rgb:85,97,122;
+  --green:#0B5FCC;--red:#DC2430;--amber:#55617A;--due:#B45309;--due-rgb:180,83,9;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
+  --green-rgb:11,95,204;--red-rgb:220,36,48;--amber-rgb:85,97,122;
   --star-rgb:85,97,122;--blue-rgb:11,95,204;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
   /* Etwas straffere Radien (Terminal-Optik statt "weich&luxurioes"). */
   /* Cyan aus der Nutzer-Vorlage (2026-08-23). Bewusst NUR fuer Interaktion:
@@ -5311,67 +5313,13 @@ body.no-asset-anim .ai-drip{opacity:0}
 body.no-asset-anim .ai-tick{stroke-dashoffset:0}
 
 
-/* ═══ BEDIEN-ICONS: Bewegung passend zur Bedeutung ═══════════════════════
-   Animiert wird das <svg>-ELEMENT selbst, nicht eine Gruppe darin. Das ist
-   der entscheidende Unterschied zu den Flaggen: ein <svg> ist im HTML-Fluss
-   ein ersetztes Element, sein transform wird auf der GPU zusammengesetzt.
-   Ein transform auf einer <g> DARIN wird es nicht (gemessen, siehe die
-   Asset-Symbol-Notiz im CLAUDE.md) - deshalb hier kein Streifen-Trick.
-   Gemessen sind ausserdem die Stueckzahlen: max. 10 Glocken, sonst 1-2 je
-   Sorte gleichzeitig sichtbar. Dauerbewegung ist hier also bezahlbar. */
-@keyframes icBell{
-  0%,70%,100%{transform:rotate(0)}
-  74%{transform:rotate(12deg)}78%{transform:rotate(-10deg)}
-  82%{transform:rotate(7deg)}86%{transform:rotate(-5deg)}90%{transform:rotate(2deg)}
-}
-@keyframes icSpin{to{transform:rotate(360deg)}}
-@keyframes icScan{
-  0%,100%{transform:translate(0,0)}
-  30%{transform:translate(1.1px,-.9px)}60%{transform:translate(-1px,.8px)}
-}
-@keyframes icBob{0%,100%{transform:translateY(0)}50%{transform:translateY(1.6px)}}
-@keyframes icBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
-@keyframes icFlicker{
-  0%,100%{transform:scale(1);opacity:1}
-  42%{transform:scale(1.13);opacity:.82}
-  58%{transform:scale(.96);opacity:1}
-}
-@keyframes icTilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-9deg)}}
-@keyframes icSlide{0%,100%{transform:translateX(0)}50%{transform:translateX(1.8px)}}
-
-body:not(.no-ui-anim) svg.ic{transform-origin:50% 50%}
-/* Die Glocke haengt an ihrer Aufhaengung, nicht an ihrer Mitte. */
-body:not(.no-ui-anim) svg.ic-bell{transform-origin:50% 15%;animation:icBell 5.5s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-gear{animation:icSpin 11s linear infinite}
-body:not(.no-ui-anim) svg.ic-refresh{animation:icSpin 6.5s linear infinite}
-body:not(.no-ui-anim) svg.ic-globe{animation:icSpin 15s linear infinite}
-body:not(.no-ui-anim) svg.ic-search{animation:icScan 4.6s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-download{animation:icBob 3.2s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-database{animation:icBob 4.4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-clock{animation:icBreathe 3.8s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-help{animation:icBreathe 4.2s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-zap{animation:icFlicker 2.4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-flame{animation:icFlicker 3s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-star{animation:icBreathe 3.4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-pin{animation:icTilt 4.8s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-link{animation:icTilt 6s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-shuffle{animation:icSlide 3.6s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-chevronRight{animation:icSlide 2.8s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-trendUp{animation:icBob 4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-bars{animation:icBreathe 3.6s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-filter{animation:icSlide 4.4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-note{animation:icTilt 5.4s ease-in-out infinite}
-body:not(.no-ui-anim) svg.ic-folder{animation:icBob 4.8s ease-in-out infinite}
-
-/* Bei Beruehrung reagiert JEDES Icon - unabhaengig davon, ob es eine eigene
-   Dauerbewegung hat. Das ist die Belebung, die nichts kostet, solange
-   niemand hinfasst. */
-@media (hover:hover){
-  body:not(.no-ui-anim) button:hover>svg.ic,
-  body:not(.no-ui-anim) .ri:hover svg.ic,
-  body:not(.no-ui-anim) a:hover>svg.ic{transform:scale(1.18)}
-  body:not(.no-ui-anim) svg.ic{transition:transform .16s ease-out}
-}
+/* ═══ BEDIEN-ICONS: KEINE Bewegung (seit 2026-09-23) ═══════════════════
+   Hier standen Dauerbewegungen fuer die Bedien-Symbole (Glocke schwingt,
+   Zahnrad/Aktualisieren/Globus drehen, Lupe sucht, Stern atmet ...) und ein
+   Vergroessern bei Hover. Auf Nutzer-Wunsch komplett entfernt: "bei den
+   Icons manche hatte ich ja animieren lassen entfern das bitte komplett die
+   Animationen" - per Rueckfrage: nur die Bedien-Symbole; Asset-Symbole
+   (Oeltropfen, Metallglanz, Index-Linie) und das Wehen der Flaggen bleiben. */
 
 /* ═══ DATEN: Einmal-Animationen ══════════════════════════════════════════
    ⚠ Sie haengen an body.anim-enter, das showTab() fuer kurze Zeit setzt.
@@ -5532,7 +5480,7 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 /* Die Flagge laeuft ueber die ganze Motivflaeche und blendet nach links aus
    (Maske am Container) - als harter Block rechts sah sie aus wie ein
    aufgeklebtes Bild, gemessen im ersten Wurf. */
-.ahead-motif-flag{opacity:.17;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden}
+.ahead-motif-flag{opacity:.95;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden}
 .atitle{font-weight:800;letter-spacing:-.6px}
 .atitle .score-badge{font-size:var(--fs-xl);border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
 .afull{font:500 var(--fs-md)/1.3 var(--ff-text);color:var(--t2);margin-top:4px}
@@ -5610,6 +5558,19 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .rub-hdr .k-ic{margin-right:4px}
 .dw-t .k-ic{margin-right:2px}
 .st .ic{vertical-align:-3px;margin-right:3px}
+/* Reihen-Ueberschriften (MACRO, POSITIONING) enger - Nutzerbild 2026-09-23.
+   Gemessen vorher: 16 px darueber, 12 px darunter (Rasterabstand 14 px plus
+   eigener Rand). Jetzt 8 / 6 px. */
+.ab-cards>.ab-rtitel{margin:-6px 0 -8px}
+/* Headlines-Karte klebte mit 0 px am Asset-Raster darueber: .ab-board hatte
+   keinen Abstand nach unten. */
+.dp>.ab-board{margin-bottom:var(--gap-block)}
+/* Gezeichnete Flagge: Rand in der Motiv-Strichfarbe, kein Schatten. Groesse im
+   Wisch: 96 % der Inhaltshoehe (Nutzer 2026-09-23: "die Flaggen sind zu
+   klein" - vorher 78 %). */
+.ai-gezeichnet .ai-rim{stroke:#9DB8DE;stroke-width:1.5px}
+.ai-gezeichnet .ai-flag{filter:none}
+.ai-gezeichnet .ai-sheen{opacity:.5}
 /* ══ ENDE BILD-DESIGN ══ */
 </style>
 </head>
@@ -5731,11 +5692,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-541 - Flaggen als ein Stueck mit weicher Welle (keine Luecken, fluessiger), Glanz auf die Flagge begrenzt, weisse Flaggen mit Rand und Toenung; Wisch-Uebergang bei jedem Seitenwechsel (Flagge/Motiv/Szene); Stapel verschwinden mit dem Wisch; Bulle und Baer als Koepfe; History-Karte fest; Symbole fuer alle Karten."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-542 - Symbole aus dem Nutzerbild (Inflation Balken, Growth Balken mit Pfeil), Bearish-Rot #DC2430, engere Reihen-Ueberschriften, Abstand ueber Headlines, Flaggen im Wisch und Kopf gezeichnet und groesser, Bedien-Symbole ohne Animation, echtes Zahnrad."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-541</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-542</span>
     </span>
   </div>
   <div class="hdr-r">

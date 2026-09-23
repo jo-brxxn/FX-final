@@ -8,7 +8,7 @@
 // (Nutzer-Wunsch 2026-08-09). Eine dunklere Zweitfassung war kurz probiert
 // und auf Nutzer-Wunsch wieder verworfen - falls sie je zurueckkommen soll:
 // bull #1d4ed8, bear #b23a3a, neu #475569.
-export const BC={bull:'#0B5FCC',bear:'#C50F1A',neu:'#55617A'};
+export const BC={bull:'#0B5FCC',bear:'#DC2430',neu:'#55617A'};
 // ⚠ BC ist fuer HELLE Flaechen gebaut. Auf dem Chrome-Grund der
 // Navigationsleiste (#2A3757) kommen die drei Werte auf 1,98 / 1,94 / 1,89 -
 // praktisch unlesbar (gemessen 2026-08-23). Die Asset-Liste dort faerbt

@@ -431,7 +431,7 @@ dunklem Grund.
 
 ### Text und Semantik
 `--t0` `#141B2E` · `--t1` `#33405C` · `--t2` `#5A6885` · `--t3` `#57637B`
-Bullish `#25619D` · Bearish `#B33633` · Neutral `#55617A` ·
+Bullish `#25619D` · Bearish `#B33633` (⚠ überholt: seit 2026-09-23 `#DC2430`) · Neutral `#55617A` ·
 Live `#D93A34` · Success `#137036` · Akzent `--accent` `#2E8FB0`.
 
 ### Kontrast wird nachgerechnet, nicht geschätzt

@@ -16889,3 +16889,30 @@ wartet über eine klickfangende Ebene hinweg → roher Koordinatenklick.
 Nachtrag am selben Tag: *„Animation mindestens doppelt so lang"* → Wisch
 `WISCH_MS` 500 → **1000 ms**. `check/uebergang.js` liest die Dauer jetzt aus der
 App statt sie fest anzunehmen.
+
+---
+
+## 2026-09-23 (mittags) — Nachschliff nach Nutzerbild (VERSION-CHECK-542)
+
+Nutzer mit zwei Bildern (App-Stand + Entwurf mit Einkreisungen). Rückfragen:
+Symbole nur für die Karten; nur Bedien-Symbole still (Asset-Symbole und
+Flaggen bewegen sich weiter); Flaggen im Wisch UND im Asset-Kopf gezeichnet.
+Kalender-Einkreisung vom Nutzer selbst zurückgenommen („das ist ja schon da").
+
+- **Symbole:** Inflation → aufsteigende Balken (`barsUp`), Economic Growth →
+  Balken mit Pfeil (`chartUp`) — wie im Entwurf; Labour/COT/Retail/Seasonality
+  waren schon gleich.
+- **Bearish-Rot:** `#C50F1A` → **`#DC2430`** (Balken im Entwurf gemessen
+  `#E0242C`; `#DC2430` hält als Schrift auf der Karte 4,63:1, auf `--bg5`
+  3,67:1 ≥ 3:1). Token, `BC.bear`, `bRC`, `cotColor`, Messuhr, Erklärtexte,
+  `check/historie.js`. Globus-Flugzeuglichter (Deko) bleiben.
+- **Reihen-Überschriften** (MACRO, POSITIONING): gemessen 16 px darüber /
+  12 px darunter → 8 / 6 px.
+- **Headlines-Karte klebte** mit gemessen 0 px am Asset-Raster (`.ab-board`
+  ohne Abstand nach unten) → `--gap-block`.
+- **Flaggen gezeichnet:** Filter `#aiDuo` (Graustufe → Motiv-Palette) als
+  SVG-Attribut (CSS-`url()`-Filter auf HTML-Elementen sind in iOS Safari
+  unzuverlässig). Wisch-Flagge 78 % → 96 % der Höhe („zu klein").
+- **Bedien-Symbole ohne Animation:** der ganze Block (Glocke, Zahnrad,
+  Aktualisieren, Globus, Lupe, Stern … und die Hover-Vergrößerung) entfernt.
+- **Zahnrad:** `ICONS.gear` waren drei Schieberegler → echtes Zahnrad.

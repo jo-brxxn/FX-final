@@ -97,7 +97,7 @@ const gruen = (m) => console.log('  ✓ ' + m);
     // Zwei Farben, und beide muessen Bias-Farben sein (docs/design-system.md,
     // Kerzen-Regel 3: ein Score ueber/unter Null ist eine Aussage ueber das
     // ASSET, also Bias-Palette - nicht --cndl-up/--cndl-dn).
-    const BIAS = ['#0B5FCC', '#C50F1A'];
+    const BIAS = ['#0B5FCC', '#DC2430'];
     if (linie.farben.length !== 2 || !BIAS.every(f => linie.farben.includes(f)))
       rot(`Die Linie fuehrt ${linie.farben.length} Farbe(n) (${linie.farben.join(', ')}) — erwartet genau die zwei Bias-Farben ${BIAS.join(' / ')}`);
     else gruen('Zwei Bias-Farben: blau ueber Null, rot darunter');

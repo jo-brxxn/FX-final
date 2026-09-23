@@ -15,7 +15,7 @@ import {IND_DATA_FEED,PRICE_DATA_FEED,priceSeriesFor} from './data-feeds.js';
 import {DATA_LIVE_OK,IND_AUTO_RUBS,IND_EVENT_MATCHERS,calEvts,cloudAutoSync,escH,evtMatchesSym,getSym,macroCcyFor,markLsUpdatedSeen,markPrefEdit,openM,parseNumLike,parsePolicyRate,periodLabel,rateInfo,recomputeAuto,rerender,save,scoreHist,selId,setSuppressBiasFlipAlerts,stripPeriodSuffix,syms,todayStr} from './main.js';
 
 function bCol(b){return(b==='bull'||b==='sbull')?'var(--green)':(b==='bear'||b==='sbear')?'var(--red)':'var(--amber)';}
-function bRC(b){return(b==='bull'||b==='sbull')?'#0B5FCC20':(b==='bear'||b==='sbear')?'#C50F1A20':'#55617A20';}
+function bRC(b){return(b==='bull'||b==='sbull')?'#0B5FCC20':(b==='bear'||b==='sbear')?'#DC243020':'#55617A20';}
 function bClass(b){return b==='sbull'?'bb2':b==='bull'?'bb':b==='sbear'?'br2':b==='bear'?'br':'bn';}
 function glowClass(b){return b==='sbull'?'glow-sbull':b==='bull'?'glow-bull':b==='sbear'?'glow-sbear':b==='bear'?'glow-bear':'glow-neu';}
 // ── SCORE: Summe der Indikator-Bias (Bullish +1, Neutral 0, Bearish -1) ──
