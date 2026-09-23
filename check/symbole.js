@@ -25,14 +25,22 @@
 //      oben und unten abgeschnitten": gemessen 510x340 px in 404x113 px -
 //      geprueft wird, dass die Flagge GANZ in der Kopfkarte liegt, und dass
 //      der Rand nicht mit der Flagge waechst (vector-effect am Defs-Pfad).
+//   E) Nutzer 2026-09-23 (iPad): Kopf-Band "komplett weg". In WebKit
+//      gemessen: der Filter am Band nahm seine Flaeche aus der Box der
+//      gestreckten Randspalte - 9747 statt 144 Einheiten, bei Pixeldichte 2
+//      ~91 000 px breit, WebKit zeichnet dann nichts. Chromium zeichnet es
+//      trotzdem, deshalb wird die Bauform geprueft: der Filter am Band hat
+//      eine FESTE Flaeche (userSpaceOnUse) innerhalb der Band-viewBox.
 //   node check/symbole.js [--gegenprobe]          (Glanz ohne Clip)
 //   node check/symbole.js [--gegenprobe-sterne]   (Punkte + Riesenflagge)
+//   node check/symbole.js [--gegenprobe-band]     (Band mit Box-Filter #aiDuo)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_STERNE = process.argv.includes('--gegenprobe-sterne');
+const GP_BAND = process.argv.includes('--gegenprobe-band');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -138,12 +146,21 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     r.out.forEach(([t, n]) => { koepfe++; if (n !== 1) fail('KARTENSYMBOL', `${s}: "${t}" hat ${n} Symbole (verlangt genau 1)`); });
     r.emoji.forEach(e => fail('EMOJI IM REITER', `${s}: "${e}"`));
     if (s === 'sym:USD') {
-      const k = await p.evaluate(gp => { const a = document.querySelector('.ahead'), f = document.querySelector('.ahead-motif-band');
+      const k = await p.evaluate(([gp, gpb]) => { const a = document.querySelector('.ahead'), f = document.querySelector('.ahead-motif-band');
         if (!a || !f) return null; if (gp) { f.style.height = '340px'; f.style.width = '510px'; }
+        if (gpb) f.querySelectorAll('[filter]').forEach(e => e.setAttribute('filter', 'url(#aiDuo)'));
+        // E) Filterflaeche: jeder Filter im Band braucht feste Einheiten und
+        //    darf nicht ueber die viewBox des Bandes hinausreichen.
+        const vb = f.viewBox.baseVal, filt = [];
+        f.querySelectorAll('[filter]').forEach(e => { const m = /url\(#([^)]+)\)/.exec(e.getAttribute('filter')); const d = m && document.getElementById(m[1]);
+          const x = d && +d.getAttribute('x'), w = d && +d.getAttribute('width'), y = d && +d.getAttribute('y'), h = d && +d.getAttribute('height');
+          if (!d || d.getAttribute('filterUnits') !== 'userSpaceOnUse' || x < vb.x || y < vb.y || x + w > vb.x + vb.width || y + h > vb.y + vb.height)
+            filt.push(`${m ? m[1] : '?'} (${d ? (d.getAttribute('filterUnits') || 'objectBoundingBox') : 'fehlt'})`); });
         const ar = a.getBoundingClientRect(), fr = f.getBoundingClientRect();
         // statisch: keine Welle, kein Glanz, keine SMIL-/CSS-Animation im Band
         const bewegt = !!f.querySelector('[clip-path*="aiWave"], .ai-sheen, animate, animateTransform') || f.getAnimations({ subtree: true }).length > 0;
-        return { bewegt, ar: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round), fr: [fr.left, fr.top, fr.right, fr.bottom].map(Math.round) }; }, GP_STERNE);
+        return { bewegt, filt, ar: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round), fr: [fr.left, fr.top, fr.right, fr.bottom].map(Math.round) }; }, [GP_STERNE, GP_BAND]);
+      if (k && k.filt.length) fail('KOPF-BAND FILTERFLAECHE', `Filter ${k.filt.join(', ')} am Kopf-Band ohne feste Flaeche in der Band-viewBox - WebKit rechnet die Box der gestreckten Randspalte ungeschnitten (9747 statt 144 Einheiten) und zeichnet das Band auf dem iPad gar nicht (2026-09-23)`);
       if (k && k.bewegt) fail('KOPF-FLAGGE BEWEGT SICH', 'das Band oben rechts traegt Welle/Glanz/Animation - verlangt ist eine statische Zeichnung (Nutzer 2026-09-23)');
       if (!k) fail('KOPF-FLAGGE FEHLT', 'kein .ahead-motif-band auf der USD-Seite');
       else if (k.fr[0] < k.ar[0] || k.fr[1] < k.ar[1] || k.fr[2] > k.ar[2] || k.fr[3] > k.ar[3])
@@ -157,10 +174,14 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     const ok = ['PUNKTE STATT STERNE', 'KOPF-FLAGGE ABGESCHNITTEN'].every(t => F.some(x => x.startsWith(t)));
     console.log(ok ? 'symbole --gegenprobe-sterne: ok (Punkte und ueberstehende Kopf-Flagge werden gemeldet)' : 'symbole --gegenprobe-sterne: FEHLER - nicht gemeldet: ' + F.join(' | ')); process.exit(ok ? 0 : 1);
   }
+  if (GP_BAND) {
+    const ok = F.some(x => x.startsWith('KOPF-BAND FILTERFLAECHE'));
+    console.log(ok ? 'symbole --gegenprobe-band: ok (Box-Filter am Kopf-Band wird gemeldet)' : 'symbole --gegenprobe-band: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
+  }
   if (GEGENPROBE) {
     const ok = F.some(x => x.startsWith('GLANZ AUSSERHALB'));
     console.log(ok ? 'symbole --gegenprobe: ok (Glanz ohne Clip wird gemeldet)' : 'symbole --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
   }
   if (F.length) { console.log(`symbole: ${F.length} Befund(e)\n  ` + F.slice(0, 40).join('\n  ')); process.exit(1); }
-  console.log(`symbole: ok (${a.length} Flaggen je ein Stueck mit Rand und begrenztem Glanz, Sterne statt Punkte, Kopf-Flagge ganz in der Karte, ${koepfe} Kartenkoepfe mit genau einem Symbol)`);
+  console.log(`symbole: ok (${a.length} Flaggen je ein Stueck mit Rand und begrenztem Glanz, Sterne statt Punkte, Kopf-Flagge ganz in der Karte mit fester Filterflaeche, ${koepfe} Kartenkoepfe mit genau einem Symbol)`);
 })();

@@ -17091,3 +17091,50 @@ Welle/Glanz/Animation; `check/uebergang.js` — kein `<animate` im
 Wisch-Flaggenbild, Seiten-/Karten-Einblendung und `WISCH_MS` = 1 s.
 Gegenproben: `--enter-dur:.3s` → `EINBLENDUNG NICHT 1 S`; Band mit
 `<animate>` → `KOPF-FLAGGE BEWEGT SICH`.
+
+## 2026-09-23 — Bugfix: Kopf-Band der Flagge auf dem iPad unsichtbar (VERSION-CHECK-547)
+
+Nutzer (zwei iPad-Screenshots, USD mitten im Wisch, AUD-Seite): *„Übergang in
+fx geht immer noch nicht und das Flaggenbild ist komplett weg."* Rückfrage:
+gemeint ist das **Band oben rechts im Kopf**; beim Übergang **fehlt die Flagge
+und der Wisch hängt**.
+
+**Reproduktion — diesmal in WebKit.** Playwright-WebKit ist gesperrt
+(cdn.playwright.dev 403), aber WebKitGTK 2.52 kommt über apt
+(`gir1.2-webkit2-4.1 python3-gi python3-gi-cairo xvfb`, Steuerung per
+`python3.12` + GTK-Fenster unter Xvfb, `GDK_SCALE=2` für Pixeldichte 2).
+Messung auf AUD, 1000×695:
+- Pixeldichte 1: Band sichtbar.
+- **Pixeldichte 2 (wie iPad): Band fehlt komplett** — genau das Nutzerbild.
+
+**Ursache — gemessen:** `getBBox()` der gefilterten Gruppe im Band =
+**9747 × 24** Einheiten statt 144 × 24. Die Randspalte (0,4 Einheiten per
+verschachteltem `<svg preserveAspectRatio="none">` auf 108 gestreckt, Faktor
+270) geht in WebKit UNGESCHNITTEN in die Box ein: 36 × 270 = 9720. Der Filter
+`#aiDuo` nahm seine Fläche aus dieser Box (objectBoundingBox) → 9747 × 4,67 px
+× 2 ≈ **91 000 × 224 Gerätepixel**. Oberhalb der Filter-Grenze zeichnet WebKit
+das Element gar nicht; bei Pixeldichte 1 (45 000 × 112) lag es noch darunter.
+Chromium schneidet die Box am Viewport und zeigt den Fehler nie.
+
+**Fix an der Wurzel:** eigener Filter `#aiDuoBand` mit FESTER Fläche
+(`filterUnits="userSpaceOnUse"`, 0 0 144 24 — die Band-viewBox), dieselben
+Duoton-Stufen (`AI_DUO_STUFEN`, gemeinsam mit `#aiDuo`). Nachgemessen in
+WebKit bei Pixeldichte 2: alle 8 Bänder sichtbar (USD, EUR, GBP, CHF, JPY,
+CAD, AUD, NZD; 93–98 % Flaggenpixel im rechten Kopfbereich).
+
+**Fehlerklasse:** alle SVG-Filter (`<filter>` gibt es nur als `#aiDuo`) und
+alle `preserveAspectRatio="none"`-Streckungen gesucht. Filter + Streckung
+zusammen gibt es nur im Band. Die Wisch-Flagge nutzt `#aiDuo` auf einem
+`<use>`, gemessen 36 × 24 für alle 8 Flaggen — unauffällig.
+
+**Wächter:** `check/symbole.js` (E) — jeder Filter am Kopf-Band braucht
+`userSpaceOnUse` und eine Fläche innerhalb der Band-viewBox (Bauform, weil
+Chromium den Fehler nicht zeigt). Gegenprobe `--gegenprobe-band` (Band mit
+`#aiDuo`) → `KOPF-BAND FILTERFLAECHE`.
+
+**Wisch (Flagge fehlt, hängt) — NICHT behoben, offen benannt:** in WebKitGTK
+bei Pixeldichte 2 ist die Wisch-Flagge (das `<img>` aus 545) SICHTBAR
+(Standbild bei 500 ms, `complete`, `naturalWidth` 924). Der Fehler auf dem iPad
+ist damit hier nicht reproduziert; WebKitGTK rendert in Software (einzelne
+Bilder bis 5 s), Messungen zum „Hängen" sind hier deshalb wertlos. Kein
+dritter Blind-Fix — nächster Schritt ist eine Messung auf dem Gerät.

@@ -137,6 +137,12 @@ function assetGlyphHtml(id, size) {
 }
 
 // ── Definitions-Block: wird EINMAL in den Body geschrieben ──────────────────
+// Duoton-Stufen der gezeichneten Flagge (Filter #aiDuo und #aiDuoBand).
+const AI_DUO_STUFEN = '<feColorMatrix type="saturate" values="0"/><feComponentTransfer>'
+  + '<feFuncR type="table" tableValues="0.47 0.86"/><feFuncG type="table" tableValues="0.59 0.91"/>'
+  + '<feFuncB type="table" tableValues="0.78 0.965"/></feComponentTransfer>';
+// Breite des Kopf-Bandes in viewBox-Einheiten (flaggenBandHtml).
+const BAND_VB_W = 144;
 function aiDefsSvg() {
   const syms = [];
   // ⚠ Weiss in Flaggen leicht getoent (Nutzer 2026-09-23: bei JPY war "die
@@ -164,14 +170,14 @@ function aiDefsSvg() {
            Asset-Kopf "ohne Farben also auch gezeichnet"): Graustufe, dann
            dunkel -> MOTIV_DK, hell -> MOTIV_F1 - dieselbe Palette wie Barren,
            Muenze, Bulle & Baer. Muster bleiben erkennbar, Farben weg. -->
-      <filter id="aiDuo" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
-        <feColorMatrix type="saturate" values="0"/>
-        <feComponentTransfer>
-          <feFuncR type="table" tableValues="0.47 0.86"/>
-          <feFuncG type="table" tableValues="0.59 0.91"/>
-          <feFuncB type="table" tableValues="0.78 0.965"/>
-        </feComponentTransfer>
-      </filter>
+      <filter id="aiDuo" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">${AI_DUO_STUFEN}</filter>
+      <!-- Dasselbe fuer das Kopf-Band (flaggenBandHtml) mit FESTER Flaeche in
+           Band-Einheiten. ⚠ Nicht objectBoundingBox: WebKit rechnet die
+           Box der um 270x gestreckten Randspalte ungeschnitten (gemessen
+           9747 statt 144 Einheiten) - bei Pixeldichte 2 wird die Filter-
+           flaeche ~91 000 px breit und WebKit zeichnet das Band GAR NICHT
+           (iPad, 2026-09-23). -->
+      <filter id="aiDuoBand" filterUnits="userSpaceOnUse" x="0" y="0" width="${BAND_VB_W}" height="24" color-interpolation-filters="sRGB">${AI_DUO_STUFEN}</filter>
       <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#fff" stop-opacity="0"/>
         <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
@@ -7638,9 +7644,10 @@ const BAND_SPALTE={USD:35.5};
 function flaggenBandHtml(id){
   if(AI_FLAG_IDS.indexOf(id)===-1)return'';
   aiEnsureDefs();
-  const L=108,sx=BAND_SPALTE[id]!=null?BAND_SPALTE[id]:.1;
-  return'<svg class="ahead-motif-band" viewBox="0 0 144 24" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">'
-    +'<g filter="url(#aiDuo)">'
+  const L=BAND_VB_W-36,sx=BAND_SPALTE[id]!=null?BAND_SPALTE[id]:.1;
+  // Filter #aiDuoBand (feste Flaeche), NICHT #aiDuo - siehe aiDefsSvg.
+  return`<svg class="ahead-motif-band" viewBox="0 0 ${BAND_VB_W} 24" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">`
+    +'<g filter="url(#aiDuoBand)">'
     +`<svg x="0" y="0" width="${L+.3}" height="24" viewBox="${sx} 0 .4 24" preserveAspectRatio="none"><use href="#ai-${id}" width="36" height="24"/></svg>`
     +`<use href="#ai-${id}" x="${L}" y="0" width="36" height="24"/></g></svg>`;
 }
