@@ -17387,3 +17387,33 @@ Bedienelement der Asset-Seite (USD, GOLD) und von Matrix/Seasonality/Carry/
 Calendar, und zeichnet jede Seite ohne Klick neu; der Stand darf sich nicht
 verschieben. Gegenprobe `--gegenprobe` (Zurücksetzen blockiert) rot; gegen
 den Stand 551 rot (70 Befunde).
+
+## 2026-09-23 — Währungswechsel: sofortige Rückmeldung beim Tippen (VERSION-CHECK-553)
+
+Offener Rest aus dem Ziel *„ich will, dass der Übergang flüssig geht …
+es hängt"*: nach dem Tippen stand ALLES still, bis die neue Währung
+aufgebaut war — auch das Asset-Panel, weil Schließen und Markierung im
+selben Durchlauf lagen wie der Aufbau.
+
+**Fix (`sbClick`):** Währung → Währung auf der Asset-Seite, nur mit Wisch:
+Panel zu und getippte Währung markiert, ein Bild abgeben
+(`requestAnimationFrame` → `setTimeout 0`), DANN `selSym`. Die
+Panel-Animation ist transform/opacity und läuft während des Aufbaus
+weiter. Mehrere schnelle Taps: der letzte gewinnt (`_sbWahl`); ohne
+Animationen bleibt alles synchron wie vorher (alle anderen Wächter laufen
+ohne Wisch und sind unberührt).
+
+**Gemessen** (Chromium, Pixeldichte 2, Asset-Panel AUD → USD):
+
+| | erstes Bild mit Rückmeldung | erste Bewegung des Wischs |
+|---|---|---|
+| CPU ×1, 552 | 129 ms | 228 ms |
+| CPU ×1, 553 | 8 ms | 241 ms |
+| CPU ×4, 552 (4 Läufe) | 668–700 ms | 853–896 ms |
+| CPU ×4, 553 (4 Läufe) | 12–22 ms | 817–896 ms |
+
+Der Wisch startet also nicht später; die sichtbare Reaktion kommt sofort.
+
+**Wächter:** `check/uebergang.js` — im ersten Bild nach dem Tippen Panel
+zu, Markierung da, Aufbau noch nicht gelaufen; gegen den Stand 552 rot
+(„Aufbau LIEF SCHON").

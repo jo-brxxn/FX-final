@@ -25,6 +25,8 @@
 //   node check/uebergang.js [--gegenprobe-scroll] (alte .dp zurueck in #detail)
 //   node check/uebergang.js [--gegenprobe-start]  (Uhr laeuft ab dem Anlegen, wie bis 549)
 //   node check/uebergang.js [--gegenprobe-tempo]  (jede Datumsformatierung wieder ueber toLocaleDateString)
+// Seit 552: sofortige Rueckmeldung beim Waehrungs-Tap - im ersten Bild ist
+// das Panel zu und die Waehrung markiert, der Aufbau folgt danach.
 // Aufbauzeit beim Waehrungswechsel (2026-09-23, "es haengt"): gemessen
 // 809 toLocaleDateString-Aufrufe je Wechsel (jeder baut intern einen neuen
 // Intl.DateTimeFormat) - jetzt ein zwischengespeicherter Formatierer je
@@ -79,6 +81,11 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   const w1 = await p.evaluate(async ([gp, gpf, gph, gps]) => {
     const altDp = document.querySelector('#detail>.dp');
     document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click();
+    // Rueckmeldung (seit 552): im ersten Bild nach dem Tippen ist das Panel
+    // schon zu und die Waehrung markiert - der Aufbau folgt ein Bild spaeter.
+    await new Promise(r => requestAnimationFrame(r));
+    const sofort = { panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), markiert: !!document.querySelector('#sidebar .np-asset.on[data-sym="GBP"]'), aufbauNoch: (getSym() || {}).id !== 'GBP' };
+    for (let i = 0; i < 60 && (getSym() || {}).id !== 'GBP'; i++) await new Promise(r => setTimeout(r, 16));
     await new Promise(r => requestAnimationFrame(r));      // erstes Bild nach dem Umbau
     if (gpf) { const im = document.querySelector('.wisch .wisch-flagge img'); if (im) im.outerHTML = assetIconHtml('GBP', 200, true); }
     const fim = document.querySelector('.wisch .wisch-flagge img');
@@ -97,7 +104,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     // Gegenprobe: das Verhalten der 1. Fassung nachstellen (Seite ausserhalb
     // ihrer Vorfahren, ohne ids)
     if (gp && alt) { alt.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); document.body.appendChild(alt); }
-    const res = { flagge, da: !!o, alt: !!alt, panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id };
+    const res = { sofort, flagge, da: !!o, alt: !!alt, panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id };
     if (!o || !alt) return res;
     const area = document.getElementById('pageArea').getBoundingClientRect(), r = alt.getBoundingClientRect(), cs = getComputedStyle(alt);
     const t = alt.querySelector('.atitle');
@@ -111,6 +118,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       neuVorn: document.querySelector('#detail>.dp') !== altDp,
       hoehe: [Math.round(r.height), Math.round(area.height)] });
   }, [GP_KOPIE, GP_FLAGGE, GP_HOEHE, GP_SCROLL]);
+  if (w1.sofort && !(w1.sofort.panelZu && w1.sofort.markiert && w1.sofort.aufbauNoch)) fail('KEINE SOFORTIGE RUECKMELDUNG', `im ersten Bild nach dem Tippen: Panel ${w1.sofort.panelZu ? 'zu' : 'OFFEN'}, Markierung ${w1.sofort.markiert ? 'da' : 'FEHLT'}, Aufbau ${w1.sofort.aufbauNoch ? 'folgt' : 'LIEF SCHON'} - bis 551 stand bis zum Ende des Aufbaus alles still ("es haengt", iPad 2026-09-23)`);
   if (!w1.da) fail('KEIN WISCH', 'Asset-Wechsel USD -> GBP startet keinen Wisch-Uebergang');
   if (w1.da) {
     const fl = w1.flagge;

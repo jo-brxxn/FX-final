@@ -6831,8 +6831,28 @@ function sbPressStart(id){
   },450);
 }
 function sbPressEnd(){clearTimeout(_sbPressTimer);_sbPressTimer=null;}
+let _sbWahl=0;                                  // zaehlt Waehrungs-Taps (letzter gewinnt)
 function sbClick(id){
   if(_sbSuppressClick){_sbSuppressClick=false;return;}
+  // ⚠ SOFORT SICHTBARE RUECKMELDUNG (Nutzer 2026-09-23, iPad: "ich will dass
+  // der Uebergang fluessig geht ... es haengt"). Waehrung -> Waehrung: der
+  // Aufbau der neuen Seite blockiert (gemessen ~85 ms am Rechner, ~400 ms
+  // bei 4x gedrosselter CPU) - lag Panel-Schliessen und Markierung im
+  // selben Durchlauf, stand bis dahin ALLES still. Jetzt: Panel zu und die
+  // getippte Waehrung markiert, ein Bild abgeben (die Panel-Animation ist
+  // transform/opacity und laeuft waehrend des Aufbaus weiter), DANN aufbauen.
+  // Nur mit Wisch - ohne Animationen bleibt es synchron wie vorher.
+  if(curPage==='cur'&&id!==selId&&!sbEditMode&&wischErlaubt()){
+    const t=++_sbWahl;
+    if(expandedStack===ASSET_STACK_ID){expandedStack=null;syncNavExpanded();}
+    document.querySelectorAll('#sidebar .ab').forEach(b=>b.classList.toggle('on',b.dataset.sym===id));
+    requestAnimationFrame(()=>setTimeout(()=>{
+      if(t!==_sbWahl||curPage!=='cur')return;   // inzwischen anders gewaehlt/weg
+      selSym(id);
+    },0));
+    return;
+  }
+  _sbWahl++;
   // Auch im Bearbeitungsmodus navigiert ein Klick ganz normal - der Modus
   // bleibt dabei an, damit man mehrere Eintraege nacheinander sortieren kann.
   if(curPage!=='cur')showTab('cur',null,'fx');
