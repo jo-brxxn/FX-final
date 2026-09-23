@@ -137,10 +137,28 @@ function assetGlyphHtml(id, size) {
 }
 
 // ── Definitions-Block: wird EINMAL in den Body geschrieben ──────────────────
-// Duoton-Stufen der gezeichneten Flagge (Filter #aiDuo und #aiDuoBand).
-const AI_DUO_STUFEN = '<feColorMatrix type="saturate" values="0"/><feComponentTransfer>'
-  + '<feFuncR type="table" tableValues="0.47 0.86"/><feFuncG type="table" tableValues="0.59 0.91"/>'
-  + '<feFuncB type="table" tableValues="0.78 0.965"/></feComponentTransfer>';
+// Gezeichnete Flagge (Nutzer 2026-09-23: Flaggen im Wisch und im Asset-Kopf
+// "ohne Farben also auch gezeichnet"): Graustufe, dann dunkel -> MOTIV_DK,
+// hell -> MOTIV_F1 - dieselbe Palette wie Barren, Muenze, Bulle & Baer.
+// ⚠ OHNE SVG-Filter, die Farben werden vorab umgerechnet (2026-09-23): bis
+// VERSION-CHECK-549 machte das ein Filter (#aiDuo) pro Pixel beim Zeichnen.
+// Auf dem iPad war die Flagge der EINZIGE Teil des Wischs mit Filtern, und
+// nur die FX-Wechsel liefen dort nicht; im Kopf-Band liess derselbe Filter
+// das Band ganz verschwinden (Filterflaeche 91 000 px, VERSION-CHECK-547).
+// Die Rechnung ist die des Filters: saturate(0) in sRGB, dann je Kanal eine
+// lineare Tabelle [dunkel, hell]. Die Flaggen sind flaechig - pro Farbe
+// gerechnet ergibt dasselbe Bild wie pro Pixel.
+const AI_DUO_TAB = [[0.47, 0.86], [0.59, 0.91], [0.78, 0.965]];
+function aiDuoFarbe(hex) {
+  let h = hex.slice(1); if (h.length === 3) h = h.replace(/./g, c => c + c);
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  const l = Math.min(1, 0.213 * r + 0.715 * g + 0.072 * b);
+  return '#' + AI_DUO_TAB.map(([a, z]) => Math.round((a + l * (z - a)) * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+// Zeichnung einer Flagge in Motiv-Farben: jede Farbangabe umgerechnet, der
+// Union Jack auf seine gezeichnete Fassung umgelenkt.
+const aiGezeichnet = t => t.replace(/(fill|stroke|stop-color)="(#[0-9a-f]{3}(?:[0-9a-f]{3})?)"/gi, (m, k, c) => `${k}="${aiDuoFarbe(c)}"`)
+  .replace(/href="#aiUJ"/g, 'href="#aiUJg"');
 // Breite des Kopf-Bandes in viewBox-Einheiten (flaggenBandHtml).
 const BAND_VB_W = 144;
 function aiDefsSvg() {
@@ -150,6 +168,8 @@ function aiDefsSvg() {
   // Zusammen mit dem feinen Rand (.ai-rim) - Nutzerwahl "Kombi aus beidem".
   const aiTint = t => t.replace(/fill="#fff(fff)?"/gi, `fill="${AI_FLAG_WHITE}"`);
   for (const id in AI_FLAGS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${aiTint(AI_FLAGS[id])}</symbol>`);
+  // Gezeichnete Fassung je Flagge (#ai-USD-g ...) fuer Wisch und Kopf-Band.
+  for (const id in AI_FLAGS) syms.push(`<symbol id="ai-${id}-g" viewBox="0 0 36 24">${aiGezeichnet(aiTint(AI_FLAGS[id]))}</symbol>`);
   for (const id in AI_SYMBOLS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${AI_SYMBOLS[id]}</symbol>`);
   for (const id in AI_INDEX_ACCENT) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${aiIndex(AI_INDEX_ACCENT[id])}</symbol>`);
   return `<svg id="aiDefs" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
@@ -166,18 +186,6 @@ function aiDefsSvg() {
         <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="${AI_WELLE_L} 0" dur="${AI_WELLE_T}s" repeatCount="indefinite"/>
       </linearGradient>
       <path id="aiRim" d="${aiWellenPfad(0)}" fill="none" vector-effect="non-scaling-stroke">${aiWellenAnim()}</path>
-      <!-- Gezeichnete Flagge (Nutzer 2026-09-23: Flaggen im Wisch und im
-           Asset-Kopf "ohne Farben also auch gezeichnet"): Graustufe, dann
-           dunkel -> MOTIV_DK, hell -> MOTIV_F1 - dieselbe Palette wie Barren,
-           Muenze, Bulle & Baer. Muster bleiben erkennbar, Farben weg. -->
-      <filter id="aiDuo" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">${AI_DUO_STUFEN}</filter>
-      <!-- Dasselbe fuer das Kopf-Band (flaggenBandHtml) mit FESTER Flaeche in
-           Band-Einheiten. ⚠ Nicht objectBoundingBox: WebKit rechnet die
-           Box der um 270x gestreckten Randspalte ungeschnitten (gemessen
-           9747 statt 144 Einheiten) - bei Pixeldichte 2 wird die Filter-
-           flaeche ~91 000 px breit und WebKit zeichnet das Band GAR NICHT
-           (iPad, 2026-09-23). -->
-      <filter id="aiDuoBand" filterUnits="userSpaceOnUse" x="0" y="0" width="${BAND_VB_W}" height="24" color-interpolation-filters="sRGB">${AI_DUO_STUFEN}</filter>
       <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#fff" stop-opacity="0"/>
         <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
@@ -191,6 +199,7 @@ function aiDefsSvg() {
       </linearGradient>
     </defs>
     <symbol id="aiUJ" viewBox="0 0 36 24">${aiTint(AI_UNION_JACK)}</symbol>
+    <symbol id="aiUJg" viewBox="0 0 36 24">${aiGezeichnet(aiTint(AI_UNION_JACK))}</symbol>
     ${syms.join('')}
   </svg>`;
 }
@@ -260,7 +269,7 @@ function assetIconHtml(id, size, gezeichnet) {
   // gemessen lief er von 107 px vor bis 100 px hinter einer 240-px-Flagge).
   // Darueber der feine Rand (.ai-rim) entlang derselben Welle.
   const inner = isFlag
-    ? `<g clip-path="url(#aiWave)"><use href="#ai-${id}"${gezeichnet ? ' filter="url(#aiDuo)"' : ''}/>`
+    ? `<g clip-path="url(#aiWave)"><use href="#ai-${id}${gezeichnet ? '-g' : ''}"/>`
       + `<rect class="ai-fold" width="36" height="24" fill="url(#aiFoldG)"/>`
       + `<rect class="ai-shade" width="36" height="24" fill="url(#aiShadeG)"/>`
       + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/></g>`
@@ -7645,11 +7654,10 @@ function flaggenBandHtml(id){
   if(AI_FLAG_IDS.indexOf(id)===-1)return'';
   aiEnsureDefs();
   const L=BAND_VB_W-36,sx=BAND_SPALTE[id]!=null?BAND_SPALTE[id]:.1;
-  // Filter #aiDuoBand (feste Flaeche), NICHT #aiDuo - siehe aiDefsSvg.
+  // Gezeichnete Fassung #ai-<id>-g, KEIN Filter (siehe aiDuoFarbe).
   return`<svg class="ahead-motif-band" viewBox="0 0 ${BAND_VB_W} 24" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">`
-    +'<g filter="url(#aiDuoBand)">'
-    +`<svg x="0" y="0" width="${L+.3}" height="24" viewBox="${sx} 0 .4 24" preserveAspectRatio="none"><use href="#ai-${id}" width="36" height="24"/></svg>`
-    +`<use href="#ai-${id}" x="${L}" y="0" width="36" height="24"/></g></svg>`;
+    +`<svg x="0" y="0" width="${L+.3}" height="24" viewBox="${sx} 0 .4 24" preserveAspectRatio="none"><use href="#ai-${id}-g" width="36" height="24"/></svg>`
+    +`<use href="#ai-${id}-g" x="${L}" y="0" width="36" height="24"/></svg>`;
 }
 function assetMotivHtml(id){
   const cls=assetCls(id);
@@ -9202,6 +9210,9 @@ function wischErlaubt(){
 // (Defs kopiert, Rand/Glanz als Attribute bzw. SMIL, kein Mischmodus) und wird
 // wie ein Foto behandelt - so wie die Motive, die auf dem iPad laufen.
 // Scheitert das Bild trotzdem (onerror), faellt es auf die Inline-Flagge zurueck.
+// Seit VERSION-CHECK-550 OHNE jeden Filter: gezeichnete Fassung #ai-<id>-g
+// (Farben vorab umgerechnet, aiDuoFarbe) und Schatten als box-shadow statt
+// filter:drop-shadow - Filter hatte als Einziges der FX-Wisch.
 function wischFlaggeHtml(id,h){
   // Statisch (Nutzer 2026-09-23: "Auch die Uebergaenge mit einer statischen
   // Zeichnung"): keine Welle, kein Glanz, keine Falten - nur die gezeichnete
@@ -9211,11 +9222,11 @@ function wischFlaggeHtml(id,h){
   if(AI_FLAG_IDS.indexOf(id)===-1)return inline;
   try{
     const ser=new XMLSerializer(),q=sel=>document.querySelector('#aiDefs '+sel);
-    const teile=['#aiUjA','#aiUjB','#aiDuo','#aiUJ','#ai-'+id].map(q);
+    const teile=['#aiUjA','#aiUjB','#aiUJg','#ai-'+id+'-g'].map(q);
     if(teile.some(t=>!t))return inline;
     const w=Math.round(h*1.5);
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" width="${w}" height="${h}"><defs>${teile.map(t=>ser.serializeToString(t)).join('')}</defs>`
-      +`<use href="#ai-${id}" width="36" height="24" filter="url(#aiDuo)"/>`
+      +`<use href="#ai-${id}-g" width="36" height="24"/>`
       +`<rect x=".2" y=".2" width="35.6" height="23.6" fill="none" stroke="#9DB8DE" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
     return`<img class="wisch-flagge-img" alt="" width="${w}" height="${h}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" onerror="this.outerHTML=this.dataset.ersatz" data-ersatz="${escH(inline)}">`;
   }catch(e){return inline;}
@@ -9336,11 +9347,33 @@ function wischLos(){
   const oben=Math.max(0,ar.top-r.top),unten=Math.max(0,r.bottom-ar.bottom);
   const x0=ar.left-bw/2-r.left,x1=ar.left+w+bw/2-r.left;
   const ease='cubic-bezier(.45,0,.25,1)';
-  const aB=bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
-  const aA=alt.animate([{clipPath:`inset(${oben}px 0 ${unten}px ${x0}px)`},{clipPath:`inset(${oben}px 0 ${unten}px ${x1}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
-  _wischAlt={ov,alt,art,anis:[aB,aA]};
-  aB.onfinish=()=>{if(_wischAlt&&_wischAlt.ov===ov)wischEnde();};
-  setTimeout(()=>{if(_wischAlt&&_wischAlt.ov===ov)wischEnde();},WISCH_MS+400);
+  // ⚠ ERST ZEICHNEN, DANN FAHREN (Nutzer 2026-09-23, iPad, Waehrungswechsel:
+  // "man sieht gar nix, es haengt und dann wechselt es ohne Animation").
+  // Bis VERSION-CHECK-549 lief die Animation ab dem Moment, in dem sie
+  // angelegt wurde, und eine Notbremse (WISCH_MS+400 ab HIER) raeumte sie ab.
+  // Das erste Bild danach ist das teuerste (neue Seite, alte Seite, grosses
+  // Flaggenbild dekodieren) - dauert es auf dem Geraet laenger, ist die Zeit
+  // beim ersten sichtbaren Bild schon um und die Notbremse zieht: man sieht
+  // nur den Endstand. Jetzt steht das Startbild still (Flagge links ausser-
+  // halb, alte Seite ganz), das Flaggenbild wird dekodiert, zwei Bilder
+  // werden gezeichnet - erst dann faehrt der Wisch, und die Notbremse zaehlt
+  // ab dem echten Start.
+  bild.style.transform=`translateX(${-bw}px)`;
+  alt.style.clipPath=`inset(${oben}px 0 ${unten}px ${x0}px)`;
+  const z={ov,alt,art,anis:[]};_wischAlt=z;
+  const los=()=>{
+    if(_wischAlt!==z)return;                    // inzwischen beendet/ersetzt
+    const aB=bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+    const aA=alt.animate([{clipPath:`inset(${oben}px 0 ${unten}px ${x0}px)`},{clipPath:`inset(${oben}px 0 ${unten}px ${x1}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+    z.anis.push(aB,aA);
+    aB.onfinish=()=>{if(_wischAlt===z)wischEnde();};
+    setTimeout(()=>{if(_wischAlt===z)wischEnde();},WISCH_MS+600);
+  };
+  const im=bild.querySelector('img');
+  const bereit=im&&im.decode?Promise.race([im.decode().catch(()=>{}),new Promise(r=>setTimeout(r,500))]):Promise.resolve();
+  bereit.then(()=>requestAnimationFrame(()=>requestAnimationFrame(los)));
+  // Falls nie ein Bild kommt (Tab im Hintergrund): nicht ewig stehen bleiben.
+  setTimeout(()=>{if(_wischAlt===z&&!z.anis.length)wischEnde();},WISCH_MS+2500);
 }
 // Raeumt sofort auf: Bild weg, alte Seite zurueck in display:none bzw. die
 // alte .dp ausgehaengt.
@@ -9350,6 +9383,7 @@ function wischEnde(){
   z.anis.forEach(a=>{try{a.cancel();}catch(e){}});
   z.ov.remove();
   const el=z.alt;
+  el.style.removeProperty('clip-path');         // Startbild (wischLos)
   if(z.art==='dp'){el.remove();return;}
   el.classList.remove('wisch-alt');el.inert=false;
   ['left','top','width','height'].forEach(k=>el.style.removeProperty(k));

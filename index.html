@@ -5555,8 +5555,11 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    (body.anim-enter, .detail-fade) noch einmal abspielen. */
 .wisch-alt,.wisch-alt *{animation:none!important;transition:none!important}
 .wisch-bild{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;will-change:transform}
-.wisch-flagge{filter:drop-shadow(0 12px 28px rgba(8,20,45,.35))}
-.wisch-flagge .ai-wrap{display:block}
+/* Schatten als box-shadow, NICHT filter:drop-shadow (2026-09-23): die Flagge
+   ist rechteckig, das Bild ist gleich - aber ein CSS-Filter auf der bewegten
+   Ebene war (mit dem SVG-Filter im Bild) das Einzige, was nur der FX-Wisch
+   hatte, und nur der lief auf dem iPad nicht. */
+.wisch-flagge>img,.wisch-flagge>.ai-wrap{display:block;box-shadow:0 12px 28px rgba(8,20,45,.35)}
 /* Motive/Szenen sind blass gezeichnet - sie bekommen eine Bahn in
    Seitenfarbe, damit der Wisch den Inhalt wirklich verdeckt. */
 .wisch-motiv{height:100%;display:flex;align-items:center;padding:0 5vw;background:var(--bg0);
@@ -5709,11 +5712,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-549 - Waehrungswechsel neu gebaut wie ein Seitenwechsel: alte Ansicht als eigene Huelle neben der Seite statt im Scrollbereich."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-550 - Waehrungswechsel: Wisch faehrt erst nach dem ersten fertigen Bild, Flagge und Kopf-Band ohne Filter."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-549</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-550</span>
     </span>
   </div>
   <div class="hdr-r">

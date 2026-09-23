@@ -17214,3 +17214,57 @@ liegt neben `#pgCur` und NICHT in `#detail`, ist nicht höher als die
 Seitenfläche. Gegenproben: `--gegenprobe-scroll` (zurück in `#detail`) →
 `ALTE SEITE NICHT AUF SEITENEBENE`; `--gegenprobe-hoehe`, `--gegenprobe-kopie`,
 `--gegenprobe-flagge`, `--gegenprobe` weiterhin rot.
+
+## 2026-09-23 — Währungswechsel: Wisch fährt erst nach dem ersten fertigen Bild, Flagge ohne Filter (VERSION-CHECK-550)
+
+Nutzer: *„Geht immer noch nicht, lös das Problem. Ich will, dass der Übergang
+flüssig geht. Aktuell sieht man gar nix, es hängt und dann wechselt es ohne
+Animation."* Dazu der erste Screenshot des Tages (Seite → USD mitten im
+Wisch): Schnitt sichtbar, **Flagge fehlt** — die Flagge fehlt also in beiden
+FX-Fällen.
+
+**1. „Hängt, dann ohne Animation" — Mechanismus reproduziert (Chromium).**
+`wischLos` legte die Animation an und startete dabei eine Notbremse
+(`WISCH_MS+400` ab dem Anlegen). Das erste Bild danach ist das teuerste
+(neue Seite, alte Seite, großes Flaggenbild). Nachgestellt mit 1,5 s belegtem
+Hauptthread direkt nach dem Anlegen:
+- 549: **0 Bilder** mit fahrender Flagge — Block endet bei 1743 ms, Wisch weg
+  bei 1759 ms. Man sieht nur den Endstand: genau das Nutzerbild.
+- neu: **55 Bilder**, die Flagge fährt nach dem Block vollständig durch.
+
+Fix: Startbild steht still (Flagge links außerhalb, alte Seite ganz),
+Flaggenbild wird dekodiert (`img.decode()`, höchstens 500 ms), zwei Bilder
+werden gezeichnet — ERST DANN fährt der Wisch. Die Notbremse zählt ab dem
+echten Start; falls nie ein Bild kommt, räumt eine zweite nach
+`WISCH_MS+2500` ab. Normalfall gemessen: Start ~50 ms später
+(Gesamtdauer 1086 statt 1043 ms bei 1× CPU, 1225 statt 1169 ms bei 4×).
+
+**2. Flagge fehlt — alles entfernt, was nur der FX-Wisch hatte.** Die Motive
+der anderen Seiten (laufen auf dem iPad) haben keinen Filter; die Flagge hatte
+zwei: SVG-Farbfilter `#aiDuo` im Bild und `filter:drop-shadow` auf der
+bewegten Ebene.
+- Gezeichnete Flagge ohne Filter: `aiDuoFarbe()` rechnet jede Farbe mit der
+  Formel des Filters vorab um (saturate(0) in sRGB, je Kanal Tabelle
+  [dunkel, hell]); neue Symbole `#ai-<id>-g` und `#aiUJg`. Genutzt von
+  Wisch-Flagge, Kopf-Band und der Inline-Rückfallflagge. Filter `#aiDuo` und
+  `#aiDuoBand` sind entfernt — damit ist auch die Fehlerklasse aus 547
+  (Filterfläche des Bandes) an der Wurzel weg.
+- Optisch gemessen gegen den Stand 549 (Chromium, Pixeldichte 2): alle
+  8 Bänder und 8 Wisch-Flaggen höchstens **3/255** Abweichung, 0 Pixel über
+  6/255.
+- Schatten: `box-shadow` am Bild statt `filter:drop-shadow` (Flagge ist
+  rechteckig, gleiches Bild).
+- WebKitGTK, Pixeldichte 2: alle 8 Flaggenbilder dekodieren
+  (`naturalWidth` 180) und werden mit Schatten gezeichnet; Kopf-Band sichtbar.
+
+⚠ Grenze: iOS-Safari selbst ist hier nicht verfügbar, und WebKitGTK liefert
+unter Xvfb zu wenige Bilder für eine Zeitmessung. Reproduziert ist der
+Mechanismus (Notbremse vor dem ersten Bild) in Chromium — dass das iPad genau
+so lange für das erste Bild braucht, ist abgeleitet aus dem Nutzerbild.
+
+**Wächter:** `check/uebergang.js` — (a) nach 1,5 s Hauptthread-Block ≥ 15
+Bilder mit fahrender Flagge; Gegenprobe `--gegenprobe-start` (Uhr ab dem
+Anlegen) rot, und gegen den echten Stand 549 (git worktree) ebenfalls rot
+(0 Bilder). (b) kein Filter im Flaggenbild und auf der bewegten Ebene —
+gegen 549 rot. `check/symbole.js` (E) — kein Filter im Kopf-Band;
+`--gegenprobe-band` rot.

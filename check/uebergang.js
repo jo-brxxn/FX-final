@@ -23,6 +23,12 @@
 //   node check/uebergang.js [--gegenprobe-flagge] (Inline-Flagge statt Bild)
 //   node check/uebergang.js [--gegenprobe-hoehe]  (alte .dp in voller Inhaltshoehe)
 //   node check/uebergang.js [--gegenprobe-scroll] (alte .dp zurueck in #detail)
+//   node check/uebergang.js [--gegenprobe-start]  (Uhr laeuft ab dem Anlegen, wie bis 549)
+// Nutzer 2026-09-23 (iPad): "man sieht gar nix, es haengt und dann wechselt
+// es ohne Animation". Nachgestellt: 1,5 s belegter Hauptthread direkt nach
+// dem Anlegen des Wischs (wie ein langsames erstes Bild auf dem Geraet) -
+// bis 549 null Bilder mit fahrender Flagge, die Notbremse raeumte ab.
+// Geprueft wird, dass die Flagge DANACH sichtbar durchfaehrt.
 // Neubau des Waehrungswechsels 2026-09-23 (548 half auf dem iPad nicht): die
 // alte .dp liegt in einer Huelle (.body > .detail) NEBEN #pgCur, wie eine
 // alte Seite - nie wieder im iOS-Scrollbereich #detail.
@@ -45,6 +51,7 @@ const GP_KOPIE = process.argv.includes('--gegenprobe-kopie');
 const GP_FLAGGE = process.argv.includes('--gegenprobe-flagge');
 const GP_HOEHE = process.argv.includes('--gegenprobe-hoehe');
 const GP_SCROLL = process.argv.includes('--gegenprobe-scroll');
+const GP_START = process.argv.includes('--gegenprobe-start');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -75,7 +82,8 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       const txt = decodeURIComponent(fim.src.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
       const def = new Set([...txt.matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
       const refs = [...txt.matchAll(/(?:url\(#|href="#)([^)"]+)/g)].map(m => m[1]);
-      flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt), bewegt: /<animate/.test(txt) };
+      flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt), bewegt: /<animate/.test(txt),
+        filter: /<filter|filter=/.test(txt) || [fim, ...(function* () { let e = fim.parentElement; while (e && e !== document.body) { yield e; e = e.parentElement; } })()].some(e => getComputedStyle(e).filter !== 'none') };
     }
     const o = document.querySelector('.wisch'), alt = document.querySelector('.wisch-alt');
     if (gph && alt) { alt.style.height = ''; alt.style.overflow = ''; }
@@ -105,6 +113,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       if (!fl.ok) fail('WISCH-FLAGGE LAEDT NICHT', 'das Flaggenbild dekodiert nicht');
       if (fl.fehlend.length) fail('WISCH-FLAGGE VERWEIST NACH AUSSEN', `nicht im Bild definiert: ${fl.fehlend.join(', ')} - ein Bild sieht die Defs der Seite nicht`);
       if (fl.bewegt) fail('WISCH-FLAGGE BEWEGT SICH', 'SMIL-Animation im Flaggenbild - verlangt ist eine statische Zeichnung (Nutzer 2026-09-23)');
+      if (fl.filter) fail('WISCH-FLAGGE MIT FILTER', 'SVG-Filter im Flaggenbild oder CSS-filter auf der bewegten Ebene - das hatte als Einziges der FX-Wisch, und nur der lief auf dem iPad nicht (2026-09-23); Farben vorab umgerechnet (#ai-<id>-g), Schatten als box-shadow');
       if (fl.blend) fail('WISCH-FLAGGE BRAUCHT SEITEN-CSS', 'Mischmodus oder ai-Klassen im Bild - Seiten-CSS wirkt in einem <img> nicht');
     }
   }
@@ -173,10 +182,36 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     if (h.ox !== 'hidden' || h.breiter) fail('HISTORY: WAAGERECHT VERSCHIEBBAR', `overflow-x=${h.ox}, Inhalt breiter als die Liste: ${h.breiter}`);
     if (h.osb !== 'none') fail('HISTORY: SCROLLEN LAEUFT AN DIE SEITE WEITER', `overscroll-behavior=${h.osb}`);
   }
+  // 7) Belegter Hauptthread direkt nach dem Anlegen: die Flagge muss danach
+  //    trotzdem sichtbar durchfahren (Bugreport iPad 2026-09-23).
+  await p.waitForTimeout(dauer + 400);
+  await p.tap('.np-assetstack'); await p.waitForTimeout(350);
+  const w7 = await p.evaluate(async ([gps, dauer]) => {
+    const ev = [];
+    if (gps) { // alte Semantik: die Uhr der Animation laeuft ab dem Anlegen des Wischs
+      const orig = Element.prototype.animate;
+      Element.prototype.animate = function () { const a = orig.apply(this, arguments);
+        if (this.classList && this.classList.contains('wisch-bild') && window.__tWisch) a.currentTime = performance.now() - window.__tWisch; return a; };
+    }
+    const mo = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.classList && n.classList.contains('wisch')) {
+      window.__tWisch = performance.now(); setTimeout(() => { const e = performance.now() + 1500; while (performance.now() < e); }, 0); } })));
+    mo.observe(document.body, { childList: true });
+    const fr = []; let lauf = true;
+    const tick = () => { const b = document.querySelector('.wisch-bild'); if (b) fr.push(Math.round(new DOMMatrix(getComputedStyle(b).transform).m41)); if (lauf) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    document.querySelector('#sidebar .np-asset[data-sym="USD"]').click();
+    await new Promise(r => setTimeout(r, 1500 + dauer + 1500)); lauf = false; mo.disconnect();
+    const bw = (document.querySelector('.wisch-bild') || {}).offsetWidth;
+    return { bewegt: fr.filter(x => x > -900 && x < 990).length, rest: document.querySelectorAll('.wisch').length };
+  }, [GP_START, dauer]);
+  if (w7.bewegt < 15) fail('WISCH NACH HAENGER UNSICHTBAR', `nach 1,5 s belegtem Hauptthread nur ${w7.bewegt} Bilder mit fahrender Flagge (verlangt >= 15) - auf dem iPad sah man so "gar nix, es haengt und dann wechselt es ohne Animation" (2026-09-23)`);
+  if (w7.rest) fail('WISCH ENDET NICHT', `nach dem Haenger-Test noch ${w7.rest} Wisch-Ebene(n) da`);
+
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
   if (GP_HOEHE) { const ok = F.some(x => x.startsWith('ALTE SEITE ZU HOCH')); console.log(ok ? 'uebergang --gegenprobe-hoehe: ok (alte .dp in voller Hoehe wird gemeldet)' : 'uebergang --gegenprobe-hoehe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_FLAGGE) { const ok = F.some(x => x.startsWith('WISCH-FLAGGE NICHT EIGENSTAENDIG')); console.log(ok ? 'uebergang --gegenprobe-flagge: ok (Inline-Flagge wird gemeldet)' : 'uebergang --gegenprobe-flagge: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
+  if (GP_START) { const ok = F.some(x => x.startsWith('WISCH NACH HAENGER UNSICHTBAR')); console.log(ok ? 'uebergang --gegenprobe-start: ok (Uhr ab dem Anlegen wird gemeldet)' : 'uebergang --gegenprobe-start: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_SCROLL) { const ok = F.some(x => x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-scroll: ok (alte .dp in #detail wird gemeldet)' : 'uebergang --gegenprobe-scroll: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS') || x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { const ok = F.some(x => x.startsWith('INHALT WAEHREND')); console.log(ok ? 'uebergang --gegenprobe: ok (klickfangende Kopie wird gemeldet)' : 'uebergang --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
