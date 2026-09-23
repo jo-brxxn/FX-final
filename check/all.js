@@ -40,6 +40,7 @@ const PRUEFUNGEN = [
   { n: 'dashboard', d: 'ueberlappende Karten und Zonen-Ueberlauf',               f: 'check/dashboard.js', args: [],           browser: true },
   { n: 'symbole',   d: 'Flaggen ein Stueck, Glanz begrenzt, jede Karte ein Symbol', f: 'check/symbole.js', args: [], browser: true },
   { n: 'uebergang', d: 'Wisch beim Seitenwechsel, Panel, History-Karte fest', f: 'check/uebergang.js', args: [], browser: true },
+  { n: 'scrollhalt', d: 'Asset-Seite neu gezeichnet: Scrollstand bleibt (WebKit nachgestellt)', f: 'check/scrollhalt.js', args: [], browser: true },
   { n: 'rahmen',    d: 'dunkle Koepfe/Bedienelemente: jeder Text lesbar (5 helle Vorlagen)', f: 'check/rahmen.js', args: [], browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
   { n: 'nav',       d: 'Sidebar-Klickregel, mit Maus UND mit Touch',          f: 'check/nav.js',       args: [],           browser: true },

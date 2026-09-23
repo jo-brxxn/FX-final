@@ -17334,3 +17334,56 @@ im Gleichlauf (0–1 px).
 
 **Wächter:** `check/uebergang.js` (8) — höchstens 50 `toLocaleDateString`
 je Währungswechsel; `--gegenprobe-tempo` rot, gegen den Stand 550 rot (805).
+
+## 2026-09-23 — Bugfix iPad: Seite springt nach einer Änderung nach oben (VERSION-CHECK-552)
+
+Nutzer: *„Teilweise ist es so, dass wenn ich in einer Kategorie etwas
+anklicke und ändere, ich weiter oben auf der Seite bugge, als ob ich einmal
+abrupt hochgescrollt habe."* Rückfrage: **in einer Karte auf der
+Asset-Seite**; Währungswechsel soll weiter oben anfangen.
+
+**Reproduktion.** Chromium zeigt den Fehler nie — auch nicht ohne Scroll
+Anchoring (1000 Bedienelemente auf 18 Seiten mittig gescrollt und geklickt,
+nur gewollte Seitenwechsel). **In WebKit** (WebKitGTK 2.52, Pixeldichte 2,
+USD, 123 Bedienelemente): die Zeitraum-Knöpfe eines Charts
+(`setAbChartRange` 1M/3M/6M/1Y/MAX) springen von scrollTop **4393 auf 247**.
+
+**Ursache — gemessen in WebKit:** `renderDetail` tauscht `#detail` per
+`innerHTML` aus. Im Moment des Austauschs ist der Scrollbereich leer, und
+WebKit kürzt `scrollTop` SOFORT:
+- `#detail` leeren: 1500 → 0; `innerHTML` in einem Schritt tauschen, sogar mit
+  exakt demselben Inhalt: 1500 → 255;
+- Position vorher merken und danach setzen: 1500 → 1500, bleibt.
+Beim Setzen war der neue Inhalt schon voll hoch (2469 px) — es ist nicht der
+Inhalt, sondern der Austausch. Chromium kürzt erst am Ende des Durchlaufs
+und zeigt es deshalb nicht; WebKit kennt kein Scroll Anchoring
+(`CSS.supports('overflow-anchor')` = false).
+
+**Fix an der Wurzel:** `scrollHalten(el)` merkt den Stand von `el` und seinen
+scrollbaren Vorfahren und setzt ihn nach dem Austausch zurück. In
+`renderDetail` (nach den Textfeld-Höhen). Der Währungswechsel setzt danach
+weiter bewusst auf 0 (Nutzerwahl „oben anfangen").
+WebKit danach: **0 Sprünge** bei 123 Bedienelementen auf USD.
+
+**Fehlerklasse.** Chromium mit nachgestelltem WebKit (`innerHTML` erst
+leeren, Layout lesen, dann füllen) über alle Seiten:
+- per Klick: Matrix (Korrelations-Auswahl/-Fenster 1495 → 0), Seasonality
+  (Asset-Wahl 207 → 0), Carry (Sortierung, Paar, Laufzeit 2044 → 0), Calendar
+  (Termin löschen, jedes Mal → 0);
+- OHNE Klick (Render-Funktion bei halb gescrollter Seite, wie bei einem
+  Datenupdate): Trends, Sentiment, News, Edge, Regime, Set-ups → 0.
+Jetzt halten alle Seiten-Render-Funktionen den Stand (`<name>` ruft
+`<name>Roh` mit `scrollHalten` der Seite), auch COT, Data, Rate,
+Watchlist, Archive. Dashboard hielt ihn schon selbst. Danach: 0 Sprünge.
+
+⚠ **Verhaltensänderung auf dem iPad:** eine Seite, die man erneut öffnet,
+steht wieder dort, wo man sie verlassen hat — wie am Rechner (Chromium
+alt = neu). Auf dem iPad sprang sie bisher beim Öffnen auf 0; das war
+derselbe Fehler, keine Absicht. Asset-Seite beim Wiederöffnen am Rechner
+jetzt exakt (vorher 1500 → 1606).
+
+**Wächter:** neu `check/scrollhalt.js` — stellt WebKit nach, klickt jedes
+Bedienelement der Asset-Seite (USD, GOLD) und von Matrix/Seasonality/Carry/
+Calendar, und zeichnet jede Seite ohne Klick neu; der Stand darf sich nicht
+verschieben. Gegenprobe `--gegenprobe` (Zurücksetzen blockiert) rot; gegen
+den Stand 551 rot (70 Befunde).

@@ -591,6 +591,21 @@ function ar(el){if(!el)return;el.style.height='auto';el.style.height=(el.scrollH
 // schreibt wieder - in einer Schleife erzwingt jedes Feld ein Layout der
 // ganzen Seite (gemessen 36 ms je Aufbau der Asset-Seite). Erst alle loesen,
 // dann alle messen, dann alle setzen.
+// Merkt den Scrollstand von el und seinen scrollbaren Vorfahren; die
+// zurueckgegebene Funktion setzt ihn wieder. ⚠ WebKit (Safari/iPad) kuerzt
+// scrollTop SOFORT, wenn der Inhalt eines Scrollbereichs per innerHTML
+// ausgetauscht wird - im Moment des Austauschs ist er kurz leer. Gemessen in
+// WebKit (2026-09-23): #detail auf 1500, innerHTML neu -> 247/255, auch mit
+// exakt demselben Inhalt; merken + zuruecksetzen -> 1500 bleibt. Chromium
+// kuerzt erst am Ende des Durchlaufs und zeigt den Fehler nie - deshalb
+// blieb er in allen Pruefskripten unsichtbar.
+function scrollHalten(el){
+  const l=[];
+  for(let x=el;x&&x.nodeType===1;x=x.parentElement)if(x.scrollTop)l.push([x,x.scrollTop]);
+  const se=document.scrollingElement;
+  if(se&&se.scrollTop&&!l.some(([x])=>x===se))l.push([se,se.scrollTop]);
+  return()=>l.forEach(([x,t])=>{if(x.scrollTop!==t)x.scrollTop=t;});
+}
 function arAlle(els){
   const l=[...els].filter(Boolean);
   l.forEach(e=>{e.style.height='auto';});
@@ -6986,7 +7001,12 @@ function renderDetail(){
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
-  document.getElementById('detail').innerHTML=`<div class="dp">
+  // ⚠ Scrollstand halten (Nutzer 2026-09-23, iPad: "wenn ich in einer
+  // Kategorie etwas anklicke und aender, bugge ich weiter oben auf der
+  // Seite, als ob ich abrupt hochgescrollt habe"). Siehe scrollHalten.
+  const detEl=document.getElementById('detail');
+  const scrollZurueck=scrollHalten(detEl);
+  detEl.innerHTML=`<div class="dp">
     ${/* ⚠ Titel und Meta-Zeile stehen wieder NEBENEINANDER, wie vor dem
          518er Umbau (Nutzer 2026-09-14: "mach das wie vorher"). Der Titel
          war in die Kopfleiste gewandert; ohne ihn hier haette die
@@ -7027,6 +7047,7 @@ function renderDetail(){
     ${renderSpecTab(c)}
   </div>`;
   arAlle(document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx'));
+  scrollZurueck();                              // nach den Textfeld-Hoehen: dann stimmt die Gesamthoehe
   attachChartHovers(document.getElementById('detail'));
   // Sidebar-Zahlen und den Score im Detail-Kopf aus EINER frischen Rechnung
   // schreiben - synchron, direkt nachdem das Markup steht. Beide Anzeigen
@@ -11745,7 +11766,13 @@ function watchSetNote(id,val){
   p.notes=val;
   saveSoon();
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderWatchlistTab(){
+  const zurueck=scrollHalten(document.getElementById('pgWatch'));
+  try{return renderWatchlistTabRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderWatchlistTabRoh(){
   const el=document.getElementById('watchBody');if(!el)return;
   // Fokus/Cursor ueber den Rebuild retten - dieselbe Absicherung wie in
   // renderDetail() fuer die Quick Note: ein Hintergrund-Render (Feed-Poll,
@@ -11781,7 +11808,13 @@ function renderWatchlistTab(){
   }
 }
 
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderPairs(){
+  const zurueck=scrollHalten(document.getElementById('pgPairs'));
+  try{return renderPairsRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderPairsRoh(){
   const el=document.getElementById('pairCats');if(!el)return;
   // Die Paar-Overview lebt im selben Container wie die Liste (siehe Kommentar
   // bei pairOvName) - die statische Set-ups-Ueberschrift daher mit umschalten,
@@ -11904,7 +11937,13 @@ function movePair(id,catId){const p=pairs.find(x=>x.id===id);if(p){pushU();p.cat
 function delPair(id){pushU();pairs=pairs.filter(x=>x.id!==id);save();renderPairs();if(curPage==='dash')renderDash();}
 
 // ══ CALENDAR ══════════════════════════════════════════════════════
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderCalendar(){
+  const zurueck=scrollHalten(document.getElementById('pgCal'));
+  try{return renderCalendarRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderCalendarRoh(){
   const el=document.getElementById('calEvents');if(!el)return;
   updCalHighBtn();updCalCcySel();
   let list=[...calEvts];
@@ -12899,7 +12938,13 @@ function researchSidebarHtml(){
 // Rendert die Ansicht neu, in der man GERADE ist: dieselben Notiz- und
 // Ordnerfunktionen werden jetzt vom Research-Terminal UND von der
 // Assets-Seite benutzt.
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function rerenderNotesHost(){
+  const zurueck=scrollHalten(document.getElementById('pgNotes'));
+  try{return rerenderNotesHostRoh.apply(this,arguments);}finally{zurueck();}
+}
+function rerenderNotesHostRoh(){
   if(curPage==='cur')renderDetail();
   else if(curPage==='watch')renderWatchlistTab();   // Notizen stehen jetzt auch dort
   else renderResearch();
@@ -15188,7 +15233,13 @@ function renderCorrCard(){
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderMatrix(){
+  const zurueck=scrollHalten(document.getElementById('pgMx'));
+  try{return renderMatrixRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderMatrixRoh(){
   const el=document.getElementById('mxBody');if(!el)return;
   const scores={};FX.forEach(id=>{const s=syms.find(x=>x.id===id);scores[id]=s?symScoreCmp(s):0;});
   // ── Stärke-Ranking ──
@@ -15584,7 +15635,13 @@ function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,bi
     ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:var(--fs-xs)">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderTrends(){
+  const zurueck=scrollHalten(document.getElementById('pgTrends'));
+  try{return renderTrendsRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderTrendsRoh(){
   const el=document.getElementById('trendsBody');if(!el)return;
   const assets=trendAssets();
   // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
@@ -17797,7 +17854,13 @@ function renderDataAssetPicker(){
   el.style.maxHeight=Math.max(160,Math.round(window.innerHeight-r.bottom-24))+'px';
 }
 function setDataInd(v){dataIndBase=v||'';dataIndOverride={};renderDataTab();}
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderDataTab(){
+  const zurueck=scrollHalten(document.getElementById('pgData'));
+  try{return renderDataTabRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderDataTabRoh(){
   const el=document.getElementById('dataBody');if(!el)return;
   const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
   dataAssets=dataAssets.filter(id=>ids.includes(id)).slice(0,DATA_MAX_PANELS);
@@ -18409,7 +18472,13 @@ function ind_kurz(ind){return indName({displayName:ind.displayName,name:stripPer
 let edgeAsset='USD';
 function setEdgeAsset(v){edgeAsset=v||'USD';renderEdge();}
 const edgeFmt=(v,d)=>v==null?'–':(v>0?'+':'')+v.toFixed(d===undefined?2:d);
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderEdge(){
+  const zurueck=scrollHalten(document.getElementById('pgEdge'));
+  try{return renderEdgeRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderEdgeRoh(){
   const el=document.getElementById('edgeBody');if(!el)return;
   const sym=syms.find(x=>x.id===edgeAsset)||syms[0];
   if(!sym){el.innerHTML='<div class="dw-empty">No assets.</div>';return;}
@@ -18512,7 +18581,13 @@ function evtNewsCount(ev){
   const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
   return alle.filter(h=>String(h.d||'').slice(0,10)===tag&&Array.isArray(h.a)&&h.a.some(x=>ids.indexOf(x)>=0)).length;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderNewsTab(){
+  const zurueck=scrollHalten(document.getElementById('pgNews'));
+  try{return renderNewsTabRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderNewsTabRoh(){
   const el=document.getElementById('newsBody');if(!el)return;
   const alle=(NEWS_DATA&&Array.isArray(NEWS_DATA.headlines))?NEWS_DATA.headlines:[];
   const daten=[...new Set(alle.map(h=>String(h.d||'').slice(0,10)).filter(Boolean))].sort();
@@ -18789,7 +18864,13 @@ function pcFilterBar(D){
   const ids=pcUsableAssetIds(D);
   return assetFilterSelect(ids,pcAsset,'setPcAsset','Market-wide (all U.S. options)','Filter by asset — only assets with enough daily options volume to be meaningful are listed',id=>escH(COT_NAME[id]||id));
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderSentiment(){
+  const zurueck=scrollHalten(document.getElementById('pgSent'));
+  try{return renderSentimentRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderSentimentRoh(){
   const el=document.getElementById('sentBody');if(!el)return;
   const D=SENTIMENT_DATA;
   // Symbole statt Emojis (Nutzer 2026-09-23 "ueberall verschiedene" Icons;
@@ -20065,7 +20146,13 @@ function cotPct3yCell(id){
   const tip=`Net positioning is above ${v}% of the last ~3 years of weekly reports (${p.n} weeks). ${v>=90?'Historically extreme LONG — crowded, contrarian caution.':v<=10?'Historically extreme SHORT — crowded, contrarian caution.':'Mid-range, nothing unusual.'} Display-only.`;
   return`<td style="color:${ext?'var(--amber)':'var(--t2)'}${ext?';font-weight:700':''}" title="${tip}">${ext?'⚠ ':''}${v}</td>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderCot(){
+  const zurueck=scrollHalten(document.getElementById('pgCot'));
+  try{return renderCotRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderCotRoh(){
   const el=document.getElementById('cotBody');if(!el)return;
   cotStopCountdown();
   // Control bar: countdown to the next report + manual refresh.
@@ -20402,7 +20489,13 @@ function regimeKarteHtml(s){
     <div class="rg-rows">${s.zeilen.map(regimeZeileHtml).join('')}</div>
   </div>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderRegime(){
+  const zurueck=scrollHalten(document.getElementById('pgRegime'));
+  try{return renderRegimeRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderRegimeRoh(){
   const el=document.getElementById('regimeBody');if(!el)return;
   const stand=regimeStand(regimeCcy);
   const messbar=stand.filter(s=>s.grad!=null);
@@ -20435,7 +20528,13 @@ function renderRegime(){
     <div class="rg-grid">${stand.map(regimeKarteHtml).join('')}</div>
     <div class="rg-foot">Every threshold is measured against that series' OWN history, not against a remembered number — "VIX above 20" ages, "VIX above its own 80th percentile" does not. Absolute thresholds (curve below zero, PMI below 50) are definitional, not calibrated. Conditions without a live source are listed as Not measured and are excluded from the denominator, so a half-covered scenario cannot look like a confirmed one; a scenario missing a decisive condition can never be the leading regime, and under ${REGIME_MIN_BED} measurable conditions there is no percentage at all.</div>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderSeasonality(){
+  const zurueck=scrollHalten(document.getElementById('pgSeas'));
+  try{return renderSeasonalityRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderSeasonalityRoh(){
   const el=document.getElementById('seasBody');if(!el)return;
   const D=SEASONALITY_DATA;
   if(!D||!D.assets||!Object.keys(D.assets).length){
@@ -21031,7 +21130,13 @@ function termStructureCardHtml(){
 // Wer hier aufraeumt, entfernt sie zusammen mit dem Fetch
 // (fetchRateProbData/autoFetchRateProb), dem Info-Text 'rateprob' und den
 // zugehoerigen Eintraegen in der window-Bruecke - einzeln geht es nicht.
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderRateProb(){
+  const zurueck=scrollHalten(document.getElementById('pgRate'));
+  try{return renderRateProbRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderRateProbRoh(){
   const el=document.getElementById('rateBody');if(!el)return;
   // Reihenfolge bewusst gesetzt statt aus RATEPROB_CCYS uebernommen (die ist
   // historisch gewachsen): erst die Waehrungen MIT Quelle in der ueblichen
@@ -21712,7 +21817,13 @@ function spreadChart(serie,px,b,q){
     <text x="${W-padR}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="end" font-family="var(--ff-num)">${escH(serie[serie.length-1][0])}</text>
   </svg></div>`;
 }
+// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
+// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
 function renderCarry(){
+  const zurueck=scrollHalten(document.getElementById('pgCarry'));
+  try{return renderCarryRoh.apply(this,arguments);}finally{zurueck();}
+}
+function renderCarryRoh(){
   const el=document.getElementById('carryBody');if(!el)return;
   const all=carryRows();
   const lookEl=document.getElementById('carryLookup');
