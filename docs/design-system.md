@@ -568,7 +568,7 @@ Faltenverlauf `#aiFoldG`; Glanz/Falten liegen IN der Welle; `.ai-rim` als Rand;
 Weiß in Flaggen = `AI_FLAG_WHITE`. Geprüft von `check/symbole.js`.
 
 ### Wisch-Übergang und Kartensymbole (seit 2026-09-23)
-Jeder Seitenwechsel wischt (0,5 s, Bild = Flagge/Motiv/Szene), Fenster nicht.
+Jeder Seitenwechsel wischt (1,0 s seit dem Nachtrag 2026-09-23, vorher 0,5 s; Bild = Flagge/Motiv/Szene), Fenster nicht.
 Jeder Kartenkopf trägt genau EIN Symbol aus `ICONS`, zugeordnet über
 `KARTEN_ICONS` — bei einer neuen Karte ggf. dort eine Regel ergänzen, sonst
 bekommt sie das neutrale `layers`. Keine Emojis in Reitern/Titeln.

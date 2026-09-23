@@ -16885,3 +16885,7 @@ auch künftige Karten. Sentiment-Reiter: Emojis → Symbole. Doppelte ersetzt
 Gegenproben waren im ersten Anlauf GRÜN (blind) und wurden korrigiert:
 Glanz auf fast weißem Grund nicht messbar → dunkler Testgrund; `p.click()`
 wartet über eine klickfangende Ebene hinweg → roher Koordinatenklick.
+
+Nachtrag am selben Tag: *„Animation mindestens doppelt so lang"* → Wisch
+`WISCH_MS` 500 → **1000 ms**. `check/uebergang.js` liest die Dauer jetzt aus der
+App statt sie fest anzunehmen.

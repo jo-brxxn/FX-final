@@ -52,9 +52,11 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   const hist = await p.evaluate(() => { const m = document.getElementById('mHist'); return !!m && m.style.display === 'flex'; });
   if (nochDa && !hist) fail('INHALT WAEHREND DES WISCHS NICHT BEDIENBAR', 'ein Klick auf "History" waehrend des Wischs oeffnet nichts - die Kopie faengt Klicks ab');
   // 3) Fenster in der Seite: KEIN Wisch
-  await p.waitForTimeout(700);
+  // Dauer aus der App lesen, nicht fest annehmen (0,5 s -> 1,0 s am 2026-09-23).
+  const dauer = await p.evaluate(() => WISCH_MS);
+  await p.waitForTimeout(dauer + 300);
   const offen = await p.evaluate(() => document.querySelectorAll('.wisch').length);
-  if (offen) fail('WISCH ENDET NICHT', `${offen} Wisch-Ebene(n) 700 ms spaeter noch da`);
+  if (offen) fail('WISCH ENDET NICHT', `${offen} Wisch-Ebene(n) ${dauer + 300} ms spaeter noch da`);
   await p.evaluate(() => { const m = document.getElementById('mHist'); if (m) m.style.display = 'none'; openPriceChart(getSym().id); });
   const beiFenster = await p.evaluate(() => document.querySelectorAll('.wisch').length);
   if (beiFenster) fail('WISCH BEI FENSTER', 'das Oeffnen von "Price chart" (ein Fenster, kein Seitenwechsel) loest den Wisch aus');
@@ -63,7 +65,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   await p.evaluate(() => showTab('dash')); await p.waitForTimeout(120);
   const w4 = await p.evaluate(() => ({ da: !!document.querySelector('.wisch'), bild: !!document.querySelector('.wisch .wisch-motiv svg, .wisch .wisch-flagge') }));
   if (!w4.da) fail('KEIN WISCH BEI SEITENWECHSEL', 'Assets -> Dashboard ohne Wisch');
-  await p.waitForTimeout(900);
+  await p.waitForTimeout(dauer + 400);
   // 5) Animationen aus -> kein Wisch
   await p.evaluate(() => { document.body.classList.add('no-ui-anim'); gotoSym('EUR'); });
   const w5 = await p.evaluate(() => document.querySelectorAll('.wisch').length);
@@ -71,7 +73,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   await p.evaluate(() => document.body.classList.remove('no-ui-anim'));
 
   // 6) History-Karte auf iPad-Breite
-  await p.waitForTimeout(600);
+  await p.waitForTimeout(dauer + 200);
   const h = await p.evaluate(() => { const t = document.querySelector('.ab-htile'); if (!t) return null; const tr = t.getBoundingClientRect(), l = t.querySelector('.histp'), cs = getComputedStyle(l);
     const raus = [...t.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); return r.width && !e.children.length && e.textContent.trim() && (r.right > tr.right + 1 || r.left < tr.left - 1); }).length;
     return { raus, ox: cs.overflowX, osb: cs.overscrollBehaviorY, breiter: l.scrollWidth > l.clientWidth + 1 }; });

@@ -9111,7 +9111,7 @@ function updateSidebarSelection(){
 // von links nach ganz rechts in voller Groesse durchwehen da wo die Flagge
 // bereits schon drueber ist entsteht dann der neue Inhalt ... waehrend sie
 // laeuft verschwindet der Stapel". Per Rueckfrage: 0,5 s, laeuft immer bis
-// zum Ende, der Inhalt ist waehrenddessen schon bedienbar; bei JEDEM
+// zum Ende (seit dem Nachtrag 1,0 s), der Inhalt ist waehrenddessen schon bedienbar; bei JEDEM
 // Seitenwechsel (auch USD -> GBP, COT -> Trends), NICHT bei Fenstern in einer
 // Seite (History, Price chart ...). Bild: Flagge (FX), Motiv (Non-FX),
 // Szene (Seiten ohne Asset).
@@ -9124,7 +9124,8 @@ function updateSidebarSelection(){
 // Animation": gemessen blockiert der Seitenaufbau 0,5-2,2 s, und das Panel
 // schloss erst DANACH bzw. seine Blende blieb in diesem Block haengen. Jetzt
 // verschwindet es als Teil der Kopie - genau dort, wo das Bild vorbeizieht.
-const WISCH_MS=500;
+// 1,0 s (Nutzer 2026-09-23: "Animation mindestens doppelt so lang" - vorher 0,5 s).
+const WISCH_MS=1000;
 const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'40 5 330 160',szene:'200 10 210 158'};
 const SEITE_SZENE={over:'overview',dash:'dashboard',pairs:'setups',watch:'watchlist',cal:'calendar',notes:'archive'};
 let _wischKopie=null,_wischLaeuft=false,_wischBereit=false;
@@ -22432,7 +22433,7 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,
+  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,
