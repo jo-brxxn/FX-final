@@ -1012,3 +1012,17 @@ Die zweite Zeile ist der Grund, warum das keine Geschmacksfrage ist: bei
 
 Geprüft von `check/achsen.js` über alle Ansichten mit Zahlenachse; eine neue
 Grafik, die das alte Muster kopiert, fällt dort auf.
+
+## Kalender-Karte der Asset-Seite: vergangene Tage (Nutzer 2026-09-23)
+
+- Vergangene Tage sind grau/blass (Zahl Deckkraft .38, wie „nicht
+  veröffentlicht"), **der Punkt bleibt in voller Farbe**.
+- Einträge vergangener Tage stehen mit Actual/Forecast/Previous im
+  Tagesfenster, nur blasser (`.abc-e.vorbei`).
+- Tage VOR dem Feed-Beginn (der Feed kennt nur ~3 Tage zurück) werden aus
+  der Indikator-Historie rekonstruiert (`abCalRekonstruiert`,
+  `ind_data.json` historyFull) — per Rückfrage „Aus Indikator-Historie".
+  Nur Indikatoren mit Kalender-Zuordnung (`CAL_RESEARCH_MATCHERS`, in der
+  App „high"); keine geratene Wichtigkeit, keine erfundene Uhrzeit.
+- „Not published yet" gilt nur für die Zukunft jenseits des Feeds.
+Geprüft in `check/kalender.js`.

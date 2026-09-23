@@ -1461,3 +1461,25 @@ in Ordnung), alle anderen rufen Funktionen über `p.evaluate()` direkt auf — e
 geschluckter Mausklick ist für sie unsichtbar. Seither prüft `check/nav.js`
 (Abschnitt F) mit einem **echten Mausklick auf einen Knopf im Inhalt**, dass am
 PC der ERSTE Klick wirkt und auf Touch erst der zweite.
+
+## Scrollstand: drei Dauerregeln (Nutzer 2026-09-23)
+
+1. **Neuzeichnen hält den Scrollstand.** Jede Render-Funktion, die einen
+   Scrollbereich per `innerHTML` austauscht, läuft über `scrollHalten()`
+   (`renderDetail` und alle Seiten-Render-Funktionen). Grund: WebKit
+   (iPad) kürzt `scrollTop` beim Austausch sofort — die Seite sprang nach
+   jeder Änderung in einer Karte nach oben. Chromium zeigt das nie; geprüft
+   wird mit nachgestelltem WebKit in `check/scrollhalt.js`.
+2. **Währungswechsel beginnt oben** (Nutzerwahl „Oben anfangen"): `selSym`
+   setzt `#detail` bewusst auf 0.
+3. **„Back" führt an die alte Stelle** („wenn man back drückt soll man zur
+   alten Position kommen"): die rote Zurück-Pille nach einem Quick-Link
+   stellt den Scrollstand der Ausgangsseite wieder her
+   (`quickReturnMerken` / `researchBackFromShortcut`).
+
+## Asset-Markierung im Panel (Nutzer 2026-09-23)
+
+Ein Asset ist im Asset-Panel nur markiert, solange man auf SEINER Seite ist.
+`syncNavActive()` gleicht die Markierung bei jedem Seitenwechsel ab
+(`updateSidebarSelection`) — `showTab` zeichnet die Leiste nicht neu.
+Geprüft in `check/nav.js`.

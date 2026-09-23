@@ -15,6 +15,7 @@
 // Bedienelement der Asset-Seite, das auf ihr bleibt: der Scrollstand darf
 // sich nicht verschieben.
 //   node check/scrollhalt.js [--gegenprobe]   (Zuruecksetzen blockiert -> muss rot werden)
+// Dazu die "Back"-Pille nach einem Quick-Link: zurueck an die alte Scrollposition.
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -145,6 +146,26 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   rs.out.forEach(f => fail('SPRUNG BEIM NEUZEICHNEN', `ohne Klick (Datenupdate): ${f} - Render-Funktion muss den Stand mit scrollHalten() halten`));
   if (rs.n < 8) fail('ZU WENIG GEPRUEFT', `nur ${rs.n} Seiten ohne Klick neu gezeichnet`);
   if (seitenGeklickt < 20) fail('ZU WENIG GEPRUEFT', `auf Matrix/Seasonality/Carry/Calendar nur ${seitenGeklickt} Bedienelemente geklickt`);
+  // "Back"-Pille nach einem Quick-Link (Nutzer 2026-09-23: "wenn man back
+  // drueckt soll man zur alten Position kommen") - vorher immer scrollTop 0.
+  const back = await p.evaluate(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms)), out = [];
+    document.querySelectorAll('.ov').forEach(o => o.style.display = 'none');
+    for (const ziel of ['trends', 'cal', 'data']) {
+      gotoSym('USD'); await sleep(300); const d = document.getElementById('detail'); d.scrollTop = 1200; await sleep(30); const vor = d.scrollTop;
+      assetQuickGo(ziel); await sleep(300); document.getElementById('resBackPill').click(); await sleep(300);
+      out.push({ weg: 'USD -> ' + ziel, vor, nach: Math.round(document.getElementById('detail').scrollTop), ok: curPage === 'cur' && getSym().id === 'USD' });
+    }
+    showTab('watch'); await sleep(400); const w = document.getElementById('pgWatch');
+    const id = (document.querySelector('#pgWatch [onclick*="watchQuickGo"]') || {}).getAttribute ? document.querySelector('#pgWatch [onclick*="watchQuickGo"]').getAttribute('onclick').match(/watchQuickGo\('([^']+)','([^']+)'/) : null;
+    if (id && w.scrollHeight > w.clientHeight + 400) {
+      w.scrollTop = 400; await sleep(30); const vor = w.scrollTop;
+      watchQuickGo(id[1], id[2]); await sleep(300); document.getElementById('resBackPill').click(); await sleep(300);
+      out.push({ weg: 'Watchlist -> ' + id[1], vor, nach: Math.round(w.scrollTop), ok: curPage === 'watch' });
+    }
+    return out; });
+  back.forEach(r => { if (!r.ok || Math.abs(r.nach - r.vor) > 20) fail('ZURUECK NICHT AN DIE ALTE STELLE', `${r.weg}, dann "Back": scrollTop ${r.vor} -> ${r.nach} (Nutzer 2026-09-23: "wenn man back drueckt soll man zur alten Position kommen")`); });
+  if (back.length < 3) fail('ZU WENIG GEPRUEFT', `nur ${back.length} Rueckwege geprueft`);
   if (geklickt < 60) fail('ZU WENIG GEPRUEFT', `nur ${geklickt} Bedienelemente geklickt - Selektoren veraltet?`);
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();

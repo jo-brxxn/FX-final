@@ -17417,3 +17417,58 @@ Der Wisch startet also nicht später; die sichtbare Reaktion kommt sofort.
 **Wächter:** `check/uebergang.js` — im ersten Bild nach dem Tippen Panel
 zu, Markierung da, Aufbau noch nicht gelaufen; gegen den Stand 552 rot
 („Aufbau LIEF SCHON").
+
+## 2026-09-23 — Asset-Markierung, Back an die alte Stelle, Kalender-Karte vergangene Tage (VERSION-CHECK-554)
+
+Nutzer: *„Aber wenn man back drückt soll man zur alten Position kommen. Und
+bei der Kalender Karte ich will das sobald ein Tag vorbei ist er grau wird
+und blass wie es aktuell ist aber es soll trotzdem ein roter Punkt dort
+bleiben und die Einträge stehen dann da einfach mit actual Wert nur alles
+halt blasser … Wenn man den Stapel Assets ausklappt dann klappt er zuerst
+noch einen Teil zu viel aus der dann verschwindet. Und wenn man am
+Dashboard ist und davor in einem Asset war und dann wieder auf Assets geht
+ist das Asset immer noch blau markiert."*
+
+**1. Blaue Markierung — reproduziert.** USD wählen → Dashboard → Asset-Panel:
+USD trägt weiter `on` (Hintergrund `rgb(46,60,94)` + Balken). Ursache:
+`showTab` zeichnet die Leiste nicht neu (nur `syncNavExpanded`/
+`syncNavActive`), die Asset-Markierung wurde nur in `selSym` nachgeführt.
+Fix: `syncNavActive()` ruft `updateSidebarSelection()`. Danach: auf dem
+Dashboard nichts markiert, zurück auf USD wieder USD. Wächter `check/nav.js`
+(gegen 553 rot), Gegenprobe `--gegenprobe-markierung`.
+
+**2. „Back" an die alte Stelle — reproduziert.** Der Pfeil ← in der
+Kopfleiste ist Rückgängig, gemeint ist die rote „Back to …"-Pille nach
+einem Quick-Link. USD auf 1500 → „Go to Trends/Calendar/Archive/Data" →
+Pille: immer scrollTop **0** (`gotoSym` → `selSym` fängt bewusst oben an).
+Fix: `quickReturnMerken()` merkt den Stand beim Weggehen (Asset-Seite oder
+Watchlist), `researchBackFromShortcut` setzt ihn zurück → 1500. Wächter
+`check/scrollhalt.js` (gegen 553 rot: 1200 → 0).
+
+**3. Kalender-Karte.** Ist-Stand: gedimmt waren die Tage AUSSERHALB des
+Feed-Zeitraums (der Feed reicht nur ~3 Tage zurück), nicht die vergangenen;
+Tage davor ohne Punkt und mit dem Tooltip „Not published yet" (für die
+Vergangenheit falsch). Rückfrage: ältere Tage **„Aus Indikator-Historie"**.
+- Raster: vergangene Tage `.vorbei` → Zahl Deckkraft .38, Punkt voll.
+- Vor dem Feed-Beginn: `abCalRekonstruiert()` aus
+  `IND_DATA_FEED[ccy][base].historyFull` — echtes Actual/Forecast, Previous
+  = voriges Actual, nur Indikatoren mit `CAL_RESEARCH_MATCHERS` (in der App
+  „high"; `CPI` m/m ohne Zuordnung bleibt draußen statt einer geratenen
+  Wichtigkeit), keine erfundene Uhrzeit. „Covers …" nennt weiter nur den Feed.
+- Tagesfenster: Einträge vergangener Tage mit Actual, blass (bestand schon).
+Gemessen USD, September: Punkte an 1.–4., 10., 11., 16., 17.; 11.09. zeigt
+Core CPI 2.4 %/2.4 %/2.5 %, CPI (Headline), Inflation Expectations.
+Wächter neu `check/kalender.js` — rechnet Actual/Forecast/Previous gegen
+`ind_data.json` nach; gegen 553 rot (25 Befunde), `--gegenprobe` rot.
+
+**4. Asset-Stapel „erst zu groß" — NICHT reproduziert, NICHT geändert.**
+Chromium (Bild für Bild, 20-fach verlangsamt) und WebKit (Übergänge auf
+4 s gestreckt): Panel konstant 165/169 × 641/642, nur Einblenden + 10 px
+Einschub. WebKitGTK spielt hier Übergänge ohne echte Bilder nicht ab
+(Deckkraft blieb 1,2 s bei 0) — für Zeitmessung untauglich. Spur: ein
+zweites, verstecktes Panel ist 180 px breit (`min-width:180px`), das
+Asset-Panel 169 px — blitzte das auf dem iPad kurz auf, sähe es genau so
+aus. Ohne Beleg kein Eingriff; Bildschirmaufnahme vom Nutzer angefragt.
+
+Dauerregeln: `docs/navigation.md` (Scrollstand, Asset-Markierung),
+`docs/design-system.md` (Kalender-Karte).

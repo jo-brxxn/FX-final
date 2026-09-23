@@ -4455,6 +4455,16 @@ let _quickReturnAssetId=null;
 // die Pille soll zurueck auf den Watchlist-Tab, nicht auf eine Asset-Seite.
 // Nur gesetzt, wenn _quickReturnAssetId leer ist (siehe researchBackFromShortcut).
 let _quickReturnTab=null;
+// Scrollstand der Seite, von der der Quick-Link ausging (Nutzer 2026-09-23:
+// "wenn man back drueckt soll man zur alten Position kommen"). Gemessen
+// vorher: USD auf 1500 -> "Go to Trends" -> Pille -> scrollTop 0, weil
+// gotoSym ueber selSym bewusst oben anfaengt (gilt fuer einen WAEHRUNGS-
+// WECHSEL, nicht fuer "zurueck").
+let _quickReturnScroll=0;
+function quickReturnMerken(){
+  const el=_quickReturnAssetId?document.getElementById('detail'):document.getElementById(PAGE_IDS[_quickReturnTab]||'');
+  _quickReturnScroll=el?el.scrollTop:0;
+}
 function researchToggleNode(id){researchTreeOpen[id]=!researchTreeOpen[id];rerenderNotesHost();}
 function researchSelectLeaf(id){researchTreeSel=id;rerenderNotesHost();}
 // Klick auf einen Asset-Ordner: klappt wie jeder andere Knoten auf/zu UND
@@ -7358,20 +7368,59 @@ const AB_MONATE=['January','February','March','April','May','June',
 function abCalShift(d){abCalMonat+=d;abCalTag=null;renderDetail();}
 function abCalPick(tag){abCalTag=tag;renderDetail();}
 
-/** Alle Termine dieses Assets nach Tag gebuendelt. */
+/** Alle Termine dieses Assets nach Tag gebuendelt - Feed plus (vor dem
+ *  Feed-Beginn) die aus der Indikator-Historie rekonstruierten Releases. */
 function abCalNachTag(assetId){
   const map={};
-  getSymEventsAll(assetId).forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
+  const feed=getSymEventsAll(assetId);
+  feed.forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
+  const start=feed.length?feed[0].date:null;
+  abCalRekonstruiert(assetId,start).forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
   return map;
+}
+/** Wie weit reicht der Kalender-Feed fuer dieses Asset (ohne Rekonstruktion). */
+function abCalFeedSpanne(assetId){
+  const feed=getSymEventsAll(assetId);
+  return{von:feed.length?feed[0].date:null,bis:feed.length?feed[feed.length-1].date:null};
+}
+// Vergangene Tage VOR dem Feed-Beginn (Nutzer 2026-09-23: "sobald ein Tag
+// vorbei ist ... soll trotzdem ein roter Punkt dort bleiben und die Eintraege
+// stehen dann da einfach mit actual Wert"; per Rueckfrage "Aus
+// Indikator-Historie"). Der Feed kennt nur ~3 Tage zurueck, danach waeren
+// Punkt und Eintrag weg. Quelle: IND_DATA_FEED[ccy][base].historyFull
+// ([Datum, Actual, Forecast], seit 2013) - echte Werte, Previous = das
+// vorige Actual. Nur Indikatoren mit Kalender-Zuordnung
+// (CAL_RESEARCH_MATCHERS): die sind score-relevant und damit in der App
+// "high" (evtImpact). Alles andere wird NICHT mit einer geratenen
+// Wichtigkeit eingetragen (Regel 4). Eine Uhrzeit hat die Historie nicht -
+// sie bleibt leer statt erfunden.
+function abCalRekonstruiert(assetId,vorDatum){
+  const quelle=(typeof IND_DATA_FEED!=='undefined'&&IND_DATA_FEED)||{};
+  const heute=todayStr(),out=[];
+  eventSrcIds(assetId).forEach(ccy=>{
+    const f=quelle[ccy];if(!f)return;
+    Object.keys(f).forEach(base=>{
+      const e=f[base];
+      if(!CAL_RESEARCH_MATCHERS[base]||!e||!Array.isArray(e.historyFull))return;
+      let vorher='';
+      e.historyFull.forEach(h=>{
+        const d=String((h&&h[0])||'').slice(0,10),akt=h&&h[1]!=null?String(h[1]):'';
+        if(d&&akt&&d<heute&&(!vorDatum||d<vorDatum))out.push({id:`hist:${ccy}:${base}:${d}`,date:d,time:'',
+          name:base,currencies:ccy,impact:'high',actual:akt,forecast:h[2]!=null?String(h[2]):'',previous:vorher,rekonstruiert:true});
+        if(akt)vorher=akt;
+      });
+    });
+  });
+  return out;
 }
 function abTagStr(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function assetMonthCalHtml(c,gross){
   const proTag=abCalNachTag(c.id);
-  const tage=Object.keys(proTag).sort();
-  // Wie weit reicht der Feed wirklich? Gemessene Groesse, keine Annahme.
-  const von=tage[0]||null, bis=tage[tage.length-1]||null;
+  // Wie weit reicht der Feed wirklich? Gemessene Groesse, keine Annahme -
+  // OHNE die rekonstruierten Tage (die sind vergangen, nicht "abgedeckt").
+  const {von,bis}=abCalFeedSpanne(c.id);
 
   const heute=new Date();heute.setHours(0,0,0,0);
   const anker=new Date(heute.getFullYear(),heute.getMonth()+abCalMonat,1);
@@ -7389,7 +7438,7 @@ function assetMonthCalHtml(c,gross){
   // genannt") - ohne ihn sieht ein leerer Tag aus wie "nichts los", statt wie
   // "weiss noch niemand".
   const calErkl=[von&&bis
-      ?`Dimmed days lie outside the window the feed currently covers: they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
+      ?`Past days are dimmed but keep their dot: before the feed window they show the recorded releases of this asset's indicators with their actual values. Future days beyond the window are dimmed because they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
       :'No calendar data has loaded for this asset yet.',
     'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.']
     .concat(calHighOnly?['The card is currently filtered to <b>high-impact</b> releases only.']:[]);
@@ -7401,7 +7450,10 @@ function assetMonthCalHtml(c,gross){
     const datum=abTagStr(new Date(jahr,monat,t));
     const evs=(proTag[datum]||[]).filter(ev=>!calHighOnly||evtImpact(ev)==='high');
     const wochenende=[5,6].includes((ersterWochentag+t-1)%7);
-    const bekannt=!!(von&&bis&&datum>=von&&datum<=bis);
+    const vorbei=datum<heuteStr;
+    // Vergangene Tage sind bekannt (Feed oder Historie) - "not published yet"
+    // gilt nur fuer die Zukunft jenseits des Feeds.
+    const bekannt=vorbei||!!(von&&bis&&datum>=von&&datum<=bis);
     const imps=evs.map(evtImpact);
     const punkte=evs.length?`<span class="abc-dots">${
       (imps.includes('high')?['high']:[]).concat(imps.includes('medium')?['medium']:[],imps.includes('low')?['low']:[])
@@ -7410,9 +7462,10 @@ function assetMonthCalHtml(c,gross){
     if(datum===heuteStr)klassen.push('heute');
     if(datum===abCalTag)klassen.push('gew');
     if(wochenende)klassen.push('we');
+    if(vorbei)klassen.push('vorbei');
     if(!bekannt)klassen.push('unbekannt');
     const titel=evs.length?`${evs.length} event${evs.length===1?'':'s'} — ${evs.map(e=>e.name).slice(0,4).join(', ')}`
-      :bekannt?'Nothing scheduled on this day':'Not published yet — the calendar feed does not reach this far';
+      :vorbei?'No tracked release on this day':bekannt?'Nothing scheduled on this day':'Not published yet — the calendar feed does not reach this far';
     // Im Widget oeffnet JEDER Tag das Detailfenster; im Fenster selbst waehlt
     // der Klick nur den Tag aus.
     const tun=gross?`abCalPick('${datum}')`:`openAssetCal('${datum}')`;
@@ -7495,6 +7548,7 @@ function renderAssetCalBody(){
     </div>`;}).join('')
     :`<div class="abc-empty">${proTag[gewaehlt]&&proTag[gewaehlt].length
         ?'Only medium/low-impact events on this day — switch the filter above to see them.'
+        :gewaehlt<heuteStr?'No tracked release for this asset on this day.'
         :'Nothing scheduled for this asset on this day. Days the feed does not reach are dimmed in the grid.'}</div>`;
   // Was als Naechstes ansteht.
   const kommend=[];
@@ -12643,8 +12697,11 @@ function researchShortcutGo(tabId){
 function researchBackFromShortcut(){
   _resReturnActive=false;
   document.body.classList.remove('res-return-active');
-  if(_quickReturnAssetId){const id=_quickReturnAssetId;_quickReturnAssetId=null;gotoSym(id);}
-  else if(_quickReturnTab){const t=_quickReturnTab;_quickReturnTab=null;showTab(t);}
+  const sc=_quickReturnScroll;_quickReturnScroll=0;
+  if(_quickReturnAssetId){const id=_quickReturnAssetId;_quickReturnAssetId=null;gotoSym(id);
+    const d=document.getElementById('detail');if(d)d.scrollTop=sc;}
+  else if(_quickReturnTab){const t=_quickReturnTab;_quickReturnTab=null;showTab(t);
+    const pg=document.getElementById(PAGE_IDS[t]);if(pg)pg.scrollTop=sc;}
   else showTab('notes');
 }
 function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(el)el.title=t;}
@@ -12759,7 +12816,7 @@ function indCompareGo(indId){
   (c.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>{if(i.id===indId)base=stripPeriodSuffix(i.name).base;}));
   dataAssets=[c.id];
   if(base)dataIndBase=base;
-  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;
+  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;quickReturnMerken();
   document.body.classList.add('res-return-active');
   setBackPillTitle(`Back to ${c.name||c.id}`);
   showTab('data');
@@ -12767,7 +12824,7 @@ function indCompareGo(indId){
 function assetQuickGo(tabId){
   const c=getSym();if(!c)return;
   applyAssetQuickFilter(tabId,c.id);
-  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;
+  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;quickReturnMerken();
   document.body.classList.add('res-return-active');
   setBackPillTitle(`Back to ${c.name}`);
   showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
@@ -12825,7 +12882,7 @@ function watchQuickGoDirect(tabId,name){
   if(tabId==='trends'){setTrendsFilter('PAIR');setTrendsPair(name);}
   else if(tabId==='retail'){setSentSub('retail');setSentSym(name.replace('/',''));}
   else return;
-  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
+  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';quickReturnMerken();
   document.body.classList.add('res-return-active');
   setBackPillTitle('Back to the Watchlist');
   showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
@@ -12837,7 +12894,7 @@ function watchQuickGoDirect(tabId,name){
 function watchQuickGo(tabId,id){
   if(!id)return;
   applyAssetQuickFilter(tabId,id);
-  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';
+  _resReturnActive=true;_quickReturnAssetId=null;_quickReturnTab='watch';quickReturnMerken();
   document.body.classList.add('res-return-active');
   setBackPillTitle('Back to the Watchlist');
   showTab(QUICK_LINK_REAL_TAB[tabId]||tabId);
@@ -21373,6 +21430,12 @@ function syncNavActive(){
     const st=tabStacks.find(s=>s.id===b.dataset.stack);
     b.classList.toggle('has-active',!!st&&st.members.includes(activeTabId));
   });
+  // Auch die Asset-Eintraege im Panel (Nutzer 2026-09-23: "wenn man am
+  // Dashboard ist und davor in einem Asset war und dann wieder auf Assets
+  // geht, ist das Asset immer noch blau markiert"). showTab zeichnet die
+  // Leiste nicht neu (siehe dort) - die Markierung wurde nur in selSym
+  // nachgefuehrt und blieb beim Verlassen der Asset-Seite stehen.
+  updateSidebarSelection();
 }
 // Schaltet NUR die .open-Klassen an der bestehenden Leiste um, statt sie neu
 // zu bauen - ein Neuaufbau wuerde jeden Uebergang verschlucken. renderTabBar()

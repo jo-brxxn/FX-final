@@ -611,6 +611,9 @@ svg.ic{vertical-align:-2px;flex:none}
 /* "Noch nicht veroeffentlicht" ist NICHT dasselbe wie "nichts los" - dieser
    Unterschied muss sichtbar sein, sonst ist die Karte eine huebsche Luege. */
 .abc-d.unbekannt .abc-n{opacity:.38}
+/* Vergangene Tage (Nutzer 2026-09-23): grau und blass wie "unbekannt", aber
+   der Punkt bleibt in voller Farbe - er sitzt ausserhalb von .abc-n. */
+.abc-d.vorbei:not(.heute) .abc-n{opacity:.38}
 .abc-d.gew .abc-n{background:var(--bg4)}
 .abc-d.heute .abc-n{background:var(--accent);color:#fff;font-weight:800}
 @media(hover:hover){.abc-d:not(.leer):not(.heute):hover .abc-n{background:var(--bg3)}}
@@ -5712,11 +5715,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-553 - Waehrungswechsel: sofortige Rueckmeldung beim Tippen (Panel zu, Markierung), Aufbau ein Bild spaeter."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-554 - Kalender-Karte: vergangene Tage blass mit Punkt, aeltere Tage aus der Indikator-Historie; Back-Pille an die alte Stelle; Asset-Markierung nur auf der Asset-Seite."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-553</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-554</span>
     </span>
   </div>
   <div class="hdr-r">

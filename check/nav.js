@@ -256,6 +256,34 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     }
   }
 
+  // ── Asset-Markierung nach dem Verlassen der Asset-Seite (Nutzer 2026-09-23:
+  // "wenn man am Dashboard ist und davor in einem Asset war und dann wieder
+  // auf Assets geht, ist das Asset immer noch blau markiert"). Gemessen: USD
+  // behielt auf dem Dashboard die Klasse "on" - showTab zeichnet die Leiste
+  // nicht neu, die Markierung wurde nur in selSym nachgefuehrt.
+  //   node check/nav.js --gegenprobe-markierung   (Markierung stehen lassen -> muss rot werden)
+  {
+    const GP=process.argv.includes('--gegenprobe-markierung');
+    const ctx=await b.newContext({viewport:{width:1000,height:695},hasTouch:true,serviceWorkers:'block'});
+    const p=await ctx.newPage();
+    await p.addInitScript(()=>{try{localStorage.setItem('fxpro_help_seen','1');localStorage.setItem('fxpro_intro_anim_enabled','0');}catch(e){}});
+    await p.goto(URL);await p.waitForTimeout(4000);
+    await p.evaluate(()=>['introOv','lockScreen'].forEach(id=>{const e=document.getElementById(id);if(e)e.remove();}));
+    const markiert=()=>p.evaluate(()=>[...document.querySelectorAll('#sidebar .np-asset.on')].map(e=>e.dataset.sym));
+    await p.tap('.np-assetstack');await p.waitForTimeout(400);
+    await p.tap('#sidebar .np-asset[data-sym="USD"]');await p.waitForTimeout(900);
+    const aufUsd=await markiert();
+    await p.evaluate(()=>{const d=[...document.querySelectorAll('#navSidebar .np[data-tab]')].find(e=>e.dataset.tab==='dash');d.click();});
+    await p.waitForTimeout(600);
+    if(GP)await p.evaluate(()=>{const e=document.querySelector('#sidebar .np-asset[data-sym="USD"]');if(e)e.classList.add('on');});
+    await p.tap('.np-assetstack');await p.waitForTimeout(400);
+    const aufDash=await markiert();
+    pruefe(aufUsd.length===1&&aufUsd[0]==='USD',`Asset-Markierung: auf der USD-Seite ist ${JSON.stringify(aufUsd)} markiert statt genau USD.`);
+    pruefe(aufDash.length===0,`Asset-Markierung: auf dem Dashboard ist im Asset-Panel ${JSON.stringify(aufDash)} blau markiert - man ist auf keiner Asset-Seite (Nutzer-Bugreport 2026-09-23).`);
+    await ctx.close();
+    if(GP){await b.close();const ok=fehler.some(f=>f.startsWith('Asset-Markierung: auf dem Dashboard'));console.log(ok?'nav --gegenprobe-markierung: ok (stehen gebliebene Markierung wird gemeldet)':'nav --gegenprobe-markierung: FEHLER - nicht gemeldet');process.exit(ok?0:1);}
+  }
+
   await b.close();
   console.log(JSON.stringify({total:fehler.length,findings:fehler},null,2));
 })();
