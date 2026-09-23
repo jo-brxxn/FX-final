@@ -17175,3 +17175,42 @@ seit 544; weitere fixe Ebenen gibt es im Wisch nicht.
 **Wächter:** `check/uebergang.js` — die alte Seite ist im ersten Bild nicht
 höher als die sichtbare Seitenfläche. Gegenprobe `--gegenprobe-hoehe`
 (Höhe zurückgesetzt) → `ALTE SEITE ZU HOCH`.
+
+## 2026-09-23 — Währungswechsel neu gebaut (VERSION-CHECK-549)
+
+Nutzer: *„Ja geht nicht. Entfern den Code, der für den Währungsübergang
+nötig ist, und dann schreib ihn neu und vergiss davor den alten. Du weißt
+doch, was ich haben will, wie das aussehen soll."* — 548 hat auf dem iPad
+nichts geändert.
+
+**Ansatz:** der einzige Wisch, der auf dem iPad nachweislich läuft, ist der
+Seitenwechsel. Der Währungswechsel ist jetzt in DERSELBEN Bauform gebaut;
+der alte Pfad (alte `.dp` zurück in `#detail`, 548er Höhenbegrenzung) ist
+entfernt.
+- Die ausgehängte alte `.dp` kommt in eine Hülle `.body > .detail` (ohne
+  ids) und liegt NEBEN `#pgCur` in `#pageArea` — wie eine alte Seite.
+  Höhe = Seitenfläche, Scrollstand per `scrollTop`, danach wird die Hülle
+  entfernt.
+- Vorher lag sie als fixe Ebene IN `#detail` — und `.detail` trägt
+  `-webkit-overflow-scrolling:touch` (auf iOS eine eigene native
+  Scroll-Ebene). Diese Kombination gab es nur in diesem Pfad.
+- Die vier `#detail .rub-card …`-Regeln sind jetzt `.detail .rub-card …`,
+  damit die Hülle dasselbe CSS bekommt (`.detail` gibt es sonst nur einmal).
+
+**Gemessen in WebKitGTK, Pixeldichte 2, #detail vorher auf 400 gescrollt:**
+Hülle in `#pageArea`, nicht in `#detail`, 642 px hoch, scrollTop 400,
+`.dp` bei top −347 / left 76 / Breite 920 — identisch zum Original.
+Im ersten Wurf 2 px nach rechts versetzt: die Scrollleiste von `#detail`
+belegte 4 px (924 außen, 920 innen), die Hülle ohne Scrollbereich nicht →
+`padding-right` = gemessene Leistenbreite. Danach rechte Hälfte im Wisch
+**pixelgleich** zum Stand vor dem Wechsel (0 von 1 003 300 Pixeln).
+
+⚠ Grenze wie zuvor: iOS-Safari selbst ist hier nicht verfügbar. Der Neubau
+beseitigt beide Bauunterschiede zum funktionierenden Seitenwechsel; ob das
+auf dem iPad reicht, zeigt erst der Test dort.
+
+**Wächter:** `check/uebergang.js` — alte Ansicht enthält den Originalknoten,
+liegt neben `#pgCur` und NICHT in `#detail`, ist nicht höher als die
+Seitenfläche. Gegenproben: `--gegenprobe-scroll` (zurück in `#detail`) →
+`ALTE SEITE NICHT AUF SEITENEBENE`; `--gegenprobe-hoehe`, `--gegenprobe-kopie`,
+`--gegenprobe-flagge`, `--gegenprobe` weiterhin rot.

@@ -22,6 +22,10 @@
 //   node check/uebergang.js [--gegenprobe-kopie]  (alte Seite ausserhalb ihrer Vorfahren)
 //   node check/uebergang.js [--gegenprobe-flagge] (Inline-Flagge statt Bild)
 //   node check/uebergang.js [--gegenprobe-hoehe]  (alte .dp in voller Inhaltshoehe)
+//   node check/uebergang.js [--gegenprobe-scroll] (alte .dp zurueck in #detail)
+// Neubau des Waehrungswechsels 2026-09-23 (548 half auf dem iPad nicht): die
+// alte .dp liegt in einer Huelle (.body > .detail) NEBEN #pgCur, wie eine
+// alte Seite - nie wieder im iOS-Scrollbereich #detail.
 // Nutzer 2026-09-23 (iPad): "alle Uebergaenge gehen ausser der zwischen den
 // Waehrungen". Gemessener Unterschied zum funktionierenden Seitenwechsel: die
 // alte .dp lag in VOLLER Inhaltshoehe (2594 px, ~9,5 Mio. Pixel bei
@@ -40,6 +44,7 @@ const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_KOPIE = process.argv.includes('--gegenprobe-kopie');
 const GP_FLAGGE = process.argv.includes('--gegenprobe-flagge');
 const GP_HOEHE = process.argv.includes('--gegenprobe-hoehe');
+const GP_SCROLL = process.argv.includes('--gegenprobe-scroll');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -58,7 +63,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   //    kein Vorhang, echtes Panel zu.
   const refFont = await p.evaluate(() => getComputedStyle(document.querySelector('#detail .atitle')).fontSize);
   await p.tap('.np-assetstack'); await p.waitForTimeout(350);
-  const w1 = await p.evaluate(async ([gp, gpf, gph]) => {
+  const w1 = await p.evaluate(async ([gp, gpf, gph, gps]) => {
     const altDp = document.querySelector('#detail>.dp');
     document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click();
     await new Promise(r => requestAnimationFrame(r));      // erstes Bild nach dem Umbau
@@ -74,6 +79,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     }
     const o = document.querySelector('.wisch'), alt = document.querySelector('.wisch-alt');
     if (gph && alt) { alt.style.height = ''; alt.style.overflow = ''; }
+    if (gps && alt) document.getElementById('detail').appendChild(alt);
     // Gegenprobe: das Verhalten der 1. Fassung nachstellen (Seite ausserhalb
     // ihrer Vorfahren, ohne ids)
     if (gp && alt) { alt.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); document.body.appendChild(alt); }
@@ -83,13 +89,14 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     const t = alt.querySelector('.atitle');
     return Object.assign(res, {
       fremd: [...o.children].filter(k => k.className !== 'wisch-bild').map(k => k.className || k.tagName),
-      original: alt === altDp, imDetail: !!alt.closest('#detail'),
+      original: alt.contains(altDp), imScroll: !!alt.closest('#detail'),
+      seitenEbene: alt.parentElement === document.getElementById('pgCur').parentElement,
       font: t ? getComputedStyle(t).fontSize : null,
       deckt: r.left <= area.left + 1 && r.right >= area.right - 1 && r.top <= area.top + 1 && r.bottom >= area.bottom - 1,
       grund: cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none',
-      neuVorn: document.querySelector('#detail>.dp') !== alt,
+      neuVorn: document.querySelector('#detail>.dp') !== altDp,
       hoehe: [Math.round(r.height), Math.round(area.height)] });
-  }, [GP_KOPIE, GP_FLAGGE, GP_HOEHE]);
+  }, [GP_KOPIE, GP_FLAGGE, GP_HOEHE, GP_SCROLL]);
   if (!w1.da) fail('KEIN WISCH', 'Asset-Wechsel USD -> GBP startet keinen Wisch-Uebergang');
   if (w1.da) {
     const fl = w1.flagge;
@@ -104,11 +111,12 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   if (w1.da && !w1.alt) fail('ALTE SEITE FEHLT', 'im ersten Bild liegt die alte Seite nicht obenauf - rechts der Flagge waere es leer ("das ist dann weiss", 2026-09-23)');
   if (w1.alt) {
     if (w1.fremd && w1.fremd.length) fail('FREMDES IN DER WISCH-EBENE', `neben dem Bild liegt: ${w1.fremd.join(', ')}`);
-    if (!w1.original || !w1.imDetail || w1.font !== refFont) fail('ALTE SEITE OHNE CSS', `alte Seite ist ${w1.original ? '' : 'NICHT '}der Originalknoten, ${w1.imDetail ? '' : 'NICHT '}in #detail, Titel ${w1.font} statt ${refFont} - eine Kopie ausserhalb ihrer Vorfahren verliert ihr CSS (Bugreport 2026-09-23)`);
+    if (!w1.original || w1.font !== refFont) fail('ALTE SEITE OHNE CSS', `alte Seite enthaelt ${w1.original ? '' : 'NICHT '}den Originalknoten, Titel ${w1.font} statt ${refFont} - eine Kopie ausserhalb ihrer Vorfahren verliert ihr CSS (Bugreport 2026-09-23)`);
+    if (w1.imScroll || !w1.seitenEbene) fail('ALTE SEITE NICHT AUF SEITENEBENE', `die alte Ansicht liegt ${w1.imScroll ? 'im Scrollbereich #detail' : 'nicht neben #pgCur'} - dort hing der Waehrungswechsel auf dem iPad (2026-09-23); verlangt ist eine Huelle neben #pgCur wie beim Seitenwechsel`);
     if (!w1.deckt) fail('ALTE SEITE DECKT NICHT', 'die alte Seite deckt die Seitenflaeche im ersten Bild nicht ganz');
     if (!w1.grund) fail('ALTE SEITE DURCHSICHTIG', 'die alte Seite hat keinen eigenen Hintergrund - die neue scheint durch');
     if (w1.hoehe[0] > w1.hoehe[1] + 1) fail('ALTE SEITE ZU HOCH', `die alte Seite liegt ${w1.hoehe[0]} px hoch obenauf, sichtbar sind ${w1.hoehe[1]} px - als volle Inhaltshoehe hing der Waehrungswechsel auf dem iPad (2026-09-23)`);
-    if (!w1.neuVorn) fail('ALTE SEITE VOR DER NEUEN', 'die alte .dp steht in #detail VOR der neuen - getElementById/querySelector traefen die alte');
+    if (!w1.neuVorn) fail('ALTE SEITE VOR DER NEUEN', '#detail>.dp ist noch die alte Ansicht - getElementById/querySelector traefen die alte');
   }
   if (!w1.panelZu) fail('PANEL BLEIBT OFFEN', 'nach der Asset-Wahl steht das echte Panel noch offen');
   if (w1.sym !== 'GBP') fail('NEUER INHALT FEHLT', `unter dem Wisch steht nicht GBP, sondern ${w1.sym}`);
@@ -169,7 +177,8 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   await b.close();
   if (GP_HOEHE) { const ok = F.some(x => x.startsWith('ALTE SEITE ZU HOCH')); console.log(ok ? 'uebergang --gegenprobe-hoehe: ok (alte .dp in voller Hoehe wird gemeldet)' : 'uebergang --gegenprobe-hoehe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_FLAGGE) { const ok = F.some(x => x.startsWith('WISCH-FLAGGE NICHT EIGENSTAENDIG')); console.log(ok ? 'uebergang --gegenprobe-flagge: ok (Inline-Flagge wird gemeldet)' : 'uebergang --gegenprobe-flagge: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
-  if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
+  if (GP_SCROLL) { const ok = F.some(x => x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-scroll: ok (alte .dp in #detail wird gemeldet)' : 'uebergang --gegenprobe-scroll: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
+  if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS') || x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { const ok = F.some(x => x.startsWith('INHALT WAEHREND')); console.log(ok ? 'uebergang --gegenprobe: ok (klickfangende Kopie wird gemeldet)' : 'uebergang --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (F.length) { console.log(`uebergang: ${F.length} Befund(e)\n  ` + F.join('\n  ')); process.exit(1); }
   console.log('uebergang: ok (Wisch bei Asset- und Seitenwechsel, FX-Flagge als eigenstaendiges Bild, alte Seite als Originalknoten mit CSS obenauf und danach weg, Panel zu, Inhalt bedienbar, kein Wisch bei Fenstern/ohne Animation, History-Karte fest)');

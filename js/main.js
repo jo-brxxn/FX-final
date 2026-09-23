@@ -9248,9 +9248,12 @@ function wischBildHtml(h){
 // ueber die neue gelegt und von links weggeschnitten. Nichts wird kopiert.
 //  - Seitenwechsel: die alte Seite (#pgDash ...) wird trotz display:none
 //    noch 1 s gezeigt.
-//  - Asset-Wechsel: renderDetail ersetzt #detail.innerHTML; die alte .dp
-//    ist dann nur ausgehaengt, nicht weg, und wird HINTER der neuen wieder
-//    eingehaengt (getElementById/querySelector finden so zuerst die neue).
+//  - Waehrungswechsel: renderDetail ersetzt #detail.innerHTML; die alte .dp
+//    ist dann nur ausgehaengt, nicht weg, und kommt in eine Huelle
+//    (.body > .detail, ohne ids) NEBEN #pgCur - also wie eine alte Seite.
+//    ⚠ Nicht wieder in #detail haengen: dort lag sie bis VERSION-CHECK-548
+//    als fixe Ebene im iOS-Scrollbereich, und nur dieser Wechsel hing auf
+//    dem iPad (2026-09-23).
 // Das alles passiert in einem Microtask direkt nach dem Umbau, also VOR dem
 // ersten Bild: man sieht nie eine leere oder halbe Flaeche.
 let _wischAlt=null;
@@ -9262,7 +9265,7 @@ function wischStart(){
   const det=seite.id==='pgCur'?document.getElementById('detail'):null;
   const dp=det&&det.querySelector(':scope>.dp');
   _wischOv={seite,anzeige:seite.style.display,scroll:seite.scrollTop,rect:seite.getBoundingClientRect(),
-    dp,dpRect:dp?dp.getBoundingClientRect():null};
+    dp,detScroll:det?det.scrollTop:0,detLeiste:det?det.offsetWidth-det.clientWidth:0};
   queueMicrotask(wischLos);
 }
 // Legt ein Element fix an seine alte Stelle (korrigiert, falls ein Vorfahre
@@ -9297,21 +9300,26 @@ function wischLos(){
     wischAltLegen(alt,st.rect,st.rect.top);
     alt.scrollTop=st.scroll;
   }else if(st.dp&&!st.dp.isConnected){
-    // Asset-Wechsel: die ausgehaengte alte .dp hinter der neuen einhaengen.
-    const det=document.getElementById('detail');if(!det)return;
-    alt=st.dp;art='dp';
-    det.appendChild(alt);
-    // ⚠ Nur den SICHTBAREN Ausschnitt zeigen, wie beim Seitenwechsel (Nutzer
-    // 2026-09-23, iPad: "alle Uebergaenge gehen ausser der zwischen den
-    // Waehrungen"). Gemessen: die alte .dp lag mit voller Inhaltshoehe
-    // (2594 px, bei Pixeldichte 2 ~9,5 Mio. Pixel) als fixe Ebene mit
-    // clip-path-Animation obenauf - der Seitenwechsel dagegen mit ~640 px.
-    // Jetzt: Hoehe = sichtbarer Teil, der Rest per scrollTop verschoben.
-    const oben=Math.max(st.dpRect.top,ar.top),versatz=oben-st.dpRect.top;
-    alt.style.height=Math.max(0,Math.min(st.dpRect.bottom,ar.bottom)-oben)+'px';
-    alt.style.overflow='hidden';
-    wischAltLegen(alt,st.dpRect,oben);
-    alt.scrollTop=versatz;
+    // Waehrungswechsel (Neubau 2026-09-23, Nutzer iPad: "alle Uebergaenge
+    // gehen ausser der zwischen den Waehrungen ... entfern den Code ... und
+    // schreib ihn neu"). Gebaut WIE EIN SEITENWECHSEL, weil nur der auf dem
+    // iPad nachweislich laeuft: die ausgehaengte alte .dp kommt in eine
+    // Huelle mit den Klassen der Seite (.body > .detail, ohne ids) und liegt
+    // als eigene Seite NEBEN #pgCur - nicht mehr in #detail. Dort stand sie
+    // vorher als fixe Ebene in einem Scrollbereich mit
+    // -webkit-overflow-scrolling:touch (auf iOS eine eigene native
+    // Scroll-Ebene), in voller Inhaltshoehe - beides gab es nur hier.
+    const huelle=document.createElement('div');huelle.className='body';
+    const det=document.createElement('div');det.className='detail';det.style.overflow='hidden';
+    // Die Scrollleiste von #detail belegte Breite (gemessen 4 px in WebKit
+    // unter Linux) - ohne sie stand der Inhalt 2 px versetzt.
+    if(st.detLeiste>0)det.style.paddingRight=st.detLeiste+'px';
+    det.appendChild(st.dp);huelle.appendChild(det);
+    st.seite.after(huelle);
+    alt=huelle;art='dp';
+    huelle.style.height=st.rect.height+'px';
+    wischAltLegen(huelle,st.rect,st.rect.top);
+    det.scrollTop=st.detScroll;
   }
   if(!alt)return;                               // nichts hat sich geaendert
   _wischLaeuft=true;

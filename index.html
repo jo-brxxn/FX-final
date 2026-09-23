@@ -1690,14 +1690,16 @@ body.no-ui-anim #navSidebar{transition:none}
    sass dadurch in jeder der drei Karten auf einer ANDEREN Hoehe (gemessen
    1px, 95px und 102px ueber dem Kartenboden) - und in der ersten Karte
    1px vom Rand entfernt in der Ecke.
-   Die Flex-Spalte ist bewusst auf #detail gescoped: `.rub-card` gibt es auch
-   als `.news-card` und im Dashboard, und dort soll sich nichts bewegen. */
-#detail .rub-card{display:flex;flex-direction:column}
-#detail .rub-card>.rub-body{flex:1 1 auto;min-height:0}
-#detail .rub-card .ab-goto{padding:7px 13px 9px}
+   Die Flex-Spalte ist bewusst auf die Detailansicht gescoped: `.rub-card`
+   gibt es auch als `.news-card` und im Dashboard, und dort soll sich nichts
+   bewegen. Klasse .detail statt #detail (2026-09-23): die alte Ansicht im
+   Waehrungs-Wisch liegt in einer Huelle mit derselben Klasse, ohne id. */
+.detail .rub-card{display:flex;flex-direction:column}
+.detail .rub-card>.rub-body{flex:1 1 auto;min-height:0}
+.detail .rub-card .ab-goto{padding:7px 13px 9px}
 /* Die Headlines-Karte teilt die .rub-card-Klasse, hat aber ihren eigenen
    Koerper - der muss den Platz nehmen, damit der Knopf unten landet. */
-#detail .rub-card>.news-card-body{flex:1 1 auto;min-height:0}
+.detail .rub-card>.news-card-body{flex:1 1 auto;min-height:0}
 /* ══ REGIME RADAR (Nutzer-Wunsch 2026-09-15) ═══════════════════════════
    Bewusst dieselbe Kartensprache wie der Rest: --card, --bd, der gestapelte
    Schatten. Ein eigener Look haette den Tab wie eine fremde Anwendung
@@ -5707,11 +5709,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-548 - Waehrungswechsel: alte Ansicht im Wisch nur im sichtbaren Ausschnitt statt in voller Inhaltshoehe (iPad)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-549 - Waehrungswechsel neu gebaut wie ein Seitenwechsel: alte Ansicht als eigene Huelle neben der Seite statt im Scrollbereich."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-548</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-549</span>
     </span>
   </div>
   <div class="hdr-r">
