@@ -84,7 +84,11 @@ const ERLAUBT = new Set(('id class style title href src alt type value name plac
   'maxheight minheight fill-opacity stroke-opacity fill-rule clip-rule mask-type ' +
   'xml:space xlink:href focusable pointer-events overflow display visibility ' +
   'maskcontentunits maskunits pathlength clippathunits primitiveunits spreadmethod ' +
-  'requiredfeatures systemlanguage baseprofile classname').split(/\s+/));
+  'requiredfeatures systemlanguage baseprofile classname ' +
+  // SMIL-Animation (seit 2026-09-23: Flaggenwelle #aiWave, Falten #aiFoldG) -
+  // echte SVG-Attribute; ohne sie meldete der Waechter jede Flagge als zerbrochen.
+  'attributename attributetype dur repeatcount repeatdur values from to by begin end ' +
+  'calcmode keytimes keysplines additive accumulate restart').split(/\s+/));
 const PRAEFIX = /^(data-|aria-|on|xlink:|xmlns:|v-|:|@|_)/;
 
 (async () => {
