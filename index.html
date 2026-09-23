@@ -4788,24 +4788,28 @@ body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
 @keyframes introExitLeft{0%{left:50%;top:16vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-120vw;top:34vh;transform:translate(-50%,0) rotate(-16deg)}}
 @media(prefers-reduced-motion:reduce){.globe-vehicle.mega-flame .globe-jet-flame,body.intro-shake,.intro-debris,.intro-wing,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
+/* Einblendungen beim Seiten-/Asset-Wechsel: alle 1 s wie der Wisch (Nutzer
+   2026-09-23: "mach alle uebergangsanimationen 1 Sekunde lang"; per
+   Rueckfrage OHNE das Stapel-Panel, das bleibt bei 0,18 s). Vorher 0,26-0,9 s. */
+:root{--enter-dur:1s}
 @keyframes detailFadeIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
-.detail-fade{animation:detailFadeIn .26s ease both}
+.detail-fade{animation:detailFadeIn var(--enter-dur) ease both}
 /* ── SEITEN-ÜBERGANG (Dashboard / Assets / Set-ups / Calendar / Notes) ── */
 @keyframes pageFadeIn{0%{opacity:0;transform:translateY(9px)}100%{opacity:1;transform:translateY(0)}}
-.page-fade-in{animation:pageFadeIn .3s cubic-bezier(.16,.84,.44,1) both}
+.page-fade-in{animation:pageFadeIn var(--enter-dur) cubic-bezier(.16,.84,.44,1) both}
 /* ── ANIMATIONEN: Chart-Einzug, Listen-Stagger, Score-/Bias-Wechsel, FLIP ── */
 @keyframes cotBarIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
-.cot-bar-in{animation:cotBarIn .5s cubic-bezier(.2,.7,.3,1) both}
+.cot-bar-in{animation:cotBarIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) both}
 @keyframes trDraw{0%{stroke-dashoffset:1}100%{stroke-dashoffset:0}}
-.tr-line-in{stroke-dasharray:1;animation:trDraw .9s ease forwards}
+.tr-line-in{stroke-dasharray:1;animation:trDraw var(--enter-dur) ease forwards}
 @keyframes trFadeIn{0%{opacity:0}100%{opacity:1}}
-.tr-line-fade{animation:trFadeIn .35s ease both}
+.tr-line-fade{animation:trFadeIn var(--enter-dur) ease both}
 @keyframes trHaloFadeIn{0%{opacity:0}100%{opacity:0.7}}
-.tr-halo-fade{animation:trHaloFadeIn .35s ease both}
+.tr-halo-fade{animation:trHaloFadeIn var(--enter-dur) ease both}
 @keyframes trDotIn{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
-.tr-dot-in{animation:trDotIn .35s ease both;transform-box:fill-box;transform-origin:center}
+.tr-dot-in{animation:trDotIn var(--enter-dur) ease both;transform-box:fill-box;transform-origin:center}
 @keyframes listRowIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
-.list-in{animation:listRowIn .4s cubic-bezier(.2,.7,.3,1) both}
+.list-in{animation:listRowIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) both}
 @keyframes scorePop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
 .score-pop{animation:scorePop .5s cubic-bezier(.3,1.4,.5,1)}
 @keyframes biasFlip{0%{transform:rotateX(85deg);opacity:.2}100%{transform:rotateX(0);opacity:1}}
@@ -5339,9 +5343,9 @@ body.anim-enter:not(.no-data-anim) .perf-bar,
 body.anim-enter:not(.no-data-anim) .esi-bar,
 body.anim-enter:not(.no-data-anim) .cot-bar-long,
 body.anim-enter:not(.no-data-anim) .cot-bar-short{
-  transform-origin:left center;animation:dataBarIn .55s cubic-bezier(.22,.9,.3,1) both}
+  transform-origin:left center;animation:dataBarIn var(--enter-dur) cubic-bezier(.22,.9,.3,1) both}
 body.anim-enter:not(.no-data-anim) #dashWidgets>.dash-zone>.dw{
-  animation:dataCardIn .42s ease-out both}
+  animation:dataCardIn var(--enter-dur) ease-out both}
 body.anim-enter:not(.no-data-anim) #dashWidgets>.dash-zone>.dw:nth-child(2){animation-delay:.05s}
 body.anim-enter:not(.no-data-anim) #dashWidgets>.dash-zone>.dw:nth-child(3){animation-delay:.1s}
 body.anim-enter:not(.no-data-anim) #dashWidgets>.dash-zone>.dw:nth-child(4){animation-delay:.15s}
@@ -5479,20 +5483,16 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .ahead>*{position:relative;z-index:1}
 .ahead>.ahead-motif{position:absolute;z-index:0;right:0;top:0;bottom:0;width:min(46%,520px);pointer-events:none;
   display:flex;align-items:flex-end;justify-content:flex-end;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 38%);mask-image:linear-gradient(90deg,transparent 0,#000 38%)}
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 55%);mask-image:linear-gradient(90deg,transparent 0,#000 55%)}
 .ahead-motif>svg{display:block;height:100%;width:auto;max-width:100%}
 /* Die Flagge laeuft ueber die ganze Motivflaeche und blendet nach links aus
    (Maske am Container) - als harter Block rechts sah sie aus wie ein
    aufgeklebtes Bild, gemessen im ersten Wurf. */
-.ahead-motif-flag{opacity:.95;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden;
-  padding:12px 18px 12px 0;box-sizing:border-box}
-/* Die Flagge passt IMMER ganz in die Karte (Nutzer 2026-09-23: "die gehen
-   ueber die Karte drueber und Teile werden oben und unten abgeschnitten ...
-   auf jeden Fall ganz zu sehen"). Gemessen vorher: 510x340 px in einer
-   404x113-Flaeche - zwei Drittel der Hoehe weggeschnitten. Jetzt folgt die
-   Hoehe der Karte, die Breite dem 3:2-Format. */
-.ahead-motif-flag .ai-wrap{height:100%!important;width:auto!important;aspect-ratio:3/2;flex:none;max-width:100%}
-.ahead-motif-flag .ai-svg{width:100%;height:100%;display:block}
+/* Kopf-Flagge: statisches Band ueber die ganze Motivflaeche (flaggenBandHtml,
+   Nutzer 2026-09-23 "laenglich ... in den Hintergrund verlaufen"). Die
+   Flagge selbst steht rechts ganz sichtbar, der Verlauf kommt von der Maske
+   an .ahead-motif. */
+.ahead-motif-band{display:block;width:100%;height:100%;opacity:.95}
 .atitle{font-weight:800;letter-spacing:-.6px}
 .atitle .score-badge{font-size:var(--fs-xl);border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
 .afull{font:500 var(--fs-md)/1.3 var(--ff-text);color:var(--t2);margin-top:4px}
@@ -5707,11 +5707,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-545 - FX-Flagge im Wisch als eigenstaendiges Bild (auf dem iPad war sie unsichtbar, die Motive liefen)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-546 - Kopf-Bilder als statisches breites Band mit Verlauf in die Kartenfarbe, statische Wisch-Flagge, alle Einblendungen beim Wechsel 1 s."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-545</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-546</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -17054,3 +17054,40 @@ dekodiert, jeden `url(#…)`/`href="#…"` selbst definiert und ohne Mischmodus/
 ai-Klassen auskommt. Gegenprobe `--gegenprobe-flagge` (Inline-Flagge) → rot.
 ⚠ Grenze: der Wächter läuft in Chromium und kann das Safari-Verhalten nicht
 selbst sehen — er hält nur die Bauform fest, die den Unterschied ausmacht.
+
+## 2026-09-23 — Kopf-Bilder als statisches Band, statischer Wisch, Einblendungen 1 s (VERSION-CHECK-546)
+
+Nutzer: *„Ich will dass die gezeichnete Flagge also generell die ganzen Bilder
+oben rechts ohne Animation sind und länglich und dann in den Hintergrund von
+der Farbe her verlaufen. Auch die Übergänge mit einer statischen Zeichnung.
+Und mach alle Übergangsanimationen 1 Sekunde lang, manche sind glaube ich
+kürzer."*
+
+Rückfragen (mit Messwerten gestellt):
+- „länglich" → **„Breites Band, Muster verlängert"** (gegen „gestreckt" und
+  „oben/unten beschnitten").
+- 1 s → **„Einblendungen auf 1 s, Panel bleibt"**. Gemessen vorher: Wisch
+  überall schon 1,0 s; kürzer waren Stapel-Panel 0,18 s, Seite 0,3 s,
+  Asset-Inhalt 0,26 s, Dashboard-Karten 0,42 s, Datenbalken 0,55 s, dazu
+  Trend-Linie 0,9 s, Trend-Punkte/-Halo 0,35 s, Listenzeilen 0,4 s, COT-Balken
+  0,5 s.
+
+Umsetzung:
+- `flaggenBandHtml()`: Flagge unverzerrt am rechten Ende eines 144×24-Bandes,
+  links davon eine 0,4 Einheiten schmale Randspalte der Flagge in die Breite
+  gezogen (verschachteltes `<svg preserveAspectRatio="none">`). USD nimmt die
+  rechte Spalte (links sitzt das Sternenfeld). `xMaxYMid slice`: Höhe füllt
+  die Karte, Flagge rechts ganz sichtbar (gemessen 404×113 Band in der
+  404×113-Fläche), links schneidet die Fläche ab; Masken-Verlauf 0→55 %.
+  Keine Welle, kein Glanz, keine Falten. Die Motive (Münze, Barren, Fass,
+  Bulle & Bär) waren schon statisch.
+- Wisch-Flagge: statisches Bild — nur Flagge + feiner Rand, keine SMIL mehr.
+- `--enter-dur:1s` für alle Einblendungen beim Wechsel; `anim-enter` hält
+  1,3 s statt 0,9 s (sonst würde die 1-s-Animation samt 0,15 s Staffelung
+  abgeschnitten).
+
+Wächter: `check/symbole.js` — Kopf-Band ganz in der Karte und ohne
+Welle/Glanz/Animation; `check/uebergang.js` — kein `<animate` im
+Wisch-Flaggenbild, Seiten-/Karten-Einblendung und `WISCH_MS` = 1 s.
+Gegenproben: `--enter-dur:.3s` → `EINBLENDUNG NICHT 1 S`; Band mit
+`<animate>` → `KOPF-FLAGGE BEWEGT SICH`.

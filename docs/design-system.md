@@ -569,9 +569,10 @@ Weiß in Flaggen = `AI_FLAG_WHITE`. Geprüft von `check/symbole.js`.
 
 ### Wisch-Übergang und Kartensymbole (seit 2026-09-23)
 Jeder Seitenwechsel wischt (1,0 s seit dem Nachtrag 2026-09-23, vorher 0,5 s; Bild = Flagge/Motiv/Szene), Fenster nicht.
+Alle Einblendungen beim Wechsel (Seite, Asset-Inhalt, Dashboard-Karten, Datenbalken, Trend-Linien, Listen) laufen `var(--enter-dur)` = 1 s wie der Wisch; `anim-enter` bleibt 1,3 s. Ausnahme per Nutzerwahl: das Stapel-Panel (0,18 s).
 ⚠ Der Wisch klont KEIN DOM und zeigt KEINE leere Fläche: die alte Seite selbst (Originalknoten an ihrem Platz, volles CSS) bleibt 1 s obenauf und wird an der Bildmitte weggeschnitten. Geklonte Seiten verlieren außerhalb ihrer Vorfahren das CSS (543 → 544), ein Vorhang in Seitenfarbe sah aus wie ein weißer Hänger.
 ⚠ Die FX-Flagge im Wisch ist ein eigenständiges `<img>` (SVG-Daten-URL mit kopierten Defs, `wischFlaggeHtml`) — als Inline-SVG mit Verweisen in die geteilten Defs, Mischmodus und Seiten-CSS in einer bewegten Ebene zeichnete Safari/iPad sie nicht (545).
-⚠ Flaggen: Sterne sind Sterne (`aiStars`), nie Punkte — auch klein. Die Kopf-Flagge folgt der Kartenhöhe und liegt ganz in der Karte. Der Flaggenrand (`#aiRim`) trägt `vector-effect` am Defs-Pfad, sonst wächst er mit der Flagge.
+⚠ Flaggen: Sterne sind Sterne (`aiStars`), nie Punkte — auch klein. Die Kopf-Flagge ist ein STATISCHES breites Band (`flaggenBandHtml`): Flagge unverzerrt rechts, eine Randspalte nach links gezogen (USD: rechte Spalte), Maske lässt es in die Kartenfarbe auslaufen. Keine Welle/kein Glanz oben rechts, auch nicht im Wisch (546). Der Flaggenrand (`#aiRim`) trägt `vector-effect` am Defs-Pfad, sonst wächst er mit der Flagge.
 Jeder Kartenkopf trägt genau EIN Symbol aus `ICONS`, zugeordnet über
 `KARTEN_ICONS` — bei einer neuen Karte ggf. dort eine Regel ergänzen, sonst
 bekommt sie das neutrale `layers`. Keine Emojis in Reitern/Titeln.

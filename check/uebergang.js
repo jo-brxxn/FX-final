@@ -63,7 +63,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       const txt = decodeURIComponent(fim.src.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
       const def = new Set([...txt.matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
       const refs = [...txt.matchAll(/(?:url\(#|href="#)([^)"]+)/g)].map(m => m[1]);
-      flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt) };
+      flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt), bewegt: /<animate/.test(txt) };
     }
     const o = document.querySelector('.wisch'), alt = document.querySelector('.wisch-alt');
     // Gegenprobe: das Verhalten der 1. Fassung nachstellen (Seite ausserhalb
@@ -88,6 +88,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     else {
       if (!fl.ok) fail('WISCH-FLAGGE LAEDT NICHT', 'das Flaggenbild dekodiert nicht');
       if (fl.fehlend.length) fail('WISCH-FLAGGE VERWEIST NACH AUSSEN', `nicht im Bild definiert: ${fl.fehlend.join(', ')} - ein Bild sieht die Defs der Seite nicht`);
+      if (fl.bewegt) fail('WISCH-FLAGGE BEWEGT SICH', 'SMIL-Animation im Flaggenbild - verlangt ist eine statische Zeichnung (Nutzer 2026-09-23)');
       if (fl.blend) fail('WISCH-FLAGGE BRAUCHT SEITEN-CSS', 'Mischmodus oder ai-Klassen im Bild - Seiten-CSS wirkt in einem <img> nicht');
     }
   }
@@ -129,6 +130,11 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   const w4 = await p.evaluate(() => ({ da: !!document.querySelector('.wisch'), bild: !!document.querySelector('.wisch .wisch-motiv svg, .wisch .wisch-flagge'), alt: (document.querySelector('.wisch-alt') || {}).id }));
   if (!w4.da) fail('KEIN WISCH BEI SEITENWECHSEL', 'Assets -> Dashboard ohne Wisch');
   if (w4.da && w4.alt !== 'pgCur') fail('ALTE SEITE FEHLT', `Assets -> Dashboard: obenauf liegt ${w4.alt || 'nichts'} statt #pgCur`);
+  const ein = await p.evaluate(() => { const pg = document.getElementById('pgDash'), dw = document.querySelector('#dashWidgets>.dash-zone>.dw');
+    const d = e => e ? parseFloat(getComputedStyle(e).animationDuration) : null;
+    return { seite: d(pg), karte: d(dw), wisch: WISCH_MS / 1000 }; });
+  if (ein.seite !== 1 || (ein.karte !== null && ein.karte !== 1)) fail('EINBLENDUNG NICHT 1 S', `Seite ${ein.seite}s, Dashboard-Karte ${ein.karte}s - verlangt 1 s wie der Wisch (Nutzer 2026-09-23)`);
+  if (ein.wisch !== 1) fail('WISCH NICHT 1 S', `WISCH_MS = ${ein.wisch * 1000}`);
   await p.waitForTimeout(dauer + 400);
   const w4b = await p.evaluate(() => ({ cur: document.getElementById('pgCur').style.display, dash: document.getElementById('pgDash').style.display, alt: document.querySelectorAll('.wisch-alt').length }));
   if (w4b.cur !== 'none' || w4b.dash !== 'block' || w4b.alt) fail('SEITEN NACH DEM WISCH FALSCH', `pgCur=${w4b.cur}, pgDash=${w4b.dash}, ${w4b.alt} .wisch-alt`);

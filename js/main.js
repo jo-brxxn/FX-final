@@ -7621,10 +7621,33 @@ const SEITEN_SZENEN=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST,
 // Gruppe -> Motiv. FX: die grosse Flagge der Waehrung (derselbe Baustein wie
 // links neben dem Namen). Aktien und Renditen bekommen Bulle & Baer.
 const MOTIV_JE_KLASSE={crypto:'coin',metal:'bars',energy:'barrel',index:'bullbear',stock:'bullbear',yield:'bullbear'};
+// Kopf-Flagge als STATISCHES, breites Band (Nutzer 2026-09-23: "die
+// gezeichnete Flagge also generell die ganzen Bilder oben rechts ohne
+// Animation ... laenglich und dann in den Hintergrund von der Farbe her
+// verlaufen"; per Rueckfrage "Breites Band, Muster verlaengert").
+// Die Flagge steht unverzerrt am rechten Ende; nach links wird EINE schmale
+// Spalte von ihr in die Breite gezogen - Streifen, Grundfarbe und Kreuzbalken
+// laufen so weiter, Sterne/Kreuz/Scheibe bleiben unverzerrt. Die Spalte ist
+// die linke Kante der Flagge; nur bei USD die rechte (links steht dort das
+// Sternenfeld, gestreckt wuerden die Sterne zu Strichen).
+// preserveAspectRatio "xMaxYMid slice": die Hoehe fuellt die Karte, die
+// Flagge bleibt rechts ganz sichtbar, links schneidet die Flaeche das Band
+// ab, und die Maske von .ahead-motif laesst es in die Kartenfarbe auslaufen.
+// Keine Welle, kein Glanz, keine Falten - bewusst ohne Animation.
+const BAND_SPALTE={USD:35.5};
+function flaggenBandHtml(id){
+  if(AI_FLAG_IDS.indexOf(id)===-1)return'';
+  aiEnsureDefs();
+  const L=108,sx=BAND_SPALTE[id]!=null?BAND_SPALTE[id]:.1;
+  return'<svg class="ahead-motif-band" viewBox="0 0 144 24" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">'
+    +'<g filter="url(#aiDuo)">'
+    +`<svg x="0" y="0" width="${L+.3}" height="24" viewBox="${sx} 0 .4 24" preserveAspectRatio="none"><use href="#ai-${id}" width="36" height="24"/></svg>`
+    +`<use href="#ai-${id}" x="${L}" y="0" width="36" height="24"/></g></svg>`;
+}
 function assetMotivHtml(id){
   const cls=assetCls(id);
   let inner='';
-  if(cls==='fx'){const f=assetIconHtml(id,90,true);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}  // Groesse legt das CSS fest (.ahead-motif-flag .ai-wrap: Kartenhoehe)
+  if(cls==='fx'){const f=flaggenBandHtml(id);if(f)inner=f;}
   else{const k=MOTIV_JE_KLASSE[cls];if(k)inner=ASSET_MOTIVE[k];}
   return inner?'<div class="ahead-motif ahead-motif-'+(cls||'x')+'" aria-hidden="true">'+inner+'</div>':'';
 }
@@ -9173,20 +9196,20 @@ function wischErlaubt(){
 // wie ein Foto behandelt - so wie die Motive, die auf dem iPad laufen.
 // Scheitert das Bild trotzdem (onerror), faellt es auf die Inline-Flagge zurueck.
 function wischFlaggeHtml(id,h){
+  // Statisch (Nutzer 2026-09-23: "Auch die Uebergaenge mit einer statischen
+  // Zeichnung"): keine Welle, kein Glanz, keine Falten - nur die gezeichnete
+  // Flagge mit feinem Rand. Das haelt das Bild ausserdem klein (vorher ~70 kB
+  // wegen der Wellen-Stuetzbilder).
   const inline=assetIconHtml(id,h,true);if(!inline)return'';
   if(AI_FLAG_IDS.indexOf(id)===-1)return inline;
   try{
     const ser=new XMLSerializer(),q=sel=>document.querySelector('#aiDefs '+sel);
-    const teile=['#aiUjA','#aiUjB','#aiWave','#aiFoldG','#aiShadeG','#aiSheenG','#aiDuo','#aiUJ','#ai-'+id].map(q);
+    const teile=['#aiUjA','#aiUjB','#aiDuo','#aiUJ','#ai-'+id].map(q);
     if(teile.some(t=>!t))return inline;
-    const rand=q('#aiRim').cloneNode(true);rand.removeAttribute('id');
-    rand.setAttribute('stroke','#9DB8DE');rand.setAttribute('stroke-width','1.5');
     const w=Math.round(h*1.5);
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" width="${w}" height="${h}"><defs>${teile.map(t=>ser.serializeToString(t)).join('')}</defs>`
-      +`<g clip-path="url(#aiWave)"><use href="#ai-${id}" filter="url(#aiDuo)"/>`
-      +`<rect width="36" height="24" fill="url(#aiFoldG)"/><rect width="36" height="24" fill="url(#aiShadeG)"/>`
-      +`<rect width="14" height="24" fill="url(#aiSheenG)" opacity=".5"><animateTransform attributeName="transform" type="translate" values="-14 0;36 0;36 0" keyTimes="0;.55;1" dur="3.4s" repeatCount="indefinite"/></rect></g>`
-      +ser.serializeToString(rand)+'</svg>';
+      +`<use href="#ai-${id}" width="36" height="24" filter="url(#aiDuo)"/>`
+      +`<rect x=".2" y=".2" width="35.6" height="23.6" fill="none" stroke="#9DB8DE" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
     return`<img class="wisch-flagge-img" alt="" width="${w}" height="${h}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" onerror="this.outerHTML=this.dataset.ersatz" data-ersatz="${escH(inline)}">`;
   }catch(e){return inline;}
 }
@@ -21268,7 +21291,7 @@ function triggerEnterAnim(){
   void b.offsetWidth;                 // Reflow, damit ein erneuter Wechsel neu startet
   b.classList.add('anim-enter');
   clearTimeout(_animEnterT);
-  _animEnterT=setTimeout(()=>b.classList.remove('anim-enter'),900);
+  _animEnterT=setTimeout(()=>b.classList.remove('anim-enter'),1300);  // >= 1 s Einblendung + 0,15 s Staffelung (Nutzer 2026-09-23: alle Uebergaenge 1 s)
 }
 // Overview: eine Seite, eine Weltkugel. Bewusst OHNE Karten, Kennzahlen
 // oder Regler - der Nutzer hat "mach da einfach die Weltkugel" gesagt, und
@@ -22538,7 +22561,7 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,
+  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,flaggenBandHtml,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,

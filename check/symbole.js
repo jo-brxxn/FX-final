@@ -138,11 +138,14 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     r.out.forEach(([t, n]) => { koepfe++; if (n !== 1) fail('KARTENSYMBOL', `${s}: "${t}" hat ${n} Symbole (verlangt genau 1)`); });
     r.emoji.forEach(e => fail('EMOJI IM REITER', `${s}: "${e}"`));
     if (s === 'sym:USD') {
-      const k = await p.evaluate(gp => { const a = document.querySelector('.ahead'), f = document.querySelector('.ahead-motif-flag .ai-wrap');
-        if (!a || !f) return null; if (gp) { f.style.setProperty('height', '340px', 'important'); f.style.setProperty('width', '510px', 'important'); }
+      const k = await p.evaluate(gp => { const a = document.querySelector('.ahead'), f = document.querySelector('.ahead-motif-band');
+        if (!a || !f) return null; if (gp) { f.style.height = '340px'; f.style.width = '510px'; }
         const ar = a.getBoundingClientRect(), fr = f.getBoundingClientRect();
-        return { ar: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round), fr: [fr.left, fr.top, fr.right, fr.bottom].map(Math.round) }; }, GP_STERNE);
-      if (!k) fail('KOPF-FLAGGE FEHLT', 'keine .ahead-motif-flag auf der USD-Seite');
+        // statisch: keine Welle, kein Glanz, keine SMIL-/CSS-Animation im Band
+        const bewegt = !!f.querySelector('[clip-path*="aiWave"], .ai-sheen, animate, animateTransform') || f.getAnimations({ subtree: true }).length > 0;
+        return { bewegt, ar: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round), fr: [fr.left, fr.top, fr.right, fr.bottom].map(Math.round) }; }, GP_STERNE);
+      if (k && k.bewegt) fail('KOPF-FLAGGE BEWEGT SICH', 'das Band oben rechts traegt Welle/Glanz/Animation - verlangt ist eine statische Zeichnung (Nutzer 2026-09-23)');
+      if (!k) fail('KOPF-FLAGGE FEHLT', 'kein .ahead-motif-band auf der USD-Seite');
       else if (k.fr[0] < k.ar[0] || k.fr[1] < k.ar[1] || k.fr[2] > k.ar[2] || k.fr[3] > k.ar[3])
         fail('KOPF-FLAGGE ABGESCHNITTEN', `Flagge ${k.fr.join(',')} ragt aus der Kopfkarte ${k.ar.join(',')}`);
     }
