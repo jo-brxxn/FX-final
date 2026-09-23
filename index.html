@@ -5442,25 +5442,38 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 #navSidebar>.np.np-stack.open:not(.on):not(.has-active){background:rgba(255,255,255,.05)}
 @media (hover:hover){#navSidebar>.np:hover:not(.on){background:rgba(255,255,255,.07);color:var(--t0)}
   #navSidebar>.np:hover:not(.on) .np-ic{color:var(--t0)}}
-/* Gruppen (Insights, eigene Stapel): "einschieben aber halt richtig klein" */
-#navSidebar .np-sub-wrap:not(.np-assets){gap:2px;margin:0 0 4px}
-#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub{flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  width:100%;padding:5px 1px;border:none;border-radius:8px;text-align:center;
-  font:600 var(--fs-2xs)/1.1 var(--ff-text);color:var(--t3)}
-#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub .np-ic,#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub .np-ic svg{width:14px;height:14px}
-#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub.on{background:rgba(var(--ui-act-rgb),.28);color:var(--t0)}
-#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub.on .np-ic{color:var(--t0)}
-/* Asset-Liste: Panel NEBEN der Leiste. top setzt syncNavExpanded() nicht -
-   die Leiste beginnt immer direkt unter der Kopfzeile, das ist top der
-   Leiste selbst; dafuer reicht eine Variable, die renderTabBar misst. */
-#navSidebar .np-sub-wrap.np-assets{position:fixed;left:76px;top:var(--nav-top,54px);bottom:0;width:250px;
-  max-height:none;padding:12px 6px 16px;gap:1px;overflow-y:auto;overflow-x:hidden;z-index:60;
+/* ── Stapel-Panels ─────────────────────────────────────────────────────
+   Seit 2026-09-23 oeffnet JEDER Stapel (Insights, eigene Stapel, Assets)
+   als Panel NEBEN der Leiste - Nutzer: "Mach bei insights den Drop out
+   bitte genau so wie bei Assets also der Stapel". Vorher klappte Insights
+   klein unter dem Symbol auf (Stand 2026-09-22, "einschieben aber halt
+   richtig klein"). Oberkante = --nav-top, gemessen in syncNavExpanded().
+   ⚠ Breite = Inhalt (max-content): im Asset-Panel stehen Name und Score
+   dadurch eng beisammen (Nutzer 2026-09-23: "der Name des Assets und der
+   Score enger beisammen"), die Scores bleiben trotzdem untereinander
+   buendig - ein Score direkt hinter jedem Namen stuende im Zickzack. */
+#navSidebar .np-sub-wrap{position:fixed;left:76px;top:var(--nav-top,54px);bottom:0;
+  width:max-content;min-width:180px;max-width:min(280px,calc(100vw - 76px));
+  max-height:none;margin:0;padding:12px 8px 16px;gap:2px;overflow-y:auto;overflow-x:hidden;z-index:60;
   background:var(--rail-bg);border-right:1px solid var(--rail-edge);box-shadow:14px 0 34px rgba(8,15,30,.32);
   transform:translateX(-10px);opacity:0;visibility:hidden;
   transition:transform .18s cubic-bezier(.4,0,.2,1),opacity .14s ease,visibility .18s}
-#navSidebar .np-sub-wrap.np-assets.open{transform:none;opacity:1;visibility:visible}
+#navSidebar .np-sub-wrap.open{transform:none;opacity:1;visibility:visible}
+/* Eintraege im Panel: Zeile mit Symbol + Name, wie die Asset-Zeilen. */
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;
+  width:100%;padding:8px 12px;border:none;border-radius:8px;text-align:left;white-space:nowrap;
+  font:600 var(--fs-sm)/1.2 var(--ff-text);color:var(--t2)}
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub .np-ic,#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub .np-ic svg{width:16px;height:16px}
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub .np-lbl{white-space:nowrap}
+@media (hover:hover){#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub:hover:not(.on){background:rgba(255,255,255,.07);color:var(--t0)}}
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub.on{background:rgba(var(--ui-act-rgb),.28);color:var(--t0)}
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub.on .np-ic{color:var(--t0)}
+/* Asset-Panel: Score direkt rechts neben der Namensspalte, kleiner Abstand. */
+#navSidebar .np-sub-wrap.np-assets{padding:12px 6px 16px;min-width:0}
+#navSidebar .np-assets .ab.np-asset{gap:8px;padding-right:12px}
+#navSidebar .np-assets .np .np-score{margin-left:10px}
 @media(max-width:760px){#navSidebar{width:64px;min-width:64px;max-width:64px;padding:8px 4px}
-  #navSidebar .np-sub-wrap.np-assets{left:64px;width:min(250px,calc(100vw - 64px))}}
+  #navSidebar .np-sub-wrap{left:64px;max-width:calc(100vw - 64px)}}
 
 /* ── Karten: fast weiss, 1px-Rand, weicher Schatten, 14px Radius ── */
 .rub-card,.ab-tile,.ab-ktile,.ab-ntile,.ab-ptile,.abc-cal,.dw,.cot-card,.aqn,.pov-card,.wt-card,.rg-card,.pcc,.nc{
@@ -5691,11 +5704,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-539 - Bild-Design nach Nutzer-Vorlage: helle Karten mit Icon-Kopf, hellgraue Umschalter mit blauem Aktivzustand, Zahlen in Sans, feste Icon-Leiste mit Asset-Panel, Asset-Kopf als Karte mit Motiv je Gruppe, Kopfreihe 2x2. Navy-Koepfe von 538 zurueckgebaut."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-540 - Insights (und jeder Stapel) oeffnet jetzt als Panel neben der Leiste wie Assets; im Asset-Panel stehen Name und Score enger beisammen (Panel so breit wie der Inhalt, Scores weiter buendig)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-539</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-540</span>
     </span>
   </div>
   <div class="hdr-r">

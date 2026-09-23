@@ -16799,3 +16799,23 @@ Eine zusätzliche dunklere Stufe `MOTIV_DK` für Hörner, Krallen und Brauen.
 | `kartenlook` | Schattenkante 1,273:1 (verlangt 1,28) | dunklerer Grund → Schattenlagen je eine Spur kräftiger, jetzt 1,35:1 |
 | `typo` | Score-Abzeichen im Titel 27,36 px | `.72em` → `--fs-xl` (24 px) |
 | `cards` + `layout` | auf 390 px Seite 401 px breit | Kopfzeilen-Abstände/Suchbreite aus dem Bild galten auch auf dem Handy → nur ab 761 px |
+
+---
+
+## 2026-09-23 — Stapel-Panels für alle Gruppen, engeres Asset-Panel (VERSION-CHECK-540)
+
+Nutzer: *„Mach bei insights den Drop out bitte genau so wie bei Assets also der
+Stapel. Und beim Drop out vom Stapel von Assets kann der Name des Assets und der
+Score enger beisammen stehen"*.
+
+- Insights öffnete seit gestern klein eingeschoben unter dem Symbol; jetzt
+  dasselbe Panel wie Assets. Umgesetzt für **jeden** Stapel (eigene Stapel
+  auch), damit Gruppen einheitlich funktionieren. `syncNavExpanded()` setzt
+  keine gemessene Inline-Höhe mehr, `showTab()` öffnet keinen Stapel mehr von
+  selbst, Tipp daneben und Wahl im Panel schließen.
+- Asset-Panel: vorher feste 250 px, Score ganz rechts. Jetzt so breit wie der
+  Inhalt (gemessen ~165 px): Score direkt neben der Namensspalte, weiterhin
+  bündig — bewusst nicht direkt hinter jedem Namen (Zickzack, schlechter
+  vergleichbar).
+- `check/nav.js` E3 prüft das Stapel-Panel (fest positioniert, neben der
+  Leiste, schließt nach der Wahl). Gegenprobe mit `position:relative`: rot.

@@ -187,6 +187,20 @@ const zustand=p=>p.evaluate(()=>({page:curPage,
     await p.mouse.click(1000,30);await p.waitForTimeout(300);
     const e5=await p.evaluate(()=>document.getElementById('sidebar').classList.contains('open'));
     pruefe(!e5,'Ein Klick neben das Asset-Panel schliesst es nicht');
+    // ── E3: jeder andere Stapel (Insights ...) ist seit 2026-09-23 dasselbe
+    // Panel wie Assets (Nutzer: "genau so wie bei Assets also der Stapel").
+    await p.click('#navSidebar .np-stack:not(.np-assetstack)');await p.waitForTimeout(350);
+    const e6=await p.evaluate(()=>{const w=document.querySelector('#navSidebar .np-sub-wrap.open:not(.np-assets)');if(!w)return null;
+      const r=w.getBoundingClientRect(),n=document.getElementById('navSidebar').getBoundingClientRect();
+      return{fest:getComputedStyle(w).position==='fixed',neben:Math.abs(r.left-n.right)<=2,eintraege:w.querySelectorAll('.np-sub').length};});
+    pruefe(!!e6,'Ein Klick auf einen Stapel (Insights) oeffnet kein Panel');
+    if(e6){
+      pruefe(e6.fest&&e6.neben,'Der Stapel oeffnet nicht als Panel neben der Leiste (wie Assets), sondern anders');
+      pruefe(e6.eintraege>0,'Im Stapel-Panel steht kein Eintrag');
+      await p.click('#navSidebar .np-sub-wrap.open:not(.np-assets) .np-sub >> nth=0');await p.waitForTimeout(350);
+      const e7=await p.evaluate(()=>!!document.querySelector('#navSidebar .np-sub-wrap.open'));
+      pruefe(!e7,'Nach der Wahl im Stapel-Panel bleibt es offen');
+    }
     await ctx.close();
   }
 

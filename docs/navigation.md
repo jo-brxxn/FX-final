@@ -17,8 +17,16 @@ per Rückfrage festgelegt:
   Umbenennungen erhalten — nichts wurde umbenannt oder umsortiert.
 - **Aktiver Eintrag = blaue Kachel** (`--rail-on`); ein Stapel, dessen
   Mitglied aktiv ist (`.has-active`), sieht genauso aus.
-- **Gruppen (Insights, eigene Stapel) klappen inline auf, „richtig klein"**:
-  14-px-Symbol, Beschriftung in `--fs-2xs`, darunter eingeschoben.
+- **Jeder Stapel öffnet als Panel neben der Leiste** (seit 2026-09-23, Nutzer:
+  *„Mach bei insights den Drop out bitte genau so wie bei Assets also der
+  Stapel"*) — Insights, eigene Stapel und Assets identisch: Einträge als Zeile
+  mit Symbol + Name, auf per Tipp, zu nach der Wahl (`onTabClick`/`sbClick`)
+  und beim Tipp daneben. Vom 2026-09-22 bis dahin klappten Gruppen „richtig
+  klein" unter dem Symbol auf. Kein Stapel öffnet mehr von selbst beim
+  Seitenwechsel; hervorgehoben wird er über `.has-active`.
+- **Asset-Panel so breit wie der Inhalt** (`width:max-content`, 2026-09-23:
+  *„der Name des Assets und der Score enger beisammen"*): der Score steht
+  direkt rechts neben der Namensspalte und bleibt untereinander bündig.
 - **Die Asset-Liste ist ein Panel NEBEN der Leiste** (`#sidebar.np-assets`,
   `position:fixed`, 250 px, Oberkante = `--nav-top`, von `syncNavExpanded()`
   gemessen). Auf per Tipp auf „Assets", zu nach der Asset-Wahl (`sbClick`,

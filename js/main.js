@@ -20826,23 +20826,14 @@ function syncNavExpanded(){
   // gewinnen gegen jeden Selektor).
   // Oberkante der Leiste = Oberkante des Asset-Panels (position:fixed).
   try{bar.style.setProperty('--nav-top',Math.round(bar.getBoundingClientRect().top)+'px');}catch(e){}
-  const iconLeiste=bar.classList.contains('nav-collapsed')||window.innerWidth<760;
+  // ⚠ Seit 2026-09-23 ist JEDER Stapel ein Ausklapp-PANEL neben der Leiste
+  // (Nutzer: "Mach bei insights den Drop out bitte genau so wie bei Assets
+  // also der Stapel") - position:fixed, Hoehe per CSS. Keine Inline-Hoehe
+  // mehr: sie deckelte das Panel auf die gemessene Listenhoehe. Die fruehere
+  // Messung fuer das Inline-Aufklappen ist damit entfallen.
   bar.querySelectorAll('.np-sub-wrap').forEach(w=>{
-    // Die Asset-Liste ist seit 2026-09-22 ein Ausklapp-PANEL neben der
-    // Leiste (position:fixed, Hoehe per CSS) - keine Inline-Hoehe setzen,
-    // sonst waere das Panel auf die gemessene Listenhoehe gedeckelt.
-    if(w.dataset.stack===ASSET_STACK_ID){w.classList.toggle('open',w.dataset.stack===expandedStack);w.style.maxHeight='';return;}
-    const soll=!iconLeiste&&w.dataset.stack===expandedStack;
     w.classList.toggle('open',w.dataset.stack===expandedStack);
-    if(iconLeiste){w.style.maxHeight='';return;}
-    if(soll){
-      // Erst .open setzen (hebt max-width:0 auf), DANN messen: im
-      // zugeklappten Zustand ist der Wrapper 0 breit, jede Zeile wuerde
-      // umbrechen und scrollHeight einen viel zu grossen Wert liefern.
-      w.style.maxHeight=w.scrollHeight+'px';
-    }else{
-      w.style.maxHeight='';
-    }
+    w.style.maxHeight='';
   });
 }
 // Stapel (z.B. "Insights") klappen sich INLINE unterhalb ihres Buttons auf
@@ -20899,7 +20890,9 @@ function tabPressStart(e,kind,id){
   _tabPressTimer=setTimeout(()=>{_tabPressed=true;openTabMenu(kind,id,x,y);},500);
 }
 function tabPressEnd(){if(_tabPressTimer){clearTimeout(_tabPressTimer);_tabPressTimer=null;}}
-function onTabClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}selectTab(id);}
+function onTabClick(e,id){if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}selectTab(id);
+  // Panel nach der Wahl schliessen - auch wenn der Tab schon aktiv war.
+  if(expandedStack){expandedStack=null;syncNavExpanded();}}
 function onStackClick(e,id){
   if(_tabPressed){_tabPressed=false;if(e)e.preventDefault();return;}
   expandedStack=(expandedStack===id)?null:id;
@@ -21016,11 +21009,13 @@ function showTab(tab,btn,fxMode){
   // Der Assets-Stapel ist kein tabStacks-Eintrag, deshalb ein eigener Zweig -
   // er soll sich beim Wechsel auf die Assets-Seite genauso aufklappen wie
   // jeder echte Stapel bei seinem aktiven Tab.
-  const _st=stackOf(activeTabId);
   // ⚠ Seit 2026-09-22 klappt die Asset-Liste beim Wechsel auf die Asset-
   // Seite NICHT mehr auf: sie ist jetzt ein Panel UEBER dem Inhalt und
   // schliesst nach der Asset-Wahl (die genau hier durchlaeuft).
-  expandedStack=(activeTabId==='fx')?null:(_st?_st.id:null);
+  // Seit 2026-09-23 gilt das fuer JEDEN Stapel: alle sind Panels, und die
+  // Seitenwahl (die genau hier durchlaeuft) schliesst sie. Hervorgehoben
+  // bleibt der Stapel ueber .has-active.
+  expandedStack=null;
   // syncNavExpanded()+syncNavActive() statt eines vollen renderTabBar():
   // ein Neuaufbau per innerHTML wuerde einen gerade offenen Stapel sofort
   // und OHNE Animation schliessen (Nutzer-Bugreport 2026-08-31), weil ein
@@ -22056,7 +22051,8 @@ function navBleibtOffen(){return true;}
 // Leiste und Panel - wie jedes Ausklapp-Menue. Capture-Phase, damit es auch
 // dann greift, wenn der Inhalt den Klick selbst abfaengt.
 document.addEventListener('pointerdown',ev=>{
-  if(expandedStack!==ASSET_STACK_ID)return;
+  // Seit 2026-09-23 fuer JEDES Stapel-Panel, nicht nur Assets.
+  if(!expandedStack)return;
   const nav=document.getElementById('navSidebar');
   if(nav&&nav.contains(ev.target))return;
   expandedStack=null;syncNavExpanded();
