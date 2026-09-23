@@ -17138,3 +17138,40 @@ bei Pixeldichte 2 ist die Wisch-Flagge (das `<img>` aus 545) SICHTBAR
 ist damit hier nicht reproduziert; WebKitGTK rendert in Software (einzelne
 Bilder bis 5 s), Messungen zum „Hängen" sind hier deshalb wertlos. Kein
 dritter Blind-Fix — nächster Schritt ist eine Messung auf dem Gerät.
+
+## 2026-09-23 — Bugfix: Wisch zwischen Währungen auf dem iPad (VERSION-CHECK-548)
+
+Nutzer: *„Ok also am iPad gehen alle Übergänge außer der zwischen den
+Währungen."* Damit ist das Flaggenbild selbst entlastet (Seite → Währung
+zeigt dieselbe Flagge und geht). Übrig bleibt der eigene Pfad des
+Währungswechsels in `wischLos` (`art='dp'`).
+
+**Gemessen in WebKitGTK, Pixeldichte 2, 1000×695** — die beiden Pfade im
+Vergleich:
+
+| | Seitenwechsel (geht) | Währung → Währung (hängt) |
+|---|---|---|
+| Höhe der alten Seite obenauf | auf die Seitenfläche begrenzt (~642 px) | volle Inhaltshöhe **2594 px** |
+| Fläche bei Pixeldichte 2 | ~1840 × 1280 | ~1840 × 5190 ≈ **9,5 Mio. Pixel** |
+| Lage | im Seitenbereich | im scrollbaren `#detail` |
+
+In WebKitGTK selbst läuft der Wechsel sichtbar (Flagge da). Der iPad-Fehler
+ist hier also NICHT direkt reproduziert. Die Wahl fiel per Rückfrage auf
+„Pfad angleichen": der kaputte Pfad wird gebaut wie der funktionierende.
+Eine riesige fixe Ebene mit clip-path-Animation ist auf iOS bekanntermaßen
+teuer (Ebenenspeicher). Dass genau das die Ursache ist, bestätigt erst der
+Test auf dem iPad.
+
+**Fix:** die alte `.dp` zeigt nur ihren sichtbaren Ausschnitt: Höhe =
+sichtbarer Teil, `overflow:hidden`, der Scrollstand per `scrollTop`. Nach
+dem Umbau gemessen: 642 px hoch, scrollTop 400 bei zuvor gescrollter Seite;
+die rechte Hälfte im Wisch ist **pixelgleich** zum Stand vor dem Wechsel
+(0 von 1 003 300 Pixeln abweichend). Aus `#detail` herausnehmen ging nicht
+(`#detail .rub-card …`-Regeln fielen weg — der Fehler der 1. Fassung).
+
+**Fehlerklasse:** der zweite Pfad (Seitenwechsel) begrenzt die Höhe schon
+seit 544; weitere fixe Ebenen gibt es im Wisch nicht.
+
+**Wächter:** `check/uebergang.js` — die alte Seite ist im ersten Bild nicht
+höher als die sichtbare Seitenfläche. Gegenprobe `--gegenprobe-hoehe`
+(Höhe zurückgesetzt) → `ALTE SEITE ZU HOCH`.

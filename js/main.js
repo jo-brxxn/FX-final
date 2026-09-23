@@ -9301,7 +9301,17 @@ function wischLos(){
     const det=document.getElementById('detail');if(!det)return;
     alt=st.dp;art='dp';
     det.appendChild(alt);
-    wischAltLegen(alt,st.dpRect,st.dpRect.top);
+    // ⚠ Nur den SICHTBAREN Ausschnitt zeigen, wie beim Seitenwechsel (Nutzer
+    // 2026-09-23, iPad: "alle Uebergaenge gehen ausser der zwischen den
+    // Waehrungen"). Gemessen: die alte .dp lag mit voller Inhaltshoehe
+    // (2594 px, bei Pixeldichte 2 ~9,5 Mio. Pixel) als fixe Ebene mit
+    // clip-path-Animation obenauf - der Seitenwechsel dagegen mit ~640 px.
+    // Jetzt: Hoehe = sichtbarer Teil, der Rest per scrollTop verschoben.
+    const oben=Math.max(st.dpRect.top,ar.top),versatz=oben-st.dpRect.top;
+    alt.style.height=Math.max(0,Math.min(st.dpRect.bottom,ar.bottom)-oben)+'px';
+    alt.style.overflow='hidden';
+    wischAltLegen(alt,st.dpRect,oben);
+    alt.scrollTop=versatz;
   }
   if(!alt)return;                               // nichts hat sich geaendert
   _wischLaeuft=true;

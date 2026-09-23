@@ -21,6 +21,12 @@
 //   node check/uebergang.js [--gegenprobe]        (Wisch-Ebene faengt Klicks)
 //   node check/uebergang.js [--gegenprobe-kopie]  (alte Seite ausserhalb ihrer Vorfahren)
 //   node check/uebergang.js [--gegenprobe-flagge] (Inline-Flagge statt Bild)
+//   node check/uebergang.js [--gegenprobe-hoehe]  (alte .dp in voller Inhaltshoehe)
+// Nutzer 2026-09-23 (iPad): "alle Uebergaenge gehen ausser der zwischen den
+// Waehrungen". Gemessener Unterschied zum funktionierenden Seitenwechsel: die
+// alte .dp lag in VOLLER Inhaltshoehe (2594 px, ~9,5 Mio. Pixel bei
+// Pixeldichte 2) als fixe clip-path-Ebene obenauf. Geprueft wird, dass die
+// alte Seite nicht hoeher ist als die sichtbare Seitenflaeche.
 // Nutzer 2026-09-23 (iPad): "Alle Animationen beim Wechseln klappen ausser die
 // von fx also die Flaggen" - in Chromium sichtbar, nur WebKit zeichnete sie
 // nicht. Die Wisch-Flagge ist deshalb ein eigenstaendiges <img>; geprueft wird,
@@ -33,6 +39,7 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_KOPIE = process.argv.includes('--gegenprobe-kopie');
 const GP_FLAGGE = process.argv.includes('--gegenprobe-flagge');
+const GP_HOEHE = process.argv.includes('--gegenprobe-hoehe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -51,7 +58,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   //    kein Vorhang, echtes Panel zu.
   const refFont = await p.evaluate(() => getComputedStyle(document.querySelector('#detail .atitle')).fontSize);
   await p.tap('.np-assetstack'); await p.waitForTimeout(350);
-  const w1 = await p.evaluate(async ([gp, gpf]) => {
+  const w1 = await p.evaluate(async ([gp, gpf, gph]) => {
     const altDp = document.querySelector('#detail>.dp');
     document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click();
     await new Promise(r => requestAnimationFrame(r));      // erstes Bild nach dem Umbau
@@ -66,6 +73,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt), bewegt: /<animate/.test(txt) };
     }
     const o = document.querySelector('.wisch'), alt = document.querySelector('.wisch-alt');
+    if (gph && alt) { alt.style.height = ''; alt.style.overflow = ''; }
     // Gegenprobe: das Verhalten der 1. Fassung nachstellen (Seite ausserhalb
     // ihrer Vorfahren, ohne ids)
     if (gp && alt) { alt.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); document.body.appendChild(alt); }
@@ -79,8 +87,9 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       font: t ? getComputedStyle(t).fontSize : null,
       deckt: r.left <= area.left + 1 && r.right >= area.right - 1 && r.top <= area.top + 1 && r.bottom >= area.bottom - 1,
       grund: cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none',
-      neuVorn: document.querySelector('#detail>.dp') !== alt });
-  }, [GP_KOPIE, GP_FLAGGE]);
+      neuVorn: document.querySelector('#detail>.dp') !== alt,
+      hoehe: [Math.round(r.height), Math.round(area.height)] });
+  }, [GP_KOPIE, GP_FLAGGE, GP_HOEHE]);
   if (!w1.da) fail('KEIN WISCH', 'Asset-Wechsel USD -> GBP startet keinen Wisch-Uebergang');
   if (w1.da) {
     const fl = w1.flagge;
@@ -98,6 +107,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     if (!w1.original || !w1.imDetail || w1.font !== refFont) fail('ALTE SEITE OHNE CSS', `alte Seite ist ${w1.original ? '' : 'NICHT '}der Originalknoten, ${w1.imDetail ? '' : 'NICHT '}in #detail, Titel ${w1.font} statt ${refFont} - eine Kopie ausserhalb ihrer Vorfahren verliert ihr CSS (Bugreport 2026-09-23)`);
     if (!w1.deckt) fail('ALTE SEITE DECKT NICHT', 'die alte Seite deckt die Seitenflaeche im ersten Bild nicht ganz');
     if (!w1.grund) fail('ALTE SEITE DURCHSICHTIG', 'die alte Seite hat keinen eigenen Hintergrund - die neue scheint durch');
+    if (w1.hoehe[0] > w1.hoehe[1] + 1) fail('ALTE SEITE ZU HOCH', `die alte Seite liegt ${w1.hoehe[0]} px hoch obenauf, sichtbar sind ${w1.hoehe[1]} px - als volle Inhaltshoehe hing der Waehrungswechsel auf dem iPad (2026-09-23)`);
     if (!w1.neuVorn) fail('ALTE SEITE VOR DER NEUEN', 'die alte .dp steht in #detail VOR der neuen - getElementById/querySelector traefen die alte');
   }
   if (!w1.panelZu) fail('PANEL BLEIBT OFFEN', 'nach der Asset-Wahl steht das echte Panel noch offen');
@@ -157,6 +167,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   }
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_HOEHE) { const ok = F.some(x => x.startsWith('ALTE SEITE ZU HOCH')); console.log(ok ? 'uebergang --gegenprobe-hoehe: ok (alte .dp in voller Hoehe wird gemeldet)' : 'uebergang --gegenprobe-hoehe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_FLAGGE) { const ok = F.some(x => x.startsWith('WISCH-FLAGGE NICHT EIGENSTAENDIG')); console.log(ok ? 'uebergang --gegenprobe-flagge: ok (Inline-Flagge wird gemeldet)' : 'uebergang --gegenprobe-flagge: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { const ok = F.some(x => x.startsWith('INHALT WAEHREND')); console.log(ok ? 'uebergang --gegenprobe: ok (klickfangende Kopie wird gemeldet)' : 'uebergang --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
