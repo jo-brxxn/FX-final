@@ -188,18 +188,26 @@ function sollRealzins(c) {
     `${ohneGrund} Bedingung(en) melden "Not measured", sagen aber nicht warum. Die Begruendung IST die Auskunft (Grundsatz 4).`);
 
   // ── 5) Der Waehrungswechsel wirkt wirklich - mit echtem Mausklick ────
-  const vorher = await p.evaluate(() => ({ ccy: window.regimeCcy, txt: document.querySelector('.rg-rows').textContent.slice(0, 200) }));
+  // ⚠ Frueher nur die ersten 200 Zeichen: stehen die ersten Bedingungen fuer
+  // USD und JPY an einem Tag gleich da, meldete der Waechter "tut nichts",
+  // obwohl der Knopf wirkte (2026-09-21 und 2026-09-23 so rot, dazwischen
+  // gruen). Jetzt: der VOLLE Text, und nur wenn sich die Daten beider
+  // Waehrungen ueberhaupt unterscheiden - sonst muss die Seite wenigstens die
+  // neue Waehrung nennen.
+  const datenGleich = await p.evaluate(() => JSON.stringify(regimeStand('USD')) === JSON.stringify(regimeStand('JPY')));
+  const vorher = await p.evaluate(() => ({ ccy: window.regimeCcy, txt: document.querySelector('.rg-rows').textContent }));
   await p.click('.rg-ccy:has-text("JPY")', { timeout: 4000 }).catch(e => fail('WAEHRUNGSKNOPF NICHT KLICKBAR', String(e.message).split('\n')[0]));
   await p.waitForTimeout(600);
   const nachher = await p.evaluate(() => ({ ccy: window.regimeCcy,
     aktiv: (document.querySelector('.rg-ccy.on') || {}).textContent,
     gespeichert: localStorage.getItem('fxpro_regime_ccy'),
-    txt: document.querySelector('.rg-rows').textContent.slice(0, 200) }));
+    txt: document.querySelector('.rg-rows').textContent,
+    seite: (document.getElementById('pgRegime') || document.body).textContent }));
   if (nachher.ccy !== 'JPY') fail('WAEHRUNGSWECHSEL WIRKT NICHT', `nach dem Klick steht regimeCcy auf "${nachher.ccy}"`);
   if (nachher.aktiv !== 'JPY') fail('AKTIVER KNOPF FALSCH', `hervorgehoben ist "${nachher.aktiv}"`);
   if (nachher.gespeichert !== 'JPY') fail('WAHL NICHT GESPEICHERT',
     `localStorage fuehrt "${nachher.gespeichert}" - ohne das kommt die Wahl weder ueber einen Neustart noch ueber den Cloud-Sync (CLAUDE.md Regel 1).`);
-  if (vorher.txt === nachher.txt) fail('ANZEIGE AENDERT SICH NICHT',
+  if (datenGleich ? !/JPY/.test(nachher.seite) : vorher.txt === nachher.txt) fail('ANZEIGE AENDERT SICH NICHT',
     'nach dem Waehrungswechsel steht derselbe Text in den Bedingungen - der Knopf sieht aus, als tue er etwas, tut es aber nicht');
 
   // ── 6) Kein Ueberlauf, nichts Unlesbares, auf fuenf Breiten ──────────
