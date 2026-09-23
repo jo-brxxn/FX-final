@@ -17268,3 +17268,26 @@ Anlegen) rot, und gegen den echten Stand 549 (git worktree) ebenfalls rot
 (0 Bilder). (b) kein Filter im Flaggenbild und auf der bewegten Ebene —
 gegen 549 rot. `check/symbole.js` (E) — kein Filter im Kopf-Band;
 `--gegenprobe-band` rot.
+
+### Nachtrag 2026-09-23 — verworfen: Flagge sofort beim Tippen („Vorab-Wisch")
+
+Idee gegen das restliche „es hängt": die Flagge fährt schon beim Tippen los
+(transform-Animation läuft auch bei beschäftigtem Skript weiter), die neue
+Währung wird erst im nächsten Task aufgebaut, der Schnitt der alten Seite
+hängt sich mit derselben Startzeit an. Gebaut, gemessen (Chromium,
+Pixeldichte 2, Asset-Panel AUD → USD) und **komplett zurückgenommen**:
+
+| | Tippen → erste Bewegung | Schnittkante − Flaggenmitte |
+|---|---|---|
+| 550, CPU ×1 | 285 ms | 0 px |
+| Vorab, CPU ×1 | 272 ms | bis −907 px (alte Seite LINKS der Flagge sichtbar) |
+| 550, CPU ×4 | 1444 ms | 0–1 px |
+| Vorab, CPU ×4 | 1375 ms | Flagge schon ganz durch, bevor die neue Währung steht |
+
+Grund: auf einem langsamen Gerät dauert der Aufbau (4×: ~900 ms) länger als
+die Fahrt — genau dort, wo es helfen soll, fällt es auseinander; der Gewinn
+bis zur ersten Bewegung liegt bei ~15–70 ms. Die Startzeit der Flagge ist
+außerdem bei beschäftigtem Hauptthread noch nicht aufgelöst (`startTime`
+null), der Gleichlauf bricht. **Nicht wieder versuchen.** Das restliche
+Stillstehen nach dem Tippen ist die Aufbauzeit der Asset-Seite selbst
+(`renderDetail`) — wenn, dann dort ansetzen.
