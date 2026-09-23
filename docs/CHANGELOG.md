@@ -16819,3 +16819,69 @@ Score enger beisammen stehen"*.
   vergleichbar).
 - `check/nav.js` E3 prüft das Stapel-Panel (fest positioniert, neben der
   Leiste, schließt nach der Wahl). Gegenprobe mit `position:relative`: rot.
+
+---
+
+## 2026-09-23 — Flaggen, Wisch-Übergang, Stapel-Bug, History-Karte, Symbole (VERSION-CHECK-541)
+
+Nutzer (eine Nachricht, mehrere Punkte): Flaggen *„wenn die sich bewegt
+entstehen weisse Lücken … Animation muss cleaner sein und nicht so abgehakt"*,
+JPY *„Flaggenfarbe gleich dem Hintergrund"*, Glanz *„startet vor der Flagge und
+hört auch erst danach auf"*, neuer Wisch-Übergang beim Seitenwechsel, *„die
+Stapel erscheinen zwar mit Animation aber das Verschwinden ist manchmal ohne"*,
+History-Tabelle *„Zahlen teilweise außerhalb … nur maximal tief und hoch
+scrollen"*, Symbole für alle Karten. Rückfragen: Wisch-Bild = Motiv aus dem
+Kopf (+ Bulle/Bär neu, *„schau im Internet"*), 0,5 s, nicht überspringbar,
+Inhalt bedienbar, jeder Seitenwechsel, Seiten ohne Asset → Auswahltafel →
+„Stil 1: Szene"; Bulle & Bär → „B: Köpfe"; weiße Flaggen → „Kombi aus beidem".
+
+### 1. Flaggen — reproduziert, Wurzel behoben
+**Messung (Standbilder bei 0/400/900 ms):** Flagge in 4 bzw. 10 Streifen
+zerschnitten, jeder einzeln verschoben/gedreht/gestaucht → US-Streifen stufig,
+Schweizer Kreuz in versetzte Stücke gerissen, Unterkante Sägezahn mit Lücken.
+Glanz: von 107 px vor bis 100 px hinter einer 240-px-Flagge (ohne Clip).
+**Neu:** Flagge = EIN Stück; bewegt wird nur der Umriss (gemeinsame SMIL-
+Clip-Welle `#aiWave`, 24 Stützbilder, schneidet nur nach innen) plus ein
+Faltenschatten im selben Takt; Glanz und Falten liegen in der Welle; Rand
+`.ai-rim` (1 px, nicht skalierend); Weiß in Flaggen → `#EEF2F8`.
+SMIL statt CSS, weil iOS Safari `d` nicht per CSS animiert.
+**Bildrate Dashboard (18 Flaggen): alt 39–41 fps, neu 52–54 fps** — eine
+geteilte Animation statt 190 Streifengruppen.
+
+### 2. Stapel verschwinden ohne Animation — reproduziert
+Deckkraft beim Schließen abgetastet, acht Wege: Tipp daneben / Symbol erneut
+→ Zwischenwerte vorhanden; **Asset wählen / Insights-Seite wählen → 0
+Zwischenwerte**. Ursache: der Seitenaufbau blockiert (Long Tasks gemessen
+0,5–2,2 s in der Testumgebung), das Panel schloss erst danach bzw. seine
+Blende hing im Block. Behoben über den Wisch: das offene Panel ist Teil der
+Kopie und verschwindet dort, wo das Bild vorbeizieht.
+
+### 3. Wisch-Übergang (`wischStart`/`wischLos`)
+Schnappschuss (Kopie der alten Seite + offenes Panel, `inert`, Handler
+entfernt, `pointer-events:none`) → neue Seite wird darunter synchron gebaut →
+im nächsten Bild fährt das Bild 0,5 s von links nach rechts, die Kopie wird bis
+zur Bildmitte weggeschnitten. FX: große wehende Flagge (78 % Höhe — voll wäre
+breiter als der Bildschirm), Non-FX: Motiv, Seiten ohne Asset: Szene (Globus,
+Monitor, Lupe über Kerzen, Fadenkreuz, Fernglas, Kalender, Archivkasten).
+Aus bei „UI-Animationen aus", `prefers-reduced-motion` und in Prüfskripten
+(außer `check/uebergang.js`).
+
+### 4. History-Karte — reproduziert
+iPad-Breite: Liste 525 px Inhalt in 469 px Kasten, „+1.58" bis 29 px außerhalb,
+waagerecht verschiebbar, `overscroll-behavior:auto`. Ursache: seit dem
+2×2-Raster ist die Karte 523 px breit — knapp über der Container-Schwelle
+470 px des schmalen Layouts. Schwelle → 600 px, Liste `overflow-x:hidden`,
+`overscroll-behavior:none`, `touch-action:pan-y`. Mitgefunden:
+`.histp-val` hatte noch Monospace fest eingetragen → `--ff-num`.
+
+### 5. Symbole
+20 neue Liniensymbole, Zuordnung über den Titel (`kartenIcon`), eingesetzt
+per Beobachter in jeden Kartenkopf (`.rub-hdr`, `.dw-t`, `.cot-card-title`) —
+auch künftige Karten. Sentiment-Reiter: Emojis → Symbole. Doppelte ersetzt
+(Data/All notes beide Stift, Rate Probabilities Flamme).
+
+### Neue Wächter
+`check/symbole.js`, `check/uebergang.js` — beide mit Gegenprobe; beide
+Gegenproben waren im ersten Anlauf GRÜN (blind) und wurden korrigiert:
+Glanz auf fast weißem Grund nicht messbar → dunkler Testgrund; `p.click()`
+wartet über eine klickfangende Ebene hinweg → roher Koordinatenklick.

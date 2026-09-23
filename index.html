@@ -751,7 +751,12 @@ svg.ic{vertical-align:-2px;flex:none}
    die vierte Spalte "What moved it" war auf 315px Kartenbreite abgeschnitten,
    die Spaltenkoepfe standen ueber leerer Flaeche. .ab-col traegt schon
    container-type:inline-size, also greift @container hier direkt. */
-@container (max-width:470px){
+/* ⚠ 470 -> 600 px (2026-09-23): seit dem 2x2-Raster ist die Karte auf dem
+   iPad 523 px breit - knapp UEBER der alten Schwelle, also im breiten
+   Layout, dessen Zeilen (Wert · Forecast · Wirkung, alle nowrap) 525 px
+   brauchen. Gemessen: "+1.58" bis 29 px ausserhalb der Karte, Liste
+   waagerecht verschiebbar (Nutzer: "da stehen Zahlen teilweise ausserhalb"). */
+@container (max-width:600px){
   .ab-htile .hw-cols,.ab-htile .hw-day{grid-template-columns:minmax(78px,1fr) 52px 44px;gap:6px}
   .ab-htile .hw-cols span:nth-child(4){display:none}
   .ab-htile .hw-d4{grid-column:1/-1;margin-top:2px}
@@ -3854,7 +3859,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .histp-time{color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:var(--fs-2xs);text-align:right;white-space:nowrap}
 .histp-arrow{font-size:var(--fs-sm);font-weight:800;text-align:center}
 .histp-name{color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
-.histp-val{color:var(--t2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:var(--fs-xs);white-space:nowrap;text-align:right}
+.histp-val{color:var(--t2);font-family:var(--ff-num);font-size:var(--fs-xs);white-space:nowrap;text-align:right}
 .histp-val .act-good{color:var(--green)}.histp-val .act-bad{color:var(--red)}
 .histp-fc{color:var(--t3)}
 .histp-noevt{color:var(--t3);font-size:var(--fs-xs);padding:2px 2px 1px 54px}
@@ -5262,22 +5267,18 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
 /* Flaggen bekommen einen echten Schlagschatten + minimal gerundete Ecken -
    das hebt sie vom Untergrund ab, ohne bunt zu werden. */
 .ai-flag{filter:drop-shadow(0 .5px 1px rgba(15,25,40,.30))}
-.ai-strip{animation:aiWave 1.75s ease-in-out infinite;transform-box:view-box;will-change:transform}
-/* Vier Stuetzstellen statt zwei: bei nur Hoch/Runter interpoliert der Browser
-   linear durch die Mitte und die Bewegung knickt dort sichtbar um. Die
-   Drehung liegt eine Viertelperiode versetzt - sie ist am groessten, wenn die
-   Hoehe gerade durch null geht, also genau dort, wo die Welle am steilsten
-   ist. */
-@keyframes aiWave{
-  0%,100%{transform:translateY(calc(var(--ai-amp) * -.8px)) rotate(0deg) scaleY(calc(1 - var(--ai-amp) * .05))}
-  25%    {transform:translateY(0) rotate(calc(var(--ai-amp) * 1.5deg)) scaleY(1)}
-  50%    {transform:translateY(calc(var(--ai-amp) *  .8px)) rotate(0deg) scaleY(calc(1 + var(--ai-amp) * .05))}
-  75%    {transform:translateY(0) rotate(calc(var(--ai-amp) * -1.5deg)) scaleY(1)}
-}
+/* ⚠ Die Streifen-Welle (.ai-strip, @keyframes aiWave) ist am 2026-09-23
+   entfallen: sie zerschnitt die Flagge und riss Luecken auf (siehe
+   aiWellenPfad in js/main.js). Die Welle ist jetzt der gemeinsame Umriss
+   #aiWave, die Falten laufen als Verlauf #aiFoldG - beides SMIL in den Defs.
+   Rand entlang derselben Welle: haelt weisse Flaechen (JPY, CHF-Kreuz, CAD)
+   vom hellen Grund ab. 1 px bei jeder Groesse (non-scaling-stroke). */
+.ai-rim{stroke:rgba(20,32,56,.24);stroke-width:.6px;vector-effect:non-scaling-stroke;pointer-events:none}
+.ai-fold{pointer-events:none;mix-blend-mode:multiply}
 /* Wandernder Glanz = das Licht, das ueber die Falte laeuft. Reines
    translate, also Compositor-Arbeit statt Repaint. */
 .ai-sheen{animation:aiSheen 3.4s linear infinite;opacity:.85}
-@keyframes aiSheen{0%{transform:translateX(-16px)}60%,100%{transform:translateX(38px)}}
+@keyframes aiSheen{0%{transform:translateX(-14px)}55%,100%{transform:translateX(36px)}}
 .ai-shade{pointer-events:none}
 
 /* Oel: ein Tropfen loest sich, faellt und zerplatzt - Kernwunsch des Nutzers. */
@@ -5300,7 +5301,6 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
 
 /* AUS: eine einzige Regel haelt jede Dauerbewegung an. Die Icons bleiben in
    ihrer Ruhelage sichtbar - kein Layout-Sprung, keine leeren Kaesten. */
-body.no-asset-anim .ai-strip,
 body.no-asset-anim .ai-sheen,
 body.no-asset-anim .ai-drip,
 body.no-asset-anim .ai-sheen-el,
@@ -5583,6 +5583,33 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 /* ── Schnellzugriffe: helle Karten mit blauem Symbol statt Navy-Kacheln ── */
 .aql{background:var(--card);border:1px solid var(--bd);color:var(--t0);box-shadow:var(--shadow-card);border-radius:var(--r)}
 .aql svg{color:var(--ui-act)}
+/* ── Wisch-Uebergang beim Seitenwechsel (2026-09-23, siehe wischStart in
+   js/main.js). pointer-events:none: der Inhalt darunter ist sofort bedienbar,
+   die Animation laeuft trotzdem bis zum Ende. z-index ueber den Stapel-
+   Panels (60), unter Fenstern/Popups. */
+.wisch{position:fixed;z-index:80;overflow:hidden;pointer-events:none;contain:strict}
+.wisch-kopie{position:absolute;inset:0;will-change:clip-path}
+.wisch-bild{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;will-change:transform}
+.wisch-flagge{filter:drop-shadow(0 12px 28px rgba(8,20,45,.35))}
+.wisch-flagge .ai-wrap{display:block}
+/* Motive/Szenen sind blass gezeichnet - sie bekommen eine Bahn in
+   Seitenfarbe, damit der Wisch den Inhalt wirklich verdeckt. */
+.wisch-motiv{height:100%;display:flex;align-items:center;padding:0 5vw;background:var(--bg0);
+  box-shadow:0 0 40px 30px var(--bg0)}
+.wisch-motiv svg{height:72%;width:auto;display:block}
+/* History-Karte: die Liste scrollt NUR senkrecht und reicht das Scrollen am
+   Ende nicht an die Seite weiter (Nutzer 2026-09-23: "nur maximal tief und
+   hoch scrollen ... und nicht wenn ich scrolle links rechts oben oder unten
+   den Hintergrund aufdecken"). overscroll-behavior:none unterdrueckt auch
+   das Nachfedern, touch-action:pan-y die waagerechte Wischgeste. */
+.ab-htile .histp{overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y}
+.ab-htile .hw-d4 .histp-evt>*{min-width:0}
+/* Kartensymbol vor dem Titel (kartenIconsNachtragen in js/main.js) - dieselbe
+   Optik wie .ab-tile-ic der Asset-Kacheln. */
+.k-ic{flex:none;display:inline-flex;align-items:center;color:var(--t1);margin-right:8px}
+.rub-hdr .k-ic{margin-right:4px}
+.dw-t .k-ic{margin-right:2px}
+.st .ic{vertical-align:-3px;margin-right:3px}
 /* ══ ENDE BILD-DESIGN ══ */
 </style>
 </head>
@@ -5704,11 +5731,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-540 - Insights (und jeder Stapel) oeffnet jetzt als Panel neben der Leiste wie Assets; im Asset-Panel stehen Name und Score enger beisammen (Panel so breit wie der Inhalt, Scores weiter buendig)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-541 - Flaggen als ein Stueck mit weicher Welle (keine Luecken, fluessiger), Glanz auf die Flagge begrenzt, weisse Flaggen mit Rand und Toenung; Wisch-Uebergang bei jedem Seitenwechsel (Flagge/Motiv/Szene); Stapel verschwinden mit dem Wisch; Bulle und Baer als Koepfe; History-Karte fest; Symbole fuer alle Karten."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-540</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-541</span>
     </span>
   </div>
   <div class="hdr-r">

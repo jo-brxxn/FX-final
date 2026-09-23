@@ -561,6 +561,18 @@ auf Textur 2026-09-04). Nach links ausgeblendet per Maske.
 (wurden höher als der Kopf) — jetzt auf die Höhe; die Flagge war 225 px breit
 und stand als harter Block da — jetzt 510 px, die Maske greift.
 
+### Flaggen (seit 2026-09-23): ein Stück, Welle nur am Umriss
+Nie wieder zerschneiden: Streifen, die einzeln bewegt werden, reißen Lücken
+auf. Bewegt werden nur der gemeinsame Umriss `#aiWave` (SMIL) und der
+Faltenverlauf `#aiFoldG`; Glanz/Falten liegen IN der Welle; `.ai-rim` als Rand;
+Weiß in Flaggen = `AI_FLAG_WHITE`. Geprüft von `check/symbole.js`.
+
+### Wisch-Übergang und Kartensymbole (seit 2026-09-23)
+Jeder Seitenwechsel wischt (0,5 s, Bild = Flagge/Motiv/Szene), Fenster nicht.
+Jeder Kartenkopf trägt genau EIN Symbol aus `ICONS`, zugeordnet über
+`KARTEN_ICONS` — bei einer neuen Karte ggf. dort eine Regel ergänzen, sonst
+bekommt sie das neutrale `layers`. Keine Emojis in Reitern/Titeln.
+
 ### Vorlagen
 Die neuen Tokens (`--ctl-*`, `--ui-act*`, `--rail-*`) stehen in JEDEM
 Vorlagen-Block; die dunklen nehmen `--accent` als Aktivfarbe. Die Formen gelten

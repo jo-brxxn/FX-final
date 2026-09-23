@@ -134,7 +134,11 @@ function assetGlyphHtml(id, size) {
 // ── Definitions-Block: wird EINMAL in den Body geschrieben ──────────────────
 function aiDefsSvg() {
   const syms = [];
-  for (const id in AI_FLAGS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${AI_FLAGS[id]}</symbol>`);
+  // ⚠ Weiss in Flaggen leicht getoent (Nutzer 2026-09-23: bei JPY war "die
+  // flaggenfarbe gleich dem Hintergrund also sieht man den Grossteil nicht").
+  // Zusammen mit dem feinen Rand (.ai-rim) - Nutzerwahl "Kombi aus beidem".
+  const aiTint = t => t.replace(/fill="#fff(fff)?"/gi, `fill="${AI_FLAG_WHITE}"`);
+  for (const id in AI_FLAGS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${aiTint(AI_FLAGS[id])}</symbol>`);
   for (const id in AI_SYMBOLS) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${AI_SYMBOLS[id]}</symbol>`);
   for (const id in AI_INDEX_ACCENT) syms.push(`<symbol id="ai-${id}" viewBox="0 0 36 24">${aiIndex(AI_INDEX_ACCENT[id])}</symbol>`);
   return `<svg id="aiDefs" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
@@ -143,13 +147,14 @@ function aiDefsSvg() {
       <clipPath id="aiUjB"><path d="M0,0 H18 V12 H0Z M18,12 H36 V24 H18Z"/></clipPath>
       <clipPath id="aiBarClip"><path d="M8.2,9.6 h19.6 l2.6,9.4 h-24.8Z M10.6,5.4 h14.8 l2.4,4.2 h-19.6Z"/></clipPath>
       <clipPath id="aiCoinClip"><circle cx="18" cy="12" r="9.4"/></clipPath>
-      ${AI_GRIDS.map(n => Array.from({length: n}, (_, i) => {
-        // ⚠ 0.3 breiter als der Rasterschritt: ohne diese Ueberlappung reisst
-        // zwischen zwei unterschiedlich weit verschobenen Streifen eine
-        // Haarlinie auf.
-        const w = 36 / n;
-        return `<clipPath id="aiStrip${n}_${i}"><rect x="${(i * w).toFixed(2)}" y="-6" width="${(w + 0.3).toFixed(2)}" height="36"/></clipPath>`;
-      }).join('')).join('')}
+      <clipPath id="aiWave" clipPathUnits="userSpaceOnUse"><path d="${aiWellenPfad(0)}">${aiWellenAnim()}</path></clipPath>
+      <linearGradient id="aiFoldG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${AI_WELLE_L}" y2="0" spreadMethod="repeat">
+        <stop offset="0" stop-color="#000" stop-opacity=".09"/>
+        <stop offset=".5" stop-color="#fff" stop-opacity=".14"/>
+        <stop offset="1" stop-color="#000" stop-opacity=".09"/>
+        <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="${AI_WELLE_L} 0" dur="${AI_WELLE_T}s" repeatCount="indefinite"/>
+      </linearGradient>
+      <path id="aiRim" d="${aiWellenPfad(0)}" fill="none">${aiWellenAnim()}</path>
       <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#fff" stop-opacity="0"/>
         <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
@@ -162,26 +167,48 @@ function aiDefsSvg() {
         <stop offset="1" stop-color="#000" stop-opacity="0"/>
       </linearGradient>
     </defs>
-    <symbol id="aiUJ" viewBox="0 0 36 24">${AI_UNION_JACK}</symbol>
+    <symbol id="aiUJ" viewBox="0 0 36 24">${aiTint(AI_UNION_JACK)}</symbol>
     ${syms.join('')}
   </svg>`;
 }
 
-// 10 Streifen statt 6: bei 6 war jeder Streifen bei 18px Anzeigegroesse 3px
-// breit, die Treppenstufen der Welle also deutlich sichtbar ("kantig").
-//
-// ⚠ GEMESSEN, nicht geschaetzt: ein animierter transform auf einer SVG-<g>
-// wird von Chromium NICHT auf der GPU zusammengesetzt, sondern zwingt zum
-// Neuzeichnen. Mit 10 Streifen auf allen ~19 gleichzeitig sichtbaren Icons
-// (190 Gruppen) fiel die Bildrate des Dashboards von konstant 61 auf Median
-// 47 mit Einbruechen auf 29. `will-change` und `contain` auf dem Wrapper
-// aenderten daran nichts - beide gemessen, beide wirkungslos.
-// Deshalb haengt die Streifenzahl an der ANZEIGEGROESSE: in Listen (17-18px)
-// ist eine 0,8px-Welle ohnehin kaum aufzuloesen, dort genuegen 4 Streifen;
-// die grossen Icons (Asset-Kopf, Research-Terminal), von denen selten mehr
-// als eines zu sehen ist, behalten die vollen 10.
-const AI_GRIDS = [4, 10];
-const AI_STRIPS_BIG = 10, AI_STRIPS_SMALL = 4, AI_BIG_MIN_PX = 20;
+// ══ WEHENDE FLAGGE (Neubau 2026-09-23) ══════════════════════════════════
+// Nutzer: "wenn die sich bewegt entstehen weisse Luecken im Bild und die
+// animation muss cleaner sein und nicht so abgehakt".
+// URSACHE (gemessen, Standbilder bei t=0/400/900 ms): die Flagge war in 4
+// bzw. 10 senkrechte Streifen zerschnitten, jeder Streifen wurde EINZELN
+// verschoben, gedreht und gestaucht. An jeder Streifengrenze brachen dadurch
+// Muster und Kanten ab - die US-Streifen stufig, das Schweizer Kreuz in
+// versetzte Stuecke gerissen, die Unterkante ein Saegezahn mit Luecken. Mit
+// 4 Streifen bei kleinen Icons war die Welle zudem sichtbar in Stufen.
+// JETZT: die Flagge bleibt EIN Stueck. Es bewegt sich nur ihr Umriss
+// (eine gemeinsame, per SMIL animierte Clip-Welle in 24 Stuetzbildern) und
+// ein Faltenschatten, der im selben Takt ueber den Stoff laeuft. Weil alle
+// Flaggen dieselbe Welle aus den Defs benutzen, wird EINE Animation
+// gerechnet statt 190 Streifengruppen (das war der Grund fuer die frueheren
+// 4-Streifen-Kompromisse). SMIL statt CSS, weil iOS Safari den
+// Pfad-Umriss (d) nicht per CSS animiert.
+// Die Welle schneidet nur NACH INNEN (Ober- und Unterkante wandern gemeinsam
+// um hoechstens AI_WELLE_A): nach aussen gaebe es keinen Stoff, der Umriss
+// liefe ins Leere.
+const AI_WELLE_L = 24, AI_WELLE_T = 1.8, AI_WELLE_A = 1.5, AI_WELLE_BILDER = 24, AI_WELLE_PUNKTE = 37;
+const AI_FLAG_WHITE = '#EEF2F8';
+function aiWellenPfad(phase) {
+  const top = [], bot = [];
+  for (let i = 0; i < AI_WELLE_PUNKTE; i++) {
+    const x = 36 * i / (AI_WELLE_PUNKTE - 1);
+    // Amplitude waechst von der Stange (links, 0) zur freien Kante.
+    const a = AI_WELLE_A * Math.pow(x / 36, 1.2);
+    const sn = Math.sin(2 * Math.PI * (x / AI_WELLE_L - phase));
+    top.push(`${x.toFixed(2)},${(a * (1 + sn) / 2).toFixed(3)}`);
+    bot.push(`${x.toFixed(2)},${(24 - a * (1 - sn) / 2).toFixed(3)}`);
+  }
+  return 'M' + top.join(' L') + ' L' + bot.reverse().join(' L') + ' Z';
+}
+function aiWellenAnim() {
+  const v = Array.from({length: AI_WELLE_BILDER + 1}, (_, k) => aiWellenPfad(k / AI_WELLE_BILDER)).join(';');
+  return `<animate attributeName="d" dur="${AI_WELLE_T}s" repeatCount="indefinite" values="${v}"/>`;
+}
 
 const AI_FLAG_IDS = Object.keys(AI_FLAGS);
 
@@ -203,26 +230,17 @@ function assetIconHtml(id, size) {
   const isFlag = AI_FLAG_IDS.indexOf(id) !== -1;
   const known = isFlag || AI_SYMBOLS[id] || AI_INDEX_ACCENT[id];
   if (!known) return '';
+  // Flagge: EIN Stueck Stoff im Wellen-Umriss, darueber Falten, Stangen-
+  // schatten und Glanz - alles in DERSELBEN Clip-Welle, damit der Glanz nicht
+  // vor der Flagge beginnt und hinter ihr aufhoert (Nutzer 2026-09-23;
+  // gemessen lief er von 107 px vor bis 100 px hinter einer 240-px-Flagge).
+  // Darueber der feine Rand (.ai-rim) entlang derselben Welle.
   const inner = isFlag
-    // Flagge: 6 Streifen, Amplitude waechst zur freien Kante hin
-    ? (() => {
-        const n = h >= AI_BIG_MIN_PX ? AI_STRIPS_BIG : AI_STRIPS_SMALL, sw = 36 / n;
-        return Array.from({length: n}, (_, i) => {
-          const amp = (0.06 + 0.94 * (i / (n - 1))).toFixed(3);
-          // Drehpunkt = Mitte GENAU DIESES Streifens. Ohne das kippt jeder
-          // Streifen um die Flaggenmitte und die Kanten wandern wieder
-          // auseinander, statt sich anzugleichen.
-          const ox = (i * sw + sw / 2).toFixed(2);
-          // Die Welle braucht ueber die Breite dieselbe Laufzeit, egal wie
-          // viele Streifen sie abtasten - sonst laeuft sie bei 4 Streifen
-          // sichtbar schneller als bei 10.
-          return `<g clip-path="url(#aiStrip${n}_${i})">`
-               + `<g class="ai-strip" style="--ai-amp:${amp};transform-origin:${ox}px 12px;`
-               + `animation-delay:${(-i * 0.85 / n).toFixed(3)}s"><use href="#ai-${id}"/></g></g>`;
-        }).join('');
-      })()
+    ? `<g clip-path="url(#aiWave)"><use href="#ai-${id}"/>`
+      + `<rect class="ai-fold" width="36" height="24" fill="url(#aiFoldG)"/>`
       + `<rect class="ai-shade" width="36" height="24" fill="url(#aiShadeG)"/>`
-      + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/>`
+      + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/></g>`
+      + `<use class="ai-rim" href="#aiRim"/>`
     : `<use href="#ai-${id}"/>`;
   return `<span class="ai-wrap" style="width:${w}px;height:${h}px">`
        + `<svg class="ai-svg${isFlag ? ' ai-flag' : ''}" viewBox="0 0 36 24" width="${w}" height="${h}" aria-hidden="true">${inner}</svg>`
@@ -471,8 +489,52 @@ const ICONS={
   // wie TAB_ICONS.news, nur hier auch ueber icn() aufrufbar (die
   // Tab-Leiste nutzt einen eigenen, nicht mit ICONS geteilten Renderpfad).
   calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-  news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>'
+  news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>',
+  // Kartensymbole (Nutzer 2026-09-23: "ergaenz bei den Makro Karten noch
+  // passende icons und mach bei den Sentiment Karten und sonst ueberall
+  // verschiedene") - Zuordnung ueber den Titel in kartenIcon().
+  thermo:'<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/><line x1="11.5" y1="9" x2="11.5" y2="15"/>',
+  briefcase:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  sprout:'<path d="M7 20h10"/><path d="M12 20v-8"/><path d="M12 12c0-4 2.5-6.5 7-7 0 4.5-2.5 7-7 7z"/><path d="M12 14c0-3-2-5-6-5.5C6 12 8 14 12 14z"/>',
+  percent:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  landmark:'<line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/>',
+  users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  gauge:'<path d="M12 14l4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 15v3l-2 4M14 15v3l2 4"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  coins:'<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/>',
+  scale:'<path d="M16 16l3-8 3 8c-1.7 1.3-4.3 1.3-6 0Z"/><path d="M2 16l3-8 3 8c-1.7 1.3-4.3 1.3-6 0Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>',
+  smile:'<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+  clipboard:'<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/>',
+  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  grid:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  compass:'<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+  pie:'<path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+  dollar:'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  layers:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  alert:'<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  candles:'<path d="M9 4v5M9 15v5M15 2v5M15 13v5"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="7" width="4" height="6" rx="1"/>'
 };
+// Titel -> Symbol. Die ERSTE passende Regel gewinnt; spezifische Begriffe
+// stehen deshalb vor allgemeinen ("rate probabilit" vor "rate").
+const KARTEN_ICONS=[
+  [/^price$/,'bars'],[/history/,'clock'],[/pinned|notes?$|archive/,'note'],[/context/,'globe'],[/calendar|event/,'calendar'],
+  [/inflation/,'thermo'],[/labou?r|employment|jobs/,'briefcase'],[/growth|gdp/,'sprout'],
+  [/rate probabilit|rate expectation|interest|policy rate|central bank/,'percent'],
+  [/cot|commitment|net long|positioning/,'landmark'],[/retail/,'users'],[/put.?call/,'scale'],
+  [/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
+  [/headline|news/,'news'],[/currency strength|strength/,'dollar'],[/carry/,'coins'],[/performance|ranking/,'trophy'],
+  [/volatil/,'pulse'],[/watchlist/,'eye'],[/correlation/,'link'],[/surprise/,'zap'],
+  [/season/,'sun'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
+  [/regime/,'compass'],[/net long|short %|share/,'pie'],[/data|release/,'candles'],[/set-?ups?|pairs?/,'shuffle'],
+  [/stale|out of date|overdue/,'alert'],[/all assets|overview/,'layers'],
+];
+function kartenIcon(titel){
+  const t=String(titel||'').toLowerCase().trim();
+  const r=KARTEN_ICONS.find(([re])=>re.test(t));
+  return r?r[1]:'layers';
+}
 function icn(name,size){
   const p=ICONS[name];if(!p)return'';
   // Der Name kommt als eigene Klasse mit (ic-bell, ic-star, ...) - erst
@@ -7446,13 +7508,18 @@ function openCardInfo(k){
 // nicht zu blass also wie im Bild", RECHTS HINTER den Tabs.
 // Selbst gezeichnet als SVG (keine Fotos: Groesse, offline, Rechte). Farben am
 // Nutzerbild gemessen (Berge #E3EDF8..#C8DAF0 auf #F1F6FC).
-// Bulle & Baer auf Nutzer-Wunsch 2026-09-22 "viel aggressiver": der Bulle
+// Bulle & Baer seit 2026-09-23 als KOEPFE (Nutzerwahl "B: Koepfe" aus einer
+// Auswahltafel; "schau im Internet wie der Bulle und der Baer dargestellt
+// ist ... aktuell nicht erkennbar"). Recherche: Bulle stoesst die Hoerner
+// nach OBEN (steigende Kurse), Baer schlaegt nach UNTEN - daher Hoerner
+// steil nach oben, Baer mit gefletschten Zaehnen. Davor (2026-09-22):
+// Ganzkoerper-Szene, "viel aggressiver": der Bulle
 // stuermt mit gesenktem Kopf, Hoerner nach vorn, Dampf aus den Nuestern und
 // Staub hinter den Hufen; der Baer steht aufgerichtet, bruellt mit offenem
 // Maul und schlaegt mit ausgefahrenen Krallen. MOTIV_DK ist die eine dunklere
 // Stufe fuer Hoerner, Krallen, Augenbrauen.
 const MOTIV_F1='#DCE8F6',MOTIV_F2='#C9DBF1',MOTIV_F3='#B4CBE9',MOTIV_ST='#9DB8DE',MOTIV_DK='#86A6D2';
-const ASSET_MOTIVE=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST,DK=MOTIV_DK;return {
+const ASSET_MOTIVE=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST,DK=MOTIV_DK,W='#F4F8FD';return {
 coin:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
  <ellipse cx="300" cy="150" rx="104" ry="12" fill="${F1}"/>
  <g transform="translate(345 112)"><ellipse rx="44" ry="12" fill="${F3}"/><rect x="-44" y="-14" width="88" height="14" fill="${F2}"/><ellipse cy="-14" rx="44" ry="12" fill="${F1}" stroke="${ST}" stroke-width="2"/></g>
@@ -7471,21 +7538,62 @@ barrel:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
  <path d="M-62 68 Q0 82 62 68 M-62 112 Q0 126 62 112" fill="none" stroke="${ST}" stroke-width="3"/></g>
  <path d="M372 62 C372 62 350 94 350 108 A22 22 0 0 0 394 108 C394 94 372 62 372 62 Z" fill="${F3}" stroke="${ST}" stroke-width="2.5"/>
 </svg>`,
-bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
- <ellipse cx="220" cy="160" rx="190" ry="7" fill="${F1}"/>
- <g fill="${F1}"><circle cx="252" cy="152" r="6"/><circle cx="263" cy="146" r="4.5"/><circle cx="244" cy="146" r="3.5"/><ellipse cx="22" cy="122" rx="9" ry="5"/><ellipse cx="12" cy="112" rx="6" ry="3.5"/></g>
- <path fill="${F2}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M40 128 C36 120 40 108 50 102 L66 92 C76 84 88 80 98 76 C104 60 114 48 132 44 C152 40 176 48 196 56 C212 62 224 66 230 76 C236 88 234 104 226 114 L248 146 L238 153 L214 124 L226 150 L213 155 L198 126 C178 132 150 132 128 126 L98 150 L86 146 L110 122 L80 146 L69 140 L98 116 C88 116 78 120 70 126 C62 132 50 136 40 128 Z"/>
- <path fill="${DK}" d="M76 90 C68 72 64 60 46 54 C44 50 50 48 54 50 C72 54 82 66 88 84 Z M92 82 C90 64 84 50 68 42 C66 38 72 36 76 38 C92 44 98 60 100 78 Z"/>
- <path fill="none" stroke="${ST}" stroke-width="2.6" stroke-linecap="round" d="M228 78 C246 64 250 48 242 34"/>
- <path fill="${ST}" d="M242 34 l-7 -8 l10 3 l2 -9 l3 10 Z"/>
- <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M56 102 L70 97"/>
- <circle cx="64" cy="104" r="2.6" fill="${DK}"/><circle cx="45" cy="124" r="2" fill="${DK}"/>
- <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M346 62 C342 48 344 32 350 20 C352 14 362 14 362 22 C360 36 356 50 356 64 Z"/>
- <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M322 156 L346 156 C350 140 352 128 356 118 L362 156 L388 156 C390 130 388 104 378 84 C372 64 358 48 342 42 C334 34 326 28 316 28 C314 21 307 19 303 24 C301 27 301 30 303 33 C296 33 290 35 286 39 L271 47 C265 49 265 55 271 57 L286 57 L276 68 L292 65 C298 67 302 71 305 75 C308 80 309 84 306 88 L270 88 C261 88 257 97 264 101 L306 103 C312 119 316 136 322 156 Z"/>
- <path fill="#F4F8FD" d="M279 57 l2.5 5 l2.5 -5 Z M285 64 l2 -4 l2 4 Z"/>
- <path fill="none" stroke="${DK}" stroke-width="2.4" stroke-linecap="round" d="M263 92 l-9 -4 M262 97 l-10 0 M263 102 l-9 4 M351 17 l-3 -8 M357 15 l1 -8 M362 20 l7 -4"/>
- <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M291 37 L301 41"/><circle cx="296" cy="42" r="2.4" fill="${DK}"/>
-</svg>`};})();
+bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><g transform="translate(120 88)">
+ <path fill="${DK}" d="M-38 -26 C-62 -34 -76 -56 -72 -80 C-62 -60 -48 -46 -30 -40 Z M38 -26 C62 -34 76 -56 72 -80 C62 -60 48 -46 30 -40 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M-40 -34 C-20 -46 20 -46 40 -34 L58 -38 C64 -30 58 -20 48 -18 C46 0 40 22 30 40 C22 54 10 62 0 62 C-10 62 -22 54 -30 40 C-40 22 -46 0 -48 -18 C-58 -20 -64 -30 -58 -38 Z"/>
+ <ellipse cy="44" rx="24" ry="16" fill="${F2}" stroke="${ST}" stroke-width="2.2"/>
+ <circle cx="-9" cy="44" r="3.5" fill="${DK}"/><circle cx="9" cy="44" r="3.5" fill="${DK}"/>
+ <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M-26 -6 l14 6 M26 -6 l-14 6"/>
+ <circle cx="-18" cy="4" r="3" fill="${DK}"/><circle cx="18" cy="4" r="3" fill="${DK}"/>
+ <path fill="none" stroke="${ST}" stroke-width="3" d="M-12 56 C-12 70 12 70 12 56"/>
+</g>
+<g transform="translate(300 92)">
+ <circle cx="-40" cy="-40" r="18" fill="${F2}" stroke="${ST}" stroke-width="2.4"/><circle cx="40" cy="-40" r="18" fill="${F2}" stroke="${ST}" stroke-width="2.4"/>
+ <circle cx="-40" cy="-40" r="8" fill="${F3}"/><circle cx="40" cy="-40" r="8" fill="${F3}"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2.4" d="M0 -52 C34 -52 56 -30 56 0 C56 34 32 58 0 58 C-32 58 -56 34 -56 0 C-56 -30 -34 -52 0 -52 Z"/>
+ <ellipse cy="24" rx="28" ry="22" fill="${F1}" stroke="${ST}" stroke-width="2.2"/>
+ <path fill="${DK}" d="M-9 8 L9 8 L0 18 Z"/>
+ <path fill="${DK}" d="M-16 30 C-8 44 8 44 16 30 C8 34 -8 34 -16 30 Z"/>
+ <path fill="${W}" d="M-12 31 l3 6 l3 -5 Z M6 32 l3 5 l3 -6 Z"/>
+ <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M-30 -18 l14 6 M30 -18 l-14 6"/>
+ <circle cx="-20" cy="-6" r="3" fill="${DK}"/><circle cx="20" cy="-6" r="3" fill="${DK}"/>
+</g></svg>`};})();
+// Szenen fuer Seiten OHNE Asset (Nutzerwahl 2026-09-23 "Stil 1: Szene" aus
+// einer Auswahltafel): erscheinen im Wisch-Uebergang (wischStart). Gleiche
+// Palette wie die Asset-Motive, gleicher 420x170-Raum.
+const SEITEN_SZENEN=(()=>{const F1=MOTIV_F1,F2=MOTIV_F2,F3=MOTIV_F3,ST=MOTIV_ST,DK=MOTIV_DK,W='#F4F8FD';return{
+  overview:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><circle cx="300" cy="84" r="66" fill="${F2}" stroke="${ST}" stroke-width="2.4"/>
+ <path fill="none" stroke="${ST}" stroke-width="2" d="M234 84 H366 M300 18 V150 M300 18 C268 40 268 128 300 150 M300 18 C332 40 332 128 300 150 M244 50 H356 M244 118 H356"/>
+ <path fill="none" stroke="${DK}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M248 116 L278 92 L300 104 L330 66 L352 54"/><path fill="${DK}" d="M352 54 l-14 0 l10 -10 Z"/></svg>`,
+  dashboard:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><rect x="210" y="22" width="180" height="116" rx="10" fill="${F2}" stroke="${ST}" stroke-width="2.4"/>
+ <rect x="286" y="138" width="28" height="16" fill="${F3}"/><rect x="262" y="152" width="76" height="6" rx="3" fill="${ST}"/>
+ <rect x="222" y="34" width="72" height="44" rx="5" fill="${F1}"/><rect x="304" y="34" width="74" height="44" rx="5" fill="${F1}"/>
+ <rect x="222" y="86" width="156" height="42" rx="5" fill="${F1}"/>
+ <path fill="${F3}" d="M230 72 v-14 h8 v14 Z M244 72 v-24 h8 v24 Z M258 72 v-18 h8 v18 Z M272 72 v-30 h8 v30 Z"/>
+ <circle cx="341" cy="56" r="15" fill="${F3}"/><path fill="${DK}" d="M341 56 V41 A15 15 0 0 1 355 60 Z"/>
+ <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M230 118 L260 104 L282 112 L312 96 L338 102 L370 92"/></svg>`,
+  insights:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><rect x="214" y="30" width="150" height="112" rx="8" fill="${F1}" stroke="${ST}" stroke-width="2"/>
+ ${[[232,90,110,22],[256,70,100,30],[280,80,108,26],[304,54,86,34],[328,62,92,28]].map(([x,t,b,h],i)=>`<path stroke="${ST}" stroke-width="2" d="M${x+7} ${t-8} V${t+h+10}"/><rect x="${x}" y="${t}" width="14" height="${h}" rx="2" fill="${i%2?F3:F2}" stroke="${ST}" stroke-width="1.6"/>`).join('')}
+ <circle cx="336" cy="84" r="36" fill="${W}" fill-opacity=".55" stroke="${DK}" stroke-width="7"/><path stroke="${DK}" stroke-width="12" stroke-linecap="round" d="M362 110 L392 140"/></svg>`,
+  setups:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><path fill="none" stroke="${ST}" stroke-width="3" stroke-linejoin="round" d="M212 132 L244 110 L268 118 L296 86 L320 96 L352 60 L384 48"/>
+ <circle cx="320" cy="84" r="44" fill="none" stroke="${DK}" stroke-width="3.5"/><circle cx="320" cy="84" r="24" fill="none" stroke="${DK}" stroke-width="3"/>
+ <path stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M320 30 V58 M320 110 V138 M266 84 H294 M346 84 H374"/><circle cx="320" cy="84" r="6" fill="${DK}"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" d="M228 60 h26 l10 10 l-10 10 h-26 Z"/></svg>`,
+  watchlist:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><g stroke="${ST}" stroke-width="2.4" stroke-linejoin="round">
+ <rect x="236" y="54" width="48" height="84" rx="20" fill="${F2}"/><rect x="316" y="54" width="48" height="84" rx="20" fill="${F2}"/>
+ <rect x="276" y="70" width="48" height="30" rx="8" fill="${F3}"/><rect x="246" y="30" width="28" height="30" rx="8" fill="${F3}"/><rect x="326" y="30" width="28" height="30" rx="8" fill="${F3}"/></g>
+ <circle cx="260" cy="118" r="14" fill="${F1}" stroke="${DK}" stroke-width="3"/><circle cx="340" cy="118" r="14" fill="${F1}" stroke="${DK}" stroke-width="3"/>
+ <path fill="${DK}" d="M382 34 l5 11 l12 1 l-9 8 l3 12 l-11 -7 l-11 7 l3 -12 l-9 -8 l12 -1 Z"/></svg>`,
+  calendar:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><rect x="222" y="30" width="140" height="120" rx="12" fill="${F1}" stroke="${ST}" stroke-width="2.4"/>
+ <path fill="${F3}" d="M222 42 a12 12 0 0 1 12 -12 h116 a12 12 0 0 1 12 12 v22 h-140 Z"/>
+ <rect x="250" y="18" width="10" height="26" rx="5" fill="${DK}"/><rect x="324" y="18" width="10" height="26" rx="5" fill="${DK}"/>
+ ${[0,1,2,3].map(r=>[0,1,2,3,4].map(c=>`<rect x="${236+c*24}" y="${74+r*18}" width="16" height="11" rx="3" fill="${(r==1&&c==2)?DK:F2}"/>`).join('')).join('')}
+ <circle cx="372" cy="118" r="30" fill="${F2}" stroke="${ST}" stroke-width="2.4"/><path stroke="${DK}" stroke-width="4" stroke-linecap="round" d="M372 118 V100 M372 118 L386 126"/></svg>`,
+  archive:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><ellipse cx="300" cy="160" rx="110" ry="7" fill="${F1}"/><path fill="${F3}" stroke="${ST}" stroke-width="2.2" d="M226 70 h56 l10 -12 h82 v92 h-148 Z"/>
+ <rect x="236" y="46" width="118" height="84" rx="4" fill="${W}" stroke="${ST}" stroke-width="2" transform="rotate(-6 295 88)"/>
+ <path stroke="${F3}" stroke-width="4" stroke-linecap="round" d="M252 70 h70 M254 84 h84 M256 98 h60" transform="rotate(-6 295 88)"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2.2" d="M218 96 h164 l-10 56 h-144 Z"/><rect x="284" y="112" width="32" height="12" rx="6" fill="${DK}"/></svg>`
+};})();
 // Gruppe -> Motiv. FX: die grosse Flagge der Waehrung (derselbe Baustein wie
 // links neben dem Namen). Aktien und Renditen bekommen Bulle & Baer.
 const MOTIV_JE_KLASSE={crypto:'coin',metal:'bars',energy:'barrel',index:'bullbear',stock:'bullbear',yield:'bullbear'};
@@ -7500,8 +7608,7 @@ function assetMotivHtml(id){
 // neben dem Titel ein Symbol). Zuordnung am Titel, nicht an der Stelle -
 // abTile() wird fuer viele Karten benutzt; unbekannte Titel bekommen ein
 // neutrales Balken-Symbol statt gar keins, damit alle Koepfe gleich stehen.
-const AB_TILE_ICONS={Price:'bars',History:'clock','Pinned notes':'note',Notes:'note',Context:'globe',Calendar:'calendar'};
-function abTileIcon(titel){return`<span class="ab-tile-ic" aria-hidden="true">${icn(AB_TILE_ICONS[titel]||'bars',18)}</span>`;}
+function abTileIcon(titel){return`<span class="ab-tile-ic" aria-hidden="true">${icn(kartenIcon(titel),18)}</span>`;}
 function abTileZ(ziel,titel,zusatz,inhalt,extra,erkl){
   return abTile(titel,zusatz,inhalt,extra,ziel,erkl);
 }
@@ -8998,7 +9105,105 @@ function updateSidebarSelection(){
     b.classList.toggle('on',active&&b.dataset.sym===selId);
   });
 }
-function selSym(id){selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
+// ══ WISCH-UEBERGANG BEIM SEITENWECHSEL (Nutzer-Wunsch 2026-09-23) ════════
+// Woertlich: "Wenn man ein Fenster wechselt zB von usd auf gbp oder Gold dann
+// soll das Bild des Assets kommen also zB die usd Flagge und einmal schnell
+// von links nach ganz rechts in voller Groesse durchwehen da wo die Flagge
+// bereits schon drueber ist entsteht dann der neue Inhalt ... waehrend sie
+// laeuft verschwindet der Stapel". Per Rueckfrage: 0,5 s, laeuft immer bis
+// zum Ende, der Inhalt ist waehrenddessen schon bedienbar; bei JEDEM
+// Seitenwechsel (auch USD -> GBP, COT -> Trends), NICHT bei Fenstern in einer
+// Seite (History, Price chart ...). Bild: Flagge (FX), Motiv (Non-FX),
+// Szene (Seiten ohne Asset).
+// ABLAUF: (1) Schnappschuss der alten Seite + eines offenen Stapel-Panels
+// als Kopie UEBER den Inhalt (pointer-events:none - Klicks gehen durch);
+// (2) die neue Seite wird darunter ganz normal synchron gebaut; (3) erst
+// danach, im naechsten Bild, wischt das Bild durch und schneidet die Kopie
+// von links weg. So laeuft die Animation auf einem freien Hauptthread.
+// ⚠ Das behebt nebenbei den Bug "Stapel verschwinden manchmal ohne
+// Animation": gemessen blockiert der Seitenaufbau 0,5-2,2 s, und das Panel
+// schloss erst DANACH bzw. seine Blende blieb in diesem Block haengen. Jetzt
+// verschwindet es als Teil der Kopie - genau dort, wo das Bild vorbeizieht.
+const WISCH_MS=500;
+const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'40 5 330 160',szene:'200 10 210 158'};
+const SEITE_SZENE={over:'overview',dash:'dashboard',pairs:'setups',watch:'watchlist',cal:'calendar',notes:'archive'};
+let _wischKopie=null,_wischLaeuft=false,_wischBereit=false;
+function wischErlaubt(){
+  if(!_wischBereit)return false;               // nicht beim Start der App
+  if(document.body.classList.contains('no-ui-anim'))return false;
+  try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return false;}catch(e){}
+  // Pruefskripte fahren ohne Wisch (sie messen Pixel direkt nach dem
+  // Wechsel) - ausser dem eigenen Waechter check/wisch.js, der ihn anschaltet.
+  if(navigator.webdriver&&!window.__wischTest)return false;
+  return true;
+}
+function wischBildHtml(h){
+  if(curPage==='cur'){
+    const c=getSym();if(c){
+      const cls=assetCls(c.id);
+      if(cls==='fx'){const f=assetIconHtml(c.id,Math.round(h*.78));if(f)return'<div class="wisch-flagge">'+f+'</div>';}
+      const k=MOTIV_JE_KLASSE[cls];
+      if(k)return'<div class="wisch-motiv">'+ASSET_MOTIVE[k].replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB[k]+'"')+'</div>';
+    }
+  }
+  const sz=SEITEN_SZENEN[SEITE_SZENE[curPage]||'insights'];
+  return'<div class="wisch-motiv">'+sz.replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB.szene+'"')+'</div>';
+}
+// (1) Vor dem Umbau aufrufen. Mehrfachaufrufe im selben Durchlauf (gotoSym
+// ruft showTab UND selSym) legen nur EINE Kopie an.
+function wischStart(){
+  if(_wischKopie||_wischLaeuft||!wischErlaubt())return;
+  const area=document.getElementById('pageArea');if(!area)return;
+  const ar=area.getBoundingClientRect();
+  const ov=document.createElement('div');ov.className='wisch';
+  ov.style.cssText=`left:${ar.left}px;top:${ar.top}px;width:${ar.width}px;height:${ar.height}px`;
+  const kopie=document.createElement('div');kopie.className='wisch-kopie';
+  const quellen=[];
+  const seite=Object.values(PAGE_IDS).map(id=>document.getElementById(id)).find(e=>e&&e.style.display!=='none'&&e.offsetParent);
+  if(seite)quellen.push(seite);
+  const panel=document.querySelector('#navSidebar .np-sub-wrap.open');
+  if(panel)quellen.push(panel);
+  quellen.forEach(orig=>{
+    const r=orig.getBoundingClientRect(),k=orig.cloneNode(true);
+    k.removeAttribute('id');k.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+    // Die Kopie darf NIE etwas ausloesen: sie traegt die eingebauten
+    // onclick-Handler der alten Seite (in der Gegenprobe von check/uebergang.js
+    // oeffnete ein Klick darauf History fuer das ALTE Asset). pointer-events:
+    // none schuetzt schon - inert und entfernte Handler zusaetzlich.
+    k.inert=true;[k,...k.querySelectorAll('*')].forEach(e=>{for(const a of [...e.attributes])if(/^on/i.test(a.name))e.removeAttribute(a.name);});
+    k.style.position='absolute';k.style.left=(r.left-ar.left)+'px';k.style.top=(r.top-ar.top)+'px';
+    k.style.width=r.width+'px';k.style.height=r.height+'px';k.style.margin='0';k.style.transform='none';k.style.transition='none';
+    kopie.appendChild(k);
+    // Scrollstaende innerer Container uebernehmen (sonst stuende z.B. die
+    // Detailseite oben statt dort, wo man war).
+    const oa=orig.querySelectorAll('*'),ka=k.querySelectorAll('*');
+    ov._scroll=(ov._scroll||[]).concat([...oa].map((e,i)=>e.scrollTop||e.scrollLeft?[ka[i],e.scrollTop,e.scrollLeft]:null).filter(Boolean));
+    // Leinwaende (Charts) werden beim Klonen leer - Inhalt mitnehmen.
+    orig.querySelectorAll('canvas').forEach((c,i)=>{try{const kc=k.querySelectorAll('canvas')[i];kc.getContext('2d').drawImage(c,0,0);}catch(e){}});
+  });
+  ov.appendChild(kopie);document.body.appendChild(ov);
+  (ov._scroll||[]).forEach(([e,t,l])=>{e.scrollTop=t;e.scrollLeft=l;});
+  _wischKopie=ov;
+  // (3) Nach dem Umbau: im naechsten Bild losfahren.
+  requestAnimationFrame(()=>requestAnimationFrame(wischLos));
+}
+function wischLos(){
+  const ov=_wischKopie;if(!ov)return;_wischKopie=null;_wischLaeuft=true;
+  const w=ov.clientWidth,h=ov.clientHeight;
+  const bild=document.createElement('div');bild.className='wisch-bild';bild.innerHTML=wischBildHtml(h);
+  ov.appendChild(bild);
+  const bw=bild.getBoundingClientRect().width||h;
+  const kopie=ov.querySelector('.wisch-kopie');
+  const ease='cubic-bezier(.45,0,.25,1)';
+  // Bild faehrt von ganz links (ausserhalb) bis ganz rechts (ausserhalb);
+  // die Kopie wird bis zur MITTE des Bildes weggeschnitten - die Schnittkante
+  // liegt also immer unter dem Bild.
+  bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+  const a=kopie.animate([{clipPath:`inset(0 0 0 ${-bw/2}px)`},{clipPath:`inset(0 0 0 ${w+bw/2}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+  a.onfinish=()=>{ov.remove();_wischLaeuft=false;};
+  setTimeout(()=>{if(ov.isConnected){ov.remove();_wischLaeuft=false;}},WISCH_MS+400);
+}
+function selSym(id){wischStart();selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite (FX und Non-FX sind seit 2026-08-03 EIN gemeinsamer Tab -
 // Nutzer-Wunsch "Non-FX unter FX anreihen", siehe TABS/renderSidebar).
@@ -12177,14 +12382,14 @@ function setBackPillTitle(t){const el=document.getElementById('resBackPill');if(
 // Ein Knopf, der dorthin fuehrt, wo man schon ist, kostet Platz und
 // Aufmerksamkeit und gibt nichts zurueck.
 const ASSET_QUICK_LINKS=[
-  ['trends','trendUp','Trends'],['data','note','Data'],['rate','flame','Rate Probabilities'],
+  ['trends','trendUp','Trends'],['data','candles','Data'],['rate','percent','Rate Probabilities'],
 ];
 // Unterkategorien hinter dem 'sent'-Quicklink (openSentPicker) - jede
 // springt in den passenden Sentiment-Subtab (QUICK_LINK_REAL_TAB, alle
 // landen auf dem Tab 'sent').
 const SENT_QUICK_SUBLINKS=[
-  ['retail','pulse','Retail Sentiment'],['putcall','bars','Put/Call Ratio'],
-  ['netflow','shuffle','Net Options Flow'],['feargreed','zap','Volatility Indicators'],
+  ['retail','users','Retail Sentiment'],['putcall','scale','Put/Call Ratio'],
+  ['netflow','shuffle','Net Options Flow'],['feargreed','smile','Volatility Indicators'],
 ];
 // Manche Quicklink-Kategorien sind nur Subtabs EINER echten Seite (alle vier
 // Sentiment-Kategorien -> Tab 'sent') - showTab() braucht die echte Tab-ID,
@@ -18359,8 +18564,10 @@ function pcFilterBar(D){
 function renderSentiment(){
   const el=document.getElementById('sentBody');if(!el)return;
   const D=SENTIMENT_DATA;
-  const tabs=[['retail','👥 Retail Sentiment'],['putcall','⚖️ Put-Call Ratio'],['netflow','🔀 Call/Put Balance'],['feargreed','😱 Fear & Greed'],['aaii','🗳️ AAII Survey']];
-  const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${escH(l)}</button>`).join('')}</div>`;
+  // Symbole statt Emojis (Nutzer 2026-09-23 "ueberall verschiedene" Icons;
+  // Emojis rendern je Plattform anders - Regel seit 2026-07-16).
+  const tabs=[['retail','users','Retail Sentiment'],['putcall','scale','Put-Call Ratio'],['netflow','shuffle','Call/Put Balance'],['feargreed','smile','Fear & Greed'],['aaii','clipboard','AAII Survey']];
+  const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,ic,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${icn(ic,15)} ${escH(l)}</button>`).join('')}</div>`;
   let body;
   if(!D)body=`<div class="cot-empty">Loading sentiment data… (written hourly by the GitHub workflow into sentiment_data.json).</div>`;
   else if(sentSub==='putcall')body=renderPutCallChart(D);
@@ -19264,7 +19471,7 @@ function renderAaiiCard(D){
     Running since July 1987. Voting is voluntary and online; the week runs Thursday to Wednesday and the
     result is published on Thursday. Source: ${quelle}</div>`;
   if(!a||a.bull==null){
-    return`<div class="cot-card"><div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}</div>
+    return`<div class="cot-card"><div class="cot-card-title">AAII Investor Sentiment${iBtn('aaii')}</div>
       <div style="padding:12px 14px">${kopf}
       <div class="cot-empty" style="margin-top:10px">No AAII reading has arrived yet. The survey is fetched by the
       GitHub workflow into sentiment_data.json; the chart starts building with the first published week.
@@ -19562,7 +19769,7 @@ function renderAaiiCard(D){
   const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
   const anzahl=a.responses!=null?` · ${a.responses} responses`:'';
   return`<div class="cot-card">
-    <div class="cot-card-title">🗳️ AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
+    <div class="cot-card-title">AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
     <div style="padding:12px 14px">
       ${kopf}${kpis}
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 12px">
@@ -20970,6 +21177,7 @@ function renderOverview(){
   startGlobes();
 }
 function showTab(tab,btn,fxMode){
+  wischStart();
   if(tab==='cur'&&fxMode)curFxMode=fxMode;
   triggerEnterAnim();
   Object.values(PAGE_IDS).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -21374,7 +21582,10 @@ function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimTog
 // Save-Funktion (unten), cloudPush, cloudPull mit prefPending-Schutz und
 // Export/Import (siehe CLAUDE.md, "WICHTIGSTE REGEL").
 let assetAnimEnabled=localStorage.getItem('fxpro_asset_anim_enabled')!=='0';
-function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);}
+function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);
+  // Die Flaggenwelle ist SMIL (siehe aiWellenAnim) - die CSS-Regel
+  // body.no-asset-anim haelt sie nicht an, deshalb hier ausdruecklich.
+  try{const d=document.getElementById('aiDefs');if(d){if(assetAnimEnabled)d.unpauseAnimations();else{d.pauseAnimations();d.setCurrentTime(0);}}}catch(e){}}
 function updAssetAnimToggleBtn(){const b=document.getElementById('assetAnimToggleBtn');if(b)b.checked=assetAnimEnabled;}
 function toggleAssetAnimEnabled(){
   assetAnimEnabled=!assetAnimEnabled;
@@ -21714,6 +21925,9 @@ if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
 renderDash();updUB();updProfile();startHdrLiveClock();updIntroHud();
+// Der Wisch-Uebergang erst nach dem Start - der erste Seitenaufbau ist kein
+// Seitenwechsel des Nutzers.
+setTimeout(()=>{_wischBereit=true;},1200);
 maybeShowFirstRunHelp();
 updFFLastUpd();
 // Vor dem Pull: falls die letzte lokale Aenderung nie erfolgreich hochgeladen
@@ -22047,6 +22261,28 @@ function navBleibtOffen(){return true;}
   if(navBleibtOffen())expand();
 })();
 
+// Kartensymbole fuer alle Koepfe, die ihr Markup selbst zusammenbauen
+// (Makro-Karten .rub-hdr, Dashboard .dw-t, Insights/Sentiment .cot-card-title).
+// Ein Beobachter statt 40 einzelner Aufrufstellen: jede neu gezeichnete Karte
+// bekommt ihr Symbol, auch kuenftige - eine vergessene Stelle gibt es so nicht.
+// data-kic markiert erledigte Koepfe, damit nichts doppelt eingesetzt wird.
+function kartenIconsNachtragen(root){
+  (root||document).querySelectorAll('.rub-hdr:not([data-kic]),.dw-t:not([data-kic]),.cot-card-title:not([data-kic])').forEach(h=>{
+    h.setAttribute('data-kic','1');
+    // Kopf traegt schon ein eigenes Symbol (z.B. "Net Long / Short %") -
+    // dann keins dazu, zwei Symbole nebeneinander waeren Laerm.
+    if(h.querySelector(':scope > svg.ic, :scope > .k-ic, :scope > .ab-tile-ic'))return;
+    let titel='';
+    if(h.classList.contains('rub-hdr')){const i=h.querySelector('.rub-inp');titel=i?i.value:'';}
+    else if(h.classList.contains('dw-t')){const t=h.querySelector('.dw-t-txt');titel=t?t.textContent:'';}
+    else{const n=[...h.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());titel=n?n.textContent:h.textContent;}
+    const span=document.createElement('span');span.className='k-ic';span.setAttribute('aria-hidden','true');
+    span.innerHTML=icn(kartenIcon(titel),18);
+    const inp=h.classList.contains('rub-hdr')?h.querySelector('.rub-inp'):null;
+    if(inp)h.insertBefore(span,inp);else h.insertBefore(span,h.firstChild);
+  });
+}
+try{new MutationObserver(()=>kartenIconsNachtragen()).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
 // Das Asset-Panel (seit 2026-09-22) schliesst bei einem Tipp ausserhalb von
 // Leiste und Panel - wie jedes Ausklapp-Menue. Capture-Phase, damit es auch
 // dann greift, wenn der Inhalt den Klick selbst abfaengt.
@@ -22196,8 +22432,8 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_GRIDS,
-  AI_STRIPS_BIG,AI_STRIPS_SMALL,AI_BIG_MIN_PX,AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
+  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,
+  AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,
   ASSET_SYNC_FIELDS,symSyncGroup,SYNC_EXCLUDE_RUBS,syncAssetGroup,PAIR_CODE_TO_ID,nonFxLegAssetId,nonFxWatchIconHtml,
