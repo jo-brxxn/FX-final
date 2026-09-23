@@ -569,6 +569,7 @@ Weiß in Flaggen = `AI_FLAG_WHITE`. Geprüft von `check/symbole.js`.
 
 ### Wisch-Übergang und Kartensymbole (seit 2026-09-23)
 Jeder Seitenwechsel wischt (1,0 s seit dem Nachtrag 2026-09-23, vorher 0,5 s; Bild = Flagge/Motiv/Szene), Fenster nicht.
+⚠ Der Wisch klont KEIN DOM: ein Vorhang in Seitenfarbe deckt ab, das Bild zieht ihn auf. Geklonte Seiten/Panels verlieren ausserhalb ihrer Vorfahren das CSS (VERSION-CHECK-543).
 Jeder Kartenkopf trägt genau EIN Symbol aus `ICONS`, zugeordnet über
 `KARTEN_ICONS` — bei einer neuen Karte ggf. dort eine Regel ergänzen, sonst
 bekommt sie das neutrale `layers`. Keine Emojis in Reitern/Titeln.

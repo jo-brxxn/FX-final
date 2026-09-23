@@ -5540,7 +5540,7 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    die Animation laeuft trotzdem bis zum Ende. z-index ueber den Stapel-
    Panels (60), unter Fenstern/Popups. */
 .wisch{position:fixed;z-index:80;overflow:hidden;pointer-events:none;contain:strict}
-.wisch-kopie{position:absolute;inset:0;will-change:clip-path}
+.wisch-vorhang{position:absolute;inset:0;background:var(--bg0);will-change:transform}
 .wisch-bild{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;will-change:transform}
 .wisch-flagge{filter:drop-shadow(0 12px 28px rgba(8,20,45,.35))}
 .wisch-flagge .ai-wrap{display:block}
@@ -5696,11 +5696,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-542 - Symbole aus dem Nutzerbild (Inflation Balken, Growth Balken mit Pfeil), Bearish-Rot #DC2430, engere Reihen-Ueberschriften, Abstand ueber Headlines, Flaggen im Wisch und Kopf gezeichnet und groesser, Bedien-Symbole ohne Animation, echtes Zahnrad."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-543 - Wisch ohne DOM-Kopie: Vorhang in Seitenfarbe statt geklonter alter Seite (Kategorie-Wechsel zeigte ein Geruest ohne CSS und kostete ~100 ms pro Tipp)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-542</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-543</span>
     </span>
   </div>
   <div class="hdr-r">

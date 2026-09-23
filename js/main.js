@@ -9134,20 +9134,21 @@ function updateSidebarSelection(){
 // Seitenwechsel (auch USD -> GBP, COT -> Trends), NICHT bei Fenstern in einer
 // Seite (History, Price chart ...). Bild: Flagge (FX), Motiv (Non-FX),
 // Szene (Seiten ohne Asset).
-// ABLAUF: (1) Schnappschuss der alten Seite + eines offenen Stapel-Panels
-// als Kopie UEBER den Inhalt (pointer-events:none - Klicks gehen durch);
-// (2) die neue Seite wird darunter ganz normal synchron gebaut; (3) erst
-// danach, im naechsten Bild, wischt das Bild durch und schneidet die Kopie
-// von links weg. So laeuft die Animation auf einem freien Hauptthread.
+// ABLAUF: (1) ein Vorhang in Seitenfarbe legt sich SOFORT ueber die Flaeche
+// (pointer-events:none - Klicks gehen durch); (2) die neue Seite wird
+// darunter ganz normal synchron gebaut; (3) erst danach, im naechsten Bild,
+// wischt das Bild durch und zieht den Vorhang hinter sich auf. So laeuft die
+// Animation auf einem freien Hauptthread.
 // ⚠ Das behebt nebenbei den Bug "Stapel verschwinden manchmal ohne
 // Animation": gemessen blockiert der Seitenaufbau 0,5-2,2 s, und das Panel
 // schloss erst DANACH bzw. seine Blende blieb in diesem Block haengen. Jetzt
-// verschwindet es als Teil der Kopie - genau dort, wo das Bild vorbeizieht.
+// liegt es ab dem Tipp unter dem Vorhang (z-index 80 > Panel 60) und ist weg,
+// wenn das Bild die Flaeche freigibt.
 // 1,0 s (Nutzer 2026-09-23: "Animation mindestens doppelt so lang" - vorher 0,5 s).
 const WISCH_MS=1000;
 const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'40 5 330 160',szene:'200 10 210 158'};
 const SEITE_SZENE={over:'overview',dash:'dashboard',pairs:'setups',watch:'watchlist',cal:'calendar',notes:'archive'};
-let _wischKopie=null,_wischLaeuft=false,_wischBereit=false;
+let _wischOv=null,_wischLaeuft=false,_wischBereit=false;
 function wischErlaubt(){
   if(!_wischBereit)return false;               // nicht beim Start der App
   if(document.body.classList.contains('no-ui-anim'))return false;
@@ -9170,56 +9171,42 @@ function wischBildHtml(h){
   return'<div class="wisch-motiv">'+sz.replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB.szene+'"')+'</div>';
 }
 // (1) Vor dem Umbau aufrufen. Mehrfachaufrufe im selben Durchlauf (gotoSym
-// ruft showTab UND selSym) legen nur EINE Kopie an.
+// ruft showTab UND selSym) legen nur EINEN Vorhang an.
+// ⚠ KEINE DOM-KOPIE der alten Seite (Bugreport 2026-09-23 "Wenn ich Kategorie
+// umschalte sieht es so aus und haengt sich auf", gemessen): die erste Fassung
+// klonte Seite und offenes Stapel-Panel in eine body-Ebene. Ohne ihre ids und
+// ausserhalb von #navSidebar/#pageArea griff das CSS nicht mehr - das Panel
+// stand als nacktes Geruest da ("FX" in 16px, display:block, ohne Hintergrund),
+// Dashboard-Karten verloren ihr Raster - und das Klonen kostete ~+100 ms pro
+// Tipp. Stattdessen deckt ein Vorhang in Seitenfarbe die Flaeche ab, und das
+// Bild zieht ihn beim Durchwischen von links nach rechts auf. Eine Ebene in
+// Seitenfarbe braucht kein fremdes CSS und kostet nichts.
 function wischStart(){
-  if(_wischKopie||_wischLaeuft||!wischErlaubt())return;
+  if(_wischOv||_wischLaeuft||!wischErlaubt())return;
   const area=document.getElementById('pageArea');if(!area)return;
   const ar=area.getBoundingClientRect();
   const ov=document.createElement('div');ov.className='wisch';
   ov.style.cssText=`left:${ar.left}px;top:${ar.top}px;width:${ar.width}px;height:${ar.height}px`;
-  const kopie=document.createElement('div');kopie.className='wisch-kopie';
-  const quellen=[];
-  const seite=Object.values(PAGE_IDS).map(id=>document.getElementById(id)).find(e=>e&&e.style.display!=='none'&&e.offsetParent);
-  if(seite)quellen.push(seite);
-  const panel=document.querySelector('#navSidebar .np-sub-wrap.open');
-  if(panel)quellen.push(panel);
-  quellen.forEach(orig=>{
-    const r=orig.getBoundingClientRect(),k=orig.cloneNode(true);
-    k.removeAttribute('id');k.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
-    // Die Kopie darf NIE etwas ausloesen: sie traegt die eingebauten
-    // onclick-Handler der alten Seite (in der Gegenprobe von check/uebergang.js
-    // oeffnete ein Klick darauf History fuer das ALTE Asset). pointer-events:
-    // none schuetzt schon - inert und entfernte Handler zusaetzlich.
-    k.inert=true;[k,...k.querySelectorAll('*')].forEach(e=>{for(const a of [...e.attributes])if(/^on/i.test(a.name))e.removeAttribute(a.name);});
-    k.style.position='absolute';k.style.left=(r.left-ar.left)+'px';k.style.top=(r.top-ar.top)+'px';
-    k.style.width=r.width+'px';k.style.height=r.height+'px';k.style.margin='0';k.style.transform='none';k.style.transition='none';
-    kopie.appendChild(k);
-    // Scrollstaende innerer Container uebernehmen (sonst stuende z.B. die
-    // Detailseite oben statt dort, wo man war).
-    const oa=orig.querySelectorAll('*'),ka=k.querySelectorAll('*');
-    ov._scroll=(ov._scroll||[]).concat([...oa].map((e,i)=>e.scrollTop||e.scrollLeft?[ka[i],e.scrollTop,e.scrollLeft]:null).filter(Boolean));
-    // Leinwaende (Charts) werden beim Klonen leer - Inhalt mitnehmen.
-    orig.querySelectorAll('canvas').forEach((c,i)=>{try{const kc=k.querySelectorAll('canvas')[i];kc.getContext('2d').drawImage(c,0,0);}catch(e){}});
-  });
-  ov.appendChild(kopie);document.body.appendChild(ov);
-  (ov._scroll||[]).forEach(([e,t,l])=>{e.scrollTop=t;e.scrollLeft=l;});
-  _wischKopie=ov;
-  // (3) Nach dem Umbau: im naechsten Bild losfahren.
+  ov.innerHTML='<div class="wisch-vorhang"></div>';
+  document.body.appendChild(ov);
+  _wischOv=ov;
+  // (2) Nach dem Umbau: im naechsten Bild losfahren.
   requestAnimationFrame(()=>requestAnimationFrame(wischLos));
 }
 function wischLos(){
-  const ov=_wischKopie;if(!ov)return;_wischKopie=null;_wischLaeuft=true;
+  const ov=_wischOv;if(!ov)return;_wischOv=null;_wischLaeuft=true;
   const w=ov.clientWidth,h=ov.clientHeight;
   const bild=document.createElement('div');bild.className='wisch-bild';bild.innerHTML=wischBildHtml(h);
   ov.appendChild(bild);
   const bw=bild.getBoundingClientRect().width||h;
-  const kopie=ov.querySelector('.wisch-kopie');
+  const vorhang=ov.querySelector('.wisch-vorhang');
   const ease='cubic-bezier(.45,0,.25,1)';
   // Bild faehrt von ganz links (ausserhalb) bis ganz rechts (ausserhalb);
-  // die Kopie wird bis zur MITTE des Bildes weggeschnitten - die Schnittkante
-  // liegt also immer unter dem Bild.
+  // die linke Kante des Vorhangs faehrt unter der MITTE des Bildes mit.
+  // Beides nur transform - laeuft auf dem Compositor, auch wenn der
+  // Hauptthread noch mit dem Seitenaufbau beschaeftigt ist.
   bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
-  const a=kopie.animate([{clipPath:`inset(0 0 0 ${-bw/2}px)`},{clipPath:`inset(0 0 0 ${w+bw/2}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+  const a=vorhang.animate([{transform:`translateX(${-bw/2}px)`},{transform:`translateX(${w+bw/2}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
   a.onfinish=()=>{ov.remove();_wischLaeuft=false;};
   setTimeout(()=>{if(ov.isConnected){ov.remove();_wischLaeuft=false;}},WISCH_MS+400);
 }

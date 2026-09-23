@@ -16922,3 +16922,40 @@ Bias-Abzeichen das neue helle Rot (`--bias-bear` war dort nie gesetzt) und
 lagen auf deren getönten Karten bei 3,9–4,0:1 (`check/rahmen.js`). Jetzt
 `--bias-bear:var(--red)` je Vorlage (deren eigenes, dunkleres Rot). Dazu
 `check/html.js`: SVG-Filter-Attribute (`tableValues`, …) in die Liste.
+
+## 2026-09-23 — Bugfix: Kategorie-Wechsel zeigt Gerüst ohne CSS (VERSION-CHECK-543)
+
+Nutzer-Bugreport mit Screenshot: *„Wenn ich Kategorie umschalte sieht es so
+aus und hängt sich auf"* — während des Wischs stand links ein nacktes
+Asset-Panel („FX / Crypto / Metals" als Fließtext, Zeilen ohne Karten),
+darunter zerrissene Dashboard-Karten.
+
+**Reproduziert** (Playwright, 1000×695, DSF 2, Touch, `__wischTest`): Panel
+offen → Dashboard. Mitten im Wisch lag in `.wisch-kopie` ein Klon des Panels;
+sein Label „FX" maß `font-size:16px`, Elternteil `display:block`, kein
+Hintergrund — identisch zum Nutzerbild. Tipp-Dauer über drei Läufe:
+ohne Wisch 266–338 ms, mit Wisch 389–417 ms.
+
+**Ursache:** `wischStart()` klonte die alte Seite und das offene Stapel-Panel
+in eine Ebene direkt unter `<body>` und entfernte dabei alle ids. Die Regeln
+für Panel und Karten hängen aber an ids und Vorfahren (`#navSidebar …`,
+`#pageArea …`, `#dashWidgets …`) — außerhalb davon griff kein CSS mehr.
+Dazu das tiefe Klonen samt Scrollständen und Canvas-Kopien: ~+100 ms pro Tipp,
+und für 1 s lag das kaputte Bild über der neuen Seite („hängt sich auf").
+
+**Fix an der Wurzel:** keine DOM-Kopie mehr. Ein Vorhang in Seitenfarbe
+(`.wisch-vorhang`, `var(--bg0)`) deckt die Fläche beim Tipp sofort ab; die
+neue Seite wird darunter gebaut, dann fährt das Bild durch und zieht den
+Vorhang hinter seiner Mitte auf (beides nur `transform`, läuft auf dem
+Compositor). Das Panel schließt beim Tipp unter dem Vorhang (z 80 > 60).
+Nachher: Tipp-Dauer 256–336 ms = wie ohne Wisch. Kompromiss: die alte Seite
+ist nicht mehr als Bild im Wisch zu sehen, sondern wird sofort flächig
+abgedeckt.
+
+**Fehlerklasse:** `cloneNode` wird im Projekt sonst nirgends zur Anzeige
+verwendet (grep über `js/*.js` und `index.html`: nur diese Stelle).
+
+**Wächter:** `check/uebergang.js` prüft jetzt, dass in `.wisch` nur Vorhang
+und Bild liegen, der Vorhang die Seitenfarbe trägt und die Fläche vor dem
+Losfahren ganz deckt. Neue Gegenprobe `--gegenprobe-kopie` hängt einen
+Panel-Klon in die Ebene → wird als `KOPIE IN DER WISCH-EBENE` gemeldet.

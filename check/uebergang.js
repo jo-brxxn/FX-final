@@ -7,17 +7,23 @@
 // Fenstern. Dazu zwei gemessene Fehler:
 //   - "die Stapel erscheinen zwar mit Animation aber das verschwinden ist
 //     manchmal ohne": der Seitenaufbau blockierte 0,5-2,2 s, das Panel
-//     schloss erst danach. Jetzt verschwindet es als Teil der Wisch-Kopie.
+//     schloss erst danach. Jetzt liegt es ab dem Tipp unter dem Vorhang.
+//   - Bugreport 2026-09-23 "Wenn ich Kategorie umschalte sieht es so aus und
+//     haengt sich auf": die erste Fassung KLONTE Seite + Panel in die
+//     Wisch-Ebene; ohne ids/Vorfahren griff das CSS nicht (Panel als nacktes
+//     Geruest, "FX" in 16px), ~+100 ms pro Tipp. Jetzt: nur Vorhang + Bild.
 //   - History-Karte: Zahlen bis 29 px ausserhalb, waagerecht verschiebbar,
 //     Scrollen lief an die Seite weiter.
 // Die anderen Waechter fahren OHNE Wisch (navigator.webdriver); dieser
 // schaltet ihn mit window.__wischTest ausdruecklich an.
-//   node check/uebergang.js [--gegenprobe]   (Gegenprobe: Kopie faengt Klicks)
+//   node check/uebergang.js [--gegenprobe]        (Wisch-Ebene faengt Klicks)
+//   node check/uebergang.js [--gegenprobe-kopie]  (Seitenkopie in der Ebene)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
+const GP_KOPIE = process.argv.includes('--gegenprobe-kopie');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -31,13 +37,24 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); gotoSym('USD'); });
   await p.waitForTimeout(1800);
 
-  // 1) Asset-Wechsel ueber das Panel: Kopie mit Panel, echtes Panel zu
+  // 1) Asset-Wechsel ueber das Panel: Vorhang in Seitenfarbe, KEINE Kopie,
+  //    echtes Panel zu
   await p.tap('.np-assetstack'); await p.waitForTimeout(350);
-  await p.evaluate(() => { document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click(); });
+  await p.evaluate(gp => { const panel = document.querySelector('#navSidebar .np-sub-wrap.open');
+    document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click();
+    // Gegenprobe: das alte Verhalten (Panel-Klon in der Wisch-Ebene) nachstellen
+    const o = document.querySelector('.wisch'); if (gp && o && panel) o.appendChild(panel.cloneNode(true)); }, GP_KOPIE);
   const w1 = await p.evaluate(() => { const o = document.querySelector('.wisch');
-    return { da: !!o, mitPanel: !!(o && o.querySelector('.np-sub-wrap')), panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id }; });
+    if (!o) return { da: false, panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id };
+    const fremd = [...o.children].filter(k => !/^wisch-(vorhang|bild)$/.test(k.className)).map(k => k.className || k.tagName);
+    const v = o.querySelector('.wisch-vorhang'), r = v && v.getBoundingClientRect(), orr = o.getBoundingClientRect();
+    return { da: true, fremd, vorhangBg: v ? getComputedStyle(v).backgroundColor : null, seiteBg: getComputedStyle(document.body).backgroundColor,
+      deckt: !!r && r.left <= orr.left + 1 && r.right >= orr.right - 1 && r.height >= orr.height - 1,
+      panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id }; });
   if (!w1.da) fail('KEIN WISCH', 'Asset-Wechsel USD -> GBP startet keinen Wisch-Uebergang');
-  if (w1.da && !w1.mitPanel) fail('PANEL NICHT IM WISCH', 'das offene Asset-Panel ist nicht Teil der Kopie - es verschwindet dann schlagartig statt mit dem Bild');
+  if (w1.da && w1.fremd.length) fail('KOPIE IN DER WISCH-EBENE', `neben Vorhang/Bild liegt: ${w1.fremd.join(', ')} - eine geklonte Seite verliert ausserhalb ihrer Vorfahren ihr CSS (Bugreport 2026-09-23)`);
+  if (w1.da && w1.vorhangBg !== w1.seiteBg) fail('VORHANG NICHT IN SEITENFARBE', `Vorhang ${w1.vorhangBg}, Seite ${w1.seiteBg}`);
+  if (w1.da && !w1.deckt) fail('VORHANG DECKT NICHT', 'vor dem Losfahren deckt der Vorhang die Flaeche nicht ganz - der halbfertige Aufbau waere sichtbar');
   if (!w1.panelZu) fail('PANEL BLEIBT OFFEN', 'nach der Asset-Wahl steht das echte Panel noch offen');
   if (w1.sym !== 'GBP') fail('NEUER INHALT FEHLT', `unter dem Wisch steht nicht GBP, sondern ${w1.sym}`);
   // 2) Inhalt ist waehrend des Wischs bedienbar: echter Klick auf "History"
@@ -50,7 +67,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   await p.mouse.click(kn.x, kn.y);
   await p.waitForTimeout(250);
   const hist = await p.evaluate(() => { const m = document.getElementById('mHist'); return !!m && m.style.display === 'flex'; });
-  if (nochDa && !hist) fail('INHALT WAEHREND DES WISCHS NICHT BEDIENBAR', 'ein Klick auf "History" waehrend des Wischs oeffnet nichts - die Kopie faengt Klicks ab');
+  if (nochDa && !hist) fail('INHALT WAEHREND DES WISCHS NICHT BEDIENBAR', 'ein Klick auf "History" waehrend des Wischs oeffnet nichts - die Wisch-Ebene faengt Klicks ab');
   // 3) Fenster in der Seite: KEIN Wisch
   // Dauer aus der App lesen, nicht fest annehmen (0,5 s -> 1,0 s am 2026-09-23).
   const dauer = await p.evaluate(() => WISCH_MS);
@@ -85,7 +102,8 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   }
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_KOPIE) { const ok = F.some(x => x.startsWith('KOPIE IN DER WISCH-EBENE')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seitenkopie im Wisch wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { const ok = F.some(x => x.startsWith('INHALT WAEHREND')); console.log(ok ? 'uebergang --gegenprobe: ok (klickfangende Kopie wird gemeldet)' : 'uebergang --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (F.length) { console.log(`uebergang: ${F.length} Befund(e)\n  ` + F.join('\n  ')); process.exit(1); }
-  console.log('uebergang: ok (Wisch bei Asset- und Seitenwechsel, Panel in der Kopie, Inhalt bedienbar, kein Wisch bei Fenstern/ohne Animation, History-Karte fest)');
+  console.log('uebergang: ok (Wisch bei Asset- und Seitenwechsel, nur Vorhang + Bild ohne Seitenkopie, Panel zu, Inhalt bedienbar, kein Wisch bei Fenstern/ohne Animation, History-Karte fest)');
 })();
