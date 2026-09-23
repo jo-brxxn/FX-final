@@ -586,6 +586,17 @@ function icn(name,size){
 // (v.a. iOS Safari) wurden Unterlaengen (g/j/p/q/y) dadurch am unteren Rand
 // abgeschnitten, obwohl der Text selbst korrekt war.
 function ar(el){if(!el)return;el.style.height='auto';el.style.height=(el.scrollHeight+2)+'px';}
+// Dasselbe fuer VIELE Felder mit EINEM Layout statt einem je Feld (2026-09-23,
+// Leistung beim Waehrungswechsel): ar() schreibt, liest scrollHeight und
+// schreibt wieder - in einer Schleife erzwingt jedes Feld ein Layout der
+// ganzen Seite (gemessen 36 ms je Aufbau der Asset-Seite). Erst alle loesen,
+// dann alle messen, dann alle setzen.
+function arAlle(els){
+  const l=[...els].filter(Boolean);
+  l.forEach(e=>{e.style.height='auto';});
+  const h=l.map(e=>e.scrollHeight);
+  l.forEach((e,i)=>{e.style.height=(h[i]+2)+'px';});
+}
 function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a[i]];}
 // 'sbull'/'sbear' (staerker als bull/bear) nur beim "Risk Correlation"-
 // Indikator der Risk-Environment-Karte (Nutzer-Wunsch 2026-07-13, siehe
@@ -1332,16 +1343,41 @@ function histTagsComparable(a,b){return a!=null&&b!=null&&a===b;}
 // Faelle gibt indAltAm() als null zurueck, statt eine Kante zu behaupten.
 // Das ist dieselbe Ausschlussliste wie in indOverdueCycles - bewusst, denn
 // eine zweite daneben wuerde irgendwann abweichen.
-function histLetztesRelease(ind,datum){
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
-  let best=null;
-  h.forEach(e=>{
+// Zwischenspeicher der Release-Tage je Indikator - lebt NUR waehrend EINES
+// Aufbaus der History-Karte (renderSymHistoryPanel) und wird danach
+// verworfen, kann also nie veraltete Daten zeigen. Grund (2026-09-23,
+// Leistung beim Waehrungswechsel): histLetztesRelease lief fuer JEDEN Tag x
+// JEDEN Indikator ueber die ganze chartHist und parste jeden Wert neu -
+// gemessen 47 ms von ~160 ms Aufbau der Asset-Seite.
+let _histRelMemo=null;
+function histReleaseTage(ind){
+  let t=_histRelMemo.get(ind);if(t)return t;
+  t=[];
+  (Array.isArray(ind.chartHist)?ind.chartHist:[]).forEach(e=>{
     if(!Array.isArray(e)||!e[0])return;
-    const d=String(e[0]).slice(0,10);
-    if(d>datum)return;
     if(parseNumLike(e[1])==null)return;
-    if(best==null||d>best)best=d;
+    t.push(String(e[0]).slice(0,10));
   });
+  t.sort();
+  _histRelMemo.set(ind,t);
+  return t;
+}
+function histLetztesRelease(ind,datum){
+  let best=null;
+  if(_histRelMemo){
+    // spaetester Tag <= datum (sortiert, Stringvergleich wie unten)
+    const t=histReleaseTage(ind);let lo=0,hi=t.length-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(t[m]<=datum){best=t[m];lo=m+1;}else hi=m-1;}
+  }else{
+    const h=Array.isArray(ind.chartHist)?ind.chartHist:[];
+    h.forEach(e=>{
+      if(!Array.isArray(e)||!e[0])return;
+      const d=String(e[0]).slice(0,10);
+      if(d>datum)return;
+      if(parseNumLike(e[1])==null)return;
+      if(best==null||d>best)best=d;
+    });
+  }
   // Ohne Historie bleibt das gespeicherte Release - aber nur, wenn es am
   // Stichtag schon existierte.
   const r=ind.research;
@@ -1677,6 +1713,10 @@ function toggleHistAge(){
   if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
 }
 function renderSymHistoryPanel(id){
+  const vorher=_histRelMemo;_histRelMemo=vorher||new WeakMap();
+  try{return renderSymHistoryPanelRoh(id);}finally{_histRelMemo=vorher;}
+}
+function renderSymHistoryPanelRoh(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
   const days=symHistoryDays(id,histRange).slice().reverse(); // neueste zuerst
@@ -6986,7 +7026,7 @@ function renderDetail(){
     </div>`}
     ${renderSpecTab(c)}
   </div>`;
-  document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx').forEach(ar);
+  arAlle(document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx'));
   attachChartHovers(document.getElementById('detail'));
   // Sidebar-Zahlen und den Score im Detail-Kopf aus EINER frischen Rechnung
   // schreiben - synchron, direkt nachdem das Markup steht. Beide Anzeigen

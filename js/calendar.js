@@ -83,14 +83,27 @@ function countdownHtml(dateStr){
 // Regel, die an 20 Aufrufstellen EINZELN haengt, haelt nicht. Es gibt jetzt
 // genau vier Datumsformatierer, und `check/datum.js` meldet jeden weiteren
 // toLocaleDateString/toLocaleString-Aufruf mit Datumsanteil rot.
+// EIN Formatierer je Optionssatz (2026-09-23, Leistung beim Waehrungs-
+// wechsel): toLocaleDateString baut bei JEDEM Aufruf intern einen neuen
+// Intl.DateTimeFormat - gemessen 27 ms von ~160 ms Aufbau der Asset-Seite
+// (History-Karte, hunderte Tageskoepfe). format() liefert denselben Text.
+// Ungueltiges Datum: toLocaleDateString gibt "Invalid Date", format() wirft -
+// beides wie bisher behandelt.
+const _enDatumFmt=new Map();
+function enDatum(d,o){
+  if(!isFinite(d.getTime()))return 'Invalid Date';
+  const k=JSON.stringify(o);let f=_enDatumFmt.get(k);
+  if(!f){f=new Intl.DateTimeFormat('en',o);_enDatumFmt.set(k,f);}
+  return f.format(d);
+}
 function fmtDayHdr(dateStr,utc){try{const d=new Date(dateStr+(utc?'T00:00:00Z':'T00:00:00'));
   const o={weekday:'short',day:'numeric',month:'short',year:'2-digit'};if(utc)o.timeZone='UTC';
-  return d.toLocaleDateString('en',o);}catch(e){return dateStr;}}
+  return enDatum(d,o);}catch(e){return dateStr;}}
 // Ohne Wochentag - fuer Chart-Achsen und Tabellenzellen, wo "Thu, " nur Platz
 // kostet. MIT Jahr, wie alles andere auch.
 function fmtDayShort(dateStr,utc){try{const d=new Date(dateStr+(utc?'T00:00:00Z':'T00:00:00'));
   const o={day:'numeric',month:'short',year:'2-digit'};if(utc)o.timeZone='UTC';
-  return d.toLocaleDateString('en',o);}catch(e){return dateStr;}}
+  return enDatum(d,o);}catch(e){return dateStr;}}
 // Nur Monat + Jahr - fuer Achsen, die mehr als ~400 Tage zeigen und auf denen
 // ein Tagesdatum ohnehin nicht mehr lesbar waere.
 //

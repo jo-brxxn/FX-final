@@ -17291,3 +17291,46 @@ außerdem bei beschäftigtem Hauptthread noch nicht aufgelöst (`startTime`
 null), der Gleichlauf bricht. **Nicht wieder versuchen.** Das restliche
 Stillstehen nach dem Tippen ist die Aufbauzeit der Asset-Seite selbst
 (`renderDetail`) — wenn, dann dort ansetzen.
+
+## 2026-09-23 — Währungswechsel: Aufbau der Asset-Seite ~40 % schneller (VERSION-CHECK-551)
+
+Rest von *„es hängt"*: nach dem Tippen steht das Bild, solange die neue
+Währung aufgebaut wird — erst danach kann der Wisch fahren. Profil
+(Chromium, 4 Wechsel gemittelt, 1× CPU): `renderDetail` **161 ms**, davon
+History-Karte 60 ms (`histIndAltAm`/`histLetztesRelease` 47 ms),
+Datumsformatierung 27 ms, Kerzen-Block 27 ms, Textfeld-Höhen (`ar`) 36 ms.
+
+Drei Änderungen, jede ohne Einfluss auf das Ergebnis:
+- **`enDatum()`** (`js/calendar.js`): ein zwischengespeicherter
+  `Intl.DateTimeFormat` je Optionssatz in `fmtDayHdr`/`fmtDayShort`.
+  `toLocaleDateString` baut bei jedem Aufruf intern einen neuen — gemessen
+  **809 Aufrufe je Währungswechsel → 0**. Ungültiges Datum liefert weiter
+  „Invalid Date".
+- **Release-Tage je Indikator einmal pro Aufbau** (`histReleaseTage`,
+  binäre Suche): der Zwischenspeicher lebt nur während
+  `renderSymHistoryPanel` und wird danach verworfen — nie veraltet.
+  Außerhalb läuft der alte Weg.
+- **`arAlle()`**: Textfeld-Höhen erst alle lösen, dann alle messen, dann
+  alle setzen — ein Layout statt einem je Feld.
+
+**Gleichheit bewiesen** (Chromium, fester Zufallsstartwert, nur lokale
+Daten): komplette Asset-Seite (`#detail`) und History-Karte aller 24 Assets
+plus 1600 Datumsformatierungen inkl. Fehlerfall — **0 von 49 Ausgaben
+abweichend**, auch die gesetzten Textfeld-Höhen.
+
+**Gemessen, Tippen im Asset-Panel AUD → USD, Pixeldichte 2, je 3 Läufe:**
+
+| | Klick-Handler | Tippen → erste Bewegung |
+|---|---|---|
+| CPU ×1, 550 | 152–175 ms | 285–311 ms |
+| CPU ×1, 551 | 82–90 ms | 228–231 ms |
+| CPU ×4, 550 | 858–944 ms | 1370–1443 ms |
+| CPU ×4, 551 | 383–442 ms | 790–1023 ms |
+
+Profil danach: `renderDetail` 80 ms, History-Karte 12 ms, Kerzen-Block 3 ms.
+Größter Rest: `wischAltLegen` 46 ms — das erzwungene Layout der neuen
+Seite, das fürs erste Bild ohnehin anfällt. Flagge und Schnittkante weiter
+im Gleichlauf (0–1 px).
+
+**Wächter:** `check/uebergang.js` (8) — höchstens 50 `toLocaleDateString`
+je Währungswechsel; `--gegenprobe-tempo` rot, gegen den Stand 550 rot (805).

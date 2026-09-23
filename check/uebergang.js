@@ -24,6 +24,11 @@
 //   node check/uebergang.js [--gegenprobe-hoehe]  (alte .dp in voller Inhaltshoehe)
 //   node check/uebergang.js [--gegenprobe-scroll] (alte .dp zurueck in #detail)
 //   node check/uebergang.js [--gegenprobe-start]  (Uhr laeuft ab dem Anlegen, wie bis 549)
+//   node check/uebergang.js [--gegenprobe-tempo]  (jede Datumsformatierung wieder ueber toLocaleDateString)
+// Aufbauzeit beim Waehrungswechsel (2026-09-23, "es haengt"): gemessen
+// 809 toLocaleDateString-Aufrufe je Wechsel (jeder baut intern einen neuen
+// Intl.DateTimeFormat) - jetzt ein zwischengespeicherter Formatierer je
+// Optionssatz. Geprueft: hoechstens 50 Aufrufe je Waehrungswechsel.
 // Nutzer 2026-09-23 (iPad): "man sieht gar nix, es haengt und dann wechselt
 // es ohne Animation". Nachgestellt: 1,5 s belegter Hauptthread direkt nach
 // dem Anlegen des Wischs (wie ein langsames erstes Bild auf dem Geraet) -
@@ -52,6 +57,7 @@ const GP_FLAGGE = process.argv.includes('--gegenprobe-flagge');
 const GP_HOEHE = process.argv.includes('--gegenprobe-hoehe');
 const GP_SCROLL = process.argv.includes('--gegenprobe-scroll');
 const GP_START = process.argv.includes('--gegenprobe-start');
+const GP_TEMPO = process.argv.includes('--gegenprobe-tempo');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -207,10 +213,21 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   if (w7.bewegt < 15) fail('WISCH NACH HAENGER UNSICHTBAR', `nach 1,5 s belegtem Hauptthread nur ${w7.bewegt} Bilder mit fahrender Flagge (verlangt >= 15) - auf dem iPad sah man so "gar nix, es haengt und dann wechselt es ohne Animation" (2026-09-23)`);
   if (w7.rest) fail('WISCH ENDET NICHT', `nach dem Haenger-Test noch ${w7.rest} Wisch-Ebene(n) da`);
 
+  // 8) Aufbauzeit: keine teure Datumsformatierung je Tag (809 -> 0 Aufrufe)
+  await p.waitForTimeout(dauer + 800);
+  const w8 = await p.evaluate(gpt => {
+    if (gpt) { Object.defineProperty(Intl.DateTimeFormat.prototype, 'format', { configurable: true, get() { const self = this; return d => new Date(d).toLocaleDateString('en', self.resolvedOptions()); } }); }
+    let n = 0; const o = Date.prototype.toLocaleDateString; Date.prototype.toLocaleDateString = function () { n++; return o.apply(this, arguments); };
+    try { gotoSym('AUD'); gotoSym('GBP'); } finally { Date.prototype.toLocaleDateString = o; }
+    return Math.round(n / 2);
+  }, GP_TEMPO);
+  if (w8 > 50) fail('AUFBAU ZU TEUER', `${w8} toLocaleDateString-Aufrufe je Waehrungswechsel (erlaubt 50) - jeder baut intern einen neuen Intl.DateTimeFormat; vorher 809, der Aufbau stand dadurch spuerbar still (2026-09-23). Zentrale Formatierer nutzen enDatum()`);
+
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
   if (GP_HOEHE) { const ok = F.some(x => x.startsWith('ALTE SEITE ZU HOCH')); console.log(ok ? 'uebergang --gegenprobe-hoehe: ok (alte .dp in voller Hoehe wird gemeldet)' : 'uebergang --gegenprobe-hoehe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_FLAGGE) { const ok = F.some(x => x.startsWith('WISCH-FLAGGE NICHT EIGENSTAENDIG')); console.log(ok ? 'uebergang --gegenprobe-flagge: ok (Inline-Flagge wird gemeldet)' : 'uebergang --gegenprobe-flagge: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
+  if (GP_TEMPO) { const ok = F.some(x => x.startsWith('AUFBAU ZU TEUER')); console.log(ok ? 'uebergang --gegenprobe-tempo: ok (Formatierung je Aufruf wird gemeldet)' : 'uebergang --gegenprobe-tempo: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_START) { const ok = F.some(x => x.startsWith('WISCH NACH HAENGER UNSICHTBAR')); console.log(ok ? 'uebergang --gegenprobe-start: ok (Uhr ab dem Anlegen wird gemeldet)' : 'uebergang --gegenprobe-start: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_SCROLL) { const ok = F.some(x => x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-scroll: ok (alte .dp in #detail wird gemeldet)' : 'uebergang --gegenprobe-scroll: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS') || x.startsWith('ALTE SEITE NICHT AUF SEITENEBENE')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
