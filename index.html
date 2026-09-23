@@ -5484,7 +5484,15 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 /* Die Flagge laeuft ueber die ganze Motivflaeche und blendet nach links aus
    (Maske am Container) - als harter Block rechts sah sie aus wie ein
    aufgeklebtes Bild, gemessen im ersten Wurf. */
-.ahead-motif-flag{opacity:.95;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden}
+.ahead-motif-flag{opacity:.95;display:flex;align-items:center;justify-content:flex-end;width:100%;height:100%;overflow:hidden;
+  padding:12px 18px 12px 0;box-sizing:border-box}
+/* Die Flagge passt IMMER ganz in die Karte (Nutzer 2026-09-23: "die gehen
+   ueber die Karte drueber und Teile werden oben und unten abgeschnitten ...
+   auf jeden Fall ganz zu sehen"). Gemessen vorher: 510x340 px in einer
+   404x113-Flaeche - zwei Drittel der Hoehe weggeschnitten. Jetzt folgt die
+   Hoehe der Karte, die Breite dem 3:2-Format. */
+.ahead-motif-flag .ai-wrap{height:100%!important;width:auto!important;aspect-ratio:3/2;flex:none;max-width:100%}
+.ahead-motif-flag .ai-svg{width:100%;height:100%;display:block}
 .atitle{font-weight:800;letter-spacing:-.6px}
 .atitle .score-badge{font-size:var(--fs-xl);border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
 .afull{font:500 var(--fs-md)/1.3 var(--ff-text);color:var(--t2);margin-top:4px}
@@ -5540,7 +5548,10 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    die Animation laeuft trotzdem bis zum Ende. z-index ueber den Stapel-
    Panels (60), unter Fenstern/Popups. */
 .wisch{position:fixed;z-index:80;overflow:hidden;pointer-events:none;contain:strict}
-.wisch-vorhang{position:absolute;inset:0;background:var(--bg0);will-change:transform}
+.wisch-alt{position:fixed!important;z-index:50;pointer-events:none;margin:0!important;will-change:clip-path;box-sizing:border-box}
+/* Die alte Seite darf beim Wieder-Einhaengen keine Eintritts-Animation
+   (body.anim-enter, .detail-fade) noch einmal abspielen. */
+.wisch-alt,.wisch-alt *{animation:none!important;transition:none!important}
 .wisch-bild{position:absolute;left:0;top:0;height:100%;display:flex;align-items:center;will-change:transform}
 .wisch-flagge{filter:drop-shadow(0 12px 28px rgba(8,20,45,.35))}
 .wisch-flagge .ai-wrap{display:block}
@@ -5696,11 +5707,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-543 - Wisch ohne DOM-Kopie: Vorhang in Seitenfarbe statt geklonter alter Seite (Kategorie-Wechsel zeigte ein Geruest ohne CSS und kostete ~100 ms pro Tipp)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-544 - Wisch zeigt rechts der Flagge die alte Seite statt Weiss, Kopf-Flagge passt ganz in die Karte, Flaggenrand waechst nicht mehr mit, Sterne statt Punkte (USD-Flagge, Symbole EUR/AUD/NZD)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-543</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-544</span>
     </span>
   </div>
   <div class="hdr-r">

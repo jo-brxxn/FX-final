@@ -16959,3 +16959,60 @@ verwendet (grep über `js/*.js` und `index.html`: nur diese Stelle).
 und Bild liegen, der Vorhang die Seitenfarbe trägt und die Fläche vor dem
 Losfahren ganz deckt. Neue Gegenprobe `--gegenprobe-kopie` hängt einen
 Panel-Klon in die Ebene → wird als `KOPIE IN DER WISCH-EBENE` gemeldet.
+
+## 2026-09-23 — Bugfix: weißer Wisch, abgeschnittene Kopf-Flagge, Punkte statt Sterne (VERSION-CHECK-544)
+
+Nutzer (zwei iPad-Screenshots, JPY- und CAD-Seite): *„Im Übergang hängt es
+also das ist dann weiß … die Flaggen die gehen über die Karte drüber und Teile
+werden oben und unten abgeschnitten. Mach so dass das auf jeden Fall ganz zu
+sehen ist. Und in manche Flaggen gehören Sterne aber da sind nur Punkte mach
+das genauer."*
+
+**1. Weißer Übergang — gemessen** (1000×695, CPU 4x gedrosselt, dann 1x):
+- Synchroner Seitenaufbau (Bild eingefroren): Assets 1571–2381 ms, Dashboard
+  732 ms (4x); 334–381 ms (1x). Das ist der Aufbau selbst, nicht der Wisch.
+- Danach stand der Vorhang aus VERSION-CHECK-543 **340–514 ms allein**: das
+  Bild startete außerhalb (Mitte bei −bw/2) mit langsamem Anlauf, und rechts
+  der Flagge blieb die Fläche bis zum Ende leer. Das ist das „weiß".
+- Ursache an der Wurzel: 543 hatte die alte Seite durch eine Leerfläche ersetzt.
+- **Fix:** die alte Seite SELBST bleibt 1 s obenauf — derselbe Knoten an
+  seinem Platz im DOM, also mit vollem CSS (keine Kopie wie in 542).
+  Seitenwechsel: die alte Seite wird trotz `display:none` weiter gezeigt.
+  Asset-Wechsel: die von `renderDetail` ausgehängte alte `.dp` wird HINTER der
+  neuen wieder eingehängt (getElementById findet zuerst die neue). Das passiert
+  im Microtask direkt nach dem Umbau, vor dem ersten Bild. Die Flagge schneidet
+  die alte Seite an ihrer Mitte weg: links steht der neue Inhalt, rechts noch
+  der alte. Leere Fläche nachher: 0 ms.
+- Preis, gemessen (1x, 6 Wechsel, zwei Läufe): erstes Bild 185–474 ms mit
+  Wisch gegen 151–404 ms ohne, im Mittel ~+60 ms. `wischLos` selbst 26–75 ms,
+  der Rest ist das erneute Zeichnen der alten Seite. Der Löwenanteil der
+  Wartezeit bleibt der Seitenaufbau.
+- Der Seiten-Hintergrund wird für die Dauer vom `body` übernommen
+  (attachment fixed). iOS Safari kennt `fixed` nicht, dort sitzt ein
+  Marmorbild 1 s leicht versetzt; einfarbige Hintergründe sind exakt.
+
+**2. Kopf-Flagge — gemessen:** 510×340 px in einer 404×113-px-Fläche, zwei
+Drittel der Höhe abgeschnitten. Dazu wuchs der Rand `.ai-rim` mit der Flagge:
+`vector-effect:non-scaling-stroke` stand an der `<use>`-Klasse, vererbt sich
+aber nicht in den referenzierten Pfad → 1,5 Einheiten = 9 px bei 150 px Höhe,
+~37 px im Wisch (der helle Streifen am Kartenrand auf dem Foto). Fix: Höhe
+folgt der Karte (jetzt 133×89 px, ganz in der Karte), `vector-effect` am Pfad
+`#aiRim` in den Defs.
+
+**3. Sterne:** die USD-Flagge trug 50 `<circle>` (Kommentar: „bei 20 px ist
+ein 5-Zack nicht auflösbar") — seit sie groß im Wisch und im Kopf steht,
+sichtbar als Punkte. Die einfarbigen Panel-Symbole EUR (8 Punkte), AUD, NZD
+ebenso. Jetzt überall `aiStars`: USD 50 Fünfzacke, EUR 12 (wie das Original),
+AUD Commonwealth-Stern + Kreuz des Südens mit 7 Zacken + kleiner 5-Zack, NZD 4.
+
+**Fehlerklasse:** alle `AI_FLAGS` und `AI_GLYPHS` auf `<circle>` als Sternersatz
+durchsucht — nur die vier genannten; JPY (Sonnenscheibe) und BTC sind echte
+Kreise.
+
+**Wächter:** `check/uebergang.js` prüft im ersten Bild, dass die alte Seite als
+Originalknoten in `#detail` mit unveränderter Titelschrift obenauf liegt, die
+Fläche deckt, einen Hintergrund hat und hinter der neuen `.dp` steht, und dass
+nach dem Wisch nichts übrig bleibt. Gegenprobe `--gegenprobe-kopie` hängt die
+alte Seite ohne ids in den body → `ALTE SEITE OHNE CSS`. `check/symbole.js` (D):
+keine Kreise/Sternzahl, Kopf-Flagge ganz in der Karte, `vector-effect` am Rand;
+Gegenprobe `--gegenprobe-sterne` meldet Punkt und Riesenflagge.

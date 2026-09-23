@@ -18,12 +18,21 @@
 //      (Pixelvergleich: Flaggenumgebung bleibt Grundfarbe, egal wann);
 //   C) jeder sichtbare Kartenkopf auf 11 Seiten traegt GENAU EIN Symbol, und
 //      in den Sentiment-Reitern steht kein Emoji mehr.
-//   node check/symbole.js [--gegenprobe]   (Gegenprobe: Glanz ohne Clip)
+//   D) Nutzer 2026-09-23: "in manche Flaggen gehoeren Sterne aber da sind nur
+//      Punkte" - USD-Flagge (50 Punkte) und die einfarbigen Symbole EUR/AUD/NZD
+//      trugen <circle>. Jetzt: kein Kreis, und die Zahl der Sterne stimmt.
+//      Dazu "die [Kopf-]Flaggen gehen ueber die Karte drueber und Teile werden
+//      oben und unten abgeschnitten": gemessen 510x340 px in 404x113 px -
+//      geprueft wird, dass die Flagge GANZ in der Kopfkarte liegt, und dass
+//      der Rand nicht mit der Flagge waechst (vector-effect am Defs-Pfad).
+//   node check/symbole.js [--gegenprobe]          (Glanz ohne Clip)
+//   node check/symbole.js [--gegenprobe-sterne]   (Punkte + Riesenflagge)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
+const GP_STERNE = process.argv.includes('--gegenprobe-sterne');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -89,6 +98,26 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   if (ausserhalb) fail('GLANZ AUSSERHALB DER FLAGGE', `${ausserhalb} Messungen neben der Flagge zeigen den weissen Glanz`);
   await p.evaluate(() => document.getElementById('symTest').remove());
 
+  // ── D) Sterne statt Punkte, Rand waechst nicht ─────────────────────
+  const d = await p.evaluate(gp => {
+    if (gp) document.getElementById('ai-USD').insertAdjacentHTML('beforeend', '<circle cx="2" cy="2" r=".4" fill="#fff"/>');
+    const SOLL = { USD: 50, EUR: 12, AUD: 6, NZD: 4 }, out = [];
+    const zacken = el => [...el.querySelectorAll('path')].reduce((n, pth) => n + ((pth.getAttribute('d') || '').match(/Z/gi) || []).length, 0);
+    for (const id in SOLL) {
+      const sym = document.getElementById('ai-' + id);
+      const g = document.createElement('div'); g.innerHTML = assetGlyphHtml(id, 40);
+      out.push({ id, wo: 'Flagge', kreise: sym.querySelectorAll('circle').length, sterne: zacken(sym), soll: SOLL[id] });
+      if (id !== 'USD') out.push({ id, wo: 'Symbol', kreise: g.querySelectorAll('circle').length, sterne: zacken(g), soll: SOLL[id] });
+    }
+    const rim = document.getElementById('aiRim');
+    return { out, rimFest: !!rim && rim.getAttribute('vector-effect') === 'non-scaling-stroke' };
+  }, GP_STERNE);
+  d.out.forEach(r => {
+    if (r.kreise) fail('PUNKTE STATT STERNE', `${r.id} (${r.wo}): ${r.kreise} <circle> - dort gehoeren Sterne hin`);
+    if (r.sterne < r.soll) fail('STERNE FEHLEN', `${r.id} (${r.wo}): ${r.sterne} Sterne, verlangt ${r.soll}`);
+  });
+  if (!d.rimFest) fail('RAND WAECHST MIT', '#aiRim ohne vector-effect="non-scaling-stroke" - an .ai-rim wirkt es nicht (vererbt sich nicht durch <use>), der Rand stand als 9-37 px dicker Rahmen um grosse Flaggen');
+
   // ── C) Kartensymbole ───────────────────────────────────────────────
   const SEITEN = ['sym:USD', 'sym:GOLD', 'dash', 'cot', 'sent', 'seas', 'data', 'rate', 'edge', 'carry', 'mx'];
   let koepfe = 0;
@@ -108,14 +137,27 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     });
     r.out.forEach(([t, n]) => { koepfe++; if (n !== 1) fail('KARTENSYMBOL', `${s}: "${t}" hat ${n} Symbole (verlangt genau 1)`); });
     r.emoji.forEach(e => fail('EMOJI IM REITER', `${s}: "${e}"`));
+    if (s === 'sym:USD') {
+      const k = await p.evaluate(gp => { const a = document.querySelector('.ahead'), f = document.querySelector('.ahead-motif-flag .ai-wrap');
+        if (!a || !f) return null; if (gp) { f.style.setProperty('height', '340px', 'important'); f.style.setProperty('width', '510px', 'important'); }
+        const ar = a.getBoundingClientRect(), fr = f.getBoundingClientRect();
+        return { ar: [ar.left, ar.top, ar.right, ar.bottom].map(Math.round), fr: [fr.left, fr.top, fr.right, fr.bottom].map(Math.round) }; }, GP_STERNE);
+      if (!k) fail('KOPF-FLAGGE FEHLT', 'keine .ahead-motif-flag auf der USD-Seite');
+      else if (k.fr[0] < k.ar[0] || k.fr[1] < k.ar[1] || k.fr[2] > k.ar[2] || k.fr[3] > k.ar[3])
+        fail('KOPF-FLAGGE ABGESCHNITTEN', `Flagge ${k.fr.join(',')} ragt aus der Kopfkarte ${k.ar.join(',')}`);
+    }
   }
   if (koepfe < 20) fail('ZU WENIG KOEPFE GEFUNDEN', `${koepfe} - Selektoren veraltet?`);
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_STERNE) {
+    const ok = ['PUNKTE STATT STERNE', 'KOPF-FLAGGE ABGESCHNITTEN'].every(t => F.some(x => x.startsWith(t)));
+    console.log(ok ? 'symbole --gegenprobe-sterne: ok (Punkte und ueberstehende Kopf-Flagge werden gemeldet)' : 'symbole --gegenprobe-sterne: FEHLER - nicht gemeldet: ' + F.join(' | ')); process.exit(ok ? 0 : 1);
+  }
   if (GEGENPROBE) {
     const ok = F.some(x => x.startsWith('GLANZ AUSSERHALB'));
     console.log(ok ? 'symbole --gegenprobe: ok (Glanz ohne Clip wird gemeldet)' : 'symbole --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
   }
   if (F.length) { console.log(`symbole: ${F.length} Befund(e)\n  ` + F.slice(0, 40).join('\n  ')); process.exit(1); }
-  console.log(`symbole: ok (${a.length} Flaggen je ein Stueck mit Rand und begrenztem Glanz, ${koepfe} Kartenkoepfe mit genau einem Symbol)`);
+  console.log(`symbole: ok (${a.length} Flaggen je ein Stueck mit Rand und begrenztem Glanz, Sterne statt Punkte, Kopf-Flagge ganz in der Karte, ${koepfe} Kartenkoepfe mit genau einem Symbol)`);
 })();

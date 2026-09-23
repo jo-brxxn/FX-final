@@ -56,6 +56,9 @@ export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScor
 const AI_GLYPH_FRAME = '<rect x="1.6" y="2.6" width="32.8" height="18.8" rx="2.6" fill="none" stroke="currentColor" stroke-width="1.6" opacity=".42"/>';
 // Sternenkreis (EU) und Punktreihen (AU/NZ) als kleine Scheiben.
 const _gPunkte = pts => pts.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r || 1}" fill="currentColor"/>`).join('');
+// Sterne statt Punkte (Nutzer 2026-09-23: "in manche Flaggen gehoeren Sterne
+// aber da sind nur Punkte mach das genauer"). [x, y, Radius, Zacken].
+const _gSterne = st => `<path d="${aiStars(st.map(([x, y, r, n]) => [x, y, r, n || 5]))}" fill="currentColor"/>`;
 const AI_GLYPHS = {
   // Sternenfeld links oben + Streifen rechts und darunter.
   USD: AI_GLYPH_FRAME
@@ -63,7 +66,8 @@ const AI_GLYPHS = {
     + '<g stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".85">'
     + '<path d="M19.4 7h12.4M19.4 11h12.4M5.2 16.8h26.6"/></g>',
   // Sternenkreis.
-  EUR: AI_GLYPH_FRAME + _gPunkte([[18, 5.4], [23.6, 7.7], [25.9, 12], [23.6, 16.3], [18, 18.6], [12.4, 16.3], [10.1, 12], [12.4, 7.7]].map(p => [p[0], p[1], 1.35])),
+  // 12 Sterne wie im Original (vorher 8 Punkte).
+  EUR: AI_GLYPH_FRAME + _gSterne(Array.from({length: 12}, (_, i) => { const a = Math.PI / 6 * i - Math.PI / 2; return [18 + Math.cos(a) * 6.8, 12 + Math.sin(a) * 6.8, 1.45]; })),
   // Union Jack: Diagonalen plus Kreuz.
   GBP: AI_GLYPH_FRAME
     + '<g stroke="currentColor" stroke-linecap="round" opacity=".85">'
@@ -80,11 +84,12 @@ const AI_GLYPHS = {
   // Kleines Unionsfeld oben links, Kreuz des Suedens rechts.
   AUD: AI_GLYPH_FRAME
     + '<rect x="4" y="5" width="12" height="7.6" rx=".8" fill="currentColor" opacity=".55"/>'
-    + _gPunkte([[9.4, 17.4, 1.9], [26.8, 7.4, 1.5], [30.4, 12.4, 1.5], [25.2, 14.6, 1.5], [28.6, 18, 1.5]]),
+    // Commonwealth-Stern und Kreuz des Suedens: 7 Zacken, der kleine 5.
+    + _gSterne([[9.4, 17.4, 2.6, 7], [27.2, 6.6, 2, 7], [31, 12.2, 2, 7], [25, 14.4, 2, 7], [28.6, 18.6, 2, 7], [28.4, 10.6, 1.1]]),
   // Unionsfeld plus vier Sterne.
   NZD: AI_GLYPH_FRAME
     + '<rect x="4" y="5" width="12" height="7.6" rx=".8" fill="currentColor" opacity=".55"/>'
-    + _gPunkte([[27.4, 6.8, 1.7], [31, 12.4, 1.7], [24.4, 13, 1.7], [28.2, 18.2, 1.7]]),
+    + _gSterne([[27.4, 6.4, 2.3], [31, 12.2, 2.3], [24.2, 12.8, 2.3], [28.2, 18.4, 2.3]]),
   // Barrenstapel - zwei unten, einer oben.
   GOLD: '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">'
     + '<path d="M4.6 14.2h11.2l1.6 5.6H3Z"/><path d="M20.2 14.2h11.2l1.6 5.6H18.6Z"/>'
@@ -154,7 +159,7 @@ function aiDefsSvg() {
         <stop offset="1" stop-color="#000" stop-opacity=".09"/>
         <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="${AI_WELLE_L} 0" dur="${AI_WELLE_T}s" repeatCount="indefinite"/>
       </linearGradient>
-      <path id="aiRim" d="${aiWellenPfad(0)}" fill="none">${aiWellenAnim()}</path>
+      <path id="aiRim" d="${aiWellenPfad(0)}" fill="none" vector-effect="non-scaling-stroke">${aiWellenAnim()}</path>
       <!-- Gezeichnete Flagge (Nutzer 2026-09-23: Flaggen im Wisch und im
            Asset-Kopf "ohne Farben also auch gezeichnet"): Graustufe, dann
            dunkel -> MOTIV_DK, hell -> MOTIV_F1 - dieselbe Palette wie Barren,
@@ -7619,7 +7624,7 @@ const MOTIV_JE_KLASSE={crypto:'coin',metal:'bars',energy:'barrel',index:'bullbea
 function assetMotivHtml(id){
   const cls=assetCls(id);
   let inner='';
-  if(cls==='fx'){const f=assetIconHtml(id,340,true);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}
+  if(cls==='fx'){const f=assetIconHtml(id,90,true);if(f)inner='<span class="ahead-motif-flag">'+f+'</span>';}  // Groesse legt das CSS fest (.ahead-motif-flag .ai-wrap: Kartenhoehe)
   else{const k=MOTIV_JE_KLASSE[cls];if(k)inner=ASSET_MOTIVE[k];}
   return inner?'<div class="ahead-motif ahead-motif-'+(cls||'x')+'" aria-hidden="true">'+inner+'</div>':'';
 }
@@ -9134,21 +9139,17 @@ function updateSidebarSelection(){
 // Seitenwechsel (auch USD -> GBP, COT -> Trends), NICHT bei Fenstern in einer
 // Seite (History, Price chart ...). Bild: Flagge (FX), Motiv (Non-FX),
 // Szene (Seiten ohne Asset).
-// ABLAUF: (1) ein Vorhang in Seitenfarbe legt sich SOFORT ueber die Flaeche
-// (pointer-events:none - Klicks gehen durch); (2) die neue Seite wird
-// darunter ganz normal synchron gebaut; (3) erst danach, im naechsten Bild,
-// wischt das Bild durch und zieht den Vorhang hinter sich auf. So laeuft die
-// Animation auf einem freien Hauptthread.
-// ⚠ Das behebt nebenbei den Bug "Stapel verschwinden manchmal ohne
-// Animation": gemessen blockiert der Seitenaufbau 0,5-2,2 s, und das Panel
-// schloss erst DANACH bzw. seine Blende blieb in diesem Block haengen. Jetzt
-// liegt es ab dem Tipp unter dem Vorhang (z-index 80 > Panel 60) und ist weg,
-// wenn das Bild die Flaeche freigibt.
+// ABLAUF: (1) wischStart merkt sich die sichtbare Seite; (2) die neue Seite
+// wird ganz normal synchron gebaut; (3) direkt danach (Microtask, vor dem
+// ersten Bild) liegt die ALTE Seite noch einmal obenauf, das Bild wischt
+// durch und schneidet sie an seiner Mitte weg - links davon steht schon der
+// neue Inhalt, rechts noch der alte. pointer-events:none/inert: Klicks gehen
+// sofort an den neuen Inhalt.
 // 1,0 s (Nutzer 2026-09-23: "Animation mindestens doppelt so lang" - vorher 0,5 s).
 const WISCH_MS=1000;
 const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'40 5 330 160',szene:'200 10 210 158'};
 const SEITE_SZENE={over:'overview',dash:'dashboard',pairs:'setups',watch:'watchlist',cal:'calendar',notes:'archive'};
-let _wischOv=null,_wischLaeuft=false,_wischBereit=false;
+let _wischOv=null,_wischLaeuft=false,_wischBereit=false;  // _wischOv: gemerkter Stand zwischen wischStart und wischLos
 function wischErlaubt(){
   if(!_wischBereit)return false;               // nicht beim Start der App
   if(document.body.classList.contains('no-ui-anim'))return false;
@@ -9170,45 +9171,112 @@ function wischBildHtml(h){
   const sz=SEITEN_SZENEN[SEITE_SZENE[curPage]||'insights'];
   return'<div class="wisch-motiv">'+sz.replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB.szene+'"')+'</div>';
 }
-// (1) Vor dem Umbau aufrufen. Mehrfachaufrufe im selben Durchlauf (gotoSym
-// ruft showTab UND selSym) legen nur EINEN Vorhang an.
-// ⚠ KEINE DOM-KOPIE der alten Seite (Bugreport 2026-09-23 "Wenn ich Kategorie
-// umschalte sieht es so aus und haengt sich auf", gemessen): die erste Fassung
-// klonte Seite und offenes Stapel-Panel in eine body-Ebene. Ohne ihre ids und
-// ausserhalb von #navSidebar/#pageArea griff das CSS nicht mehr - das Panel
-// stand als nacktes Geruest da ("FX" in 16px, display:block, ohne Hintergrund),
-// Dashboard-Karten verloren ihr Raster - und das Klonen kostete ~+100 ms pro
-// Tipp. Stattdessen deckt ein Vorhang in Seitenfarbe die Flaeche ab, und das
-// Bild zieht ihn beim Durchwischen von links nach rechts auf. Eine Ebene in
-// Seitenfarbe braucht kein fremdes CSS und kostet nichts.
+// (1) Vor dem Umbau aufrufen: merkt sich, WAS gerade zu sehen ist.
+// Mehrfachaufrufe im selben Durchlauf (gotoSym ruft showTab UND selSym)
+// zaehlen als EIN Wechsel.
+// ⚠ Geschichte, beide gemessen (Bugreports 2026-09-23):
+//  - 1. Fassung KLONTE Seite + Panel in eine body-Ebene. Ohne ids und
+//    ausserhalb von #navSidebar/#pageArea griff das CSS nicht: nacktes
+//    Geruest ("FX" in 16px), ~+100 ms pro Tipp.
+//  - 2. Fassung (VERSION-CHECK-543): Vorhang in Seitenfarbe statt Klon. Der
+//    Vorhang stand 340-514 ms ALLEIN (Bild noch ausserhalb, langsamer
+//    Anlauf), rechts der Flagge blieb es bis zum Ende leer - "das ist dann
+//    weiss". Dazu kam der eingefrorene Seitenaufbau davor.
+// JETZT: die ALTE Seite selbst bleibt stehen - dieselben Knoten, an ihrem
+// Platz im DOM, also mit vollem CSS - und wird nur fuer die Dauer des Wischs
+// ueber die neue gelegt und von links weggeschnitten. Nichts wird kopiert.
+//  - Seitenwechsel: die alte Seite (#pgDash ...) wird trotz display:none
+//    noch 1 s gezeigt.
+//  - Asset-Wechsel: renderDetail ersetzt #detail.innerHTML; die alte .dp
+//    ist dann nur ausgehaengt, nicht weg, und wird HINTER der neuen wieder
+//    eingehaengt (getElementById/querySelector finden so zuerst die neue).
+// Das alles passiert in einem Microtask direkt nach dem Umbau, also VOR dem
+// ersten Bild: man sieht nie eine leere oder halbe Flaeche.
+let _wischAlt=null;
 function wischStart(){
-  if(_wischOv||_wischLaeuft||!wischErlaubt())return;
-  const area=document.getElementById('pageArea');if(!area)return;
-  const ar=area.getBoundingClientRect();
-  const ov=document.createElement('div');ov.className='wisch';
-  ov.style.cssText=`left:${ar.left}px;top:${ar.top}px;width:${ar.width}px;height:${ar.height}px`;
-  ov.innerHTML='<div class="wisch-vorhang"></div>';
-  document.body.appendChild(ov);
-  _wischOv=ov;
-  // (2) Nach dem Umbau: im naechsten Bild losfahren.
-  requestAnimationFrame(()=>requestAnimationFrame(wischLos));
+  if(_wischLaeuft)wischEnde();                  // neuer Wechsel mitten im Wisch
+  if(_wischOv||!wischErlaubt())return;
+  const seite=Object.values(PAGE_IDS).map(id=>document.getElementById(id)).find(e=>e&&e.style.display!=='none'&&e.offsetParent);
+  if(!seite)return;
+  const det=seite.id==='pgCur'?document.getElementById('detail'):null;
+  const dp=det&&det.querySelector(':scope>.dp');
+  _wischOv={seite,anzeige:seite.style.display,scroll:seite.scrollTop,rect:seite.getBoundingClientRect(),
+    dp,dpRect:dp?dp.getBoundingClientRect():null};
+  queueMicrotask(wischLos);
+}
+// Legt ein Element fix an seine alte Stelle (korrigiert, falls ein Vorfahre
+// mit transform den Bezugsrahmen verschiebt) und schneidet es auf die
+// Seitenflaeche zu.
+const WISCH_BG=['backgroundColor','backgroundImage','backgroundSize','backgroundPosition','backgroundRepeat','backgroundAttachment'];
+function wischAltLegen(el,r,oben){
+  el.classList.add('wisch-alt');el.inert=true;
+  // Seiten sind durchsichtig (der Hintergrund gehoert dem body) - die alte
+  // Seite braucht ihn selbst, sonst scheint die neue durch. attachment:fixed
+  // richtet ihn am Viewport aus wie beim body (iOS Safari kennt fixed nicht:
+  // dort sitzt ein Marmor-Bild fuer 1 s leicht versetzt - einfarbige
+  // Hintergruende sind exakt).
+  const bs=getComputedStyle(document.body);
+  WISCH_BG.forEach(k=>{el.style[k]=bs[k];});el.style.backgroundAttachment='fixed';
+  el.style.left=r.left+'px';el.style.top=oben+'px';el.style.width=r.width+'px';
+  const ist=el.getBoundingClientRect();
+  if(Math.abs(ist.left-r.left)>.5)el.style.left=(2*r.left-ist.left)+'px';
+  if(Math.abs(ist.top-oben)>.5)el.style.top=(2*oben-ist.top)+'px';
 }
 function wischLos(){
-  const ov=_wischOv;if(!ov)return;_wischOv=null;_wischLaeuft=true;
-  const w=ov.clientWidth,h=ov.clientHeight;
+  const st=_wischOv;if(!st)return;_wischOv=null;
+  const area=document.getElementById('pageArea');if(!area)return;
+  const ar=area.getBoundingClientRect();
+  let alt=null,art='';
+  const neu=document.getElementById(PAGE_IDS[curPage]);
+  if(neu!==st.seite){
+    // Seitenwechsel: alte Seite noch einmal zeigen, mit ihrem Scrollstand.
+    alt=st.seite;art='seite';
+    alt.style.setProperty('display',st.anzeige||'block','important');
+    alt.style.height=st.rect.height+'px';
+    wischAltLegen(alt,st.rect,st.rect.top);
+    alt.scrollTop=st.scroll;
+  }else if(st.dp&&!st.dp.isConnected){
+    // Asset-Wechsel: die ausgehaengte alte .dp hinter der neuen einhaengen.
+    const det=document.getElementById('detail');if(!det)return;
+    alt=st.dp;art='dp';
+    det.appendChild(alt);
+    wischAltLegen(alt,st.dpRect,st.dpRect.top);
+  }
+  if(!alt)return;                               // nichts hat sich geaendert
+  _wischLaeuft=true;
+  const ov=document.createElement('div');ov.className='wisch';
+  ov.style.cssText=`left:${ar.left}px;top:${ar.top}px;width:${ar.width}px;height:${ar.height}px`;
+  document.body.appendChild(ov);
+  const w=ar.width,h=ar.height;
   const bild=document.createElement('div');bild.className='wisch-bild';bild.innerHTML=wischBildHtml(h);
   ov.appendChild(bild);
   const bw=bild.getBoundingClientRect().width||h;
-  const vorhang=ov.querySelector('.wisch-vorhang');
+  // Schnitt der alten Seite in IHREN Koordinaten: oben/unten auf die
+  // Seitenflaeche, links an der Mitte des Bildes.
+  const r=alt.getBoundingClientRect();
+  const oben=Math.max(0,ar.top-r.top),unten=Math.max(0,r.bottom-ar.bottom);
+  const x0=ar.left-bw/2-r.left,x1=ar.left+w+bw/2-r.left;
   const ease='cubic-bezier(.45,0,.25,1)';
-  // Bild faehrt von ganz links (ausserhalb) bis ganz rechts (ausserhalb);
-  // die linke Kante des Vorhangs faehrt unter der MITTE des Bildes mit.
-  // Beides nur transform - laeuft auf dem Compositor, auch wenn der
-  // Hauptthread noch mit dem Seitenaufbau beschaeftigt ist.
-  bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
-  const a=vorhang.animate([{transform:`translateX(${-bw/2}px)`},{transform:`translateX(${w+bw/2}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
-  a.onfinish=()=>{ov.remove();_wischLaeuft=false;};
-  setTimeout(()=>{if(ov.isConnected){ov.remove();_wischLaeuft=false;}},WISCH_MS+400);
+  const aB=bild.animate([{transform:`translateX(${-bw}px)`},{transform:`translateX(${w}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+  const aA=alt.animate([{clipPath:`inset(${oben}px 0 ${unten}px ${x0}px)`},{clipPath:`inset(${oben}px 0 ${unten}px ${x1}px)`}],{duration:WISCH_MS,easing:ease,fill:'forwards'});
+  _wischAlt={ov,alt,art,anis:[aB,aA]};
+  aB.onfinish=()=>{if(_wischAlt&&_wischAlt.ov===ov)wischEnde();};
+  setTimeout(()=>{if(_wischAlt&&_wischAlt.ov===ov)wischEnde();},WISCH_MS+400);
+}
+// Raeumt sofort auf: Bild weg, alte Seite zurueck in display:none bzw. die
+// alte .dp ausgehaengt.
+function wischEnde(){
+  const z=_wischAlt;_wischAlt=null;_wischLaeuft=false;
+  if(!z)return;
+  z.anis.forEach(a=>{try{a.cancel();}catch(e){}});
+  z.ov.remove();
+  const el=z.alt;
+  if(z.art==='dp'){el.remove();return;}
+  el.classList.remove('wisch-alt');el.inert=false;
+  ['left','top','width','height'].forEach(k=>el.style.removeProperty(k));
+  WISCH_BG.forEach(k=>{el.style[k]='';});
+  el.style.removeProperty('display');
+  el.style.display=el===document.getElementById(PAGE_IDS[curPage])?(curPage==='cur'?'flex':'block'):'none';
 }
 function selSym(id){wischStart();selId=id;curSub='specific';updateSidebarSelection();renderDetail();const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}}
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
@@ -22439,7 +22507,7 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,
+  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,

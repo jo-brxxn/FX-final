@@ -114,14 +114,19 @@ export const AI_FLAGS = {
   USD: `<rect width="36" height="24" fill="#fff"/>` +
     [0, 2, 4, 6, 8, 10, 12].map(i => `<rect y="${(i * 24 / 13).toFixed(2)}" width="36" height="${(24 / 13).toFixed(2)}" fill="#B22234"/>`).join('') +
     `<rect width="14.4" height="${(24 / 13 * 7).toFixed(2)}" fill="#3C3B6E"/>` +
-    (() => { // 9 Reihen abwechselnd 6/5 Sterne - vereinfacht als Punkte, bei 20px ist ein 5-Zack nicht mehr aufloesbar
-      let d = '';
+    (() => { // 9 Reihen abwechselnd 6/5 Sterne, ECHTE 5-Zacke.
+      // ⚠ Bis 2026-09-23 Punkte ("bei 20px ist ein 5-Zack nicht aufloesbar").
+      // Seit die Flagge gross im Wisch und im Asset-Kopf steht, sah man dort
+      // 50 Punkte statt Sterne (Nutzer: "in manche Flaggen gehoeren Sterne
+      // aber da sind nur Punkte"). Klein bleibt ein Stern ein heller Fleck
+      // wie vorher der Punkt - es gibt keinen Grund fuer zwei Zeichnungen.
+      const st = [];
       for (let r = 0; r < 9; r++) {
         const odd = r % 2;
         const n = odd ? 5 : 6, y = 1.05 + r * 1.35, x0 = odd ? 2.3 : 1.25;
-        for (let c = 0; c < n; c++) d += `<circle cx="${(x0 + c * 2.15).toFixed(2)}" cy="${y.toFixed(2)}" r=".42" fill="#fff"/>`;
+        for (let c = 0; c < n; c++) st.push([x0 + c * 2.15, y, .62]);
       }
-      return d;
+      return `<path d="${aiStars(st)}" fill="#fff"/>`;
     })(),
 
   EUR: `<rect width="36" height="24" fill="#039"/><path d="${AI_EU_STARS}" fill="#FC0"/>`,
