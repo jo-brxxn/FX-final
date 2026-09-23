@@ -20,12 +20,19 @@
 // schaltet ihn mit window.__wischTest ausdruecklich an.
 //   node check/uebergang.js [--gegenprobe]        (Wisch-Ebene faengt Klicks)
 //   node check/uebergang.js [--gegenprobe-kopie]  (alte Seite ausserhalb ihrer Vorfahren)
+//   node check/uebergang.js [--gegenprobe-flagge] (Inline-Flagge statt Bild)
+// Nutzer 2026-09-23 (iPad): "Alle Animationen beim Wechseln klappen ausser die
+// von fx also die Flaggen" - in Chromium sichtbar, nur WebKit zeichnete sie
+// nicht. Die Wisch-Flagge ist deshalb ein eigenstaendiges <img>; geprueft wird,
+// dass sie eines ist, dekodiert, und dass ihr SVG jeden url(#..)-Verweis selbst
+// definiert und keinen Mischmodus traegt.
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_KOPIE = process.argv.includes('--gegenprobe-kopie');
+const GP_FLAGGE = process.argv.includes('--gegenprobe-flagge');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -44,15 +51,25 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   //    kein Vorhang, echtes Panel zu.
   const refFont = await p.evaluate(() => getComputedStyle(document.querySelector('#detail .atitle')).fontSize);
   await p.tap('.np-assetstack'); await p.waitForTimeout(350);
-  const w1 = await p.evaluate(async gp => {
+  const w1 = await p.evaluate(async ([gp, gpf]) => {
     const altDp = document.querySelector('#detail>.dp');
     document.querySelector('#sidebar .np-asset[data-sym="GBP"]').click();
     await new Promise(r => requestAnimationFrame(r));      // erstes Bild nach dem Umbau
+    if (gpf) { const im = document.querySelector('.wisch .wisch-flagge img'); if (im) im.outerHTML = assetIconHtml('GBP', 200, true); }
+    const fim = document.querySelector('.wisch .wisch-flagge img');
+    let flagge = { img: !!fim };
+    if (fim) {
+      try { await fim.decode(); } catch (e) {}
+      const txt = decodeURIComponent(fim.src.replace(/^data:image\/svg\+xml;charset=utf-8,/, ''));
+      const def = new Set([...txt.matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
+      const refs = [...txt.matchAll(/(?:url\(#|href="#)([^)"]+)/g)].map(m => m[1]);
+      flagge = { img: true, ok: fim.complete && fim.naturalWidth > 0, fehlend: [...new Set(refs.filter(r => !def.has(r)))], blend: /mix-blend|class="ai-/.test(txt) };
+    }
     const o = document.querySelector('.wisch'), alt = document.querySelector('.wisch-alt');
     // Gegenprobe: das Verhalten der 1. Fassung nachstellen (Seite ausserhalb
     // ihrer Vorfahren, ohne ids)
     if (gp && alt) { alt.querySelectorAll('[id]').forEach(e => e.removeAttribute('id')); document.body.appendChild(alt); }
-    const res = { da: !!o, alt: !!alt, panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id };
+    const res = { flagge, da: !!o, alt: !!alt, panelZu: !document.querySelector('#navSidebar .np-sub-wrap.open'), sym: (getSym() || {}).id };
     if (!o || !alt) return res;
     const area = document.getElementById('pageArea').getBoundingClientRect(), r = alt.getBoundingClientRect(), cs = getComputedStyle(alt);
     const t = alt.querySelector('.atitle');
@@ -63,8 +80,17 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       deckt: r.left <= area.left + 1 && r.right >= area.right - 1 && r.top <= area.top + 1 && r.bottom >= area.bottom - 1,
       grund: cs.backgroundColor !== 'rgba(0, 0, 0, 0)' || cs.backgroundImage !== 'none',
       neuVorn: document.querySelector('#detail>.dp') !== alt });
-  }, GP_KOPIE);
+  }, [GP_KOPIE, GP_FLAGGE]);
   if (!w1.da) fail('KEIN WISCH', 'Asset-Wechsel USD -> GBP startet keinen Wisch-Uebergang');
+  if (w1.da) {
+    const fl = w1.flagge;
+    if (!fl.img) fail('WISCH-FLAGGE NICHT EIGENSTAENDIG', 'die FX-Flagge im Wisch ist kein <img> - als Inline-SVG mit Verweisen in die geteilten Defs zeichnete Safari/iPad sie nicht (2026-09-23)');
+    else {
+      if (!fl.ok) fail('WISCH-FLAGGE LAEDT NICHT', 'das Flaggenbild dekodiert nicht');
+      if (fl.fehlend.length) fail('WISCH-FLAGGE VERWEIST NACH AUSSEN', `nicht im Bild definiert: ${fl.fehlend.join(', ')} - ein Bild sieht die Defs der Seite nicht`);
+      if (fl.blend) fail('WISCH-FLAGGE BRAUCHT SEITEN-CSS', 'Mischmodus oder ai-Klassen im Bild - Seiten-CSS wirkt in einem <img> nicht');
+    }
+  }
   if (w1.da && !w1.alt) fail('ALTE SEITE FEHLT', 'im ersten Bild liegt die alte Seite nicht obenauf - rechts der Flagge waere es leer ("das ist dann weiss", 2026-09-23)');
   if (w1.alt) {
     if (w1.fremd && w1.fremd.length) fail('FREMDES IN DER WISCH-EBENE', `neben dem Bild liegt: ${w1.fremd.join(', ')}`);
@@ -125,8 +151,9 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   }
   if (perr.length) perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_FLAGGE) { const ok = F.some(x => x.startsWith('WISCH-FLAGGE NICHT EIGENSTAENDIG')); console.log(ok ? 'uebergang --gegenprobe-flagge: ok (Inline-Flagge wird gemeldet)' : 'uebergang --gegenprobe-flagge: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GP_KOPIE) { const ok = F.some(x => x.startsWith('ALTE SEITE OHNE CSS')); console.log(ok ? 'uebergang --gegenprobe-kopie: ok (Seite ausserhalb ihrer Vorfahren wird gemeldet)' : 'uebergang --gegenprobe-kopie: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { const ok = F.some(x => x.startsWith('INHALT WAEHREND')); console.log(ok ? 'uebergang --gegenprobe: ok (klickfangende Kopie wird gemeldet)' : 'uebergang --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1); }
   if (F.length) { console.log(`uebergang: ${F.length} Befund(e)\n  ` + F.join('\n  ')); process.exit(1); }
-  console.log('uebergang: ok (Wisch bei Asset- und Seitenwechsel, alte Seite als Originalknoten mit CSS obenauf und danach weg, Panel zu, Inhalt bedienbar, kein Wisch bei Fenstern/ohne Animation, History-Karte fest)');
+  console.log('uebergang: ok (Wisch bei Asset- und Seitenwechsel, FX-Flagge als eigenstaendiges Bild, alte Seite als Originalknoten mit CSS obenauf und danach weg, Panel zu, Inhalt bedienbar, kein Wisch bei Fenstern/ohne Animation, History-Karte fest)');
 })();

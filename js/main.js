@@ -9159,11 +9159,42 @@ function wischErlaubt(){
   if(navigator.webdriver&&!window.__wischTest)return false;
   return true;
 }
+// Die Wisch-Flagge als EIGENSTAENDIGES Bild (<img> mit SVG-Daten-URL).
+// ⚠ Nutzer 2026-09-23 (iPad): "Alle Animationen beim Wechseln klappen ausser
+// die von fx also die Flaggen". In Chromium war die Flagge an angehaltenen
+// Standbildern bei GBP/JPY/EUR/CAD/AUD voll sichtbar - der Fehler lebt nur in
+// Safari/WebKit (hier nicht installierbar). Was NUR die Wisch-Flagge hatte und
+// die funktionierenden Motive nicht: Verweise auf die geteilten Defs in einem
+// ANDEREN <svg> (Clip-Welle, Duoton-Filter, Verlaeufe), mix-blend-mode auf
+// den Falten und Seiten-CSS-Animationen - innerhalb einer per transform
+// bewegten Ebene mit CSS-Schatten. Genau diese Mischung zeichnet WebKit
+// bekanntermassen unzuverlaessig. Als Bild bringt die Flagge alles selbst mit
+// (Defs kopiert, Rand/Glanz als Attribute bzw. SMIL, kein Mischmodus) und wird
+// wie ein Foto behandelt - so wie die Motive, die auf dem iPad laufen.
+// Scheitert das Bild trotzdem (onerror), faellt es auf die Inline-Flagge zurueck.
+function wischFlaggeHtml(id,h){
+  const inline=assetIconHtml(id,h,true);if(!inline)return'';
+  if(AI_FLAG_IDS.indexOf(id)===-1)return inline;
+  try{
+    const ser=new XMLSerializer(),q=sel=>document.querySelector('#aiDefs '+sel);
+    const teile=['#aiUjA','#aiUjB','#aiWave','#aiFoldG','#aiShadeG','#aiSheenG','#aiDuo','#aiUJ','#ai-'+id].map(q);
+    if(teile.some(t=>!t))return inline;
+    const rand=q('#aiRim').cloneNode(true);rand.removeAttribute('id');
+    rand.setAttribute('stroke','#9DB8DE');rand.setAttribute('stroke-width','1.5');
+    const w=Math.round(h*1.5);
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" width="${w}" height="${h}"><defs>${teile.map(t=>ser.serializeToString(t)).join('')}</defs>`
+      +`<g clip-path="url(#aiWave)"><use href="#ai-${id}" filter="url(#aiDuo)"/>`
+      +`<rect width="36" height="24" fill="url(#aiFoldG)"/><rect width="36" height="24" fill="url(#aiShadeG)"/>`
+      +`<rect width="14" height="24" fill="url(#aiSheenG)" opacity=".5"><animateTransform attributeName="transform" type="translate" values="-14 0;36 0;36 0" keyTimes="0;.55;1" dur="3.4s" repeatCount="indefinite"/></rect></g>`
+      +ser.serializeToString(rand)+'</svg>';
+    return`<img class="wisch-flagge-img" alt="" width="${w}" height="${h}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" onerror="this.outerHTML=this.dataset.ersatz" data-ersatz="${escH(inline)}">`;
+  }catch(e){return inline;}
+}
 function wischBildHtml(h){
   if(curPage==='cur'){
     const c=getSym();if(c){
       const cls=assetCls(c.id);
-      if(cls==='fx'){const f=assetIconHtml(c.id,Math.round(h*.96),true);if(f)return'<div class="wisch-flagge">'+f+'</div>';}
+      if(cls==='fx'){const f=wischFlaggeHtml(c.id,Math.round(h*.96));if(f)return'<div class="wisch-flagge">'+f+'</div>';}
       const k=MOTIV_JE_KLASSE[cls];
       if(k)return'<div class="wisch-motiv">'+ASSET_MOTIVE[k].replace('viewBox="0 0 420 170"','viewBox="'+WISCH_VB[k]+'"')+'</div>';
     }
@@ -22507,7 +22538,7 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,
+  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,

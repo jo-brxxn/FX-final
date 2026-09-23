@@ -17016,3 +17016,41 @@ nach dem Wisch nichts übrig bleibt. Gegenprobe `--gegenprobe-kopie` hängt die
 alte Seite ohne ids in den body → `ALTE SEITE OHNE CSS`. `check/symbole.js` (D):
 keine Kreise/Sternzahl, Kopf-Flagge ganz in der Karte, `vector-effect` am Rand;
 Gegenprobe `--gegenprobe-sterne` meldet Punkt und Riesenflagge.
+
+## 2026-09-23 — Bugfix: FX-Flagge im Wisch auf dem iPad unsichtbar (VERSION-CHECK-545)
+
+Nutzer: *„Alle Animationen beim Wechseln klappen außer die von fx also die
+Flaggen."* (iPad, Safari).
+
+**Reproduktion — nur zur Hälfte möglich, offen benannt:** In Chromium
+(1000×695, DSF 2, Touch, echte Taps über das Asset-Panel) ist die Flagge bei
+GBP, JPY, EUR, CAD und AUD an angehaltenen Standbildern (Animation bei 450 ms
+eingefroren) voll sichtbar; BTC-Motiv ebenso. WebKit ließ sich in der
+Umgebung nicht installieren (Download gesperrt). Der Fehler lebt also nur in
+Safari — gemessen ist das Nicht-Auftreten in Chromium, nicht die Ursache in
+Safari.
+
+**Eingrenzung am Unterschied:** Die funktionierenden Motive (Münze, Barren,
+Fass, Bulle & Bär, Szenen) sind in sich geschlossene SVGs. Nur die Flagge
+verwies aus ihrem `<svg>` in die geteilten Defs eines ANDEREN `<svg>`
+(Clip-Welle mit SMIL, Duoton-Filter, Verläufe, `<use>` auf Symbole), trug
+`mix-blend-mode:multiply` auf den Falten und eine Seiten-CSS-Animation (Glanz)
+— und das innerhalb einer per `transform` bewegten Ebene mit CSS-Schatten.
+Die Kopf-Flagge (dieselbe Zeichnung, aber nicht bewegt, ohne Schatten) wird
+auf dem iPad gezeichnet.
+
+**Fix:** `wischFlaggeHtml()` baut die Wisch-Flagge als eigenständiges `<img>`
+(SVG-Daten-URL, ~70 kB): benötigte Defs per `XMLSerializer` hineinkopiert,
+Rand als Attribute, Glanz als SMIL statt CSS, kein Mischmodus. Ein Bild
+behandelt WebKit wie ein Foto — so wie die Motive. `onerror` fällt auf die
+Inline-Flagge zurück. In Chromium optisch gleich (Falten minimal heller, weil
+ohne multiply).
+
+**Fehlerklasse:** alle bewegten Ebenen mit Inline-SVG gesucht — nur die
+Wisch-Flagge; die Motive sind geschlossen, die Kopf-Flagge ist nicht bewegt.
+
+**Wächter:** `check/uebergang.js` verlangt beim FX-Wechsel ein `<img>`, das
+dekodiert, jeden `url(#…)`/`href="#…"` selbst definiert und ohne Mischmodus/
+ai-Klassen auskommt. Gegenprobe `--gegenprobe-flagge` (Inline-Flagge) → rot.
+⚠ Grenze: der Wächter läuft in Chromium und kann das Safari-Verhalten nicht
+selbst sehen — er hält nur die Bauform fest, die den Unterschied ausmacht.
