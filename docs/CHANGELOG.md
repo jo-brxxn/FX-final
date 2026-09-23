@@ -16916,3 +16916,9 @@ Kalender-Einkreisung vom Nutzer selbst zurückgenommen („das ist ja schon da")
 - **Bedien-Symbole ohne Animation:** der ganze Block (Glocke, Zahnrad,
   Aktualisieren, Globus, Lupe, Stern … und die Hover-Vergrößerung) entfernt.
 - **Zahnrad:** `ICONS.gear` waren drei Schieberegler → echtes Zahnrad.
+
+Beim Prüflauf gefunden: in den vier übrigen hellen Vorlagen erbten die
+Bias-Abzeichen das neue helle Rot (`--bias-bear` war dort nie gesetzt) und
+lagen auf deren getönten Karten bei 3,9–4,0:1 (`check/rahmen.js`). Jetzt
+`--bias-bear:var(--red)` je Vorlage (deren eigenes, dunkleres Rot). Dazu
+`check/html.js`: SVG-Filter-Attribute (`tableValues`, …) in die Liste.
