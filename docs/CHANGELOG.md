@@ -17532,3 +17532,35 @@ Growth" eins. `position:relative` nur auf Karten mit Logo — gemessen: kein
 absolut platziertes Kind richtet sich an etwas außerhalb seiner Karte aus.
 
 **Wächter:** neu `check/logo.js`, Gegenprobe `--gegenprobe`.
+
+## 2026-09-24 — FX-Logo: flüssige Ladeanimation, stille Platzhalter (VERSION-CHECK-557)
+
+Nutzer: *„mach die Platzhalter nicht animiert, nur wenn etwas lädt soll es
+animiert sein und die Platzhalter ganz bisschen kleiner und dann mit mehr
+Platz wachsend beim Erscheinen; wenn sich was ausklappt können die animiert
+sein aber danach nicht mehr. Und ein bisschen mehr Farbe bei den
+Platzhaltern, und die Anfangsanimation hat ein paar Performance-Probleme,
+das ist sehr abgehakt."*
+
+**Abgehakt — gemessen:** während des Ladens blockiert der Hauptthread
+(CPU ×1: 13 Pausen > 50 ms, bis 287 ms; ×4: 34 Pausen, bis 979 ms, nur 48
+Bilder in 7,5 s). Die Kerzen waren Kinder EINER SVG — deren transform-
+Animationen rechnet der Browser auf dem Hauptthread, sie standen in jeder
+Pause still; dazu `filter:drop-shadow` am Logo (jedes Bild neu).
+**Fix:** `fxLogoSvg()` liefert Ebenen — FX + Schrift als stilles SVG, jede
+Kerze und der Bogen als eigenes HTML-Element, animiert nur über
+transform/opacity (`will-change`); Leuchten als einmal gemalter Hintergrund.
+Nachgemessen mit Chrome-Bildschirmaufzeichnung bei 1,5 s absichtlich
+blockiertem Hauptthread: verschiedene Bilder alt 20–22, neu **42–47** (drei
+Läufe; Rest sind die gewollten Haltephasen). Bogen gleitet ein statt sich zu
+strecken (scaleX drückte ihn zum senkrechten Strich).
+
+**Platzhalter:** still nach dem Laden (`lg-loop` nur solange Feeds fehlen,
+danach entfernt); erscheint einer, weil die Karte gewachsen ist, wächst er
+einmal (`lg-einmal`); kleiner (60 % der freien Höhe, ≤ 42 % Breite,
+≤ 170 px), Größenwechsel gleitet (0,45 s); Farbe: Blau des Icons, F in
+Textfarbe mit Blau, helle Kerze als Blau-Tint, Deckkraft .85.
+
+**Wächter:** `check/logo.js` (E) — Lade-Kerzen als HTML-Ebenen ohne Filter,
+Platzhalter ohne laufende Animation, Aufklapp-Logo endlich; gegen 556 rot
+(3 Befunde).

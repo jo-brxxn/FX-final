@@ -22735,17 +22735,30 @@ function lgFreiraum(card){
   }
   return{frei:unten-inhalt,unten,inhalt,breite:cr.width,top:cr.top};
 }
+// Animiert nur, wenn etwas LAEDT (Nutzer 2026-09-24: "mach die Platzhalter
+// nicht animiert, nur wenn etwas laedt soll es animiert sein ... beim
+// Erscheinen wenn sich was ausklappt koennen die animiert sein aber danach
+// nicht mehr"): solange nicht alle Feeds geantwortet haben lg-loop; erscheint
+// es in einer Karte, die schon einmal vermessen war (sie ist gewachsen),
+// einmal lg-einmal; sonst still.
+function lgLaedt(){return !Object.keys(DATA_SRC_LABEL).every(k=>k in DATA_LIVE_OK);}
 function lgKarte(card){
   const m=lgFreiraum(card);
+  const schonGesehen=!!card.__lgGesehen;card.__lgGesehen=true;
   let lg=card.querySelector(':scope > .lg-frei');
   if(!m||m.frei<LG_MIN_FREI){if(lg){lg.remove();card.classList.remove('lg-host');}return;}
-  // Groesse: 75 % der freien Hoehe, hoechstens die halbe Kartenbreite und 220 px
-  const hoehe=Math.max(48,Math.min(m.frei*0.75-10,(m.breite*0.5)*190/300,220*190/300));
+  // Groesse (Nutzer 2026-09-24: "ganz bisschen kleiner und dann mit mehr
+  // Platz wachsend"): 60 % der freien Hoehe, hoechstens 42 % der Karten-
+  // breite und 170 px breit; Groessenwechsel gleitet (CSS-Transition).
+  const hoehe=Math.max(40,Math.min(m.frei*0.6-8,(m.breite*0.42)*190/300,170*190/300));
   const breite=hoehe*300/190;
+  const laedt=lgLaedt();
   if(!lg){
     lg=document.createElement('div');lg.className='lg-frei';lg.setAttribute('aria-hidden','true');
-    lg.innerHTML=window.fxLogoSvg?window.fxLogoSvg('lg-einmal'):'';
+    lg.innerHTML=window.fxLogoSvg?window.fxLogoSvg(laedt?'lg-loop':schonGesehen?'lg-einmal':''):'';
     card.classList.add('lg-host');card.appendChild(lg);
+  }else if(!laedt){
+    const f=lg.querySelector('.fxlogo');if(f&&f.classList.contains('lg-loop'))f.classList.remove('lg-loop');
   }
   lg.style.width=Math.round(breite)+'px';
   // unten mittig in der freien Flaeche, mit etwas Abstand zum Fuss
@@ -22767,6 +22780,8 @@ try{
   }).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});
   window.addEventListener('resize',lgPlanen);
   lgBeobachten();lgPlanen();
+  // Sobald alle Feeds da sind: laufende Lade-Platzhalter still stellen.
+  (function lgNachLaden(){if(lgLaedt())setTimeout(lgNachLaden,300);else lgPlanen();})();
 }catch(e){}
 // Das Asset-Panel (seit 2026-09-22) schliesst bei einem Tipp ausserhalb von
 // Leiste und Panel - wie jedes Ausklapp-Menue. Capture-Phase, damit es auch

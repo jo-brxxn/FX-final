@@ -5498,37 +5498,51 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    (fxLogoSvg im fruehen Skript am Body-Anfang) fuer beide Stellen. Farben
    ueber --lg-*: auf dem dunklen Ladebildschirm wie im Icon, in den hellen
    Karten dunkles F und graue statt weisser Kerze (weiss waere unsichtbar). */
-.fxlogo{display:block;width:100%;height:auto;overflow:visible}
-.fxlogo .lg-k{transform-box:fill-box;transform-origin:50% 100%}
-.fxlogo .lg-b{stroke-dasharray:1;stroke-dashoffset:1}
-/* Ladebildschirm: waechst, haelt, setzt zurueck - solange geladen wird. */
-.fxlogo.lg-loop .lg-k{animation:lgKerze 3s cubic-bezier(.3,.7,.3,1) infinite both}
-.fxlogo.lg-loop .lg-k2{animation-delay:.22s}.fxlogo.lg-loop .lg-k3{animation-delay:.44s}.fxlogo.lg-loop .lg-k4{animation-delay:.66s}
-.fxlogo.lg-loop .lg-b{animation:lgBogen 3s cubic-bezier(.45,0,.2,1) infinite both}
+.fxlogo{position:relative;width:100%;aspect-ratio:300/190}
+.fxlogo>.lg-basis{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.fxlogo>.lg-k,.fxlogo>.lg-b{position:absolute}
+.fxlogo>.lg-k>svg,.fxlogo>.lg-b>svg{display:block;width:100%;height:100%;overflow:visible}
+.fxlogo>.lg-k{transform-origin:50% 100%}
+.fxlogo>.lg-b{transform-origin:0 100%}
+/* Ohne Klasse: fertig gezeichnet und STILL (Platzhalter in Karten - Nutzer
+   2026-09-24: "mach die Platzhalter nicht animiert, nur wenn etwas laedt"). */
+/* lg-loop: Laden - waechst, haelt, setzt zurueck. Nur transform/opacity. */
+.fxlogo.lg-loop>.lg-k,.fxlogo.lg-loop>.lg-b{will-change:transform,opacity}
+.fxlogo.lg-loop>.lg-k{animation:lgKerze 3s cubic-bezier(.3,.7,.3,1) infinite both}
+.fxlogo.lg-loop>.lg-k2{animation-delay:.22s}.fxlogo.lg-loop>.lg-k3{animation-delay:.44s}.fxlogo.lg-loop>.lg-k4{animation-delay:.66s}
+.fxlogo.lg-loop>.lg-b{animation:lgBogen 3s cubic-bezier(.45,0,.2,1) infinite both}
 @keyframes lgKerze{0%{transform:scaleY(0);opacity:0}5%{opacity:1}30%{transform:scaleY(1)}86%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
-/* Deckkraft 0 bis zum Start: die runde Linienkappe zeichnet sonst bei
-   Laenge 0 einen Punkt ans Bogenende. */
-@keyframes lgBogen{0%,44%{stroke-dashoffset:1;opacity:0}45%{opacity:1}66%,86%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
-/* Karten: waechst einmal und bleibt stehen. */
-.fxlogo.lg-einmal .lg-k{animation:lgKerzeEin .6s cubic-bezier(.3,.7,.3,1) both}
-.fxlogo.lg-einmal .lg-k2{animation-delay:.12s}.fxlogo.lg-einmal .lg-k3{animation-delay:.24s}.fxlogo.lg-einmal .lg-k4{animation-delay:.36s}
-.fxlogo.lg-einmal .lg-b{animation:lgBogenEin .7s .5s cubic-bezier(.45,0,.2,1) both}
+/* Bogen gleitet ein statt sich zu strecken: scaleX von 0 drueckte die
+   Kurve zu einem senkrechten Strich am X zusammen. */
+@keyframes lgBogen{0%,40%{transform:translateX(-7%);opacity:0}64%,86%{transform:translateX(0);opacity:1}100%{transform:translateX(0);opacity:0}}
+/* lg-einmal: erscheint, weil eine Karte gewachsen ist (Aufklappen) -
+   waechst einmal hinein, danach still. */
+.fxlogo.lg-einmal>.lg-k{animation:lgKerzeEin .6s cubic-bezier(.3,.7,.3,1) both}
+.fxlogo.lg-einmal>.lg-k2{animation-delay:.12s}.fxlogo.lg-einmal>.lg-k3{animation-delay:.24s}.fxlogo.lg-einmal>.lg-k4{animation-delay:.36s}
+.fxlogo.lg-einmal>.lg-b{animation:lgBogenEin .6s .45s cubic-bezier(.45,0,.2,1) both}
 @keyframes lgKerzeEin{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
-@keyframes lgBogenEin{0%{stroke-dashoffset:1;opacity:0}1%{opacity:1}100%{stroke-dashoffset:0;opacity:1}}
-body.no-ui-anim .fxlogo.lg-einmal .lg-k,body.no-ui-anim .fxlogo.lg-einmal .lg-b{animation:none;transform:none;stroke-dashoffset:0}
-@media(prefers-reduced-motion:reduce){.fxlogo .lg-k,.fxlogo .lg-b{animation:none!important;transform:none;stroke-dashoffset:0}}
+@keyframes lgBogenEin{0%{transform:translateX(-7%);opacity:0}100%{transform:translateX(0);opacity:1}}
+body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{animation:none}
+@media(prefers-reduced-motion:reduce){.fxlogo>.lg-k,.fxlogo>.lg-b{animation:none!important}}
 /* Logo in freier Kartenflaeche (lgKarte in js/main.js): gedaempft, reine
    Dekoration, faengt keine Klicks. Farben aus den Tokens der jeweiligen
    Vorlage - weiss waere auf hellen Karten unsichtbar. */
 .lg-host{position:relative}
-.lg-frei{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;opacity:.5;
-  --lg-f1:var(--t1);--lg-f2:var(--t0);--lg-x1:#7FC0FF;--lg-x2:var(--accent);--lg-kb:var(--accent);--lg-kw:var(--t3);--lg-t:var(--t2);--lg-p:var(--accent)}
+.lg-frei{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;opacity:.85;
+  transition:width .45s cubic-bezier(.3,.7,.3,1),top .45s cubic-bezier(.3,.7,.3,1);
+  /* mehr Farbe (Nutzer 2026-09-24): F in Textfarbe mit Blau, X/Kerzen/Bogen
+     im Blau des Icons, helle Kerze als Blau-Tint statt Grau. color-mix mit
+     den Vorlagen-Tokens, damit es auch in dunklen Vorlagen lesbar bleibt. */
+  --lg-f1:color-mix(in srgb,var(--t0) 62%,#2F6FF0);--lg-f2:var(--t0);--lg-x1:#6FB6FF;--lg-x2:#2F6FF0;
+  --lg-kb:#3E8BFF;--lg-kw:color-mix(in srgb,#3E8BFF 38%,var(--card));--lg-t:var(--t2);--lg-p:#2F7BFF}
 #ladeOv{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse 70% 60% at 50% 45%,#10284f 0%,#081326 60%,#050b17 100%);
   transition:opacity .9s ease,visibility .9s;
   --lg-f1:#FFFFFF;--lg-f2:#B9C7DC;--lg-x1:#8FD0FF;--lg-x2:#2F6FF0;--lg-kb:#3E8BFF;--lg-kw:#EEF3FA;--lg-t:#E6ECF5;--lg-p:#4AA3FF}
 #ladeOv.weg{opacity:0;visibility:hidden}
-#ladeOv .lade-logo{width:min(62vw,380px);filter:drop-shadow(0 0 26px rgba(47,111,240,.45))}
+/* Leuchten als einmal gemalter Hintergrund statt filter:drop-shadow (der
+   wurde in jedem Bild neu gerechnet). */
+#ladeOv .lade-logo{width:min(62vw,380px);background:radial-gradient(closest-side,rgba(47,111,240,.28),transparent 75%)}
 </style>
 </head>
 <body>
@@ -5540,23 +5554,34 @@ body.no-ui-anim .fxlogo.lg-einmal .lg-k,body.no-ui-anim .fxlogo.lg-einmal .lg-b{
 // Die EINE Zeichnung des Logos (Ladebildschirm + leere Karten). Fruehes
 // Skript, damit der Ladebildschirm sofort steht - vor dem grossen Modul.
 window.fxLogoSvg=function(art){
-  // Eigene Verlaufs-ids je Logo: mehrere Logos auf der Seite (Karten +
-  // Ladebildschirm) wuerden sonst alle den ERSTEN Verlauf mit dessen Farben
-  // benutzen - das weisse F des Ladebildschirms in einer hellen Karte.
-  var v='var(--lg-',n=(window.__lgN=(window.__lgN||0)+1),F='lgF'+n,X='lgX'+n,B='lgB'+n;
-  return '<svg class="fxlogo '+(art||'')+'" viewBox="0 0 300 190" aria-hidden="true" focusable="false">'
+  // ⚠ EBENEN statt einer SVG (Nutzer 2026-09-24: "die Anfangsanimation hat
+  // ein paar Performance-Probleme, das ist sehr abgehakt"). Gemessen: beim
+  // Laden ist der Hauptthread blockiert (CPU x1: 13 Pausen > 50 ms, bis
+  // 287 ms; x4: 34, bis 979 ms). Transform-Animationen an SVG-KINDERN rechnet
+  // der Browser auf genau diesem Thread - sie standen in jeder Pause still.
+  // Jetzt: FX + Schrift als stilles SVG, jede Kerze und der Bogen als eigene
+  // HTML-Ebene, animiert nur ueber transform/opacity -> Grafikprozessor,
+  // laeuft auch weiter, waehrend das Skript rechnet.
+  // Eigene Verlaufs-ids je Logo: mehrere Logos auf der Seite wuerden sonst
+  // alle den ERSTEN Verlauf mit dessen Farben benutzen.
+  var v='var(--lg-',n=(window.__lgN=(window.__lgN||0)+1),F='lgF'+n,X='lgX'+n,B='lgB'+n,
+      pc=function(a,b){return (a/b*100).toFixed(3)+'%';};
+  var basis='<svg class="lg-basis" viewBox="0 0 300 190" aria-hidden="true" focusable="false">'
    +'<defs><linearGradient id="'+F+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+v+'f1,#fff)"/><stop offset="1" stop-color="'+v+'f2,#b9c7dc)"/></linearGradient>'
-   +'<linearGradient id="'+X+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+v+'x1,#8fd0ff)"/><stop offset="1" stop-color="'+v+'x2,#2f6ff0)"/></linearGradient>'
-   +'<linearGradient id="'+B+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+v+'x2,#2f6ff0)" stop-opacity="0"/><stop offset=".35" stop-color="'+v+'x2,#2f6ff0)"/><stop offset="1" stop-color="'+v+'x1,#8fd0ff)"/></linearGradient></defs>'
+   +'<linearGradient id="'+X+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+v+'x1,#8fd0ff)"/><stop offset="1" stop-color="'+v+'x2,#2f6ff0)"/></linearGradient></defs>'
    +'<text x="22" y="120" font-family="Inter,Segoe UI,Arial,sans-serif" font-weight="900" font-style="italic" font-size="118" letter-spacing="-6">'
    +'<tspan fill="url(#'+F+')">F</tspan><tspan fill="url(#'+X+')">X</tspan></text>'
-   +[[196,78,34,18],[216,62,38,14],[236,50,42,12],[256,34,46,10]].map(function(k,i){
-      var x=k[0],y=k[1],h=k[2],d=k[3],f=i===1?v+'kw,#eef3fa)':v+'kb,#3e8bff)';
-      return '<g class="lg-k lg-k'+(i+1)+'"><rect x="'+(x+4.25)+'" y="'+(y-d)+'" width="1.5" height="'+(h+2*d)+'" fill="'+f+'"/>'
-        +'<rect x="'+x+'" y="'+y+'" width="10" height="'+h+'" rx="1.5" fill="'+f+'"/></g>';}).join('')
-   +'<path class="lg-b" pathLength="1" d="M112 146 C170 146 238 128 284 76" fill="none" stroke="url(#'+B+')" stroke-width="4.5" stroke-linecap="round"/>'
    +'<text x="150" y="182" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-weight="600" font-size="27" letter-spacing="3">'
    +'<tspan fill="'+v+'t,#e6ecf5)">ANALYST </tspan><tspan fill="'+v+'p,#4aa3ff)">PRO</tspan></text></svg>';
+  var kerzen=[[196,78,34,18],[216,62,38,14],[236,50,42,12],[256,34,46,10]].map(function(k,i){
+    var x=k[0],y=k[1],h=k[2],d=k[3],H=h+2*d,f=i===1?v+'kw,#eef3fa)':v+'kb,#3e8bff)';
+    return '<div class="lg-k lg-k'+(i+1)+'" style="left:'+pc(x,300)+';top:'+pc(y-d,190)+';width:'+pc(10,300)+';height:'+pc(H,190)+'">'
+      +'<svg viewBox="0 0 10 '+H+'" preserveAspectRatio="none"><rect x="4.25" y="0" width="1.5" height="'+H+'" fill="'+f+'"/>'
+      +'<rect x="0" y="'+d+'" width="10" height="'+h+'" rx="1.5" fill="'+f+'"/></svg></div>';}).join('');
+  var bogen='<div class="lg-b" style="left:'+pc(106,300)+';top:'+pc(70,190)+';width:'+pc(184,300)+';height:'+pc(82,190)+'">'
+    +'<svg viewBox="106 70 184 82"><defs><linearGradient id="'+B+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+v+'x2,#2f6ff0)" stop-opacity="0"/><stop offset=".35" stop-color="'+v+'x2,#2f6ff0)"/><stop offset="1" stop-color="'+v+'x1,#8fd0ff)"/></linearGradient></defs>'
+    +'<path d="M112 146 C170 146 238 128 284 76" fill="none" stroke="url(#'+B+')" stroke-width="4.5" stroke-linecap="round"/></svg></div>';
+  return '<div class="fxlogo '+(art||'')+'" aria-hidden="true">'+basis+kerzen+bogen+'</div>';
 };
 (function(){
   var ov=document.getElementById('ladeOv');if(!ov)return;
@@ -5605,11 +5630,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-556 - Animiertes FX-Logo als Ladebildschirm und in leerer Kartenflaeche; Cockpit-Intro, Gleiter und Einstellungen entfernt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-557 - FX-Logo: Ladeanimation fluessig (Ebenen auf dem Grafikprozessor), Platzhalter still, kleiner, farbiger; Aufklapp-Logo waechst einmal."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-556</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-557</span>
     </span>
   </div>
   <div class="hdr-r">

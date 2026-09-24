@@ -1031,14 +1031,19 @@ Geprüft in `check/kalender.js`.
 
 - EINE Zeichnung: `window.fxLogoSvg(art)` (frühes Skript am Body-Anfang),
   nachgezeichnet nach dem App-Icon — „FX", vier Kerzen, Bogen, „ANALYST PRO".
-  Animation „Kerzen wachsen" (Nutzerwahl): `lg-loop` wiederholt (Laden),
-  `lg-einmal` wächst einmal und bleibt (Karten).
+  Animation „Kerzen wachsen" (Nutzerwahl). **Animiert nur beim Laden**
+  (`lg-loop`); ein Platzhalter, der erscheint, weil eine Karte gewachsen ist,
+  wächst EINMAL hinein (`lg-einmal`); sonst still (Nutzer 2026-09-24).
+- Kerzen und Bogen sind eigene HTML-Ebenen, animiert NUR über
+  transform/opacity (Grafikprozessor). SVG-Kinder-Animationen laufen auf dem
+  Hauptthread und standen beim Laden in jeder Pause still („sehr abgehakt").
 - **Ladebildschirm** `#ladeOv`: steht, bis alle Feeds in `DATA_LIVE_OK`
   geantwortet haben (mind. ein Durchlauf 3 s, höchstens 12 s), blendet dann
   langsam aus (0,9 s). Das Cockpit-Intro ist ENTFERNT.
 - **Karten**: ist zwischen dem untersten Inhalt und dem Kartenfuß ≥ 84 px
-  frei, steht das Logo dort unten mittig (gedämpft, Farben aus den Tokens),
-  Größe nach freier Höhe/Breite — auch in dauerhaft leeren Karten.
+  frei, steht das Logo dort unten mittig (Blau des Icons, F in Textfarbe),
+  60 % der freien Höhe, höchstens 42 % der Breite / 170 px; wächst mit, wenn
+  mehr Platz frei wird — auch in dauerhaft leeren Karten.
   `lgKarte`/`lgAlleKarten` in `js/main.js`, neu vermessen per
   ResizeObserver + MutationObserver.
 Geprüft in `check/logo.js`.

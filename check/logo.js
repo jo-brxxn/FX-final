@@ -13,6 +13,14 @@
 //      der Karte, UEBER dem Fuss und UNTER dem letzten Inhalt (verdeckt
 //      nichts); eine Karte ohne freie Flaeche (Price) hat keins;
 //   D) Indikator-Chart aufgeklappt -> Nachbarkarte bekommt ein Logo.
+//   E) (Nutzer 2026-09-24 "mach die Platzhalter nicht animiert, nur wenn
+//      etwas laedt ... beim Erscheinen wenn sich was ausklappt koennen die
+//      animiert sein aber danach nicht mehr"; "die Anfangsanimation ... sehr
+//      abgehakt"): Platzhalter nach dem Laden ohne laufende Animation; das
+//      nach dem Aufklappen neu erschienene waechst genau einmal (endlich);
+//      die Kerzen des Ladebildschirms sind HTML-Ebenen mit transform-
+//      Animation (Grafikprozessor) statt SVG-Kinder (Hauptthread - stand
+//      beim Laden in jeder Pause still).
 //   node check/logo.js [--gegenprobe]   (Logo per CSS versteckt -> muss rot werden)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
@@ -29,10 +37,12 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     await p.addInitScript(() => { window.__ladeTest = true; });
     p.goto(URL).catch(() => {});
     let da = null;
-    try { await p.waitForSelector('#ladeOv .fxlogo', { timeout: 10000 }); da = await p.evaluate(() => ({ kerzen: document.querySelectorAll('#ladeOv .lg-k').length, voll: (() => { const r = document.getElementById('ladeOv').getBoundingClientRect(); return r.width >= innerWidth && r.height >= innerHeight; })() })); } catch (e) {}
+    try { await p.waitForSelector('#ladeOv .fxlogo', { timeout: 10000 }); da = await p.evaluate(() => ({ kerzen: document.querySelectorAll('#ladeOv .lg-k').length, ebenen: [...document.querySelectorAll('#ladeOv .lg-k')].every(k => k.tagName === 'DIV' && getComputedStyle(k).animationName === 'lgKerze' && !k.ownerSVGElement), filter: getComputedStyle(document.querySelector('#ladeOv .lade-logo')).filter, voll: (() => { const r = document.getElementById('ladeOv').getBoundingClientRect(); return r.width >= innerWidth && r.height >= innerHeight; })() })); } catch (e) {}
     if (!da) fail('LADEBILDSCHIRM FEHLT', 'kein #ladeOv mit Logo beim Oeffnen');
     else {
       if (da.kerzen !== 4) fail('LADE-LOGO', `${da.kerzen} Kerzen statt 4`);
+      if (!da.ebenen) fail('LADE-KERZEN AUF DEM HAUPTTHREAD', 'die Kerzen sind keine HTML-Ebenen mit lgKerze - SVG-Kinder-Animationen standen beim Laden in jeder Pause des Hauptthreads still ("sehr abgehakt", 2026-09-24)');
+      if (da.filter !== 'none') fail('LADE-LOGO MIT FILTER', `filter ${da.filter} am Logo wird in jedem Bild neu gerechnet`);
       if (!da.voll) fail('LADEBILDSCHIRM', 'deckt den Bildschirm nicht');
       const weg = await p.waitForFunction(() => !document.getElementById('ladeOv'), null, { timeout: 16000 }).then(() => true).catch(() => false);
       if (!weg) fail('LADEBILDSCHIRM BLEIBT', 'nach 16 s noch da - er soll ausblenden, sobald die Daten da sind (spaetestens 12 s)');
@@ -63,7 +73,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     let inhalt = kr.top; karte.querySelectorAll('*').forEach(e => { if (e.ownerSVGElement || e.closest('.lg-frei') || (fuss && fuss.contains(e)) || e.children.length || !e.textContent.trim()) return; const b = e.getBoundingClientRect(); if (b.height) inhalt = Math.max(inhalt, b.bottom); });
     return { leer: /Nothing pinned/.test(karte.textContent), sichtbar, r: r && [r.left, r.top, r.right, r.bottom].map(Math.round), kr: [kr.left, kr.top, kr.right, kr.bottom].map(Math.round),
       fussTop: fuss ? Math.round(fuss.getBoundingClientRect().top) : null, inhalt: Math.round(inhalt), mitte: r ? Math.round((r.left + r.right) / 2 - (kr.left + kr.right) / 2) : null,
-      preisLogo: !!(preis && preis.querySelector(':scope > .lg-frei')) };
+      preisLogo: !!(preis && preis.querySelector(':scope > .lg-frei')), laeuft: lg ? lg.getAnimations({ subtree: true }).filter(an => an.playState === 'running').length : 0 };
   });
   if (!c) fail('KARTE FEHLT', 'keine "Pinned notes"-Karte auf USD');
   else if (!c.leer) fail('VORAUSSETZUNG', '"Pinned notes" auf USD ist nicht leer - Pruefung braucht die leere Karte');
@@ -76,16 +86,20 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       if (c.fussTop !== null && c.fussTop - c.r[3] > 40) fail('LOGO NICHT UNTEN', `${c.fussTop - c.r[3]} px Luft bis zum Fuss - verlangt "unten mittig"`);
     }
     if (c.preisLogo) fail('LOGO OHNE FREIRAUM', 'die volle Price-Karte traegt ein Logo');
+    if (c.laeuft) fail('PLATZHALTER ANIMIERT', `${c.laeuft} laufende Animation(en) im Platzhalter der leeren Karte nach dem Laden - verlangt: still, animiert nur beim Laden (2026-09-24)`);
   }
   // D)
   const d = await p.evaluate(async () => {
     const zaehl = () => [...document.querySelectorAll('#detail .rub-card')].filter(k => k.querySelector(':scope > .lg-frei') && getComputedStyle(k.querySelector(':scope > .lg-frei')).display !== 'none').length;
-    const vor = zaehl();
+    const vor = zaehl(), alt = new Set([...document.querySelectorAll('#detail .lg-frei')]);
     const z = document.querySelector('#detail .rub-card [onclick*="toggleIndDetailRow"]'); if (!z) return null; z.click();
     await new Promise(r => setTimeout(r, 400));
-    return { vor, nach: zaehl() };
+    const neu = [...document.querySelectorAll('#detail .rub-card > .lg-frei')].filter(l => !alt.has(l));
+    const einmal = neu.every(l => l.querySelector('.fxlogo.lg-einmal') && l.getAnimations({ subtree: true }).every(an => !an.effect || an.effect.getComputedTiming().iterations !== Infinity));
+    return { vor, nach: zaehl(), neu: neu.length, einmal };
   });
   if (!d) fail('INDIKATOR-ZEILE FEHLT', 'keine aufklappbare Indikator-Zeile');
+  else if (d.neu && !d.einmal) fail('AUFKLAPP-LOGO NICHT EINMALIG', 'das nach dem Aufklappen erschienene Logo soll genau einmal hineinwachsen (lg-einmal, endlich), nicht dauerhaft laufen');
   else if (d.nach <= d.vor) fail('KEIN LOGO NACH AUFKLAPPEN', `Rubrik-Karten mit Logo vorher ${d.vor}, nach dem Aufklappen eines Charts ${d.nach} - die gestreckten Nachbarkarten sollen eins bekommen`);
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
