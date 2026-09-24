@@ -2613,6 +2613,82 @@ jobs:
           '
           rm -f price_tv.json
 
+      # ── ROHSTOFFE FUER AUD/NZD/CAD (commodity_data.json) ─────────────
+      # Nutzer 2026-09-24: "Rohstoffe fuer AUD usw find ich gut, bau das ein" -
+      # gewichtet nach Exportanteil (AUD: Eisenerz 0,5 / Kohle 0,3 / Gold 0,2;
+      # NZD: Milch 1,0; CAD: Oel 1,0). Gemessen im Probelauf
+      # probe-commodity-sources.yml (2026-09-24):
+      #   - TradingView-Scanner liefert Kurs + echte 1-Monats-Veraenderung
+      #     (Perf.1M) fuer SGX:FEF1! (Eisenerz), ICEEUR:NCF1! (Newcastle-
+      #     Kohle), NZX:WMP1! (Vollmilchpulver), TVC:GOLD, NYMEX:CL1!.
+      #   - Yahoo hat 5 Jahre Tageskurse fuer TIO=F (Eisenerz), GC=F, CL=F und
+      #     MTF=F (API2-Kohle Rotterdam) - NICHT fuer Newcastle und nicht fuer
+      #     Milchpulver. Daraus die typische Monatsbewegung (Standardabweichung
+      #     der 21-Tage-Veraenderungen) als Massstab: Kohle mit API2 als
+      #     offengelegtem Massstab (keine freie Newcastle-Historie). Milch
+      #     braucht keinen: dort gelten die festen GDT-Schwellen 2 %/5 %.
+      #   - GDT selbst hat keine offene Schnittstelle (Ergebnisse per Skript).
+      - name: Fetch commodity prices (TradingView + Yahoo) -> commodity_data.json
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Content-Type: application/json" \
+            --data '{"symbols":{"tickers":["SGX:FEF1!","ICEEUR:NCF1!","NZX:WMP1!","TVC:GOLD","NYMEX:CL1!"],"query":{"types":[]}},"columns":["close","Perf.1M"]}' \
+            "https://scanner.tradingview.com/global/scan" -o comm_tv.json || true
+          for SYM in "TIO=F" "MTF=F" "GC=F" "CL=F"; do
+            F="comm_y_$(echo "$SYM" | tr -c 'A-Za-z0-9' '_').json"
+            curl -sL -A "$UA" --max-time 40 -o "$F" "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || true
+          done
+          node -e '
+            const fs=require("fs");
+            const today=new Date().toISOString().slice(0,10);
+            const lies=f=>{try{return JSON.parse(fs.readFileSync(f,"utf8"));}catch(e){return null;}};
+            // id -> TradingView-Ticker, Yahoo-Massstab, Anzeigename
+            const DEF={
+              IRON:{tv:"SGX:FEF1!",y:"TIO=F",name:"Iron ore",note:"SGX iron ore futures"},
+              COAL:{tv:"ICEEUR:NCF1!",y:"MTF=F",name:"Coal",note:"Newcastle coal futures; typical move measured on API2 Rotterdam coal (no free Newcastle history)"},
+              DAIRY:{tv:"NZX:WMP1!",y:null,name:"Dairy (whole milk powder)",note:"NZX whole milk powder futures; fixed GDT thresholds 2%/5%"},
+              GOLD:{tv:"TVC:GOLD",y:"GC=F",name:"Gold",note:"spot gold"},
+              OIL:{tv:"NYMEX:CL1!",y:"CL=F",name:"Crude oil",note:"WTI crude futures"}
+            };
+            const tv=lies("comm_tv.json"),rows=(tv&&Array.isArray(tv.data))?tv.data:[];
+            // Typische Monatsbewegung in %: Standardabweichung der 21-Tage-
+            // Veraenderungen (log) ueber die Yahoo-Historie.
+            const sigma=y=>{
+              const d=lies("comm_y_"+y.replace(/[^A-Za-z0-9]/g,"_")+".json");
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];
+              const c=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              if(!Array.isArray(c))return null;
+              const x=c.filter(v=>typeof v==="number"&&v>0);
+              if(x.length<300)return null;
+              const ch=[];for(let i=21;i<x.length;i++)ch.push(Math.log(x[i]/x[i-21]));
+              const m=ch.reduce((a,b)=>a+b,0)/ch.length;
+              const sd=Math.sqrt(ch.reduce((a,b)=>a+(b-m)*(b-m),0)/(ch.length-1));
+              return {sigma:Math.round(sd*1000)/10,tage:x.length};
+            };
+            let out={};const alt=lies("commodity_data.json");if(alt&&alt.items)out=alt.items;
+            let ok=0;
+            Object.keys(DEF).forEach(id=>{
+              const def=DEF[id],row=rows.find(r=>r.s===def.tv);
+              const cur=out[id]||{};
+              const close=row&&row.d?Number(row.d[0]):NaN,perf=row&&row.d?Number(row.d[1]):NaN;
+              let hist=Array.isArray(cur.history)?cur.history.filter(e=>e&&e[0]!==today):[];
+              if(isFinite(close)){hist.push([today,close]);ok++;}
+              hist=hist.slice(-400);
+              const s=def.y?sigma(def.y):null;
+              out[id]={name:def.name,ticker:def.tv,note:def.note,
+                close:isFinite(close)?close:(cur.close??null),
+                perf1m:isFinite(perf)?Math.round(perf*100)/100:(cur.perf1m??null),
+                sigma1m:s?s.sigma:(cur.sigma1m??null),sigmaFrom:def.y,sigmaDays:s?s.tage:(cur.sigmaDays??null),
+                asOf:isFinite(close)?today:(cur.asOf||null),history:hist};
+            });
+            if(ok>0){
+              fs.writeFileSync("commodity_data.json",JSON.stringify({updated:new Date().toISOString(),items:out}));
+              console.log("commodity_data.json: "+ok+"/5 prices, "+Object.keys(out).map(k=>k+" perf1m="+out[k].perf1m+" sigma="+out[k].sigma1m).join(" | "));
+            }else console.log("commodity_data: no prices from TradingView, keeping existing file");
+          ' || true
+          rm -f comm_tv.json comm_y_*.json
+
       # ── MARKT-SENTIMENT (sentiment_data.json) ─────────────────────────
       # Contrarian-Positionierungs-/Stimmungsdaten fuer Krypto (BTC) und
       # Aktienindizes (SP500/NAS): Crypto Fear & Greed (alternative.me, sehr
@@ -5114,6 +5190,7 @@ jobs:
           [ -f bond_data.json ] && git add bond_data.json
           [ -f cot_data.json ] && git add cot_data.json
           [ -f price_data.json ] && git add price_data.json
+          [ -f commodity_data.json ] && git add commodity_data.json
           [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json
