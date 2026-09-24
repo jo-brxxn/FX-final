@@ -3518,7 +3518,7 @@ function applyIndResearch(sym){
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield'])},
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['CB Tone','Next CB Move'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Next CB Move'])},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
@@ -3547,7 +3547,6 @@ const IND_INFO_DEFAULTS={
   'Central Bank Rate':'The central bank\'s main policy interest rate, in %. Higher rates generally strengthen the currency. Watch the decision vs. expectations and the forward guidance.',
   '2Y Bond Yield':'Yield on 2-year government bonds, in %. Tracks rate-hike/cut expectations closely; rising = market pricing tighter policy = currency-supportive.',
   '10Y Bond Yield':'Yield on 10-year government bonds, in %. Reflects long-term growth & inflation expectations; rising yields often support the currency.',
-  'CB Tone':'Your own read of the central bank\'s current rhetoric (statement, press conference, speeches). Bullish = hawkish tone, bearish = dovish tone. Set manually - counts at half weight since it overlaps with the Central Bank Rate / bond yields.',
   'Next CB Move':'Your own expectation for the next policy decision. Bullish = hike expected, bearish = cut expected, neutral = hold expected. Set manually.',
   // Labour Market
   'NFP / Employment Change':'Net new jobs added in the period (non-farm), in thousands. Strong job growth = robust economy = hawkish and currency-positive.',
@@ -3613,7 +3612,7 @@ function ensureRiskEnvWeg(){
 // Nutzer-Wunsch 2026-08-24 entfernt (siehe NEUE_UMFRAGEN_2026_08-Kommentar) -
 // aktive Bereinigung noetig, weil migrateRubInds() sie sonst aus bereits
 // gespeicherten Profilen (vor diesem Datum) nie herausnehmen wuerde.
-const RUB_IND_REMOVE={'Interest Rates':['Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'Economic Growth':['NFIB Small Business Optimism','Leading Index'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
+const RUB_IND_REMOVE={'Interest Rates':['CB Tone','Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'Economic Growth':['NFIB Small Business Optimism','Leading Index'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -3859,10 +3858,9 @@ function migrateRubInds(rubrics,sym){
     // kurzzeitiger dritter Indikator hier - auf Nutzerwunsch wieder
     // entfernt, siehe RUB_IND_REMOVE; Carry laeuft jetzt wieder ueber
     // pairCarryAdj() nur auf Paar-Ebene bei den Set-ups.)
-    if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='CB Tone')){
-      const tone=sym&&sym.cbStance==='hawk'?'bull':sym&&sym.cbStance==='dove'?'bear':'neu';
-      rub.indicators.push({id:uid(),name:'CB Tone',bias:tone,imp:false,date:'',interval:'',points:[]});
-    }
+    // ⚠ "CB Tone" wird seit 2026-09-24 NICHT mehr eingefuegt (Nutzer: "CB Tone
+    // entfernen"): eine eigene Einschaetzung, die nie gesetzt wurde - bei
+    // allen 24 Assets neutral. Bestehende Zeilen raeumt RUB_IND_REMOVE ab.
     if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='Next CB Move')){
       const move=sym&&sym.cbNextMove==='hike'?'bull':sym&&sym.cbNextMove==='cut'?'bear':'neu';
       rub.indicators.push({id:uid(),name:'Next CB Move',bias:move,imp:false,date:'',interval:'',points:[]});
@@ -6152,7 +6150,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6360,7 +6358,7 @@ document.addEventListener('keydown',e=>{
 // die Liste. Greift NIE in einem Eingabefeld und nie mit Modifier-Taste.
 const KEY_TABS={d:['dash','Dashboard'],a:['cur','Assets'],n:['news','News'],
   c:['cal','Calendar'],s:['pairs','Set-ups'],w:['watch','Watchlist'],
-  t:['trends','Trends'],m:['mx','Matrix'],e:['edge','Edge'],r:['notes','Archive'],
+  t:['trends','Trends'],m:['mx','Matrix'],r:['notes','Archive'],
   y:['carry','Carry'],o:['cot','COT']};
 let _keyChord='',_keyChordT=0;
 function keyNavAktiv(e){
@@ -6550,7 +6548,7 @@ async function cloudPull(manual,forceOverwrite){
       // (Nutzer-Bugreport 2026-07-27), obwohl seine Save-Funktion
       // markPrefEdit() (jetzt bei saveTabStacks() ergaenzt) bereits setzt -
       // ohne den Guard HIER wurde es trotzdem unconditional ueberschrieben.
-      if(!prefPending&&Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
+      if(!prefPending&&Array.isArray(cd.tabStacks)){tabStacks=cd.tabStacks;tabStacksOhneEntfernte(tabStacks);try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}renderTabBar();}
       // Kompakt-Stufe: compactLevel (0/1/2) hat Vorrang. Steht in der Cloud
       // nur das alte Boolean-Feld (Push von einem Geraet mit gecachter
       // alter App-Version), wird es NUR uebernommen, wenn sich der An/Aus-
@@ -18407,220 +18405,11 @@ function newsAssetSectionHtml(sym){
     ${abGoToHtml('news')}
   </div>`;
 }
-// ══ EDGE: traegt der Score ueberhaupt? ═══════════════════════════════════
-// Alles hier rechnet AUSSCHLIESSLICH auf bereits aufgezeichneten Werten:
-// ind.chartHist (bis 3 Jahre [Datum, Actual, Forecast] je Indikator),
-// price_data (Tagesschluss) und scoreHist. Nichts wird geschaetzt, und wo
-// die Stichprobe zu duenn ist, wird die Zahl NICHT gezeigt, sondern die
-// Stichprobengroesse.
-//
-// ⚠ Die Rueckrechnung nutzt bewusst die ECHTEN Bausteine des Score-Modells
-// (researchBias, indIsHalfWeight, biasScore) statt einer zweiten Formel -
-// sonst waere es die naechste Auspraegung der Dual-Source-Fehlerklasse.
-// Sie bildet die KLASSISCHE Gewichtung ab; die Normierung des Modus
-// "normalized" haengt an Groessen (Marktrelevanz, Decay), die es fuer
-// vergangene Tage nicht rekonstruierbar gibt. Das steht so auch in der
-// Karte, damit niemand die Zahl fuer den Live-Score haelt.
-const EDGE_MIN_N=10;                       // darunter wird nichts behauptet
-const EDGE_HORIZONTE=[1,5,20];
-// Alle Indikatoren eines Assets, die eine verwertbare Historie haben.
-function edgeIndHistories(sym){
-  const out=[];
-  // ⚠ Bei Non-FX-Assets sind die Makro-Karten von einer Waehrung GESPIEGELT
-  // (deriveMacroBiasAll). Ohne dieselbe same/inverse-Umrechnung wie dort
-  // summiert die Rueckrechnung die ROHEN US-Signale und liefert fuer Gold
-  // ein umgedrehtes Ergebnis - im Test genau so aufgetreten. Karten ohne
-  // hinterlegte Regel bleiben aussen vor, statt eine Richtung anzunehmen.
-  const regeln=isNonFx(sym.id)?effDeriveRules(sym):null;
-  (sym.rubrics||[]).forEach(rub=>{
-    if(!IND_AUTO_RUBS.includes(rub.name))return;
-    let vz=1;
-    if(regeln){
-      const r=regeln[rub.name];
-      if(r==='inverse')vz=-1; else if(r==='same')vz=1; else return;
-    }
-    (rub.indicators||[]).forEach(ind=>{
-      const h=ind.chartHist;
-      if(!Array.isArray(h)||h.length<2)return;
-      if(SCORE_ZERO.has(stripPeriodSuffix(ind.name).base))return;
-      const punkte=h.filter(e=>Array.isArray(e)&&e[0]&&e[1]!=null&&e[1]!==''&&e[2]!=null&&e[2]!=='')
-        .map(e=>({d:String(e[0]).slice(0,10),a:e[1],f:e[2]}))
-        .sort((x,y)=>x.d.localeCompare(y.d));
-      if(punkte.length<2)return;
-      out.push({ind,rub,punkte,vz,gewicht:indIsHalfWeight(ind,rub)?0.5:1});
-    });
-  });
-  return out;
-}
-// Rueckgerechnete Score-Reihe: je Datum die Summe der zuletzt bekannten
-// Beat/Miss-Signale. Ein Release zaehlt, bis das naechste kommt - laenger
-// als EDGE_MAX_ALTER Tage aber nicht mehr (sinngemaess wie IND_STALE_CYCLES,
-// nur ohne die Zyklus-Rechnung, die je Indikator eine eigene Historie
-// braeuchte).
-const EDGE_MAX_ALTER=120;
-function edgeScoreSeries(sym){
-  const reihen=edgeIndHistories(sym);
-  if(!reihen.length)return[];
-  const daten=[...new Set(reihen.flatMap(r=>r.punkte.map(p=>p.d)))].sort();
-  if(daten.length<3)return[];
-  const von=daten[0],bis=todayStr();
-  const out=[];
-  const zeiger=reihen.map(()=>-1);
-  // Tageweise durch den Zeitraum, Zeiger je Reihe nachziehen.
-  for(let t=new Date(von);t<=new Date(bis);t.setDate(t.getDate()+1)){
-    const d=t.toISOString().slice(0,10);
-    let summe=0,aktiv=0;
-    reihen.forEach((r,i)=>{
-      while(zeiger[i]+1<r.punkte.length&&r.punkte[zeiger[i]+1].d<=d)zeiger[i]++;
-      if(zeiger[i]<0)return;
-      const p=r.punkte[zeiger[i]];
-      if((new Date(d)-new Date(p.d))/864e5>EDGE_MAX_ALTER)return;
-      const b=researchBias(stripPeriodSuffix(r.ind.name).base,p.a,p.f,null);
-      if(b==='neu')return;
-      summe+=biasScore(b)*r.gewicht*(r.vz||1); aktiv++;
-    });
-    if(aktiv>=3)out.push([d,Math.round(summe*100)/100,aktiv]);
-  }
-  return out;
-}
-// Vorlaufrendite: wie sich der Kurs NACH dem Tag entwickelt hat.
-function edgeForwardReturns(symId,serie){
-  const px=priceSeriesFor(symId);
-  if(!px||px.length<40)return null;
-  const idx={},arr=px.map(e=>e[0]);
-  px.forEach((e,i)=>{idx[e[0]]=i;});
-  const rows=[];
-  serie.forEach(([d,sc])=>{
-    let i=idx[d];
-    if(i===undefined){                      // Wochenende: naechster Handelstag
-      const j=arr.findIndex(x=>x>=d); if(j<0)return; i=j;
-    }
-    const p0=px[i][1]; if(!p0)return;
-    const r={sc};
-    EDGE_HORIZONTE.forEach(n=>{
-      const q=px[i+n]; r['r'+n]=(q&&q[1])?((q[1]/p0-1)*100):null;
-    });
-    if(EDGE_HORIZONTE.some(n=>r['r'+n]!=null))rows.push(r);
-  });
-  return rows;
-}
-const EDGE_BUCKETS=[[-99,-3,'≤ −3'],[-3,-1,'−3 … −1'],[-1,1,'−1 … +1'],[1,3,'+1 … +3'],[3,99,'≥ +3']];
-function edgeBucketStats(rows){
-  return EDGE_BUCKETS.map(([lo,hi,lbl])=>{
-    const teil=rows.filter(r=>r.sc>=lo&&r.sc<hi||(hi===99&&r.sc>=lo));
-    const z={lbl,n:teil.length};
-    EDGE_HORIZONTE.forEach(h=>{
-      const v=teil.map(r=>r['r'+h]).filter(x=>x!=null);
-      z['r'+h]=v.length>=EDGE_MIN_N?v.reduce((a,b)=>a+b,0)/v.length:null;
-      z['n'+h]=v.length;
-      if(h===5)z.tref=v.length>=EDGE_MIN_N?v.filter(x=>x>0).length/v.length*100:null;
-    });
-    return z;
-  });
-}
-// Trefferquote je Indikator: nach einem Beat/Miss - lief der Kurs in die
-// erwartete Richtung? Nur Indikatoren mit genug Beobachtungen.
-function edgeIndicatorStats(sym){
-  const px=priceSeriesFor(sym.id); if(!px||px.length<40)return[];
-  const idx={};px.forEach((e,i)=>{idx[e[0]]=i;});
-  const arr=px.map(e=>e[0]);
-  return edgeIndHistories(sym).map(r=>{
-    let treffer=0,n=0,summe=0;
-    r.punkte.forEach(p=>{
-      const b=researchBias(stripPeriodSuffix(r.ind.name).base,p.a,p.f,null);
-      if(b==='neu')return;
-      let i=idx[p.d]; if(i===undefined){const j=arr.findIndex(x=>x>=p.d);if(j<0)return;i=j;}
-      const p0=px[i][1],q=px[i+5];
-      if(!p0||!q||!q[1])return;
-      const ret=(q[1]/p0-1)*100, erwartet=(b==='bull'?1:-1)*(r.vz||1);
-      n++; summe+=ret*erwartet; if(ret*erwartet>0)treffer++;
-    });
-    return{name:ind_kurz(r.ind),n,quote:n?treffer/n*100:null,schnitt:n?summe/n:null};
-  }).filter(x=>x.n>=EDGE_MIN_N).sort((a,b)=>b.quote-a.quote);
-}
-function ind_kurz(ind){return indName({displayName:ind.displayName,name:stripPeriodSuffix(ind.name).base});}
-// ── Edge-Tab: Darstellung ────────────────────────────────────────────────
-let edgeAsset='USD';
-function setEdgeAsset(v){edgeAsset=v||'USD';renderEdge();}
-const edgeFmt=(v,d)=>v==null?'–':(v>0?'+':'')+v.toFixed(d===undefined?2:d);
-// Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
-// scrollHalten; Fehlerklasse gefunden 2026-09-23 nach dem iPad-Bugreport).
-function renderEdge(){
-  const zurueck=scrollHalten(document.getElementById('pgEdge'));
-  try{return renderEdgeRoh.apply(this,arguments);}finally{zurueck();}
-}
-function renderEdgeRoh(){
-  const el=document.getElementById('edgeBody');if(!el)return;
-  const sym=syms.find(x=>x.id===edgeAsset)||syms[0];
-  if(!sym){el.innerHTML='<div class="dw-empty">No assets.</div>';return;}
-  const filter=assetFilterSelect(syms.map(x=>x.id),edgeAsset,'setEdgeAsset','',
-    'Which asset to test',id=>COT_NAME[id]||id);
-  const serie=edgeScoreSeries(sym);
-  const rows=serie.length?edgeForwardReturns(sym.id,serie):null;
-  const kopf=`<div style="margin-bottom:10px">${filter}</div>`;
-  if(!rows||rows.length<EDGE_MIN_N){
-    el.innerHTML=kopf+`<div class="cot-card"><div class="cot-card-title">Signal test${iBtn('edge')}</div>
-      <div class="dw-empty" style="text-align:left;line-height:1.55">Not enough recorded history for ${escH(COT_NAME[sym.id]||sym.id)} yet.
-      ${serie.length?`The reconstructed score covers <b>${serie.length}</b> days, but only <b>${rows?rows.length:0}</b> of them line up with a price series long enough to measure a forward return.`
-        :`No indicator of this asset carries a release history with both an actual and a forecast — the reconstruction needs both.`}
-      Nothing is estimated to fill the gap.</div></div>`;
-    return;
-  }
-  const st=edgeBucketStats(rows);
-  const zeile=z=>`<tr${z.n<EDGE_MIN_N?' class="edge-thin"':''}>
-    <td class="edge-b">${escH(z.lbl)}</td><td class="edge-n">${z.n}</td>
-    ${EDGE_HORIZONTE.map(h=>`<td class="${z['r'+h]==null?'':(z['r'+h]>0?'act-good':'act-bad')}">${z['r'+h]==null?`<span class="edge-thin-t" title="${escH('only '+z['n'+h]+' observations - below the '+EDGE_MIN_N+' needed')}">n=${z['n'+h]}</span>`:edgeFmt(z['r'+h])+'%'}</td>`).join('')}
-    <td>${z.tref==null?'–':z.tref.toFixed(0)+'%'}</td></tr>`;
-  // Gesamtaussage: laeuft der Score in die richtige Richtung? Spearman-artig
-  // ueber die Bucket-Mittelwerte, aber ehrlich als das benannt, was es ist:
-  // eine Richtungspruefung, kein Signifikanztest.
-  const gueltig=st.filter(z=>z.r5!=null);
-  let urteil='';
-  if(gueltig.length>=3){
-    const erst=gueltig[0],letzt=gueltig[gueltig.length-1];
-    const spanne=letzt.r5-erst.r5;
-    urteil=`<div class="edge-verdict ${spanne>0.15?'ok':spanne<-0.15?'bad':'flat'}">
-      Over 5 days the lowest bucket averages <b>${edgeFmt(erst.r5)}%</b> and the highest <b>${edgeFmt(letzt.r5)}%</b> —
-      a spread of <b>${edgeFmt(spanne)} pp</b> in ${spanne>0.15?'the direction the score implies':spanne<-0.15?'the OPPOSITE direction to what the score implies':'no clear direction'}.
-      This is a direction check on ${rows.length} recorded days, not a significance test.</div>`;
-  }
-  const indSt=edgeIndicatorStats(sym);
-  const indTbl=indSt.length?`<table class="edge-tbl"><thead><tr><th>Indicator</th><th>n</th><th>Hit rate 5d</th><th>Ø return · direction</th></tr></thead><tbody>
-    ${indSt.map(x=>`<tr><td class="edge-b">${escH(x.name)}</td><td class="edge-n">${x.n}</td>
-      <td class="${x.quote>=55?'act-good':x.quote<=45?'act-bad':''}">${x.quote.toFixed(0)}%</td>
-      <td class="${x.schnitt>0?'act-good':'act-bad'}">${edgeFmt(x.schnitt)}%</td></tr>`).join('')}
-    </tbody></table>`
-    :`<div class="dw-empty" style="text-align:left">No indicator of this asset has ${EDGE_MIN_N} or more releases with both an actual and a forecast plus a matching price window.</div>`;
-  // Verteilung der TATSAECHLICH aufgezeichneten Live-Scores
-  const hist=(scoreHist&&scoreHist[sym.id])||[];
-  const werte=hist.map(e=>e[1]).filter(v=>typeof v==='number');
-  const bands=EDGE_BUCKETS.map(([lo,hi,lbl])=>({lbl,n:werte.filter(v=>v>=lo&&(hi===99?true:v<hi)).length}));
-  const maxB=Math.max(1,...bands.map(b=>b.n));
-  const verteilung=werte.length?`<div class="edge-dist">${bands.map(b=>`
-      <div class="edge-dist-row"><span class="edge-b">${escH(b.lbl)}</span>
-        <span class="edge-dist-bar"><i style="width:${Math.round(b.n/maxB*100)}%"></i></span>
-        <span class="edge-n">${b.n}</span></div>`).join('')}
-    <div class="edge-note">${werte.length} recorded days since ${escH(hist[0][0])}. This is the LIVE score, not the reconstruction above.</div></div>`
-    :`<div class="dw-empty" style="text-align:left">No live score history recorded yet.</div>`;
-  el.innerHTML=kopf+`
-  <div class="cot-card">
-    <div class="cot-card-title">Signal test — ${escH(COT_NAME[sym.id]||sym.id)}${iBtn('edge')}
-      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Reconstructed from ${serie.length} days of recorded releases · base weights only · ${rows.length} days with a measurable forward return</small></div>
-    ${urteil}
-    <table class="edge-tbl"><thead><tr><th>Score</th><th>days</th>${EDGE_HORIZONTE.map(h=>`<th>Ø ${h}d</th>`).join('')}<th>Hit 5d</th></tr></thead>
-      <tbody>${st.map(zeile).join('')}</tbody></table>
-    <div class="edge-note">Buckets with fewer than ${EDGE_MIN_N} observations show their count instead of a number — a mean from three days is noise, not a result.</div>
-  </div>
-  <div class="cot-card" style="margin-top:10px">
-    <div class="cot-card-title">Which indicator carries information?</div>
-    ${indTbl}
-    <div class="edge-note">After a beat or miss: did the price move in the implied direction over the next five trading days? Sorted by hit rate, ${EDGE_MIN_N} observations minimum.</div>
-  </div>
-  <div class="cot-card" style="margin-top:10px">
-    <div class="cot-card-title">Distribution of the live score</div>
-    ${verteilung}
-  </div>`;
-}
+// ══ EDGE-Tab entfernt 2026-09-24 (Nutzer: "Entfern die Kategorie Edge").
+// Der Signal-Test legte alle Tage vor dem Kursbeginn (07.08.2023) auf die
+// erste Kerze und zeigte dadurch fuer USD 87 % Treffer in JEDEM Score-Bereich.
+// Wer so eine Pruefung wieder baut: nur Tage mit echtem Kurs zaehlen und die
+// Ueberlappung der Renditefenster ausweisen (docs/CHANGELOG.md 2026-09-24).
 // ── News-Tab ──────────────────────────────────────────────────────────────
 // Volle Historie (bis 35 Tage), Volltextsuche, Asset- und Quellenfilter.
 // Zeitraum ueber den app-weiten TIME_RANGES-Helfer, kein eigener Filter
@@ -20673,14 +20462,6 @@ SENT_INFO.spread=['Rate differential vs price',
   `<p><b>What it is:</b> the 2-year (or 10-year) government yield of the base currency minus that of the quote currency, drawn against the pair itself. Both series are the ones the app already collects daily.</p>
    <p><b>How to read it:</b> the pair and the differential usually move together — short-dated yields are the market's own view of where the two central banks are heading. When they <b>diverge</b>, something else is driving the pair (risk flows, positioning, politics), and that is worth knowing before taking a macro trade.</p>
    <p><b>Limits:</b> the two axes are scaled independently, so the vertical distance between the lines means nothing — only the SHAPE does. The history is as long as the collected bond series, which is shorter than the price history.</p>`];
-SENT_INFO.edge=['Edge (does the score lead the price?)',
-  `<p><b>What this is:</b> the score is only worth something if it leads the price. This tab measures that on <b>recorded</b> data — no simulation, no assumed fills, no estimated values.</p>
-   <p><b>How the reconstruction works:</b> every indicator carries up to three years of releases with both an actual and a forecast (<i>chartHist</i>). For each past day the last known beat/miss of every indicator is summed with the same weights the live score uses — the same functions, not a second formula. A release counts until the next one arrives, at most 120 days. Days with fewer than three active indicators are skipped.</p>
-   <p><b>What it deliberately does NOT do:</b> the reconstruction counts every beat/miss with its <b>base weight</b> only (±1, ±0.5). The live score also multiplies by measured surprise size, age decay and market impact — quantities that cannot be rebuilt for a past day without rewriting history. So the number here is not the live score, and the card says so.</p>
-   <p><b>How to read the table:</b> each row is a score band; the columns are the <b>average</b> price change over the next 1, 5 and 20 trading days. If the score carries information, the bottom row should be clearly worse than the top row. A band with fewer than 10 observations shows its count instead of a mean — an average from three days is noise, not a result.</p>
-   <p><b>The verdict line</b> compares the lowest and highest band over five days. It is a direction check, not a significance test — with a few dozen observations per band it can flip on a single outlier, and it says so.</p>
-   <p><b>Per indicator:</b> after a beat or miss, did the price move in the implied direction within five trading days? A hit rate near 50% means that indicator carried no directional information for this asset in the recorded window. That is a finding, not a defect.</p>
-   <p><b>The distribution</b> at the bottom is the LIVE score as it was actually recorded day by day — useful to see whether an asset ever leaves the neutral band at all, which is a calibration question rather than a signal.</p>`];
 SENT_INFO.news=['Headlines (free RSS feeds, no key)',
   `<p><b>Where it comes from:</b> central banks directly (Federal Reserve, ECB, Bank of England), established market media (CNBC, MarketWatch, Bloomberg, Yahoo Finance) and a targeted search for Reuters and for what the big houses are saying (JPMorgan, Goldman Sachs, Morgan Stanley, Bank of America, Citigroup). All free RSS, no API key, no quota.</p>
    <p><b>How the ranking works — it is counted, not judged:</b> the main signal is how many <b>independent outlets</b> carried the same story (2 outlets, 4 outlets…). On top of that come capped hits on a fixed topic list and on the markets listed in this app. A real central-bank decision or speech is lifted; their administrative notices (comment requests, surveys, facility frameworks) are pushed down — without that, a note like "Fed requests comment on a proposal" outranked everything that actually moved a market.</p>
@@ -21234,7 +21015,16 @@ function renderRateProbRoh(){
 }
 
 // ══ TABS ══════════════════════════════════════════════════════════
-const PAGE_IDS={over:'pgOver',edge:'pgEdge',regime:'pgRegime',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
+// Tabs, die es nicht mehr gibt ('cmp' 2026-08, 'edge' 2026-09-24). Aus jedem
+// Stapel entfernen - beim Laden, beim Import und beim Cloud-Abgleich.
+// Liefert true, wenn etwas entfernt wurde.
+const ENTFERNTE_TABS=new Set(['cmp','edge']);
+function tabStacksOhneEntfernte(ts){
+  let weg=false;
+  (ts||[]).forEach(st=>{if(st&&Array.isArray(st.members)&&st.members.some(m=>ENTFERNTE_TABS.has(m))){st.members=st.members.filter(m=>!ENTFERNTE_TABS.has(m));weg=true;}});
+  return weg;
+}
+const PAGE_IDS={over:'pgOver',regime:'pgRegime',news:'pgNews',dash:'pgDash',cur:'pgCur',mx:'pgMx',trends:'pgTrends',cot:'pgCot',sent:'pgSent',seas:'pgSeas',data:'pgData',rate:'pgRate',carry:'pgCarry',pairs:'pgPairs',watch:'pgWatch',cal:'pgCal',notes:'pgNotes'};
 // ── Tab-Leiste mit Stapeln (Gruppen) ───────────────────────────────
 // Reihenfolge + Definition aller Kategorien. FX und Non-FX sind seit
 // 2026-08-03 EIN gemeinsamer Tab (Nutzer-Wunsch "die beiden Kategorien
@@ -21243,7 +21033,7 @@ const PAGE_IDS={over:'pgOver',edge:'pgEdge',regime:'pgRegime',news:'pgNews',dash
 // Indices/Stocks), kein Modus-Filter mehr (siehe renderSidebar/moveSbCat).
 // 'over' steht bewusst VOR 'dash' (Nutzer-Wunsch 2026-09-11: "eine neue
 // Kategorie ueber Dashboard").
-const TAB_ORDER=['over','dash','fx','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
+const TAB_ORDER=['over','dash','fx','mx','trends','cot','sent','seas','data','rate','news','carry','pairs','watch','cal','notes'];
 const TABS={
   over:{label:'Overview',tab:'over'},
   dash:{label:'Dashboard',tab:'dash'},
@@ -21262,7 +21052,6 @@ const TABS={
   data:{label:'Data',tab:'data'},
   rate:{label:'Rate Probabilities',tab:'rate'},
   news:{label:'News',tab:'news'},
-  edge:{label:'Edge',tab:'edge'},
   // Regime Radar (Nutzer-Wunsch 2026-09-15): Szenarien aus vorhandenen
   // Daten. Liegt im Insights-Stapel, weil es eine Analyse-Ansicht ist.
   regime:{label:'Regime',tab:'regime'},
@@ -21291,9 +21080,10 @@ function loadTabStacks(){
     // haben ihn aber in ihren gespeicherten Stapeln stehen - ohne diese
     // Migration bliebe eine Kachel in der Leiste, deren Klick auf eine
     // Seite zeigt, die es nicht mehr gibt (leere Flaeche).
-    let _cmpDrop=false;
-    tabStacks.forEach(st=>{if(st&&Array.isArray(st.members)&&st.members.includes('cmp')){st.members=st.members.filter(m=>m!=='cmp');_cmpDrop=true;}});
-    if(_cmpDrop){try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
+    // Seit 2026-09-24 ebenso 'edge' (Tab entfernt) - ueber tabStacksOhneEntfernte,
+    // das auch Import und Cloud-Abgleich nutzen: ein Geraet mit altem Stand
+    // wuerde den Tab sonst per Sync wieder einschleppen.
+    if(tabStacksOhneEntfernte(tabStacks)){try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     // Sentiment nachtraeglich in einen bestehenden Insights-Stapel einreihen
     // (direkt nach COT), falls noch nicht vorhanden - damit der neue Tab bei
     // Bestandsnutzern nicht heimatlos in der Hauptleiste landet.
@@ -21303,10 +21093,10 @@ function loadTabStacks(){
     const ins2=tabStacks.find(st=>st.members&&st.members.includes('sent')&&!st.members.includes('seas'));
     if(ins2){const i=ins2.members.indexOf('sent');ins2.members.splice(i+1,0,'seas');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     // Regime Radar ebenso nachtraeglich einreihen (ans Ende des Stapels,
-    // in dem auch Edge liegt - Nutzer-Wunsch 2026-09-15). Ohne diese
+    // in dem News liegt - bis 2026-09-24 hing das an Edge, Nutzer-Wunsch 2026-09-15). Ohne diese
     // Migration landete der neue Tab bei Bestandsnutzern heimatlos in der
     // Hauptleiste statt unter Insights.
-    const insRg=tabStacks.find(st=>st.members&&st.members.includes('edge')&&!st.members.includes('regime'));
+    const insRg=tabStacks.some(st=>st.members&&st.members.includes('regime'))?null:tabStacks.find(st=>st.members&&st.members.includes('news'));
     if(insRg){insRg.members.push('regime');try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}}
     // Data (Indikator-Verlaufschart-Browser) ebenso nachtraeglich einreihen
     // (direkt nach Seasonality, Nutzer-Wunsch 2026-07-14).
@@ -21331,15 +21121,6 @@ function loadTabStacks(){
     // 'rate', dann der stapelweite Rueckfall - ein einzelner Anker reicht
     // laut dem Bugreport von 2026-07-20 nicht, weil Bestandsnutzer ihre
     // Stapel umsortiert haben koennen.
-    if(!tabStacks.some(st=>st.members&&st.members.includes('edge'))){
-      const insE=tabStacks.find(st=>st.members&&st.members.includes('news'));
-      if(insE){const i=insE.members.indexOf('news');insE.members.splice(i+1,0,'edge');}
-      else{
-        const anyE=tabStacks.find(st=>st.members&&(st.members.includes('cot')||st.members.includes('data')||st.members.includes('trends')));
-        if(anyE)anyE.members.push('edge');
-      }
-      try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){}
-    }
     if(!tabStacks.some(st=>st.members&&st.members.includes('news'))){
       const insN=tabStacks.find(st=>st.members&&st.members.includes('rate'));
       if(insN){const i=insN.members.indexOf('rate');insN.members.splice(i+1,0,'news');}
@@ -21351,7 +21132,7 @@ function loadTabStacks(){
     }
     return;}}catch(e){}
   // Standard: die Analyse-Kategorien im Stapel "Insights" buendeln.
-  tabStacks=[{id:uid(),name:'Insights',members:['mx','trends','cot','sent','seas','data','rate','news','edge','carry','regime']}];
+  tabStacks=[{id:uid(),name:'Insights',members:['mx','trends','cot','sent','seas','data','rate','news','carry','regime']}];
   try{localStorage.setItem(TABSTACKS_KEY,JSON.stringify(tabStacks));}catch(e){} // Default nur lokal, kein Sync-Anstoss
 }
 function saveTabStacks(){
@@ -21387,7 +21168,6 @@ const TAB_ICONS={
   rate:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
   calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
   news:'<path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><line x1="8" y1="9" x2="15" y2="9"/><line x1="8" y1="13" x2="15" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>',
-  edge:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   regime:'<path d="M20.5 14.5A9 9 0 1 1 12 3"/><path d="M16.5 13.5A5 5 0 1 1 12 7"/><line x1="12" y1="12" x2="20" y2="6"/><circle cx="12" cy="12" r="1"/>',
   carry:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
   pairs:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
@@ -21666,7 +21446,6 @@ function showTab(tab,btn,fxMode){
   else if(tab==='sent'){renderSentiment();autoFetchSentiment();}
   else if(tab==='seas'){renderSeasonality();autoFetchSeasonality();}
   else if(tab==='news'){renderNewsTab();}
-  else if(tab==='edge'){renderEdge();}
   // ⚠ Das Regime liest fuenf Feeds. Wer den Tab als ERSTES oeffnet, haette
   // sonst eine Seite voller "Not measured", die nach dem naechsten
   // Auto-Refresh von selbst umspringt - das sieht aus wie ein Fehler.
@@ -23067,9 +22846,8 @@ Object.assign(window,{
   clearSentCcyFilter,sentMultiFilterBarHtml,sentItemMatchesMulti,setNewsRange,toggleNewsWatch,toggleNewsExpand,
   setNewsAsset,toggleNewsTopic,toggleNewsSrc,NEWS_TOP_N,NEWS_MAX_N,newsLevel,newsWatchAssets,saveNewsSeen,
   markNewsSeen,newsIsNew,newsPool,newsTopicWord,schluesselWortTreffer,newsPressureHtml,newsAttentionHtml,newsRowHtml,
-  newsDayLabel,newsForAsset,symBiasFlipDays,newsAssetSectionHtml,EDGE_MIN_N,EDGE_HORIZONTE,edgeIndHistories,
-  EDGE_MAX_ALTER,edgeScoreSeries,edgeForwardReturns,EDGE_BUCKETS,edgeBucketStats,edgeIndicatorStats,ind_kurz,
-  setEdgeAsset,edgeFmt,renderEdge,setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,
+  newsDayLabel,newsForAsset,symBiasFlipDays,newsAssetSectionHtml,
+  setNewsTabRange,setNewsTabRangeCustom,setNewsTabQuery,setNewsTabAsset,setNewsTabSrc,
   newsTabMore,gotoNewsFor,evtNewsIds,evtNewsCount,renderNewsTab,newsCardHtml,setAaiiView,aaiiBarsRange,setAaiiRange,
   setAaiiRangeCustom,setSentSub,setSentSym,setPcAsset,setSentimentRange,setPcRange,setFearGreedRange,
   setSentimentRangeCustom,setPcRangeCustom,setFearGreedRangeCustom,SENT_NONFX_SYMS,SENT_NONFX_PRICE_ID,
@@ -23281,7 +23059,7 @@ Object.defineProperty(window,'newsAssetSel',{get:()=>newsAssetSel,set:v=>{newsAs
 Object.defineProperty(window,'newsTopicOnly',{get:()=>newsTopicOnly,set:v=>{newsTopicOnly=v;},configurable:true});
 Object.defineProperty(window,'newsOpenSrc',{get:()=>newsOpenSrc,set:v=>{newsOpenSrc=v;},configurable:true});
 Object.defineProperty(window,'newsSeenTs',{get:()=>newsSeenTs,set:v=>{newsSeenTs=v;},configurable:true});
-Object.defineProperty(window,'edgeAsset',{get:()=>edgeAsset,set:v=>{edgeAsset=v;},configurable:true});
+
 Object.defineProperty(window,'newsTabQuery',{get:()=>newsTabQuery,set:v=>{newsTabQuery=v;},configurable:true});
 Object.defineProperty(window,'newsTabAsset',{get:()=>newsTabAsset,set:v=>{newsTabAsset=v;},configurable:true});
 Object.defineProperty(window,'newsTabSrc',{get:()=>newsTabSrc,set:v=>{newsTabSrc=v;},configurable:true});

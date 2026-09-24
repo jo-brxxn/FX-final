@@ -130,7 +130,7 @@ const PRAEFIX = /^(data-|aria-|on|xlink:|xmlns:|v-|:|@|_)/;
   }, { erlaubt: [...ERLAUBT], praefix: PRAEFIX.source });
 
   const SEITEN = ['over', 'dash', 'cur', 'mx', 'trends', 'cot', 'sent', 'seas', 'data',
-    'rate', 'news', 'edge', 'carry', 'pairs', 'cal', 'notes', 'regime'];
+    'rate', 'news',  'carry', 'pairs', 'cal', 'notes', 'regime'];
   let elemente = 0, treffer = 0;
   const gesehen = new Set();
   for (const s of SEITEN) {

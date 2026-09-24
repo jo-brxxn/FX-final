@@ -128,7 +128,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   if (!d.rimFest) fail('RAND WAECHST MIT', '#aiRim ohne vector-effect="non-scaling-stroke" - an .ai-rim wirkt es nicht (vererbt sich nicht durch <use>), der Rand stand als 9-37 px dicker Rahmen um grosse Flaggen');
 
   // ── C) Kartensymbole ───────────────────────────────────────────────
-  const SEITEN = ['sym:USD', 'sym:GOLD', 'dash', 'cot', 'sent', 'seas', 'data', 'rate', 'edge', 'carry', 'mx'];
+  const SEITEN = ['sym:USD', 'sym:GOLD', 'dash', 'cot', 'sent', 'seas', 'data', 'rate',  'carry', 'mx'];
   let koepfe = 0;
   for (const s of SEITEN) {
     await p.evaluate(s => s.startsWith('sym:') ? gotoSym(s.slice(4)) : showTab(s), s);

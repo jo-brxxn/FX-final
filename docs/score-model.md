@@ -433,6 +433,8 @@ zaehlte 21 geaenderte Stellen - die Indikatorenzahl in USDs Economic-Growth-
 Karte sinkt, das wirkt sich (Modus `normalized`) auch auf die vergleichende
 Staerke-Note ANDERER Waehrungen aus, nicht nur auf USD selbst.
 
+**13 → 14 (2026-09-24, CB Tone entfernt):** Beitrag überall 0, zählte aber im Divisor — `check/scorediff.js`: NAS, CHYIELD, NAS/USD je ±0,1.
+
 **KEIN Bump am 2026-09-22 (Leitzins in die Inflation-Karte) — bewusst:**
 Nutzer-Wunsch *„bei der Inflationskarte ganz oben direkt den Indikator
 interest rate"*, ausdrücklich als Verschieben. `moveRateIndToInflation()`

@@ -13,7 +13,7 @@ const URL=process.env.CHECK_URL||'http://127.0.0.1:8935/index.html';
 // dadurch nie waechst (siehe auch der Fix in layout.js).
 const {chromium}=require(PW);
 const PORT=process.env.PORT||8935;
-const TABS=['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
+const TABS=['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','news','carry','pairs','watch','cal','notes'];
 // Breites, aber endliches Set der im Projekt tatsaechlich verwendeten
 // Karten-Klassen (CLAUDE.md: "Karten-Inhalt darf nie ueber den Kartenrand
 // hinausgehen"). Ergaenzt sich bei neuen Kartentypen - siehe README.

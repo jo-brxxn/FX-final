@@ -167,7 +167,7 @@ console.log(`  ${fehler ? '✗' : '✓'} ${geprueft} Datums-Aufrufe geprueft, ${
   //       Chart-ACHSEN sind der Hauptfundort.
   console.log('\n── 3) Sichtbarer Text: kein "Sep 2026" irgendwo ──');
   const SEITEN = ['over', 'dash', 'cur', 'mx', 'trends', 'cot', 'sent', 'seas',
-    'data', 'rate', 'news', 'edge', 'carry', 'pairs', 'cal', 'notes', 'regime'];
+    'data', 'rate', 'news',  'carry', 'pairs', 'cal', 'notes', 'regime'];
   const MONAT = '(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*';
   let treffer3 = 0;
   for (const seite of SEITEN) {

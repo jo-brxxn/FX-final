@@ -17615,3 +17615,36 @@ von `SCORE_MODEL_TAG`) — kein `SCORE_MODEL_VERSION`-Bump, die Rechnung ist
 unverändert. `check/score.js` F3 prüft jetzt: Modus fest, kein Setter, kein
 Schalter, kein alter Schlüssel. Edge-Tab-Text sagt statt „classic weighting"
 jetzt „base weights only".
+
+## 2026-09-24 — Edge-Tab und CB Tone entfernt (VERSION-CHECK-560, SCORE_MODEL_VERSION 14)
+
+Nutzer: *„Entfern die Kategorie Edge"* und *„CB Tone entfernen, das ist
+objektiv"* (gemeint: der Score soll objektiv sein, eine eigene Einschätzung
+gehört nicht hinein).
+
+**Edge:** Seite, Rechnung (`edgeIndHistories`, `edgeScoreSeries`,
+`edgeForwardReturns`, …), Info-Text, Tastenkürzel `g e`, Tab-Eintrag und die
+Stapel-Migration entfernt. Gemessen vor dem Entfernen: der Signal-Test legte
+alle Tage vor Kursbeginn (07.08.2023; USD 3.805 von 4.950) auf die erste
+Kerze und zeigte dadurch 87 % Treffer in jedem Score-Bereich; korrekt
+nachgerechnet lag die Korrelation Score↔5-Tage-Rendite bei −0,12 … +0,07.
+`tabStacksOhneEntfernte()` räumt 'edge' (und das ältere 'cmp') beim Laden,
+Import und Cloud-Abgleich aus jedem Stapel — sonst schleppte ein Gerät mit
+altem Stand den Tab per Sync zurück. Regime-Migration hängt jetzt an 'news'.
+Die CSS-Klassen `.edge-*` bleiben: Carry/Rate-Tabs benutzen sie.
+
+**CB Tone:** stand bei allen 24 Assets auf neutral, zählte aber im Divisor.
+Aus `RUB_IND_REMOVE['Interest Rates']` entfernt (bestehende Zeilen),
+nicht mehr eingefügt, Halbgewicht-Regel leer. `check/scorediff.js`: NAS
+2,4→2,3, CHYIELD 3,6→3,7, NAS/USD −3,8→−3,9 — daher
+`SCORE_MODEL_VERSION` 13→14 (Stärke-Note baut sich ~10 Tage neu auf).
+
+**Fehler beim Entfernen, selbst gefunden (vor dem Push):** der erste Schnitt
+nahm `<div id="edgeBody"></div>` als Ende der Seite und liess das
+schliessende `</div>` von `#pgEdge` stehen. Es schloss den Seitenbereich zu
+früh — alle folgenden Seiten hingen ausserhalb von `#pageArea`; der
+Kartensymbol-Beobachter sah sie nicht (`check/symbole.js`: 7 Köpfe ohne
+Symbol), dazu rot: layout, dashboard, cards, hintergrund, regime. Neuer
+Wächter in `check/structure.js`: gleich viele `<div>` wie `</div>` im
+statischen Body (ohne Skripte/Stile/Kommentare); Gegenprobe mit dem kaputten
+Stand: 335 gegen 336 → rot.

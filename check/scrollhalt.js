@@ -124,7 +124,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   }
   // Neuzeichnen OHNE Klick (Datenupdates, Zeitgeber): jede Seiten-Render-
   // Funktion bei halb gescrollter Seite. Vorher sprangen 13 Seiten auf 0.
-  const RF = { dash: 'renderDash', mx: 'renderMatrix', trends: 'renderTrends', cot: 'renderCot', sent: 'renderSentiment', seas: 'renderSeasonality', news: 'renderNewsTab', edge: 'renderEdge', regime: 'renderRegime', data: 'renderDataTab', rate: 'renderRateProb', carry: 'renderCarry', pairs: 'renderPairs', watch: 'renderWatchlistTab', cal: 'renderCalendar', notes: 'rerenderNotesHost' };
+  const RF = { dash: 'renderDash', mx: 'renderMatrix', trends: 'renderTrends', cot: 'renderCot', sent: 'renderSentiment', seas: 'renderSeasonality', news: 'renderNewsTab', regime: 'renderRegime', data: 'renderDataTab', rate: 'renderRateProb', carry: 'renderCarry', pairs: 'renderPairs', watch: 'renderWatchlistTab', cal: 'renderCalendar', notes: 'rerenderNotesHost' };
   const rs = await p.evaluate(async ([RF, gp]) => {
     const sleep = ms => new Promise(r => setTimeout(r, ms)), out = []; let n = 0;
     const ih = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML'), st = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollTop');

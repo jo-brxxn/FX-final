@@ -74,7 +74,6 @@ function indGroupPartners(ind,rub){
 function indIsHalfWeight(ind,rub){
   if(BOND_HALF_PT.has(ind.name))return true;
   if(COT_NET_HALF.has(stripPeriodSuffix(ind.name).base))return true;
-  if(CB_TONE_HALF.has(ind.name))return true;
   if(SEAS_RETAIL_HALF.has(ind.name))return true;
   if(cotWowIsSmall(ind))return true;
   if(typeof SENT_HALF!=='undefined'&&SENT_HALF.has(stripPeriodSuffix(ind.name).base))return true;
@@ -162,11 +161,9 @@ const SENT_HALF=new Set(SENT_IND_NAMES);
 // Hoechstalter der AAII-Lesung in Tagen. Die Umfrage erscheint jede
 // Woche; 21 Tage heisst drei verpasste Veroeffentlichungen.
 const AAII_STALE_DAYS=21;
-// "CB Tone" zaehlt mit halbem Gewicht (wie ein Bond-Halbpunkt) - "Next CB
-// Move" bleibt normal gewichtet (1). Beide sind echte Indikatoren der
-// Interest-Rates-Rubrik statt eines separaten Bolt-ons auf symScore:
-// Ton bull=hawkish/bear=dovish (Standard-Bias-Buttons, manuell).
-const CB_TONE_HALF=new Set(['CB Tone']);
+// "CB Tone" (Halbgewicht) ist seit 2026-09-24 entfernt (Nutzer: "CB Tone
+// entfernen"). Der Name bleibt als leere Menge, weil js/main.js ihn importiert.
+const CB_TONE_HALF=new Set();
 // ── Saisonalitaet und Retail: beide HALBGEWICHT (Nutzer-Vorgabe 2026-09-14)
 // Saisonalitaet: "0,5 Aenderung macht das dann." seasBiasFor liefert nur
 // bull/bear/neu (biasScore +/-1) -> mit w=0,5 genau +/-0,5.
@@ -1552,7 +1549,11 @@ function symScoreCmp(sym){
 // Mit im Bump: _sigCache/_cycCache schluesseln jetzt ebenfalls auf die
 // Array-Identitaet statt auf die Laenge (eine Revision ohne neuen Punkt blieb
 // vorher unbemerkt). Aufgezeichnete Tage davor sind eine andere Rechnung.
-const SCORE_MODEL_VERSION=13;
+// 13 -> 14 (2026-09-24): "CB Tone" entfernt (Nutzer: "CB Tone entfernen").
+// Beitrag war ueberall 0, der Indikator zaehlte aber im Divisor
+// (symTrackedCount/fxRefCount) - check/scorediff.js: NAS 2,4->2,3, CHYIELD
+// 3,6->3,7, NAS/USD -3,8->-3,9, alles andere unveraendert.
+const SCORE_MODEL_VERSION=14;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

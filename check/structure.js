@@ -271,4 +271,15 @@ if(blockDup) befunde.push('identischer 40-Zeilen-Block bei Zeile '+blockDup.zeil
 if(fehlend.size) befunde.push('Handler ohne Funktion: '+[...fehlend].join(', '));
 if(ohneExport.size) befunde.push('Handler nicht in der window-Bruecke (Klick wirft ReferenceError): '+[...ohneExport].join(', '));
 if(befunde.length){console.log('STRUKTURFEHLER:\n  '+befunde.join('\n  '));process.exit(1);}
+// ── Statisches Markup: gleich viele <div> wie </div> (2026-09-24) ────────
+// Anlass: beim Entfernen der Edge-Seite blieb ein schliessendes </div> stehen
+// und schloss den Seitenbereich zu frueh - alle Seiten danach hingen
+// ausserhalb von #pageArea, der Kartensymbol-Beobachter sah sie nicht
+// (check/symbole.js: 7 Koepfe ohne Symbol), dazu Ueberlaeufe in 5 Waechtern.
+// Gezaehlt wird im Body ohne <script>/<style>/Kommentare.
+{
+  const body=h.slice(h.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g,'').replace(/<style[\s\S]*?<\/style>/g,'').replace(/<!--[\s\S]*?-->/g,'');
+  const auf=(body.match(/<div[\s>]/g)||[]).length, zu=(body.match(/<\/div>/g)||[]).length;
+  if(auf!==zu){console.log('STRUKTUR-FEHLER: '+auf+' <div> gegen '+zu+' </div> im statischen Body - ein Container schliesst zu frueh oder gar nicht.');process.exit(1);}
+}
 console.log('Struktur ok: keine doppelten ids, kein wiederholter Block, '+def.size+' Funktionen, alle Handler aufloesbar, '+tokenDef.size+' CSS-Tokens alle definiert');

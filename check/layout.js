@@ -11,7 +11,7 @@ const { chromium } = require(PW);
   // der Test lief also mehrfach auf dem letzten GUELTIGEN Tab statt auf den
   // gemeinten Tabs. Gefunden, nachdem ein echter Page-Overflow auf 'rate'
   // trotz gruenem Lauf durchgerutscht war (siehe Fix unten, Punkt 1).
-  const TABS = ['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','news','edge','carry','pairs','watch','cal','notes'];
+  const TABS = ['dash','cur','cmp','mx','trends','cot','sent','seas','data','rate','news','carry','pairs','watch','cal','notes'];
   const VIEWPORTS = [[1920,1080,'wide'],[1440,900,'desktop'],[1180,820,'small-desktop'],[820,1180,'tablet'],[390,844,'mobile']];
 
   for (const [w,h,vpName] of VIEWPORTS) {
