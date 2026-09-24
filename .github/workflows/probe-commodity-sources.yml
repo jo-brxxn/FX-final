@@ -32,6 +32,26 @@ jobs:
               const c=q.close.filter(x=>typeof x==="number");const t=r.timestamp;
               console.log(process.argv[1],process.argv[2],"Tage",c.length,"erster",new Date(t[0]*1000).toISOString().slice(0,10),"letzter",new Date(t[t.length-1]*1000).toISOString().slice(0,10),"letzter Wert",c[c.length-1],r.meta&&r.meta.longName||r.meta&&r.meta.shortName||"");})()' "$SYM" "$CODE"
           done
+      - name: F) TradingView-Scanner - Performance-Spalten
+        run: |
+          curl -s --max-time 40 -X POST "https://scanner.tradingview.com/global/scan" \
+            --data '{"symbols":{"tickers":["ICEEUR:NCF1!","NZX:WMP1!","SGX:FEF1!","TVC:GOLD","NYMEX:CL1!"],"query":{"types":[]}},"columns":["close","Perf.W","Perf.1M","Perf.3M","Perf.6M","Perf.Y","Volatility.M","Volatility.W"]}' -o tvp.json || true
+          cat tvp.json || true; echo
+      - name: G) GDT - eingebettete Daten suchen
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          curl -sL -A "$UA" --max-time 40 -o e.html "https://www.globaldairytrade.info/en/gdt-events/" || true
+          grep -o -E "(https?:)?/[A-Za-z0-9_./?=&-]*(json|csv|xlsx|api)[A-Za-z0-9_./?=&-]*" e.html | sort -u | head -30 || true
+          grep -o -E "IndexValues[^<]{0,300}" e.html | head -5 || true
+          grep -o -E "data-[a-z-]+=\"[^\"]{0,200}\"" e.html | head -20 || true
+          python3 - <<'PY' || true
+          import re
+          t=open('e.html',encoding='utf8',errors='ignore').read()
+          for m in re.finditer(r'(Event\s*\d+|TE\d{3})',t):
+              print('EVENT', t[max(0,m.start()-80):m.start()+200].replace('\n',' ')[:280]); break
+          i=t.find('IndexValues')
+          print('UMFELD', t[i-400:i+1200].replace('\n',' ') if i>0 else 'nicht gefunden')
+          PY
       - name: C) Global Dairy Trade
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
