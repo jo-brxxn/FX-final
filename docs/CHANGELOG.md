@@ -17498,3 +17498,37 @@ Push"*. Routine gelöscht; `news_ai.json` aus der Frischeprüfung genommen
 (sonst dauerhaft rot), Wiederaufnahme-Zeile als Kommentar in `check/rules.js`.
 Die App zeigt die vorhandene KI-Einordnung (Stand 18.09.) weiter; neue
 Meldungen bekommen keine mehr.
+
+## 2026-09-24 — Animiertes FX-Logo; Cockpit-Intro entfernt (VERSION-CHECK-556)
+
+Nutzer: *„ich will das du dieses Bild eine Animation hinzufügst und das wenn
+man die Webseite öffnet und das ganze lädt das das als Ladesymbol kommt und
+auch wenn Karten keine Daten haben soll das schonmal in der Karte stehen. Und
+sobald es dann geladen ist soll es langsam verschwinden und der Inhalt
+erscheinen."* Rückfragen: Animation **„Kerzen wachsen"**; Intro: *„Mach das
+Intro und den Gleiter und die Einstellungen dazu alles weg"*; Karten: *„Auch
+dauerhaft leer also wenn zB nichts bei den Pinned Notes ist aber mach auch
+mal das wenn eine Karte sehr leer ist und sehr groß ist das dann unten
+mittig das Logo erscheint und je nach Größe der freien Fläche sich anpasst.
+Das kann ja passieren wenn man einen Chart bei einem Indikator ausklappt und
+daneben die Karten die Größe annehmen."*
+
+**Intro entfernt:** `#introOv` (Cockpit, Globus-HUD, Schubregler), Boost-
+Fenster, frühes Skript, Intro-CSS (Explosion, Weißblende, Fallschirm-
+Gleiter), `globe.js`-Intro-Sequenz (Boost-Angebot, Reveal, Skip, Pilotenname,
+HUD), Einstellung „Intro" samt `introAnimEnabled` (Speichern, Import,
+Cloud-Pull, „alle Animationen"), Feld „Glider name" im Cloud-Fenster. Der
+Overview-Globus bleibt; ein Klick auf eine Währung dort geht jetzt direkt per
+`gotoSym`. Alter localStorage-Schlüssel wird beim Start entfernt.
+
+**Logo:** `window.fxLogoSvg()` — eigene Verlaufs-ids je Logo (sonst hätten
+Karten das weiße F des Ladebildschirms geerbt). Ladebildschirm gemessen:
+Logo nach 0,35 s, Ausblenden nach ~2,9 s (Feeds da), danach entfernt. Bogen
+bis zum Start unsichtbar (runde Linienkappe zeichnete sonst einen Punkt).
+Karten: USD „Pinned notes" (leer) → Logo 217×137 unten mittig; „Economic
+Growth" (kürzer als die Nachbarn) → 142×90; nach Aufklappen eines
+Indikator-Charts in „Inflation" bekommen „Labour Market" und „Economic
+Growth" eins. `position:relative` nur auf Karten mit Logo — gemessen: kein
+absolut platziertes Kind richtet sich an etwas außerhalb seiner Karte aus.
+
+**Wächter:** neu `check/logo.js`, Gegenprobe `--gegenprobe`.

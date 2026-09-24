@@ -73,7 +73,7 @@ const ERLAUBT = new Set(('id class style title href src alt type value name plac
   'checked selected readonly multiple rows cols min max step width height viewbox d fill stroke ' +
   'x y x1 y1 x2 y2 cx cy r rx ry points transform opacity clip-path preserveaspectratio ' +
   'stroke-width stroke-dasharray stroke-linecap stroke-linejoin vector-effect text-anchor ' +
-  'font-size font-weight font-family dominant-baseline xmlns lang charset content rel media ' +
+  'font-size font-weight font-family font-style letter-spacing dominant-baseline xmlns lang charset content rel media ' +
   'target for colspan rowspan maxlength autocomplete spellcheck contenteditable draggable ' +
   'tabindex role hidden open loading decoding integrity crossorigin sizes srcset defer async ' +
   'accept capture inputmode pattern required autofocus form list wrap download ping ' +

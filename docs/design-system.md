@@ -1026,3 +1026,19 @@ Grafik, die das alte Muster kopiert, fällt dort auf.
   App „high"); keine geratene Wichtigkeit, keine erfundene Uhrzeit.
 - „Not published yet" gilt nur für die Zukunft jenseits des Feeds.
 Geprüft in `check/kalender.js`.
+
+## FX-Logo: Ladebildschirm und leere Kartenfläche (Nutzer 2026-09-24)
+
+- EINE Zeichnung: `window.fxLogoSvg(art)` (frühes Skript am Body-Anfang),
+  nachgezeichnet nach dem App-Icon — „FX", vier Kerzen, Bogen, „ANALYST PRO".
+  Animation „Kerzen wachsen" (Nutzerwahl): `lg-loop` wiederholt (Laden),
+  `lg-einmal` wächst einmal und bleibt (Karten).
+- **Ladebildschirm** `#ladeOv`: steht, bis alle Feeds in `DATA_LIVE_OK`
+  geantwortet haben (mind. ein Durchlauf 3 s, höchstens 12 s), blendet dann
+  langsam aus (0,9 s). Das Cockpit-Intro ist ENTFERNT.
+- **Karten**: ist zwischen dem untersten Inhalt und dem Kartenfuß ≥ 84 px
+  frei, steht das Logo dort unten mittig (gedämpft, Farben aus den Tokens),
+  Größe nach freier Höhe/Breite — auch in dauerhaft leeren Karten.
+  `lgKarte`/`lgAlleKarten` in `js/main.js`, neu vermessen per
+  ResizeObserver + MutationObserver.
+Geprüft in `check/logo.js`.

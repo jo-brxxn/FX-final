@@ -4685,113 +4685,8 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
 @media(min-width:1600px){
   .dp{max-width:none}
 }
-/* ── INTRO-ANIMATION (Start/Reload) ── Nutzer-Wunsch 2026-08-04: komplett
-   neu als interaktives Globus-Cockpit statt Klick-zum-Wegklicken-Shards
-   (siehe HTML-Kommentar bei #introOv und runIntroBoostSequence()). ── */
-#introOv{position:fixed;inset:0;z-index:100000;overflow:hidden;background:radial-gradient(ellipse 90% 55% at 50% -8%,rgba(255,255,255,.6) 0%,transparent 62%),radial-gradient(ellipse 55% 45% at 14% 22%,rgba(193,198,204,.26) 0%,transparent 72%),radial-gradient(ellipse 60% 50% at 88% 68%,rgba(198,203,209,.24) 0%,transparent 72%),radial-gradient(ellipse 45% 42% at 58% 96%,rgba(180,185,191,.22) 0%,transparent 70%),linear-gradient(97deg,transparent 13.6%,rgba(96,103,111,.2) 14.1%,rgba(96,103,111,.05) 14.7%,transparent 15.5%),linear-gradient(97deg,transparent 14.7%,rgba(108,114,121,.1) 15.1%,transparent 15.7%),linear-gradient(94deg,transparent 51.4%,rgba(100,107,115,.17) 51.8%,transparent 52.6%),linear-gradient(41deg,transparent 27.5%,rgba(108,114,121,.16) 27.9%,rgba(108,114,121,.04) 28.5%,transparent 29.3%),linear-gradient(43deg,transparent 65.6%,rgba(104,110,117,.12) 66%,transparent 66.8%),linear-gradient(152deg,transparent 36.6%,rgba(94,100,107,.14) 36.9%,transparent 37.6%),linear-gradient(148deg,transparent 79.5%,rgba(98,104,111,.11) 79.8%,transparent 80.5%),linear-gradient(64deg,transparent 46.6%,rgba(106,112,119,.1) 46.9%,transparent 47.6%),#0c1424}
-.intro-grid{position:absolute;inset:0;z-index:2;background-image:linear-gradient(rgba(79,155,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(79,155,255,.05) 1px,transparent 1px);background-size:46px 46px;pointer-events:none}
-/* Nutzer-Korrektur 2026-08-04 (Foto): das Cockpit liess oben/unten zu viel
-   Leerraum - soll den ganzen verfuegbaren Bildschirm einnehmen. justify-
-   content:space-evenly statt center verteilt Titel/Reihe/Signatur ueber die
-   volle Hoehe, alle Groessen (Titel/Globus/HUD/Regler) deutlich angehoben. */
-/* Titel jetzt GANZ OBEN fest positioniert (Nutzer-Korrektur 2026-08-04,
-   dritte Runde - vorheriger Fund war eine Kollision mit dem Sync-Button,
-   diesmal ueberlappten TRACKING/SIGNAL-HUD-Badges mit Titel/Signatur, siehe
-   Foto-Bugreport). Ursache war strukturell: .intro-cockpit-row hatte zwar
-   flex:1 1 auto, aber der Globus selbst ist per vh/vw-Formel (nicht per
-   Flex-Anteil) gross - auf kurzen Viewports konnte er dadurch trotz
-   schrumpfender Row-Box optisch ueber die Row hinaus in den Titel-/Signatur-
-   Bereich hineinragen. Fix zweiteilig: (1) Titel raus aus dem Fluss,
-   position:absolute fest oben (reserviert per padding-top einen GARANTIERTEN
-   eigenen Bereich, den die Row nie beanspruchen kann), (2) Globus-Obergrenze
-   von 72vh auf 58vh gesenkt (haelt auf kurzen Screens verlaesslich Abstand zu
-   Titel oben UND Signatur unten, statt fast die volle Hoehe zu beanspruchen). */
-.intro-cockpit{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(10px,2vh,26px);padding:2vh 3vw;padding-top:clamp(96px,15vh,180px)}
-.intro-title{position:absolute;top:max(2vh,26px);left:3vw;right:3vw;z-index:4;font-weight:800;font-size:clamp(28px,6.4vw,88px);letter-spacing:clamp(1px,.6vw,6px);white-space:normal;padding:0 4vw;color:#14171a;text-align:center;line-height:1.02;opacity:0;animation:introTitleIn 1.05s cubic-bezier(.2,.75,.25,1) .2s both}
-.intro-cockpit-row{display:flex;align-items:center;justify-content:center;gap:clamp(14px,4vw,64px);width:100%;flex:1 1 auto;min-height:0;opacity:0;animation:introSubIn .9s ease .5s both}
-.intro-hud-col{display:flex;flex-direction:column;gap:clamp(14px,3vh,34px);min-width:110px}
-.intro-hud-stat{text-align:right}
-.intro-hud-lbl{font-size:var(--fs-xs);letter-spacing:1.4px;text-transform:uppercase;color:#7c8794;font-weight:700;font-family:var(--ff-num)}
-.intro-hud-val{font-size:clamp(22px,3.4vw,42px);font-weight:800;color:#14171a;font-family:var(--ff-num);line-height:1.15}
-.intro-hud-unit{font-size:.5em;font-weight:700;color:#7c8794;margin-left:2px}
-.intro-globe-host{width:min(58vh,50vw,760px);height:min(58vh,50vw,760px)}
-/* Boost-Button zentriert unter dem Globus (Nutzer-Wunsch 2026-08-04, neue
-   Runde): eigene Flex-Spalte um Globus+Button, damit der Button IMMER exakt
-   mittig unter dem Globus sitzt, unabhaengig von den unterschiedlich breiten
-   HUD-/Throttle-Spalten links/rechts davon in der Reihe. */
-.intro-globe-col{display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,20px);flex:0 0 auto}
-.intro-boost-btn{font-size:var(--fs-base);padding:9px 22px;border-radius:var(--r)}
-.intro-throttle-col{display:flex;align-items:center}
-.intro-throttle-col .gt-track{width:38px;height:clamp(180px,34vh,420px)}
-.intro-throttle-col .gt-label{font-size:var(--fs-sm)}
-.intro-throttle-col .gt-pct{font-size:var(--fs-md)}
-.intro-created{font-size:clamp(13px,1.9vw,20px);font-weight:600;letter-spacing:clamp(1.5px,.6vw,4px);color:#5a6472;text-transform:uppercase;text-align:center;opacity:0;animation:introSubIn .95s ease .9s both}
-@media(max-width:640px){
-  .intro-title{font-size:clamp(22px,8vw,36px);white-space:normal;line-height:1.08;top:max(1.6vh,20px)}
-  .intro-cockpit{padding-top:clamp(76px,13vh,120px)}
-  .intro-cockpit-row{gap:10px}
-  .intro-hud-col{min-width:74px;gap:16px}
-  .intro-hud-lbl{font-size:var(--fs-2xs)}
-  .intro-hud-val{font-size:16px}
-  .intro-globe-host{width:56vw;height:56vw}
-  .intro-throttle-col .gt-track{width:26px;height:190px}
-}
-#introLoginBtn{position:absolute;top:clamp(14px,2.4vw,26px);right:clamp(14px,2.4vw,26px);z-index:6;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:var(--fs-base);font-weight:600;letter-spacing:.4px;padding:8px 16px;border-radius:10px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,transform .14s ease,border-color .2s ease}@media (hover:hover){#introLoginBtn:hover{background:rgba(255,255,255,.17);border-color:rgba(255,255,255,.34)}}
-/* Skip-Button (Nutzer-Wunsch 2026-08-04): unauffaellig oben links, graue
-   Schrift auf duennem grauen Rahmen - bewusst zurueckhaltend gestaltet
-   (kein Farbakzent, kein Blur/Backdrop wie #introLoginBtn), damit er nicht
-   mit dem Cockpit-Chrome konkurriert. */
-#introSkipBtn{position:absolute;top:clamp(14px,2.4vw,26px);left:clamp(14px,2.4vw,26px);z-index:6;background:transparent;border:1px solid rgba(20,23,26,.22);color:#7c8794;font-size:var(--fs-sm);font-weight:600;letter-spacing:.5px;padding:6px 14px;border-radius:8px;cursor:pointer;opacity:0;animation:introSubIn .8s ease 1s both;transition:background .2s ease,border-color .2s ease,color .2s ease}
-@media (hover:hover){#introSkipBtn:hover{background:rgba(20,23,26,.06);border-color:rgba(20,23,26,.34);color:#4b535c}}
-#introSkipBtn:active{transform:scale(.95)}
-#introLoginBtn:active{transform:scale(.95)}
-@keyframes introTitleIn{0%{opacity:0;transform:scale(.62)}100%{opacity:1;transform:scale(1)}}
-@keyframes introSubIn{0%{opacity:0;transform:translateY(16px) scale(.96)}100%{opacity:.9;transform:translateY(0) scale(1)}}
-/* ── INTRO-BOOST-SEQUENZ (Nutzer-Korrektur 2026-08-04, zweite Runde) ──
-   Phase 1: KEIN Zoom mehr aufs Cockpit/Flugzeug - der Globus dreht sich
-   bereits mit maximaler Geschwindigkeit (Regler stand auf 100%, Vorbedingung
-   fuer das Boost-Fenster), die Flamme waechst zusaetzlich kurz auf das
-   30-fache (.mega-flame) als sichtbarer Spannungsaufbau vor der Explosion. */
-.globe-vehicle.mega-flame .globe-jet-flame{animation:introMegaFlame 900ms cubic-bezier(.3,0,.6,1) forwards,jetFlameFlicker .12s steps(2) infinite}
-@keyframes introMegaFlame{0%{transform:scaleY(calc(.32 + var(--boost-i,0)*1.35)) scaleX(calc(.6 + var(--boost-i,0)*1.8))}100%{transform:scaleY(10) scaleX(10)}}
-body.intro-shake{animation:introShake .48s cubic-bezier(.36,.07,.19,.97)}
-@keyframes introShake{10%,90%{transform:translate3d(-1px,0,0)}20%,80%{transform:translate3d(2px,0,0)}30%,50%,70%{transform:translate3d(-4px,0,0)}40%,60%{transform:translate3d(4px,0,0)}}
-/* Phase 2: das Flugzeug zerspringt in Einzelteile - mehrere Truemmerstuecke
-   fliegen radial weg (introDebrisFly, wiederverwendet das rotate+translateX-
-   Burst-Muster: rotate(--a) dreht das lokale Koordinatensystem auf den
-   Burst-Winkel, translateX(--d) bewegt dann entlang dieser Achse - so ohne
-   CSS-Trigonometriefunktionen (cos/sin), die nicht ueberall unterstuetzt
-   sind). EINE Tragflaeche (.intro-wing) fliegt bewusst NICHT weg, sondern
-   waechst direkt auf den Betrachter zu, bis sie den ganzen Bildschirm
-   einnimmt UND dabei weiss wird - erzeugt dadurch selbst die Weissblende,
-   kein separater Flash-Layer mehr noetig. */
-.intro-debris{position:fixed;left:0;top:0;z-index:100002;background:linear-gradient(135deg,#1c2733,#04101c);border:1.4px solid #9fd8f2;box-shadow:0 0 6px rgba(0,0,0,.35);transform:translate(-50%,-50%);animation:introDebrisFly 950ms cubic-bezier(.18,.75,.3,1) both}
-@keyframes introDebrisFly{0%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(0) rotate(0deg);opacity:1}100%{transform:translate(-50%,-50%) rotate(var(--a)) translateX(var(--d)) rotate(var(--rot));opacity:0}}
-.intro-wing{position:fixed;left:0;top:0;z-index:100002;width:64px;height:20px;border-radius:3px 50% 3px 50%;box-shadow:0 0 10px rgba(0,0,0,.3);background:#8fd3ee;transform:translate(-50%,-50%) rotate(-16deg) scale(1);animation:introWingGrow 1050ms cubic-bezier(.4,0,.7,1) forwards}
-@keyframes introWingGrow{0%{transform:translate(-50%,-50%) rotate(-16deg) scale(1);background:#8fd3ee}55%{background:#eaf6ff}100%{transform:translate(-50%,-50%) rotate(6deg) scale(90);background:#fff}}
-/* Phase 3+4: die Weissblende (von der wachsenden Tragflaeche uebernommen)
-   schiebt sich nach oben aus dem Bild - das laengst fertig gerenderte
-   Dashboard darunter "steigt" dadurch scheinbar von unten ins Bild, ohne
-   echte Dashboard-DOM-Elemente eigens animieren zu muessen. */
-.intro-whiteout{position:fixed;inset:0;z-index:100001;background:#fff;transform:translateY(0);transition:transform 1150ms cubic-bezier(.65,0,.35,1)}
-.intro-whiteout.wiping{transform:translateY(-100%)}
-/* Phase 3-5: Fallschirm-Agent - schwebt von oben herein, haengt kurz, segelt
-   dann links aus dem Bild. */
-/* Gleiter nochmal deutlich vergroessert (Nutzer-Wunsch 2026-08-04, naechste
-   Runde: "der Gleiter ist nicht groesser, nur die Leinen - mach den Gleiter
-   doppelt so gross") - der viewBox ist jetzt quadratisch (300x300 statt
-   220x260, siehe parachuteFigureHtml()), Container-Breite nochmal erhoeht
-   (84vw/640px statt 76vw/560px). Start-/Haenge-/Endpositionen (top/left)
-   entsprechend angepasst, damit der jetzt nochmal groessere, jetzt auch
-   quadratische Schirm beim Start weiterhin komplett ausserhalb des
-   sichtbaren Bereichs beginnt und beim Rausgleiten links wirklich
-   vollstaendig aus dem Bild verschwindet. */
-.intro-parachute{position:fixed;top:-130vh;left:50%;width:min(84vw,640px);z-index:100003;transform:translate(-50%,0) rotate(-4deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.25))}
-.intro-parachute.descend{animation:introDescend 1750ms cubic-bezier(.24,.72,.34,1) forwards}
-@keyframes introDescend{0%{top:-130vh;transform:translate(-50%,0) rotate(-4deg)}55%{transform:translate(-50%,0) rotate(3deg)}100%{top:16vh;transform:translate(-50%,0) rotate(-2deg)}}
-.intro-parachute.exit-left{animation:introExitLeft 1350ms cubic-bezier(.4,0,.7,.3) forwards}
-@keyframes introExitLeft{0%{left:50%;top:16vh;transform:translate(-50%,0) rotate(-2deg)}100%{left:-120vw;top:34vh;transform:translate(-50%,0) rotate(-16deg)}}
-@media(prefers-reduced-motion:reduce){.globe-vehicle.mega-flame .globe-jet-flame,body.intro-shake,.intro-debris,.intro-wing,.intro-whiteout,.intro-parachute.descend,.intro-parachute.exit-left{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* (Intro-Animation samt Fallschirm-Gleiter am 2026-09-24 entfernt - Nutzer:
+   "Mach das Intro und den Gleiter und die Einstellungen dazu alles weg".) */
 /* ── DETAIL CROSS-FADE (Symbolwechsel & Sub-Tab-Wechsel) ── */
 /* Einblendungen beim Seiten-/Asset-Wechsel: alle 1 s wie der Wisch (Nutzer
    2026-09-23: "mach alle uebergangsanimationen 1 Sekunde lang"; per
@@ -5595,89 +5490,84 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .ai-gezeichnet .ai-flag{filter:none}
 .ai-gezeichnet .ai-sheen{opacity:.5}
 /* ══ ENDE BILD-DESIGN ══ */
+/* ── FX-LOGO: Ladebildschirm + leere Karten (Nutzer 2026-09-24) ─────────
+   "ich will das du dieses Bild eine Animation hinzufuegst ... wenn man die
+   Webseite oeffnet und das ganze laedt das das als ladesymbol kommt und auch
+   wenn Karten keine Daten haben ... sobald es dann geladen ist soll es
+   langsam verschwinden". Per Rueckfrage: "Kerzen wachsen". EINE Zeichnung
+   (fxLogoSvg im fruehen Skript am Body-Anfang) fuer beide Stellen. Farben
+   ueber --lg-*: auf dem dunklen Ladebildschirm wie im Icon, in den hellen
+   Karten dunkles F und graue statt weisser Kerze (weiss waere unsichtbar). */
+.fxlogo{display:block;width:100%;height:auto;overflow:visible}
+.fxlogo .lg-k{transform-box:fill-box;transform-origin:50% 100%}
+.fxlogo .lg-b{stroke-dasharray:1;stroke-dashoffset:1}
+/* Ladebildschirm: waechst, haelt, setzt zurueck - solange geladen wird. */
+.fxlogo.lg-loop .lg-k{animation:lgKerze 3s cubic-bezier(.3,.7,.3,1) infinite both}
+.fxlogo.lg-loop .lg-k2{animation-delay:.22s}.fxlogo.lg-loop .lg-k3{animation-delay:.44s}.fxlogo.lg-loop .lg-k4{animation-delay:.66s}
+.fxlogo.lg-loop .lg-b{animation:lgBogen 3s cubic-bezier(.45,0,.2,1) infinite both}
+@keyframes lgKerze{0%{transform:scaleY(0);opacity:0}5%{opacity:1}30%{transform:scaleY(1)}86%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
+/* Deckkraft 0 bis zum Start: die runde Linienkappe zeichnet sonst bei
+   Laenge 0 einen Punkt ans Bogenende. */
+@keyframes lgBogen{0%,44%{stroke-dashoffset:1;opacity:0}45%{opacity:1}66%,86%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+/* Karten: waechst einmal und bleibt stehen. */
+.fxlogo.lg-einmal .lg-k{animation:lgKerzeEin .6s cubic-bezier(.3,.7,.3,1) both}
+.fxlogo.lg-einmal .lg-k2{animation-delay:.12s}.fxlogo.lg-einmal .lg-k3{animation-delay:.24s}.fxlogo.lg-einmal .lg-k4{animation-delay:.36s}
+.fxlogo.lg-einmal .lg-b{animation:lgBogenEin .7s .5s cubic-bezier(.45,0,.2,1) both}
+@keyframes lgKerzeEin{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
+@keyframes lgBogenEin{0%{stroke-dashoffset:1;opacity:0}1%{opacity:1}100%{stroke-dashoffset:0;opacity:1}}
+body.no-ui-anim .fxlogo.lg-einmal .lg-k,body.no-ui-anim .fxlogo.lg-einmal .lg-b{animation:none;transform:none;stroke-dashoffset:0}
+@media(prefers-reduced-motion:reduce){.fxlogo .lg-k,.fxlogo .lg-b{animation:none!important;transform:none;stroke-dashoffset:0}}
+/* Logo in freier Kartenflaeche (lgKarte in js/main.js): gedaempft, reine
+   Dekoration, faengt keine Klicks. Farben aus den Tokens der jeweiligen
+   Vorlage - weiss waere auf hellen Karten unsichtbar. */
+.lg-host{position:relative}
+.lg-frei{position:absolute;left:50%;transform:translateX(-50%);pointer-events:none;opacity:.5;
+  --lg-f1:var(--t1);--lg-f2:var(--t0);--lg-x1:#7FC0FF;--lg-x2:var(--accent);--lg-kb:var(--accent);--lg-kw:var(--t3);--lg-t:var(--t2);--lg-p:var(--accent)}
+#ladeOv{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 70% 60% at 50% 45%,#10284f 0%,#081326 60%,#050b17 100%);
+  transition:opacity .9s ease,visibility .9s;
+  --lg-f1:#FFFFFF;--lg-f2:#B9C7DC;--lg-x1:#8FD0FF;--lg-x2:#2F6FF0;--lg-kb:#3E8BFF;--lg-kw:#EEF3FA;--lg-t:#E6ECF5;--lg-p:#4AA3FF}
+#ladeOv.weg{opacity:0;visibility:hidden}
+#ladeOv .lade-logo{width:min(62vw,380px);filter:drop-shadow(0 0 26px rgba(47,111,240,.45))}
 </style>
 </head>
 <body>
-
-
-<!-- INTRO-ANIMATION -->
-<!-- Nutzer-Wunsch 2026-08-04 (Foto+Beschreibung): der alte Klick-zum-
-     Wegklicken-Shard-Effekt ist komplett ersetzt durch ein interaktives
-     Cockpit - Titel oben, grosser Globus in der Mitte (Speedometer/Active
-     Signals/Fuel links, grosser Thrust-Regler rechts), "created by..."
-     darunter. Regler auf Maximum -> Bestaetigungs-Fenster -> Boost aktiviert
-     -> Globus rast auf den Betrachter zu und "explodiert" -> Weissblende ->
-     ein an einem Fallschirm haengender Agent schwebt herein und segelt nach
-     links raus, waehrend das Dashboard darunter enthuellt wird. Erscheint
-     bei JEDEM Laden/Reload (Nutzer-Bestaetigung, kein "einmalig"-Flag). -->
-<div id="introOv">
-  <button id="introSkipBtn" onclick="skipIntro()">Skip</button>
-  <button id="introLoginBtn" onclick="introLogin()">Set up sync</button>
-  <div class="intro-grid"></div>
-  <div class="intro-cockpit" id="introCockpit">
-    <div class="intro-title">FX ANALYST&nbsp;PRO</div>
-    <div class="intro-cockpit-row">
-      <div class="intro-hud-col">
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Speedometer</div><div class="intro-hud-val" id="introHudSpeed">0<span class="intro-hud-unit">kn</span></div></div>
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Active signals</div><div class="intro-hud-val" id="introHudSignals">–</div></div>
-        <div class="intro-hud-stat"><div class="intro-hud-lbl">Fuel</div><div class="intro-hud-val" id="hudFuel" style="color:var(--green)">100%</div></div>
-      </div>
-      <div class="intro-globe-col">
-        <div class="globe-host intro-globe-host"></div>
-        <button class="btn scan-btn boost-btn intro-boost-btn" id="introBoostBtn" onclick="triggerIntroBoost()">🔥 BOOST</button>
-      </div>
-      <div class="intro-throttle-col">
-        <div class="globe-throttle" title="Drag to control thrust">
-          <div class="gt-label">THRUST</div>
-          <div class="gt-track" id="globeThrottleTrack" onpointerdown="throttlePressStart(event)">
-            <div class="gt-notches"><span></span><span></span><span></span><span></span><span></span></div>
-            <div class="gt-fill" id="globeThrottleFill"></div>
-            <div class="gt-handle" id="globeThrottleHandle"></div>
-          </div>
-          <div class="gt-pct" id="globeThrottlePct">0%</div>
-        </div>
-      </div>
-    </div>
-    <div class="intro-created">created by Jonathan Brinkmann</div>
-  </div>
-</div>
-<!-- Boost-Bestaetigung, erscheint sobald der Thrust-Regler auf Maximum steht
-     (setGlobeThrust() -> introMaybeOfferBoost()) -->
-<div class="ov" id="mIntroBoost" style="display:none;z-index:100004" onclick="if(event.target===this)closeM('mIntroBoost')">
-  <div class="modal" style="max-width:260px;text-align:center">
-    <h3>🔥 Ready for Launch</h3>
-    <p style="font-size:var(--fs-base);color:var(--t2);margin:6px 0 14px">Thrust at maximum. Enable boost?</p>
-    <button class="btn scan-btn boost-btn" style="width:100%;justify-content:center" onclick="confirmIntroBoost()">🔥 ENABLE BOOST</button>
-    <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="closeM('mIntroBoost')">Not yet</button>
-  </div>
-</div>
+<!-- LADEBILDSCHIRM (Nutzer 2026-09-24): animiertes FX-Logo, bis die Daten da
+     sind, dann langsam ausblenden (js/main.js: ladeOvAusblenden). Ersetzt
+     das entfernte Cockpit-Intro. -->
+<div id="ladeOv" role="status" aria-label="Loading"></div>
 <script>
-// Nutzer-Wunsch 2026-08-04 ("Animation genau wie den Code aktivieren/
-// deaktivieren koennen"): ist sie deaktiviert, verschwindet das komplette
-// Cockpit-Overlay SOFORT, bevor es je sichtbar wird - direkter localStorage-
-// Read, weil dieses <script> lange vor der spaeteren introAnimEnabled-
-// Variablendeklaration im Hauptskript (ganz unten im Body) laeuft.
+// Die EINE Zeichnung des Logos (Ladebildschirm + leere Karten). Fruehes
+// Skript, damit der Ladebildschirm sofort steht - vor dem grossen Modul.
+window.fxLogoSvg=function(art){
+  // Eigene Verlaufs-ids je Logo: mehrere Logos auf der Seite (Karten +
+  // Ladebildschirm) wuerden sonst alle den ERSTEN Verlauf mit dessen Farben
+  // benutzen - das weisse F des Ladebildschirms in einer hellen Karte.
+  var v='var(--lg-',n=(window.__lgN=(window.__lgN||0)+1),F='lgF'+n,X='lgX'+n,B='lgB'+n;
+  return '<svg class="fxlogo '+(art||'')+'" viewBox="0 0 300 190" aria-hidden="true" focusable="false">'
+   +'<defs><linearGradient id="'+F+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+v+'f1,#fff)"/><stop offset="1" stop-color="'+v+'f2,#b9c7dc)"/></linearGradient>'
+   +'<linearGradient id="'+X+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+v+'x1,#8fd0ff)"/><stop offset="1" stop-color="'+v+'x2,#2f6ff0)"/></linearGradient>'
+   +'<linearGradient id="'+B+'" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="'+v+'x2,#2f6ff0)" stop-opacity="0"/><stop offset=".35" stop-color="'+v+'x2,#2f6ff0)"/><stop offset="1" stop-color="'+v+'x1,#8fd0ff)"/></linearGradient></defs>'
+   +'<text x="22" y="120" font-family="Inter,Segoe UI,Arial,sans-serif" font-weight="900" font-style="italic" font-size="118" letter-spacing="-6">'
+   +'<tspan fill="url(#'+F+')">F</tspan><tspan fill="url(#'+X+')">X</tspan></text>'
+   +[[196,78,34,18],[216,62,38,14],[236,50,42,12],[256,34,46,10]].map(function(k,i){
+      var x=k[0],y=k[1],h=k[2],d=k[3],f=i===1?v+'kw,#eef3fa)':v+'kb,#3e8bff)';
+      return '<g class="lg-k lg-k'+(i+1)+'"><rect x="'+(x+4.25)+'" y="'+(y-d)+'" width="1.5" height="'+(h+2*d)+'" fill="'+f+'"/>'
+        +'<rect x="'+x+'" y="'+y+'" width="10" height="'+h+'" rx="1.5" fill="'+f+'"/></g>';}).join('')
+   +'<path class="lg-b" pathLength="1" d="M112 146 C170 146 238 128 284 76" fill="none" stroke="url(#'+B+')" stroke-width="4.5" stroke-linecap="round"/>'
+   +'<text x="150" y="182" text-anchor="middle" font-family="Inter,Segoe UI,Arial,sans-serif" font-weight="600" font-size="27" letter-spacing="3">'
+   +'<tspan fill="'+v+'t,#e6ecf5)">ANALYST </tspan><tspan fill="'+v+'p,#4aa3ff)">PRO</tspan></text></svg>';
+};
 (function(){
-  if(localStorage.getItem('fxpro_intro_anim_enabled')==='0'){
-    var ov=document.getElementById('introOv');if(ov)ov.remove();
-    var bm=document.getElementById('mIntroBoost');if(bm)bm.remove();
-    return;
-  }
-  // Login-Button oben rechts: zeigt den eingetragenen Benutzernamen, wenn der
-  // Cloud-Sync bereits eingerichtet ist, sonst "Set up sync". Kein Klick-zum-
-  // Wegklicken mehr auf dem Rest des Overlays - Dismiss laeuft ausschliesslich
-  // ueber die Boost-Sequenz (introBoostSequence()).
-  var loginBtn=document.getElementById('introLoginBtn');
-  if(loginBtn){
-    var cc=null;try{cc=JSON.parse(localStorage.getItem('fxpro_cloud_cfg'));}catch(e){}
-    if(cc&&(cc.username||cc.syncId)){loginBtn.textContent='👤 '+(cc.username||cc.syncId);}
-    else{loginBtn.textContent='Set up sync';}
-  }
+  var ov=document.getElementById('ladeOv');if(!ov)return;
+  // Pruefskripte fahren ohne Ladebildschirm (er faengt sonst Klicks ab) -
+  // ausser dem eigenen Waechter, der ihn mit __ladeTest anschaltet.
+  if(navigator.webdriver&&!window.__ladeTest){ov.remove();return;}
+  ov.innerHTML='<div class="lade-logo">'+window.fxLogoSvg('lg-loop')+'</div>';
+  window.__ladeStart=Date.now();
 })();
-function introLogin(){
-  if(typeof openCloudM==='function')openCloudM(true);
-}
 </script>
+
 
 <!-- LOCK SCREEN -->
 <div class="lock-ov" id="lockScreen">
@@ -5715,11 +5605,11 @@ function introLogin(){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-555 - Neues App-Icon (Nutzerbild, auf die Kachel zugeschnitten, Android-Fassung mit Innenabstand)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-556 - Animiertes FX-Logo als Ladebildschirm und in leerer Kartenflaeche; Cockpit-Intro, Gleiter und Einstellungen entfernt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-555</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-556</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6323,10 +6213,6 @@ function introLogin(){
          wie der PIN-Toggle, exakt dasselbe An/Aus-Muster. -->
     <div class="set-sec">Animation</div>
     <div class="set-row">
-      <span class="set-row-txt">Intro<span class="set-row-sub">globe + boost launch on load</span></span>
-      <label class="tgl"><input type="checkbox" id="introAnimToggleBtn" onchange="toggleIntroAnimEnabled()"><span class="tgl-track"></span></label>
-    </div>
-    <div class="set-row">
       <span class="set-row-txt">Asset symbols<span class="set-row-sub">waving flags, dripping oil, shifting metal sheen</span></span>
       <label class="tgl"><input type="checkbox" id="assetAnimToggleBtn" onchange="toggleAssetAnimEnabled()"><span class="tgl-track"></span></label>
     </div>
@@ -6363,10 +6249,8 @@ function introLogin(){
     </div>
     <h3 style="font-size:var(--fs-base);margin:14px 0 10px">☁ Cloud Sync</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
-    <label class="dm-lbl">Username (shown in the top right of the start screen)</label>
+    <label class="dm-lbl">Username (shown on your profile)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
-    <label class="dm-lbl">Glider name (shown on the parachute on the loading screen instead of "Trader")</label>
-    <input class="m-inp" id="cloudPilotName" placeholder="e.g. Jonathan" maxlength="18">
     <label class="dm-lbl">Project URL</label>
     <input class="m-inp" id="cloudUrl" placeholder="https://xxxxx.supabase.co">
     <label class="dm-lbl">Anon / Public API Key</label>

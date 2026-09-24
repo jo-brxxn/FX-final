@@ -1,10 +1,9 @@
-// ══ GLOBUS + INTRO-BOOST-SEQUENZ ════════════════════════════════════════
+// ══ GLOBUS ═══════════════════════════════════════════════════════════════
 // Zweite ausgekoppelte Kategorie (Nutzer-Wunsch 2026-08-25: "generell das
-// Projekt in Kategorien machen"). Rotierender FX-Weltglobus (Dashboard-
-// Widget) + die daran haengende Intro-Boost-Sequenz (Ladebildschirm-
-// Animation) - beide zusammen ausgekoppelt, weil setGlobeThrust() direkt in
-// introBoostOfferReset()/introMaybeOfferBoost() verzahnt ist. Bidirektional
-// mit js/main.js verbunden (main.js ruft globeSkeleton()/updIntroHud()/etc.
+// Projekt in Kategorien machen"). Rotierender FX-Weltglobus (Overview-Seite).
+// Die frueher angehaengte Intro-Boost-Sequenz samt Fallschirm-Gleiter ist
+// seit 2026-09-24 entfernt (Nutzer). Bidirektional
+// mit js/main.js verbunden (main.js ruft globeSkeleton()/etc.
 // fuer die Dashboard-Widget-Karte auf, dieses Modul braucht umgekehrt
 // syms/curPage/symScoreCmp/escH/icn/... aus main.js) - deshalb der
 // zirkulaere Import unten. ES-Module erlauben das (Funktionsdeklarationen
@@ -214,18 +213,10 @@ function throttleUpdateFromEvent(ev,track){
 }
 function setGlobeThrust(frac){
   _throttleFrac=frac;
-  introBoostOfferReset(frac);
   const fill=document.getElementById('globeThrottleFill'),handle=document.getElementById('globeThrottleHandle'),pct=document.getElementById('globeThrottlePct');
   if(fill)fill.style.height=(frac*100).toFixed(1)+'%';
   if(handle)handle.style.bottom=(frac*100).toFixed(1)+'%';
   if(pct)pct.textContent=Math.round(frac*100)+'%';
-  // Speedometer (Intro-Screen-HUD, Nutzer-Wunsch 2026-08-04): rein
-  // dekorative "Knoten"-Anzeige direkt aus der Reglerposition abgeleitet -
-  // wie schon "Fuel" ein Spielmechanik-Wert, kein Marktdatum (CLAUDE.md-
-  // Grundsatz "nie erfundene Werte" gilt fuer Markt-/Indikatordaten, nicht
-  // fuer diese ohnehin fiktive Cockpit-Deko).
-  const spd=document.getElementById('introHudSpeed');
-  if(spd)spd.innerHTML=Math.round(frac*480)+'<span class="intro-hud-unit">kn</span>';
   const engaged=frac>0.02;
   document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.toggle('boosting',engaged));
   document.querySelectorAll('.globe-host').forEach(h=>h.classList.toggle('boosting',engaged));
@@ -235,263 +226,9 @@ function setGlobeThrust(frac){
     _globeMode='decel';
     document.querySelectorAll('.globe-host').forEach(h=>{h.style.removeProperty('--boost-i');h.style.removeProperty('--boost-blur');});
   }
-  // Regler auf Maximum -> Boost-Bestaetigung anbieten (Nutzer-Wunsch
-  // 2026-08-04). Nur auf dem Intro-Screen relevant (dort lebt der Globus
-  // jetzt ausschliesslich) - introMaybeOfferBoost() haelt selbst fest, ob
-  // das Fenster schon offen war/die Sequenz schon lief, damit ein Drag, der
-  // kurz ueber 97% oszilliert, es nicht mehrfach oeffnet.
-  if(frac>=0.97)introMaybeOfferBoost();
 }
-// ══ INTRO-BOOST-SEQUENZ (Nutzer-Wunsch 2026-08-04, Foto+Beschreibung) ══════
-// Regler auf Maximum -> Bestaetigungsfenster -> Boost aktiviert -> Globus
-// rast auf den Betrachter zu und "explodiert" -> Weissblende, aus der ein an
-// einem Fallschirm haengender Agent hervorschwebt, waehrend darunter das
-// Dashboard sichtbar wird -> Agent segelt nach links aus dem Bild -> Intro-
-// Overlay komplett entfernt. Laeuft ausschliesslich auf #introOv (kein
-// Dashboard-Globus mehr, seit DASH_V18 - siehe migrateDash()).
-let _introBoostOffered=false,_introBoostRunning=false;
-function introMaybeOfferBoost(){
-  if(_introBoostOffered||_introBoostRunning)return;
-  if(!document.getElementById('introOv'))return; // Intro schon weg (z.B. Sequenz lief bereits durch)
-  _introBoostOffered=true;
-  openM('mIntroBoost');
-}
-// Regler unter 90% zurueckgezogen, ohne dass die Sequenz lief -> Angebot
-// darf beim naechsten Erreichen von 100% erneut erscheinen.
-function introBoostOfferReset(frac){if(frac<0.9)_introBoostOffered=false;}
-function confirmIntroBoost(){
-  closeM('mIntroBoost');
-  if(_introBoostRunning)return;
-  _introBoostRunning=true;
-  runIntroBoostSequence();
-}
-// Boost-Button zentriert unter dem Globus (Nutzer-Wunsch 2026-08-04, neue
-// Runde "machen wir nochmal anders"): startet die komplette Animation SOFORT
-// per eigenem Klick, ohne erst den Regler auf Maximum ziehen zu muessen -
-// setzt den Regler dabei einfach mit auf 100% (setGlobeThrust(1), damit Fuel-
-// /Speedometer-HUD und die Flammen-"boosting"-Optik konsistent bleiben) und
-// startet direkt danach dieselbe Sequenz wie bisher der Bestaetigungs-Dialog
-// (confirmIntroBoost() - der Klick auf den Button IST die Bestaetigung, kein
-// zweites Fenster noetig). Der Regler-Weg (Maximum -> Modal) bleibt daneben
-// weiter nutzbar, falls jemand ihn lieber zieht.
-function triggerIntroBoost(){
-  if(_introBoostRunning)return;
-  setGlobeThrust(1);
-  confirmIntroBoost();
-}
-// Zeit-Konstanten der Sequenz (ms) - eine Stelle, an der sich Tempo/Timing
-// der gesamten Choreografie einstellen laesst, statt verstreuter Magic
-// Numbers in jedem setTimeout().
-const INTRO_SEQ={flameUp:900,shatter:1050,whiteHold:150,wipe:1150,descend:1750,exitDelay:250,exit:1350};
-// Gemeinsame Reveal-Choreografie (Weissblende weg -> Fallschirm-Agent runter
-// -> links raus -> Cleanup) - genutzt sowohl von der vollen Boost-Explosion
-// als auch vom direkten Waehrungs-Klick auf dem Globus (Nutzer-Wunsch
-// 2026-08-04: dort erscheint der Agent SOFORT, ganz ohne Explosion/
-// Truemmerteile). delay0 ist die Wartezeit (ms) bis die Weissblende ueberhaupt
-// erscheint - bei der Boost-Sequenz die Zeit fuer Flammenaufbau+Zersplittern,
-// beim Waehrungs-Klick 0 (direkt).
-function introRevealAndExit(ov,delay0){
-  let t=delay0||0;
-  // Phase 3: Weissblende + Fallschirm-Agent erscheinen.
-  setTimeout(()=>{
-    // Fehlerursache gefunden (Nutzer-Wunsch 2026-08-04 "finde den Fehler"):
-    // #introOv selbst hatte einen eigenen, opaken (Marmor-)Hintergrund - der
-    // blieb bestehen, bis ov.remove() ganz am Ende der Sequenz lief. Die
-    // Weissblende (.intro-whiteout) sass zwar farblich passend DAVOR, aber
-    // wenn sie per .wiping wegtranslatiert wurde, gab sie den Blick nur auf
-    // #introOvs EIGENEN, ebenfalls opaken Hintergrund frei - nicht auf das
-    // tatsaechliche Dashboard darunter. Das Dashboard poppte dadurch erst
-    // ganz am Schluss (ov.remove()) schlagartig auf, statt sichtbar "hoch-
-    // zusteigen". Fix: #introOv wird GENAU HIER (Weissblende deckt in diesem
-    // Moment ohnehin noch alles ab) durchsichtig gemacht - ab jetzt ist die
-    // Weissblende selbst die einzige Deckschicht, ihr Wegschieben legt
-    // dadurch wirklich das darunterliegende Dashboard frei.
-    ov.style.background='transparent';
-    ov.insertAdjacentHTML('beforeend','<div class="intro-whiteout" id="introWhiteout"></div>'+parachuteFigureHtml());
-  },t);
-  t+=INTRO_SEQ.whiteHold;
-  // Phase 4: Weiss schiebt sich nach oben aus dem Bild (s. CSS) - das
-  // laengst fertig gerenderte Dashboard darunter "steigt" dadurch scheinbar
-  // von unten ins Bild. Gleichzeitig schwebt der Fallschirm-Agent von oben
-  // herein.
-  // Zweiter Teil desselben Fehlers (s. Kommentar oben bei ov.style.background):
-  // .intro-wing (die gewachsene, weisse Tragflaeche) liegt mit z-index:100002
-  // UEBER der Weissblende (100001) und behaelt ihren Endzustand dank
-  // animation-fill-mode:forwards dauerhaft bei - sie wurde bisher NIE entfernt,
-  // blieb also als zweite, staerker liegende deckende Flaeche permanent stehen
-  // und blockierte die Weissblenden-Wisch-Animation komplett (das Dashboard
-  // "stieg" dadurch nie sichtbar hoch, sondern poppte erst ganz am Ende beim
-  // Cleanup schlagartig auf). Fix: die Tragflaeche verschwindet HIER, im
-  // exakt selben Moment wie die Weissblende zu wischen beginnt. (Beim
-  // Waehrungs-Klick gibt es gar keine Tragflaeche - der Check ist dann einfach
-  // ein No-Op.)
-  setTimeout(()=>{
-    const wo=document.getElementById('introWhiteout');if(wo)wo.classList.add('wiping');
-    const wing=document.getElementById('introWing');if(wing)wing.style.display='none';
-    const pf=document.getElementById('introParachute');if(pf)pf.classList.add('descend');
-  },t);
-  t+=Math.max(INTRO_SEQ.wipe,INTRO_SEQ.descend)+INTRO_SEQ.exitDelay;
-  // Phase 5: Agent segelt links aus dem Bild - danach ist das Dashboard
-  // vollstaendig sichtbar/nutzbar (Cleanup direkt im Anschluss).
-  setTimeout(()=>{
-    const pf=document.getElementById('introParachute');if(pf)pf.classList.add('exit-left');
-  },t);
-  t+=INTRO_SEQ.exit;
-  // Cleanup: komplettes Intro-Overlay (inkl. Boost-Modal) entfernen - exakt
-  // wie der alte dismiss() das Shard-Overlay entfernt hat.
-  setTimeout(()=>{
-    if(ov.parentNode)ov.remove();
-    const bm=document.getElementById('mIntroBoost');if(bm&&bm.parentNode)bm.remove();
-    _introBoostRunning=false;
-  },t+250);
-}
-function runIntroBoostSequence(){
-  const ov=document.getElementById('introOv');if(!ov)return;
-  // Phase 1: KEIN Zoom aufs Cockpit/Flugzeug (Nutzer-Korrektur 2026-08-04) -
-  // der Globus dreht bereits mit maximaler Geschwindigkeit (Regler stand auf
-  // 100%, Vorbedingung fuer dieses Fenster, siehe introMaybeOfferBoost()).
-  // Die Flamme waechst zusaetzlich kurz auf das 10-fache (.mega-flame) als
-  // sichtbarer Spannungsaufbau vor der Explosion.
-  document.querySelectorAll('.globe-vehicle').forEach(g=>g.classList.add('boosting','mega-flame'));
-  document.querySelectorAll('.globe-host').forEach(h=>h.classList.add('boosting'));
-  let t=INTRO_SEQ.flameUp;
-  // Phase 2: das Flugzeug zerspringt in Einzelteile. Der Globus/das
-  // Flugzeug selbst wird ausgeblendet (visibility:hidden, kein remove() -
-  // haelt startGlobes()' Referenzen intakt, falls die Sequenz je unterbrochen
-  // wuerde), die Truemmerstuecke uebernehmen ab hier die Szene.
-  setTimeout(()=>{
-    const host=document.querySelector('.intro-globe-host');
-    const r=host?host.getBoundingClientRect():null;
-    const cx=r?r.left+r.width/2:window.innerWidth/2,cy=r?r.top+r.height/2:window.innerHeight/2;
-    if(host)host.style.visibility='hidden';
-    // Restliches Cockpit-Chrome (Titel/HUD-Werte/Regler/Signatur) verschwindet
-    // hier mit, statt bis zum ganz finalen Cleanup als tote Deko ueber der
-    // Explosion/dem spaeteren Dashboard-Reveal stehen zu bleiben.
-    const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
-    ov.insertAdjacentHTML('beforeend',introShatterHtml(cx,cy));
-    document.body.classList.add('intro-shake');
-    setTimeout(()=>document.body.classList.remove('intro-shake'),480);
-  },t);
-  t+=INTRO_SEQ.shatter;
-  introRevealAndExit(ov,t);
-}
-// Waehrungs-Klick auf dem Globus (Nutzer-Wunsch 2026-08-04): der Fallschirm-
-// Agent erscheint SOFORT (keine Explosion/Truemmerteile - die ist der Boost-
-// Sequenz vorbehalten), waehrend darunter direkt der Asset-Tab mit der
-// angeklickten Waehrung ausgewaehlt hochsteigt. Nutzt dieselbe
-// introRevealAndExit()-Choreografie, nur ohne jeden Vorlauf.
-function runIntroCurrencyReveal(id){
-  const ov=document.getElementById('introOv');
-  if(!ov){gotoSym(id);return;} // Intro schon weg -> ganz normale Navigation
-  if(_introBoostRunning)return;
-  _introBoostRunning=true;
-  gotoSym(id); // Ziel-Tab+Waehrung sofort im Hintergrund fertig rendern
-  const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
-  introRevealAndExit(ov,0);
-}
-// Skip-Button (Nutzer-Wunsch 2026-08-04, oben links, unauffaellig): ueber-
-// springt den Rest des Intros direkt ueber dieselbe Weissblende+Fallschirm-
-// Reveal-Choreografie wie ein Waehrungs-Klick - nur OHNE gotoSym(), das
-// Dashboard bleibt einfach auf dem Tab, der ohnehin schon aktiv ist.
-function skipIntro(){
-  const ov=document.getElementById('introOv');if(!ov)return;
-  if(_introBoostRunning)return;
-  closeM('mIntroBoost');
-  _introBoostRunning=true;
-  const cockpit=document.getElementById('introCockpit');if(cockpit)cockpit.style.display='none';
-  introRevealAndExit(ov,0);
-}
-// Zerspringt in ~8 radial wegfliegende Truemmerstuecke (introDebrisFly, s.
-// CSS - rotate(--a)+translateX(--d)-Burst-Muster, kein CSS-cos()/sin()
-// noetig) PLUS eine Tragflaeche (.intro-wing), die stattdessen direkt auf
-// den Betrachter zu waechst und dabei weiss wird - siehe CSS-Kommentar bei
-// .intro-wing fuer die Begruendung ("keine separate Weissblende noetig").
-function introShatterHtml(cx,cy){
-  const bits=Array.from({length:8},(_,i)=>{
-    const ang=(i/8)*360+(Math.random()*20-10);
-    const dist=(40+Math.random()*50).toFixed(0);
-    const rot=(Math.random()*640-320).toFixed(0);
-    const w=(9+Math.random()*13).toFixed(0),h=(4+Math.random()*6).toFixed(0);
-    return`<span class="intro-debris" style="left:${cx}px;top:${cy}px;width:${w}px;height:${h}px;--a:${ang.toFixed(0)}deg;--d:${dist}vmax;--rot:${rot}deg;animation-delay:${(Math.random()*60).toFixed(0)}ms"></span>`;
-  }).join('');
-  const wing=`<div class="intro-wing" id="introWing" style="left:${cx}px;top:${cy}px"></div>`;
-  return bits+wing;
-}
-// Name auf dem Fallschirm/Gleiter (Nutzer-Wunsch 2026-08-04, naechste Runde):
-// steht statt "TRADER" da, sobald ueber Cloud Sync eingeloggt UND ein eigener
-// Gleiter-Name hinterlegt ist - eigenes Feld (cfg.pilotName), bewusst
-// GETRENNT von "Username" (das ist fuer den Header-Profilkreis gedacht, ein
-// anderer Anzeigekontext). Lebt im selben lokalen Cloud-Config-Objekt wie
-// Username/URL/Key/SyncId - Verbindungs-Zugangsdaten sind bewusst NICHT Teil
-// des app-weiten Cloud-Datensyncs (chicken-and-egg: man braucht die Zugangs-
-// daten erst, um ueberhaupt syncen zu koennen), exakt dasselbe Muster wie
-// "Username" daneben.
-function introPilotName(){
-  const cfg=getCloudCfg();
-  const loggedIn=!!(cfg&&cfg.url&&cfg.key&&cfg.syncId);
-  const n=loggedIn&&cfg.pilotName?String(cfg.pilotName).trim():'';
-  return n||'TRADER';
-}
-// FBI-Agent an einem Gleitschirm (Nutzer-Wunsch 2026-08-04: "der Gleiter ist
-// nicht groesser, nur die Leinen - mach den Gleiter doppelt so gross"). Die
-// vorherige Version skalierte zwar den ganzen SVG-Container gleichmaessig
-// hoch, aber der eigentliche Fluegel (Canopy) nahm darin nur einen kleinen
-// oberen Ausschnitt ein, waehrend die langen Leinen den Grossteil der Hoehe
-// beanspruchten - dadurch WIRKTE nur das Leinen-Faecher optisch groesser.
-// Fix: Fluegel-Pfad selbst deutlich hoeher/domiger gezeichnet (fast die
-// gesamte obere Haelfte des jetzt quadratischen viewBox statt nur ein
-// schmaler Streifen), Leinen dadurch automatisch kuerzer/unauffaelliger im
-// Vergleich - der Fluegel dominiert jetzt wirklich das Bild. Flache,
-// stilisierte Formen (Kreise/Rechtecke/einfache Pfade) statt einer
-// detaillierten Illustration - passend zum sonstigen Stroke-Icon-Stil der
-// App, aber mit genug Merkmalen (Anzug, Krawatte, Sonnenbrille, Ohrhoerer+
-// Kabel) um klar erkennbar zu sein. Kein Marken-/Logo-Aufdruck mehr auf dem
-// Schirm - stattdessen ein persoenlicher Begruessungstext, zweizeilig
-// zentriert auf dem Fluegel.
-function parachuteFigureHtml(){
-  const name=escH(introPilotName());
-  const nameFontSize=name.length>14?8.5:(name.length>9?11:14);
-  return`<div class="intro-parachute" id="introParachute">
-    <svg viewBox="0 0 300 300" width="100%" height="100%">
-      <path d="M5,140 C50,5 250,5 295,140 C260,105 230,88 200,80 C170,74 130,74 100,80 C70,88 40,105 5,140 Z" fill="#dfe4ea" stroke="#7c8794" stroke-width="2.5"/>
-      <text x="150" y="58" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing=".3" fill="#5a6472" font-family="'SF Mono',SFMono-Regular,Consolas,monospace">WELCOME BACK,</text>
-      <text x="150" y="72" text-anchor="middle" font-size="${nameFontSize}" font-weight="800" letter-spacing=".6" fill="#171b20" font-family="'SF Mono',SFMono-Regular,Consolas,monospace" style="text-transform:uppercase">${name}</text>
-      <path d="M50,100 L135,150 M90,82 L135,150 M130,75 L135,150 M170,75 L165,150 M210,82 L165,150 M250,100 L165,150" fill="none" stroke="#8a94a0" stroke-width="1"/>
-      <g transform="translate(80,60)">
-        <path d="M60,100 Q70,92 80,100 L84,118 L56,118 Z" fill="#12161c"/>
-        <circle cx="70" cy="112" r="1.6" fill="#c9a27a"/>
-        <rect x="66" y="108" width="8" height="14" rx="2" fill="#1b2129"/>
-        <path d="M69,110 L70,120 L71,110 Z" fill="#7a1a20"/>
-        <path d="M56,118 C48,124 44,140 46,158 L58,158 L58,132 Z" fill="#1b2129"/>
-        <path d="M84,118 C92,124 96,140 94,158 L82,158 L82,132 Z" fill="#1b2129"/>
-        <path d="M46,158 L44,178 L54,178 L58,160 Z" fill="#2a323d"/>
-        <path d="M94,158 L96,178 L86,178 L82,160 Z" fill="#2a323d"/>
-        <rect x="41" y="176" width="15" height="6" rx="2" fill="#0c0f13"/>
-        <rect x="84" y="176" width="15" height="6" rx="2" fill="#0c0f13"/>
-        <circle cx="70" cy="98" r="12" fill="#c9a27a"/>
-        <path d="M58,96 C58,86 82,86 82,96 C82,90 76,88 70,88 C64,88 58,90 58,96 Z" fill="#1b2129"/>
-        <rect x="59" y="95" width="10" height="4.5" rx="1.5" fill="#0c0f13"/>
-        <rect x="71" y="95" width="10" height="4.5" rx="1.5" fill="#0c0f13"/>
-        <rect x="69" y="97" width="2" height="1.6" fill="#0c0f13"/>
-        <circle cx="81" cy="101" r="1.7" fill="#0c0f13"/>
-        <path d="M82,102 C86,104 87,110 85,116" fill="none" stroke="#0c0f13" stroke-width="1.1"/>
-      </g>
-    </svg>
-  </div>`;
-}
-// "Active signals" auf dem Intro-HUD (Nutzer-Wunsch 2026-08-04) - dieselbe
-// Kennzahl wie zuvor im Dashboard-Globus-Widget (globeHudHtml()): Anzahl FX-
-// Majors mit nicht-neutralem Bias von der Gesamtzahl. Eigener, schlanker
-// Aufruf statt globeHudHtml() zu importieren, da hier nur diese eine Zahl
-// gebraucht wird (kein Readout-Rahmen/Intel-Feed auf dem Intro-Screen).
-// Laeuft NACH loadState() (siehe Boot-Zeile ganz unten) - vorher waere syms
-// noch leer.
-function updIntroHud(){
-  const el=document.getElementById('introHudSignals');if(!el)return;
-  const fxSyms=(syms||[]).filter(s=>GLOBE_GEO[s.id]);
-  const active=fxSyms.filter(s=>s.bias!=='neu').length;
-  el.textContent=active+'/'+fxSyms.length;
-}
+// (Intro-Boost-Sequenz, Fallschirm-Gleiter, Intro-HUD: am 2026-09-24 entfernt,
+// Nutzer: "Mach das Intro und den Gleiter und die Einstellungen dazu alles weg".)
 // Fuel-Anzeige (Nutzer-Wunsch 2026-07-28, ersetzt "Liquidity" im HUD-
 // Readout): rein dekorativer Cockpit-Wert fuer den Jet, KEINE Marktdaten -
 // der CLAUDE.md-Grundsatz "nie erfundene Werte" gilt fuer Indikator-/
@@ -911,7 +648,8 @@ function globeVehicleTravel(st,x1,y1,dur,onDone){
 }
 // Klick auf eine Waehrung (Nutzer-Wunsch 2026-08-04, dritte Runde): der
 // Fallschirm-Agent soll SOFORT erscheinen, waehrend darunter direkt der
-// Asset-Tab mit der angeklickten Waehrung hochsteigt (runIntroCurrencyReveal)
+// Asset-Tab mit der angeklickten Waehrung hochsteigt (seit 2026-09-24 ohne
+// Intro: direkt gotoSym)
 // - kein Zwischenschritt mehr. Laeuft bewusst UNABHAENGIG von prefers-
 // reduced-motion (Nutzer-Bugreport 2026-07-28: "am PC funktionieren die
 // Animationen... gar nicht" - Windows/Chrome kann diese Systemeinstellung
@@ -920,10 +658,10 @@ function globeVehicleTravel(st,x1,y1,dur,onDone){
 // ausdruecklich gewuenscht, das ist keine ambiente Dauerbewegung).
 function globeMarkerClick(ev,id){
   ev.stopPropagation();
-  if(_globeVehicleBusy||_introBoostRunning)return;
+  if(_globeVehicleBusy)return;
   const sym=syms.find(s=>s.id===id);if(!sym)return;
   closeGlobeTip();
-  runIntroCurrencyReveal(id);
+  gotoSym(id);
 }
 // Drag-zum-Drehen: Ziehen am Globus dreht ihn direkt mit dem Finger/der Maus mit;
 // nach dem Loslassen laeuft der Schwung aus dem Drag weiter (Traegheit), bevor er
@@ -1040,15 +778,14 @@ function startGlobes(){
     // groesser werden als die alte 320px-Kartenobergrenze, da er nicht mehr in
     // ein Karten-Raster eingepasst werden muss, sondern der Bildschirmmitte
     // gehoert (siehe .intro-globe-host-CSS fuer die tatsaechliche Breite).
-    const isIntro=!!h.closest('#introOv');
-    // ⚠ Drei verschiedene Buehnen, drei Obergrenzen: eine Dashboard-Karte
-    // muss ins Raster passen (320), der Intro-Bildschirm gehoert der Kugel
-    // fast ganz (900), und die Overview-Seite gehoert ihr GANZ - dort
+    // ⚠ Zwei Buehnen, zwei Obergrenzen (das Intro gibt es seit 2026-09-24
+    // nicht mehr): eine Dashboard-Karte muss ins Raster passen (320), und
+    // die Overview-Seite gehoert der Kugel GANZ - dort
     // begrenzt bereits das CSS (.pg-over .globe-host: min(72vh,760px)),
     // eine zweite, niedrigere Kappung hier wuerde die Kugel klein in eine
     // grosse Flaeche setzen.
     const isOver=!!h.closest('#pgOver');
-    const size=Math.max(140,Math.min(w||220,isIntro?900:isOver?760:320));
+    const size=Math.max(140,Math.min(w||220,isOver?760:320));
     h.innerHTML=globeSkeleton(size,_globeUid++);
     // HUD-Rahmen/Scanline NACH dem Skeleton einfuegen (nicht Teil des
     // Skeleton-Strings selbst) - h.innerHTML= wuerde sie sonst bei jedem
@@ -1152,13 +889,13 @@ export {
   GLOBE_GEO,GLOBE_LAT0,GLOBE_LAND,GLOBE_HOME_LON,_globeRAF,_globeLon,_globeLast,_globeHosts,
   _globeUid,GLOBE_AUTO_VEL,_globeMode,_globeVel,_globeDrag,_globeVehicleBusy,GLOBE_BOOST_PEAK_MS,GLOBE_BOOST_HOLD_MS,
   GLOBE_BOOST_DECEL_MS,GLOBE_BOOST_PEAK_VEL,_globeBoostT0,startGlobeBoost,endGlobeBoost,_throttleFrac,_throttleDragging,throttlePressStart,
-  throttleUpdateFromEvent,setGlobeThrust,_introBoostOffered,_introBoostRunning,introMaybeOfferBoost,introBoostOfferReset,confirmIntroBoost,triggerIntroBoost,
-  INTRO_SEQ,introRevealAndExit,runIntroBoostSequence,runIntroCurrencyReveal,skipIntro,introShatterHtml,introPilotName,parachuteFigureHtml,
-  updIntroHud,_globeFuel,GLOBE_FUEL_BURN_PCT_S,GLOBE_FUEL_REGEN_PCT_S,globeFuelTick,stopGlobe,globeProject,globeHorizonPoint,
+  throttleUpdateFromEvent,setGlobeThrust,
+  
+  _globeFuel,GLOBE_FUEL_BURN_PCT_S,GLOBE_FUEL_REGEN_PCT_S,globeFuelTick,stopGlobe,globeProject,globeHorizonPoint,
   globePathD,globeSkeleton,globeCollectRefs,globeUpdateOne,globeUpdateSweep,closeGlobeTip,globeVehicleTravel,globeMarkerClick,
   globeHitTest,globeOnPointerDown,globeOnPointerMove,globeOnPointerUp,startGlobes,resetGlobeLon,ladeLandHD,
 };
 // Kompatibilitaets-Bruecke: diese Namen werden per inline onclick=/
 // onpointerdown=/... aus generiertem HTML im GLOBALEN Scope aufgerufen
 // (siehe docs/module-split.md) - selbst gebridged, nicht Aufgabe von main.js.
-if(typeof window!=='undefined')Object.assign(window,{closeGlobeTip,confirmIntroBoost,globeMarkerClick,skipIntro,throttlePressStart,triggerIntroBoost});
+if(typeof window!=='undefined')Object.assign(window,{closeGlobeTip,globeMarkerClick,throttlePressStart});

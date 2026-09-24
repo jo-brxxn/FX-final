@@ -6144,7 +6144,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -6152,7 +6152,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.introAnimEnabled!==undefined){introAnimEnabled=_imp.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6213,19 +6213,16 @@ function rezPurgeHintText(){
   if(!err)return '';
   return ' · ⚠ Could not delete the old recipe rows from the cloud ('+err+'). This is retried on every start.';
 }
-function openCloudM(fromIntro){
+function openCloudM(){
   try{updPinToggleBtn()}catch(e){}
-  try{updIntroAnimToggleBtn()}catch(e){}
   try{updScoreModeBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
-  document.getElementById('cloudPilotName').value=cfg.pilotName||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
   document.getElementById('cloudKey').value=cfg.key||'';
   document.getElementById('cloudSyncId').value=cfg.syncId||'';
   setCloudStatus((cfg.url?'Connected with Sync ID "'+(cfg.syncId||'')+'". Last local change: '+(localStorage.getItem('fxpro_updated')?fmtStamp(localStorage.getItem('fxpro_updated')):'-'):'Not set up yet.')+rezPurgeHintText());
   // Wenn vom Intro aus geöffnet, muss das Modal über dem Sperrbildschirm liegen.
-  document.getElementById('mCloud').style.zIndex=fromIntro?'100001':'';
   openM('mCloud');
 }
 function setCloudStatus(txt){
@@ -6233,15 +6230,11 @@ function setCloudStatus(txt){
 }
 function saveCloudCfg(){
   const username=document.getElementById('cloudUsername').value.trim();
-  const pilotName=document.getElementById('cloudPilotName').value.trim();
   const url=document.getElementById('cloudUrl').value.trim().replace(/\/+$/,'');
   const key=document.getElementById('cloudKey').value.trim();
   const syncId=document.getElementById('cloudSyncId').value.trim();
   if(!url||!key||!syncId){alert('Please fill in URL, API key and Sync ID.');return;}
-  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,pilotName,url,key,syncId}));
-  // Falls der Login-Button im Intro noch sichtbar ist, sofort aktualisieren.
-  const lb=document.getElementById('introLoginBtn');
-  if(lb)lb.textContent='👤 '+(username||syncId);
+  localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,url,key,syncId}));
   updProfile();
   setCloudStatus('Saved. Syncing...');
   // manual:true fuer die Status-Rueckmeldung ("Downloaded"/Fehlertext),
@@ -6437,7 +6430,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.introAnimEnabled=introAnimEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6579,7 +6572,6 @@ async function cloudPull(manual,forceOverwrite){
       if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){setScoreModeVal(cd.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
       if(!prefPending&&typeof cd.newsSeenTs==='string'&&cd.newsSeenTs>newsSeenTs){newsSeenTs=cd.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
-      if(!prefPending&&cd.introAnimEnabled!==undefined){introAnimEnabled=cd.introAnimEnabled;try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}updIntroAnimToggleBtn();}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
       if(!prefPending&&cd.denseMode!==undefined){denseMode=!!cd.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}
       // ⚠ !==undefined, nicht truthy: das aktuelle Design ist der LEERE
@@ -14721,9 +14713,9 @@ import {
   GLOBE_GEO,GLOBE_LAT0,GLOBE_LAND,GLOBE_HOME_LON,_globeRAF,_globeLon,_globeLast,_globeHosts,
   _globeUid,GLOBE_AUTO_VEL,_globeMode,_globeVel,_globeDrag,_globeVehicleBusy,GLOBE_BOOST_PEAK_MS,GLOBE_BOOST_HOLD_MS,
   GLOBE_BOOST_DECEL_MS,GLOBE_BOOST_PEAK_VEL,_globeBoostT0,startGlobeBoost,endGlobeBoost,_throttleFrac,_throttleDragging,throttlePressStart,
-  throttleUpdateFromEvent,setGlobeThrust,_introBoostOffered,_introBoostRunning,introMaybeOfferBoost,introBoostOfferReset,confirmIntroBoost,triggerIntroBoost,
-  INTRO_SEQ,introRevealAndExit,runIntroBoostSequence,runIntroCurrencyReveal,skipIntro,introShatterHtml,introPilotName,parachuteFigureHtml,
-  updIntroHud,_globeFuel,GLOBE_FUEL_BURN_PCT_S,GLOBE_FUEL_REGEN_PCT_S,globeFuelTick,stopGlobe,globeProject,globeHorizonPoint,
+  throttleUpdateFromEvent,setGlobeThrust,
+  
+  _globeFuel,GLOBE_FUEL_BURN_PCT_S,GLOBE_FUEL_REGEN_PCT_S,globeFuelTick,stopGlobe,globeProject,globeHorizonPoint,
   globePathD,globeSkeleton,globeCollectRefs,globeUpdateOne,globeUpdateSweep,closeGlobeTip,globeVehicleTravel,globeMarkerClick,
   globeHitTest,globeOnPointerDown,globeOnPointerMove,globeOnPointerUp,startGlobes,resetGlobeLon,
 } from './globe.js';
@@ -21987,18 +21979,11 @@ function togglePinEnabled(){
     const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';
   }
 }
-// Nutzer-Wunsch 2026-08-04 ("genau wie den Code aktivieren/deaktivieren
-// koennen, direkt unter dem Code"): identisches An/Aus-Muster wie
-// pinEnabled direkt darueber - liegt bewusst ausserhalb von snap()/Undo
-// (reine Geraet-/Nutzer-Praeferenz, kein Kern-Datenzustand). Der eigentliche
-// Effekt (Intro ueberspringen) wird NICHT hier ausgewertet, sondern ganz
-// frueh im eigenen <script> direkt bei #introOv (das laeuft VOR diesem
-// Skriptblock hier, kann also nicht auf diese spaeter deklarierte Variable
-// zugreifen - liest denselben localStorage-Key stattdessen direkt).
-let introAnimEnabled=localStorage.getItem('fxpro_intro_anim_enabled')!=='0';
-function updIntroAnimToggleBtn(){const btn=document.getElementById('introAnimToggleBtn');if(btn)btn.checked=introAnimEnabled;}
+// Intro samt Einstellung am 2026-09-24 entfernt (Nutzer: "Mach das Intro und
+// den Gleiter und die Einstellungen dazu alles weg") - alten Schluessel aufraeumen.
+try{localStorage.removeItem('fxpro_intro_anim_enabled');}catch(e){}
 // Dauerbewegung der Asset-Symbole (wehende Flaggen, tropfendes Oel, ...).
-// Liegt wie pinEnabled/introAnimEnabled bewusst AUSSERHALB von snap()/Undo:
+// Liegt wie pinEnabled bewusst AUSSERHALB von snap()/Undo:
 // eine Anzeige-Praeferenz gehoert nicht in den Undo-Stapel. Damit sie
 // trotzdem auf allen Geraeten ankommt, sind alle vier Ecken bedient -
 // Save-Funktion (unten), cloudPush, cloudPull mit prefPending-Schutz und
@@ -22158,11 +22143,10 @@ function toggleDataAnimEnabled(){
   markPrefEdit();cloudAutoSync();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();
 }
 // "Alles aus" soll ein Klick sein, nicht vier.
-function allAnimOn(){return introAnimEnabled||assetAnimEnabled||uiAnimEnabled||dataAnimEnabled;}
+function allAnimOn(){return assetAnimEnabled||uiAnimEnabled||dataAnimEnabled;}
 function updAllAnimToggleBtn(){const b=document.getElementById('allAnimToggleBtn');if(b)b.checked=allAnimOn();}
 function toggleAllAnim(){
   const to=!allAnimOn();
-  if(introAnimEnabled!==to)toggleIntroAnimEnabled();
   if(assetAnimEnabled!==to)toggleAssetAnimEnabled();
   if(uiAnimEnabled!==to)toggleUiAnimEnabled();
   if(dataAnimEnabled!==to)toggleDataAnimEnabled();
@@ -22186,15 +22170,6 @@ function toggleTelegramEnabled(){
   // liest den Stand im naechsten Lauf, der schon in wenigen Minuten kommt.
   cloudAutoSync();
   updTelegramToggleBtn();
-}
-function toggleIntroAnimEnabled(){
-  introAnimEnabled=!introAnimEnabled;
-  try{localStorage.setItem('fxpro_intro_anim_enabled',introAnimEnabled?'1':'0');}catch(e){}
-  localStorage.setItem('fxpro_updated',new Date().toISOString());
-  _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
-  markPrefEdit();
-  cloudAutoSync();
-  updIntroAnimToggleBtn();updAllAnimToggleBtn();
 }
 async function checkLockCode(code){
   try{
@@ -22346,7 +22321,25 @@ const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
 // Start on dashboard
 document.getElementById('pgDash').style.display='block';
-renderDash();updUB();updProfile();startHdrLiveClock();updIntroHud();
+renderDash();updUB();updProfile();startHdrLiveClock();
+// Ladebildschirm (Nutzer 2026-09-24): steht, bis ALLE Datenfeeds geantwortet
+// haben (dasselbe Signal wie check/warten.js: ein Eintrag je Feed in
+// DATA_LIVE_OK, mit Daten ODER Fehlschlag), mindestens einen vollen
+// Kerzen-Durchlauf (3 s), hoechstens 12 s - dann langsam ausblenden.
+function ladeOvAusblenden(){
+  const ov=document.getElementById('ladeOv');if(!ov||ov.classList.contains('weg'))return;
+  ov.classList.add('weg');
+  setTimeout(()=>{if(ov.parentNode)ov.remove();},950);
+}
+(function ladeOvWachen(){
+  const ov=document.getElementById('ladeOv');if(!ov)return;
+  const t0=window.__ladeStart||Date.now(),feeds=Object.keys(DATA_SRC_LABEL);
+  const pruefen=()=>{
+    const z=Date.now()-t0,da=feeds.every(k=>k in DATA_LIVE_OK);
+    if((da&&z>=3000)||z>=12000)ladeOvAusblenden();else setTimeout(pruefen,150);
+  };
+  pruefen();
+})();
 // Der Wisch-Uebergang erst nach dem Start - der erste Seitenaufbau ist kein
 // Seitenwechsel des Nutzers.
 setTimeout(()=>{_wischBereit=true;},1200);
@@ -22705,6 +22698,76 @@ function kartenIconsNachtragen(root){
   });
 }
 try{new MutationObserver(()=>kartenIconsNachtragen()).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
+
+// ══ FX-LOGO IN FREIER KARTENFLAECHE (Nutzer 2026-09-24) ═══════════════
+// "auch wenn Karten keine Daten haben soll das schonmal in der Karte stehen
+// ... Auch dauerhaft leer also wenn zB nichts bei den Pinned Notes ist ...
+// wenn eine Karte sehr leer ist und sehr gross ist, dass dann unten mittig
+// das Logo erscheint und je nach Groesse der freien Flaeche sich anpasst.
+// Das kann ja passieren wenn man einen Chart bei einem Indikator ausklappt
+// und daneben die Karten die Groesse annehmen."
+// Gemessen wird die LEERE Flaeche zwischen dem untersten sichtbaren Inhalt
+// und dem Kartenfuss ("Go to ..."-Zeile bzw. Innenkante). Ab LG_MIN_FREI px
+// steht dort das Logo unten mittig, Groesse aus der freien Hoehe und Breite.
+// Die Karte wird dafuer (nur dann) Bezugsrahmen (.lg-host) - gemessen
+// 2026-09-24: kein absolut platziertes Kind richtet sich an etwas ausserhalb
+// seiner Karte aus, es verschiebt sich also nichts.
+const LG_KARTEN='.ab-tile,.ab-ptile,.ab-ntile,.ab-htile,.ab-ktile,.abc-cal,.rub-card,.dw,.cot-card';
+const LG_MIN_FREI=84;
+const LG_MEDIEN=/^(svg|canvas|img|textarea|input|button|select|video)$/i;
+function lgFreiraum(card){
+  const cr=card.getBoundingClientRect();
+  if(!cr.height||!card.offsetParent)return null;
+  const cs=getComputedStyle(card);
+  const fuss=card.querySelector(':scope > .ab-goto');
+  const unten=fuss&&fuss.offsetParent?fuss.getBoundingClientRect().top
+    :cr.bottom-parseFloat(cs.borderBottomWidth)-parseFloat(cs.paddingBottom);
+  let inhalt=cr.top+parseFloat(cs.borderTopWidth)+parseFloat(cs.paddingTop);
+  for(const e of card.querySelectorAll('*')){
+    if(e.ownerSVGElement||e.closest('.lg-frei')||(fuss&&fuss.contains(e)))continue;
+    // nur sichtbare "Blaetter": Container ueberspringen (ein gestreckter
+    // Kartenkoerper reicht bis unten), leere Platzhalter ebenso
+    if(e.children.length&&!LG_MEDIEN.test(e.tagName))continue;
+    if(!LG_MEDIEN.test(e.tagName)&&!e.textContent.trim())continue;
+    const r=e.getBoundingClientRect();
+    if(!r.width&&!r.height)continue;
+    if(r.bottom>inhalt)inhalt=r.bottom;
+  }
+  return{frei:unten-inhalt,unten,inhalt,breite:cr.width,top:cr.top};
+}
+function lgKarte(card){
+  const m=lgFreiraum(card);
+  let lg=card.querySelector(':scope > .lg-frei');
+  if(!m||m.frei<LG_MIN_FREI){if(lg){lg.remove();card.classList.remove('lg-host');}return;}
+  // Groesse: 75 % der freien Hoehe, hoechstens die halbe Kartenbreite und 220 px
+  const hoehe=Math.max(48,Math.min(m.frei*0.75-10,(m.breite*0.5)*190/300,220*190/300));
+  const breite=hoehe*300/190;
+  if(!lg){
+    lg=document.createElement('div');lg.className='lg-frei';lg.setAttribute('aria-hidden','true');
+    lg.innerHTML=window.fxLogoSvg?window.fxLogoSvg('lg-einmal'):'';
+    card.classList.add('lg-host');card.appendChild(lg);
+  }
+  lg.style.width=Math.round(breite)+'px';
+  // unten mittig in der freien Flaeche, mit etwas Abstand zum Fuss
+  lg.style.top=Math.round(m.unten-m.top-hoehe-Math.min(18,m.frei*0.08))+'px';
+}
+let _lgPlan=0;
+function lgAlleKarten(){
+  _lgPlan=0;
+  document.querySelectorAll(LG_KARTEN).forEach(c=>{if(c.offsetParent||c.querySelector(':scope > .lg-frei'))lgKarte(c);});
+}
+function lgPlanen(){if(!_lgPlan)_lgPlan=requestAnimationFrame(()=>requestAnimationFrame(lgAlleKarten));}
+try{
+  const lgRo=new ResizeObserver(lgPlanen);
+  const lgBeobachten=()=>document.querySelectorAll(LG_KARTEN).forEach(c=>{if(!c.__lgRo){c.__lgRo=1;lgRo.observe(c);}});
+  new MutationObserver(ms=>{
+    // eigene Logo-Einfuegungen loesen keinen neuen Durchlauf aus
+    if(ms.every(m=>[...m.addedNodes,...m.removedNodes].every(n=>n.nodeType===1&&n.classList.contains('lg-frei'))))return;
+    lgBeobachten();lgPlanen();
+  }).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});
+  window.addEventListener('resize',lgPlanen);
+  lgBeobachten();lgPlanen();
+}catch(e){}
 // Das Asset-Panel (seit 2026-09-22) schliesst bei einem Tipp ausserhalb von
 // Leiste und Panel - wie jedes Ausklapp-Menue. Capture-Phase, damit es auch
 // dann greift, wenn der Inhalt den Klick selbst abfaengt.
@@ -23011,10 +23074,10 @@ Object.assign(window,{
   openTabMenu,triggerEnterAnim,showTab,rerender,parsePolicyRate,CARRY_CACHE_KEY,loadRateCache,saveRateCache,rateInfo,
   realRateInfo,yieldSpreadSeries,carryRows,carryRowHTML,setRealRateSort,realRateTableHtml,setSpreadPair,
   setSpreadTenor,spreadCardHtml,spreadChart,renderCarry,openHelpM,maybeShowFirstRunHelp,LOCK_HASH,updPinToggleBtn,
-  togglePinEnabled,updIntroAnimToggleBtn,applyAssetAnim,updAssetAnimToggleBtn,toggleAssetAnimEnabled,applyUiAnim,
+  togglePinEnabled,applyAssetAnim,updAssetAnimToggleBtn,toggleAssetAnimEnabled,applyUiAnim,
   applyDataAnim,applyDenseMode,updDenseToggleBtn,toggleDenseMode,updUiAnimToggleBtn,updDataAnimToggleBtn,
   toggleUiAnimEnabled,toggleDataAnimEnabled,allAnimOn,updAllAnimToggleBtn,toggleAllAnim,updTelegramToggleBtn,
-  toggleTelegramEnabled,toggleIntroAnimEnabled,checkLockCode,lockKey,lockBack,updLockDots,unlockApp,flushAndSave,
+  toggleTelegramEnabled,checkLockCode,lockKey,lockBack,updLockDots,unlockApp,flushAndSave,
   cloudSyncNow,_seedCleaned,_researchCalChanged,bootFetchScoreFeeds,fetchScoreHistServer,applyScoreHistServerFeed,
   updNetStatus,
 });
@@ -23230,7 +23293,6 @@ Object.defineProperty(window,'realRateSort',{get:()=>realRateSort,set:v=>{realRa
 Object.defineProperty(window,'spreadPair',{get:()=>spreadPair,set:v=>{spreadPair=v;},configurable:true});
 Object.defineProperty(window,'spreadTenor',{get:()=>spreadTenor,set:v=>{spreadTenor=v;},configurable:true});
 Object.defineProperty(window,'pinEnabled',{get:()=>pinEnabled,set:v=>{pinEnabled=v;},configurable:true});
-Object.defineProperty(window,'introAnimEnabled',{get:()=>introAnimEnabled,set:v=>{introAnimEnabled=v;},configurable:true});
 Object.defineProperty(window,'assetAnimEnabled',{get:()=>assetAnimEnabled,set:v=>{assetAnimEnabled=v;},configurable:true});
 Object.defineProperty(window,'uiAnimEnabled',{get:()=>uiAnimEnabled,set:v=>{uiAnimEnabled=v;},configurable:true});
 Object.defineProperty(window,'dataAnimEnabled',{get:()=>dataAnimEnabled,set:v=>{dataAnimEnabled=v;},configurable:true});
