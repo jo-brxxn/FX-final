@@ -37,17 +37,17 @@ jobs:
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
           for URL in "https://www.globaldairytrade.info/en/product-results/" "https://www.globaldairytrade.info/en/gdt-events/" "https://www.globaldairytrade.info/api/proxy/GetLatestEventResults" ; do
             CODE=$(curl -sL -A "$UA" --max-time 40 -o g.html -w "%{http_code}" "$URL" || echo 000)
-            echo "$URL -> $CODE, $(wc -c < g.html) Bytes"
-            grep -o -i -E "(GDT Price Index|index)[^<]{0,120}" g.html | head -8
-            grep -o -E "[-+]?[0-9]+\.[0-9]%" g.html | head -8
+            echo "$URL -> $CODE, $(wc -c < g.html 2>/dev/null || echo 0) Bytes"
+            grep -o -i -E "(GDT Price Index|index)[^<]{0,120}" g.html | head -8 || true
+            grep -o -E "[-+]?[0-9]+\.[0-9]%" g.html | head -8 || true
           done
       - name: D) RBA-Rohstoffpreisindex + BoC-BCPI
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
           CODE=$(curl -sL -A "$UA" --max-time 40 -o i2.csv -w "%{http_code}" "https://www.rba.gov.au/statistics/tables/csv/i2-data.csv" || echo 000)
-          echo "RBA I2 -> $CODE"; head -c 600 i2.csv; echo; tail -n 3 i2.csv
+          echo "RBA I2 -> $CODE"; head -c 600 i2.csv || true; echo; tail -n 3 i2.csv || true
           CODE=$(curl -sL --max-time 40 -o b.json -w "%{http_code}" "https://www.bankofcanada.ca/valet/observations/group/BCPI_MONTHLY/json?recent=3" || echo 000)
-          echo "BoC BCPI -> $CODE"; head -c 800 b.json; echo
+          echo "BoC BCPI -> $CODE"; head -c 800 b.json || true; echo
       - name: E) rateprobability.com - Seiten je Zentralbank
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
