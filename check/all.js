@@ -41,6 +41,7 @@ const PRUEFUNGEN = [
   { n: 'symbole',   d: 'Flaggen ein Stueck, Glanz begrenzt, jede Karte ein Symbol', f: 'check/symbole.js', args: [], browser: true },
   { n: 'uebergang', d: 'Wisch beim Seitenwechsel, Panel, History-Karte fest', f: 'check/uebergang.js', args: [], browser: true },
   { n: 'logo',      d: 'FX-Logo: Ladebildschirm, leere Kartenflaeche, Intro entfernt', f: 'check/logo.js', args: [], browser: true },
+  { n: 'regeln',    d: 'COT, Rendite-Trends, 2Y-Zinsdifferenz, Carry, Rohstoffe, Score-Fenster, Momentum', f: 'check/regeln.js', args: [], browser: true },
   { n: 'kartentitel', d: 'Kartentitel einheitlich, Info-i blau und kleiner, Notizen in Bias-Farbe', f: 'check/kartentitel.js', args: [], browser: true },
   { n: 'kalender',  d: 'Kalender-Karte: vergangene Tage blass mit Punkt, Releases aus der Historie', f: 'check/kalender.js', args: [], browser: true },
   { n: 'scrollhalt', d: 'Asset-Seite neu gezeichnet: Scrollstand bleibt (WebKit nachgestellt)', f: 'check/scrollhalt.js', args: [], browser: true },

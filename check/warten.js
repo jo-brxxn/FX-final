@@ -33,7 +33,7 @@
 // festen Frist weiter, damit ein Waechter nie haengt.
 
 // Muss die Feed-Schluessel aus js/main.js + js/data-feeds.js spiegeln.
-const FEEDS = ['ind', 'bond', 'price', 'cot', 'sentiment', 'news', 'risk', 'calendar'];
+const FEEDS = ['ind', 'bond', 'price', 'cot', 'sentiment', 'news', 'risk', 'calendar', 'commodity'];
 
 async function wartenBisDatenDa(page, opt) {
   const o = opt || {};

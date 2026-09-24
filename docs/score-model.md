@@ -25,6 +25,32 @@ umschalten. Überall unten, wo „nur im Modus normalized" steht, gilt das jetzt
 immer. Der Edge-Tab rekonstruiert weiterhin nur mit Basisgewichten (die
 Normierungsfaktoren lassen sich für vergangene Tage nicht ehrlich nachbauen).
 
+## ⚠️ Stand 2026-09-24 (SCORE_MODEL_VERSION 15): Regel-Teile mit festen Punkten
+
+Nutzer-Paket, in einem Versionssprung umgesetzt. **Feste Punkte** stehen als
+Zahl in `ind.pkt`, gesetzt vom jeweiligen Feed; `indScoreParts` zaehlt sie
+genau so — VOR der Altersgrenze, ohne Normierungs-Faktor (Nutzer: *„bei COT
+will ich, dass der Score nicht altert"*). Von Hand gesetzter Bias loescht
+`pkt`, dann gilt wieder Bias × Gewicht.
+
+| Teil | Regel | Wo | Feed |
+|---|---|---|---|
+| COT Netto | Long- bzw. Short-Anteil ≥ 60 % → ±0,75 | COT Data | `applyCotDataFeed` / `cotPunkte` |
+| COT Woche | Änderung des Long-Anteils ≥ 3/5/7,5/10 Pkt → ±0,75/1,05/1,275/1,35; Summe mit Netto max ±1,5 (Woche wird gekürzt) | COT Data | dito |
+| Retail | je Paar ≥ 65 % long → −0,5, ≤ 35 % → +0,5, doppelt bei ≥ 3 Pkt Wachstum in 5 Tagen; Währung = Mittel, max ±1 | COT Data | `retailBiasFor` |
+| Rendite-Trend 2Y/10Y | SMA5 vs SMA21, 3 bp Totzone → je ±0,75, kein Faktor | Inflation | `BOND_PKT` |
+| 2Y Yield Gap (20d) | eigene 2Y minus Ø der anderen 7; Änderung in 20 Handelstagen ≥ 10 bp → ±0,5, ≥ 25 bp → ±0,75 | Inflation | `applyZinsDiffFeed` |
+| Rohstoffe | AUD: Eisenerz 0,5 / Kohle 0,3 / Gold 0,2; NZD: Milch 1; CAD: Öl 1 (Exportanteile). 1-Monats-Änderung ÷ typische Monatsbewegung (5 J Yahoo): ≥1 → ±0,5, ≥2 → ±1, × Gewicht; Milch feste 2 %/5 %; Daten > 7 Tage → 0 | Economic Growth | `applyRohstoffFeed`, `commodity_data.json` |
+| Carry (nur Paar-Score) | (2Y Basis − 2Y Kurs) ÷ Jahres-Schwankung des Paares: ≥ 0,2 → ±0,5, ≥ 0,4 → ±1; VIX +30 % in 20 Handelstagen → 0 | Set-ups | `carryDetails` |
+
+Nicht-FX-Assets übernehmen Zinsdifferenz und Rohstoffe über die Karten-Regel
+(same/inverse); ohne Regel liest `zinsdiffRichtung` die Richtung an den
+eigenen Rendite-Zeilen ab. **Entfernt:** CB Tone, Next CB Move (Hand-
+Einschätzungen, überall neutral), der Edge-Tab. **Nicht im Score:** Momentum
+(eigene Karte, nur Anzeige), Zinswahrscheinlichkeiten (nur Link).
+Geprüft von `check/regeln.js` (Zinsdifferenz und Rohstoffe unabhängig aus den
+Rohdateien nachgerechnet) und `check/seasretail.js` (Retail-Tabelle).
+
 ## Was in den Score einfliesst
 
 | Bestandteil | Gewicht | Bemerkung |

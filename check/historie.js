@@ -449,14 +449,17 @@ const gruen = (m) => console.log('  ✓ ' + m);
     const rub = sy && (sy.rubrics || []).find(r => r.name === 'COT Data');
     const ind = rub && (rub.indicators || [])[0];
     if (!ind) return null;
-    const v = sc(), n = (scoreLog || []).length, alt = ind.bias;
+    const v = sc(), n = (scoreLog || []).length, alt = ind.bias, altPkt = ind.pkt;
     ind.bias = (alt === 'bull') ? 'bear' : 'bull';
+    // Seit 2026-09-24 zaehlen COT-Zeilen feste Punkte (ind.pkt) - der Bias
+    // allein bewegt den Score nicht mehr. Die Lieferung aendert also auch pkt.
+    if (typeof altPkt === 'number') ind.pkt = altPkt > 0 ? -0.75 : 0.75;
     // Eine echte Lieferung ersetzt das Feed-Objekt - genau das nachstellen.
     window.COT_DATA = Object.assign({}, window.COT_DATA || {});
     _flipCauseTag = 'cot'; recomputeAuto(); _flipCauseTag = null;
     const e = (scoreLog || []).slice(n).filter(x => x.sym === 'USD');
     const r = { delta: +(sc() - v).toFixed(2), eintraege: e.length, cause: e[0] && e[0].cause, protokolliert: e[0] && e[0].delta };
-    ind.bias = alt; _flipCauseTag = 'cot'; recomputeAuto(); _flipCauseTag = null;
+    ind.bias = alt; if (typeof altPkt === 'number') ind.pkt = altPkt; _flipCauseTag = 'cot'; recomputeAuto(); _flipCauseTag = null;
     return r;
   });
   if (!g2) rot('Gegenprobe nicht ausfuehrbar - keine COT-Karte bei USD gefunden');

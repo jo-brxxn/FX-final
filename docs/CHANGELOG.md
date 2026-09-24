@@ -17648,3 +17648,50 @@ Symbol), dazu rot: layout, dashboard, cards, hintergrund, regime. Neuer
 Wächter in `check/structure.js`: gleich viele `<div>` wie `</div>` im
 statischen Body (ohne Skripte/Stile/Kommentare); Gegenprobe mit dem kaputten
 Stand: 335 gegen 336 → rot.
+
+## 2026-09-24 — Score-Umbau: COT, Retail, Renditen, Zinsdifferenz, Rohstoffe, Carry, Score-Fenster, Momentum (VERSION-CHECK-561, SCORE_MODEL_VERSION 15)
+
+Nutzer-Freigabe nach zwei Runden Rückfragen, wörtlich u. a.: *„Das bei COT
+kannst du so machen, aber rechne dann alles mal 1,5, sodass es maximal 1,5
+Score ausmachen kann"* (per Rückfrage: seine Prozentschwellen, nur die Punkte
+× 1,5), *„Retail kannst du so umsetzen"*, *„mach, dass der Trend bei den
+Yields jeweils 0,75 ausmacht"*, *„Nimm die Zinsdifferenz über 20 Tage auf"*
+(per Rückfrage ±0,5 ab 10 bp, ±0,75 ab 25 bp), *„Die drei Punkte zum Carry
+umsetzen"*, *„Zinswahrscheinlichkeiten nur als Link"*, *„Rohstoffe für AUD
+usw. find ich gut, bau das ein"*, *„Momentum kannst du ohne Score einbauen"*,
+*„wenn man irgendwo auf einen Score drückt, soll das da deutlich
+übersichtlicher stehen … ein richtiges Fenster … mit guter Unterteilung"*,
+*„überall ein kleines i, in dem ganz genau steht, wie sich das
+zusammensetzt"*. Abgelehnt/nicht umgesetzt: Dämpfer, Prozent-Verteilung,
+Risiko-Index im Score, Kurs-Backtest der Gewichte.
+
+**Mechanik:** `ind.pkt` = feste Punkte nach der Regel; `indScoreParts` zählt
+sie vor der Altersgrenze, ohne Faktor. Tabelle aller Regeln: docs/score-model.md.
+
+**Gemessen nach dem Umbau (Chromium, echte Daten):** USD: Retail +0,79
+(6/7 Paare ≥ 65 % short USD, 4 davon wachsend), COT netto +0,75, Woche −1,28
+(−9,6 Pkt). JPY: netto +0,75 + Woche +1,35 = 2,1 → auf 1,5 gekappt
+(Woche 0,75). Carry EUR/CHF: 2Y-Differenz 2,92 Pkt ÷ Schwankung 3,7 % = 0,78
+→ +1; EUR/USD −1,61 ÷ 5,3 % = −0,30 → −0,5. Zinsdifferenz USD +0,5,
+JPY −0,75.
+
+**Rohstoff-Quellen — Probelauf `probe-commodity-sources.yml` (3 Runden):**
+TradingView-Scanner liefert Kurs + `Perf.1M` für SGX:FEF1! (Eisenerz),
+ICEEUR:NCF1! (Newcastle-Kohle), NZX:WMP1! (Vollmilchpulver), TVC:GOLD,
+NYMEX:CL1!. Yahoo liefert 5 Jahre für TIO=F, GC=F, CL=F, MTF=F (API2), NICHT
+für Newcastle/Milchpulver. GDT hat keine offene Schnittstelle (Ergebnisse per
+Skript nachgeladen). rateprobability.com blockt Abrufe (Cloudflare 403) —
+Wahrscheinlichkeiten bleiben ein Link. Kohle: typische Monatsbewegung aus der
+API2-Historie (offengelegt), Milch: feste GDT-Schwellen 2 %/5 %.
+Neuer Workflow-Schritt „Fetch commodity prices" → `commodity_data.json`.
+
+**Sichtbarkeit:** Zinsdifferenz als Zeile in der Inflation-Karte, Rohstoffe
+in der Wachstums-Karte, COT-Kachel mit Score-Zeile (netto/Woche), Retail-
+Kachel mit 65/35-Zählung, Momentum-Karte (neue Reihe „Trend"). Jedes i einer
+Makro-Karte bzw. eines Indikators zeigt „How it counts" (`indZaehlText`,
+`rubrikZusammensetzungText`). Neues Score-Fenster (`openScoreInfoSym`): Kopf,
+Balken je Karte, aufklappbare Karten und Zeilen mit Regel/Rechnung.
+
+**Wächter:** neu `check/regeln.js` (gegen 560: Abbruch, Gegenprobe rot);
+`check/seasretail.js` auf die neue Retail-Regel (Tabelle mit Wachstum);
+`check/score.js` E1c; `check/warten.js` kennt den Feed `commodity`.

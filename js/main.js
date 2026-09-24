@@ -331,7 +331,7 @@ const FEED_TIMEOUT_MS=20000;
 // beendet (dann keine Warnung, sonst Fehlalarm waehrend des ersten Ladens).
 // Ersetzt NIRGENDS einen Wert - siehe dataFeedStaleNotifyHtml().
 const DATA_LIVE_OK={};
-const DATA_SRC_LABEL={ind:'Indicators',bond:'Bond yields',cot:'COT',sentiment:'Retail sentiment',price:'Prices',news:'News',risk:'Risk index',calendar:'Calendar'};
+const DATA_SRC_LABEL={ind:'Indicators',bond:'Bond yields',cot:'COT',sentiment:'Retail sentiment',price:'Prices',news:'News',risk:'Risk index',calendar:'Calendar',commodity:'Commodities'};
 
 // Official FX pairs list (base/quote correct)
 const ALL_PAIRS=[
@@ -565,7 +565,7 @@ const KARTEN_ICONS=[
   [/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
   [/headline|news/,'news'],[/currency strength|strength/,'dollar'],[/carry/,'coins'],[/performance|ranking/,'trophy'],
   [/volatil/,'pulse'],[/watchlist/,'eye'],[/correlation/,'link'],[/surprise/,'zap'],
-  [/season/,'sun'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
+  [/season/,'sun'],[/momentum/,'trendUp'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
   [/regime/,'compass'],[/net long|short %|share/,'pie'],[/data|release/,'candles'],[/set-?ups?|pairs?/,'shuffle'],
   [/stale|out of date|overdue/,'alert'],[/all assets|overview/,'layers'],
 ];
@@ -619,7 +619,7 @@ function mvArr(a,i,d){const n=i+d;if(n<0||n>=a.length)return;[a[i],a[n]]=[a[n],a
 // glowClass/biasScore global fuer jedes ind.bias aufgerufen werden.
 // Score-Berechnung nach js/score.js ausgekoppelt (docs/module-split.md).
 import {
-  bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
+  bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,BOND_PKT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SEAS_RETAIL_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
   SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
@@ -628,7 +628,7 @@ import {
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
   scoreInfoTotalRow,indSurpriseStats,indHalfLifeDays,dqNum,openDataQuality,openScoreInfoRub,openScoreInfoSym,symStrengthSectionHtml,
   countActiveInds,openScoreInfoPair,indTrendAdjMag,rubScore,symScore,scoreColor,scoreBias,scoreBadge,
-  _animPrev,animChanges,flipNotes,flipRankRows,carryStufe,pairCarryAdj,_rateStufenCache,rateSteps,
+  _animPrev,animChanges,flipNotes,flipRankRows,carryStufe,pairCarryAdj,carryDetails,carryRegelText,_rateStufenCache,rateSteps,
   invalidateRateStepCache,rateAtDate,pairCarryAdjAt,symTrackedCount,_fxRefCountCache,invalidateCmpCache,beginRenderPass,syncSidebarScores,
   fxRefCount,symCmpFactor,symScoreCmp,SCORE_MODEL_VERSION,SCORE_MODEL_TAG,scoreHistEntryCurrent,STRENGTH_MIN_OBS,STRENGTH_Z_BANDS,
   symScoreAvg,symOwnHistory,symOwnZ,symStrength10,symStrengthMissing,pairScore,rowScore,fmtDate,
@@ -765,11 +765,13 @@ const RATE_WATCH={
   CAD:'https://rateprobability.com/boc',
   AUD:'https://rateprobability.com/rba',
   CHF:null,
-  NZD:null,
+  // centralbank.watch fuehrt eine RBNZ-Seite (Suche 2026-09-24); rateprobability
+  // blockt automatische Pruefungen (Cloudflare), dort ist nichts verifizierbar.
+  NZD:'https://centralbank.watch/reserve-bank-of-new-zealand/',
 };
 // Wie die Seite je Waehrung heisst - fuer Beschriftung und Hinweistext.
 const RATE_WATCH_BANK={USD:'Fed',EUR:'ECB',GBP:'Bank of England',JPY:'Bank of Japan',CAD:'Bank of Canada',AUD:'Reserve Bank of Australia',CHF:'Swiss National Bank',NZD:'Reserve Bank of New Zealand'};
-const RATE_WATCH_SITE={USD:'CME FedWatch Tool',EUR:'rateprobability.com/ecb',GBP:'rateprobability.com/boe',JPY:'rateprobability.com/boj',CAD:'rateprobability.com/boc',AUD:'rateprobability.com/rba'};
+const RATE_WATCH_SITE={USD:'CME FedWatch Tool',EUR:'rateprobability.com/ecb',GBP:'rateprobability.com/boe',JPY:'rateprobability.com/boj',CAD:'rateprobability.com/boc',AUD:'rateprobability.com/rba',NZD:'centralbank.watch (RBNZ)'};
 // null = fuer diese Waehrung existiert keine Seite. Ein selbst gesetzter Link
 // (Langdruck aufs Symbol) gewinnt immer, auch bei CHF/NZD - findet der Nutzer
 // dort doch eine Quelle, soll die App ihm nicht im Weg stehen.
@@ -3518,7 +3520,7 @@ function applyIndResearch(sym){
 function mkInds(names){return names.map(n=>({id:uid(),name:n,bias:'neu',imp:false,date:'',interval:'',points:[]}));}
 function mkRubs(){return[
   {id:uid(),name:'Inflation',bias:'neu',imp:false,summary:'',indicators:mkInds(['Central Bank Rate','CPI (Headline)','CPI m/m','Core CPI','PPI','Core PPI','PCE','Core PCE','Services Inflation','Inflation Expectations','2Y Bond Yield','10Y Bond Yield'])},
-  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:mkInds(['Next CB Move'])},
+  {id:uid(),name:'Interest Rates',bias:'neu',imp:false,summary:'',indicators:[]},
   {id:uid(),name:'Labour Market',bias:'neu',imp:false,summary:'',indicators:mkInds(['NFP / Employment Change','Unemployment Rate','ADP Employment','JOLTS Job Openings','Avg Hourly Earnings','Unemployment Claims'])},
   {id:uid(),name:'Economic Growth',bias:'neu',imp:false,summary:'',indicators:mkInds(['GDP Growth QoQ','Manufacturing PMI','Services PMI','Retail Sales','Consumer Confidence','ZEW Economic Sentiment','Ifo Business Climate'])},
   {id:uid(),name:'COT Data',bias:'neu',imp:false,summary:'',indicators:mkInds(['Net Bullish Positioning','Net Bearish Positioning','WoW Change in Net Position (%)'])},
@@ -3547,7 +3549,6 @@ const IND_INFO_DEFAULTS={
   'Central Bank Rate':'The central bank\'s main policy interest rate, in %. Higher rates generally strengthen the currency. Watch the decision vs. expectations and the forward guidance.',
   '2Y Bond Yield':'Yield on 2-year government bonds, in %. Tracks rate-hike/cut expectations closely; rising = market pricing tighter policy = currency-supportive.',
   '10Y Bond Yield':'Yield on 10-year government bonds, in %. Reflects long-term growth & inflation expectations; rising yields often support the currency.',
-  'Next CB Move':'Your own expectation for the next policy decision. Bullish = hike expected, bearish = cut expected, neutral = hold expected. Set manually.',
   // Labour Market
   'NFP / Employment Change':'Net new jobs added in the period (non-farm), in thousands. Strong job growth = robust economy = hawkish and currency-positive.',
   'Unemployment Rate':'Share of the labour force without a job, in %. Lower = tighter labour market, supports rate hikes and the currency.',
@@ -3612,7 +3613,7 @@ function ensureRiskEnvWeg(){
 // Nutzer-Wunsch 2026-08-24 entfernt (siehe NEUE_UMFRAGEN_2026_08-Kommentar) -
 // aktive Bereinigung noetig, weil migrateRubInds() sie sonst aus bereits
 // gespeicherten Profilen (vor diesem Datum) nie herausnehmen wuerde.
-const RUB_IND_REMOVE={'Interest Rates':['CB Tone','Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'Economic Growth':['NFIB Small Business Optimism','Leading Index'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
+const RUB_IND_REMOVE={'Interest Rates':['CB Tone','Next CB Move','Rate Decision Surprise','Forward Guidance','Swaps','Market Repricing (OIS/Swaps)','Carry Bias'],'Inflation':['ISM Prices Paid','Unemployment Claims'],'Labour Market':['Participation Rate'],'Economic Growth':['NFIB Small Business Optimism','Leading Index'],'COT Data':['Asset Manager Positioning','Crowded Trade Warning','Implied Volatility','Put/Call Ratio','Fear & Greed Index']};
 const RUB_IND_RENAME={'Net Speculative Position':'Net Bullish Positioning','WoW Change in Net Position':'WoW Change in Net Position (%)','Initial Jobless Claims':'Unemployment Claims','Retail Sales MoM':'Retail Sales','Retail Sales MoM m/m':'Retail Sales'};
 // Diese Indikatoren wurden früher per "newInds" einzeln in Labour Market/
 // Inflation eingefügt (v3). Sie sind jetzt durch die "Economic Growth"-
@@ -3861,10 +3862,11 @@ function migrateRubInds(rubrics,sym){
     // ⚠ "CB Tone" wird seit 2026-09-24 NICHT mehr eingefuegt (Nutzer: "CB Tone
     // entfernen"): eine eigene Einschaetzung, die nie gesetzt wurde - bei
     // allen 24 Assets neutral. Bestehende Zeilen raeumt RUB_IND_REMOVE ab.
-    if(rub.name==='Interest Rates'&&!rub.indicators.find(i=>i.name==='Next CB Move')){
-      const move=sym&&sym.cbNextMove==='hike'?'bull':sym&&sym.cbNextMove==='cut'?'bear':'neu';
-      rub.indicators.push({id:uid(),name:'Next CB Move',bias:move,imp:false,date:'',interval:'',points:[]});
-    }
+    // ⚠ Ebenso "Next CB Move" seit 2026-09-24 nicht mehr (Nutzer:
+    // "Zinswahrscheinlichkeiten nur als Link"): eine Hand-Einschaetzung, auf
+    // der Asset-Seite nirgends sichtbar, ueberall neutral. Die Zinserwartung
+    // steckt jetzt objektiv in den Rendite-Trends (je 0,75) und der 2Y-
+    // Zinsdifferenz; die Wahrscheinlichkeiten bleiben ein Link.
   });
   if(sym){delete sym.cbStance;delete sym.cbNextMove;}
   if(!rubrics.find(r=>r.name==='Economic Growth')){
@@ -5361,7 +5363,11 @@ function reapplyLiveFeeds(){
    // Snapshot von VOR dem 2026-09-14 kennt die beiden Indikatoren gar nicht -
    // ohne diesen Aufruf fehlte ihr Score-Beitrag nach jedem Sync, jedem
    // Backup und jedem Undo, bis die Seite neu geladen wird.
-   ()=>applySeasRetailFeed()].forEach(fn=>{try{fn();}catch(e){}});
+   ()=>applySeasRetailFeed(),
+   // 2Y-Zinsdifferenz und Rohstoffe (2026-09-24) - laufen auch in
+   // applySeasRetailFeed mit, stehen hier aber ausdruecklich (check/structure.js).
+   ()=>applyZinsDiffFeed(),
+   ()=>applyRohstoffFeed()].forEach(fn=>{try{fn();}catch(e){}});
 }
 function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // Nutzer-Bugreport 2026-09-01 ("Notizen in mehreren Ordnern sind weg,
@@ -8430,43 +8436,53 @@ function seasBiasFor(id){
 }
 
 // ── Retail: gegen die Menge, nach der Regel des Nutzers ──────────────────
-// Woertlich: "ab Extremen von 85 und 15 Long oder Short in % 1
-// scoreaemderung in die andere Richtung und ab 60 bzw 40% nur 0,5 Aenderung
-// aber bei 40-60 gar nix das ist neutral" - und fuer eine Waehrung ueber
-// ihre Paare: "3/5 Paaren Long Dann scoreaemderung -0,5 bearish. Aber wenn
-// 5/5 Long dann -1".
-// ⚠ Die beiden Saetze sind DIESELBE Skala, einmal in Prozent des Buches und
-// einmal in Prozent der Paare: 3 von 5 sind 60%, 5 von 5 sind 100%. Deshalb
-// eine Schwelle fuer beide Faelle - bei einer Waehrung zaehlt der ANTEIL DER
-// PAARE, die auf dieser Seite stehen, bei einem Einzel-Asset der Anteil des
-// Buches. Mit sieben USD-Paaren heisst das: 5 von 7 (71%) mild, 6 von 7
-// (86%) extrem.
-// Das Vorzeichen dreht: eine einseitig long positionierte Menge ist bearish.
-const RETAIL_EXTREM=85, RETAIL_MILD=60;
+// Neu 2026-09-24 (Nutzer: "bei Retail sollen nur Paare zu Long oder Short
+// zaehlen ab 65 und 35 Prozent, sonst neutral. Und die Veraenderung
+// einbeziehen ist auch gut" - "Retail kannst du so umsetzen").
+// Vorher zaehlte bei einer Waehrung der ANTEIL der Paare ueber 50 % - ein
+// Paar mit 51 % long zaehlte so viel wie eines mit 91 %.
+// Jetzt je Paar (auf das Asset gedreht) eine Gegenstimme:
+//   Menge >= 65 % long  -> -0,5     Menge <= 35 % long -> +0,5    sonst 0
+//   ist das Extrem in den letzten 5 Tagen um >= 3 Punkte WEITER gewachsen
+//   (IG-Logik: extrem und wird noch extremer) -> doppelt (±1).
+// Waehrung = Durchschnitt ueber ihre Paare (-1 ... +1), Einzel-Asset = das
+// eine Buch. Das ist der Score-Beitrag (ind.pkt), hoechstens ±1.
+const RETAIL_AB=65,RETAIL_STIMME=0.5,RETAIL_WACHS_PKT=3,RETAIL_WACHS_TAGE=5;
+// Veraenderung der Broker-Long-Quote ueber RETAIL_WACHS_TAGE Kalendertage.
+function retailAenderung(sym){
+  const D=SENTIMENT_DATA;
+  const h=(D&&D.retailHistory&&Array.isArray(D.retailHistory[sym]))?D.retailHistory[sym].filter(e=>e&&e[0]&&isFinite(+e[1])):null;
+  if(!h||h.length<2)return null;
+  const letzt=h[h.length-1],grenze=new Date(Date.parse(letzt[0])-RETAIL_WACHS_TAGE*864e5).toISOString().slice(0,10);
+  let alt=null;for(let i=h.length-2;i>=0;i--){if(h[i][0]<=grenze){alt=h[i];break;}}
+  return alt?(+letzt[1])-(+alt[1]):null;
+}
+function retailStimme(langAsset,dAsset){
+  const ext=langAsset>=RETAIL_AB?-1:langAsset<=100-RETAIL_AB?1:0;
+  if(!ext)return{st:0,waechst:false};
+  // waechst = die Menge rueckt weiter in dieselbe (extreme) Richtung
+  const waechst=dAsset!=null&&(ext<0?dAsset>=RETAIL_WACHS_PKT:dAsset<=-RETAIL_WACHS_PKT);
+  return{st:ext*RETAIL_STIMME*(waechst?2:1),waechst};
+}
 function retailBiasFor(id){
   const z=abRetailZeilen(id);
   if(!z||!z.length)return{bias:'neu',txt:null,grund:'no retail book'};
   const einzel=z.length===1;
-  // ⚠ IMMER langAsset, nie lang. `lang` ist seit dem 2026-09-14 die
-  // ungedrehte Broker-Quote (so steht sie in der Kachel), `langAsset` die
-  // auf dieses Asset gedrehte. Fuer den Score zaehlt nur die zweite: ob die
-  // Menge auf DIESEM Asset long sitzt, nicht ob sie auf einem Paar long
-  // sitzt, in dem das Asset hinten steht.
-  // Einzel-Asset: der Anteil des Buches. Waehrung: der Anteil ihrer Paare.
-  const lang=einzel?z[0].langAsset:Math.round(z.filter(x=>x.langAsset>50).length/z.length*100);
-  const kurz=100-lang;
-  let bias='neu';
-  if(lang>=RETAIL_EXTREM)bias='sbear';
-  else if(lang>=RETAIL_MILD)bias='bear';
-  else if(kurz>=RETAIL_EXTREM)bias='sbull';
-  else if(kurz>=RETAIL_MILD)bias='bull';
-  return{bias,lang,einzel,paare:z.length,
-    txt:einzel?`${lang}% long`:`${z.filter(x=>x.langAsset>50).length}/${z.length} pairs long`,
-    grund:bias==='neu'?'crowd is balanced (40-60%)':null};
+  // ⚠ IMMER langAsset, nie lang (lang = ungedrehte Broker-Quote).
+  const stimmen=z.map(x=>{
+    const d=retailAenderung(x.sym),dAsset=d==null?null:(x.vorn?d:-d);
+    return Object.assign({},x,{dAsset},retailStimme(x.langAsset,dAsset));
+  });
+  const pkt=Math.round(stimmen.reduce((s,x)=>s+x.st,0)/stimmen.length*100)/100;
+  const nLang=stimmen.filter(x=>x.langAsset>=RETAIL_AB).length,nKurz=stimmen.filter(x=>x.langAsset<=100-RETAIL_AB).length;
+  const bias=pkt>0?'bull':pkt<0?'bear':'neu';
+  return{bias,pkt,einzel,paare:z.length,stimmen,nLang,nKurz,lang:einzel?z[0].langAsset:null,
+    txt:einzel?`${z[0].langAsset}% long`:`${nLang}/${z.length} pairs ≥${RETAIL_AB}% long · ${nKurz}/${z.length} ≥${RETAIL_AB}% short`,
+    grund:bias==='neu'?`no pair at ${RETAIL_AB}/${100-RETAIL_AB} or beyond`:null};
 }
 /** Die Score-Regel in einem Satz - einmal geschrieben, in Kachel und Score-Fenster gleich. */
 function retailRegelText(){
-  return`From ${RETAIL_EXTREM}/${100-RETAIL_EXTREM} the score moves a full 1 the other way, from ${RETAIL_MILD}/${100-RETAIL_MILD} it moves 0.5, and between ${100-RETAIL_MILD} and ${RETAIL_MILD} nothing happens.`;
+  return`Each pair votes against the crowd: ${RETAIL_AB}% or more long counts −${RETAIL_STIMME}, ${100-RETAIL_AB}% or less long counts +${RETAIL_STIMME}, anything in between 0. If the crowd moved further into that extreme by ${RETAIL_WACHS_PKT} points or more over the last ${RETAIL_WACHS_TAGE} days, the vote counts double (±${RETAIL_STIMME*2}). A currency's score is the average of its pair votes, so at most ±1.`;
 }
 function seasRegelText(){
   return`Counts ±0.5, and only when the average and the hit rate agree — a positive average needs at least ${SEAS_HIT_HOCH}% up years, a negative one at most ${SEAS_HIT_TIEF}%.`;
@@ -8481,6 +8497,17 @@ function seasRegelText(){
 // dargestellte Asset; getSym() liefert die Auswahl der Seitenleiste - beides
 // faellt in 23 von 24 Faellen auseinander, sobald man eine Kachel eines
 // anderen Assets ansieht.
+// COT: drei Zeilen (Netto long, Netto short, Wochenaenderung) als EIN
+// Beitrag in der Kachel - mit der Aufteilung, damit man die Regel sieht.
+function abCotScoreZeile(c){
+  const rub=(c&&c.rubrics||[]).find(r=>r&&r.name==='COT Data');if(!rub)return'';
+  const teil=n=>{const i=(rub.indicators||[]).find(x=>x&&stripPeriodSuffix(x.name).base===n);return i?indScore(i,rub):0;};
+  const netz=roundSc(teil('Net Bullish Positioning')+teil('Net Bearish Positioning')),wow=teil(COT_WOW_BASE),v=roundSc(netz+wow);
+  const col=v>0?BC.bull:v<0?BC.bear:'var(--t3)',f=x=>(x>0?'+':'')+x;
+  return`<div class="ab-scoreline" title="What COT contributes to ${escH(c.name||c.id)}'s score — read straight from the score engine.">
+    <span class="ab-scoreline-l">Score effect</span><b style="color:${col}">${f(v)}</b>
+    <span class="ab-scoreline-n">net ${f(netz)} · weekly ${f(wow)}</span></div>`;
+}
 function abScoreZeile(c,indName,grund){
   const rub=(c&&c.rubrics||[]).find(r=>r&&r.name==='COT Data');
   const ind=rub&&(rub.indicators||[]).find(i=>i&&i.name===indName);
@@ -8550,9 +8577,16 @@ function applySeasRetailFeed(){
       ind.research={actual:erg.txt,forecast:null,previous:null,source:quelle,cotColor:col};
       changed=true;
     }
-    if(!indBiasPinned(ind,indBiasInputSig(erg.txt,null,null,''))&&ind.bias!==erg.bias){
+    const gepinnt=indBiasPinned(ind,indBiasInputSig(erg.txt,null,null,''));
+    if(!gepinnt&&ind.bias!==erg.bias){
       ind.bias=erg.bias;changed=true;
     }
+    // Feste Punkte nur dort, wo die Regel eine Zahl liefert (Retail seit
+    // 2026-09-24); Saisonalitaet bleibt Bias x Halbgewicht. Von Hand
+    // gesetzter Bias hebt die Zahl auf.
+    const pkt=(!gepinnt&&typeof erg.pkt==='number')?erg.pkt:undefined;
+    if(pkt===undefined){if('pkt' in ind){delete ind.pkt;changed=true;}}
+    else if(ind.pkt!==pkt){ind.pkt=pkt;changed=true;}
     // Wie COT und Sentiment: kein Trend-Modell, kein Step-Signal.
     if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
     if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}
@@ -8580,9 +8614,182 @@ function applySeasRetailFeed(){
     const sc=rubScore(rub),cardBias=sc>0?'bull':sc<0?'bear':'neu';
     if(rub.bias!==cardBias){rub.bias=cardBias;changed=true;}
   });
+  // Die uebrigen Feste-Punkte-Feeds haengen hier mit dran: applySeasRetailFeed
+  // laeuft an JEDER Stelle, an der Live-Daten (neu) angewandt werden (Boot,
+  // Sync/Undo/Import ueber reapplyLiveFeeds, Sentiment-Abruf) - eine eigene
+  // Aufrufstelle je Feed waere die naechste, die irgendwo fehlt.
+  try{if(applyZinsDiffFeed())changed=true;}catch(e){}
+  try{if(applyRohstoffFeed())changed=true;}catch(e){}
   return changed;
 }
 
+// ══ 2Y-ZINSDIFFERENZ UEBER 20 HANDELSTAGE (Nutzer 2026-09-24) ══════════
+// "Nimm die Zinsdifferenz ueber 20 Tage auf" - per Rueckfrage: ±0,5 ab 10 bp,
+// ±0,75 ab 25 bp. Gemessen wird der ABSTAND der eigenen 2Y-Rendite zum
+// Durchschnitt der 2Y-Renditen der anderen sieben Waehrungen und wie er sich
+// in 20 Handelstagen veraendert hat. Waechst der Abstand zugunsten der
+// Waehrung, stuetzt das sie (die Zinserwartung laeuft fuer sie). Das ist
+// NICHT der Carry: der Carry ist der heutige Abstand der Zinsen und wirkt nur
+// im Paar-Score (Set-ups); hier zaehlt die Richtung, in die er sich bewegt.
+// Steht in der Inflation-Karte direkt bei den Rendite-Trends. Nicht-FX-Assets
+// uebernehmen den Wert ihrer Waehrung ueber die Inflation-Regel (same/inverse).
+const ZINSDIFF_IND='2Y Yield Gap (20d)',ZINSDIFF_TAGE=20,ZINSDIFF_STUFEN=[[25,0.75],[10,0.5]];
+function zinsdiffReihe(ccy){
+  const bd=BOND_DATA_FEED&&BOND_DATA_FEED[ccy],s=bd&&bd['2Y Bond Yield']&&bd['2Y Bond Yield'].series;
+  if(!Array.isArray(s))return null;
+  const r=s.map(e=>[String(e[0]).slice(0,10),Number(e[1])]).filter(e=>e[0]&&isFinite(e[1])).sort((a,b)=>a[0].localeCompare(b[0]));
+  return r.length?r:null;
+}
+function zinsAm(r,d){let v=null;for(let i=0;i<r.length;i++){if(r[i][0]<=d)v=r[i][1];else break;}return v;}
+// {jetzt, vorher, datum, datumVorher, bp, pkt} oder null (zu kurze Reihe).
+function zinsdiffFuer(ccy){
+  if(!FX.includes(ccy))return null;
+  const eigen=zinsdiffReihe(ccy);if(!eigen)return null;
+  const gestern=isoMinusDays(todayStr(),1);
+  const fertig=eigen.filter(e=>e[0]<=gestern);
+  if(fertig.length<=ZINSDIFF_TAGE)return null;
+  const d1=fertig[fertig.length-1][0],d0=fertig[fertig.length-1-ZINSDIFF_TAGE][0];
+  const andere=FX.filter(c=>c!==ccy).map(zinsdiffReihe);
+  if(andere.some(r=>!r))return null;
+  const abstand=d=>{const e=zinsAm(eigen,d),o=andere.map(r=>zinsAm(r,d));if(e==null||o.some(v=>v==null))return null;return e-o.reduce((a,b)=>a+b,0)/o.length;};
+  const jetzt=abstand(d1),vorher=abstand(d0);
+  if(jetzt==null||vorher==null)return null;
+  const bp=Math.round((jetzt-vorher)*1000)/10;
+  const st=ZINSDIFF_STUFEN.find(([ab])=>Math.abs(bp)>=ab);
+  return{jetzt,vorher,datum:d1,datumVorher:d0,bp,pkt:st?Math.sign(bp)*st[1]:0};
+}
+function zinsdiffRegelText(){
+  return`Gap = this currency's 2-year yield minus the average 2-year yield of the other seven. The score looks at how that gap changed over the last ${ZINSDIFF_TAGE} trading days: ${ZINSDIFF_STUFEN.slice().reverse().map(([ab,p])=>ab+' bp or more → ±'+p).join(', ')}, less than 10 bp → 0. A widening gap in the currency's favour counts bullish.`;
+}
+const fmtPp=v=>(v>0?'+':'')+v.toFixed(2)+' pp';
+// Richtung fuer ein Nicht-FX-Asset: zuerst die Ableitungsregel der Inflation-
+// Karte (Gold, Indizes, Yields). Assets ohne Regel (BTC, Silber, Oel, DAX ...)
+// spiegeln ihre Rendite-Zeilen auf anderem Weg - dann gilt, wie DIESES Asset
+// die eigene 2Y- (sonst 10Y-)Rendite gegenueber seiner Waehrung wertet: gleiche
+// Richtung = same, entgegengesetzt = inverse. Ist beides neutral, laesst sich
+// die Richtung nicht ablesen -> keine Zeile (nie raten).
+function zinsdiffRichtung(sym,rub,ccy){
+  const r=(effDeriveRules(sym)||{})['Inflation'];
+  if(r==='same'||r==='inverse')return r;
+  const src=syms.find(s=>s.id===ccy),srcRub=src&&(src.rubrics||[]).find(x=>x.name==='Inflation');
+  if(!srcRub)return null;
+  for(const n of ['2Y Bond Yield','10Y Bond Yield']){
+    const a=(rub.indicators||[]).find(i=>i.name===n),b=(srcRub.indicators||[]).find(i=>i.name===n);
+    if(!a||!b||!a.bias||!b.bias||a.bias==='neu'||b.bias==='neu')continue;
+    return a.bias===b.bias?'same':'inverse';
+  }
+  return null;
+}
+function applyZinsDiffFeed(){
+  if(!BOND_DATA_FEED||!Array.isArray(syms))return false;
+  let changed=false;
+  const werte={};FX.forEach(c=>{try{werte[c]=zinsdiffFuer(c);}catch(e){werte[c]=null;}});
+  syms.forEach(sym=>{
+    const rub=(sym.rubrics||[]).find(r=>r&&r.name==='Inflation');
+    if(!rub||!Array.isArray(rub.indicators))return;
+    const fx=!isNonFx(sym.id),ccy=fx?sym.id:macroCcyFor(sym.id);
+    const w=ccy?werte[ccy]:null;
+    const regel=fx?'same':zinsdiffRichtung(sym,rub,ccy);
+    let idx=rub.indicators.findIndex(i=>i&&i.name===ZINSDIFF_IND);
+    // Keine Grundlage (zu kurze Reihe, keine Waehrung, keine Ableitungsregel)
+    // -> keine Zeile. Aber nur, wenn die Quelle DA ist (sonst unangetastet,
+    // wie applySeasRetailFeed).
+    if(!w||(regel!=='same'&&regel!=='inverse')){
+      if(idx>=0&&DATA_LIVE_OK.bond===true){rub.indicators.splice(idx,1);changed=true;}
+      return;
+    }
+    let ind=idx>=0?rub.indicators[idx]:null;
+    if(!ind){
+      ind={id:uid(),name:ZINSDIFF_IND,bias:'neu',imp:false,date:'',interval:'',points:[]};
+      // direkt hinter die Rendite-Trends
+      let nach=-1;rub.indicators.forEach((i,k)=>{if(BOND_INDS.includes(stripPeriodSuffix(i.name).base))nach=k;});
+      rub.indicators.splice(nach>=0?nach+1:rub.indicators.length,0,ind);changed=true;
+    }
+    const pkt=regel==='inverse'?-w.pkt:w.pkt;
+    const bias=pkt>0?'bull':pkt<0?'bear':'neu';
+    const col=w.bp>0?'bond-up':w.bp<0?'bond-down':'bond-flat';
+    const act=fmtPp(w.jetzt),prev=fmtPp(w.vorher);
+    const r=ind.research||{};
+    if(!(r.zinsdiff&&r.actual===act&&r.previous===prev&&r.stand===w.datum&&r.bp===w.bp)){
+      // Ohne research.date (wie Saisonalitaet/Retail): ein Zustand, keine
+      // Veroeffentlichung - sonst griffe die Altersgrenze/History-Synthese.
+      ind.research={actual:act,forecast:null,previous:prev,stand:w.datum,prevDate:w.datumVorher,source:'bond_data.json',zinsdiff:true,bp:w.bp,cotColor:col};
+      changed=true;
+    }
+    if(ind.bias!==bias){ind.bias=bias;changed=true;}
+    if(ind.pkt!==pkt){ind.pkt=pkt;changed=true;}
+    if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+    if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}
+  });
+  return changed;
+}
+// ══ ROHSTOFFE FUER AUD/NZD/CAD (Nutzer 2026-09-24) ════════════════════
+// "Rohstoffe fuer AUD usw find ich gut, bau das ein". Gewicht nach
+// Exportanteil (Recherche 2026-09-24): Australien Eisenerz 18,0 %, Kohle
+// 11,0 %, Gold 7,3 % der Warenexporte -> 0,5/0,3/0,2; Neuseeland Milch
+// ~31-35 % -> 1,0; Kanada Oel ~13 % (Energie 20 %) -> 1,0.
+// Signal: die 1-Monats-Veraenderung des Preises (TradingView), gemessen an
+// der typischen Monatsbewegung dieses Rohstoffs (5 Jahre Yahoo-Historie):
+// ab 1 typischen Bewegung ±0,5, ab 2 ±1 - mal Gewicht. Milch ohne Historie:
+// feste GDT-Schwellen, ab 2 % ±0,5, ab 5 % ±1. Steht in der Wachstums-Karte.
+const ROHSTOFF_KORB={AUD:[['IRON',0.5],['COAL',0.3],['GOLD',0.2]],NZD:[['DAIRY',1]],CAD:[['OIL',1]]};
+const ROHSTOFF_NAME={IRON:'Iron Ore (1M)',COAL:'Coal (1M)',GOLD:'Gold (1M)',DAIRY:'Dairy (1M)',OIL:'Crude Oil (1M)'};
+const ROHSTOFF_FEST={DAIRY:[[5,1],[2,0.5]]},ROHSTOFF_Z=[[2,1],[1,0.5]],ROHSTOFF_MAX_ALTER=7;
+function rohstoffWert(id,gewicht){
+  const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[id];
+  if(!it||it.perf1m==null||!isFinite(+it.perf1m))return null;
+  const perf=+it.perf1m;
+  const alt=it.asOf?Math.round((Date.parse(todayStr())-Date.parse(it.asOf))/864e5):null;
+  const frisch=alt!=null&&alt<=ROHSTOFF_MAX_ALTER;
+  let stufe=0,z=null,mass=null;
+  if(ROHSTOFF_FEST[id]){const st=ROHSTOFF_FEST[id].find(([ab])=>Math.abs(perf)>=ab);stufe=st?st[1]:0;mass='fixed 2% / 5%';}
+  else if(it.sigma1m!=null&&+it.sigma1m>0){z=perf/(+it.sigma1m);const st=ROHSTOFF_Z.find(([ab])=>Math.abs(z)>=ab);stufe=st?st[1]:0;mass='±'+(+it.sigma1m).toFixed(1)+'% typical';}
+  else return null;
+  const pkt=frisch?Math.round(Math.sign(perf)*stufe*gewicht*1000)/1000:0;
+  return{id,it,perf,z,stufe,gewicht,pkt,mass,frisch,alt};
+}
+function rohstoffRegelText(ccy){
+  const k=ROHSTOFF_KORB[ccy];if(!k)return'';
+  return`${k.map(([id,g])=>ROHSTOFF_NAME[id].replace(' (1M)','')+' '+g).join(', ')} (weights by share of exports). Each counts its 1-month price change: `
+    +(k.some(([id])=>!ROHSTOFF_FEST[id])?`measured against that commodity's typical 1-month move (5 years of history) — one typical move or more → ±0.5, two or more → ±1`:'')
+    +(k.some(([id])=>ROHSTOFF_FEST[id])?`${k.some(([id])=>!ROHSTOFF_FEST[id])?'; ':''}dairy uses the fixed auction thresholds: 2% or more → ±0.5, 5% or more → ±1`:'')
+    +`, times the weight. Rising prices support the currency. Data older than ${ROHSTOFF_MAX_ALTER} days counts 0.`;
+}
+function applyRohstoffFeed(){
+  if(!COMMODITY_DATA||!Array.isArray(syms))return false;
+  let changed=false;
+  syms.forEach(sym=>{
+    const rub=(sym.rubrics||[]).find(r=>r&&r.name==='Economic Growth');
+    if(!rub||!Array.isArray(rub.indicators))return;
+    const fx=!isNonFx(sym.id),ccy=fx?sym.id:macroCcyFor(sym.id);
+    const regel=fx?'same':(effDeriveRules(sym)||{})['Economic Growth'];
+    const korb=(ccy&&ROHSTOFF_KORB[ccy]&&(regel==='same'||regel==='inverse'))?ROHSTOFF_KORB[ccy]:[];
+    const soll=new Set(korb.map(([id])=>ROHSTOFF_NAME[id]));
+    // Zeilen, die hier nicht (mehr) hingehoeren, raus.
+    const vorher=rub.indicators.length;
+    rub.indicators=rub.indicators.filter(i=>!(Object.values(ROHSTOFF_NAME).includes(i.name)&&!soll.has(i.name)));
+    if(rub.indicators.length!==vorher)changed=true;
+    korb.forEach(([id,g])=>{
+      const w=rohstoffWert(id,g),name=ROHSTOFF_NAME[id];
+      let idx=rub.indicators.findIndex(i=>i&&i.name===name);
+      if(!w){if(idx>=0){rub.indicators.splice(idx,1);changed=true;}return;}
+      let ind=idx>=0?rub.indicators[idx]:null;
+      if(!ind){ind={id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]};rub.indicators.push(ind);changed=true;}
+      const pkt=regel==='inverse'?-w.pkt:w.pkt,bias=pkt>0?'bull':pkt<0?'bear':'neu';
+      const act=(w.perf>0?'+':'')+w.perf.toFixed(1)+'%',prev=w.mass;
+      const r=ind.research||{};
+      if(!(r.rohstoff&&r.actual===act&&r.previous===prev&&r.stand===w.it.asOf)){
+        ind.research={actual:act,forecast:null,previous:prev,stand:w.it.asOf,source:'https://www.tradingview.com/symbols/'+String(w.it.ticker||'').replace(':','-').replace('!',''),rohstoff:true,
+          cotColor:w.perf>0?'bond-up':w.perf<0?'bond-down':'bond-flat',gewicht:g,z:w.z,frisch:w.frisch};
+        changed=true;
+      }
+      if(ind.bias!==bias){ind.bias=bias;changed=true;}
+      if(ind.pkt!==pkt){ind.pkt=pkt;changed=true;}
+      if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}
+    });
+  });
+  return changed;
+}
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
 function abGrafikHtml(art,c){
   if(art==='cot'){
@@ -8618,9 +8825,10 @@ function abGrafikHtml(art,c){
       </div>`;
     return abTileZ('cot','COT Positioning',
       `<span class="ab-tile-s">as of ${escH(stand)}</span>`,
-      `${ch.html}${fuss}`,null,
+      `${ch.html}${fuss}${abCotScoreZeile(c)}`,null,
       ['Large speculators (CFTC Legacy, non-commercial) — the reporting group whose positioning the score reads.',
-       'Blue is long contracts, red is short, the black line is the long share.'+(ch.leer?'':` The chart covers ${ch.berichte} weekly reports.`)]);
+       'Blue is long contracts, red is short, the black line is the long share.'+(ch.leer?'':` The chart covers ${ch.berichte} weekly reports.`),
+       'How it counts: '+cotRegelText()]);
   }
   if(art==='retail'){
     const zeilen=abRetailZeilen(c.id);
@@ -8660,8 +8868,8 @@ function abGrafikHtml(art,c){
     // (USD/JPY) und mal hinten (EUR/USD), das waeren zwei Blickrichtungen in
     // einer Zahl. Beide Angaben sind deshalb ausdruecklich beschriftet.
     const schnitt=Math.round(zeilen.reduce((a,z)=>a+z.langAsset,0)/zeilen.length);
-    const einseitig=zeilen.filter(z=>z.langAsset>=60).length;
-    const kurzSeitig=zeilen.filter(z=>z.langAsset<=40).length;
+    const einseitig=zeilen.filter(z=>z.langAsset>=RETAIL_AB).length;
+    const kurzSeitig=zeilen.filter(z=>z.langAsset<=100-RETAIL_AB).length;
     const mehrfach=zeilen.length>1;
     let rb=null;try{rb=retailBiasFor(c.id);}catch(e){}
     return abTileZ('retail','Retail Positioning',
@@ -8670,8 +8878,8 @@ function abGrafikHtml(art,c){
        <div class="ab-bars">${kopf}${bars}</div>
        ${verlauf?verlauf.html:''}
        <div class="ab-foot">
-         <span><span class="ab-foot-l">Long ${escH(c.id)}</span> <b>${einseitig}/${zeilen.length}</b></span>
-         <span><span class="ab-foot-l">Short ${escH(c.id)}</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">≥${RETAIL_AB}% long ${escH(c.id)}</span> <b>${einseitig}/${zeilen.length}</b></span>
+         <span><span class="ab-foot-l">≥${RETAIL_AB}% short ${escH(c.id)}</span> <b>${kurzSeitig}/${zeilen.length}</b></span>
          <span><span class="ab-foot-l">Average</span> <b>${schnitt}% long ${escH(c.id)}</b></span>
        </div>
        ${abScoreZeile(c,RETAIL_IND_NAME,rb&&rb.grund)}`,null,
@@ -8953,6 +9161,10 @@ function renderAssetBoard(c){
       ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
       ${abReihenTitel('Positioning')}
       ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
+      ${/* Momentum (2026-09-24): reine Anzeige, ueber alle drei Spalten -
+           OHNE eigene Reihen-Ueberschrift: mehr als drei sind ausdruecklich
+           ausgeschlossen (check/kartenlook.js). */''}
+      <div class="ab-col ab-full">${abMomentumHtml(c)}</div>
     </div>
     ${/* Die Notizen-Karte ist hier weg (Nutzer: "entfern die Notes Karte
          sodass dann die Charts da fetter hinpassen") - angepinnt stehen sie
@@ -8962,6 +9174,69 @@ function renderAssetBoard(c){
   </div>`;
 }
 
+// ══ MOMENTUM (Nutzer 2026-09-24: "Momentum kannst du ohne Score einbauen
+// ... und ganz ausfuehrlich im i die Karte erklaeren") ══════════════════
+// Reine Anzeige, zaehlt NICHT in den Score. Rendite ueber 1, 3 und 12 Monate
+// (21/63/252 Handelstage), bei Waehrungen gegen den Korb der anderen sieben
+// (Durchschnitt der sieben Paar-Renditen - eine Waehrung "steigt" sonst nur
+// gegen den Dollar). Jede Rendite wird mit der eigenen Historie verglichen:
+// wie viele typische Bewegungen (Standardabweichungen aller bisherigen
+// Renditen derselben Fensterlaenge) ist sie gross?
+const MOM_FENSTER=[['1M',21],['3M',63],['12M',252]];
+function momReihe(id){
+  // [[datum, wert]] ohne Wochenende; bei FX: Korb-Index aus Log-Renditen.
+  if(!FX.includes(id)){const s=ohneWochenende(priceSeriesFor(id),id);return Array.isArray(s)&&s.length?s.map(e=>[e[0],+e[1]]).filter(e=>isFinite(e[1])&&e[1]>0):null;}
+  const reihen=FX.filter(x=>x!==id).map(o=>{const s=resolvePairPriceSeries(id,o);return Array.isArray(s)?new Map(s.map(e=>[e[0],+e[1]])):null;});
+  if(reihen.some(r=>!r))return null;
+  const daten=[...reihen[0].keys()].filter(d=>reihen.every(r=>r.has(d)&&r.get(d)>0)).sort();
+  if(daten.length<2)return null;
+  // Index = exp(Mittel der Log-Kurse), damit Verhaeltnisse der Renditen stimmen.
+  return daten.map(d=>[d,Math.exp(reihen.reduce((s,r)=>s+Math.log(r.get(d)),0)/reihen.length)]);
+}
+function momWerte(id){
+  const s=momReihe(id);
+  if(!s||s.length<30)return null;
+  const v=s.map(e=>e[1]);
+  return MOM_FENSTER.map(([lbl,n])=>{
+    if(v.length<=n)return{lbl,n,ret:null};
+    const ret=(v[v.length-1]/v[v.length-1-n]-1)*100;
+    const alle=[];for(let i=n;i<v.length;i++)alle.push(Math.log(v[i]/v[i-n])*100);
+    let z=null;
+    if(alle.length>=60){const m=alle.reduce((a,b)=>a+b,0)/alle.length,sd=Math.sqrt(alle.reduce((a,b)=>a+(b-m)*(b-m),0)/(alle.length-1));if(sd>0)z=(Math.log(v[v.length-1]/v[v.length-1-n])*100-m)/sd;}
+    return{lbl,n,ret,z,beob:alle.length};
+  });
+}
+function momZustand(w){
+  const d=Object.fromEntries(w.map(x=>[x.lbl,x]));
+  const m3=d['3M'],m12=d['12M'];
+  if(!m3||m3.ret==null)return{txt:'Not enough price history',b:'neu'};
+  const auf=m3.ret>0&&(!m12||m12.ret==null||m12.ret>0),ab=m3.ret<0&&(!m12||m12.ret==null||m12.ret<0);
+  if(auf)return{txt:(m3.z!=null&&m3.z>=1?'Strong uptrend':'Uptrend'),b:'bull'};
+  if(ab)return{txt:(m3.z!=null&&m3.z<=-1?'Strong downtrend':'Downtrend'),b:'bear'};
+  return{txt:'Mixed — short and long term disagree',b:'neu'};
+}
+function abMomentumHtml(c){
+  const w=momWerte(c.id);
+  const korb=FX.includes(c.id);
+  const erkl=[
+    '<b>What momentum is.</b> Momentum is the tendency of prices that have risen over the past months to keep rising for a while longer — and of falling prices to keep falling. It is one of the best-documented patterns in markets: in currencies, Menkhoff, Sarno, Schmeling and Schrimpf (2012) measured a gap of up to 10% a year between past winners and past losers, and Moskowitz, Ooi and Pedersen (2012) found the same "time-series momentum" in currencies, bonds, commodities and equity indices.',
+    '<b>Why it tends to work.</b> Investors react slowly to news (under-reaction), information spreads gradually, and trend-following funds buy what has risen and sell what has fallen — which pushes a trend further. None of this is guaranteed, it is a statistical tendency over many cases.',
+    '<b>When it fails.</b> At turning points momentum is by definition late: it is still bullish when the top is in. Sharp reversals ("momentum crashes", e.g. spring 2009) can wipe out months of gains. In sideways markets the signal flips back and forth. Central-bank interventions can end a currency trend overnight.',
+    `<b>How it is computed here.</b> The price change over 1, 3 and 12 months (21, 63 and 252 trading days).${korb?` For a currency it is measured against the basket of the other seven major currencies (the average of the seven pairs), because a currency can rise against the dollar and fall against everything else.`:` For this asset it is its own price.`} Next to each change: how many "typical moves" it is — the change divided by the standard deviation of all past changes of the same length in this asset's own history. ±1 is a clearly above-average move, ±2 an exceptional one.`,
+    '<b>The trend label.</b> Uptrend = 3 months and 12 months both up; strong uptrend = the 3-month move is at least one typical move. Downtrend the mirror image. If short and long term point different ways, the label says so.',
+    '<b>Why it is not in the score.</b> The score is built from fundamentals (economic data, rates, positioning). Momentum is price information — mixing it in would partly count the same move twice, because prices already react to those fundamentals. It is shown here as an independent cross-check: a bullish score WITH an uptrend is a stronger picture than a bullish score against a downtrend.'
+  ];
+  if(!w)return abTileZ('trends','Momentum','',AB_LEER('Not enough price history for this asset yet.'),' ab-mom',erkl);
+  const zs=momZustand(w);
+  const zellen=w.map(x=>{
+    const col=x.ret==null?'var(--t3)':x.ret>0?BC.bull:x.ret<0?BC.bear:'var(--t3)';
+    const zTxt=x.z==null?'—':(x.z>0?'+':'')+x.z.toFixed(1)+'×';
+    return`<div class="mom-z"><span class="mom-l">${x.lbl}</span><b style="color:${col}">${x.ret==null?'–':(x.ret>0?'+':'')+x.ret.toFixed(2)+'%'}</b><span class="mom-s" title="Change divided by the typical ${x.lbl} move in this asset's own history">${zTxt} typical</span></div>`;
+  }).join('');
+  return abTileZ('trends','Momentum',`<span class="ab-tile-s">${korb?'vs basket of 7':'own price'}</span>`,
+    `<div class="mom-kopf" style="color:${biasCss(zs.b)}">${escH(zs.txt)}</div><div class="mom-reihe">${zellen}</div>
+     <div class="ab-scoreline"><span class="ab-scoreline-l">Score effect</span><b style="color:var(--t3)">0</b><span class="ab-scoreline-n">shown only — not part of the score</span></div>`,' ab-mom',erkl);
+}
 function renderSpecTab(c){
   if(abCalOffen)setTimeout(renderAssetCalBody,0);
   const rubs=c.rubrics||[];
@@ -9655,6 +9930,33 @@ function addRub(){pushU();const c=getSym();if(!c)return;if(!c.rubrics)c.rubrics=
 
 // ══ INFO MODAL (Rubrik- & Indikator-Erklärungen) ═════════════════════
 let _infoRi=-1,_infoIi=-1;
+// ── "How it counts" - die Regel je Indikator und die Zusammensetzung je
+// Karte, aus denselben Konstanten wie die Rechnung (keine zweite Wahrheit).
+const MAKRO_REGEL='A release counts +1 when it beats the forecast and −1 when it misses (bullish/bearish for this asset). Headline and core of the same measure share the weight (±0.5 each); without a forecast the release is compared with the previous one (±0.5). That weight is then multiplied by three measured factors — surprise size against the indicator\'s own typical miss, freshness (half-life 1.5 of its own release cycles) and how much the market usually moves on it — kept between 0.4 and 1.8. A release more than 2 of its own cycles overdue counts 0.';
+function indZaehlText(sym,rub,ind){
+  if(!ind)return'';
+  const b=stripPeriodSuffix(ind.name).base,r=ind.research||{};
+  const spiegel=sym&&isNonFx(sym.id)&&rub&&rubAutoDerived(sym,rub)?` Mirrored from ${macroCcyFor(sym.id)} with its card rule (same or inverse).`:'';
+  if(BOND_INDS.includes(b))return`Yield trend: ±${BOND_PKT} — the 5-day average above the 21-day average by more than 3 bp is bullish, below is bearish, in between 0. No extra weighting, no ageing.`+spiegel;
+  if(b===ZINSDIFF_IND)return zinsdiffRegelText()+spiegel;
+  if(Object.values(ROHSTOFF_NAME).includes(ind.name))return rohstoffRegelText(sym?macroCcyFor(sym.id):'')+spiegel;
+  if(b==='Net Bullish Positioning'||b==='Net Bearish Positioning'||b===COT_WOW_BASE)return cotRegelText();
+  if(b===RETAIL_IND_NAME)return retailRegelText();
+  if(b===SEAS_IND_NAME)return seasRegelText();
+  if(r.sent)return'Contrarian market sentiment, half weight (±0.5), only at extremes.';
+  if(b==='Central Bank Rate')return'The rate decision against the forecast, counted like a macro release: '+MAKRO_REGEL+spiegel;
+  return MAKRO_REGEL+spiegel;
+}
+function rubrikZusammensetzungText(sym,rub){
+  if(!rub)return'';
+  const n=rub.name,ccy=sym?macroCcyFor(sym.id):'';
+  const spiegel=sym&&isNonFx(sym.id)&&rubAutoDerived(sym,rub)?` For ${sym.id} every indicator is mirrored from ${ccy} (rule: ${effDeriveRules(sym)[n]}).`:'';
+  if(n==='COT Data')return`Four parts, added up. COT: ${cotRegelText()} Retail: ${retailRegelText()} Seasonality: ${seasRegelText()} Market sentiment (only some assets): contrarian, half weight.`;
+  let s=`Card score = sum of its indicators. Macro releases: ${MAKRO_REGEL}`;
+  if(n==='Inflation')s+=` 2Y and 10Y yield trends: ±${BOND_PKT} each (5-day vs 21-day average, 3 bp dead band). 2Y yield gap: ${zinsdiffRegelText()}`;
+  if(n==='Economic Growth'&&ROHSTOFF_KORB[ccy])s+=` Commodities: ${rohstoffRegelText(ccy)}`;
+  return s+spiegel;
+}
 function openInfoM(ri,ii){
   _infoRi=ri;_infoIi=(ii===undefined?-1:ii);
   const obj=_infoIi>=0?getInd(ri,ii):getRub(ri);
@@ -9673,7 +9975,14 @@ function openInfoM(ri,ii){
   // Schreibgeschützte Standard-Erklärung (was/wen der Indikator misst, wie er
   // angegeben ist, was er bedeutet) über den eigenen Notizen einblenden.
   const std=document.getElementById('mInfoStd'),notesLbl=document.getElementById('mInfoNotesLbl');
-  const stdTxt=_infoIi>=0?IND_INFO_DEFAULTS[stripPeriodSuffix(obj.name).base]:null;
+  // Seit 2026-09-24 steht hier immer auch, WIE gezaehlt wird (Nutzer: "dass
+  // es ueberall ein kleines i gibt, in dem ganz genau steht, wie sich das
+  // zusammensetzt") - fuer die Karte die Zusammensetzung, fuer einen
+  // Indikator seine Regel.
+  const _sym=getSym(),_rub=getRub(ri);
+  const stdBasis=_infoIi>=0?IND_INFO_DEFAULTS[stripPeriodSuffix(obj.name).base]:null;
+  const zaehl=_infoIi>=0?indZaehlText(_sym,_rub,obj):rubrikZusammensetzungText(_sym,obj);
+  const stdTxt=[stdBasis,zaehl?'How it counts: '+zaehl:null].filter(Boolean).join('\n\n')||null;
   if(std){
     if(stdTxt){std.textContent=stdTxt;std.style.display='';if(notesLbl)notesLbl.style.display='';}
     else{std.style.display='none';if(notesLbl)notesLbl.style.display='none';}
@@ -11223,36 +11532,26 @@ function pairHasCcy(name,ccys){const parts=(name||'').split('/').map(s=>s.trim()
 // Leitzinsen, die Differenz und den konkreten Score-Effekt (dieselbe
 // gestaffelte Formel wie pairCarryAdj). Fenster passt sich per .modal-CSS
 // (max-width:min(...,94vw)) automatisch an die Bildschirmgroesse an.
+function carryZeilenHtml(c){
+  const f=(v,d)=>v==null?'–':(v>0?'+':'')+v.toFixed(d);
+  const zeile=(l,v,sub)=>`<div class="cd-row"><span>${l}${sub?`<small>${sub}</small>`:''}</span><b>${v}</b></div>`;
+  return zeile(escH(c.b)+' 2-year yield',c.yb==null?'–':c.yb.toFixed(2)+'%')
+    +zeile(escH(c.q)+' 2-year yield',c.yq==null?'–':c.yq.toFixed(2)+'%')
+    +zeile('Differential',c.diff==null?'–':f(c.diff,2)+' pp','base − quote')
+    +zeile('Volatility of the pair',c.vol==null?'–':c.vol.toFixed(1)+'% a year','last '+250+' trading days')
+    +zeile('Carry-to-risk',c.ratio==null?'–':f(c.ratio,2),'differential ÷ volatility')
+    +zeile('Stage',c.stufe==null?'–':f(c.stufe,1),'±0.5 from 0.2 · ±1 from 0.4')
+    +zeile('VIX, last 20 trading days',c.vix==null?'–':f(c.vix,0)+'%',c.vixAus?'rose 30% or more → carry off':'switches carry off from +30%');
+}
 function openCarryDetail(pairName){
-  const parts=(pairName||'').split('/');
-  if(parts.length!==2)return;
-  const[b,q]=parts;
-  const rb=rateInfo(b),rq=rateInfo(q);
+  const c=carryDetails(pairName);
   const body=document.getElementById('carryDetailBody');
-  document.getElementById('carryDetailTitle').textContent='📈 Carry: '+pairName;
-  if(!rb||!rq){
-    body.innerHTML=`<div style="font-size:var(--fs-sm);color:var(--t3)">Policy rate not known for both currencies yet.</div>`;
-    openM('mCarryDetail');return;
-  }
-  const d=Math.round((rb.rate-rq.rate)*100)/100;
-  const adj=pairCarryAdj(pairName);
-  const long=d>=0;
-  const col=d>0?'var(--green)':d<0?'var(--red)':'var(--t3)';
-  body.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px;margin-bottom:10px">
-      <div style="text-align:center"><div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700">${escH(b)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rb.rate}%</div></div>
-      <div style="font-size:16px;color:var(--t3)">−</div>
-      <div style="text-align:center"><div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700">${escH(q)}</div><div style="font-size:20px;font-weight:800;color:var(--t0);font-family:var(--ff-num)">${rq.rate}%</div></div>
-    </div>
-    <div style="text-align:center;margin-bottom:10px">
-      <div style="font-size:var(--fs-xs);color:var(--t3);font-weight:700;text-transform:uppercase">Differential</div>
-      <div style="font-size:24px;font-weight:800;color:${col};font-family:var(--ff-num)">${d>0?'+':''}${d}%</div>
-      <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:2px">${d===0?'No carry edge either way.':(long?`Favours going long ${escH(b)} / short ${escH(q)}`:`Favours going long ${escH(q)} / short ${escH(b)}`)}</div>
-    </div>
-    <div style="font-size:var(--fs-sm);color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px">
-      <b>Score effect: ${adj>0?'+':''}${adj}</b> toward the ${escH(pairName)} pair score.<br>
-      Staged from the |differential|: ≥1.5% → ±1, ≥0.5% → ±0.5, otherwise 0 — sign follows which side has the higher rate.
-    </div>`;
+  document.getElementById('carryDetailTitle').textContent='Carry: '+pairName;
+  const col=c.adj>0?BC.bull:c.adj<0?BC.bear:'var(--t3)';
+  body.innerHTML=`<div class="cd-box">${carryZeilenHtml(c)}</div>
+    <div class="cd-res"><span>Score effect on ${escH(pairName)}</span><b style="color:${col}">${c.adj>0?'+':''}${c.adj}</b></div>
+    ${c.ok?'':`<div class="cd-note">${escH(c.grund)}</div>`}
+    <div class="cd-note">${escH(carryRegelText())}</div>`;
   openM('mCarryDetail');
 }
 // ══ PAAR-OVERVIEW ═════════════════════════════════════════════════════════
@@ -11413,13 +11712,12 @@ function povPerfHtml(name){
 function povCarryHtml(name){
   const l=pairLegs(name);if(!l)return'';
   if(!FX.includes(l.bId)||!FX.includes(l.qId))return povEmpty('Carry applies to currency pairs only — one side here is not a currency.');
-  const rb=rateInfo(l.bc),rq=rateInfo(l.qc);
-  if(!rb||!rq)return povEmpty('Policy rate not known for both sides yet.');
-  const d=Math.round((rb.rate-rq.rate)*100)/100,adj=pairCarryAdj(name);
-  const col=d>0?BC.bull:d<0?BC.bear:'var(--t3)';
-  return povRow(l.bc+' policy rate',rb.rate+'%')+povRow(l.qc+' policy rate',rq.rate+'%')+
-    `<div class="pov-stot"><span>Differential</span><span style="color:${col}">${d>0?'+':''}${d}%</span></div>`+
-    `<div class="pov-note">${d===0?'No carry edge either way.':(d>0?`Holding long ${escH(l.bc)}/${escH(l.qc)} <b>earns</b> carry.`:`Holding long ${escH(l.bc)}/${escH(l.qc)} <b>costs</b> carry.`)} Score effect <b>${adj>0?'+':''}${adj}</b> — staged from |differential|: ≥1.5% → ±1, ≥0.5% → ±0.5, otherwise 0.</div>`;
+  const c=carryDetails(l.bId+'/'+l.qId);
+  if(c.yb==null||c.yq==null)return povEmpty('2-year yield not known for both sides yet.');
+  const col=c.adj>0?BC.bull:c.adj<0?BC.bear:'var(--t3)';
+  return`<div class="cd-box">${carryZeilenHtml(c)}</div>`+
+    `<div class="pov-stot"><span>Score effect</span><span style="color:${col}">${c.adj>0?'+':''}${c.adj}</span></div>`+
+    `<div class="pov-note">${c.ok?'':escH(c.grund)+' '}${escH(carryRegelText())}</div>`;
 }
 
 // ── Block 4: Makro Seite an Seite ────────────────────────────────────────
@@ -13953,23 +14251,24 @@ function carryRankingHtml(){
   const rows=[];
   FX_PAIRS.forEach(n=>{
     const [b,q]=n.split('/');
-    const rb=rateInfo(b),rq=rateInfo(q);
-    if(!rb||!rq)return;
-    rows.push({name:n,diff:rb.rate-rq.rate,rb:rb.rate,rq:rq.rate,adj:pairCarryAdj(n)});
+    // Seit 2026-09-24 dieselbe Grundlage wie der Score: 2-jaehrige Renditen.
+    const c=carryDetails(n);
+    if(c.yb==null||c.yq==null)return;
+    rows.push({name:n,diff:c.diff,rb:c.yb,rq:c.yq,adj:c.adj,ratio:c.ratio});
   });
-  if(!rows.length)return`<div class="dw-empty">No policy rates available.</div>`;
+  if(!rows.length)return`<div class="dw-empty">No 2-year yields available.</div>`;
   rows.sort((a,b)=>b.diff-a.diff);
   // Nur die Extreme zeigen - die Mitte (Carry nahe 0) traegt keine Aussage.
   const top=rows.slice(0,5),bot=rows.slice(-5).reverse();
   const max=Math.max(...rows.map(r=>Math.abs(r.diff)))||1;
   const row=r=>{
     const col=r.diff>0?BC.bull:r.diff<0?BC.bear:'var(--t3)';
-    return`<div class="perf-row" title="${escH(r.name)}: ${r.rb.toFixed(2)}% − ${r.rq.toFixed(2)}% · score effect ${r.adj>0?'+':''}${r.adj}">
+    return`<div class="perf-row" title="${escH(r.name)}: 2Y ${r.rb.toFixed(2)}% − ${r.rq.toFixed(2)}%${r.ratio!=null?' · carry-to-risk '+r.ratio.toFixed(2):''} · score effect ${r.adj>0?'+':''}${r.adj}">
       <span class="perf-name" style="flex:0 0 84px">${escH(r.name)}</span>
       <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.diff)/max*100).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.diff>0?'+':''}${r.diff.toFixed(2)}%</span>
     </div>`;};
-  _dwErkl=['Policy-rate differential per pair (base − quote). Positive means holding the pair long earns carry.'];
+  _dwErkl=['2-year yield differential per pair (base − quote), the same basis the pair score uses. Positive means holding the pair long earns carry.',carryRegelText()];
   return`<div class="carry-sec">Long pays most</div><div class="perf-list">${top.map(row).join('')}</div>`+
     `<div class="carry-sec">Long costs most</div><div class="perf-list">${bot.map(row).join('')}</div>`;
 }
@@ -16306,6 +16605,31 @@ function cotWarningActive(){
   }
   return false;
 }
+// ── COT-Punkte (Nutzer-Regel 2026-09-24) ─────────────────────────────
+// Woertlich: "COT insgesamt 1 ... setzt sich aus Net Positionierung und dem
+// Change zusammen. Net Positioning mit den Schwellen 60/40, maximal 0,5; w/w
+// Change ab 3 % 0,5, ab 5 % 0,7, ab 7,5 % 0,85, ab 10 % 0,9 ... trotzdem
+// maximal 1" - und danach: "Prozentzahlen bleiben so, nur die Scores alles
+// mal 1,5, damit am Ende maximal 1,5 herauskommt".
+// Also: Netto ±0,75 (Long- bzw. Short-Anteil ab 60 %), Wochenaenderung des
+// Long-Anteils in Prozentpunkten ab 3/5/7,5/10 -> ±0,75/1,05/1,275/1,35,
+// Summe auf ±1,5 begrenzt. Beim Begrenzen wird die Wochenaenderung gekuerzt
+// (die Netto-Zeile bleibt, was sie ist), damit jede Zeile ihren echten
+// Anteil zeigt. Widersprechen sich beide, heben sie sich teilweise auf.
+const COT_NETZ_AB=60,COT_NETZ_PKT=0.75,COT_MAX=1.5;
+const COT_WOW_STUFEN=[[10,1.35],[7.5,1.275],[5,1.05],[3,0.75]];
+function cotPunkte(m){
+  const netz=m.longPct>=COT_NETZ_AB?COT_NETZ_PKT:m.shortPct>=COT_NETZ_AB?-COT_NETZ_PKT:0;
+  const d=+m.dNetPct||0,st=COT_WOW_STUFEN.find(([ab])=>Math.abs(d)>=ab);
+  let wow=st?Math.sign(d)*st[1]:0;
+  const summe=Math.max(-COT_MAX,Math.min(COT_MAX,netz+wow));
+  const gekappt=Math.abs(netz+wow)>COT_MAX;
+  wow=Math.round((summe-netz)*1000)/1000;
+  return{netz,wow,summe,gekappt,stufe:st?st[0]:null};
+}
+function cotRegelText(){
+  return`Net positioning: ${COT_NETZ_AB}% or more long gives +${COT_NETZ_PKT}, ${COT_NETZ_AB}% or more short gives −${COT_NETZ_PKT}, otherwise 0. Weekly change of the long share: from ${COT_WOW_STUFEN.slice().reverse().map(([ab,p])=>ab+' pts → '+p).join(', ')} (in the direction of the change). Together at most ±${COT_MAX}; the weekly part is cut back if the sum would go over.`;
+}
 function applyCotDataFeed(){
   if(!COT_DATA||!COT_DATA.symbols)return false;
   const date=COT_DATA.report_date||null;
@@ -16315,7 +16639,7 @@ function applyCotDataFeed(){
   // zusaetzlicher 2-Wochen-Trend wuerde dieselbe Bewegung doppelt zaehlen.
   // setOne raeumt daher auch Reste der kurzlebigen Trend-Variante
   // (PURPLE-TREND-EVERYWHERE-62/63) aus persistiertem State wieder ab.
-  const setOne=(rub,base,actual,previous,bias)=>{
+  const setOne=(rub,base,actual,previous,bias,pkt)=>{
     const idx=rub.indicators.findIndex(i=>stripPeriodSuffix(i.name).base===base);
     if(idx<0)return;
     const ind=rub.indicators[idx];
@@ -16325,7 +16649,12 @@ function applyCotDataFeed(){
       ind.research={actual,forecast:null,previous,date,source:COT_SOURCE_URL,cot:true,cotColor:cotColor2};
       changed=true;
     }
-    if(!indBiasPinned(ind,indBiasInputSig(actual,null,previous,date))&&ind.bias!==bias){ind.bias=bias;changed=true;}
+    const gepinnt=indBiasPinned(ind,indBiasInputSig(actual,null,previous,date));
+    if(!gepinnt&&ind.bias!==bias){ind.bias=bias;changed=true;}
+    // Feste Punkte nach der COT-Regel (cotPunkte); von Hand gesetzter Bias
+    // hebt sie auf.
+    if(gepinnt){if('pkt' in ind){delete ind.pkt;changed=true;}}
+    else if(ind.pkt!==pkt){ind.pkt=pkt;changed=true;}
     if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
     if(ind.cotTrendPts){delete ind.cotTrendPts;changed=true;}
   };
@@ -16338,9 +16667,10 @@ function applyCotDataFeed(){
     // Netto-Positionierung treibt den Score nur bei klarer Dominanz einer
     // Seite (>=60% Long bzw. Short); bei ausgeglichener Positionierung
     // bleiben beide Indikatoren neutral. Zaehlen je 0,5 (COT_NET_HALF).
-    setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),m.longPct>=60?'bull':'neu');
-    setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),m.shortPct>=60?'bear':'neu');
-    setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,m.dNetPct>0?'bull':m.dNetPct<0?'bear':'neu');
+    const cp=cotPunkte(m);
+    setOne(rub,'Net Bullish Positioning',cotPct(m.longPct),cotPct(m.prevLongPct),cp.netz>0?'bull':'neu',cp.netz>0?cp.netz:0);
+    setOne(rub,'Net Bearish Positioning',cotPct(m.shortPct),cotPct(m.prevShortPct),cp.netz<0?'bear':'neu',cp.netz<0?cp.netz:0);
+    setOne(rub,'WoW Change in Net Position (%)',cotPct(m.dNetPct,true),null,cp.wow>0?'bull':cp.wow<0?'bear':'neu',cp.wow);
     // Karten-Bias direkt aus dem Score-Vorzeichen ableiten: die COT-Karte
     // hat nur zwei kleine Score-Treiber (WoW-Aenderung +/-1 ab 3pp, sonst
     // +/-0,5, und Netto-Positionierung +/-0,5), die normale +/-2-Schwelle
@@ -16427,6 +16757,17 @@ function sentEval(key,d){
   }
   return null;
 }
+// Rohstoffpreise fuer AUD/NZD/CAD (commodity_data.json, seit 2026-09-24,
+// stuendlich vom Workflow - siehe dort "Fetch commodity prices").
+let COMMODITY_DATA=null;
+function fetchCommodityData(){
+  return fetch(DATA_BASE+'commodity_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&d.items&&typeof d.items==='object'){COMMODITY_DATA=d;DATA_LIVE_OK.commodity=true;}
+      else DATA_LIVE_OK.commodity=false;
+    }).catch(()=>{DATA_LIVE_OK.commodity=false;});
+}
 function fetchSentimentData(){
   return fetch(DATA_BASE+'sentiment_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
     .then(r=>r.ok?r.json():null)
@@ -16436,7 +16777,8 @@ function fetchSentimentData(){
     }).catch(()=>{DATA_LIVE_OK.sentiment=false;});
 }
 function autoFetchSentiment(){
-  fetchSentimentData().then(()=>{
+  // Rohstoffe kommen im selben Takt (beide stuendlich vom Workflow).
+  Promise.all([fetchSentimentData(),fetchCommodityData()]).then(()=>{
     // ⚠ Das Retail-Buch steckt in DERSELBEN Datei - ohne den zweiten Aufruf
     // liefe der Retail-Score-Beitrag bis zum naechsten Neuladen auf dem
     // alten Stand weiter, obwohl die Kachel daneben schon die neuen
@@ -22173,7 +22515,9 @@ async function bootFetchScoreFeeds(){
     // deshalb HIERHER statt neben den Preis-Feed. Sie meldet selbst kein
     // "changed" - angewandt wird sie erst unten, wenn AUCH das Sentiment da
     // ist, weil applySeasRetailFeed() beide Quellen zugleich braucht.
-    fetchSeasonalityData().then(()=>false)
+    fetchSeasonalityData().then(()=>false),
+    // Rohstoffe (seit 2026-09-24) - angewandt unten mit applySeasRetailFeed.
+    fetchCommodityData().then(()=>false)
   ]);
   let seasCh=false;
   try{seasCh=applySeasRetailFeed();}catch(e){}
@@ -22657,6 +23001,8 @@ setInterval(()=>{
 // echtem JS-Parser (acorn) aus dem Top-Level-Scope dieses Moduls ermittelt,
 // nie per Regex/Handschrift.
 Object.assign(window,{
+  // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von
@@ -22712,7 +23058,7 @@ Object.assign(window,{
   tagesKerzen,ohneWochenende,istWochenende,tagMitWochentag,kerzenWochenendeErlaubt,KERZEN_WOCHENENDE_OK,priceSeriesFor,
   abCotChart,abCotId,abRetailZeilen,abRetailVerlauf,navBleibtOffen,abHandelstage,abAchseFuer,bondSeriesOhlc,
   seasBiasFor,retailBiasFor,abScoreZeile,applySeasRetailFeed,SEAS_IND_NAME,RETAIL_IND_NAME,
-  SEAS_HIT_HOCH,SEAS_HIT_TIEF,RETAIL_EXTREM,RETAIL_MILD,
+  SEAS_HIT_HOCH,SEAS_HIT_TIEF,RETAIL_AB,RETAIL_STIMME,retailAenderung,retailStimme,cotPunkte,cotRegelText,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,

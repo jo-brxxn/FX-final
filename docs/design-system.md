@@ -1067,3 +1067,30 @@ Geprüft in `check/kalender.js`.
   `lgKarte`/`lgAlleKarten` in `js/main.js`, neu vermessen per
   ResizeObserver + MutationObserver.
 Geprüft in `check/logo.js`.
+
+## Score-Fenster (seit 2026-09-24, `openScoreInfoSym`/`openScoreInfoRub` in js/score.js)
+
+Nutzer: *„ein richtiges Fenster, das alles ordentlich darstellt, mit guter
+Unterteilung"*. Feste Gliederung, nicht erweitern ohne Grund:
+1. **Kopf** (`.sw-kopf`): angezeigter Score groß, Einordnung, Rechnung
+   „Summe × Faktor".
+2. **Übersicht** (`.sw-bars`): ein Balken je Karte von der Mitte aus.
+3. **Karten** (`details.sw-karte`): aufklappbar; COT Data heißt dort
+   „Positioning & sentiment" und ist in COT / Retail / Seasonality /
+   Sentiment gegliedert. Jede Indikator-Zeile (`details.sw-ind`) klappt die
+   volle Rechnung (`scoreInfoIndRow`) bzw. bei festen Punkten die Regel auf.
+4. **„How the displayed score is built"** und die Stärke-Note.
+
+## „How it counts" hinter jedem i (seit 2026-09-24)
+
+Das i einer Makro-Karte zeigt `rubrikZusammensetzungText`, das i eines
+Indikators `indZaehlText` — immer aus denselben Konstanten wie die Rechnung.
+Asset-Kacheln (COT, Retail, Seasonality, Momentum) nennen ihre Regel im i
+und haben eine „Score effect"-Zeile.
+
+## Momentum-Karte (seit 2026-09-24)
+
+Volle Breite unter der Positioning-Reihe, **ohne** eigene Reihen-Überschrift
+(höchstens drei, `check/kartenlook.js`). 1M/3M/12M, bei Währungen gegen den
+Korb der anderen sieben, dazu „× typical" aus der eigenen Historie; Score
+effect immer 0 („shown only"). Ausführliche Erklärung hinter dem i.

@@ -21,6 +21,7 @@
 // Geprueft wird:
 //   1. die Schwellen-Tabelle beider Regeln, an eingespeisten Werten
 //   2. Halbgewicht und Deckel: Saisonalitaet nie ueber 0,5, Retail nie ueber 1
+//      (Retail seit 2026-09-24: Paar-Stimmen ab 65/35, doppelt bei Wachstum)
 //   3. keine Geisterzeile - ohne Datenlage existiert der Indikator nicht
 //   4. Kachel-Zeile und Score-Fenster nennen dieselbe Zahl
 //   5. kein Release-Datum (sonst meldet die Altersgrenze "OUT OF DATE"
@@ -76,31 +77,34 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
     out.leer.seas = { bias: le.bias, txt: le.txt };
     SEASONALITY_DATA = altS;
 
-    // (b) Retail, EIN Buch (Gold): Prozent des Buches.
+    // (b) Retail, EIN Buch (Gold) - Regel seit 2026-09-24 (Nutzer: "nur Paare
+    // zu Long oder Short ab 65 und 35 Prozent, sonst neutral ... und die
+    // Veraenderung einbeziehen"): >=65 % long -> -0,5, <=35 % -> +0,5,
+    // doppelt, wenn das Extrem in 5 Tagen um >=3 Punkte gewachsen ist.
     const gsym = retailSymFor('GOLD');
-    [[98, 'sbear'], [85, 'sbear'], [84, 'bear'], [60, 'bear'], [59, 'neu'],
-     [50, 'neu'], [41, 'neu'], [40, 'bull'], [16, 'bull'], [15, 'sbull'], [2, 'sbull']
-    ].forEach(([lang, soll]) => {
-      SENTIMENT_DATA = { retail: [{ sym: gsym, long: lang, short: 100 - lang }] };
+    const hist = (l, alt) => ({ [gsym]: [['2026-09-10', alt, 100 - alt], ['2026-09-20', l, 100 - l]] });
+    [[98, 98, -0.5], [65, 65, -0.5], [64, 64, 0], [50, 50, 0], [36, 36, 0], [35, 35, 0.5], [2, 2, 0.5],
+     [70, 66, -1],      // extrem und um 4 Punkte weiter gewachsen -> doppelt
+     [70, 68, -0.5],    // nur 2 Punkte -> einfach
+     [70, 75, -0.5],    // Extrem schrumpft -> einfach
+     [30, 34, 1],       // Short-Extrem waechst -> doppelt
+    ].forEach(([lang, alt, soll]) => {
+      SENTIMENT_DATA = { retail: [{ sym: gsym, long: lang, short: 100 - lang }], retailHistory: hist(lang, alt) };
       const e = retailBiasFor('GOLD');
-      out.ret.push({ lang, soll, ist: e.bias, txt: e.txt });
+      out.ret.push({ lang, alt, soll, ist: e.pkt, txt: e.txt });
     });
 
-    // (c) Retail, eine WAEHRUNG: Anteil der Paare. Genau der Satz des
-    // Nutzers ("3/5 Paaren Long ... aber wenn 5/5 Long dann -1"), hier auf
-    // die sieben USD-Paare uebertragen: 5/7 = 71% mild, 6/7 = 86% extrem.
+    // (c) Retail, eine WAEHRUNG: Durchschnitt der Paar-Stimmen. Sieben USD-
+    // Paare, davon nLang mit >=70 % long USD, der Rest 50 % (neutral).
     const PAARE = ['EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDJPY', 'USDCHF', 'USDCAD'];
-    [[7, 'sbear'], [6, 'sbear'], [5, 'bear'], [4, 'neu'], [3, 'neu'],
-     [2, 'bull'], [1, 'sbull'], [0, 'sbull']
-    ].forEach(([nLang, soll]) => {
+    [[7, -0.5], [6, -0.43], [2, -0.14], [0, 0]].forEach(([nLang, soll]) => {
       SENTIMENT_DATA = { retail: PAARE.map((s, i) => {
-        const usdLang = i < nLang;                 // steht USD in diesem Paar long?
-        const vorn = s.slice(0, 3) === 'USD';      // USD ist die Basis
-        const l = vorn ? (usdLang ? 70 : 30) : (usdLang ? 30 : 70);
+        const usdLang = i < nLang, vorn = s.slice(0, 3) === 'USD';
+        const l = usdLang ? (vorn ? 70 : 30) : 50;
         return { sym: s, long: l, short: 100 - l };
       }) };
       const e = retailBiasFor('USD');
-      out.paare.push({ nLang, soll, ist: e.bias, txt: e.txt });
+      out.paare.push({ nLang, soll, ist: e.pkt, txt: e.txt });
     });
     SENTIMENT_DATA = { retail: [] };
     const lr = retailBiasFor('GOLD');
@@ -113,10 +117,10 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
   });
   r1.seas.forEach(c => { if (c.ist !== c.soll)
     fail('SAISONALITAET-SCHWELLE', `Schnitt ${c.avg}% bei ${c.hit}% Trefferquote -> "${c.ist}" statt "${c.soll}"`); });
-  r1.ret.forEach(c => { if (c.ist !== c.soll)
-    fail('RETAIL-SCHWELLE (Buch)', `${c.lang}% long -> "${c.ist}" statt "${c.soll}"`); });
-  r1.paare.forEach(c => { if (c.ist !== c.soll)
-    fail('RETAIL-SCHWELLE (Paare)', `${c.nLang}/7 Paare long -> "${c.ist}" statt "${c.soll}"`); });
+  r1.ret.forEach(c => { if (Math.abs(c.ist - c.soll) > 1e-9)
+    fail('RETAIL-REGEL (Buch)', `${c.lang}% long (5 Tage vorher ${c.alt}%) -> ${c.ist} statt ${c.soll}`); });
+  r1.paare.forEach(c => { if (Math.abs(c.ist - c.soll) > 0.006)
+    fail('RETAIL-REGEL (Paare)', `${c.nLang}/7 Paare >=65% long -> ${c.ist} statt ${c.soll}`); });
   if (r1.leer.seas && (r1.leer.seas.bias !== 'neu' || r1.leer.seas.txt != null))
     fail('SAISONALITAET OHNE REIHE', `liefert ${JSON.stringify(r1.leer.seas)} statt neutral ohne Text`);
   if (r1.leer.ret && (r1.leer.ret.bias !== 'neu' || r1.leer.ret.txt != null))
@@ -140,7 +144,9 @@ const fail = (t, x) => F.push(`${t}: ${x}`);
         if (!ind) { if (html !== '') out.probleme.push({ sym: s.id, ind: n, t: 'Score-Zeile ohne Indikator' }); return; }
         const teile = indScoreParts(ind, rub);
         // 2) Halbgewicht und Deckel
-        if (Math.abs(teile.w - 0.5) > 1e-9) out.probleme.push({ sym: s.id, ind: n, t: 'kein Halbgewicht', w: teile.w });
+        // Saisonalitaet: Halbgewicht. Retail: feste Punkte nach der Regel (ind.pkt).
+        if (n === 'Seasonality' && Math.abs(teile.w - 0.5) > 1e-9) out.probleme.push({ sym: s.id, ind: n, t: 'kein Halbgewicht', w: teile.w });
+        if (n === 'Retail Positioning' && !teile.fest && ind.pkt !== undefined) out.probleme.push({ sym: s.id, ind: n, t: 'Retail nicht nach fester Regel', pkt: ind.pkt });
         const v = indScore(ind, rub);
         if (Math.abs(v) > NAMEN[n] + 1e-9) out.probleme.push({ sym: s.id, ind: n, t: 'Beitrag ueber der Regel', v, max: NAMEN[n] });
         if (n === 'Seasonality' && (ind.bias === 'sbull' || ind.bias === 'sbear'))

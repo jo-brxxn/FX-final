@@ -2636,7 +2636,10 @@ jobs:
             --data '{"symbols":{"tickers":["SGX:FEF1!","ICEEUR:NCF1!","NZX:WMP1!","TVC:GOLD","NYMEX:CL1!"],"query":{"types":[]}},"columns":["close","Perf.1M"]}' \
             "https://scanner.tradingview.com/global/scan" -o comm_tv.json || true
           for SYM in "TIO=F" "MTF=F" "GC=F" "CL=F"; do
-            F="comm_y_$(echo "$SYM" | tr -c 'A-Za-z0-9' '_').json"
+            # printf statt echo: echo haengt einen Zeilenumbruch an, den tr zu
+            # "_" macht - der Dateiname passte dann nicht zu dem, den Node
+            # sucht (erster Lauf 2026-09-24: sigma1m ueberall leer).
+            F="comm_y_$(printf '%s' "$SYM" | tr -c 'A-Za-z0-9' '_').json"
             curl -sL -A "$UA" --max-time 40 -o "$F" "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || true
           done
           node -e '

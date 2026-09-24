@@ -106,11 +106,17 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     await new Promise(r => setTimeout(r, 400));
     const neu = [...document.querySelectorAll('#detail .rub-card > .lg-frei')].filter(l => !alt.has(l));
     const einmal = neu.every(l => l.querySelector('.fxlogo.lg-einmal') && l.getAnimations({ subtree: true }).every(an => !an.effect || an.effect.getComputedTiming().iterations !== Infinity));
-    return { vor, nach: zaehl(), neu: neu.length, einmal };
+    // Wie viele Rubrik-Karten koennten ueberhaupt ein Logo bekommen? Die
+    // aufgeklappte Karte selbst nicht (sie ist ja voll). Haben alle anderen
+    // schon VORHER eins (seit 2026-09-24 moeglich: die Inflation-Karte ist
+    // durch die Zinsdifferenz-Zeile laenger, die Nachbarn damit schon leer),
+    // kann nach dem Aufklappen keins dazukommen - dann ist das kein Fehler.
+    const moeglich = document.querySelectorAll('#detail .ab-cards .rub-card').length - 1;
+    return { vor, nach: zaehl(), neu: neu.length, einmal, moeglich };
   });
   if (!d) fail('INDIKATOR-ZEILE FEHLT', 'keine aufklappbare Indikator-Zeile');
   else if (d.neu && !d.einmal) fail('AUFKLAPP-LOGO NICHT EINMALIG', 'das nach dem Aufklappen erschienene Logo soll genau einmal hineinwachsen (lg-einmal, endlich), nicht dauerhaft laufen');
-  else if (d.nach <= d.vor) fail('KEIN LOGO NACH AUFKLAPPEN', `Rubrik-Karten mit Logo vorher ${d.vor}, nach dem Aufklappen eines Charts ${d.nach} - die gestreckten Nachbarkarten sollen eins bekommen`);
+  else if (d.nach <= d.vor && d.vor < d.moeglich) fail('KEIN LOGO NACH AUFKLAPPEN', `Rubrik-Karten mit Logo vorher ${d.vor}, nach dem Aufklappen eines Charts ${d.nach} - die gestreckten Nachbarkarten sollen eins bekommen`);
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
   if (GEGENPROBE) {

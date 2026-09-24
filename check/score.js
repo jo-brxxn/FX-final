@@ -159,7 +159,9 @@ const MODE = process.argv[2] || 'normalized';
     const teile=indScoreParts(ind,rub);
     if(Math.abs(teile.norm-1)>1e-9)add('Normierung wirkt auf Saisonalitaet/Retail',
       {sym:sym.id,ind:ind.name,norm:Math.round(teile.norm*1000)/1000});
-    if(Math.abs(teile.w-0.5)>1e-9)add('Saisonalitaet/Retail nicht Halbgewicht',{sym:sym.id,ind:ind.name,w:teile.w});
+    // Saisonalitaet Halbgewicht; Retail seit 2026-09-24 feste Punkte (ind.pkt).
+    if(ind.name==='Seasonality'&&Math.abs(teile.w-0.5)>1e-9)add('Saisonalitaet nicht Halbgewicht',{sym:sym.id,ind:ind.name,w:teile.w});
+    if(ind.name==='Retail Positioning'&&ind.pkt!==undefined&&!teile.fest)add('Retail nicht nach fester Regel',{sym:sym.id,pkt:ind.pkt});
     if(Math.abs(teile.total)>max+1e-9)add('Saisonalitaet/Retail ueber der Nutzer-Regel',
       {sym:sym.id,ind:ind.name,beitrag:teile.total,max});
     ok.seasRetail.geprueft++;
