@@ -17598,3 +17598,20 @@ Watchlist).
 **Wächter:** `check/logo.js` (F: ein Durchlauf, keine Kerze wächst beim
 Ausblenden — gegen 557 rot, 54/57 Bilder) und neu `check/kartentitel.js`
 (gegen 557 rot, 39 Befunde; Gegenprobe rot).
+
+## 2026-09-24 — Einfacher Score-Modus entfernt (VERSION-CHECK-559)
+
+Nutzer: *„Entfern bitte den einfachen Modus."* Anlass war die Bewertung des
+Score-Systems (v558): im einfachen Modus (`classic`) zählte ein Beat um 0,01
+genauso ±1 wie einer um 0,8, und er war ohne gespeicherte Einstellung der
+Standard. Entfernt: Schalter „Normalized weighting" in den Einstellungen,
+`setScoreMode`/`toggleScoreMode`/`setScoreModeVal`/`updScoreModeBtn`/
+`saveScoreMode`, die Übernahme von `scoreMode` aus Import und Cloud,
+`localStorage['fxpro_score_mode']` (beim Start gelöscht), die classic-Zweige
+in `indNormFactor`, Score-Fenster, Datenqualitäts-Fenster und Stärke-Note,
+der Wächterlauf `score-cl` und die classic-Runden in `check/runtime.js` und
+`check/scorediff.js`. `scoreMode` bleibt als Konstante `'normalized'` (Teil
+von `SCORE_MODEL_TAG`) — kein `SCORE_MODEL_VERSION`-Bump, die Rechnung ist
+unverändert. `check/score.js` F3 prüft jetzt: Modus fest, kein Setter, kein
+Schalter, kein alter Schlüssel. Edge-Tab-Text sagt statt „classic weighting"
+jetzt „base weights only".

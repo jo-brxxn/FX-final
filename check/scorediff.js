@@ -184,7 +184,10 @@ const ERFASSEN = () => {
     // obwohl Basis und Arbeitsbaum derselbe Code waren. Eine Wiederholung auf
     // einer verschmutzten Seite beantwortet die Frage nicht, sie erfindet eine
     // neue Antwort.
-    for (const m of ['classic', 'normalized']) {
+    // Nur 'normalized': den einfachen Modus gibt es seit 2026-09-24 nicht mehr.
+    // Die Basis (alter Stand) wird ebenfalls in 'normalized' geladen - so
+    // vergleicht der Lauf dieselbe Rechnung auf beiden Seiten.
+    for (const m of ['normalized']) {
       const a = await ladenModus(BASIS_URL, m);
       const n = await ladenModus(URL_NEU, m);
       if (feedSig(a.__feeds) !== feedSig(n.__feeds)) {

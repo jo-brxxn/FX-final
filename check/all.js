@@ -27,7 +27,7 @@ const PRUEFUNGEN = [
   { n: 'rules',     d: 'Versions-Bumps und Workflow-Ausgaben',                   f: 'check/rules.js',     args: [basis],      browser: false },
   { n: 'structure', d: 'doppelte ids und wiederholte HTML-Bloecke',              f: 'check/structure.js', args: ['index.html'], browser: false },
   { n: 'score',     d: 'Rechenkette, _symId, Bias gegen Rohdaten, Idempotenz',   f: 'check/score.js',     args: ['normalized'], browser: true },
-  { n: 'score-cl',  d: 'dasselbe im Modus classic',                              f: 'check/score.js',     args: ['classic'],    browser: true },
+  // score-cl (Modus classic) entfernt 2026-09-24: den einfachen Modus gibt es nicht mehr.
   { n: 'display',   d: 'angezeigte Scores im DOM gegen den Sollwert',            f: 'check/display.js',   args: ['normalized'], browser: true },
   { n: 'runtime',   d: 'alle Tabs, Modals und Zustaende ohne JS-Fehler',         f: 'check/runtime.js',   args: [],           browser: true },
   { n: 'quickcap',  d: 'Schnellerfassung: Zerlegung an echten Beispielen',    f: 'check/quickcapture.js', args: [],     browser: false },

@@ -200,48 +200,22 @@ const NO_TREND_INDS=new Set(['Central Bank Rate']);
 // abweichen kann. Rueckgabe: {w, base, trend, total, zero, noTrend}.
 // (Der fruehere ★-Wichtig-Bonus/+0.5 auf das Gewicht wurde 2026-07-28 auf
 // Nutzer-Wunsch komplett entfernt - siehe tech-design-Skill-Session.)
-// Score-Modus (Nutzer-Wunsch 2026-08-07): 'classic' = die bisherige,
-// vollstaendig im Kopf nachrechenbare Punktlogik (Standard). 'normalized' =
-// zusaetzliche Gewichtung nach Ueberraschungsgroesse, Aktualitaet und
-// gemessener Marktreaktion (siehe indNormFactor). Bewusst eine PRAEFERENZ
-// ausserhalb von snap()/Undo - der Modus ist eine Sicht auf dieselben Daten,
-// kein Inhalt. Anbindung an den Cross-Device-Sync deshalb nach dem
-// pinEnabled-Muster an allen vier Stellen (cloudPush/cloudPull/export/import)
-// plus markPrefEdit() in der Save-Funktion.
-let scoreMode=localStorage.getItem('fxpro_score_mode')==='normalized'?'normalized':'classic';
-function setScoreModeVal(v){scoreMode=v;}
-function saveScoreMode(){
-  try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}
-  try{localStorage.setItem('fxpro_updated',new Date().toISOString());markLsUpdatedSeen();}catch(e){}
-  markPrefEdit();cloudAutoSync();
-}
-function setScoreMode(m){
-  const n=(m==='normalized')?'normalized':'classic';
-  if(n===scoreMode)return;
-  scoreMode=n;
-  invalidateNormCache();invalidateCmpCache();
-  saveScoreMode();
-  // Nutzer-Bugreport 2026-08-22: ein Telegram-Bias-Flip-Alert kam ohne jede
-  // erklaerende "Driven by"-Zeile an - Ursache war teils, dass der Flip gar
-  // nicht von neuen Marktdaten kam, sondern vom classic/normalized-Wechsel
-  // hier selbst (der Faktor aendert symScore genug, um die +/-3-Schwelle zu
-  // kreuzen). recomputeAllSymBiases() unterschied das bisher nicht von einem
-  // echten Flip - _suppressBiasFlipAlerts haelt lastNotifBias synchron, ohne
-  // einen Alert einzureihen, waehrend genau dieser Recompute laeuft.
-  setSuppressBiasFlipAlerts(true);
-  try{recomputeAuto();}finally{setSuppressBiasFlipAlerts(false);}
-  save();rerender();updScoreModeBtn();
-}
-function toggleScoreMode(){setScoreMode(scoreMode==='normalized'?'classic':'normalized');}
-function updScoreModeBtn(){
-  const b=document.getElementById('scoreModeBtn');
-  if(b)b.checked=scoreMode==='normalized';
-}
+// Score-Modus: seit 2026-09-24 gibt es NUR NOCH 'normalized' (Nutzer:
+// "Entfern bitte den einfachen Modus"). Der einfache Modus ('classic', seit
+// 2026-08-07 per Schalter waehlbar und bis dahin Standard) zaehlte jeden
+// Beat/Miss gleich, egal wie gross - ein CPI-Beat um 0,01 wog so viel wie
+// einer um 0,8. Die Konstante bleibt als Name stehen, weil SCORE_MODEL_TAG
+// ihn in jeden scoreHist-Eintrag schreibt ("<Version>:normalized") - die
+// bisher aufgezeichnete normalized-Historie bleibt damit gueltig, alte
+// classic-Eintraege fallen wie jede andere fremde Rechnung aus der Note.
+// ⚠ Nicht wieder zu einer Variablen machen: der Schalter, der Cloud-/Import-
+// Pfad und zwei Waechter-Laeufe sind mit ihm entfernt worden.
+const scoreMode='normalized';
+try{localStorage.removeItem('fxpro_score_mode');}catch(e){}
 
 // ══ SCORE-V2: NORMIERUNGS-EBENE (Nutzer-Wunsch 2026-08-07) ═══════════════
-// Bewusst eine ZUSAETZLICHE, abschaltbare Ebene ueber dem klassischen Score,
-// kein Ersatz: `scoreMode==='classic'` (Standard) rechnet exakt wie bisher,
-// jede Zahl bleibt im Kopf nachrechenbar. Erst `scoreMode==='normalized'`
+// Urspruenglich eine abschaltbare Ebene ueber dem klassischen Score; seit
+// 2026-09-24 die einzige Rechnung (der einfache Modus ist entfernt). Sie
 // multipliziert den Basis-Anteil jedes Indikators mit einem Faktor aus drei
 // Bausteinen, die Profi-Haeuser (Citi ESI) genauso verwenden:
 //
@@ -573,7 +547,6 @@ let _mktWeightCache={};
 function invalidateNormCache(){_mktWeightCache={};}
 // Gesamtfaktor, um 1,0 zentriert und geklemmt (siehe Kommentar oben).
 function indNormFactor(ind,symId,rub){
-  if(scoreMode!=='normalized')return 1;
   const f=indSurpriseMag(ind)*indDecayWeight(ind,rub)*indMarketWeight(ind,symId);
   if(!isFinite(f))return 1;
   return Math.min(SCORE_NORM_MAX,Math.max(SCORE_NORM_MIN,f));
@@ -758,9 +731,8 @@ function indScoreParts(ind,rub,symId,ohneAltersgrenze){
   // Rechnung, damit auch Gewicht/Normierung gar nicht erst greifen.
   if(!ohneAltersgrenze&&indIsStale(ind))return{w:0,base:0,trend:0,rev:0,total:0,zero:false,stale:true,noTrend:false,norm:1};
   const w=indBaseWeight(ind,rub);
-  // norm ist im Standardmodus IMMER exakt 1 - der klassische Score bleibt
-  // damit bitgenau unveraendert. Nur bei scoreMode==='normalized' greift die
-  // zusaetzliche Gewichtung (siehe indNormFactor weiter oben).
+  // norm = Gewichtung nach Ueberraschungsgroesse, Alter und Marktrelevanz
+  // (indNormFactor; seit 2026-09-24 immer aktiv, der einfache Modus ist weg).
   // Reihenfolge bewusst: ausdruecklich uebergebene ID, dann die
   // Zugehoerigkeit der Karte, und erst zuletzt das gewaehlte Asset. Der
   // letzte Fall greift nur noch fuer Karten, die (noch) keinen Stempel
@@ -900,7 +872,7 @@ function scoreInfoIndRow(ind,rub){
   // ── Formel-Kette ──
   const chips=[`<span class="si-chip">Base <span class="v">${biasScore(ind.bias)>0?'+':''}${biasScore(ind.bias)}</span></span>`,
                `<span class="si-chip">Weight <span class="v">${p.w}</span></span>`];
-  const nb=(scoreMode==='normalized')?indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null),rub):null;
+  const nb=indNormBreakdown(ind,(rub&&rub._symId)||(typeof selId!=='undefined'?selId:null),rub);
   let factorPanels='';
   if(nb){
     if(nb.z!=null&&Math.abs(nb.mag-1)>0.005){
@@ -1079,7 +1051,6 @@ function openDataQuality(symId){
     <b>Impact</b> answers a different question — not "how far off was the forecast" but "does the market actually care". It compares the average price move on release days against the average move on all days, so it is observed behaviour rather than an opinion.
     <b>Half-life</b> is deliberately measured in the indicator's own cycles, not in fixed days: otherwise a quarterly series would always look stale next to a weekly one.
     Where the history is too thin, the cell stays empty instead of showing a number derived from too few observations.
-    ${scoreMode==='normalized'?'':'<br><br><b>Note:</b> the score is currently in <b>classic</b> mode, so the Weight column is shown for information only and does not affect any score. Switch to normalised mode to activate it.'}
   </div>`;
   document.getElementById('dqTitle').textContent='Data quality & weighting — '+sym.id;
   document.getElementById('dqBody').innerHTML=head+body+note;
@@ -1135,8 +1106,6 @@ function openScoreInfoSym(symId){
 // Satz nach ihrer Schwaeche - beides gehoert deshalb an dieselbe Stelle,
 // nicht die Note allein.
 function symStrengthSectionHtml(sym){
-  if(scoreMode!=='normalized')
-    return`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:10px;padding-top:8px;border-top:1px solid var(--bd)">Strength 1–10 (score measured against this asset's <b>own</b> history) is shown in <b>normalised</b> mode. Switch the weighting in the header to activate it.</div>`;
   const past=symOwnHistory(sym.id);
   const avg=symScoreAvg(sym);
   const row=(l,v,c)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 8px"><span style="color:var(--t2)">${l}</span><span style="font-family:var(--ff-num)${c?';color:'+c:''}">${v}</span></div>`;
@@ -1669,7 +1638,7 @@ export {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SEAS_RETAIL_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
-  saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
+  SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
@@ -1680,7 +1649,7 @@ export {
   fxRefCount,symCmpFactor,symScoreCmp,SCORE_MODEL_VERSION,SCORE_MODEL_TAG,scoreHistEntryCurrent,STRENGTH_MIN_OBS,STRENGTH_Z_BANDS,
   symScoreAvg,symOwnHistory,symOwnZ,symStrength10,symStrengthMissing,pairScore,rowScore,fmtDate,
 };
-// Kompatibilitaets-Bruecke: onclick-referenzierte Namen (toggleScoreMode,
+// Kompatibilitaets-Bruecke: onclick-referenzierte Namen (
 // openDataQuality, openScoreInfo*) PLUS Namen, die check/score.js/
 // check/display.js/check/runtime.js/check/scorediff.js direkt per
 // page.evaluate() als globalen Bezeichner aufrufen (docs/module-split.md,
@@ -1688,20 +1657,8 @@ export {
 // ⚠ indDecayWeight/indDecayExempt stehen hier fuer check/score.js: der
 // Waechter muss pruefen koennen, WELCHE Indikatoren einen Alters-Faktor
 // tragen - sonst faellt eine falsch gezogene Ausnahme erst dem Nutzer auf.
-if(typeof window!=="undefined")Object.assign(window,{toggleScoreMode,openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,setScoreMode,setScoreModeVal,invalidateNormCache,indMarketWeight,symScore,symScoreCmp,symCmpFactor,symTrackedCount,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
-// ⚠ scoreMode gehoert NICHT in das Object.assign darueber (Fund im
-// Pruefdurchgang 2026-09-20). Object.assign kopiert den WERT zum Zeitpunkt
-// des Modul-Starts - window.scoreMode war danach eine tote Momentaufnahme.
-// Gemessen: nach setScoreMode('classic') stand in localStorage 'classic' und
-// 356 von 559 Normierungsfaktoren fielen auf 1, window.scoreMode las aber
-// weiter 'normalized'.
-//
-// In der App selbst blieb das folgenlos (ES-Module-Importe sind live
-// gebunden) - die WAECHTER lesen aber ueber window: check/score.js Abschnitt
-// F3 wollte belegen, "dass der Setter scoreMode wirklich setzt", war mit
-// `typeof setScoreModeVal==='function'` abgesichert und lief deshalb NIE
-// (der Setter stand nicht auf der Bruecke). Ein gruener Waechter ohne
-// Pruefung. Beides ist jetzt behoben: setScoreModeVal steht oben mit drauf,
-// und scoreMode kommt als GETTER - dasselbe Muster wie bei scoreHist/syms
-// in js/main.js.
+if(typeof window!=="undefined")Object.assign(window,{openDataQuality,indCycleIsGuess,openScoreInfoRub,openScoreInfoSym,openScoreInfoPair,indScore,indScoreParts,pairScore,roundSc,rubScore,invalidateNormCache,indMarketWeight,symScore,symScoreCmp,symCmpFactor,symTrackedCount,pairCarryAdj,symStrength10,indDecayWeight,indDecayExempt});
+// ⚠ scoreMode kommt als GETTER auf window, nicht per Object.assign (das
+// kopiert den Wert beim Modul-Start). Seit 2026-09-24 ist er ohnehin
+// konstant 'normalized' - der Getter bleibt, weil Waechter ihn lesen.
 if(typeof window!=="undefined")Object.defineProperty(window,'scoreMode',{get:()=>scoreMode,configurable:true});

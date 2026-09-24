@@ -143,7 +143,7 @@ const MODE = process.argv[2] || 'normalized';
   // ── E1c) Saisonalitaet und Retail: kein Normierungs-Faktor ─────
   // Die Schwellen der beiden Regeln stehen in check/seasretail.js - hier
   // geht es um die EBENE DARUEBER, und zwar in BEIDEN Modi (dieser Waechter
-  // laeuft classic UND normalized, seasretail nur im Standardmodus):
+  // lief bis 2026-09-24 in beiden Modi; seit es nur noch normalized gibt, dort):
   // ihr Beitrag darf in "normalized" nicht durch indNormFactor verschoben
   // werden. Beide sind laufend gemessene Zustaende ohne Prognose und ohne
   // Release-Termin - Ueberraschungsgroesse, Alter und Marktrelevanz haben
@@ -263,22 +263,14 @@ const MODE = process.argv[2] || 'normalized';
     setSuppressBiasFlipAlerts(false);
     if(_suppressBiasFlipAlerts!==false)add('setSuppressBiasFlipAlerts(false) wirkt nicht',{});
   }
-  // ── F3) setScoreModeVal() haelt wirklich, was es zusagt ──
-  // Derselbe Setter-statt-Direktzugriff-Grund wie bei F2, eingefuehrt bei der
-  // Modul-Aufteilung von js/calendar.js: importData()/cloudPull() in
-  // js/main.js schrieben vorher direkt auf scoreMode (Import-Binding aus
-  // js/score.js) - ein Laufzeitfehler, der erst durch den Import-Bindungs-
-  // Zuweisungs-Check dieser Runde aufgefallen ist (nicht durch einen zuvor
-  // bestandenen Testlauf). Regel 5 flaggt setScoreModeVal zu Recht als neue
-  // Score-Groesse - hier der Beleg, dass der Setter scoreMode wirklich setzt.
-  if(typeof setScoreModeVal==='function'){
-    const vorher=scoreMode;
-    setScoreModeVal('normalized');
-    if(scoreMode!=='normalized')add('setScoreModeVal(\'normalized\') wirkt nicht',{});
-    setScoreModeVal('classic');
-    if(scoreMode!=='classic')add('setScoreModeVal(\'classic\') wirkt nicht',{});
-    setScoreModeVal(vorher);
-  }
+  // ── F3) Es gibt nur noch EINEN Modus (Nutzer 2026-09-24 "Entfern bitte den
+  // einfachen Modus"): kein Schalter, kein Setter, scoreMode fest normalized,
+  // und der alte localStorage-Schluessel ist weg.
+  if(scoreMode!=='normalized')add('scoreMode ist nicht normalized',{scoreMode});
+  ['setScoreMode','toggleScoreMode','setScoreModeVal','updScoreModeBtn'].forEach(f=>{if(typeof window[f]==='function')add('Modus-Schalter noch vorhanden: '+f,{});});
+  if(document.getElementById('scoreModeBtn'))add('Schalter #scoreModeBtn noch in den Einstellungen',{});
+  try{if(localStorage.getItem('fxpro_score_mode')!==null)add('fxpro_score_mode steht noch im localStorage',{wert:localStorage.getItem('fxpro_score_mode')});}catch(e){}
+
   // ── F4) Notiz-Bias (resPickBias/resPaintBias/noteBiasBadge) - reiner
   // UI-Tag, KEINE Score-Groesse ──
   // Nutzer-Wunsch 2026-08-30 ("mach von Notizen das Aussehen deutlich ob sie

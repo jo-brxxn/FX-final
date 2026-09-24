@@ -8,6 +8,23 @@ Score - bei Widerspruch zu irgendeiner aelteren Herleitung in
 siehe eigenen Abschnitt weiter unten, sonst vergleicht die Stärke-Note zwei
 verschiedene Rechnungen.
 
+## ⚠️ Es gibt nur EINEN Modus: `normalized` (seit 2026-09-24)
+
+Nutzer: *„Entfern bitte den einfachen Modus"*. Der Modus `classic` (jeder
+Beat/Miss ±1 unabhängig von der Größe; seit 2026-08-07 per Schalter, bis dahin
+Standard) ist komplett entfernt: Schalter in den Einstellungen, Setter,
+Import-/Cloud-Übernahme von `scoreMode`, `localStorage['fxpro_score_mode']`
+(wird beim Start gelöscht) und der Wächterlauf `score-cl`. `scoreMode` bleibt
+als Konstante `'normalized'` stehen, weil `SCORE_MODEL_TAG()` ihn schreibt —
+die bisherige normalized-Historie bleibt damit gültig, **kein**
+`SCORE_MODEL_VERSION`-Bump (die Rechnung selbst ist unverändert,
+`check/scorediff.js` 0 Unterschiede). Alte `…:classic`-Einträge fallen wie
+jede fremde Rechnung aus der Stärke-Note. `cloudPush` schreibt `scoreMode`
+weiter (immer `'normalized'`), damit noch nicht aktualisierte Geräte
+umschalten. Überall unten, wo „nur im Modus normalized" steht, gilt das jetzt
+immer. Der Edge-Tab rekonstruiert weiterhin nur mit Basisgewichten (die
+Normierungsfaktoren lassen sich für vergangene Tage nicht ehrlich nachbauen).
+
 ## Was in den Score einfliesst
 
 | Bestandteil | Gewicht | Bemerkung |

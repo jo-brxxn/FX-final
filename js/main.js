@@ -622,7 +622,7 @@ import {
   bCol,bRC,bClass,glowClass,biasScore,BOND_HALF_PT,CORE_PAIRS,indIsCorePaired,
   indGroupPartners,indIsHalfWeight,COT_WOW_BASE,COT_WOW_FULL_AT,cotWowIsSmall,indBaseWeight,COT_NET_HALF,SENT_SOURCE,
   SENT_MAP,SENT_IND_NAMES,SENT_HALF,AAII_STALE_DAYS,CB_TONE_HALF,SEAS_RETAIL_HALF,SCORE_ZERO,NO_TREND_RUBS,scoreMode,
-  saveScoreMode,setScoreMode,setScoreModeVal,toggleScoreMode,updScoreModeBtn,SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
+  SCORE_NORM_MIN,SCORE_NORM_MAX,NORM_MIN_OBS,DECAY_HALFLIFE_CYCLES,
   indCycleDays,indCycleTextDays,indCycleDaysCalc,indCycleIsGuess,indSurpriseScale,indSurpriseMag,indDecayWeight,indMarketWeight,_mktWeightCache,
   invalidateNormCache,indNormFactor,indNormBreakdown,IND_STALE_CYCLES,indOverdueCycles,indIsStale,staleIndicators,AWAIT_GRACE_H,
   AWAIT_MAX_DAYS,indAwaitingEvent,awaitingIndicators,indScoreParts,roundSc,indScore,fmtScNum,scoreInfoIndRow,
@@ -6152,7 +6152,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.scoreMode!==undefined){setScoreModeVal(_imp.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();updScoreModeBtn();}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6215,7 +6215,6 @@ function rezPurgeHintText(){
 }
 function openCloudM(){
   try{updPinToggleBtn()}catch(e){}
-  try{updScoreModeBtn()}catch(e){}
   const cfg=getCloudCfg()||{};
   document.getElementById('cloudUsername').value=cfg.username||'';
   document.getElementById('cloudUrl').value=cfg.url||'';
@@ -6569,7 +6568,9 @@ async function cloudPull(manual,forceOverwrite){
       // 2026-07-27) - anders als compactLevel/designHue direkt daneben wurde
       // der Cloud-Wert IMMER uebernommen, auch waehrend eine lokale Aenderung
       // gerade noch auf ihren eigenen Push wartet ("springt zurueck").
-      if(!prefPending&&cd.scoreMode!==undefined&&cd.scoreMode!==scoreMode){setScoreModeVal(cd.scoreMode==='normalized'?'normalized':'classic');try{localStorage.setItem('fxpro_score_mode',scoreMode);}catch(e){}invalidateNormCache();invalidateCmpCache();updScoreModeBtn();}
+      // cd.scoreMode wird seit 2026-09-24 nicht mehr gelesen - es gibt nur noch
+      // 'normalized'. Geschrieben wird er weiter (immer 'normalized'), damit
+      // ein noch nicht aktualisiertes Geraet beim naechsten Abgleich umschaltet.
       if(!prefPending&&typeof cd.newsSeenTs==='string'&&cd.newsSeenTs>newsSeenTs){newsSeenTs=cd.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}
       if(!prefPending&&cd.pinEnabled!==undefined){pinEnabled=cd.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}
       if(!prefPending&&cd.assetAnimEnabled!==undefined){assetAnimEnabled=cd.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}
@@ -10022,7 +10023,7 @@ function flipCauseBlock(sym,newB){
   // oder ein Indikator, der gerade OUT OF DATE gefallen ist (beides ohne
   // eigenes "neues" Ereignis). Auch das wird benannt statt weggelassen.
   return'\n\nCause: no single new release found - likely indicator ageing (OUT OF DATE)'
-    +(scoreMode==='normalized'?' or normalization reweighting.':'.');
+    +' or normalization reweighting.';
 }
 function queueScoreFlipAlert(sym,oldB,newB){
   // Deterministische ID (Symbol+Wechsel+Tag): erkennen zwei Geraete denselben
@@ -10053,9 +10054,10 @@ function triggerFlipGlow(symId){
   _flipGlowIds.add(symId);
   setTimeout(()=>{_flipGlowIds.delete(symId);renderSidebar();},1500);
 }
-// Siehe setScoreMode(): waehrend eines classic/normalized-Wechsels gesetzt,
-// damit ein dadurch ausgeloester Bias-Flip lastNotifBias synchron haelt,
-// aber keinen Telegram-Alert/Glow ohne echte neue Daten ausloest.
+// Setzte bis 2026-09-24 setScoreMode() waehrend eines classic/normalized-
+// Wechsels (den Schalter gibt es nicht mehr). Bleibt als Werkzeug: ein
+// Recompute ohne neue Daten soll lastNotifBias synchron halten, aber keinen
+// Telegram-Alert/Glow ausloesen.
 let _suppressBiasFlipAlerts=false;
 function setSuppressBiasFlipAlerts(v){_suppressBiasFlipAlerts=v;}
 function recomputeAllSymBiases(){
@@ -14900,7 +14902,7 @@ function scoreHistAufzeichenbar(){
   if(DATA_LIVE_OK.ind!==true)return false;
   // Im normalisierten Modus haengt zusaetzlich die Marktrelevanz an den
   // Preisen (seit SCORE_MODEL_VERSION 13 wirkt sie wirklich).
-  if(scoreMode==='normalized'&&DATA_LIVE_OK.price!==true)return false;
+  if(DATA_LIVE_OK.price!==true)return false;
   return true;
 }
 function recordScoreHist(){
@@ -18603,7 +18605,7 @@ function renderEdgeRoh(){
   el.innerHTML=kopf+`
   <div class="cot-card">
     <div class="cot-card-title">Signal test — ${escH(COT_NAME[sym.id]||sym.id)}${iBtn('edge')}
-      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Reconstructed from ${serie.length} days of recorded releases · classic weighting · ${rows.length} days with a measurable forward return</small></div>
+      <small style="width:100%;font-weight:500;color:var(--t2);font-size:var(--fs-xs)">Reconstructed from ${serie.length} days of recorded releases · base weights only · ${rows.length} days with a measurable forward return</small></div>
     ${urteil}
     <table class="edge-tbl"><thead><tr><th>Score</th><th>days</th>${EDGE_HORIZONTE.map(h=>`<th>Ø ${h}d</th>`).join('')}<th>Hit 5d</th></tr></thead>
       <tbody>${st.map(zeile).join('')}</tbody></table>
@@ -20674,7 +20676,7 @@ SENT_INFO.spread=['Rate differential vs price',
 SENT_INFO.edge=['Edge (does the score lead the price?)',
   `<p><b>What this is:</b> the score is only worth something if it leads the price. This tab measures that on <b>recorded</b> data — no simulation, no assumed fills, no estimated values.</p>
    <p><b>How the reconstruction works:</b> every indicator carries up to three years of releases with both an actual and a forecast (<i>chartHist</i>). For each past day the last known beat/miss of every indicator is summed with the same weights the live score uses — the same functions, not a second formula. A release counts until the next one arrives, at most 120 days. Days with fewer than three active indicators are skipped.</p>
-   <p><b>What it deliberately does NOT do:</b> the reconstruction uses the <b>classic</b> weighting only. The normalised mode multiplies by measured surprise size, age decay and market impact — quantities that cannot be rebuilt for a past day without rewriting history. So the number here is not the live score, and the card says so.</p>
+   <p><b>What it deliberately does NOT do:</b> the reconstruction counts every beat/miss with its <b>base weight</b> only (±1, ±0.5). The live score also multiplies by measured surprise size, age decay and market impact — quantities that cannot be rebuilt for a past day without rewriting history. So the number here is not the live score, and the card says so.</p>
    <p><b>How to read the table:</b> each row is a score band; the columns are the <b>average</b> price change over the next 1, 5 and 20 trading days. If the score carries information, the bottom row should be clearly worse than the top row. A band with fewer than 10 observations shows its count instead of a mean — an average from three days is noise, not a result.</p>
    <p><b>The verdict line</b> compares the lowest and highest band over five days. It is a direction check, not a significance test — with a few dozen observations per band it can flip on a single outlier, and it says so.</p>
    <p><b>Per indicator:</b> after a beat or miss, did the price move in the implied direction within five trading days? A hit rate near 50% means that indicator carried no directional information for this asset in the recorded window. That is a finding, not a defect.</p>

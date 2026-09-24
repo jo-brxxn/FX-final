@@ -5689,11 +5689,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-558 - Ladelogo genau ein Durchlauf; Kartentitel einheitlich 17px; Info-i blau 15px; angepinnte Notizen in Bias-Farbe, groesserer Titel."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-559 - Einfacher Score-Modus (classic) entfernt; nur noch normalized."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-558</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-559</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6282,16 +6282,9 @@ window.fxLogoSvg=function(art){
       <span class="set-row-txt">PIN lock<span class="set-row-sub">code screen on open</span></span>
       <label class="tgl"><input type="checkbox" id="pinToggleBtn" onchange="togglePinEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <!-- Score-Gewichtung (Nutzer-Wunsch 2026-08-07): bewusst als SCHALTER
-         neben den anderen Praeferenzen, nicht als stiller Umbau. "classic"
-         bleibt Standard und rechnet bitgenau wie bisher; "normalized" legt
-         die Gewichtung nach Ueberraschungsgroesse, Aktualitaet und gemessener
-         Marktreaktion darueber. Jederzeit zurueckschaltbar. -->
-    <div class="set-sec">Score</div>
-    <div class="set-row">
-      <span class="set-row-txt">Normalized weighting<span class="set-row-sub">size of surprise, freshness &amp; market impact</span></span>
-      <label class="tgl"><input type="checkbox" id="scoreModeBtn" onchange="toggleScoreMode()"><span class="tgl-track"></span></label>
-    </div>
+    <!-- Score-Schalter "Normalized weighting" entfernt 2026-09-24 (Nutzer:
+         "Entfern bitte den einfachen Modus") - normalized ist die einzige
+         Rechnung. -->
     <!-- Nutzer-Wunsch 2026-08-04: "genau wie den Code aktivieren und
          deaktivieren koennen, direkt unter dem Code" - gleiche Zeile/Stil
          wie der PIN-Toggle, exakt dasselbe An/Aus-Muster. -->

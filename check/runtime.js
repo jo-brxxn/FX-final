@@ -76,11 +76,11 @@ const { chromium } = require(PW);
     await page.evaluate(() => { document.querySelectorAll('.mov,.mov2').forEach(m => { m.style.display='none'; }); });
   }
 
-  // ---- 3. score modals across all symbols/rubrics/pairs, both modes ----
+  // ---- 3. score modals across all symbols/rubrics/pairs ----
   const modalErrs = await page.evaluate(() => {
     const out = [];
-    for (const mode of ['classic','normalized']) {
-      try { setScoreMode(mode); } catch(e) { out.push('setScoreMode '+mode+': '+e.message); continue; }
+    // Nur noch ein Modus (der einfache ist seit 2026-09-24 entfernt).
+    for (const mode of ['normalized']) {
       for (const s of syms) {
         try { openScoreInfoSym(s.id); } catch(e) { out.push(mode+' sym '+s.id+': '+e.message); }
         for (const r of (s.rubrics||[])) {
