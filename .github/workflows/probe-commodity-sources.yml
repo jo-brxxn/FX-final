@@ -24,13 +24,13 @@ jobs:
       - name: B) Yahoo-Historie
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
-          for SYM in "TIO=F" "MTF=F" "QZ=F" "NCF=F" "DC=F" "GC=F" "CL=F" "%5EVIX"; do
+          for SYM in "TIO=F" "MTF=F" "QZ=F" "NCF=F" "DC=F" "GC=F" "CL=F" "%5EVIX" "SGX-FEF.SI" "WMP=F"; do
             CODE=$(curl -sL -A "$UA" --max-time 40 -o y.json -w "%{http_code}" "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || echo 000)
-            node -e 'const fs=require("fs");let d=null;try{d=JSON.parse(fs.readFileSync("y.json","utf8"));}catch(e){}
+            node -e '(()=>{const fs=require("fs");let d=null;try{d=JSON.parse(fs.readFileSync("y.json","utf8"));}catch(e){}
               const r=d&&d.chart&&d.chart.result&&d.chart.result[0];const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
               if(!r||!q){console.log(process.argv[1],process.argv[2],"KEINE DATEN",JSON.stringify(fs.readFileSync("y.json","utf8").slice(0,120)));return;}
               const c=q.close.filter(x=>typeof x==="number");const t=r.timestamp;
-              console.log(process.argv[1],process.argv[2],"Tage",c.length,"erster",new Date(t[0]*1000).toISOString().slice(0,10),"letzter",new Date(t[t.length-1]*1000).toISOString().slice(0,10),"letzter Wert",c[c.length-1],r.meta&&r.meta.longName||r.meta&&r.meta.shortName||"");' "$SYM" "$CODE"
+              console.log(process.argv[1],process.argv[2],"Tage",c.length,"erster",new Date(t[0]*1000).toISOString().slice(0,10),"letzter",new Date(t[t.length-1]*1000).toISOString().slice(0,10),"letzter Wert",c[c.length-1],r.meta&&r.meta.longName||r.meta&&r.meta.shortName||"");})()' "$SYM" "$CODE"
           done
       - name: C) Global Dairy Trade
         run: |
