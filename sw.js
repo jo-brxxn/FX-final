@@ -28,13 +28,14 @@
 // nicht Kosmetik: ohne ihn behielte jedes Geraet rezept.html und
 // js/rezept/* in seinem alten Cache und koennte die geloeschte App offline
 // weiter starten.
-const CACHE_VERSION = 'fxpro-v15';
+const CACHE_VERSION = 'fxpro-v16';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './icon-maskable-512.png',
   './apple-touch-icon.png',
   './favicon-32.png',
   // ⚠ Die Hintergrundbilder gehoeren in die App-Huelle: ohne sie faellt der

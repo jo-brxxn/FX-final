@@ -523,7 +523,14 @@ const FRISCHE = [
   // ("ein kaputter Zulieferer darf laut sein, aber er darf nicht die
   // Werkstatt abschliessen", siehe oben). Bewusst kurz: laeuft die Routine
   // bis dahin nicht wieder, wird der Waechter von selbst wieder hart rot.
-  ['news_ai.json',              40, 'zweimal taeglich (geplante Sitzung)',  '2026-09-23'],
+  // ⚠ news_ai.json NICHT MEHR UEBERWACHT (2026-09-24, Nutzer: "Loesch die News
+  // Routine"). Die Routine "News-Einordnung (KI, 08:00 + 17:00 DE)" lieferte
+  // seit 18.09. nichts: ihre Sitzungen hatten den Connector Claude_Code_Remote
+  // nicht (mcp_connections: [] im Trigger), konnten create_session also nie
+  // aufrufen und meldeten trotzdem SUCCEEDED. Routine geloescht - die Datei
+  // wird von niemandem mehr geschrieben, eine Frischepruefung waere dauerhaft
+  // rot. Wird die Einordnung wieder aufgenommen, gehoert die Zeile zurueck:
+  //   ['news_ai.json', 40, 'zweimal taeglich (geplante Sitzung)', null],
   ['sentiment_data.json',       30, 'stuendlicher Workflow',                '2026-09-13'],
   ['news_data.json',            30, 'stuendlicher Workflow',                null],
   ['seasonality_data.json',     30, 'stuendlicher Workflow',                null],

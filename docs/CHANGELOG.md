@@ -17472,3 +17472,29 @@ aus. Ohne Beleg kein Eingriff; Bildschirmaufnahme vom Nutzer angefragt.
 
 Dauerregeln: `docs/navigation.md` (Scrollstand, Asset-Markierung),
 `docs/design-system.md` (Kalender-Karte).
+
+## 2026-09-24 — Neues App-Icon (VERSION-CHECK-555)
+
+Nutzer: *„Ich will das App Icon ändern, nimm das Bild"* (1254×1254,
+blaue Kachel mit „FX ANALYST PRO", Kerzen, Weltkarte, auf Schwarz mit
+Leuchtrand). Zugeschnitten auf die Kachel (x 141–1113, y 137–1109) — ungeschnitten
+hätte iOS eine Kachel IN der Kachel mit schwarzen Ecken gezeigt; iOS
+rundet selbst. Erzeugt: `icon-512.png`, `icon-192.png`,
+`apple-touch-icon.png` (180), `favicon-32.png`, dazu
+`icon-maskable-512.png` (Kachel auf 80 % mit Kachelfarbe als Rand — die
+Android-Maske schneidet sonst „ANALYST PRO" an). `manifest.json` zeigt für
+`maskable` auf die neue Datei, `sw.js` CACHE_VERSION v15 → v16 mit der
+neuen Datei in der App-Hülle, `?v=2` an Favicon/Apple-Touch-Icon.
+⚠ iOS liest das Home-Bildschirm-Icon nur beim Hinzufügen: App vom
+Home-Bildschirm entfernen und neu hinzufügen.
+
+**Nachtrag (derselbe Push): News-Routine gelöscht.** `check/rules.js` war
+rot: `news_ai.json` 133 h alt, Quittung am 23.09. abgelaufen. Diagnose: die
+Routine „News-Einordnung (KI, 08:00 + 17:00 DE)" (`trig_017mFktyWqqnEgMijMigGKJ3`)
+feuerte, meldete SUCCEEDED nach ~27 s — ihre Sitzung hatte aber den
+Connector `Claude_Code_Remote` nicht (`mcp_connections: []`), konnte
+`create_session` also nie aufrufen. Nutzer: *„Lösch die News Routine und
+Push"*. Routine gelöscht; `news_ai.json` aus der Frischeprüfung genommen
+(sonst dauerhaft rot), Wiederaufnahme-Zeile als Kommentar in `check/rules.js`.
+Die App zeigt die vorhandene KI-Einordnung (Stand 18.09.) weiter; neue
+Meldungen bekommen keine mehr.
