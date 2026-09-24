@@ -1,0 +1,57 @@
+# Welche Quellen liefern Rohstoffpreise fuer AUD/NZD/CAD (Nutzer 2026-09-24:
+# "Rohstoffe fuer AUD usw find ich gut bau das ein" - Eisenerz, Kohle, Gold
+# fuer AUD, Milchpreis-Auktion GDT fuer NZD, Oel fuer CAD) und wie lauten die
+# Seiten von rateprobability.com je Zentralbank (Link im Asset)?
+# Aus der Claude-Umgebung sind TradingView/Yahoo gesperrt - deshalb misst
+# dieser Lauf auf dem GitHub-Laeufer. Schreibt NICHTS in die Daten, nur von Hand.
+name: Probe commodity sources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: A) TradingView-Scanner - Kandidaten-Ticker
+        run: |
+          curl -s --max-time 40 -X POST "https://scanner.tradingview.com/global/scan" \
+            --data '{"symbols":{"tickers":["SGX:FEF1!","COMEX:TIO1!","DCE:I1!","SGX:FEF2!","ICEEUR:NCF1!","NYMEX:MTF1!","ICEEUR:ATW1!","NYMEX:QZ1!","NZX:WMP1!","NZX:SMP1!","SGX:NZW1!","CME:DC1!","TVC:GOLD","NYMEX:CL1!","CBOE:VIX"],"query":{"types":[]}},"columns":["close","description","currency"]}' -o tv.json || true
+          echo "## A) TradingView-Scanner" >> $GITHUB_STEP_SUMMARY
+          node -e 'const fs=require("fs");let d={};try{d=JSON.parse(fs.readFileSync("tv.json","utf8"));}catch(e){console.log("keine JSON:",fs.readFileSync("tv.json","utf8").slice(0,200));}
+            (d.data||[]).forEach(r=>{const z="| "+r.s+" | "+JSON.stringify(r.d)+" |";console.log(z);fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,z+"\n");});
+            console.log("Anzahl Treffer:",(d.data||[]).length,"von 15");'
+      - name: B) Yahoo-Historie
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          for SYM in "TIO=F" "MTF=F" "QZ=F" "NCF=F" "DC=F" "GC=F" "CL=F" "%5EVIX"; do
+            CODE=$(curl -sL -A "$UA" --max-time 40 -o y.json -w "%{http_code}" "https://query1.finance.yahoo.com/v8/finance/chart/$SYM?range=5y&interval=1d" || echo 000)
+            node -e 'const fs=require("fs");let d=null;try{d=JSON.parse(fs.readFileSync("y.json","utf8"));}catch(e){}
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];const q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!r||!q){console.log(process.argv[1],process.argv[2],"KEINE DATEN",JSON.stringify(fs.readFileSync("y.json","utf8").slice(0,120)));return;}
+              const c=q.close.filter(x=>typeof x==="number");const t=r.timestamp;
+              console.log(process.argv[1],process.argv[2],"Tage",c.length,"erster",new Date(t[0]*1000).toISOString().slice(0,10),"letzter",new Date(t[t.length-1]*1000).toISOString().slice(0,10),"letzter Wert",c[c.length-1],r.meta&&r.meta.longName||r.meta&&r.meta.shortName||"");' "$SYM" "$CODE"
+          done
+      - name: C) Global Dairy Trade
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          for URL in "https://www.globaldairytrade.info/en/product-results/" "https://www.globaldairytrade.info/en/gdt-events/" "https://www.globaldairytrade.info/api/proxy/GetLatestEventResults" ; do
+            CODE=$(curl -sL -A "$UA" --max-time 40 -o g.html -w "%{http_code}" "$URL" || echo 000)
+            echo "$URL -> $CODE, $(wc -c < g.html) Bytes"
+            grep -o -i -E "(GDT Price Index|index)[^<]{0,120}" g.html | head -8
+            grep -o -E "[-+]?[0-9]+\.[0-9]%" g.html | head -8
+          done
+      - name: D) RBA-Rohstoffpreisindex + BoC-BCPI
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          CODE=$(curl -sL -A "$UA" --max-time 40 -o i2.csv -w "%{http_code}" "https://www.rba.gov.au/statistics/tables/csv/i2-data.csv" || echo 000)
+          echo "RBA I2 -> $CODE"; head -c 600 i2.csv; echo; tail -n 3 i2.csv
+          CODE=$(curl -sL --max-time 40 -o b.json -w "%{http_code}" "https://www.bankofcanada.ca/valet/observations/group/BCPI_MONTHLY/json?recent=3" || echo 000)
+          echo "BoC BCPI -> $CODE"; head -c 800 b.json; echo
+      - name: E) rateprobability.com - Seiten je Zentralbank
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
+          for S in fed ecb boe boj snb boc rba rbnz; do
+            CODE=$(curl -sL -A "$UA" --max-time 30 -o r.html -w "%{http_code} %{url_effective}" "https://rateprobability.com/$S" || echo 000)
+            echo "$S -> $CODE | $(grep -o -i '<title>[^<]*' r.html | head -1)"
+          done
