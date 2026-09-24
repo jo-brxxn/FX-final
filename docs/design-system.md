@@ -36,7 +36,7 @@ Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn automatisch.
 ## ⚠️ TYPOGRAFISCHE SKALA (Dashboard)
 
 Sieben feste Stufen als CSS-Variablen statt frei gewaehlter Werte:
-`--fs-hero` 30 · `--fs-xl` **24** · `--fs-lg` 17 · `--fs-md` 15 (KARTENTITEL) ·
+`--fs-hero` 30 · `--fs-xl` **24** · `--fs-lg` 17 · `--fs-md` 15 ·
 `--fs-base` 13 · `--fs-sm` 12 · `--fs-xs` 11 · `--fs-2xs` 10.
 
 ⚠ **Korrigiert am 2026-09-16:** hier stand `--fs-xl` 22 — im Code ist der
@@ -220,6 +220,23 @@ zeichen."*
   von ihrer Zeile auf gleiche Höhe gestreckt werden.
 - Geprüft von `check/kartenlook.js` (genau einer je Karte, Lage, gültiges
   Ziel, echter Klick mit Zurück-Pille).
+
+## Kartentitel EINE Größe: `--fs-kt` 17px (seit 2026-09-24)
+
+Nutzer: *„die Makrokarten haben größere Überschriften als die anderen Karten,
+mach das einheitlich, treff dich in der Größe ca. in der Mitte"*. Vorher
+22/17/15/13px je nach Karte. Mitte 22↔15 = 18,5 → Skalenstufe 17px. Jeder
+Kartentitel (`.rub-inp .nc-inp .pcc-name .rub-name-static .ab-tile-t
+.cot-card-title .dw-t-txt .abc-mon .wt-name .rg-name`) nimmt `--fs-kt`, fest
+in px (die verkleinerte Skala der `.ab-cards` drückt ihn nicht). Ein neuer
+Kartentitel kommt in diese Liste. Geprüft von `check/kartentitel.js`.
+
+- **ⓘ im Kartenkopf:** blau (`--blue`), 15px-Kreis — *„leicht kleiner als
+  die Schrift daneben"*; Knopf 21px (Trefferfläche), Kreis per `::before` — kein überstehendes `::after` (zählt als Überlauf) und kein negativer Rand (verschiebt die Flex-Zeile). `.info-b` und
+  `.rinfo` sehen gleich aus.
+- **Angepinnte Notizen:** Fläche 11 % und Rand 30 % in der Bias-Farbe
+  (`--nb` je Zeile aus `biasCss`), Strich 4px, hervorgehoben 20 %; Titel
+  `--fs-md`, Text `--fs-sm` (Asset-Karte und Watchlist).
 
 ## ⓘ neben dem Kartennamen — Erklärungen stehen NIE im Kartenkörper (seit 2026-09-18)
 
@@ -687,7 +704,7 @@ Es gibt **eine** Skala, sie steht als Token in `index.html`:
 | `--fs-hero` | 30px | Hero-Zahl einer Karte (Score, Kurs) |
 | `--fs-xl` | 24px | Seitentitel |
 | `--fs-lg` | 17px | Abschnittstitel |
-| `--fs-md` | 15px | Kartentitel |
+| `--fs-md` | 15px | Titel einer Zeile/Notiz in einer Karte |
 | `--fs-base` | 13px | Fließtext |
 | `--fs-sm` | 12px | Buttons, dichte Tabellenzeilen |
 | `--fs-xs` | 11px | Sekundärtext in Karten |
@@ -1038,8 +1055,11 @@ Geprüft in `check/kalender.js`.
   transform/opacity (Grafikprozessor). SVG-Kinder-Animationen laufen auf dem
   Hauptthread und standen beim Laden in jeder Pause still („sehr abgehakt").
 - **Ladebildschirm** `#ladeOv`: steht, bis alle Feeds in `DATA_LIVE_OK`
-  geantwortet haben (mind. ein Durchlauf 3 s, höchstens 12 s), blendet dann
-  langsam aus (0,9 s). Das Cockpit-Intro ist ENTFERNT.
+  geantwortet haben, mindestens bis der EINE Kerzen-Durchlauf (`lg-lade`,
+  ~1,9 s, `LADE_ANIM_MS`) fertig ist, höchstens 12 s; in der Wartezeit steht
+  das Logo fertig still. Blendet dann langsam aus (0,9 s). **Keine Schleife**
+  — sie begann beim Ausblenden von vorn (Nutzer 2026-09-24). Das
+  Cockpit-Intro ist ENTFERNT.
 - **Karten**: ist zwischen dem untersten Inhalt und dem Kartenfuß ≥ 84 px
   frei, steht das Logo dort unten mittig (Blau des Icons, F in Textfarbe),
   60 % der freien Höhe, höchstens 42 % der Breite / 170 px; wächst mit, wenn

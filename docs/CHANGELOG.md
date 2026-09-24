@@ -17564,3 +17564,37 @@ Textfarbe mit Blau, helle Kerze als Blau-Tint, Deckkraft .85.
 **Wächter:** `check/logo.js` (E) — Lade-Kerzen als HTML-Ebenen ohne Filter,
 Platzhalter ohne laufende Animation, Aufklapp-Logo endlich; gegen 556 rot
 (3 Befunde).
+
+## 2026-09-24 — Ladelogo einmal, Kartentitel einheitlich, ⓘ blau, Notizen in Bias-Farbe (VERSION-CHECK-558)
+
+Nutzer: *„Beim Verschwinden der Startanimation wachsen noch einmal die
+Kerzen, also es soll die Animation genau einmal machen und dann verschwinden.
+Bei Pinned notes die Notizen sollen mehr in der Bias-Farbe eingefärbt sein und
+die Überschrift größer, besser lesbar. Und die Makrokarten haben größere
+Überschriften als die anderen Karten, mach das einheitlich, treff dich in der
+Größe ca. in der Mitte, und die kleinen Info i sollen leicht kleiner als die
+Schrift daneben sein und blau, wie es an manchen Stellen auch schon ist."*
+
+**Ladelogo — gemessen (Chromium, jedes Bild):** `lg-loop` lief 3 s in der
+Schleife, das Ausblenden begann bei ≥ 3 s — also genau, wenn die Schleife von
+vorn anfing: in 55 von 56 Ausblend-Bildern stand eine Kerze unter voller Höhe
+(scaleY 0,13 → 1). **Fix:** eigene Klasse `lg-lade` mit EINEM Durchlauf
+(Kerzen 1 s, Versatz 0,22 s, Bogen ab 1,2 s), danach steht das Logo;
+Ausblenden frühestens nach `LADE_ANIM_MS` = 2,1 s, sobald die Feeds da sind.
+Nachgemessen: 0 von 58 Ausblend-Bildern.
+
+**Kartentitel — gemessen:** Makro 22px, Dashboard 17px, Price/Pinned/
+History/Tab-Karten 15px, COT/Retail/Seasonality 13px. Mitte 22↔15 = 18,5 →
+Skalenstufe 17px (`--fs-kt`) für alle Kartentitel.
+**ⓘ — gemessen:** `.info-b` grau 18px neben 13/15px-Titel (größer als der
+Text), `.rinfo` blau 13px. Jetzt beide blau, 15px neben 17px, Trefferfläche
+21px (Knopf 21px, Kreis per `::before`; ein überstehendes `::after`
+meldete `check/dashboard.js` als Überlauf, ein −4px-Rand `check/layout.js`
+als verschobenes Flex-Kind).
+**Notizen:** vorher graue Fläche + 3px-Strich, Titel 10px. Jetzt Fläche 11 %
+/ Rand 30 % Bias-Farbe, Strich 4px, Titel 15px, Text 12px (Asset-Karte und
+Watchlist).
+
+**Wächter:** `check/logo.js` (F: ein Durchlauf, keine Kerze wächst beim
+Ausblenden — gegen 557 rot, 54/57 Bilder) und neu `check/kartentitel.js`
+(gegen 557 rot, 39 Befunde; Gegenprobe rot).

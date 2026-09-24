@@ -1732,7 +1732,9 @@ body.no-ui-anim #navSidebar{transition:none}
 .rg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .rg-hd-l{min-width:0}
 .rg-hd-r{text-align:right;flex:0 0 auto}
-/* ⚠ KARTENTITEL = --fs-md (15px). Nicht --fs-base: das ist die
+/* ⚠ Seit 2026-09-24 nehmen ALLE Kartentitel --fs-kt (17px, Block
+   "KARTENTITEL EINHEITLICH" unten) - die Regel hier ist nur der Ausgangswert.
+   Frueher: KARTENTITEL = --fs-md (15px). Nicht --fs-base: das ist die
    FLIESSTEXT-Stufe, und die Skala reserviert --fs-md ausdruecklich fuer
    Kartentitel ("bewusst groesser als der Fliesstext", docs/design-system.md).
    Der erste Entwurf hatte den Szenario-Namen auf 13px - damit kam 15px im
@@ -5522,6 +5524,19 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .fxlogo.lg-einmal>.lg-b{animation:lgBogenEin .6s .45s cubic-bezier(.45,0,.2,1) both}
 @keyframes lgKerzeEin{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
 @keyframes lgBogenEin{0%{transform:translateX(-7%);opacity:0}100%{transform:translateX(0);opacity:1}}
+/* lg-lade: der Ladebildschirm - GENAU EIN Durchlauf, danach steht das Logo
+   fertig, bis es ausgeblendet wird (Nutzer 2026-09-24: "beim Verschwinden
+   der Startanimation wachsen noch einmal die Kerzen ... es soll die
+   Animation genau einmal machen und dann verschwinden"). Gemessen vorher:
+   lg-loop (3 s, unendlich) + Ausblenden ab 3 s = die Schleife begann genau
+   beim Ausblenden von vorn, in 55 von 56 Ausblend-Bildern wuchs eine Kerze
+   neu. Ende des Durchlaufs: 0,66 s Versatz + 1 s Kerze = 1,66 s; Bogen bis
+   1,9 s (LADE_ANIM_MS in js/main.js). */
+.fxlogo.lg-lade>.lg-k,.fxlogo.lg-lade>.lg-b{will-change:transform,opacity}
+.fxlogo.lg-lade>.lg-k{animation:lgKerzeLade 1s cubic-bezier(.3,.7,.3,1) both}
+.fxlogo.lg-lade>.lg-k2{animation-delay:.22s}.fxlogo.lg-lade>.lg-k3{animation-delay:.44s}.fxlogo.lg-lade>.lg-k4{animation-delay:.66s}
+.fxlogo.lg-lade>.lg-b{animation:lgBogenEin .7s 1.2s cubic-bezier(.45,0,.2,1) both}
+@keyframes lgKerzeLade{0%{transform:scaleY(0);opacity:0}15%{opacity:1}100%{transform:scaleY(1);opacity:1}}
 body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{animation:none}
 @media(prefers-reduced-motion:reduce){.fxlogo>.lg-k,.fxlogo>.lg-b{animation:none!important}}
 /* Logo in freier Kartenflaeche (lgKarte in js/main.js): gedaempft, reine
@@ -5535,6 +5550,50 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
      den Vorlagen-Tokens, damit es auch in dunklen Vorlagen lesbar bleibt. */
   --lg-f1:color-mix(in srgb,var(--t0) 62%,#2F6FF0);--lg-f2:var(--t0);--lg-x1:#6FB6FF;--lg-x2:#2F6FF0;
   --lg-kb:#3E8BFF;--lg-kw:color-mix(in srgb,#3E8BFF 38%,var(--card));--lg-t:var(--t2);--lg-p:#2F7BFF}
+/* ══ KARTENTITEL EINHEITLICH (Nutzer 2026-09-24: "die Makrokarten haben
+   groessere Ueberschriften als die anderen Karten, mach das einheitlich,
+   treff dich in der Groesse ca. in der Mitte"). Gemessen vorher: Makro
+   22px, Dashboard 17px, Price/Pinned/History/Tabs 15px, COT/Retail/
+   Seasonality 13px (die verkleinerte Skala der .ab-cards). Mitte von 22 und
+   15 = 18,5 -> die naechste Skalenstufe ist 17px (--fs-lg, auf der die
+   Dashboard-Karten schon standen). EIN Token fuer alle Kartentitel, fest in
+   px, damit die verkleinerte Skala der .ab-cards ihn nicht wieder drueckt. */
+:root{--fs-kt:17px}
+.rub-inp,.nc-inp,.pcc-name,.rub-name-static,.ab-tile-t,.cot-card-title,.dw-t-txt,.abc-mon,.wt-name,.rg-name{font-size:var(--fs-kt)}
+/* ⓘ neben dem Titel (Nutzer 2026-09-24: "die kleinen Info i sollen leicht
+   kleiner als die Schrift daneben sein und blau wie es an manchen Stellen
+   auch schon ist"). Vorher zwei Sorten: .info-b grau 18px (groesser als
+   der 13/15px-Titel daneben), .rinfo blau 13px. Jetzt beide blau, 15px
+   Kreis neben dem 17px-Titel; die Trefferflaeche ist 21px gross, damit man sie auf dem Telefon trifft. */
+.info-b,.rinfo{color:var(--blue);border:1.3px solid var(--blue);background:transparent;opacity:1}
+/* Knopf selbst 21px (Trefferflaeche), den sichtbaren 15px-Kreis zeichnet
+   ::before. ⚠ NICHT per ueberstehendem ::after vergroessern - das zaehlt in
+   scrollWidth und meldet sich als Ueberlauf (check/dashboard.js) - und NICHT
+   per negativem Rand: der verschiebt das Kind in der zentrierten Flex-Zeile
+   (check/layout.js, beides 2026-09-24). */
+.info-b,.rub-hdr .rinfo,.cot-card-title .rinfo,.dw-t .rinfo{width:21px;height:21px;margin:0;border:none;border-radius:50%;
+  font:800 11px/1 Georgia,'Times New Roman',serif;font-style:italic;position:relative}
+.info-b::before,.rub-hdr .rinfo::before,.cot-card-title .rinfo::before,.dw-t .rinfo::before{content:'';position:absolute;inset:3px;
+  border:1.3px solid var(--blue);border-radius:50%;pointer-events:none}
+@media(hover:hover){.info-b:hover::before,.rub-hdr .rinfo:hover::before,.cot-card-title .rinfo:hover::before,.dw-t .rinfo:hover::before{background:rgba(var(--blue-rgb),.1)}}
+.info-b:hover{background:transparent}
+/* ⚠ Der Kalenderkopf setzt .info-b auf position:static (hoehere Spezifitaet) -
+   dann zeichnete ::before den Kreis ueber den ganzen Kopf (479px gemessen). */
+.abc-cal>.abc-hd .info-b{position:relative}
+/* ══ ANGEPINNTE NOTIZEN (Nutzer 2026-09-24: "die Notizen sollen mehr in der
+   Bias-Farbe eingefaerbt sein und die Ueberschrift groesser, besser
+   lesbar"). Vorher nur ein 3px-Strich links, Flaeche grau, Titel 10/11px.
+   Jetzt: Flaeche und Rand in der Bias-Farbe getoent (--nb kommt je Zeile aus
+   biasCss), Strich 4px, Titel --fs-md (15px) unter dem 17px-Kartentitel,
+   Text --fs-sm. Hervorgehobene (★) kraeftiger getoent statt Akzentgrau. */
+.ab-nt,.wt-pin{--nb:var(--bias-neu);background:color-mix(in srgb,var(--nb) 11%,var(--card));
+  border:1px solid color-mix(in srgb,var(--nb) 30%,var(--bd));border-left:4px solid var(--nb)}
+.ab-nt{padding:7px 8px}
+.ab-nt.hl{background:color-mix(in srgb,var(--nb) 20%,var(--card))}
+.wt-pin{border-width:0 0 1px 4px;border-bottom-color:color-mix(in srgb,var(--nb) 30%,var(--bd))}
+@media(hover:hover){.wt-pin:hover{background:color-mix(in srgb,var(--nb) 18%,var(--card))}}
+.ab-nt-ti,.wt-pin-ti{font:700 var(--fs-md)/1.3 var(--ff-text);color:var(--t0)}
+.ab-nt-bd,.wt-pin-tx{font:400 var(--fs-sm)/1.4 var(--ff-text);color:var(--t2)}
 #ladeOv{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse 70% 60% at 50% 45%,#10284f 0%,#081326 60%,#050b17 100%);
   transition:opacity .9s ease,visibility .9s;
@@ -5588,7 +5647,7 @@ window.fxLogoSvg=function(art){
   // Pruefskripte fahren ohne Ladebildschirm (er faengt sonst Klicks ab) -
   // ausser dem eigenen Waechter, der ihn mit __ladeTest anschaltet.
   if(navigator.webdriver&&!window.__ladeTest){ov.remove();return;}
-  ov.innerHTML='<div class="lade-logo">'+window.fxLogoSvg('lg-loop')+'</div>';
+  ov.innerHTML='<div class="lade-logo">'+window.fxLogoSvg('lg-lade')+'</div>';
   window.__ladeStart=Date.now();
 })();
 </script>
@@ -5630,11 +5689,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-557 - FX-Logo: Ladeanimation fluessig (Ebenen auf dem Grafikprozessor), Platzhalter still, kleiner, farbiger; Aufklapp-Logo waechst einmal."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-558 - Ladelogo genau ein Durchlauf; Kartentitel einheitlich 17px; Info-i blau 15px; angepinnte Notizen in Bias-Farbe, groesserer Titel."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-557</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-558</span>
     </span>
   </div>
   <div class="hdr-r">

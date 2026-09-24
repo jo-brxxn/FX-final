@@ -8757,7 +8757,7 @@ function abNotizen(assetId){
 }
 function abNotesHtml(c){
   const list=abNotizen(c.id);
-  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="border-left:3px solid ${biasCss(n.bias||'neu')}">
+  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="--nb:${biasCss(n.bias||'neu')}">
       <button class="ab-nt-hl${n.hl?' on':''}" onclick="abNoteHl('${escJH(n.id)}')" title="${n.hl?'Remove highlight':'Mark as important'}">${n.hl?'★':'☆'}</button>
       <button class="ab-nt-tx" onclick="openResNote('${escJH(n.id)}')" title="Open this note">
         <span class="ab-nt-ti">${escH(n.title||'Untitled note')}</span>
@@ -8862,7 +8862,7 @@ function abQuickZeileHtml(c){
 // Liste hier waere wieder die Dopplung, die gerade erst weggeraeumt wurde.
 function abPinnedHtml(c){
   const list=abNotizen(c.id).filter(n=>n.pin);
-  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="border-left:3px solid ${biasCss(n.bias||'neu')}">
+  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="--nb:${biasCss(n.bias||'neu')}">
       <button class="ab-nt-hl${n.hl?' on':''}" onclick="abNoteHl('${escJH(n.id)}')" title="${n.hl?'Remove highlight':'Mark as important'}">${n.hl?'★':'☆'}</button>
       <button class="ab-nt-tx" onclick="openResNote('${escJH(n.id)}')" title="Open this note">
         <span class="ab-nt-ti">${escH(n.title||'Untitled note')}</span>
@@ -11811,7 +11811,7 @@ function watchAssetNotesHtml(name){
     const pins=assetPinnedNotes(id);
     const total=resNotes().filter(n=>n&&resNoteAssetIds(n).includes(id)).length;
     const rows=pins.length
-      ? pins.map(n=>`<button class="wt-pin" style="border-left:3px solid ${BC[n.bias||'neu']}" onclick="event.stopPropagation();openResNote('${escJH(n.id)}')">
+      ? pins.map(n=>`<button class="wt-pin" style="--nb:${biasCss(n.bias||'neu')}" onclick="event.stopPropagation();openResNote('${escJH(n.id)}')">
           <span class="wt-pin-ti">${escH(n.title||'Untitled note')}</span>
           ${n.body?`<span class="wt-pin-tx">${escH(n.body.replace(/\s+/g,' ').slice(0,80))}</span>`:''}
         </button>`).join('')
@@ -22324,8 +22324,11 @@ document.getElementById('pgDash').style.display='block';
 renderDash();updUB();updProfile();startHdrLiveClock();
 // Ladebildschirm (Nutzer 2026-09-24): steht, bis ALLE Datenfeeds geantwortet
 // haben (dasselbe Signal wie check/warten.js: ein Eintrag je Feed in
-// DATA_LIVE_OK, mit Daten ODER Fehlschlag), mindestens einen vollen
-// Kerzen-Durchlauf (3 s), hoechstens 12 s - dann langsam ausblenden.
+// DATA_LIVE_OK, mit Daten ODER Fehlschlag), mindestens bis der EINE
+// Kerzen-Durchlauf (lg-lade) fertig ist, hoechstens 12 s - dann langsam
+// ausblenden. Das Logo steht in der Wartezeit fertig still; es laeuft keine
+// Schleife mehr, die beim Ausblenden von vorn beginnen koennte (2026-09-24).
+const LADE_ANIM_MS=2100;
 function ladeOvAusblenden(){
   const ov=document.getElementById('ladeOv');if(!ov||ov.classList.contains('weg'))return;
   ov.classList.add('weg');
@@ -22336,7 +22339,7 @@ function ladeOvAusblenden(){
   const t0=window.__ladeStart||Date.now(),feeds=Object.keys(DATA_SRC_LABEL);
   const pruefen=()=>{
     const z=Date.now()-t0,da=feeds.every(k=>k in DATA_LIVE_OK);
-    if((da&&z>=3000)||z>=12000)ladeOvAusblenden();else setTimeout(pruefen,150);
+    if((da&&z>=LADE_ANIM_MS)||z>=12000)ladeOvAusblenden();else setTimeout(pruefen,150);
   };
   pruefen();
 })();

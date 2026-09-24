@@ -13,6 +13,9 @@
 //      der Karte, UEBER dem Fuss und UNTER dem letzten Inhalt (verdeckt
 //      nichts); eine Karte ohne freie Flaeche (Price) hat keins;
 //   D) Indikator-Chart aufgeklappt -> Nachbarkarte bekommt ein Logo.
+//   F) Ladebildschirm: genau EIN Kerzen-Durchlauf; beim Ausblenden bleibt
+//      jede Kerze voll stehen (Nutzer 2026-09-24 "beim Verschwinden der
+//      Startanimation wachsen noch einmal die Kerzen").
 //   E) (Nutzer 2026-09-24 "mach die Platzhalter nicht animiert, nur wenn
 //      etwas laedt ... beim Erscheinen wenn sich was ausklappt koennen die
 //      animiert sein aber danach nicht mehr"; "die Anfangsanimation ... sehr
@@ -37,14 +40,21 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     await p.addInitScript(() => { window.__ladeTest = true; });
     p.goto(URL).catch(() => {});
     let da = null;
-    try { await p.waitForSelector('#ladeOv .fxlogo', { timeout: 10000 }); da = await p.evaluate(() => ({ kerzen: document.querySelectorAll('#ladeOv .lg-k').length, ebenen: [...document.querySelectorAll('#ladeOv .lg-k')].every(k => k.tagName === 'DIV' && getComputedStyle(k).animationName === 'lgKerze' && !k.ownerSVGElement), filter: getComputedStyle(document.querySelector('#ladeOv .lade-logo')).filter, voll: (() => { const r = document.getElementById('ladeOv').getBoundingClientRect(); return r.width >= innerWidth && r.height >= innerHeight; })() })); } catch (e) {}
+    try { await p.waitForSelector('#ladeOv .fxlogo', { timeout: 10000 }); da = await p.evaluate(() => ({ kerzen: document.querySelectorAll('#ladeOv .lg-k').length, ebenen: [...document.querySelectorAll('#ladeOv .lg-k')].every(k => k.tagName === 'DIV' && getComputedStyle(k).animationName === 'lgKerzeLade' && getComputedStyle(k).animationIterationCount === '1' && !k.ownerSVGElement), filter: getComputedStyle(document.querySelector('#ladeOv .lade-logo')).filter, voll: (() => { const r = document.getElementById('ladeOv').getBoundingClientRect(); return r.width >= innerWidth && r.height >= innerHeight; })() })); } catch (e) {}
     if (!da) fail('LADEBILDSCHIRM FEHLT', 'kein #ladeOv mit Logo beim Oeffnen');
     else {
       if (da.kerzen !== 4) fail('LADE-LOGO', `${da.kerzen} Kerzen statt 4`);
-      if (!da.ebenen) fail('LADE-KERZEN AUF DEM HAUPTTHREAD', 'die Kerzen sind keine HTML-Ebenen mit lgKerze - SVG-Kinder-Animationen standen beim Laden in jeder Pause des Hauptthreads still ("sehr abgehakt", 2026-09-24)');
+      if (!da.ebenen) fail('LADE-KERZEN', 'die Kerzen sind keine HTML-Ebenen mit EINEM Durchlauf lgKerzeLade - SVG-Kinder-Animationen standen beim Laden in jeder Pause des Hauptthreads still ("sehr abgehakt"), eine Schleife begann beim Ausblenden von vorn ("wachsen noch einmal die Kerzen", beides 2026-09-24)');
       if (da.filter !== 'none') fail('LADE-LOGO MIT FILTER', `filter ${da.filter} am Logo wird in jedem Bild neu gerechnet`);
       if (!da.voll) fail('LADEBILDSCHIRM', 'deckt den Bildschirm nicht');
+      // F) Ausblenden: keine Kerze darf dabei wieder klein werden (Nutzer
+      //    2026-09-24 "beim Verschwinden wachsen noch einmal die Kerzen").
+      await p.evaluate(() => { window.__ausLog = []; const tick = () => { const ov = document.getElementById('ladeOv'); if (!ov) return; if (ov.classList.contains('weg')) window.__ausLog.push(Math.min(...[...ov.querySelectorAll('.lg-k')].map(k => new DOMMatrix(getComputedStyle(k).transform).d))); requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
       const weg = await p.waitForFunction(() => !document.getElementById('ladeOv'), null, { timeout: 16000 }).then(() => true).catch(() => false);
+      const aus = await p.evaluate(() => window.__ausLog || []);
+      const klein = aus.filter(d => d < 0.99).length;
+      if (weg && !aus.length) fail('AUSBLENDEN NICHT GEMESSEN', 'kein Bild mit .weg gesehen');
+      if (klein) fail('KERZEN WACHSEN BEIM AUSBLENDEN NEU', `${klein} von ${aus.length} Ausblend-Bildern mit einer Kerze unter voller Hoehe - die Animation soll genau einmal laufen`);
       if (!weg) fail('LADEBILDSCHIRM BLEIBT', 'nach 16 s noch da - er soll ausblenden, sobald die Daten da sind (spaetestens 12 s)');
     }
     await p.context().close();
