@@ -2740,6 +2740,9 @@ body.res-return-active #resBackBar{display:flex}
 .ir-prev.act-good{color:var(--green)}
 .ir-prev.act-bad{color:var(--red)}
 .ir-fc,.ir-prev{color:var(--t2)}
+/* Werte-Zellen ragen nie in die Nachbarspalte (NZD-Screenshot 2026-09-25,
+   89 px). Der volle Text steht im title; Waechter check/zellen.js. */
+.ir-act,.ir-fc,.ir-prev{overflow:hidden;text-overflow:ellipsis}
 .ir-dash{color:var(--t3)}
 /* Sparkline schrumpft mit der (jetzt festen, nicht mehr scrollbaren) Trend-
    Spalte statt mit fester Pixelbreite ueberzustehen (Nutzer-Wunsch
@@ -5772,11 +5775,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-564 - Verlauf fuer Regel-Zeilen (2Y-Differenz, Trend, Retail, Rohstoffe, Saisonalitaets-Profil)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-565 - Werte-Zellen: kein Satz, kein Ueberlauf (NZD Core CPI), Rohstoff-Massstab raus aus PREV, Mio. -> M."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-564</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-565</span>
     </span>
   </div>
   <div class="hdr-r">

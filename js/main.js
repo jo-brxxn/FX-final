@@ -3006,7 +3006,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Inflation',indicator:'PCE',applicable:false},
     {rubric:'Inflation',indicator:'Core PCE',applicable:false},
     {rubric:'Inflation',indicator:'Services Inflation',applicable:false},
-    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537 Mio. (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516 Mio.',releaseDate:'2026-06-04',interval:'quarterly',unit:'level',source:'https://www.investing.com/economic-calendar/employment-level-98'},
+    {rubric:'Labour Market',indicator:'NFP / Employment Change',applicable:true,actual:'5.537M (+0.5% YoY, +20.7K QoQ s.a.)',forecast:null,previous:'5.516M',releaseDate:'2026-06-04',interval:'quarterly',unit:'level',source:'https://www.investing.com/economic-calendar/employment-level-98'},
     {rubric:'Labour Market',indicator:'Unemployment Rate',applicable:true,actual:'3.0% n.s.a. / 3.1% s.a.',forecast:'2.9%',previous:'3.0%',releaseDate:'2026-06-09',interval:'monthly',source:'https://www.investing.com/economic-calendar/unemployment-rate-sa-296'},
     {rubric:'Labour Market',indicator:'ADP Employment',applicable:false},
     {rubric:'Labour Market',indicator:'JOLTS Job Openings',applicable:false},
@@ -3108,7 +3108,7 @@ const IND_RESEARCH_DATA={
     {rubric:'Interest Rates',indicator:'FOMC Dot Plot',applicable:false},
     {rubric:'Inflation',indicator:'CPI (Headline)',applicable:true,actual:'3.1% y/y (+0.9% q/q)',forecast:'3.0% y/y',previous:'3.1% y/y',releaseDate:'2026-04-21',interval:'quarterly',source:'https://www.investing.com/economic-calendar/new-zealand-consumer-price-index-(cpi)-yoy-1063'},
     {rubric:'Inflation',indicator:'CPI',applicable:false},
-    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.5% y/y (Non-tradables CPI; +1.1% q/q)',forecast:null,previous:'Non-tradables CPI ~3.4% y/y (Q4 2025)',releaseDate:'2026-04-21',interval:'quarterly',source:'https://www.stats.govt.nz/indicators/consumers-price-index-cpi/',period:null},
+    {rubric:'Inflation',indicator:'Core CPI',applicable:true,actual:'3.5% y/y (Non-tradables CPI; +1.1% q/q)',forecast:null,previous:null,releaseDate:'2026-04-21',interval:'quarterly',source:'https://www.stats.govt.nz/indicators/consumers-price-index-cpi/',period:null},
     {rubric:'Inflation',indicator:'PPI',applicable:true,actual:'+0.8% q/q (Output; Input +1.4% q/q)',forecast:'0.5% q/q (Output; Input 0.8% q/q)',previous:'+0.1% q/q (Output, Q4 2025)',releaseDate:'2026-05-19',interval:'quarterly',source:'https://www.investing.com/economic-calendar/ppi-output-247'},
     {rubric:'Inflation',indicator:'Core PPI',applicable:false},
     {rubric:'Inflation',indicator:'PCE',applicable:false},
@@ -3440,6 +3440,20 @@ function splitResearchVal(s){
   const str=String(s).trim();
   let notes=[];
   let val=str.replace(/\s*\(([^)]*)\)/g,(m,g)=>{notes.push(g.trim());return'';}).trim();
+  // ⚠ Eine Tabellenzelle zeigt einen WERT, keinen Satz (NZD-Screenshot
+  // 2026-09-25: "Non-tradables CPI ~3.4% y/y" ragte 89 px ueber NEXT und
+  // TRD). Beginnt der Text mit Worten, wird die erste Zahl samt Einheit der
+  // Wert, der Rest wandert in die Anmerkungen (aufgeklappte Zeile).
+  // Deutsche Kurzformen gehoeren nicht auf die englische Oberflaeche.
+  val=val.replace(/(\d)\s*Mio\.?(?=\s|$)/g,'$1M').replace(/(\d)\s*Mrd\.?(?=\s|$)/g,'$1B');
+  if(/^[A-Za-z]/.test(val)){
+    const zm=val.match(/[~±<>]?[+\-−]?\d[\d.,]*\s*(?:%|pp|bp|[KMBT]\b)?/);
+    if(zm){
+      const rest=(val.slice(0,zm.index)+' '+val.slice(zm.index+zm[0].length)).replace(/\s+/g,' ').trim();
+      if(rest)notes.unshift(rest);
+      val=zm[0].trim();
+    }
+  }
   let period=null,note2=null;
   const pm=val.match(new RegExp(`^([+\\-]?[\\d.,]+\\s*%?)\\s*(${PERIOD_TAG_RE.source})\\b\\s*(?:\\/\\s*([+\\-]?[\\d.,]+\\s*%?)\\s*(${PERIOD_TAG_RE.source}))?`));
   if(pm){
@@ -3460,7 +3474,8 @@ function splitResearchVal(s){
     if(lm2){if(!period)period=periodLabel(lm2[1]);return lm2[2];}
     return n;
   }).filter(Boolean);
-  return{val:val||String(s),period,note2,notes};
+  // Nur Anmerkung, kein Wert ("(±10.6% typical)") -> leere Zelle, nicht der Satz.
+  return{val:val||(notes.length?null:String(s)),period,note2,notes};
 }
 
 function researchBias(name,actual,forecast,previous){
@@ -3792,6 +3807,12 @@ function migrateRubInds(rubrics,sym){
   moveRateIndToInflation(rubrics);
   addSurveyInds(rubrics,sym);
   cleanDeriveRules(sym);
+  // Bestandsgeraete (2026-09-25): NZD Core CPI trug als Vorwert den Satz
+  // "Non-tradables CPI ~3.4% y/y (Q4 2025)" - ein "~"-Wert ist geschaetzt
+  // (Regel 4) und ragte 89 px aus der Spalte. Die Recherche-Daten werden nur
+  // einmal je Asset eingespielt, der korrigierte Eintrag erreicht bestehende
+  // Staende also nur ueber diese Zeile.
+  rubrics.forEach(rub=>(rub.indicators||[]).forEach(i=>{const r=i&&i.research;if(r&&typeof r.previous==='string'&&/^Non-tradables CPI ~/.test(r.previous))r.previous=null;}));
   rubrics.forEach(rub=>{
     if(!rub.indicators)return;
     const rm=RUB_IND_REMOVE[rub.name];
@@ -8707,7 +8728,7 @@ function zinsdiffFuer(ccy){
 function zinsdiffRegelText(){
   return`Gap = this currency's 2-year yield minus the average 2-year yield of the other seven. The score looks at how that gap changed over the last ${ZINSDIFF_TAGE} trading days: ${ZINSDIFF_STUFEN.slice().reverse().map(([ab,p])=>ab+' bp or more → ±'+p).join(', ')}, less than 10 bp → 0. A widening gap in the currency's favour counts bullish.`;
 }
-const fmtPp=v=>(v>0?'+':'')+v.toFixed(2)+' pp';
+const fmtPp=v=>(v>0?'+':'')+v.toFixed(2)+'pp';   // ohne Leerzeichen: "+1.61 pp" wurde in der 16%-Spalte abgeschnitten (check/zellen.js)
 // Richtung fuer ein Nicht-FX-Asset: zuerst die Ableitungsregel der Inflation-
 // Karte (Gold, Indizes, Yields). Assets ohne Regel (BTC, Silber, Oel, DAX ...)
 // spiegeln ihre Rendite-Zeilen auf anderem Weg - dann gilt, wie DIESES Asset
@@ -8824,8 +8845,10 @@ function applyRohstoffFeed(){
       const pkt=regel==='inverse'?-w.pkt:w.pkt,bias=pkt>0?'bull':pkt<0?'bear':'neu';
       const act=(w.perf>0?'+':'')+w.perf.toFixed(1)+'%',prev=w.mass;
       const r=ind.research||{};
-      if(!(r.rohstoff&&r.actual===act&&r.previous===prev&&r.stand===w.it.asOf)){
-        ind.research={actual:act,forecast:null,previous:prev,stand:w.it.asOf,source:'https://www.tradingview.com/symbols/'+String(w.it.ticker||'').replace(':','-').replace('!',''),rohstoff:true,
+      // ⚠ Der Massstab gehoert NICHT in PREV (2026-09-25, NZD-Screenshot):
+      // "±10.6% typical" ist kein Vorwert und ragte 19-25 px aus der Spalte.
+      if(!(r.rohstoff&&r.actual===act&&r.mass===prev&&r.previous==null&&r.stand===w.it.asOf)){
+        ind.research={actual:act,forecast:null,previous:null,mass:prev,stand:w.it.asOf,source:'https://www.tradingview.com/symbols/'+String(w.it.ticker||'').replace(':','-').replace('!',''),rohstoff:true,
           cotColor:w.perf>0?'bond-up':w.perf<0?'bond-down':'bond-flat',gewicht:g,z:w.z,frisch:w.frisch};
         changed=true;
       }
@@ -9696,9 +9719,9 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
         <button class="idel2" onclick="event.stopPropagation();delInd(${ri},${ii})">×</button>
       </span>
     </td>
-    <td class="ir-act${actCls?' '+actCls:''}">${escH(actTxt)}</td>
-    <td class="ir-fc">${escH(fcTxt)}</td>
-    <td class="ir-prev${prevCls?' '+prevCls:''}">${escH(prevTxt)}</td>
+    <td class="ir-act${actCls?' '+actCls:''}" title="${escH(actTxt)}">${escH(actTxt)}</td>
+    <td class="ir-fc" title="${escH(fcTxt)}">${escH(fcTxt)}</td>
+    <td class="ir-prev${prevCls?' '+prevCls:''}" title="${escH(prevTxt)}">${escH(prevTxt)}</td>
     <td class="ir-nextc">${indNextReleaseCell(getSym().id,ind)}</td>
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
@@ -17414,6 +17437,47 @@ function abgeleiteteReihe(ind,id){
   });
   return null;
 }
+// ── Indikator-Historie aus TradingView ECONOMICS (tvecon_data.json) ─────
+// Fuer Reihen, deren Quelle nur den aktuellen Wert fuehrt (Workflow-Schritt
+// "Fetch indicator history (TradingView ECONOMICS)"). NUR fuer den
+// Verlaufschart - der Score bleibt bei der bisherigen Quelle.
+// ⚠ Eine Reihe wird nur benutzt, wenn ihr LETZTER Wert zum angezeigten
+// Actual passt (0,15 Punkte bzw. 0,5 % Abstand). Sonst misst TradingView
+// womoeglich etwas anderes (Kernrate nach anderer Definition, m/m statt
+// y/y) - dann lieber kein Chart als ein falscher (Regel 4).
+// Kandidaten je Waehrung + Indikator; der erste passende gewinnt.
+const TVECON_MAP={
+  AUD:{'Core CPI':['AUCIR'],'Retail Sales':['AUHSPMM']},
+  CHF:{'Core CPI':['CHCIR'],'PPI':['CHPPI:yoy'],'Avg Hourly Earnings':['CHWG'],'NFP / Employment Change':['CHEMC']},
+  NZD:{'Core CPI':['NZCIR'],'PPI':['NZPPIMM','NZPPIYY'],'Avg Hourly Earnings':['NZWG']},
+  JPY:{'Services Inflation':['JPSI'],'NFP / Employment Change':['JPEMP'],'JOLTS Job Openings':['JPJAR']},
+  EUR:{'Avg Hourly Earnings':['EUNWG'],'JOLTS Job Openings':['EUJVR']},
+  CAD:{'Consumer Confidence':['CACCI']}
+};
+let TVECON_DATA=null;
+function fetchTvEconData(){
+  return fetch(DATA_BASE+'tvecon_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{if(d&&d.series&&typeof d.series==='object')TVECON_DATA=d;}).catch(()=>{});
+}
+function tvEconReihe(ind,id){
+  const ccy=id?macroCcyFor(id):null,base=stripPeriodSuffix(ind.name).base;
+  const kand=ccy&&TVECON_MAP[ccy]&&TVECON_MAP[ccy][base];
+  const S=TVECON_DATA&&TVECON_DATA.series;
+  if(!kand||!S)return null;
+  const act=parseNumLike((ind.research||{}).actual);
+  if(act==null)return null;
+  for(const k of kand){
+    const [sym,art]=k.split(':');
+    let r=Array.isArray(S[sym])?S[sym].filter(e=>e&&isFinite(e[1])):[];
+    if(art==='yoy'){const m=new Map(r.map(e=>[e[0],e[1]]));r=r.map(e=>{const d=new Date(e[0]+'T00:00:00Z');d.setUTCFullYear(d.getUTCFullYear()-1);const v0=m.get(d.toISOString().slice(0,10));return v0>0?[e[0],Math.round((e[1]/v0-1)*1000)/10]:null;}).filter(Boolean);}
+    if(r.length<3)continue;
+    const letzt=r[r.length-1][1];
+    const passt=Math.abs(letzt-act)<=Math.max(0.15,Math.abs(act)*0.005);
+    if(passt)return{pts:r.map(e=>[e[0],e[1],null]),unit:null,tv:sym};
+  }
+  return null;
+}
 function indChartSeries(ind,symId){
   const own=Array.isArray(ind.chartHist)?ind.chartHist:[];
   if(own.length>=2)return{pts:own,unit:null};
@@ -17426,6 +17490,7 @@ function indChartSeries(ind,symId){
   else if(r.cot&&id){pts=cotHistPts(id,base);unit='%';}
   else if(r.sent&&r.sentKey){pts=sentHistPts(r.sentKey);unit=r.sentKey==='aaii'?'%':'';}
   if(pts.length<2){try{const ab=abgeleiteteReihe(ind,id);if(ab&&ab.pts&&ab.pts.length>=2){pts=ab.pts;unit=ab.unit;}}catch(e){}}
+  if(pts.length<3){try{const tv=tvEconReihe(ind,id);if(tv){pts=tv.pts;unit=null;}}catch(e){}}
   if(pts.length<2){pts=valHistPts(ind);unit=null;}
   return pts.length>=2?{pts,unit}:{pts:own,unit:null};
 }
@@ -20807,7 +20872,11 @@ function renderCotRoh(){
 let SEASONALITY_DATA=null,seasAsset='';
 function fetchSeasonalityData(){
   return fetch(DATA_BASE+'seasonality_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
-    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets)SEASONALITY_DATA=d;}).catch(()=>{});
+    .then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'&&d.assets){
+      // Stand bis 2026-09-25: NZD/DAX-Proxy stand URL-kodiert in der Datei
+      // ("NZDUSD%3DX") - der Workflow schreibt ihn inzwischen dekodiert.
+      Object.values(d.assets).forEach(a=>{if(a&&typeof a.proxy==='string'&&/%[0-9A-F]{2}/i.test(a.proxy)){try{a.proxy=decodeURIComponent(a.proxy);}catch(e){}}});
+      SEASONALITY_DATA=d;}}).catch(()=>{});
 }
 function autoFetchSeasonality(){
   fetchSeasonalityData().then(()=>{
@@ -22825,7 +22894,9 @@ async function bootFetchScoreFeeds(){
     // Rohstoffe (seit 2026-09-24) - angewandt unten mit applySeasRetailFeed.
     fetchCommodityData().then(()=>false),
     // Trend 4H (seit 2026-09-25) - angewandt mit applySeasRetailFeed.
-    fetchTrendData().then(()=>false)
+    fetchTrendData().then(()=>false),
+    // Indikator-Historie fuer den Verlaufschart (nur Anzeige, kein Score).
+    fetchTvEconData().then(()=>false)
   ]);
   let seasCh=false;
   try{seasCh=applySeasRetailFeed();}catch(e){}
@@ -23310,7 +23381,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

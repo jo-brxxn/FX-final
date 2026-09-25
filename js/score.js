@@ -899,7 +899,7 @@ function scoreInfoIndRow(ind,rub){
       erkl=`${r.trend==='d'?'Daily':'4-hour'} candle closed ${escH(r.stand||'?')}: ${escH(r.actual||'?')} · ${escH(r.previous||'')}`;
       regel=W.trendRegelText?W.trendRegelText():'';
     }else if(r.rohstoff){
-      erkl=`1-month change ${escH(r.actual||'?')} · yardstick ${escH(r.previous||'?')}${r.z!=null?` → ${r.z.toFixed(2)} typical moves`:''} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`;
+      erkl=`1-month change ${escH(r.actual||'?')} · yardstick ${escH(r.mass||r.previous||'?')}${r.z!=null?` → ${r.z.toFixed(2)} typical moves`:''} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`;
       regel=W.rohstoffRegelText?W.rohstoffRegelText(W.macroCcyFor?W.macroCcyFor((rub&&rub._symId)||selId):''):'';
     }else erkl=escH(r.actual||'');
     return`<div class="si-card ${biasCls}">

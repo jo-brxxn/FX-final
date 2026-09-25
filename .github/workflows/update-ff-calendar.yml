@@ -3721,6 +3721,58 @@ jobs:
           '
           rm -f tr_*.json
 
+      # ── INDIKATOR-HISTORIE AUS TRADINGVIEW ECONOMICS (tvecon_data.json) ──
+      # Nutzer 2026-09-25: "jeder Indikator wenn aufgeklappt muss eine Historie
+      # haben, wenn nicht, hol sie ... das ist wichtig". Die Reihen, die nur
+      # von Trading-Economics-Seiten kommen, hatten nur den aktuellen Wert.
+      # Probelaeufe 2026-09-25: Investing gesperrt (3 Byte / sbcharts 403),
+      # TE-Seiten ohne Chartdaten; der TradingView-Chart-Websocket liefert
+      # ECONOMICS:* mit anonymem Token ab 1993 (JPEMP, CHPPI, USCPI geprueft).
+      # PMIs (S&P Global/HCOB/Jibun) fuehrt TradingView NICHT - die bleiben
+      # ohne Historie. Die App uebernimmt eine Reihe nur, wenn ihr letzter
+      # Wert zum angezeigten Actual passt (tvEconReihe) - sonst waere es
+      # womoeglich eine andere Messgroesse. Einmal am Tag reicht.
+      - name: Fetch indicator history (TradingView ECONOMICS) -> tvecon_data.json
+        continue-on-error: true
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("tvecon_data.json","utf8"));process.exit(String(d.updated||"").slice(0,10)==="'"$TODAY"'"?0:1);}catch(e){process.exit(1);}'; then
+            echo "[debug] tvecon: already fetched today, skipping"; exit 0
+          fi
+          mkdir -p tvw && cd tvw && npm install --silent --no-save ws@8 >/dev/null 2>&1 && cd ..
+          cat > tvw/hol.js <<'JS'
+          const WebSocket=require("./node_modules/ws");const fs=require("fs");
+          const SYMS=["AUCIR","CHCIR","NZCIR","JPSI","JPEMP","CHWG","NZWG","EUNWG","CACCI","EUJVR","CHPPI","NZPPIMM","NZPPIYY","AUHSPMM","CHEMC","JPJAR"];
+          const rnd=()=>Math.random().toString(36).slice(2,14);
+          const pack=(m,p)=>{const s=JSON.stringify({m,p});return "~m~"+s.length+"~m~"+s;};
+          const hol=sym=>new Promise(res=>{
+            const ws=new WebSocket("wss://data.tradingview.com/socket.io/websocket?type=chart",{headers:{Origin:"https://www.tradingview.com"}});
+            const cs="cs_"+rnd();let done=false;const fin=v=>{if(done)return;done=true;try{ws.close();}catch(e){}res(v);};
+            const t=setTimeout(()=>fin(null),20000);
+            ws.on("open",()=>{ws.send(pack("set_auth_token",["unauthorized_user_token"]));ws.send(pack("chart_create_session",[cs,""]));
+              ws.send(pack("resolve_symbol",[cs,"s1","="+JSON.stringify({symbol:"ECONOMICS:"+sym,adjustment:"splits"})]));
+              ws.send(pack("create_series",[cs,"sds_1","s1","s1","1M",400,""]));});
+            ws.on("error",()=>fin(null));
+            ws.on("message",data=>{const txt=String(data);
+              if(/~h~/.test(txt)&&!/"m"/.test(txt)){ws.send(txt);return;}
+              txt.split(/~m~\d+~m~/).filter(Boolean).forEach(ch=>{let j;try{j=JSON.parse(ch);}catch(e){return;}
+                if(j.m==="symbol_error"){clearTimeout(t);fin(null);}
+                if(j.m==="timescale_update"){clearTimeout(t);const s=(j.p&&j.p[1]&&j.p[1].sds_1&&j.p[1].sds_1.s)||[];
+                  fin(s.map(x=>[new Date(x.v[0]*1000).toISOString().slice(0,10),Number(Number(x.v[4]).toPrecision(6))]));}});});
+          });
+          (async()=>{
+            let alt={};try{alt=JSON.parse(fs.readFileSync("tvecon_data.json","utf8")).series||{};}catch(e){}
+            const out={};let ok=0;
+            for(const s of SYMS){const r=await hol(s);
+              if(r&&r.length>=3){out[s]=r;ok++;console.log("[debug] tvecon "+s+": "+r.length+" bars "+r[0][0]+" .. "+r[r.length-1].join("="));}
+              else{console.log("[debug] tvecon "+s+": none"+(alt[s]?" (keeping old)":""));if(alt[s])out[s]=alt[s];}}
+            if(ok)fs.writeFileSync("tvecon_data.json",JSON.stringify({updated:new Date().toISOString(),source:"TradingView ECONOMICS (monthly bars, reference period)",series:out}));
+            console.log("tvecon_data.json: "+ok+"/"+SYMS.length);
+          })();
+          JS
+          node tvw/hol.js || true
+          rm -rf tvw
+
       - name: Fetch seasonality (Yahoo ETF proxies, monthly bars) -> seasonality_data.json
         continue-on-error: true
         run: |
@@ -3759,7 +3811,7 @@ jobs:
             const fs=require("fs");
             const YEARS=15, MIN_YEARS=8;
             let meta=[];
-            try{meta=fs.readFileSync("seas_meta.txt","utf8").trim().split("\n").filter(Boolean).map(l=>{const p=l.split(" ");return{id:p[0],sym:p[1]};});}catch(e){}
+            try{meta=fs.readFileSync("seas_meta.txt","utf8").trim().split("\n").filter(Boolean).map(l=>{const p=l.split(" ");return{id:p[0],sym:decodeURIComponent(p[1])};});}catch(e){}
             const out={updated:new Date().toISOString(),assets:{}};
             const log=[];
             meta.forEach(m=>{
@@ -5296,6 +5348,7 @@ jobs:
           [ -f price_data.json ] && git add price_data.json
           [ -f commodity_data.json ] && git add commodity_data.json
           [ -f trend_data.json ] && git add trend_data.json
+          [ -f tvecon_data.json ] && git add tvecon_data.json
           [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json

@@ -17814,3 +17814,45 @@ in Börsenzeit datieren (`meta.gmtoffset`). DAX: `range=max` lieferte bei
 ^GDAXI 3-Monats-Bars (5 Monate) — jetzt `range=20y`, das Monats-Bars
 erzwingt. Außerdem holt der Schritt neu, wenn ein Asset fehlt, statt bis zum
 nächsten UTC-Tag zu warten.
+
+---
+
+## VERSION-CHECK-565 (2026-09-25) — Werte-Zellen (NZD-Screenshot)
+
+**Gemeldet** (Screenshot NZD, Inflation-Karte): in der Zeile Core CPI lief
+der PREV-Text über NEXT und TRD („Non-tradables CPI ~3.4% y/y").
+
+**Reproduziert/gemessen** (Chromium, 1180 px, alle 24 Assets): NZD Core CPI
+PREV ragt **89 px** aus der Zelle. Dieselbe Klasse: Rohstoff-Zeilen (PREV =
+Maßstab „±10.6% typical" / „fixed 2% / 5%", 19–25 px), CHF Employment
+(„5.537 Mio.", 7–8 px, dazu Deutsch auf der englischen Oberfläche). Nach dem
+ersten Fix zusätzlich: 2Y Yield Gap „+1.61 pp" in der 16-%-Spalte
+abgeschnitten.
+
+**Ursache:** `splitResearchVal()` reichte Sätze ungekürzt als Zellwert
+durch; die Tabelle hat feste Spalten (`table-layout:fixed`), nichts
+begrenzte den Überlauf. Die Rohstoff-Zeilen (von mir am 24.09. gebaut)
+missbrauchten PREV für den Maßstab.
+
+**Fix an der Wurzel:** Beginnt ein Wert mit Worten, wird die erste Zahl samt
+Einheit der Zellwert, der Rest wandert in die Anmerkungen der aufgeklappten
+Zeile; `Mio.`/`Mrd.` → `M`/`B`. Rohstoff-Maßstab in `research.mass`, PREV
+leer. NZD-Vorwert „~3.4%" entfernt (ein „~"-Wert ist geschätzt, Regel 4) —
+auch in gespeicherten Ständen (`migrateRubInds`). `pp` ohne Leerzeichen.
+Sicherheitsnetz: `.ir-act/.ir-fc/.ir-prev` mit `overflow:hidden`, voller
+Text im `title`.
+
+**Nachher:** 0 Befunde in 2664 Zellen (1180 + 820 px). Wächter
+`check/zellen.js`, Gegenprobe rot (15 Befunde).
+
+**Nachtrag 565 — Indikator-Historie aus TradingView ECONOMICS.** Probelauf
+`probe-tv-economics.yml`: der Chart-Websocket liefert mit anonymem Token
+Monatsreihen ab 1993 (JPEMP, CHPPI, USCPI geprüft). Die Symbolsuche zeigt:
+**PMIs führt TradingView nicht** (EU/GB/JP/AU/CA/CH: nur Produktion, GDP
+from Manufacturing u. Ä.) — die PMI-Zeilen bleiben ohne Historie, bis eine
+freie Quelle auftaucht. Gefunden und angebunden: AUCIR, CHCIR, NZCIR, JPSI,
+JPEMP, CHWG, NZWG, EUNWG, CACCI, EUJVR, CHPPI (→ y/y), NZPPIMM/NZPPIYY,
+AUHSPMM, CHEMC, JPJAR. Neuer Workflow-Schritt → `tvecon_data.json` (einmal
+täglich). Die App (`tvEconReihe`) benutzt eine Reihe nur für den
+Verlaufschart und nur, wenn ihr letzter Wert zum angezeigten Actual passt
+(±0,15 bzw. 0,5 %) — sonst wäre es womöglich eine andere Messgröße.
