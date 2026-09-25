@@ -895,6 +895,9 @@ function scoreInfoIndRow(ind,rub){
     }else if(r.zinsdiff){
       erkl=`Gap now ${escH(r.actual||'?')}, ${escH(r.prevDate||'')} ${escH(r.previous||'?')} → change ${r.bp>0?'+':''}${r.bp} bp`;
       regel=W.zinsdiffRegelText?W.zinsdiffRegelText():'';
+    }else if(r.trend){
+      erkl=`${r.trend==='d'?'Daily':'4-hour'} candle closed ${escH(r.stand||'?')}: ${escH(r.actual||'?')} · ${escH(r.previous||'')}`;
+      regel=W.trendRegelText?W.trendRegelText():'';
     }else if(r.rohstoff){
       erkl=`1-month change ${escH(r.actual||'?')} · yardstick ${escH(r.previous||'?')}${r.z!=null?` → ${r.z.toFixed(2)} typical moves`:''} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`;
       regel=W.rohstoffRegelText?W.rohstoffRegelText(W.macroCcyFor?W.macroCcyFor((rub&&rub._symId)||selId):''):'';
@@ -1127,12 +1130,13 @@ function swIndZeile(i,rub){
 }
 // COT Data ist inhaltlich vier Dinge - im Fenster als vier Gruppen.
 function swCotGruppen(rub){
-  const g={COT:[],Retail:[],Seasonality:[],Sentiment:[]};
+  const g={COT:[],Retail:[],Seasonality:[],Trend:[],Sentiment:[]};
   (rub.indicators||[]).forEach(i=>{
     const b=stripPeriodSuffix(i.name).base;
     if(/Positioning$/.test(b)&&b!=='Retail Positioning'||b===COT_WOW_BASE)g.COT.push(i);
     else if(b==='Retail Positioning')g.Retail.push(i);
     else if(b==='Seasonality')g.Seasonality.push(i);
+    else if(/^Trend (1D|4H) \(EMA20\)$/.test(i.name))g.Trend.push(i);
     else g.Sentiment.push(i);
   });
   return g;
@@ -1147,7 +1151,7 @@ function swKarteHtml(sym,rub,offen){
     Object.keys(g).forEach(k=>{
       if(!g[k].length)return;
       const sub=roundSc(g[k].reduce((s,i)=>s+indScoreParts(i,rub).total,0));
-      body+=`<div class="sw-grp"><span>${k==='COT'?'COT positioning (max ±1.5)':k==='Retail'?'Retail positioning (max ±1)':k==='Seasonality'?'Seasonality (±0.5)':'Market sentiment'}</span><b style="color:${sub>0?BC.bull:sub<0?BC.bear:'var(--t3)'}">${fmtScNum(sub)}</b></div>`
+      body+=`<div class="sw-grp"><span>${k==='COT'?'COT positioning (max ±1.5)':k==='Retail'?'Retail positioning (max ±1)':k==='Seasonality'?'Seasonality (±0.5)':k==='Trend'?'Price trend 1D + 4H (max ±1.5)':'Market sentiment'}</span><b style="color:${sub>0?BC.bull:sub<0?BC.bear:'var(--t3)'}">${fmtScNum(sub)}</b></div>`
         +g[k].map(i=>swIndZeile(i,rub)).join('');
     });
   }else{
@@ -1740,7 +1744,10 @@ function symScoreCmp(sym){
 // 2Y-Zinsdifferenz (±0,5/±0,75), Rohstoffe fuer AUD/NZD/CAD, Next CB Move
 // entfernt, Carry auf 2Y/Carry-to-Risk/VIX umgestellt, feste Punkte (ind.pkt)
 // ohne Normierung und ohne Altersgrenze.
-const SCORE_MODEL_VERSION=15;
+// 15 -> 16 (2026-09-25): neuer Treiber "Trend" (Nutzer): Schluss der letzten
+// geschlossenen 1D- und 4H-Kerze gegen EMA20, je ±0,75, neutral innerhalb
+// ±0,25 x ATR14 - zwei feste Zeilen in der COT-Data-Karte.
+const SCORE_MODEL_VERSION=16;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

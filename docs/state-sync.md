@@ -33,7 +33,8 @@ Nach diesem Muster angebundene Felder: `greenDismissed`, `tabStacks`,
 Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch "zurück auf
 Auto" = null ankommt), `setupCcyFilter`/`setupFxOnly`
 (Set-ups-Waehrungsfilter/FX-Quick-Filter), `calHighOnly`/`calCcyFilter`
-(Kalender-Filter), `telegramEnabled`,
+(Kalender-Filter), `abTrendLinien` (EMA20-Linien 1D/4H im Price-Chart,
+`'d,h'`, seit 2026-09-25), `telegramEnabled`,
 `newsSeenTs`, `denseMode`, `appBg` (Hintergrund-Wahl: leer = Current,
 sonst `white`/`marble-light`/`marble-vivid`/`marble-dark`; ⚠ die erlaubten
 Werte stehen doppelt — in `APP_BGS` in `js/main.js` und in der Frueh-Weiche
@@ -129,6 +130,7 @@ Betroffen sind heute vier Feeds mit ihren Zielfeldern:
 | `bond_data.json` | `applyBondDataFeed()` | `ind.research` der Renditen |
 | `cot_data.json` | `applyCotDataFeed()` | `ind.research` der COT-Indikatoren |
 | `sentiment_data.json` | `applySentimentFeed()` | `ind.research` der Sentiment-Indikatoren |
+| `price_data.json` + `trend_data.json` | `applyTrendFeed()` (seit 2026-09-25) | Zeilen `Trend 1D/4H (EMA20)` der COT-Data-Karte, `ind.pkt` |
 
 Deshalb ruft `applySnap()` seit VERSION-CHECK-472 `reapplyLiveFeeds()` direkt
 vor `recomputeAuto()` auf. **Kommt ein fünfter Feed dazu, der in `syms`

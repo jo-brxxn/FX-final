@@ -1085,12 +1085,22 @@ Unterteilung"*. Feste Gliederung, nicht erweitern ohne Grund:
 
 Das i einer Makro-Karte zeigt `rubrikZusammensetzungText`, das i eines
 Indikators `indZaehlText` — immer aus denselben Konstanten wie die Rechnung.
-Asset-Kacheln (COT, Retail, Seasonality, Momentum) nennen ihre Regel im i
+Asset-Kacheln (COT, Retail, Seasonality) nennen ihre Regel im i
 und haben eine „Score effect"-Zeile.
 
-## Momentum-Karte (seit 2026-09-24)
+## Momentum-Karte — entfernt (2026-09-25)
 
-Volle Breite unter der Positioning-Reihe, **ohne** eigene Reihen-Überschrift
-(höchstens drei, `check/kartenlook.js`). 1M/3M/12M, bei Währungen gegen den
-Korb der anderen sieben, dazu „× typical" aus der eigenen Historie; Score
-effect immer 0 („shown only"). Ausführliche Erklärung hinter dem i.
+Stand 2026-09-24 bis 2026-09-25 unter der Positioning-Reihe; auf Nutzer-Wunsch
+entfernt. Trend zählt jetzt als Score-Treiber in der Price-Karte (EMA20 4h/1d).
+`check/regeln.js` meldet rot, falls `.ab-mom` wieder auftaucht.
+
+## Feste Tabellen (Dauerregel seit 2026-09-25)
+
+Jeder innere Scrollbereich (Kalender, Listen, Tabellen, Fenster) scrollt nur
+bis zu seinen Rändern — kein Gummiband, keine Weitergabe an die Seite
+(Nutzer: *„alle losen Tabellen fest … also schon scrollen aber nur zu den
+Grenzen nach oben und unten"*). Umgesetzt an der Wurzel:
+`*{overscroll-behavior:none}` im Kopf von `index.html`; Ausnahme nur die
+Seiten-Scroller `.pc`/`.detail`. Kein `overscroll-behavior:contain` benutzen
+(contain lässt das Element selbst weiter federn). Wächter:
+`check/tabellenfest.js`.

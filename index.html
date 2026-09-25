@@ -84,6 +84,15 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{height:100%;overflow:hidden;overscroll-behavior:none}
+/* FESTE TABELLEN (Nutzer-Regel 2026-09-25, Dauerregel: "alle losen Tabellen
+   fest ... also schon scrollen aber nur zu den Grenzen nach oben und unten").
+   Jeder innere Scrollbereich (Kalender, Listen, Tabellen, Fenster) scrollt
+   nur bis zu seinen Raendern: kein Gummiband, keine Weitergabe an die Seite.
+   An der Wurzel fuer ALLE Elemente statt pro Tabelle - neue Listen erben es.
+   Ausnahme nur die Seiten-Scroller selbst (.pc, .detail).
+   Waechter: check/tabellenfest.js. */
+*{overscroll-behavior:none}
+.pc,.detail{overscroll-behavior-y:auto}
 /* ══ HINTERGRUND-BILDER (Nutzer-Wunsch 2026-09-11) ══════════════════════
    Fuenf Auswahlmoeglichkeiten in den Einstellungen: Current (dieses body-
    Regelwerk hier, unveraendert), White und drei Marmor-Bilder.
@@ -940,6 +949,23 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-rg{font:700 var(--fs-2xs)/1 var(--ff-num);padding:4px 8px;border-radius:var(--rss);
   border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);cursor:pointer}
 .ab-rg.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+/* Trend-Overlay im Price-Chart (2026-09-25): 1D-EMA bernstein, 4H-EMA violett,
+   Neutralband (+-0,25 x ATR14) grau mit gestrichelten Raendern. Feste Farben
+   statt Tokens: beide lesen sich auf hellen wie dunklen Vorlagen. */
+.tr-sws{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 4px}
+.tr-sw{display:inline-flex;align-items:center;gap:5px}
+.tr-sw-dot{width:10px;height:3px;border-radius:2px;background:currentColor;opacity:.35}
+.tr-sw.on .tr-sw-dot{opacity:1}
+.ab-ptile .tr-sw,.ab-ptile .tr-sw.on{background:var(--bg3);border-color:var(--bd2);color:var(--t3);box-shadow:none}
+.ab-ptile .tr-sw.on{color:var(--t0);border-color:var(--bd2)}
+.tr-sw-d .tr-sw-dot{background:#D4901A}.tr-sw-h .tr-sw-dot{background:#8E5BE0}
+.tr-ema{fill:none;stroke-width:1.6}
+.tr-ema.tr-d{stroke:#D4901A}.tr-ema.tr-h{stroke:#8E5BE0}
+.tr-band{fill:var(--t3);fill-opacity:.13;stroke:none}
+.tr-bandrand{fill:none;stroke-width:.8;stroke-dasharray:3 2;opacity:.75}
+.tr-bandrand.tr-d{stroke:#D4901A}.tr-bandrand.tr-h{stroke:#8E5BE0}
+.tr-line .ab-scoreline-n{display:inline-flex;gap:6px;align-items:center}
+.tr-teil b{font-family:var(--ff-num)}
 @media(hover:hover){.ab-rg:not(.on):hover{color:var(--t0)}}
 /* Keine Reihe, kein Chart: ein leerer Kasten mit Achsen saehe aus wie
    "der Markt stand still", heisst aber "wir haben keine Daten". */
@@ -4620,7 +4646,7 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .dw.dw-cap>.dw-body>.carry-list,.dw.dw-cap>.dw-body>.esi-list,
   .dw.dw-cap>.dw-body>.nb-list,.dw.dw-cap>.dw-body>.mv-list,
   .dw.dw-cap>.dw-body>.hl-list{
-    max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:contain}
+    max-height:var(--dw-cap,300px);overflow-y:auto;overscroll-behavior:none}
   .dw.dw-cap.dw-headlines{--dw-cap:545px}
   /* Auf breiten Schirmen werden die Karten flacher, die rechte Aussenspalte
      traegt aber nur zwei - der Rest sammelte sich dort als 85px-Spalt.
@@ -5643,12 +5669,6 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 @media(max-width:560px){.sw-bar-z{grid-template-columns:minmax(0,96px) 1fr 44px}.sw-ind-m{display:none}}
 /* Momentum-Karte (2026-09-24) */
 .ab-cards>.ab-full{grid-column:1/-1}
-.mom-kopf{font:800 var(--fs-lg)/1.2 var(--ff-text);margin:2px 0 10px}
-.mom-reihe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.mom-z{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2)}
-.mom-l{font:700 var(--fs-2xs)/1 var(--ff-text);letter-spacing:.06em;color:var(--t3)}
-.mom-z b{font:800 var(--fs-lg)/1.1 var(--ff-num)}
-.mom-s{font-size:var(--fs-2xs);color:var(--t2)}
 #ladeOv{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse 70% 60% at 50% 45%,#10284f 0%,#081326 60%,#050b17 100%);
   transition:opacity .9s ease,visibility .9s;
@@ -5744,11 +5764,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-561 - Score-Umbau: COT/Retail neu, Yields 0,75, 2Y-Zinsdifferenz, Rohstoffe AUD/NZD/CAD, Carry neu, Next CB Move weg, neues Score-Fenster, Momentum-Karte."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-562 - Trend-Treiber 1D/4H (EMA20, Neutralzone 0,25 ATR) mit Chart-Linien, Momentum-Karte entfernt, feste Tabellen, Saisonalitaet NZD/DAX/BTC."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-561</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-562</span>
     </span>
   </div>
   <div class="hdr-r">

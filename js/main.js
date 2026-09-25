@@ -331,7 +331,7 @@ const FEED_TIMEOUT_MS=20000;
 // beendet (dann keine Warnung, sonst Fehlalarm waehrend des ersten Ladens).
 // Ersetzt NIRGENDS einen Wert - siehe dataFeedStaleNotifyHtml().
 const DATA_LIVE_OK={};
-const DATA_SRC_LABEL={ind:'Indicators',bond:'Bond yields',cot:'COT',sentiment:'Retail sentiment',price:'Prices',news:'News',risk:'Risk index',calendar:'Calendar',commodity:'Commodities'};
+const DATA_SRC_LABEL={ind:'Indicators',bond:'Bond yields',cot:'COT',sentiment:'Retail sentiment',price:'Prices',news:'News',risk:'Risk index',calendar:'Calendar',commodity:'Commodities',trend:'4h trend'};
 
 // Official FX pairs list (base/quote correct)
 const ALL_PAIRS=[
@@ -565,7 +565,7 @@ const KARTEN_ICONS=[
   [/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
   [/headline|news/,'news'],[/currency strength|strength/,'dollar'],[/carry/,'coins'],[/performance|ranking/,'trophy'],
   [/volatil/,'pulse'],[/watchlist/,'eye'],[/correlation/,'link'],[/surprise/,'zap'],
-  [/season/,'sun'],[/momentum/,'trendUp'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
+  [/season/,'sun'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
   [/regime/,'compass'],[/net long|short %|share/,'pie'],[/data|release/,'candles'],[/set-?ups?|pairs?/,'shuffle'],
   [/stale|out of date|overdue/,'alert'],[/all assets|overview/,'layers'],
 ];
@@ -5367,7 +5367,8 @@ function reapplyLiveFeeds(){
    // 2Y-Zinsdifferenz und Rohstoffe (2026-09-24) - laufen auch in
    // applySeasRetailFeed mit, stehen hier aber ausdruecklich (check/structure.js).
    ()=>applyZinsDiffFeed(),
-   ()=>applyRohstoffFeed()].forEach(fn=>{try{fn();}catch(e){}});
+   ()=>applyRohstoffFeed(),
+   ()=>applyTrendFeed()].forEach(fn=>{try{fn();}catch(e){}});
 }
 function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
   // Nutzer-Bugreport 2026-09-01 ("Notizen in mehreren Ordnern sind weg,
@@ -6149,14 +6150,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6433,7 +6434,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6604,6 +6605,7 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupNonFxOnly!==undefined){setupNonFxOnly=cd.setupNonFxOnly;try{localStorage.setItem('fxpro_setup_nonfxonly',setupNonFxOnly?'1':'0');}catch(e){}}
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.abChartRange!==undefined){setAbChartRangeVal(cd.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}
+        if(cd.abTrendLinien!==undefined){setAbTrendLinienVal(cd.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}
         if(cd.regimeCcy!==undefined){setRegimeCcyVal(cd.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}if(curPage==='regime')renderRegime();}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
@@ -8059,7 +8061,7 @@ function abDochtGrund(feed){
   if(feed==='price')return'Days before the backfill carry no measured high/low. The body is always close-to-close, so the candle itself is correct either way.';
   return'Days without a measured high/low show the close-to-close body only.';
 }
-function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
+function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
   const W=240,H=100;
   const k=abTagesKerzen(reihe,assetId);
   // ⚠ Keine Reihe, kein Chart. Ein leerer Kasten mit Achsen sieht aus wie
@@ -8069,7 +8071,11 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
     return{leer:true,html:fehlt||`<div class="ab-nodata">No daily series for this window yet.${
       abChartRange!=='MAX'?' Try <b>MAX</b> — the feed may start later than the selected range.':''}</div>`};
   }
-  const hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
+  // Trend-Overlay (nur Price-Karte, Nutzer 2026-09-25): EMA20-Linien 1D/4H,
+  // Neutralband +-0,25 x ATR14, Flaeche Kurs<->EMA in Bias-Farbe.
+  const ov=opt&&opt.trend?abTrendOverlayDaten(assetId,k,opt.trend):[];
+  let hi=Math.max(...k.map(x=>x.h)),lo=Math.min(...k.map(x=>x.l));
+  ov.forEach(o=>o.pkte.forEach(p=>{hi=Math.max(hi,p.ema+p.band);lo=Math.min(lo,p.ema-p.band);}));
   const sp=(hi-lo)||1;
   const y=v=>3+(1-(v-lo)/sp)*(H-6);
   // Handelstag-Raster. Jeder Tag bekommt ein gleich breites Fach, die Kerze
@@ -8102,6 +8108,22 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
   const zahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):v.toFixed(3);
   let sv='';
   [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
+  // Unter den Kerzen: Schattierung und Neutralband; die Linien kommen danach.
+  let ovLinien='';
+  ov.forEach(o=>{
+    const P=o.pkte.map(p=>({...p,x:xOf(p.d)}));
+    if(P.length<2)return;
+    const deck=ov.length>1?0.08:0.12;
+    P.forEach(p=>{
+      if(!p.pkt)return;
+      const y1=y(p.c),y2=y(p.ema);
+      sv+=`<rect class="tr-schatten" x="${(p.x-fach/2).toFixed(2)}" y="${Math.min(y1,y2).toFixed(1)}" width="${fach.toFixed(2)}" height="${Math.abs(y1-y2).toFixed(1)}" fill="${p.pkt>0?BC.bull:BC.bear}" fill-opacity="${deck}"/>`;
+    });
+    const ob=P.map(p=>`${p.x.toFixed(2)},${y(p.ema+p.band).toFixed(1)}`),un=P.map(p=>`${p.x.toFixed(2)},${y(p.ema-p.band).toFixed(1)}`);
+    sv+=`<polygon class="tr-band tr-band-${o.k}" points="${ob.concat(un.slice().reverse()).join(' ')}"/>`;
+    sv+=`<polyline class="tr-bandrand tr-${o.k}" points="${ob.join(' ')}" vector-effect="non-scaling-stroke"/><polyline class="tr-bandrand tr-${o.k}" points="${un.join(' ')}" vector-effect="non-scaling-stroke"/>`;
+    ovLinien+=`<polyline class="tr-ema tr-${o.k}" points="${P.map(p=>`${p.x.toFixed(2)},${y(p.ema).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/>`;
+  });
   const pts=[];
   k.forEach((c,i)=>{
     const mx=xOf(c.d), x=mx-bw/2;
@@ -8128,6 +8150,7 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed){
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Prev close</span><b>${zahl(c.o)}${escH(einheit||'')}</b></div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:${col}">Change</span><b style="color:${col}">${diff>0?'+':''}${zahl(diff)}</b></div>`});
   });
+  sv+=ovLinien;
   const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
   const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
   const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${zahl(v)}</span>`).join('');
@@ -8620,6 +8643,7 @@ function applySeasRetailFeed(){
   // Aufrufstelle je Feed waere die naechste, die irgendwo fehlt.
   try{if(applyZinsDiffFeed())changed=true;}catch(e){}
   try{if(applyRohstoffFeed())changed=true;}catch(e){}
+  try{if(applyTrendFeed())changed=true;}catch(e){}
   return changed;
 }
 
@@ -8789,6 +8813,156 @@ function applyRohstoffFeed(){
     });
   });
   return changed;
+}
+// ══ TREND (Nutzer 2026-09-25) ═══════════════════════════════════════════
+// "Neuer Score driver soll noch Trend mit 1,5 ... Haelfte 4h, Haelfte 1d ...
+// letzte geschlossene Tageskerze ueber dem 20 EMA bullish, darunter bearish
+// ... neutralzone". Per Rueckfrage: Neutralzone +-0,25 x ATR(14), Anzeige in
+// der Price-Karte.
+//   Je Zeitebene: Schluss der letzten GESCHLOSSENEN Kerze gegen die EMA20.
+//   |Schluss - EMA| <= 0,25 x ATR14 -> neutral, 0 Punkte
+//   darueber +0,75, darunter -0,75. Summe beider Ebenen max +-1,5.
+// 1D rechnet die App selbst aus price_data.json - DIESELBEN Kerzen wie im
+// Chart (bei USD/JPY, USD/CHF, USD/CAD also der gekehrte Kurs wie in
+// priceSeriesFor). Die heutige Zeile ist noch offen und zaehlt nicht.
+// ATR nach Wilder nur ueber Tage mit gemessenem Hoch/Tief; ein Tag ohne
+// Docht wird uebersprungen, nicht geschaetzt (Regel 4).
+// 4H kommt aus trend_data.json (Workflow: Yahoo 1h -> 4h-Bloecke UTC
+// 00/04/..., EMA/ATR dort ueber 730 Tage gerechnet).
+const TREND_IND={d:'Trend 1D (EMA20)',h:'Trend 4H (EMA20)'};
+const TREND_PKT=0.75,TREND_NEUTRAL_ATR=0.25,TREND_EMA_N=20,TREND_ATR_N=14;
+// Ein 4h-Stand, dessen Block laenger als 4 Tage vorbei ist, zaehlt nicht
+// (Wochenende bei FX ~2,1 Tage).
+const TREND_4H_MAX_ALTER_MS=4*86400000;
+let TREND_DATA=null;
+function fetchTrendData(){
+  return fetch(DATA_BASE+'trend_data.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{
+      if(d&&typeof d==='object'&&d.assets&&typeof d.assets==='object'){TREND_DATA=d;DATA_LIVE_OK.trend=true;}
+      else DATA_LIVE_OK.trend=false;
+    }).catch(()=>{DATA_LIVE_OK.trend=false;});
+}
+// Tagesreihe mit EMA20/ATR14 je GESCHLOSSENEM Tag. Merkt sich das Ergebnis
+// je Reihen-Objekt (ein neuer Feed ist ein neues Objekt).
+const _trendTagMemo=new Map();
+function trendTagesReihe(id){
+  const roh=priceSeriesFor(id);
+  if(!Array.isArray(roh)||!roh.length)return null;
+  const heute=todayStr(),schl=id+'|'+roh.length+'|'+(roh[roh.length-1]||[])[0]+'|'+heute;
+  const m=_trendTagMemo.get(id);
+  if(m&&m.roh===PRICE_DATA_FEED&&m.schl===schl)return m.r;
+  const zahl=x=>x!=null&&x!==''&&isFinite(Number(x))&&Number(x)>0;
+  const s=ohneWochenende(roh,id).filter(e=>e&&e[0]<heute&&zahl(e[1]));
+  const r=[];let ema=null,atr=null;const trs=[];
+  s.forEach((e,i)=>{
+    const c=Number(e[1]),hl=zahl(e[3])&&zahl(e[4]);
+    const z={d:e[0],c,h:hl?Number(e[3]):null,l:hl?Number(e[4]):null,ema:null,atr:null};
+    if(i===TREND_EMA_N-1)ema=s.slice(0,TREND_EMA_N).reduce((a,x)=>a+Number(x[1]),0)/TREND_EMA_N;
+    else if(i>=TREND_EMA_N)ema=c*2/(TREND_EMA_N+1)+ema*(TREND_EMA_N-1)/(TREND_EMA_N+1);
+    z.ema=ema;
+    if(i>0&&hl){
+      const pc=Number(s[i-1][1]),tr=Math.max(z.h-z.l,Math.abs(z.h-pc),Math.abs(z.l-pc));
+      if(atr==null){trs.push(tr);if(trs.length===TREND_ATR_N)atr=trs.reduce((a,x)=>a+x,0)/TREND_ATR_N;}
+      else atr=(atr*(TREND_ATR_N-1)+tr)/TREND_ATR_N;
+    }
+    z.atr=atr;
+    r.push(z);
+  });
+  _trendTagMemo.set(id,{roh:PRICE_DATA_FEED,schl,r});
+  return r;
+}
+function trendUrteil(c,ema,atr){
+  if(![c,ema,atr].every(v=>v!=null&&isFinite(v))||atr<=0)return null;
+  const abst=(c-ema)/atr;
+  const pkt=Math.abs(abst)<=TREND_NEUTRAL_ATR?0:abst>0?TREND_PKT:-TREND_PKT;
+  return{c,ema,atr,abst,pkt,bias:pkt>0?'bull':pkt<0?'bear':'neu'};
+}
+// {d,h}: je Zeitebene das Urteil oder null; grund.d/grund.h sagt warum null.
+function trendWerte(id){
+  const out={d:null,h:null,grund:{}};
+  const r=trendTagesReihe(id);
+  if(!r||r.length<TREND_EMA_N+TREND_ATR_N)out.grund.d='not enough closed daily candles';
+  else{
+    const z=r[r.length-1];
+    out.d=trendUrteil(z.c,z.ema,z.atr);
+    if(out.d)out.d.stand=z.d;else out.grund.d='no measured high/low for the ATR';
+  }
+  const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
+  const n=a&&a.now;
+  if(!n)out.grund.h='no 4h candles for this asset';
+  else if(Date.now()-Date.parse(n.ende)>TREND_4H_MAX_ALTER_MS)out.grund.h='last 4h candle is older than 4 days';
+  else{out.h=trendUrteil(n.c,n.ema,n.atr);if(out.h){out.h.stand=n.t;out.h.ende=n.ende;}else out.grund.h='4h values incomplete';}
+  return out;
+}
+function trendRegelText(){
+  return`Price trend, max ±1.5: half on the daily chart, half on the 4-hour chart. On each, the close of the last FINISHED candle is compared with its 20-period EMA. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish +${TREND_PKT}; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish −${TREND_PKT}; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
+}
+function trendAbstTxt(u){
+  if(!u)return'–';
+  const a=Math.abs(u.abst).toFixed(2);
+  return u.pkt===0?`${a} ATR ${u.abst>=0?'above':'below'} EMA20 — inside ±${TREND_NEUTRAL_ATR}`:`${a} ATR ${u.abst>0?'above':'below'} EMA20`;
+}
+function applyTrendFeed(){
+  if(!Array.isArray(syms))return false;
+  let changed=false;
+  const preisDa=!!PRICE_DATA_FEED&&DATA_LIVE_OK.price===true;
+  const vierDa=!!TREND_DATA;
+  syms.forEach(sym=>{
+    const rub=(sym.rubrics||[]).find(r=>r&&r.name==='COT Data');
+    if(!rub||!Array.isArray(rub.indicators))return;
+    const w=trendWerte(sym.id);
+    [['d',preisDa],['h',vierDa]].forEach(([k,da])=>{
+      // Quelle noch nicht geladen -> nichts anfassen (wie applySeasRetailFeed).
+      if(!da)return;
+      const name=TREND_IND[k],u=w[k];
+      const idx=rub.indicators.findIndex(i=>i&&i.name===name);
+      if(!u){if(idx>=0){rub.indicators.splice(idx,1);changed=true;}return;}
+      let ind=idx>=0?rub.indicators[idx]:null;
+      if(!ind){ind={id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]};rub.indicators.push(ind);changed=true;}
+      const act=trendAbstTxt(u),prev='EMA20 '+u.ema.toPrecision(6)+' · ATR '+u.atr.toPrecision(3);
+      const stand=k==='d'?u.stand:String(u.stand).slice(0,16).replace('T',' ')+' UTC';
+      const r=ind.research||{};
+      if(!(r.trend&&r.actual===act&&r.previous===prev&&r.stand===stand)){
+        ind.research={actual:act,forecast:null,previous:prev,stand,trend:k,
+          source:k==='d'?'price_data.json · daily candles':'trend_data.json · Yahoo 1h → 4h',
+          cotColor:u.pkt>0?'bond-up':u.pkt<0?'bond-down':'bond-flat'};
+        changed=true;
+      }
+      if(ind.bias!==u.bias){ind.bias=u.bias;changed=true;}
+      if(ind.pkt!==u.pkt){ind.pkt=u.pkt;changed=true;}
+      if(ind.trendBias&&ind.trendBias!=='neu'){ind.trendBias='neu';changed=true;}
+      if(ind.stepDriven||ind.trendDriven){ind.stepDriven=false;ind.trendDriven=false;changed=true;}
+    });
+  });
+  return changed;
+}
+// Nach jedem Preis-Feed (autoFetchPriceData in data-feeds.js): der 1D-Trend
+// haengt an denselben Kerzen.
+function nachPreisFeed(){
+  let ch=false;
+  try{ch=applyTrendFeed();}catch(e){}
+  if(ch){try{_flipCauseTag='trend';recomputeAuto();_flipCauseTag=null;save();renderSidebar();}catch(e){_flipCauseTag=null;}}
+}
+// Score-Zeile der Price-Karte: beide Ebenen, direkt aus der Score-Engine.
+function abTrendScoreZeile(c){
+  const rub=(c&&c.rubrics||[]).find(r=>r&&r.name==='COT Data');
+  const w=trendWerte(c.id);
+  const teil=k=>{
+    const ind=rub&&(rub.indicators||[]).find(i=>i&&i.name===TREND_IND[k]);
+    const v=ind?Math.round(indScore(ind,rub)*100)/100:null;
+    const col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
+    const tip=w[k]?trendAbstTxt(w[k]):(w.grund[k]||'no data');
+    return{v,html:`<span class="tr-teil" title="${escH(tip)}">${k==='d'?'1D':'4H'} <b style="color:${col}">${v==null?'–':(v>0?'+':'')+v}</b></span>`};
+  };
+  const d=teil('d'),h=teil('h');
+  const sum=Math.round(((d.v||0)+(h.v||0))*100)/100;
+  const col=sum>0?BC.bull:sum<0?BC.bear:'var(--t3)';
+  return`<div class="ab-scoreline tr-line" title="${escH(trendRegelText())}">
+    <span class="ab-scoreline-l">Trend score</span>
+    <b style="color:${col}">${sum>0?'+':''}${sum}</b>
+    <span class="ab-scoreline-n">${d.html} · ${h.html}</span>
+  </div>`;
 }
 // ── Das Grafik-Band ─────────────────────────────────────────────────────
 function abGrafikHtml(art,c){
@@ -9161,10 +9335,6 @@ function renderAssetBoard(c){
       ${ASSET_CARDS.map(n=>{const i=idx(n);return`<div class="ab-col">${i<0?'':renderRub(rubs[i],i,rubs.length)}</div>`;}).join('')}
       ${abReihenTitel('Positioning')}
       ${ASSET_GRAPHS.map(a=>`<div class="ab-col">${abGrafikHtml(a,c)}</div>`).join('')}
-      ${/* Momentum (2026-09-24): reine Anzeige, ueber alle drei Spalten -
-           OHNE eigene Reihen-Ueberschrift: mehr als drei sind ausdruecklich
-           ausgeschlossen (check/kartenlook.js). */''}
-      <div class="ab-col ab-full">${abMomentumHtml(c)}</div>
     </div>
     ${/* Die Notizen-Karte ist hier weg (Nutzer: "entfern die Notes Karte
          sodass dann die Charts da fetter hinpassen") - angepinnt stehen sie
@@ -9174,69 +9344,9 @@ function renderAssetBoard(c){
   </div>`;
 }
 
-// ══ MOMENTUM (Nutzer 2026-09-24: "Momentum kannst du ohne Score einbauen
-// ... und ganz ausfuehrlich im i die Karte erklaeren") ══════════════════
-// Reine Anzeige, zaehlt NICHT in den Score. Rendite ueber 1, 3 und 12 Monate
-// (21/63/252 Handelstage), bei Waehrungen gegen den Korb der anderen sieben
-// (Durchschnitt der sieben Paar-Renditen - eine Waehrung "steigt" sonst nur
-// gegen den Dollar). Jede Rendite wird mit der eigenen Historie verglichen:
-// wie viele typische Bewegungen (Standardabweichungen aller bisherigen
-// Renditen derselben Fensterlaenge) ist sie gross?
-const MOM_FENSTER=[['1M',21],['3M',63],['12M',252]];
-function momReihe(id){
-  // [[datum, wert]] ohne Wochenende; bei FX: Korb-Index aus Log-Renditen.
-  if(!FX.includes(id)){const s=ohneWochenende(priceSeriesFor(id),id);return Array.isArray(s)&&s.length?s.map(e=>[e[0],+e[1]]).filter(e=>isFinite(e[1])&&e[1]>0):null;}
-  const reihen=FX.filter(x=>x!==id).map(o=>{const s=resolvePairPriceSeries(id,o);return Array.isArray(s)?new Map(s.map(e=>[e[0],+e[1]])):null;});
-  if(reihen.some(r=>!r))return null;
-  const daten=[...reihen[0].keys()].filter(d=>reihen.every(r=>r.has(d)&&r.get(d)>0)).sort();
-  if(daten.length<2)return null;
-  // Index = exp(Mittel der Log-Kurse), damit Verhaeltnisse der Renditen stimmen.
-  return daten.map(d=>[d,Math.exp(reihen.reduce((s,r)=>s+Math.log(r.get(d)),0)/reihen.length)]);
-}
-function momWerte(id){
-  const s=momReihe(id);
-  if(!s||s.length<30)return null;
-  const v=s.map(e=>e[1]);
-  return MOM_FENSTER.map(([lbl,n])=>{
-    if(v.length<=n)return{lbl,n,ret:null};
-    const ret=(v[v.length-1]/v[v.length-1-n]-1)*100;
-    const alle=[];for(let i=n;i<v.length;i++)alle.push(Math.log(v[i]/v[i-n])*100);
-    let z=null;
-    if(alle.length>=60){const m=alle.reduce((a,b)=>a+b,0)/alle.length,sd=Math.sqrt(alle.reduce((a,b)=>a+(b-m)*(b-m),0)/(alle.length-1));if(sd>0)z=(Math.log(v[v.length-1]/v[v.length-1-n])*100-m)/sd;}
-    return{lbl,n,ret,z,beob:alle.length};
-  });
-}
-function momZustand(w){
-  const d=Object.fromEntries(w.map(x=>[x.lbl,x]));
-  const m3=d['3M'],m12=d['12M'];
-  if(!m3||m3.ret==null)return{txt:'Not enough price history',b:'neu'};
-  const auf=m3.ret>0&&(!m12||m12.ret==null||m12.ret>0),ab=m3.ret<0&&(!m12||m12.ret==null||m12.ret<0);
-  if(auf)return{txt:(m3.z!=null&&m3.z>=1?'Strong uptrend':'Uptrend'),b:'bull'};
-  if(ab)return{txt:(m3.z!=null&&m3.z<=-1?'Strong downtrend':'Downtrend'),b:'bear'};
-  return{txt:'Mixed — short and long term disagree',b:'neu'};
-}
-function abMomentumHtml(c){
-  const w=momWerte(c.id);
-  const korb=FX.includes(c.id);
-  const erkl=[
-    '<b>What momentum is.</b> Momentum is the tendency of prices that have risen over the past months to keep rising for a while longer — and of falling prices to keep falling. It is one of the best-documented patterns in markets: in currencies, Menkhoff, Sarno, Schmeling and Schrimpf (2012) measured a gap of up to 10% a year between past winners and past losers, and Moskowitz, Ooi and Pedersen (2012) found the same "time-series momentum" in currencies, bonds, commodities and equity indices.',
-    '<b>Why it tends to work.</b> Investors react slowly to news (under-reaction), information spreads gradually, and trend-following funds buy what has risen and sell what has fallen — which pushes a trend further. None of this is guaranteed, it is a statistical tendency over many cases.',
-    '<b>When it fails.</b> At turning points momentum is by definition late: it is still bullish when the top is in. Sharp reversals ("momentum crashes", e.g. spring 2009) can wipe out months of gains. In sideways markets the signal flips back and forth. Central-bank interventions can end a currency trend overnight.',
-    `<b>How it is computed here.</b> The price change over 1, 3 and 12 months (21, 63 and 252 trading days).${korb?` For a currency it is measured against the basket of the other seven major currencies (the average of the seven pairs), because a currency can rise against the dollar and fall against everything else.`:` For this asset it is its own price.`} Next to each change: how many "typical moves" it is — the change divided by the standard deviation of all past changes of the same length in this asset's own history. ±1 is a clearly above-average move, ±2 an exceptional one.`,
-    '<b>The trend label.</b> Uptrend = 3 months and 12 months both up; strong uptrend = the 3-month move is at least one typical move. Downtrend the mirror image. If short and long term point different ways, the label says so.',
-    '<b>Why it is not in the score.</b> The score is built from fundamentals (economic data, rates, positioning). Momentum is price information — mixing it in would partly count the same move twice, because prices already react to those fundamentals. It is shown here as an independent cross-check: a bullish score WITH an uptrend is a stronger picture than a bullish score against a downtrend.'
-  ];
-  if(!w)return abTileZ('trends','Momentum','',AB_LEER('Not enough price history for this asset yet.'),' ab-mom',erkl);
-  const zs=momZustand(w);
-  const zellen=w.map(x=>{
-    const col=x.ret==null?'var(--t3)':x.ret>0?BC.bull:x.ret<0?BC.bear:'var(--t3)';
-    const zTxt=x.z==null?'—':(x.z>0?'+':'')+x.z.toFixed(1)+'×';
-    return`<div class="mom-z"><span class="mom-l">${x.lbl}</span><b style="color:${col}">${x.ret==null?'–':(x.ret>0?'+':'')+x.ret.toFixed(2)+'%'}</b><span class="mom-s" title="Change divided by the typical ${x.lbl} move in this asset's own history">${zTxt} typical</span></div>`;
-  }).join('');
-  return abTileZ('trends','Momentum',`<span class="ab-tile-s">${korb?'vs basket of 7':'own price'}</span>`,
-    `<div class="mom-kopf" style="color:${biasCss(zs.b)}">${escH(zs.txt)}</div><div class="mom-reihe">${zellen}</div>
-     <div class="ab-scoreline"><span class="ab-scoreline-l">Score effect</span><b style="color:var(--t3)">0</b><span class="ab-scoreline-n">shown only — not part of the score</span></div>`,' ab-mom',erkl);
-}
+// Momentum-Karte (2026-09-24) am 2026-09-25 auf Nutzer-Wunsch entfernt
+// ("Entfern die Momentum Karte") - Trend zaehlt jetzt als Score-Treiber
+// in der Price-Karte (EMA20 auf 4h + 1d).
 function renderSpecTab(c){
   if(abCalOffen)setTimeout(renderAssetCalBody,0);
   const rubs=c.rubrics||[];
@@ -9296,14 +9406,65 @@ function assetPerfStripHtml(c){
 // (abChartRange, gesynct ueber alle Geraete). Zwei Regler fuer dieselbe
 // Einstellung waeren zwei Wahrheiten; so steht ueber der ganzen Seite
 // derselbe Zeitraum, und man erreicht ihn von oben wie von unten.
+// ── Trend-Linien im Price-Chart (Nutzer 2026-09-25: "4h und 1d EMA lines
+// oben im Chart an- und ausschaltbar") ────────────────────────────────────
+// Schalter-Zustand ist eine Nutzer-Praeferenz -> Vier-Ecken-Muster wie
+// abChartRange (docs/state-sync.md): localStorage + fxpro_updated + Snapshot
+// (Export, Cloud-Push, Cloud-Pull, Import).
+let abTrendLinien=(()=>{try{const v=localStorage.getItem('fxpro_ab_trendlines');return v==null?'d,h':v;}catch(e){return'd,h';}})();
+function setAbTrendLinienVal(v){abTrendLinien=String(v==null?'':v).split(',').filter(x=>x==='d'||x==='h').join(',');}
+setAbTrendLinienVal(abTrendLinien);
+function toggleAbTrendLinie(k){
+  try{
+    const a=new Set(abTrendLinien.split(',').filter(Boolean));
+    a.has(k)?a.delete(k):a.add(k);
+    setAbTrendLinienVal(['d','h'].filter(x=>a.has(x)).join(','));
+    localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    markLsUpdatedSeen();markPrefEdit();cloudAutoSync();
+  }catch(e){alert('The trend-line setting could not be saved: '+(e&&e.message||e));}
+  renderDetail();
+}
+// Je eingeschalteter Ebene die Punkte im Fenster: {d,c,ema,band,pkt}.
+// 1D: EMA/ATR des GESCHLOSSENEN Tages (heute offen -> keine Marke).
+// 4H: Stand des letzten geschlossenen 4h-Blocks am Ende jedes Tages.
+function abTrendOverlayDaten(id,k,welche){
+  const out=[];
+  const kMap=new Map(k.map(c=>[c.d,c.c]));
+  const add=(key,werte)=>{
+    const pkte=[];
+    werte.forEach(([d,ema,atr])=>{
+      if(!kMap.has(d)||!(ema>0)||!(atr>0))return;
+      const c=kMap.get(d),u=trendUrteil(c,ema,atr);
+      pkte.push({d,c,ema,band:TREND_NEUTRAL_ATR*atr,pkt:u?u.pkt:0});
+    });
+    if(pkte.length>1)out.push({k:key,pkte});
+  };
+  if(welche.includes('d')){
+    const r=trendTagesReihe(id)||[];
+    add('d',r.filter(z=>z.ema!=null&&z.atr!=null).map(z=>[z.d,z.ema,z.atr]));
+  }
+  if(welche.includes('h')){
+    const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
+    if(a&&Array.isArray(a.e4))add('h',a.e4);
+  }
+  return out;
+}
 function assetPreisKarteHtml(c){
   const reihe=priceSeriesFor(c.id);
-  const ch=abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price');
+  const linien=abTrendLinien.split(',').filter(Boolean);
+  const ch=abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price',{trend:linien});
+  const w=trendWerte(c.id);
+  const schalter=[['d','1D EMA20'],['h','4H EMA20']].map(([k,l])=>{
+    const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
+    return`<button class="ab-rg tr-sw tr-sw-${k}${linien.includes(k)?' on':''}" onclick="toggleAbTrendLinie('${k}')" title="${escH(da?`Show or hide the ${k==='d'?'daily':'4-hour'} EMA20 with its neutral band (±${TREND_NEUTRAL_ATR} × ATR14)`:`No ${k==='d'?'daily':'4-hour'} trend data for this asset yet`)}"><span class="tr-sw-dot"></span>${l}</button>`;
+  }).join('');
   const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart on this page">${lbl}</button>`).join('');
   const kopf=`<div class="ab-tile-hd">
     ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
-    <span class="ab-rgs">${regler}</span></div>`;
+    <span class="ab-rgs">${regler}</span></div>
+    <div class="tr-sws">${schalter}</div>`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
   // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
   // der Kopfleiste. Die Leiste ist am selben Tag auf Nutzer-Wunsch wieder
@@ -9313,6 +9474,7 @@ function assetPreisKarteHtml(c){
     ${kopf}
     <div class="ab-pk-chart">${ch.html}</div>
     ${fuss}
+    ${abTrendScoreZeile(c)}
     ${assetPerfStripHtml(c)}
     ${abGoToHtml('trends')}
   </div>`;
@@ -9943,6 +10105,7 @@ function indZaehlText(sym,rub,ind){
   if(b==='Net Bullish Positioning'||b==='Net Bearish Positioning'||b===COT_WOW_BASE)return cotRegelText();
   if(b===RETAIL_IND_NAME)return retailRegelText();
   if(b===SEAS_IND_NAME)return seasRegelText();
+  if(r.trend||ind.name===TREND_IND.d||ind.name===TREND_IND.h)return trendRegelText();
   if(r.sent)return'Contrarian market sentiment, half weight (±0.5), only at extremes.';
   if(b==='Central Bank Rate')return'The rate decision against the forecast, counted like a macro release: '+MAKRO_REGEL+spiegel;
   return MAKRO_REGEL+spiegel;
@@ -9951,7 +10114,7 @@ function rubrikZusammensetzungText(sym,rub){
   if(!rub)return'';
   const n=rub.name,ccy=sym?macroCcyFor(sym.id):'';
   const spiegel=sym&&isNonFx(sym.id)&&rubAutoDerived(sym,rub)?` For ${sym.id} every indicator is mirrored from ${ccy} (rule: ${effDeriveRules(sym)[n]}).`:'';
-  if(n==='COT Data')return`Four parts, added up. COT: ${cotRegelText()} Retail: ${retailRegelText()} Seasonality: ${seasRegelText()} Market sentiment (only some assets): contrarian, half weight.`;
+  if(n==='COT Data')return`Five parts, added up. COT: ${cotRegelText()} Retail: ${retailRegelText()} Seasonality: ${seasRegelText()} Trend: ${trendRegelText()} Market sentiment (only some assets): contrarian, half weight.`;
   let s=`Card score = sum of its indicators. Macro releases: ${MAKRO_REGEL}`;
   if(n==='Inflation')s+=` 2Y and 10Y yield trends: ±${BOND_PKT} each (5-day vs 21-day average, 3 bp dead band). 2Y yield gap: ${zinsdiffRegelText()}`;
   if(n==='Economic Growth'&&ROHSTOFF_KORB[ccy])s+=` Commodities: ${rohstoffRegelText(ccy)}`;
@@ -10313,6 +10476,7 @@ const FLIP_CAUSE_TXT={
   sentiment:'Cause: new sentiment data (put/call, AAII, retail, ...).',
   bond:'Cause: new bond/yield data.',
   seasonality:'Cause: new seasonality averages.',
+  trend:'Cause: price trend changed (close vs EMA20 on the daily or 4-hour chart).',
   sync:'Cause: state adopted from another tab/device (sync).',
   backup:'Cause: local backup restored.',
   undo:'Cause: undo/redo.'
@@ -11176,7 +11340,7 @@ function summarizeCot(sym,rub){
 }
 // Welche Nicht-Positionierungs-Indikatoren der COT-Karte im Kartentext
 // namentlich genannt werden, wenn sie wirklich etwas beitragen.
-const SUM_COT_EXTRA={'Seasonality':'seasonality','Retail Positioning':'the retail book'};
+const SUM_COT_EXTRA={'Seasonality':'seasonality','Retail Positioning':'the retail book','Trend 1D (EMA20)':'the daily trend','Trend 4H (EMA20)':'the 4-hour trend'};
 // ⚠ summarizeRiskEnv() ist weg (2026-09-13, mit der Risk-Environment-Karte).
 const RUB_SUMMARIZERS={
   'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
@@ -11216,7 +11380,9 @@ function summarizeRub(sym,rub){
 // Saisonalitaet, nicht aus der Positionierung, und der Satz behauptete das
 // Gegenteil. Ausserdem aendert sich das Schlusswort selbst an 8 Karten, weil
 // der Karten-Score ein anderer ist.
-const SUMMARY_ENGINE_VERSION=14;
+// V15 (2026-09-25): summarizeCot() nennt auch den Trend (1D/4H), wenn er
+// beitraegt - er steckt seit heute im Karten-Score.
+const SUMMARY_ENGINE_VERSION=15;
 // Nimmt jetzt auch `sym` entgegen: der Asset-Bezug-Schlusssatz (2026-07-21)
 // haengt fuer Non-FX-Assets zusaetzlich von effDeriveRules(sym)[rub.name] ab
 // (die same/inverse-Karteneinstellung, die deriveMacroBiasAll() auch fuer
@@ -11351,6 +11517,7 @@ function _feedStamp(){
   lies('cot',()=>COT_DATA);
   lies('sent',()=>SENTIMENT_DATA);
   lies('seas',()=>SEASONALITY_DATA);
+  lies('trend',()=>TREND_DATA);
   return o;
 }
 // Welche Feed-Aenderung DARF welche Ursache erklaeren? 'ind' und 'price'
@@ -11358,7 +11525,7 @@ function _feedStamp(){
 // (bootFetchScoreFeeds laesst ihn ausdruecklich null, damit flipCauseLines()
 // das konkrete Release nennen kann) - eine Bewegung aus diesen beiden darf
 // sich also keine andere Ursache anheften.
-const FEED_ERKLAERT_VON={bond:'bond',cot:'cot',sent:'sentiment',seas:'seasonality'};
+const FEED_ERKLAERT_VON={bond:'bond',cot:'cot',sent:'sentiment',seas:'seasonality',trend:'trend'};
 function _bewegungZuschreibbar(vorher,jetzt,tag){
   if(!vorher||!jetzt)return false;
   return Object.keys(jetzt).every(k=>jetzt[k]===vorher[k]||FEED_ERKLAERT_VON[k]===tag);
@@ -16778,7 +16945,7 @@ function fetchSentimentData(){
 }
 function autoFetchSentiment(){
   // Rohstoffe kommen im selben Takt (beide stuendlich vom Workflow).
-  Promise.all([fetchSentimentData(),fetchCommodityData()]).then(()=>{
+  Promise.all([fetchSentimentData(),fetchCommodityData(),fetchTrendData()]).then(()=>{
     // ⚠ Das Retail-Buch steckt in DERSELBEN Datei - ohne den zweiten Aufruf
     // liefe der Retail-Score-Beitrag bis zum naechsten Neuladen auf dem
     // alten Stand weiter, obwohl die Kachel daneben schon die neuen
@@ -22517,7 +22684,9 @@ async function bootFetchScoreFeeds(){
     // ist, weil applySeasRetailFeed() beide Quellen zugleich braucht.
     fetchSeasonalityData().then(()=>false),
     // Rohstoffe (seit 2026-09-24) - angewandt unten mit applySeasRetailFeed.
-    fetchCommodityData().then(()=>false)
+    fetchCommodityData().then(()=>false),
+    // Trend 4H (seit 2026-09-25) - angewandt mit applySeasRetailFeed.
+    fetchTrendData().then(()=>false)
   ]);
   let seasCh=false;
   try{seasCh=applySeasRetailFeed();}catch(e){}
@@ -23002,7 +23171,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von
@@ -23328,6 +23497,8 @@ Object.defineProperty(window,'pairOvBack',{get:()=>pairOvBack,set:v=>{pairOvBack
 Object.defineProperty(window,'pairOvRange',{get:()=>pairOvRange,set:v=>{pairOvRange=v;},configurable:true});
 Object.defineProperty(window,'pairOvFrom',{get:()=>pairOvFrom,set:v=>{pairOvFrom=v;},configurable:true});
 Object.defineProperty(window,'pairOvTo',{get:()=>pairOvTo,set:v=>{pairOvTo=v;},configurable:true});
+Object.defineProperty(window,'abTrendLinien',{get:()=>abTrendLinien,set:v=>{abTrendLinien=v;},configurable:true});
+Object.defineProperty(window,'TREND_DATA',{get:()=>TREND_DATA,set:v=>{TREND_DATA=v;},configurable:true});
 Object.defineProperty(window,'abChartRange',{get:()=>abChartRange,set:v=>{abChartRange=v;},configurable:true});
 Object.defineProperty(window,'_resAutoPin',{get:()=>_resAutoPin,set:v=>{_resAutoPin=v;},configurable:true});
 Object.defineProperty(window,'_evtAlertKey',{get:()=>_evtAlertKey,set:v=>{_evtAlertKey=v;},configurable:true});

@@ -1297,9 +1297,9 @@ jobs:
           # Der Fortschritt bleibt wie bisher in _histChunksFetched: bricht ein
           # Lauf wegen Rate-Limiting mittendrin ab, holt der naechste nur die
           # noch fehlenden nach, statt wieder bei 0 anzufangen.
-          export TARGET_CHUNKS=82   # export, damit das node -e darunter ihn sieht
+          export TARGET_CHUNKS=84   # export, damit das node -e darunter ihn sieht
           CHUNKS_DONE=$(node -e '
-            const T=+process.env.TARGET_CHUNKS||82;
+            const T=+process.env.TARGET_CHUNKS||84;
             try{const d=JSON.parse(require("fs").readFileSync("ind_data.json","utf8"));console.log(Math.max(5,Math.min(T,+d._histChunksFetched||5)));}catch(e){console.log(5);}
           ')
           rm -f tv_hist_deep_*.json
@@ -3632,6 +3632,78 @@ jobs:
           '
           rm -f pbf_*.json pbf_meta.txt ypc.txt
 
+      # ── TREND 4H (trend_data.json) ─────────────────────────────────────
+      # Nutzer 2026-09-25: Score-Treiber "Trend" 1,5 = je 0,75 fuer 4h und 1d:
+      # letzte GESCHLOSSENE Kerze ueber der EMA20 -> bullish, darunter ->
+      # bearish, innerhalb +-0,25 x ATR(14) neutral. Den Tag rechnet die App
+      # selbst aus price_data.json (dieselben Kerzen wie im Chart). Fuer 4h
+      # gibt es in keiner Datei eine Reihe - hier: Yahoo 1h-Kerzen (730 Tage),
+      # zu 4h-Kerzen auf festen UTC-Bloecken 00/04/08/12/16/20 zusammengefasst.
+      # Dieselben Yahoo-Symbole wie der Preis-Backfill; invertierte Paare
+      # (USD/CHF, USD/JPY, USD/CAD) werden VOR dem Zusammenfassen gekehrt, wie
+      # priceSeriesFor() in der App - EMA(1/x) ist nicht 1/EMA(x).
+      # Ausgabe je Asset: der letzte geschlossene 4h-Block (Schluss, EMA20,
+      # ATR14) und je Handelstag der EMA/ATR-Stand am Tagesende fuer die Linie
+      # im Tages-Chart.
+      - name: Fetch 4h trend (Yahoo 1h -> 4h, EMA20/ATR14) -> trend_data.json
+        continue-on-error: true
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          MAPS="USD:DX-Y.NYB EUR:EURUSD=X GBP:GBPUSD=X CHF:CHF=X JPY:JPY=X CAD:CAD=X AUD:AUDUSD=X NZD:NZDUSD=X GOLD:GC=F SILVER:SI=F OIL:CL=F BTC:BTC-USD SP500:^GSPC NAS:^NDX DAX:^GDAXI"
+          for PAIR in $MAPS; do
+            ASSET="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            ENC=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$SYM")
+            HCODE=$(curl -sL --max-time 40 -A "$UA" -H "Accept: application/json" -w "%{http_code}" \
+              "https://query1.finance.yahoo.com/v8/finance/chart/${ENC}?range=730d&interval=60m" -o "tr_${ASSET}.json" || echo "000")
+            echo "[debug] trend 1h $ASSET <- $SYM: http=$HCODE $(wc -c < "tr_${ASSET}.json" 2>/dev/null || echo 0) bytes"
+          done
+          node -e '
+            const fs=require("fs");
+            const INV={CHF:1,JPY:1,CAD:1};
+            const B=4*3600,jetzt=Math.floor(Date.now()/1000);
+            const r7=v=>Number(v.toPrecision(7));
+            let alt={};try{alt=JSON.parse(fs.readFileSync("trend_data.json","utf8")).assets||{};}catch(e){}
+            const out={};let ok=0;
+            ["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD","GOLD","SILVER","OIL","BTC","SP500","NAS","DAX"].forEach(id=>{
+              let j;try{j=JSON.parse(fs.readFileSync("tr_"+id+".json","utf8"));}catch(e){if(alt[id])out[id]=alt[id];return;}
+              const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
+              const ts=r&&r.timestamp,q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
+              if(!ts||!q||!ts.length){console.log("[debug] trend "+id+": no bars");if(alt[id])out[id]=alt[id];return;}
+              // 1h -> 4h-Bloecke; ein Block ist GESCHLOSSEN, wenn sein Ende vorbei ist.
+              const bl=new Map();
+              for(let i=0;i<ts.length;i++){
+                let o=q.open[i],h=q.high[i],l=q.low[i],c=q.close[i];
+                if(![o,h,l,c].every(v=>v!=null&&isFinite(v)&&v>0))continue;
+                if(INV[id]){const oh=h;o=1/o;c=1/c;h=1/l;l=1/oh;}
+                const k=Math.floor(ts[i]/B)*B;
+                const b=bl.get(k);
+                if(!b)bl.set(k,{t:k,o,h,l,c});
+                else{b.h=Math.max(b.h,h);b.l=Math.min(b.l,l);b.c=c;}
+              }
+              const kz=[...bl.values()].sort((a,b)=>a.t-b.t).filter(b=>b.t+B<=jetzt);
+              if(kz.length<40){console.log("[debug] trend "+id+": only "+kz.length+" closed 4h bars");if(alt[id])out[id]=alt[id];return;}
+              // EMA20 (Start: Mittel der ersten 20), ATR14 nach Wilder.
+              let ema=null,atr=null;const trs=[];
+              kz.forEach((b,i)=>{
+                if(i<19){b.ema=null;}else if(i===19){ema=kz.slice(0,20).reduce((s,x)=>s+x.c,0)/20;b.ema=ema;}
+                else{ema=b.c*2/21+ema*19/21;b.ema=ema;}
+                if(i>0){const pc=kz[i-1].c,tr=Math.max(b.h-b.l,Math.abs(b.h-pc),Math.abs(b.l-pc));
+                  if(atr==null){trs.push(tr);if(trs.length===14)atr=trs.reduce((s,x)=>s+x,0)/14;}else atr=(atr*13+tr)/14;}
+                b.atr=atr;
+              });
+              const tag={};
+              kz.forEach(b=>{if(b.ema!=null&&b.atr!=null)tag[new Date(b.t*1000).toISOString().slice(0,10)]=[r7(b.ema),r7(b.atr)];});
+              const e4=Object.keys(tag).sort().slice(-520).map(d=>[d,tag[d][0],tag[d][1]]);
+              const z=kz[kz.length-1];
+              out[id]={sym:r.meta&&r.meta.symbol||"",now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
+              ok++;
+              console.log("[debug] trend "+id+": "+kz.length+" 4h bars, last "+out[id].now.t+" c="+out[id].now.c+" ema="+out[id].now.ema+" atr="+out[id].now.atr);
+            });
+            if(ok){fs.writeFileSync("trend_data.json",JSON.stringify({updated:new Date().toISOString(),blocks:"UTC 00/04/08/12/16/20",assets:out}));console.log("trend_data.json: "+ok+"/15 assets");}
+            else console.log("trend_data: no 4h bars, keeping existing file");
+          '
+          rm -f tr_*.json
+
       - name: Fetch seasonality (Yahoo ETF proxies, monthly bars) -> seasonality_data.json
         continue-on-error: true
         run: |
@@ -3644,7 +3716,12 @@ jobs:
           curl -sL --max-time 15 -A "$UA" -c yscookies.txt "https://fc.yahoo.com" -o /dev/null || true
           CRUMB=$(curl -sL --max-time 15 -A "$UA" -b yscookies.txt -c yscookies.txt "https://query2.finance.yahoo.com/v1/test/getcrumb")
           echo "[debug] seasonality Yahoo crumb: len=${#CRUMB}"
-          declare -A PROXY=( [USD]=UUP [EUR]=FXE [GBP]=FXB [JPY]=FXY [CHF]=FXF [CAD]=FXC [AUD]=FXA [GOLD]=GLD [SILVER]=SLV [OIL]=USO [BTC]=IBIT [SP500]=SPY [NAS]=QQQ )
+          # NZD/DAX/BTC (2026-09-25, Nutzer: "guck ob NZD Seasonality hat"): es
+          # gibt keinen NZD-ETF, IBIT ist erst seit 01/2024 da. Stattdessen das
+          # Paar bzw. der Index selbst - NZDUSD=X steigt, wenn NZD staerker wird
+          # (dieselbe Richtung wie die CurrencyShares-ETFs), ^GDAXI ist der DAX,
+          # BTC-USD der Kurs. Echte Monats-Bars, 15 Jahre wie die anderen.
+          declare -A PROXY=( [USD]=UUP [EUR]=FXE [GBP]=FXB [JPY]=FXY [CHF]=FXF [CAD]=FXC [AUD]=FXA [NZD]=NZDUSD%3DX [GOLD]=GLD [SILVER]=SLV [OIL]=USO [BTC]=BTC-USD [SP500]=SPY [NAS]=QQQ [DAX]=%5EGDAXI )
           rm -f seas_meta.txt
           for ASSET in "${!PROXY[@]}"; do
             SYM="${PROXY[$ASSET]}"
@@ -5194,6 +5271,7 @@ jobs:
           [ -f cot_data.json ] && git add cot_data.json
           [ -f price_data.json ] && git add price_data.json
           [ -f commodity_data.json ] && git add commodity_data.json
+          [ -f trend_data.json ] && git add trend_data.json
           [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json
           [ -f score_hist.json ] && git add score_hist.json

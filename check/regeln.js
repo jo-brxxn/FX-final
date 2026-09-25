@@ -127,14 +127,14 @@ function zinsSoll(bond, ccy) {
   });
   e.fehler.forEach(x => fail('SCORE-FENSTER', x));
   await p.waitForTimeout(900);
-  const m = await p.evaluate(() => { const k = [...document.querySelectorAll('#detail .ab-mom')]; return { n: k.length, zellen: k[0] ? k[0].querySelectorAll('.mom-z').length : 0, info: k[0] ? !!k[0].querySelector('.info-b') : false }; });
-  if (m.n !== 1 || m.zellen !== 3) fail('MOMENTUM-KARTE', JSON.stringify(m));
-  if (!m.info) fail('MOMENTUM OHNE i', 'die Karte braucht die Erklaerung hinter dem i');
+  // Momentum-Karte ist seit 2026-09-25 entfernt (Nutzer) - darf nicht zurueckkommen.
+  const m = await p.evaluate(() => document.querySelectorAll('#detail .ab-mom').length);
+  if (m) fail('MOMENTUM-KARTE', 'entfernt am 2026-09-25, steht aber wieder auf der Seite');
 
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
   if (GEGENPROBE) { if (F.length) { console.log(`regeln --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('regeln --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`regeln: ${F.length} Befund(e)`); F.slice(0, 30).forEach(f => console.log('  ' + f)); process.exit(1); }
-  console.log(`regeln: ok (COT-Tabelle + ${a.zeilen.length} Assets, Rendite-Trends 0,75, 2Y-Zinsdifferenz unabhaengig nachgerechnet, ${cy.filter(x => x.c.ok).length} Carry-Paare, Rohstoffe ${com ? 'gegen commodity_data.json' : '(Datei fehlt noch)'}, Score-Fenster ${e.karten} Karten, Momentum-Karte)`);
+  console.log(`regeln: ok (COT-Tabelle + ${a.zeilen.length} Assets, Rendite-Trends 0,75, 2Y-Zinsdifferenz unabhaengig nachgerechnet, ${cy.filter(x => x.c.ok).length} Carry-Paare, Rohstoffe ${com ? 'gegen commodity_data.json' : '(Datei fehlt noch)'}, Score-Fenster ${e.karten} Karten, Momentum-Karte weg)`);
 })().catch(e => { console.log('regeln: ABBRUCH ' + e.message); process.exit(1); });
 function roundTo(v) { return Math.round((v + (v >= 0 ? 1 : -1) * Number.EPSILON) * 100) / 100; }

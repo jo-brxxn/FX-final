@@ -17695,3 +17695,52 @@ Balken je Karte, aufklappbare Karten und Zeilen mit Regel/Rechnung.
 **Wächter:** neu `check/regeln.js` (gegen 560: Abbruch, Gegenprobe rot);
 `check/seasretail.js` auf die neue Retail-Regel (Tabelle mit Wachstum);
 `check/score.js` E1c; `check/warten.js` kennt den Feed `commodity`.
+
+---
+
+## VERSION-CHECK-562 (2026-09-25) — Momentum weg, feste Tabellen, NZD-Saisonalität
+
+**Momentum-Karte entfernt** (Nutzer: *„Entfern die Momentum Karte"*): Code
+(`abMomentumHtml`/`momWerte`/`momReihe`), CSS `.mom-*`, Icon-Regel. Trend
+kommt stattdessen als Score-Treiber in die Price-Karte (EMA20 4h/1d).
+`check/regeln.js` prüft jetzt umgekehrt: `.ab-mom` darf nicht mehr auftauchen.
+
+**Feste Tabellen — Dauerregel** (Nutzer: *„der Kalender da ist auch so eine
+Tabelle die nicht fest ist … alle losen Tabellen fest … schon scrollen aber
+nur zu den Grenzen nach oben und unten"*). Gemessen vor der Änderung:
+23 tatsächlich scrollbare innere Bereiche auf 16 Tabs, Asset-Seite und
+Asset-Kalender hatten `overscroll-behavior: auto` (federn auf iOS über den
+Rand, reichen den Wisch weiter); die Dashboard-Listen hatten `contain`
+(lässt das Element selbst weiter federn). Ursache an der Wurzel: es gab keine
+allgemeine Regel, nur zwei Einzel-Patches (History-Karte, Dashboard-Listen).
+Fix: `*{overscroll-behavior:none}` im Kopf, Ausnahme `.pc`/`.detail`
+(Seiten-Scroller), `contain` → `none`. Wächter `check/tabellenfest.js`,
+Gegenprobe rot (23 Befunde). Regel in docs/design-system.md.
+
+**NZD-Saisonalität:** fehlte, weil der Workflow NZD keinen Proxy zuordnete
+(die anderen Währungen laufen über ETFs, für NZD gibt es keinen). Jetzt
+`NZDUSD=X` direkt; BTC über `BTC-USD` statt IBIT (längere Historie), DAX über
+`^GDAXI`. `TARGET_CHUNKS` 82 → 84 (check/rules.js meldete Datums-Drift).
+
+**Trend-Treiber (SCORE_MODEL_VERSION 16, SUMMARY_ENGINE_VERSION 15).**
+Nutzer: *„Neuer Score driver soll noch Trend mit 1,5 … Hälfte 4h, Hälfte 1d
+… letzte geschlossene Tageskerze über dem 20 EMA bullish, darunter bearish
+… neutralzone … die 4h und 1d EMA oben im Chart an- und ausschaltbar …
+Fläche zwischen EMA und Preis leicht in der Bias-Farbe"*. Per Rückfrage:
+Neutralzone ±0,25 × ATR(14), Anzeige in der Price-Karte.
+- Zwei feste Zeilen `Trend 1D (EMA20)` / `Trend 4H (EMA20)` in der
+  COT-Data-Karte, je ±0,75 oder 0 (`applyTrendFeed`, hängt an
+  `applySeasRetailFeed` + `reapplyLiveFeeds` + nach jedem Preis-Feed).
+- 1D aus `price_data.json` (dieselben Kerzen wie der Chart; heutige Zeile
+  offen). ATR nach Wilder nur über Tage mit gemessenem Hoch/Tief.
+- 4H: neuer Workflow-Schritt → `trend_data.json` (Yahoo 1h, 730 Tage, zu
+  4h-Blöcken UTC 00/04/08/12/16/20; invertierte Paare vor dem Zusammenfassen
+  gekehrt). Je Tag der EMA/ATR-Stand am Tagesende für die Linie.
+- Price-Karte: Schalter „1D EMA20" / „4H EMA20" (synchronisiert,
+  `abTrendLinien`), Linie + gestricheltes Neutralband + Schattierung
+  Kurs↔EMA in Bias-Farbe, Zeile „Trend score". Score-Fenster: Gruppe
+  „Price trend 1D + 4H (max ±1.5)".
+- Gemessen (1D, Stand 2026-09-24): EUR −3,24 ATR → −0,75; USD +2,88 → +0,75;
+  JPY −1,54 → −0,75; GOLD −1,10 → −0,75; BTC +1,59 → +0,75.
+- Wächter `check/trend.js` (1D in Node unabhängig nachgerechnet, 15/15
+  Assets gleich; Gegenprobe rot).

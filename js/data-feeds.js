@@ -344,7 +344,10 @@ async function fetchPriceData(){
 // so lange, bis er da ist. Ohne diesen Aufruf bekaeme der Tag ueberhaupt
 // keinen Eintrag mehr, weil fetchPriceData ausserhalb von
 // bootFetchScoreFeeds laeuft und kein save() nach sich zieht.
-function autoFetchPriceData(){fetchPriceData().then(()=>{checkPriceAlerts();try{recordScoreHist();}catch(e){}rerender();});}
+function autoFetchPriceData(){fetchPriceData().then(()=>{
+  // Seit 2026-09-25 haengt der 1D-Trend (Score) an diesen Kerzen.
+  try{if(typeof nachPreisFeed==='function')nachPreisFeed();}catch(e){}
+  checkPriceAlerts();try{recordScoreHist();}catch(e){}rerender();});}
 // ── FINANZ-SCHLAGZEILEN (news_data.json) ──────────────────────────
 // Nutzer-Wunsch 2026-08-06: eigene Dashboard-Karte ganz rechts mit den
 // neusten Finanz-Schlagzeilen (Fed-Reden, Geopolitik/Oel, Index-Ausblick,
