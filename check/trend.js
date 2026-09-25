@@ -23,7 +23,7 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const lies = f => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8')); } catch (e) { return null; } };
-const urteil = (c, ema, atr) => { const a = (c - ema) / atr; return Math.abs(a) <= 0.25 ? 0 : a > 0 ? 0.75 : -0.75; };
+const urteil = (c, ema, atr, g = 0.75) => { const a = (c - ema) / atr; return Math.abs(a) <= 0.25 ? 0 : a > 0 ? g : -g; };
 
 function soll1d(p, id, heute) {
   const z = x => x != null && x !== '' && isFinite(Number(x)) && Number(x) > 0;
@@ -74,7 +74,7 @@ function soll1d(p, id, heute) {
   if (vier && vier.assets) Object.keys(vier.assets).forEach(id => {
     const a = vier.assets[id], i = ist.a[id]; if (!i || !a.now) return;
     const alt = Date.now() - Date.parse(a.now.ende) > 4 * 864e5;
-    const sl = alt ? null : urteil(a.now.c, a.now.ema, a.now.atr);
+    const sl = alt ? null : urteil(a.now.c, a.now.ema, a.now.atr, 0.5);   // 4H seit 2026-09-25 abends 0,5
     n4++;
     if ((sl == null ? null : sl) !== i.h) fail('4H FALSCH', `${id}: App ${i.h}, Datei ${sl}${alt ? ' (Block aelter als 4 Tage)' : ''}`);
   });

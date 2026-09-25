@@ -17875,3 +17875,34 @@ plus 2,5 px Unterstrich, Kinder nicht zentriert). Motivband Deckkraft .95.
 Nachher: 17 px/700 mit Schein in Kartenfarbe; Mitte ±0 px, rechts 1 px;
 Zahnrad 17 px, Schrift/Zahnrad/Regler innerhalb 0,5 px; Motivband .6.
 Wächter `check/kopfleiste.js`, Gegenprobe rot.
+
+---
+
+## VERSION-CHECK-567 (2026-09-25) — 4H 0,5 · lange Kurshistorie · Asset-Stapel
+
+**Trend 4H 0,5** (Nutzer: *„mach 4h auf 0,5"*, auf meine Kritik, dass der
+4h-Teil oft kippt). 1D bleibt ±0,75, Summe ±1,25. SCORE_MODEL_VERSION 17.
+
+**Lange Kurshistorie bei Bedarf** (Nutzer: *„pack die Daten für die großen
+Zeitintervalle in eine Datei wo dann drauf zugegriffen wird bei Bedarf. Wenn
+das dann lädt soll das Ladesymbol kommen, generell bei Warten als
+Platzhalter immer das animierte Logo so festhalten"*). Neuer wöchentlicher
+Workflow-Schritt → `price_hist.json` (Yahoo, 10 Jahre Schlusskurse VOR dem
+Anfang von price_data.json) + `price_hist_meta.json` (Anfang je Asset). Die
+App lädt die Meta-Datei beim Start, das Archiv erst bei 6Y/10Y/Max (Price-
+Karte, Kontext-Band, Price-Tab) und zeigt so lange das animierte Logo. Das
+Archiv fließt NUR in die Darstellung (`preisReiheLang`), nicht in Trend,
+Marktrelevanz oder Performance — sonst hinge ein Score davon ab, ob jemand
+auf Max getippt hat (gemessen: 24 Scores vor/nach dem Laden gleich). Die
+beiden „Loading … data"-Sätze (Sentiment, Saisonalität) zeigen jetzt ebenfalls
+das Logo. Wächter `check/archiv.js`.
+
+**Asset-Stapel „klappt erst mehr auf … nur ganz wenig"** (zwei iPad-Bilder:
+rechte Panelkante 418 vs 425 Bildpixel, Inhalt unverändert). Nicht in WebKit
+nachstellbar (kein WebKit in der Umgebung), aber die Ursache in Chromium
+gemessen: das Panel ist `max-content` breit, die breiteste Zeile enthielt die
+Score-Zahl — beim Start sprang die Breite 163,9 → 164,6 px, als „-2.3" zu „+5"
+wurde; mit proportionalen Ziffern (iPad-Systemschrift) mehr. Jede
+Score-Lieferung bei offenem Panel verschob die Kante. Fix: feste Score-Spalte
+(5ch, tabular-nums). Breite jetzt 172,7 px, konstant für Scores `0`…`-10.8`.
+Wächter `check/stapel.js`, Gegenprobe rot.

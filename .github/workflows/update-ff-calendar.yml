@@ -3647,6 +3647,58 @@ jobs:
           '
           rm -f pbf_*.json pbf_meta.txt ypc.txt
 
+      # ── LANGE KURSHISTORIE (price_hist.json + price_hist_meta.json) ──────
+      # Nutzer 2026-09-25: "pack die Daten fuer die grossen Zeitintervalle in
+      # eine Datei wo dann drauf zugegriffen wird bei Bedarf". price_data.json
+      # bleibt bei ~3 Jahren (stuendlich, Groessendeckel 900 KB, weil das iPad
+      # am 2026-09-14 eine 1,3-MB-Datei nicht mehr in 8 s geladen hat). Die
+      # Jahre DAVOR (bis 10 Jahre zurueck) stehen hier - nur Schlusskurse,
+      # dieselben Yahoo-Symbole wie der Backfill - und werden von der App erst
+      # geladen, wenn 6Y/10Y/Max gewaehlt ist. Die Meta-Datei (wenige Bytes)
+      # sagt, ab wann es Daten gibt, damit die Zeitfilter-Knoepfe stimmen.
+      # Alte Kurse aendern sich nicht: einmal pro Woche reicht.
+      - name: Build long price archive (Yahoo 10y daily closes) -> price_hist.json
+        continue-on-error: true
+        run: |
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("price_hist_meta.json","utf8"));process.exit(Date.now()-Date.parse(d.updated)<7*864e5?0:1);}catch(e){process.exit(1);}'; then
+            echo "[debug] price archive: fresh (< 7 days), skipping"; exit 0
+          fi
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          MAPS="USD:DX-Y.NYB EUR:EURUSD=X GBP:GBPUSD=X CHF:CHF=X JPY:JPY=X CAD:CAD=X AUD:AUDUSD=X NZD:NZDUSD=X GOLD:GC=F SILVER:SI=F OIL:CL=F BTC:BTC-USD SP500:^GSPC NAS:^NDX DAX:^GDAXI"
+          for PAIR in $MAPS; do
+            ASSET="${PAIR%%:*}"; SYM="${PAIR#*:}"
+            ENC=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$SYM")
+            curl -sL --max-time 40 -A "$UA" -H "Accept: application/json" "https://query1.finance.yahoo.com/v8/finance/chart/${ENC}?range=10y&interval=1d" -o "ph_${ASSET}.json" || true
+          done
+          node -e '
+            const fs=require("fs");
+            let pd={};try{pd=JSON.parse(fs.readFileSync("price_data.json","utf8"));}catch(e){}
+            const out={},meta={};let ok=0;
+            Object.keys(pd).forEach(id=>{
+              let j;try{j=JSON.parse(fs.readFileSync("ph_"+id+".json","utf8"));}catch(e){return;}
+              const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
+              const ts=r&&r.timestamp,c=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              const s=pd[id]&&pd[id].series;
+              if(!Array.isArray(ts)||!Array.isArray(c)||!Array.isArray(s)||!s.length)return;
+              const erst=s[0][0];
+              const off=(r.meta&&r.meta.gmtoffset)||0;
+              const a=[];const seen=new Set();
+              for(let i=0;i<ts.length;i++){const v=c[i];if(typeof v!=="number"||!(v>0))continue;
+                const d=new Date((ts[i]+off)*1000).toISOString().slice(0,10);
+                if(d>=erst||seen.has(d))continue;seen.add(d);a.push([d,Number(v.toPrecision(6))]);}
+              if(a.length<20)return;
+              out[id]=a;meta[id]=a[0][0];ok++;
+              console.log("[debug] price archive "+id+": "+a.length+" days "+a[0][0]+" .. "+a[a.length-1][0]+" (hourly file starts "+erst+")");
+            });
+            if(ok){
+              const now=new Date().toISOString();
+              fs.writeFileSync("price_hist.json",JSON.stringify({updated:now,note:"daily closes BEFORE price_data.json starts; raw quote, same invert flag as price_data.json",assets:out}));
+              fs.writeFileSync("price_hist_meta.json",JSON.stringify({updated:now,assets:meta}));
+              console.log("price_hist.json: "+ok+" assets, "+Math.round(fs.statSync("price_hist.json").size/1024)+" KB");
+            }else console.log("price archive: nothing built, keeping existing files");
+          ' || true
+          rm -f ph_*.json
+
       # ── TREND 4H (trend_data.json) ─────────────────────────────────────
       # Nutzer 2026-09-25: Score-Treiber "Trend" 1,5 = je 0,75 fuer 4h und 1d:
       # letzte GESCHLOSSENE Kerze ueber der EMA20 -> bullish, darunter ->
@@ -5348,6 +5400,8 @@ jobs:
           [ -f price_data.json ] && git add price_data.json
           [ -f commodity_data.json ] && git add commodity_data.json
           [ -f trend_data.json ] && git add trend_data.json
+          [ -f price_hist.json ] && git add price_hist.json
+          [ -f price_hist_meta.json ] && git add price_hist_meta.json
           [ -f tvecon_data.json ] && git add tvecon_data.json
           [ -f seasonality_data.json ] && git add seasonality_data.json
           [ -f sentiment_data.json ] && git add sentiment_data.json

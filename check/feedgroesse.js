@@ -39,7 +39,9 @@ const GESAMT_KB = 3500;
 // Abrufe in js/main.js + js/data-feeds.js spiegeln.
 const FEEDS = ['ind_data.json', 'bond_data.json', 'price_data.json', 'cot_data.json',
   'sentiment_data.json', 'news_data.json', 'news_ai.json', 'risk_index.json',
-  'ff_calendar.json', 'score_hist.json', 'seasonality_data.json', 'rate_probabilities.json'];
+  'ff_calendar.json', 'score_hist.json', 'seasonality_data.json', 'rate_probabilities.json',
+  // seit 2026-09-25: 4H-Trend, TradingView-Historien, lange Kurshistorie (bei Bedarf geladen)
+  'trend_data.json', 'tvecon_data.json', 'price_hist.json'];
 
 const F = [];
 const fail = (t, x) => F.push(`${t}: ${x}`);

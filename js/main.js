@@ -7885,12 +7885,66 @@ function yieldBiasFor(art,klasse,roh){
 // geht". Bewusst EIN Zustand fuer alle Kacheln - vier getrennte Regler waeren
 // vier Gelegenheiten, Charts zu vergleichen, die verschiedene Zeitraeume
 // zeigen.
+// ── WARTE-PLATZHALTER: IMMER DAS ANIMIERTE LOGO ──────────────────────────
+// Nutzer-Regel 2026-09-25 (Dauerregel): "wenn das dann laedt soll das
+// Ladesymbol kommen, generell bei Warten als Platzhalter immer das animierte
+// Logo". Jede Stelle, an der auf Daten gewartet wird, zeigt ladeLogoHtml()
+// statt eines "Loading ..."-Satzes. Waechter: check/archiv.js.
+function ladeLogoHtml(txt){
+  return`<div class="lade-platz" role="status" aria-label="${escH(txt||'Loading')}"><div class="lade-platz-logo">${window.fxLogoSvg?window.fxLogoSvg('lg-loop'):''}</div>${txt?`<div class="lade-platz-t">${escH(txt)}</div>`:''}</div>`;
+}
+// ── LANGE KURSHISTORIE BEI BEDARF (price_hist.json) ──────────────────────
+// Nutzer 2026-09-25: "pack die Daten fuer die grossen Zeitintervalle in eine
+// Datei wo dann drauf zugegriffen wird bei Bedarf". price_data.json bleibt
+// bei ~3 Jahren (Ladezeit iPad, Deckel 900 KB). Die Jahre davor laedt die App
+// erst, wenn ein Zeitraum sie braucht (6Y/10Y/Max/Custom davor).
+// ⚠ NUR fuer die Darstellung (preisReiheLang). Alle Rechnungen - Trend,
+// Marktrelevanz, Performance, Korrelationen - bleiben bei priceSeriesFor(),
+// sonst haenge ein Score davon ab, ob jemand auf "Max" getippt hat.
+let PRICE_HIST_META=null,PRICE_HIST=null,_preisArchivVersprechen=null,preisArchivFehler=false;
+function fetchPriceHistMeta(){
+  return fetch(DATA_BASE+'price_hist_meta.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null).then(d=>{if(d&&d.assets)PRICE_HIST_META=d.assets;}).catch(()=>{});
+}
+function preisArchivAb(id){return(PRICE_HIST_META&&PRICE_HIST_META[id])||null;}
+// Fruehester Tag, den es fuer dieses Asset ueberhaupt gibt (Archiv oder Datei).
+function preisAnfang(id){
+  const s=priceSeriesFor(id),a=preisArchivAb(id);
+  const d=Array.isArray(s)&&s.length?String(s[0][0]).slice(0,10):null;
+  return a&&(!d||a<d)?a:d;
+}
+function ladePreisArchiv(){
+  if(PRICE_HIST)return Promise.resolve(PRICE_HIST);
+  if(_preisArchivVersprechen)return _preisArchivVersprechen;
+  _preisArchivVersprechen=fetch(DATA_BASE+'price_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{if(d&&d.assets){PRICE_HIST=d.assets;preisArchivFehler=false;}else preisArchivFehler=true;})
+    .catch(()=>{preisArchivFehler=true;})
+    .then(()=>{_preisArchivVersprechen=null;try{rerender();}catch(e){}return PRICE_HIST;});
+  return _preisArchivVersprechen;
+}
+// Reicht der gewaehlte Zeitraum (in Tagen, null = Max) hinter die stuendliche
+// Datei zurueck, und gibt es dort Archivdaten, die noch nicht geladen sind?
+function preisArchivNoetig(id,tage,von){
+  if(PRICE_HIST||preisArchivFehler)return false;
+  const s=priceSeriesFor(id),a=preisArchivAb(id);
+  if(!Array.isArray(s)||!s.length||!a||a>=s[0][0])return false;
+  const start=von||(tage==null?a:dateAddStr(todayStr(),-tage));
+  return start<s[0][0];
+}
+function preisReiheLang(id){
+  const s=priceSeriesFor(id);
+  const a=PRICE_HIST&&PRICE_HIST[id];
+  if(!Array.isArray(s)||!s.length||!Array.isArray(a)||!a.length)return s;
+  const inv=!!(PRICE_DATA_FEED&&PRICE_DATA_FEED[id]&&PRICE_DATA_FEED[id].invert);
+  const erst=s[0][0];
+  return a.filter(e=>e&&e[0]<erst&&e[1]>0).map(e=>[e[0],inv?1/e[1]:+e[1]]).concat(s);
+}
 // Stufen seit 2026-09-25 wie bei allen grossen Charts (Nutzer: "3m 6m 1y 3y
 // 6y 10y max"); gezeigt wird nur, was die Kursreihe hergibt (abRegler).
 const AB_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['MAX',null]];
 function abRegler(id,titel){
-  const r=priceSeriesFor(id);
-  const ab=Array.isArray(r)&&r.length?String(r[0][0]).slice(0,10):null;
+  const ab=preisAnfang(id);   // inkl. Archiv (price_hist_meta.json)
   const heute=todayStr();
   const liste=AB_RANGES.filter(([,t])=>t==null||!ab||dateAddStr(heute,-t)>ab);
   const an=liste.some(([l])=>l===abChartRange)?abChartRange:'MAX';
@@ -8242,10 +8296,10 @@ function abKontextReihe(art,assetId){
     case 'y10':   return{reihe:zu2(bondSeriesOhlc(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy,feed:'bond'};
     case 'y2us':  return{reihe:zu2(bondSeriesOhlc('USD','2Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
     case 'y10us': return{reihe:zu2(bondSeriesOhlc('USD','10Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
-    case 'dxy':   return{reihe:priceSeriesFor('USD'),einheit:'',quelle:'USD',feed:'price'};
-    case 'spx':   return{reihe:priceSeriesFor('SP500'),einheit:'',quelle:'SP500',feed:'price'};
-    case 'nas':   return{reihe:priceSeriesFor('NAS'),einheit:'',quelle:'NAS',feed:'price'};
-    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:priceSeriesFor(q),einheit:'',quelle:q,feed:'price'};}
+    case 'dxy':   return{reihe:preisReiheLang('USD'),einheit:'',quelle:'USD',feed:'price'};
+    case 'spx':   return{reihe:preisReiheLang('SP500'),einheit:'',quelle:'SP500',feed:'price'};
+    case 'nas':   return{reihe:preisReiheLang('NAS'),einheit:'',quelle:'NAS',feed:'price'};
+    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:preisReiheLang(q),einheit:'',quelle:q,feed:'price'};}
     case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:'',quelle:'VIX',feed:'sentiment'};}
     default:      return{reihe:null,einheit:'',quelle:null,feed:null};
   }
@@ -8875,7 +8929,9 @@ function applyRohstoffFeed(){
 // 4H kommt aus trend_data.json (Workflow: Yahoo 1h -> 4h-Bloecke UTC
 // 00/04/..., EMA/ATR dort ueber 730 Tage gerechnet).
 const TREND_IND={d:'Trend 1D (EMA20)',h:'Trend 4H (EMA20)'};
-const TREND_PKT=0.75,TREND_NEUTRAL_ATR=0.25,TREND_EMA_N=20,TREND_ATR_N=14;
+// 4H seit 2026-09-25 abends 0,5 statt 0,75 (Nutzer: "mach 4h auf 0,5" - der
+// 4h-Teil kippt oft innerhalb eines Tages). Summe max ±1,25.
+const TREND_PKT=0.75,TREND_PKT_H=0.5,TREND_NEUTRAL_ATR=0.25,TREND_EMA_N=20,TREND_ATR_N=14;
 // Ein 4h-Stand, dessen Block laenger als 4 Tage vorbei ist, zaehlt nicht
 // (Wochenende bei FX ~2,1 Tage).
 const TREND_4H_MAX_ALTER_MS=4*86400000;
@@ -8917,10 +8973,11 @@ function trendTagesReihe(id){
   _trendTagMemo.set(id,{roh:PRICE_DATA_FEED,schl,r});
   return r;
 }
-function trendUrteil(c,ema,atr){
+function trendUrteil(c,ema,atr,gewicht){
+  const g=gewicht||TREND_PKT;
   if(![c,ema,atr].every(v=>v!=null&&isFinite(v))||atr<=0)return null;
   const abst=(c-ema)/atr;
-  const pkt=Math.abs(abst)<=TREND_NEUTRAL_ATR?0:abst>0?TREND_PKT:-TREND_PKT;
+  const pkt=Math.abs(abst)<=TREND_NEUTRAL_ATR?0:abst>0?g:-g;
   return{c,ema,atr,abst,pkt,bias:pkt>0?'bull':pkt<0?'bear':'neu'};
 }
 // {d,h}: je Zeitebene das Urteil oder null; grund.d/grund.h sagt warum null.
@@ -8937,11 +8994,11 @@ function trendWerte(id){
   const n=a&&a.now;
   if(!n)out.grund.h='no 4h candles for this asset';
   else if(Date.now()-Date.parse(n.ende)>TREND_4H_MAX_ALTER_MS)out.grund.h='last 4h candle is older than 4 days';
-  else{out.h=trendUrteil(n.c,n.ema,n.atr);if(out.h){out.h.stand=n.t;out.h.ende=n.ende;}else out.grund.h='4h values incomplete';}
+  else{out.h=trendUrteil(n.c,n.ema,n.atr,TREND_PKT_H);if(out.h){out.h.stand=n.t;out.h.ende=n.ende;}else out.grund.h='4h values incomplete';}
   return out;
 }
 function trendRegelText(){
-  return`Price trend, max ±1.5: half on the daily chart, half on the 4-hour chart. On each, the close of the last FINISHED candle is compared with its 20-period EMA. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish +${TREND_PKT}; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish −${TREND_PKT}; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
+  return`Price trend, max ±${TREND_PKT+TREND_PKT_H}: daily chart ±${TREND_PKT}, 4-hour chart ±${TREND_PKT_H} (the 4-hour side flips more often, so it weighs less). On each, the close of the last FINISHED candle is compared with its 20-period EMA. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
 }
 function trendAbstTxt(u){
   if(!u)return'–';
@@ -9496,9 +9553,12 @@ function abTrendOverlayDaten(id,k,welche){
   return out;
 }
 function assetPreisKarteHtml(c){
-  const reihe=priceSeriesFor(c.id);
+  const tage=(AB_RANGES.find(x=>x[0]===abChartRange)||[])[1];
+  const warten=preisArchivNoetig(c.id,tage===undefined?90:tage);
+  if(warten)ladePreisArchiv();
+  const reihe=preisReiheLang(c.id);
   const linien=abTrendLinien.split(',').filter(Boolean);
-  const ch=abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price',{trend:linien});
+  const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price',{trend:linien});
   const w=trendWerte(c.id);
   const schalter=[['d','1D EMA20'],['h','4H EMA20']].map(([k,l])=>{
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
@@ -18304,13 +18364,19 @@ function renderPriceChart(){
   // Tage: Kerzen ohne Samstag, Linie mit. Und die Ereignis-Kaertchen
   // darunter haengen am selben Index wie der Chart. Krypto behaelt seine
   // sieben Tage (siehe kerzenWochenendeErlaubt).
-  const all=ohneWochenende(priceSeriesFor(id),id);
+  // Lange Historie bei Bedarf (price_hist.json) - Tage aus der Monatsstufe.
+  const pxTage=priceRange==='MAX'?null:priceRange==='CUSTOM'?null:Math.round(priceRange*30.44);
+  const pxWarten=preisArchivNoetig(id,pxTage,priceRange==='CUSTOM'?(priceCustomFrom||preisArchivAb(id)):null);
+  if(pxWarten)ladePreisArchiv();
+  const all=ohneWochenende(preisReiheLang(id),id);
+  const pxAb=preisAnfang(id);
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
   const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'One candle per trading day. The wick is the real measured high and low of that day; the body runs from the previous close to that day\u2019s close. Body and wick come from different sources (TradingView close, Yahoo high/low), and those two cut the day differently \u2014 so the body deliberately is not drawn from the open, which would flip the direction of about half the days.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
-  const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange',null,all&&all.length?all[0][0]:null)}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange',all&&all.length?all[0][0]:null)}</div>`;
+  const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange',null,pxAb)}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange',pxAb)}</div>`;
   const src=feed&&feed.source?`<a class="px-src" href="${safeUrl(feed.source)}" target="_blank" rel="noopener">Source ↗</a>`:'';
   const bar=`<div class="px-toolbar">${modeBar}${rangeBar}<div class="px-toolbar-sp"></div>${src}</div>`;
+  if(pxWarten){el.innerHTML=bar+ladeLogoHtml('Loading long price history…');return;}
   if(!all||all.length<2){
     el.innerHTML=bar+`<div class="px-empty">No price series for ${escH(sym?(sym.name||id):id)}. price_data.json covers the eight FX currencies plus Gold, Silver, Oil, BTC, DAX, S&amp;P 500 and Nasdaq — nothing is estimated for the rest.</div>`;
     return;
@@ -19449,7 +19515,7 @@ function renderSentimentRoh(){
   const tabs=[['retail','users','Retail Sentiment'],['putcall','scale','Put-Call Ratio'],['netflow','shuffle','Call/Put Balance'],['feargreed','smile','Fear & Greed'],['aaii','clipboard','AAII Survey']];
   const nav=`<div class="stabs" style="margin-bottom:6px;flex-wrap:wrap">${tabs.map(([k,ic,l])=>`<button class="st${sentSub===k?' on':''}" onclick="setSentSub('${k}')">${icn(ic,15)} ${escH(l)}</button>`).join('')}</div>`;
   let body;
-  if(!D)body=`<div class="cot-empty">Loading sentiment data… (written hourly by the GitHub workflow into sentiment_data.json).</div>`;
+  if(!D)body=ladeLogoHtml('Loading sentiment data…');   // Warte-Platzhalter = animiertes Logo (Nutzer-Regel 2026-09-25)
   else if(sentSub==='putcall')body=renderPutCallChart(D);
   else if(sentSub==='netflow')body=renderNetFlowChart(D);
   else if(sentSub==='feargreed')body=renderFearGreedCards(D);
@@ -21115,7 +21181,7 @@ function renderSeasonalityRoh(){
   const el=document.getElementById('seasBody');if(!el)return;
   const D=SEASONALITY_DATA;
   if(!D||!D.assets||!Object.keys(D.assets).length){
-    el.innerHTML=`<div class="cot-empty">Loading seasonality data… (computed once a day by the GitHub workflow from long-run ETF price history into seasonality_data.json — if this stays empty, the first daily run simply hasn't happened yet).</div>`;
+    el.innerHTML=ladeLogoHtml('Loading seasonality data…');   // Warte-Platzhalter = animiertes Logo (Nutzer-Regel 2026-09-25)
     return;
   }
   const ids=seasSortIds(Object.keys(D.assets));
@@ -22896,7 +22962,10 @@ async function bootFetchScoreFeeds(){
     // Trend 4H (seit 2026-09-25) - angewandt mit applySeasRetailFeed.
     fetchTrendData().then(()=>false),
     // Indikator-Historie fuer den Verlaufschart (nur Anzeige, kein Score).
-    fetchTvEconData().then(()=>false)
+    fetchTvEconData().then(()=>false),
+    // Wie weit die lange Kurshistorie reicht (wenige Bytes; die Daten selbst
+    // erst bei Bedarf, ladePreisArchiv).
+    fetchPriceHistMeta().then(()=>false)
   ]);
   let seasCh=false;
   try{seasCh=applySeasRetailFeed();}catch(e){}
@@ -23381,7 +23450,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von
@@ -23708,6 +23777,8 @@ Object.defineProperty(window,'pairOvRange',{get:()=>pairOvRange,set:v=>{pairOvRa
 Object.defineProperty(window,'pairOvFrom',{get:()=>pairOvFrom,set:v=>{pairOvFrom=v;},configurable:true});
 Object.defineProperty(window,'pairOvTo',{get:()=>pairOvTo,set:v=>{pairOvTo=v;},configurable:true});
 Object.defineProperty(window,'abTrendLinien',{get:()=>abTrendLinien,set:v=>{abTrendLinien=v;},configurable:true});
+Object.defineProperty(window,'PRICE_HIST',{get:()=>PRICE_HIST,set:v=>{PRICE_HIST=v;},configurable:true});
+Object.defineProperty(window,'PRICE_HIST_META',{get:()=>PRICE_HIST_META,set:v=>{PRICE_HIST_META=v;},configurable:true});
 Object.defineProperty(window,'TREND_DATA',{get:()=>TREND_DATA,set:v=>{TREND_DATA=v;},configurable:true});
 Object.defineProperty(window,'abChartRange',{get:()=>abChartRange,set:v=>{abChartRange=v;},configurable:true});
 Object.defineProperty(window,'_resAutoPin',{get:()=>_resAutoPin,set:v=>{_resAutoPin=v;},configurable:true});

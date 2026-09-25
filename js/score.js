@@ -1151,7 +1151,7 @@ function swKarteHtml(sym,rub,offen){
     Object.keys(g).forEach(k=>{
       if(!g[k].length)return;
       const sub=roundSc(g[k].reduce((s,i)=>s+indScoreParts(i,rub).total,0));
-      body+=`<div class="sw-grp"><span>${k==='COT'?'COT positioning (max ±1.5)':k==='Retail'?'Retail positioning (max ±1)':k==='Seasonality'?'Seasonality (±0.5)':k==='Trend'?'Price trend 1D + 4H (max ±1.5)':'Market sentiment'}</span><b style="color:${sub>0?BC.bull:sub<0?BC.bear:'var(--t3)'}">${fmtScNum(sub)}</b></div>`
+      body+=`<div class="sw-grp"><span>${k==='COT'?'COT positioning (max ±1.5)':k==='Retail'?'Retail positioning (max ±1)':k==='Seasonality'?'Seasonality (±0.5)':k==='Trend'?'Price trend 1D + 4H (max ±1.25)':'Market sentiment'}</span><b style="color:${sub>0?BC.bull:sub<0?BC.bear:'var(--t3)'}">${fmtScNum(sub)}</b></div>`
         +g[k].map(i=>swIndZeile(i,rub)).join('');
     });
   }else{
@@ -1747,7 +1747,8 @@ function symScoreCmp(sym){
 // 15 -> 16 (2026-09-25): neuer Treiber "Trend" (Nutzer): Schluss der letzten
 // geschlossenen 1D- und 4H-Kerze gegen EMA20, je ±0,75, neutral innerhalb
 // ±0,25 x ATR14 - zwei feste Zeilen in der COT-Data-Karte.
-const SCORE_MODEL_VERSION=16;
+// 16 -> 17 (2026-09-25 abends): Trend 4H 0,5 statt 0,75 (Nutzer), Summe ±1,25.
+const SCORE_MODEL_VERSION=17;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

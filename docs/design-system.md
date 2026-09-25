@@ -1131,3 +1131,20 @@ Schrift, Zahnrad und Kompakt-Regler auf einer Mittellinie. Flaggen-/
 Motivband `opacity:.6`. Unter ~900 px Breite bricht die Gruppe in eine eigene
 Zeile unter den Titel (kein Platz nebeneinander) — dort rechtsbündig, nicht
 kartenmittig. Wächter `check/kopfleiste.js`.
+
+## Warte-Platzhalter = animiertes Logo (Dauerregel seit 2026-09-25)
+
+Nutzer: *„wenn das dann lädt soll das Ladesymbol kommen, generell bei Warten
+als Platzhalter immer das animierte Logo so festhalten"*. Jede Stelle, an der
+auf Daten gewartet wird, zeigt `ladeLogoHtml(text)` (FX-Logo `lg-loop`,
+darunter eine kurze Zeile) — kein „Loading …"-Satz allein. Nicht zu
+verwechseln mit dem STILLEN Logo in leeren Kartenflächen (`lg-frei`, nur
+animiert, solange Feeds laden). Wächter: `check/archiv.js` (statisch + am
+Beispiel der langen Kurshistorie).
+
+## Asset-Stapel: Breite nur aus den Namen (seit 2026-09-25)
+
+Das Panel ist `max-content` breit; die Score-Spalte hat deshalb eine feste
+Breite (`min-width:5ch`, `tabular-nums`, rechtsbündig). Sonst verschiebt jede
+neue Score-Lieferung bei offenem Panel die rechte Kante. Wächter
+`check/stapel.js`.
