@@ -1,0 +1,61 @@
+# Woher bekommen die Indikatoren ohne Verlauf eine Historie? (Nutzer
+# 2026-09-25: "jeder Indikator wenn aufgeklappt muss eine Historie haben, wenn
+# nicht, hol sie ... das ist wichtig"). Betroffen sind vor allem die Reihen,
+# die nur von Trading-Economics-Seiten kommen (PMIs EUR/GBP/JPY/AUD/CAD/CHF,
+# Core CPI AUD/CHF, PPI CHF, ...): dort steht nur der aktuelle Wert.
+# Geprueft auf dem GitHub-Laeufer (aus der Claude-Umgebung gesperrt):
+#   A) Investing-Kalender der letzten 60 Tage -> Event-IDs je Name
+#   B) sbcharts.investing.com/events_charts/<id>.json -> volle Historie?
+#   C) Trading-Economics-Seite -> wie viele Zeilen hat die Kalender-Tabelle?
+# Schreibt NICHTS in die Daten.
+name: Probe indicator history sources
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: A) Investing event ids
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          FROM=$(node -e 'console.log(new Date(Date.now()-60*86400e3).toISOString().slice(0,10))')
+          TO=$(node -e 'console.log(new Date().toISOString().slice(0,10))')
+          for try in 1 2 3; do
+            curl -sL -A "$UA" -H "X-Requested-With: XMLHttpRequest" -H "Referer: https://www.investing.com/economic-calendar/" -H "Accept: application/json" \
+              --data-urlencode "country[]=17" --data-urlencode "country[]=22" --data-urlencode "country[]=72" --data-urlencode "country[]=4" \
+              --data-urlencode "country[]=35" --data-urlencode "country[]=6" --data-urlencode "country[]=25" --data-urlencode "country[]=43" --data-urlencode "country[]=5" \
+              --data-urlencode "dateFrom=$FROM" --data-urlencode "dateTo=$TO" --data-urlencode "timeZone=8" --data-urlencode "timeFilter=timeRemain" \
+              --data-urlencode "currentTab=custom" --data-urlencode "submitFilters=1" --data-urlencode "limit_from=0" \
+              "https://www.investing.com/economic-calendar/Service/getCalendarFilteredData" -o inv.json || true
+            SIZE=$(wc -c <inv.json 2>/dev/null | tr -d ' '); echo "attempt $try: $SIZE bytes"
+            if [ "${SIZE:-0}" -gt 20000 ]; then break; fi; sleep 20
+          done
+          node -e '(()=>{const fs=require("fs");let d;try{d=JSON.parse(fs.readFileSync("inv.json","utf8"));}catch(e){console.log("keine JSON");return;}
+            const h=String(d.data||"");const rows=h.split(/<tr /).slice(1);const seen={};
+            rows.forEach(r=>{const id=(r.match(/event_attr_ID="(\d+)"/)||[])[1];const cc=(r.match(/title="([^"]+)" class="ceFlags/)||[])[1]||"";const nm=((r.match(/class="left event"[^>]*>([\s\S]*?)<\/td>/)||[])[1]||"").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").trim();
+              if(id&&!seen[id]){seen[id]=1;if(/PMI|CPI|PPI|Retail|Employ|Earnings|Wage|Confidence|Vacanc|Spending|Inflation|Producer/i.test(nm))console.log(id+" | "+cc+" | "+nm);}});
+            fs.writeFileSync("ids.txt",Object.keys(seen).join("\n"));})()' | tee -a $GITHUB_STEP_SUMMARY
+      - name: B) sbcharts history per id
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          for ID in 201 272 204 274 202 1839 1838 1836 1837 1520 1521 1745 1744 69 56; do
+            for R in eu us; do
+              CODE=$(curl -sL -A "$UA" --max-time 30 -o sb.json -w "%{http_code}" "https://sbcharts.investing.com/events_charts/$R/$ID.json" || echo 000)
+              node -e '(()=>{const fs=require("fs");let d=null;try{d=JSON.parse(fs.readFileSync("sb.json","utf8"));}catch(e){}
+                const a=d&&(d.attr||d.data);const n=Array.isArray(a)?a.length:0;
+                const f=n?a[0]:null,l=n?a[n-1]:null;
+                console.log(process.argv[1]+" ["+process.argv[2]+"] http="+process.argv[3]+" keys="+(d?Object.keys(d).join(","):"-")+" n="+n+" first="+JSON.stringify(f)+" last="+JSON.stringify(l));})()' "$ID" "$R" "$CODE" | tee -a $GITHUB_STEP_SUMMARY
+            done
+          done
+      - name: C) Trading Economics table rows
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          for P in euro-area/manufacturing-pmi switzerland/core-inflation-rate australia/household-spending; do
+            curl -sL -A "$UA" -m 25 "https://tradingeconomics.com/$P" -o te.html || true
+            node -e '(()=>{const fs=require("fs");const h=fs.readFileSync("te.html","utf8");
+              const t=h.match(/<table[^>]*id="calendar"[\s\S]*?<\/table>/);const rows=t?(t[0].match(/<tr/g)||[]).length:0;
+              const hist=/historical|TEChartsMeta|chartData|"data":\[\[/i.test(h);
+              console.log(process.argv[1]+": "+h.length+" bytes, calendar rows="+rows+", chart-data marker="+hist+", sample="+((h.match(/TEChartsMeta[\s\S]{0,300}/)||[""])[0].replace(/\s+/g," ")));})()' "$P" | tee -a $GITHUB_STEP_SUMMARY
+          done

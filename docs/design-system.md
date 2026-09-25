@@ -1104,3 +1104,19 @@ Grenzen nach oben und unten"*). Umgesetzt an der Wurzel:
 Seiten-Scroller `.pc`/`.detail`. Kein `overscroll-behavior:contain` benutzen
 (contain lässt das Element selbst weiter federn). Wächter:
 `check/tabellenfest.js`.
+
+## Zeitfilter (Dauerregel seit 2026-09-25)
+
+- **Große Charts** (Price-Karte/Asset-Seite, Price-Tab, Trends, Data,
+  Paar-Übersicht, Put/Call, Retail, AAII, Fear & Greed, History-Fenster):
+  `3M 6M 1Y 3Y 6Y 10Y Max` + `Custom`.
+- **Mini-Charts** (aufgeklappter Indikator): `6M 1Y 6Y Max` + `Custom`.
+- Eine Stufe erscheint nur, wenn die Daten des Charts weiter zurückreichen
+  als sie (`rangesFuerTiefe`/`abRegler`/`histMaxTage`) — sonst wäre sie ein
+  Knopf, der dasselbe zeigt wie Max. Fehlende Stufen werden weggelassen,
+  nicht ausgegraut; die Leiste steht rechtsbündig ohne Lücke.
+- Ist die gewählte Stufe hier nicht vorhanden, ist **Max** markiert (der
+  Chart zeigt dann ohnehin alles).
+- `Custom`: zwei Monatsfelder (`type=month`), vorbelegt mit dem gerade
+  sichtbaren Zeitraum; ein Feld ändern reicht.
+- Wächter: `check/zeitfilter.js`.

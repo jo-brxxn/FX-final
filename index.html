@@ -3041,6 +3041,14 @@ body.res-return-active #resBackBar{display:flex}
 /* Zeitraum-Leiste kompakt IN der Grafik (direkt ueber der Plot-Flaeche) */
 .pc-inchart-range{margin:0 0 8px}
 .pc-inchart-range .ind-hist-range-bar,.pc-inchart-range .time-range-custom{margin:0}
+/* Zeitfilter rechtsbuendig (Nutzer 2026-09-25: "immer so dass sie wenn es
+   passt rechtsbuendig sind und nicht eine Luecke ist wo es fehlt"). Fehlende
+   Stufen werden weggelassen, nicht ausgegraut - die Leiste rueckt zusammen. */
+.pc-inchart-range{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px}
+.ind-hist-toolbar>.ind-hist-range-bar{order:10;margin-left:auto;justify-content:flex-end}
+.ind-hist-toolbar>.time-range-custom{order:11}
+.trc-m{padding:3px 6px;font-size:var(--fs-2xs);min-width:0;width:auto}
+.trc-bis{color:var(--t3)}
 /* ── NEW COT DATA BANNER ──
    Nutzer-Wunsch 2026-07-19 (Farbaudit): vorher ein voll ausgemalter
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
@@ -5764,11 +5772,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-562 - Trend-Treiber 1D/4H (EMA20, Neutralzone 0,25 ATR) mit Chart-Linien, Momentum-Karte entfernt, feste Tabellen, Saisonalitaet NZD/DAX/BTC."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-563 - Zeitfilter neu: gross 3M-10Y-Max, Mini 6M/1Y/6Y/Max, nur Stufen mit Daten, rechtsbuendig, Custom per Monat."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-562</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-563</span>
     </span>
   </div>
   <div class="hdr-r">

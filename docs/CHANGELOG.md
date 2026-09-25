@@ -17744,3 +17744,33 @@ Neutralzone ±0,25 × ATR(14), Anzeige in der Price-Karte.
   JPY −1,54 → −0,75; GOLD −1,10 → −0,75; BTC +1,59 → +0,75.
 - Wächter `check/trend.js` (1D in Node unabhängig nachgerechnet, 15/15
   Assets gleich; Gegenprobe rot).
+
+---
+
+## VERSION-CHECK-563 (2026-09-25) — Zeitfilter neu
+
+Nutzer: *„Zeitfilter bei den kleinen Charts 6m 1y 6y max und bei allen
+anderen fetten Charts 3m 6m 1y 3y 6y 10y max"*; per Rückfrage: Mini = nur
+aufgeklappte Indikator-Charts; Custom behalten, *„verbessre ihn das er
+einfach und schneller einzustellen ist"*; History-Fenster umstellen; *„wo es
+nur begrenzt Historie gibt sollen auch nur begrenzt Zeitfilter stehen aber
+immer so dass sie … rechtsbündig sind und nicht eine Lücke ist"*.
+
+- `TIME_RANGES` aufsteigend 3M…10Y/Max/Custom, `MINI_RANGES` 6M/1Y/6Y/Max/
+  Custom, `AB_RANGES` (Asset-Seite) und `HIST_RANGES` (History) gleich.
+- `timeRangeBarHtml(…, ab)`: jede Aufrufstelle reicht den Datenanfang
+  durch; Stufen dahinter entfallen. Gemessen EUR: Price-Karte `3M 6M 1Y 3Y
+  MAX` (Kurse ab 2023-08), History/Trends nur `Max` (Score-Historie ab
+  2026-07-20, 68 Tage), Data `3M…10Y Max` (CPI ab 2007).
+- Insights > Data hat einen eigenen Zeitraum (`dataRange`) — vorher teilte
+  es `indHistRange` mit dem Mini-Chart, das jetzt andere Stufen hat.
+- Custom: Monatsfelder, vorbelegt (Datenanfang bzw. aktueller Monat).
+- Voreinstellungen, die es nicht mehr gibt (1M), auf 3M umgestellt.
+- Wächter `check/zeitfilter.js`, Gegenprobe rot.
+
+**Warum Kurse nur ~3 Jahre zurückreichen** (Nutzer-Frage): keine Absprache,
+sondern die ursprüngliche Bauentscheidung des Backfills (`range=3y`, Deckel
+1100 Punkte). Grenze ist nicht der Speicher (Repo 54 MB, GitHub erlaubt
+GB), sondern die Dateigröße beim Laden: `price_data.json` ist heute 581 KB,
+der Wächter `check/feedgroesse.js` deckelt bei 900 KB, weil eine 1,3-MB-Datei
+am 2026-09-14 auf dem iPad die 8-s-Frist riss. 10 Jahre OHLC wären ~1,9 MB.

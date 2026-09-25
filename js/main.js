@@ -988,9 +988,21 @@ const indDetailsOpen={};
 // bleiben leer/grau statt fälschlich "neutral" zu zeigen.
 const HIST_DAYS=10;
 // Zeitregler des History-Fensters (Nutzer-Wunsch 2026-08-23).
-const HIST_RANGES=[['1W',7],['2W',14],['1M',30],['2M',60],['3M',90]];
+// Seit 2026-09-25 dieselben Stufen wie die grossen Charts (Nutzer: "Ja,
+// umstellen"); Max = ab dem ersten aufgezeichneten Tag. Nur Stufen, die die
+// Score-Historie des Assets hergibt. ⚠ Die Liste der Score-AENDERUNGEN
+// (scoreLog) reicht wegen des Geraete-Syncs nur 92 Tage zurueck - aeltere
+// Tage zeigen Score und Veraenderung, aber keine einzelnen Bias-Klicks.
+const HIST_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['Max','MAX']];
+function histMaxTage(id){
+  const h=(scoreHist&&scoreHist[id])||[];
+  const ab=h.length?String(h[0][0]).slice(0,10):null;
+  if(!ab)return 90;
+  return Math.max(1,Math.round((Date.parse(todayStr()+'T00:00:00Z')-Date.parse(ab+'T00:00:00Z'))/864e5)+1);
+}
+function histTageFuer(id){return histRange==='MAX'?histMaxTage(id):histRange;}
 const HIST_MAX_RANGE=90;
-let histRange=30,_histSymId=null,_histErkl=[];
+let histRange=90,_histSymId=null,_histErkl=[];
 // ⚠ Der Zeitstrahl-Drill-down (Wochenbalken -> Tagesbalken -> Detailkarte,
 // Nutzer-Wunsch 2026-08-31) ist am 2026-09-17 ENTFALLEN, samt histExpandWeek/
 // histExpandDay/toggleHistWeek/toggleHistDay/histTimelineChart. Grund: die
@@ -998,7 +1010,7 @@ let histRange=30,_histSymId=null,_histErkl=[];
 // damit gibt es nichts mehr aufzuklappen - und drei Klick-Ebenen, von denen
 // zwei ins Leere fuehren, sind schlimmer als keine.
 function setHistRange(d){
-  histRange=+d||30;
+  histRange=d==='MAX'?'MAX':(+d||90);
   histAktivTag=null;
   const el=document.getElementById('histBody');
   if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
@@ -1736,7 +1748,7 @@ function renderSymHistoryPanel(id){
 function renderSymHistoryPanelRoh(id){
   const today=todayStr();
   const sym=syms.find(s=>s.id===id);
-  const days=symHistoryDays(id,histRange).slice().reverse(); // neueste zuerst
+  const days=symHistoryDays(id,histTageFuer(id)).slice().reverse(); // neueste zuerst
   // Manuelle Score-Aenderungen dieses Symbols nach Datum gruppieren (neueste
   // zuerst innerhalb des Tages), damit sie neben den Events erscheinen.
   const logByDate={};
@@ -1971,8 +1983,8 @@ function renderSymHistoryPanelRoh(id){
 
   const nAlterung=histAgeShow?dayCards.filter(c=>/histp-age/.test(c.detail)).length:0;
   const bar=`<div class="histp-bar">
-    <div class="histp-range">${HIST_RANGES.map(([lbl,dd])=>
-      `<button class="histp-rbtn${histRange===dd?' on':''}" onclick="setHistRange(${dd})">${lbl}</button>`).join('')}</div>
+    <div class="histp-range">${(()=>{const mx=histMaxTage(id),l=HIST_RANGES.filter(([,dd])=>dd==='MAX'||dd<mx),an=l.some(([,dd])=>dd===histRange)?histRange:'MAX';
+      return l.map(([lbl,dd])=>`<button class="histp-rbtn${an===dd?' on':''}" onclick="setHistRange('${dd}')">${lbl}</button>`).join('');})()}</div>
     <button class="histp-agebtn${histAgeShow?' on':''}" onclick="toggleHistAge()" title="The score also moves on days with nothing published: a release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting (see the score model). With this on, every day that crossed that edge names the indicator and the contribution it lost.">${histAgeShow?'✓ ':''}Ageing${nAlterung?` · ${nAlterung}`:''}</button>
   </div>`;
   // ── Eine Zeile je Tag, flach, mit EINER Kopfzeile ───────────────────
@@ -7852,7 +7864,17 @@ function yieldBiasFor(art,klasse,roh){
 // geht". Bewusst EIN Zustand fuer alle Kacheln - vier getrennte Regler waeren
 // vier Gelegenheiten, Charts zu vergleichen, die verschiedene Zeitraeume
 // zeigen.
-const AB_RANGES=[['1M',30],['3M',90],['6M',180],['1Y',365],['MAX',null]];
+// Stufen seit 2026-09-25 wie bei allen grossen Charts (Nutzer: "3m 6m 1y 3y
+// 6y 10y max"); gezeigt wird nur, was die Kursreihe hergibt (abRegler).
+const AB_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['MAX',null]];
+function abRegler(id,titel){
+  const r=priceSeriesFor(id);
+  const ab=Array.isArray(r)&&r.length?String(r[0][0]).slice(0,10):null;
+  const heute=todayStr();
+  const liste=AB_RANGES.filter(([,t])=>t==null||!ab||dateAddStr(heute,-t)>ab);
+  const an=liste.some(([l])=>l===abChartRange)?abChartRange:'MAX';
+  return liste.map(([lbl])=>`<button class="ab-rg${an===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="${escH(titel.replace('%',lbl))}">${lbl}</button>`).join('');
+}
 let abChartRange=(()=>{try{const v=localStorage.getItem('fxpro_ab_range');
   return AB_RANGES.some(r=>r[0]===v)?v:'3M';}catch(e){return '3M';}})();
 function setAbChartRangeVal(v){abChartRange=AB_RANGES.some(r=>r[0]===v)?v:'3M';}
@@ -8248,7 +8270,7 @@ function abKontextHtml(c){
         ${wert==null?'<span class="ab-rate-s">no value on file</span>':''}</span>`;
   })():'';
   // Der Zeitfilter gilt fuer ALLE Kacheln gleichzeitig.
-  const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart">${lbl}</button>`).join('');
+  const regler=abRegler(c.id,'Show % of daily candles in every chart');
   return`<div class="ab-ktile">
     <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}
       <span class="ab-rgs">${regler}</span></div>
@@ -9459,7 +9481,7 @@ function assetPreisKarteHtml(c){
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
     return`<button class="ab-rg tr-sw tr-sw-${k}${linien.includes(k)?' on':''}" onclick="toggleAbTrendLinie('${k}')" title="${escH(da?`Show or hide the ${k==='d'?'daily':'4-hour'} EMA20 with its neutral band (±${TREND_NEUTRAL_ATR} × ATR14)`:`No ${k==='d'?'daily':'4-hour'} trend data for this asset yet`)}"><span class="tr-sw-dot"></span>${l}</button>`;
   }).join('');
-  const regler=AB_RANGES.map(([lbl])=>`<button class="ab-rg${abChartRange===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="Show ${lbl} of daily candles in every chart on this page">${lbl}</button>`).join('');
+  const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
     ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
@@ -12009,7 +12031,7 @@ function povTrendHtml(name){
   const baseArr=scoreHist[l.bId]||[],qm={};(scoreHist[l.qId]||[]).forEach(e=>qm[e[0]]=e);
   const diff=[];
   baseArr.forEach(be=>{const qe=qm[be[0]];if(!qe)return;diff.push([be[0],Math.round((be[1]-qe[1])*10)/10]);});
-  const bar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(pairOvRange,'setPairOvRange')}${timeRangeCustomHtml(pairOvRange,pairOvFrom,pairOvTo,'setPairOvRange')}</div>`;
+  const bar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(pairOvRange,'setPairOvRange',null,diff.length?diff[0][0]:null)}${timeRangeCustomHtml(pairOvRange,pairOvFrom,pairOvTo,'setPairOvRange',diff.length?diff[0][0]:null)}</div>`;
   if(diff.length<2)return bar+povEmpty('The pair line grows from the day both sides have a score snapshot on record \u2014 it needs at least two shared days.');
   const dates=filterDatesByRange(diff.map(e=>e[0]),pairOvRange,pairOvFrom,pairOvTo);
   if(dates.length<2)return bar+povEmpty('No data in the selected time range \u2014 pick a wider one above.');
@@ -15896,13 +15918,20 @@ function groupedAssetOptions(ids,selected){
 // wiederkehrende UI-Bausteine muessen einheitlich sein) - 'Max' zeigt die
 // volle verfuegbare Historie (Standard, "maximale Historie" Nutzer-Wunsch),
 // 'Custom' schaltet zwei Datums-Felder frei.
-const TIME_RANGES=[['MAX','Max'],[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M'],['CUSTOM','Custom']];
+// Nutzer 2026-09-25: grosse Charts "3m 6m 1y 3y 6y 10y max", die Mini-Charts
+// (aufgeklappte Indikatoren) "6m 1y 6y max"; Custom bleibt ("behalten aber
+// verbessre ihn"). Jede Stufe erscheint nur, wenn die Daten des Charts
+// weiter zurueckreichen als sie (timeRangeBarHtml mit `ab`) - sonst waere sie
+// ein Knopf, der dasselbe zeigt wie Max (Regel 6). Aufsteigend, rechtsbuendig.
+const TIME_RANGES=[[3,'3M'],[6,'6M'],[12,'1Y'],[36,'3Y'],[72,'6Y'],[120,'10Y'],['MAX','Max'],['CUSTOM','Custom']];
+const MINI_RANGES=[[6,'6M'],[12,'1Y'],[72,'6Y'],['MAX','Max'],['CUSTOM','Custom']];
 // Laengere Stufen NUR fuer die Indikator-Daten (Nutzer-Wunsch 2026-09-07:
 // "Fueg auch bei den Zeitfilter fuer die Daten 5y und 8y und 12y hinzu und
 // dann max und max ist 2007"). Bewusst nicht ueberall: News, AAII, Fear&Greed
 // und die Kursreihen haben gar keine so tiefe Quelle - dort waeren drei
 // zusaetzliche Knoepfe drei Knoepfe ohne Wirkung.
-const TIME_RANGES_TIEF=[['MAX','Max'],[144,'12Y'],[96,'8Y'],[60,'5Y'],[36,'3Y'],[24,'2Y'],[12,'1Y'],[6,'6M'],[3,'3M'],[1,'1M'],['CUSTOM','Custom']];
+// Seit 2026-09-25 dieselben Stufen wie ueberall (10Y statt 5/8/12Y).
+const TIME_RANGES_TIEF=TIME_RANGES;
 // Untergrenze von 'Max' fuer die Indikator-Historie: der Nutzer hat sie
 // ausdruecklich auf 2007 gesetzt. Derselbe Wert steuert den Daten-Workflow
 // (TARGET_CHUNKS in .github/workflows/update-ff-calendar.yml) - wer ihn hier
@@ -15916,8 +15945,21 @@ const IND_HIST_MAX_FROM='2007-01-01';
 // nur rund 35 Tage. 'D<n>' heisst: die letzten n Tage EINSCHLIESSLICH heute -
 // 'D1' ist also genau der heutige Tag.
 const NEWS_RANGES=[['D1','Today'],['D3','3 days'],['D5','5 days'],['D7','7 days'],['MAX','All'],['CUSTOM','Custom']];
-function timeRangeBarHtml(current,setFnName,ranges){
-  return `<div class="ind-hist-range-bar">${(ranges||TIME_RANGES).map(([v,lbl])=>`<button class="ind-hist-range-btn${String(current)===String(v)?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
+function rangeCutoffStr(m){const c=new Date();c.setMonth(c.getMonth()-m);try{return c.toISOString().slice(0,10);}catch(e){return'';}}
+// Stufen, die die Daten hergeben: eine Monatsstufe nur, wenn der Chart
+// frueher anfaengt als ihre Grenze. Ohne `ab` (unbekannt) alle Stufen.
+function rangesFuerTiefe(ranges,ab){
+  if(!ab)return ranges;
+  const a=String(ab).slice(0,10);
+  return ranges.filter(([v])=>typeof v!=='number'||rangeCutoffStr(v)>a);
+}
+function timeRangeBarHtml(current,setFnName,ranges,ab){
+  const liste=rangesFuerTiefe(ranges||TIME_RANGES,ab);
+  // Gespeicherte Stufe, die hier fehlt (laenger als die Daten oder aus der
+  // alten Liste): der Chart zeigt dann alles - also ist Max die ehrliche Marke.
+  const da=liste.some(([v])=>String(v)===String(current));
+  const an=da?String(current):'MAX';
+  return `<div class="ind-hist-range-bar">${liste.map(([v,lbl])=>`<button class="ind-hist-range-btn${String(v)===an?' on':''}" onclick="${setFnName}('${v}')">${lbl}</button>`).join('')}</div>`;
 }
 // Ab wann liegen fuer diese Reihe wirklich Daten vor? Wird neben der Leiste
 // gezeigt, sobald der gewaehlte Zeitraum weiter zurueckreicht als die Quelle
@@ -15936,9 +15978,16 @@ function indHistStartNote(pts,range){
   if(ab<=grenze)return'';   // die Reihe deckt den Zeitraum ab, nichts zu sagen
   return`<span class="ind-hist-start" title="The selected range reaches further back than this series goes. Nothing is filled in — the chart shows every release that exists.">series starts ${escH(ab)}</span>`;
 }
-function timeRangeCustomHtml(current,from,to,setFnName){
+// Custom (Nutzer 2026-09-25: "verbessre ihn das er einfach und schneller
+// einzustellen ist"): Monat statt Tag (ein Rad weniger auf dem iPad), und die
+// Felder zeigen von Anfang an den Zeitraum, der gerade zu sehen ist - leer
+// heisst "offen", also Datenanfang bzw. heute. Ein Feld aendern reicht.
+function timeRangeCustomHtml(current,from,to,setFnName,ab){
   if(current!=='CUSTOM')return'';
-  return`<span class="time-range-custom"><input type="date" class="btn" value="${from||''}" onchange="${setFnName}Custom(this.value,${to?`'${to}'`:'null'})" style="padding:3px 7px;font-size:var(--fs-2xs)"> &ndash; <input type="date" class="btn" value="${to||''}" onchange="${setFnName}Custom(${from?`'${from}'`:'null'},this.value)" style="padding:3px 7px;font-size:var(--fs-2xs)"></span>`;
+  const heute=todayStr().slice(0,7);
+  const vonW=(from||ab||'').slice(0,7),bisW=(to||heute).slice(0,7);
+  const q=v=>v?`'${v}'`:'null';
+  return`<span class="time-range-custom"><input type="month" class="btn trc-m" value="${vonW}" max="${heute}" aria-label="From month" onchange="${setFnName}Custom(this.value?this.value+'-01':'',${q(to)})"><span class="trc-bis">to</span><input type="month" class="btn trc-m" value="${bisW}" max="${heute}" aria-label="To month" onchange="${setFnName}Custom(${q(from)},this.value?this.value+'-31':'')"></span>`;
 }
 function filterDatesByRange(dates,range,customFrom,customTo){
   if(range==null||range==='MAX')return dates;
@@ -16230,7 +16279,7 @@ function renderTrendsRoh(){
   totalIds.forEach(id=>(scoreHist[id]||[]).forEach(e=>dset.add(e[0])));
   const allDates=[...dset].sort();
   if(!allDates.length){el.innerHTML=trendsMultiBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No history data yet for the current selection. The score is now saved daily &ndash; the line grows by one point with every new day. Check back tomorrow, or adjust the filter above.</div>';return;}
-  const rangeBar=trendsMultiBar+`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
+  const rangeBar=trendsMultiBar+`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange',null,allDates[0])}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange',allDates[0])}</div>`;
   const dates=filterDatesByRange(allDates,trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   // Hinweis, wenn im gewaehlten Zeitraum Punkte aus einem FRUEHEREN
@@ -16288,7 +16337,7 @@ function renderTrendsPair(el){
   // Color the pair's line by its current overall bias (same bull/bear/neutral
   // colors used everywhere else in the app), not a fixed identity color.
   const colorOverride=BC[scoreBias(pairScore(pairKey))];
-  const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange')}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange')}</div>`;
+  const rangeBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(trendsRange,'setTrendsRange',null,diffArr[0][0])}${timeRangeCustomHtml(trendsRange,trendsCustomFrom,trendsCustomTo,'setTrendsRange',diffArr[0][0])}</div>`;
   const dates=filterDatesByRange(diffArr.map(e=>e[0]),trendsRange,trendsCustomFrom,trendsCustomTo);
   if(!dates.length){el.innerHTML=rangeBar+'<div style="padding:16px;color:var(--t3);font-size:var(--fs-base);line-height:1.6">No data in the selected time range.</div>';attachChartHovers(el);return;}
   let html=rangeBar;
@@ -17142,6 +17191,13 @@ function sentSpark(series,lo,hi,loTh,hiTh){
 // Balken nur, wenn genug Platz ist; sonst nur ueber den Hover/Touch-Tooltip
 // (chartHoverWrap/attachChartHovers, Standard-Pattern fuer alle Charts hier).
 let indHistRange=12,indHistCustomFrom=null,indHistCustomTo=null; // Default beim Oeffnen: 1 Jahr (Nutzer-Wunsch)
+// Insights > Data hat seit 2026-09-25 einen EIGENEN Zeitraum: dort stehen die
+// grossen Stufen (3M..10Y), am aufgeklappten Indikator die Mini-Stufen - ein
+// gemeinsamer Wert haette an einer Stelle eine Stufe markiert, die es dort
+// nicht gibt.
+let dataRange=12,dataCustomFrom=null,dataCustomTo=null;
+function setDataRange(v){dataRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderDataTab();}
+function setDataRangeCustom(from,to){dataCustomFrom=from||null;dataCustomTo=to||null;renderDataTab();}
 function setIndHistRange(v){
   indHistRange=(v==='MAX'||v==='CUSTOM')?v:+v;
   // Chart kann an zwei Stellen stehen (Asset-Detailseite ODER Insights >
@@ -17330,10 +17386,15 @@ function indHistChart(ind,symId,opts){
   opts=opts||{};
   const _cs=indChartSeries(ind,symId);
   const all=_cs.pts;
-  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange',TIME_RANGES_TIEF);
+  // Mini-Chart (aufgeklappter Indikator) mit eigener Leiste 6M/1Y/6Y/Max;
+  // Insights > Data reicht seinen eigenen Zeitraum durch (opts.range).
+  const R=opts.range!=null?opts.range:indHistRange;
+  const CF=opts.range!=null?opts.from:indHistCustomFrom,CT=opts.range!=null?opts.to:indHistCustomTo;
+  const ab0=all.length?all[0][0]:null;
+  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange',MINI_RANGES,ab0);
   const legend=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span></div>`;
-  const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange');
-  const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${indHistStartNote(all,indHistRange)}${legend}</div>`;
+  const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange',ab0);
+  const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${indHistStartNote(all,R)}${legend}</div>`;
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -17362,16 +17423,16 @@ function indHistChart(ind,symId,opts){
     return`<div class="ind-hist-wrap">${toolbar}<div class="ind-hist-empty">${msg}</div></div>`;
   }
   let use;
-  if(indHistRange==='MAX'){
+  if(R==='MAX'){
     // 'Max' ist seit 2026-09-07 kein "alles was da ist" mehr, sondern ein
     // benannter Zeitraum: zurueck bis 2007 (Nutzer-Vorgabe). Praktisch
     // aendert der Filter am Ergebnis nichts, solange die Quelle nicht weiter
     // zurueckreicht - er sagt aber, WAS gemeint ist, statt es offen zu lassen.
     use=all.filter(p=>p[0]>=IND_HIST_MAX_FROM);
-  }else if(indHistRange==='CUSTOM'){
-    use=all.filter(p=>(!indHistCustomFrom||p[0]>=indHistCustomFrom)&&(!indHistCustomTo||p[0]<=indHistCustomTo));
+  }else if(R==='CUSTOM'){
+    use=all.filter(p=>(!CF||p[0]>=CF)&&(!CT||p[0]<=CT));
   }else{
-    const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-indHistRange);
+    const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-R);
     let cutoffStr;try{cutoffStr=cutoff.toISOString().slice(0,10);}catch(e){cutoffStr='';}
     use=all.filter(p=>p[0]>=cutoffStr);
   }
@@ -17495,7 +17556,7 @@ function indHistChart(ind,symId,opts){
   // erste bekommt nur der Leerzustand zu sehen). Beim Einbau 2026-09-07 war
   // der Hinweis zuerst nur oben - die Funktion lieferte ihn nachweislich
   // (197 Zeichen), im Chart stand er trotzdem nie.
-  const startNote=indHistStartNote(all,indHistRange);
+  const startNote=indHistStartNote(all,R);
   // Auf der Insights>Data-Seite tragen die Panels keine eigene Zeitraum-Leiste
   // (eine gemeinsame steht darueber) - der Hinweis gehoert dort trotzdem an
   // JEDES Panel, weil jede Reihe ein anderes Anfangsdatum hat.
@@ -18111,7 +18172,7 @@ function renderPriceChart(){
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
   const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'One candle per trading day. The wick is the real measured high and low of that day; the body runs from the previous close to that day\u2019s close. Body and wick come from different sources (TradingView close, Yahoo high/low), and those two cut the day differently \u2014 so the body deliberately is not drawn from the open, which would flip the direction of about half the days.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
-  const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange')}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange')}</div>`;
+  const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange',null,all&&all.length?all[0][0]:null)}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange',all&&all.length?all[0][0]:null)}</div>`;
   const src=feed&&feed.source?`<a class="px-src" href="${safeUrl(feed.source)}" target="_blank" rel="noopener">Source ↗</a>`:'';
   const bar=`<div class="px-toolbar">${modeBar}${rangeBar}<div class="px-toolbar-sp"></div>${src}</div>`;
   if(!all||all.length<2){
@@ -18448,14 +18509,19 @@ function renderDataTabRoh(){
     <button class="ind-hist-range-btn${dataMode==='assets'?' on':''}" onclick="setDataMode('assets')" title="One indicator, up to four assets side by side">By asset</button>
     <button class="ind-hist-range-btn${dataMode==='inds'?' on':''}" onclick="setDataMode('inds')" title="One asset, up to four of its indicators side by side">By indicator</button>
   </div>`;
-  const rangeBarHtml=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(indHistRange,'setIndHistRange',TIME_RANGES_TIEF)}${timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange')}</div>`;
+  // Die Leiste steht im Kopf, die Datentiefe kennt man erst nach den Panels:
+  // Platzhalter, am Ende ersetzt (fruehester Punkt ueber alle Panels).
+  let dataAb=null;
+  const rangeBarHtml=()=>'<!--DATA-RANGE-BAR-->';
+  const rangeBarEcht=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(dataRange,'setDataRange',TIME_RANGES,dataAb)}${timeRangeCustomHtml(dataRange,dataCustomFrom,dataCustomTo,'setDataRange',dataAb)}</div>`;
   // Panel-Bausteine sind in beiden Modi identisch - nur woher Asset und
   // Indikator kommen, unterscheidet sich.
   const panelHtml=(sym,base,title,ctrls)=>{
     const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base));
     const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
+    if(ind){const pp=indChartSeries(ind,sym.id).pts;if(pp&&pp.length){const d0=String(pp[0][0]).slice(0,10);if(!dataAb||d0<dataAb)dataAb=d0;}}
     const inner=ind
-      ?indAsOfNextHtml(sym.id,ind)+indHistChart(ind,sym.id,{noToolbar:true,group:'data'})
+      ?indAsOfNextHtml(sym.id,ind)+indHistChart(ind,sym.id,{noToolbar:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo})
       :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
     return`<div class="cot-card"><div class="cot-card-title">${title}<span class="px-panel-ctrls">${ctrls||''}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
   };
@@ -18513,7 +18579,7 @@ function renderDataTabRoh(){
       return panelHtml(sym,base,escH(sym.name||sym.id),chip+sel);
     }).join('')+`</div>`;
   }
-  el.innerHTML=head+body;
+  el.innerHTML=head.replace('<!--DATA-RANGE-BAR-->',rangeBarEcht())+body;
   attachChartHovers(el);
   // Die Buttons wurden gerade neu gebaut - ein offenes Popup muss sich wieder
   // daran ausrichten und den neuen Stand zeigen. No-ops, solange zu.
@@ -18656,8 +18722,8 @@ function sentItemMatchesMulti(sym){
 // Retail-Sentiment-Filter ein einzelnes Symbol statt "All symbols" gewaehlt
 // ist) - Default 'MAX' wie ueberall sonst (Nutzer-Wunsch "maximale Historie").
 let sentimentRange='MAX',sentimentCustomFrom='',sentimentCustomTo='';
-let pcRange=1,pcCustomFrom='',pcCustomTo='';
-let fearGreedRange=1,fearGreedCustomFrom='',fearGreedCustomTo='';
+let pcRange=3,pcCustomFrom='',pcCustomTo='';
+let fearGreedRange=3,fearGreedCustomFrom='',fearGreedCustomTo='';
 // ── Schlagzeilen ──────────────────────────────────────────────────────────
 // Zeitfenster der Karte: day | week | month. Reine Lese-Auswahl wie pcAsset -
 // bewusst nicht persistiert, kein Sync noetig. Ebenso der Watchlist-Filter,
@@ -19261,8 +19327,8 @@ function renderSentimentRoh(){
 }
 // Gemeinsame Zeitraum-Leiste, die IN den Chart-Bereich gehoert (kompakt, direkt
 // ueber der Plot-Flaeche). Nutzt denselben timeRangeBarHtml-Helfer wie ueberall.
-function pcRangeBarInChart(){
-  return`<div class="pc-inchart-range">${timeRangeBarHtml(pcRange,'setPcRange')}${timeRangeCustomHtml(pcRange,pcCustomFrom,pcCustomTo,'setPcRange')}</div>`;
+function pcRangeBarInChart(ab){
+  return`<div class="pc-inchart-range">${timeRangeBarHtml(pcRange,'setPcRange',null,ab)}${timeRangeCustomHtml(pcRange,pcCustomFrom,pcCustomTo,'setPcRange',ab)}</div>`;
 }
 // "2026-07-16" -> "16 Jul 26" (X-Achsen-Label mit zweistelligem Jahr).
 function pcXLabel(iso){
@@ -19333,7 +19399,7 @@ function renderRetailBars(D){
 function renderRetailHistory(D,sym,hdr){
   const raw=((D.retailHistory&&D.retailHistory[sym])||[]).filter(e=>e&&isFinite(+e[1])).map(e=>[e[0],+e[1],isFinite(+e[2])?+e[2]:100-(+e[1])]);
   raw.sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
-  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(sentimentRange,'setSentimentRange')}${timeRangeCustomHtml(sentimentRange,sentimentCustomFrom,sentimentCustomTo,'setSentimentRange')}</div>`;
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(sentimentRange,'setSentimentRange',null,raw.length?raw[0][0]:null)}${timeRangeCustomHtml(sentimentRange,sentimentCustomFrom,sentimentCustomTo,'setSentimentRange',raw.length?raw[0][0]:null)}</div>`;
   if(raw.length<2){
     return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${rangeBar}<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;padding:8px 0">Not enough retail-positioning history for ${escH(sentSymLabel(sym))} yet — this builds up one real point per day as the hourly job runs (no backfill possible beyond what was already recorded). Tap the <b>i</b> to learn what this shows.</div></div></div>`;
   }
@@ -19959,7 +20025,7 @@ function renderPutCallChart(D){
       `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${lastB==='neu'?'var(--t1)':BC[lastB]}">${lastSm.toFixed(2)}</b> (${PC_SMOOTH}d avg, raw ${vals[vals.length-1].toFixed(2)}) — ${zoneTxt(lastB)}${pctlTxt}</div>`+
       `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">${basisNote}</div>`+staleNote;
   }
-  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart(rawSeries.length?rawSeries[0][0]:null)}${chart}</div></div>`;
 }
 // ── Net Options Flow: Balken = (Call−Put)/(Call+Put), aus der Put/Call-Reihe
 // abgeleitet, 5-Tage-geglaettet. >0 = call-lastiger Fluss (blau, bullish),
@@ -20113,7 +20179,7 @@ function renderNetFlowChart(D){
   const chart=chartHoverWrap(svg,hpts)+
     `<div style="text-align:center;font-size:var(--fs-base);color:var(--t2);margin-top:6px">Latest: <b style="color:${last>=0?BC.bull:BC.bear}">${(last>0?'+':'')+last.toFixed(3)}</b> — ${last>=0?(bezug.mode==='zero'?'call-heavy':'more call-heavy than usual'):(bezug.mode==='zero'?'put-heavy':'more put-heavy than usual')}</div>`+
     `<div style="text-align:center;color:var(--t3);font-size:var(--fs-xs);margin-top:4px;line-height:1.5">${SMOOTH}-day rolling median (it ignores the odd broken day in the option chain instead of averaging it in). ${bezug.mode==='zero'?`Zero means an even call/put split, which this market crosses often enough for the sign to mean something — ${Math.round((bezug.anteil||0)*100)}% of days fall on the thinner side.`:`⚠ Measured against this series' own median (raw ${(mid>0?'+':'')+mid.toFixed(3)}), <b>not</b> against an even call/put split: only ${Math.round((bezug.anteil||0)*100)}% of days would land on the thinner side of a plain zero line, so it would colour nearly every bar the same way. That is a property of this options market — index hedging runs through puts — not a daily signal.`} <b>Volume-based, so it cannot tell buying from selling</b> — a real net flow needs trade-level data, which no free source provides.</div>`;
-  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart()}${chart}</div></div>`;
+  return`<div class="cot-card">${hdr}<div style="padding:12px 14px">${pcRangeBarInChart(rawSeries.length?rawSeries[0][0]:null)}${chart}</div></div>`;
 }
 // ── Fear & Greed + VIX: die Tacho-Karten (frueheres Overview) ──
 // ── AAII Investor Sentiment Survey ────────────────────────────────────────
@@ -20444,7 +20510,7 @@ function renderAaiiCard(D){
     </details>`;
   })();
 
-  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange')}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange')}</div>`;
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(aaiiRange,'setAaiiRange',null,hist.length?hist[0][0]:null)}${timeRangeCustomHtml(aaiiRange,aaiiCustomFrom,aaiiCustomTo,'setAaiiRange',hist.length?hist[0][0]:null)}</div>`;
   const anzahl=a.responses!=null?` · ${a.responses} responses`:'';
   return`<div class="cot-card">
     <div class="cot-card-title">AAII Investor Sentiment${iBtn('aaii')}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${a.date?'week ending '+escH(a.date):''}${anzahl}</span></div>
@@ -20464,7 +20530,9 @@ function legende(paare){
 function absAaiiH(){return 220;}
 function renderFearGreedCards(D){
   const card=(title,key,sub,inner)=>`<div class="cot-card"><div class="cot-card-title">${title}${iBtn(key)}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">${sub}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
-  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange')}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange')}</div>`;
+  // Tiefe = die laengste der drei Reihen (jede Stufe soll mindestens einen Chart kuerzen).
+  const fgAb=[D.cryptoFng,D.vix,D.stockFng].map(x=>x&&Array.isArray(x.series)&&x.series.length?String(x.series[0][0]):null).filter(Boolean).sort()[0]||null;
+  const rangeBar=`<div class="pc-inchart-range">${timeRangeBarHtml(fearGreedRange,'setFearGreedRange',null,fgAb)}${timeRangeCustomHtml(fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo,'setFearGreedRange',fgAb)}</div>`;
   let html=rangeBar+`<div class="cot-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px">`;
   const cf=D.cryptoFng,cfEv=sentEval('cryptoFng',cf);
   const cfFiltered=cf&&cf.series?filterDatesByRange(cf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
@@ -23171,7 +23239,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

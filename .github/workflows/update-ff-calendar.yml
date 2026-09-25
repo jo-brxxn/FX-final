@@ -3708,7 +3708,10 @@ jobs:
         continue-on-error: true
         run: |
           TODAY=$(date -u +%Y-%m-%d)
-          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("seasonality_data.json","utf8"));process.exit(String(d.updated||"").slice(0,10)==="'"$TODAY"'"?0:1);}catch(e){process.exit(1);}'; then
+          # Nur ueberspringen, wenn heute schon geholt UND jedes Asset der
+          # Proxy-Liste drinsteht - sonst wartete ein neu aufgenommenes Asset
+          # (NZD/DAX/BTC am 2026-09-25) bis zum naechsten UTC-Tag.
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("seasonality_data.json","utf8"));const alle=["USD","EUR","GBP","JPY","CHF","CAD","AUD","NZD","GOLD","SILVER","OIL","BTC","SP500","NAS","DAX"].every(k=>d.assets&&d.assets[k]);process.exit(String(d.updated||"").slice(0,10)==="'"$TODAY"'"&&alle?0:1);}catch(e){process.exit(1);}'; then
             echo "[debug] seasonality: already fetched today, skipping"
             exit 0
           fi
