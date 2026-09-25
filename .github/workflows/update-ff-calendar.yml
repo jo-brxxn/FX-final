@@ -3745,7 +3745,7 @@ jobs:
           rm -f seas_meta.txt
           for ASSET in "${!PROXY[@]}"; do
             SYM="${PROXY[$ASSET]}"
-            HCODE=$(curl -sL --max-time 30 -A "$UA" -b yscookies.txt -H "Accept: application/json" -w "%{http_code}" "https://query1.finance.yahoo.com/v8/finance/chart/${SYM}?range=max&interval=1mo&crumb=${CRUMB}" -o "seas_${ASSET}.json" || echo "000")
+            HCODE=$(curl -sL --max-time 30 -A "$UA" -b yscookies.txt -H "Accept: application/json" -w "%{http_code}" "https://query1.finance.yahoo.com/v8/finance/chart/${SYM}?range=20y&interval=1mo&crumb=${CRUMB}" -o "seas_${ASSET}.json" || echo "000")
               SZ=$(wc -c < "seas_${ASSET}.json" 2>/dev/null || echo 0)
               echo "[debug] seasonality $ASSET <- $SYM: http=$HCODE $SZ bytes"
               if [ "$HCODE" = "200" ] && [ "$SZ" -gt 500 ]; then
@@ -3790,7 +3790,11 @@ jobs:
               for(let i=0;i<ts.length;i++){
                 const c=closes[i];
                 if(c==null||!isFinite(c)||c<=0)continue;
-                const d=new Date(ts[i]*1000);
+                // ⚠ In BOERSEN-Zeit datieren (2026-09-25): NZDUSD=X kam mit
+                // 275 Monats-Bars, aber nur 11 Kalendermonaten - Yahoo stempelt
+                // Devisen-Monate auf Mitternacht London, im Sommer also 23:00
+                // UTC des Vormonats. In UTC gelesen rutschte ein Monat weg.
+                const d=new Date((ts[i]+((r.meta&&r.meta.gmtoffset)||0))*1000);
                 if(prevClose!=null&&d>=cutoff){
                   const ret=(c/prevClose-1)*100;
                   const mon=d.getUTCMonth()+1;

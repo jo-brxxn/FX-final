@@ -17805,3 +17805,12 @@ TE-Seite ohne Chartdaten (`TEChartsMeta` leer). Nächster Versuch:
 **Fund:** Bei DAX, GER100 und den Renditen stehen drei COT-Zeilen ohne
 jeden Wert (es gibt keinen CFTC-Kontrakt) — sie zählen 0, stehen aber in der
 Karte. Nicht angefasst (Entfernen ändert den Divisor, also Scores).
+
+**Nachtrag 564 — NZD/DAX-Saisonalität (gemessen im Lauf 2026-09-25 15:59):**
+BTC kam an (BTC-USD, 12 Jahre). NZD: 275 Monats-Bars, aber nur 11
+Kalendermonate — Yahoo stempelt Devisen-Monate auf Mitternacht London, im
+Sommer also 23:00 UTC des Vormonats; in UTC gelesen fiel ein Monat weg. Fix:
+in Börsenzeit datieren (`meta.gmtoffset`). DAX: `range=max` lieferte bei
+^GDAXI 3-Monats-Bars (5 Monate) — jetzt `range=20y`, das Monats-Bars
+erzwingt. Außerdem holt der Schritt neu, wenn ein Asset fehlt, statt bis zum
+nächsten UTC-Tag zu warten.
