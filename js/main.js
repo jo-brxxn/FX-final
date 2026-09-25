@@ -7060,7 +7060,7 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openHistModal('${c.id}')" title="History (${HIST_DAYS}D): last ${HIST_DAYS} days, colored by event outcome vs. forecast">History</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openBacktester('${c.id}')" title="Backtester: every rate hike and cut on file, and the inflation, labour and growth readings the central bank had in front of it — three releases each, so the trend into the decision is visible">Backtester</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
-    ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',13)}</button></div>`:''}
+    ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',17)}</button></div>`:''}
     <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   // ⚠ Scrollstand halten (Nutzer 2026-09-23, iPad: "wenn ich in einer

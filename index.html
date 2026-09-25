@@ -5431,7 +5431,9 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
    Nutzer 2026-09-23 "laenglich ... in den Hintergrund verlaufen"). Die
    Flagge selbst steht rechts ganz sichtbar, der Verlauf kommt von der Maske
    an .ahead-motif. */
-.ahead-motif-band{display:block;width:100%;height:100%;opacity:.95}
+/* Blasser seit 2026-09-25 (Nutzer: "Bild blasser", die Knoepfe sollen sich
+   abheben): .95 -> .6. */
+.ahead-motif-band{display:block;width:100%;height:100%;opacity:.6}
 .atitle{font-weight:800;letter-spacing:-.6px}
 .atitle .score-badge{font-size:var(--fs-xl);border-width:1.5px;border-radius:12px;padding:2px 10px;margin-left:14px;background:rgba(var(--blue-rgb),.07)}
 .afull{font:500 var(--fs-md)/1.3 var(--ff-text);color:var(--t2);margin-top:4px}
@@ -5442,10 +5444,23 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .dmeta-v{font:600 var(--fs-base)/1.3 var(--ff-text);color:var(--t0)}
 .dmeta-controls{margin-left:10px;padding-left:4px;border-left:1px solid var(--bd)}
 .dmeta-ctrl{border-left-color:var(--bd);padding:0 11px}
+/* Rechtsbuendig heisst buendig mit dem Karteninhalt: das letzte Element ohne
+   Innenabstand rechts (gemessen: 12 px Luecke, 2026-09-25). */
+.dmeta-controls>.dmeta-ctrl:last-child{padding-right:0}
 /* Die Tabs oeffnen Fenster - einen "aktiven" Tab gibt es nicht. Der blaue
    Unterstrich aus dem Bild erscheint deshalb bei Hover/Fokus, nicht dauerhaft
    (sonst behauptete er einen Zustand, den es nicht gibt). */
-.dmeta-hist-btn{font:500 var(--fs-base)/1.2 var(--ff-text);color:var(--t0);padding:8px 0 6px;border-bottom:2.5px solid transparent;border-radius:0}
+/* Nutzer 2026-09-25: "zu klein ... kraeftiger und groessere Schrift, mittig
+   aber rechtsbuendig". Groesser/fetter, dazu ein Schein in Kartenfarbe, damit
+   die Schrift auf dem Flaggenbild steht statt darin zu verschwimmen. */
+.dmeta-hist-btn{font:700 var(--fs-lg)/1.2 var(--ff-text);color:var(--t0);padding:8px 0 6px;border-bottom:2.5px solid transparent;border-radius:0;
+  text-shadow:0 0 2px var(--card),0 0 6px var(--card),0 0 12px var(--card)}
+/* Unterstrich (2,5 px) mitgerechnet, damit die Schrift in der Knopfmitte
+   sitzt - vorher 8/6 px, die Schrift lag 2 px unter Zahnrad und Regler. */
+.dmeta-controls .dmeta-hist-btn{padding:8px 0 5.5px}
+.dmeta-controls,.dmeta-controls>.dmeta-ctrl{display:flex;align-items:center}
+/* Zahnrad so hoch wie die Schrift (Icon wird mit 17px gezeichnet). */
+.dmeta-controls .cfg-gear{width:auto;height:auto;padding:4px 0;filter:drop-shadow(0 0 3px var(--card))}
 @media (hover:hover){.dmeta-hist-btn:hover{color:var(--ui-act);border-bottom-color:var(--ui-act)}}
 .dmeta-hist-btn:focus-visible{color:var(--ui-act);border-bottom-color:var(--ui-act)}
 .dmeta-controls .compact-sw.on,.compact-sw.on{background:var(--ui-act);border-color:var(--ui-act)}
@@ -5775,11 +5790,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-565 - Werte-Zellen: kein Satz, kein Ueberlauf (NZD Core CPI), Rohstoff-Massstab raus aus PREV, Mio. -> M."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-566 - Asset-Kopf: Knoepfe 17px fett, mittig, rechtsbuendig, Zahnrad = Schrifthoehe, Flaggenbild blasser."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-565</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-566</span>
     </span>
   </div>
   <div class="hdr-r">

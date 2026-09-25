@@ -1120,3 +1120,14 @@ Seiten-Scroller `.pc`/`.detail`. Kein `overscroll-behavior:contain` benutzen
 - `Custom`: zwei Monatsfelder (`type=month`), vorbelegt mit dem gerade
   sichtbaren Zeitraum; ein Feld ändern reicht.
 - Wächter: `check/zeitfilter.js`.
+
+## Asset-Kopf (seit 2026-09-25)
+
+Knöpfe Price chart / History / Backtester / Data quality: `700 var(--fs-lg)`
+(17 px), Schein in Kartenfarbe (`text-shadow`), Gruppe vertikal mittig auf
+der Karte und rechtsbündig zum Karteninhalt (letztes Element ohne rechten
+Innenabstand). Zahnrad (Nicht-FX) so hoch wie die Schrift (Icon 17 px);
+Schrift, Zahnrad und Kompakt-Regler auf einer Mittellinie. Flaggen-/
+Motivband `opacity:.6`. Unter ~900 px Breite bricht die Gruppe in eine eigene
+Zeile unter den Titel (kein Platz nebeneinander) — dort rechtsbündig, nicht
+kartenmittig. Wächter `check/kopfleiste.js`.

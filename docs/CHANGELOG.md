@@ -17856,3 +17856,22 @@ AUHSPMM, CHEMC, JPJAR. Neuer Workflow-Schritt → `tvecon_data.json` (einmal
 täglich). Die App (`tvEconReihe`) benutzt eine Reihe nur für den
 Verlaufschart und nur, wenn ihr letzter Wert zum angezeigten Actual passt
 (±0,15 bzw. 0,5 %) — sonst wäre es womöglich eine andere Messgröße.
+
+---
+
+## VERSION-CHECK-566 (2026-09-25) — Asset-Kopf: Knöpfe
+
+Nutzer: *„oben rechts bei Assets die Knöpfe zu History und Backtester sind zu
+klein mach die perfekt mittig rechtsbündig auf die Karte und mach das
+Zahnrad so hoch wie die Schrift. Es soll sich mehr von dem Bild abheben und
+das Bild ein wenig blasser"*; per Rückfrage: *„Kräftiger und größere Schrift
+die mittig ist aber rechtsbündig"* (kein Pillen-Hintergrund).
+
+Gemessen vorher (1180 px): Schrift 13 px/500; Gruppe zwar kartenmittig, aber
+12 px Lücke rechts (Innenabstand des letzten Elements); Zahnrad 13 px und
+5 px über der Schriftmitte, Regler 6,5 px darüber (Knopf-Innenabstand 8/6 px
+plus 2,5 px Unterstrich, Kinder nicht zentriert). Motivband Deckkraft .95.
+
+Nachher: 17 px/700 mit Schein in Kartenfarbe; Mitte ±0 px, rechts 1 px;
+Zahnrad 17 px, Schrift/Zahnrad/Regler innerhalb 0,5 px; Motivband .6.
+Wächter `check/kopfleiste.js`, Gegenprobe rot.

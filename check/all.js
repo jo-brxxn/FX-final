@@ -41,6 +41,7 @@ const PRUEFUNGEN = [
   { n: 'symbole',   d: 'Flaggen ein Stueck, Glanz begrenzt, jede Karte ein Symbol', f: 'check/symbole.js', args: [], browser: true },
   { n: 'uebergang', d: 'Wisch beim Seitenwechsel, Panel, History-Karte fest', f: 'check/uebergang.js', args: [], browser: true },
   { n: 'logo',      d: 'FX-Logo: Ladebildschirm, leere Kartenflaeche, Intro entfernt', f: 'check/logo.js', args: [], browser: true },
+  { n: 'kopfleiste', d: 'Asset-Kopf: Knoepfe gross, mittig, rechtsbuendig, Zahnrad = Schrifthoehe', f: 'check/kopfleiste.js', args: [], browser: true },
   { n: 'zellen',     d: 'Werte-Zellen der Indikator-Tabellen: kein Ueberlauf, kein Satz, kein Deutsch', f: 'check/zellen.js', args: [], browser: true },
   { n: 'zeitfilter', d: 'Zeitfilter: gross 3M..10Y/Max, Mini 6M/1Y/6Y/Max, nur mit Daten, rechtsbuendig', f: 'check/zeitfilter.js', args: [], browser: true },
   { n: 'trend',      d: 'Trend 1D/4H: EMA20 +-0,25 ATR, 1D in Node nachgerechnet, Schalter, Overlay', f: 'check/trend.js', args: [], browser: true },
