@@ -18,6 +18,45 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Symbol search (ECONOMICS)
+        run: |
+          # Erster Lauf 2026-09-25: Websocket liefert volle Historie (JPEMP ab
+          # 1993, CHPPI ab 1993), die geratenen PMI-Kuerzel sind aber
+          # "invalid symbol" - hier sucht TradingView selbst die Kuerzel.
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+          while IFS='|' read -r land text; do
+            [ -z "$land" ] && continue
+            Q=$(node -e 'process.stdout.write(encodeURIComponent(process.argv[1]))' "$text")
+            curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" -H "Referer: https://www.tradingview.com/" --max-time 20 \
+              "https://symbol-search.tradingview.com/symbol_search/v3/?text=$Q&hl=1&exchange=ECONOMICS&lang=en&search_type=economic&domain=production&country=$land" -o ss.json || true
+            node -e '(()=>{const fs=require("fs");let d;try{d=JSON.parse(fs.readFileSync("ss.json","utf8"));}catch(e){console.log(process.argv[1]+" "+process.argv[2]+": keine JSON "+fs.readFileSync("ss.json","utf8").slice(0,120));return;}
+              const l=(d.symbols||d||[]).slice(0,6).map(x=>(x.symbol||"").replace(/<\/?em>/g,"")+" = "+(x.description||"").replace(/<\/?em>/g,""));
+              console.log(process.argv[1]+" | "+process.argv[2]+" -> "+l.join(" ; "));})()' "$land" "$text" | tee -a $GITHUB_STEP_SUMMARY
+          done <<'Q'
+          EU|manufacturing pmi
+          EU|services pmi
+          EU|job vacancy
+          EU|wage growth
+          GB|manufacturing pmi
+          GB|services pmi
+          JP|manufacturing pmi
+          JP|services pmi
+          JP|jobs to applications
+          JP|services inflation
+          AU|manufacturing pmi
+          AU|services pmi
+          AU|core inflation
+          AU|household spending
+          CA|manufacturing pmi
+          CA|consumer confidence
+          CH|services pmi
+          CH|core inflation
+          CH|employment
+          CH|wage growth
+          NZ|core inflation
+          NZ|producer prices
+          NZ|wage growth
+          Q
       - name: Websocket history per symbol
         run: |
           cat > p.mjs <<'JS'
