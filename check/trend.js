@@ -97,6 +97,13 @@ function soll1d(p, id, heute) {
   // D) Score-Fenster
   const g = await p.evaluate(() => { openScoreInfoSym('EUR'); const t = document.getElementById('scoreInfoBody').textContent; closeM('mScoreInfo'); return /Price trend 1D \+ 4H/.test(t); });
   if (!g) fail('SCORE-FENSTER', 'keine Gruppe "Price trend"');
+  // E) Verlauf der Regel-Zeilen (Nutzer 2026-09-25: jeder aufgeklappte
+  //    Indikator braucht eine Historie) - aus den Feeds ausgelesen.
+  const h = await p.evaluate(() => { const s = syms.find(x => x.id === 'EUR'); const o = {};
+    s.rubrics.forEach(r => (r.indicators || []).forEach(i => { if (['Trend 1D (EMA20)', '2Y Yield Gap (20d)', 'Retail Positioning'].includes(stripPeriodSuffix(i.name).base) || i.name === 'Trend 1D (EMA20)') o[i.name] = indChartSeries(i, 'EUR').pts.length; }));
+    o.seas = seasProfilHtml('EUR').length; return o; });
+  ['Trend 1D (EMA20)', '2Y Yield Gap (20d)', 'Retail Positioning'].forEach(n => { if (!(h[n] >= 20)) fail('VERLAUF FEHLT', `EUR ${n}: ${h[n]} Punkte`); });
+  if (!h.seas) fail('VERLAUF FEHLT', 'EUR Seasonality: kein Monatsprofil');
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
   if (GEGENPROBE) { if (F.length) { console.log(`trend --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('trend --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }

@@ -2669,6 +2669,20 @@ jobs:
               const sd=Math.sqrt(ch.reduce((a,b)=>a+(b-m)*(b-m),0)/(ch.length-1));
               return {sigma:Math.round(sd*1000)/10,tage:x.length};
             };
+            // Tagesschluesse der letzten ~3 Jahre fuer den Verlaufschart der
+            // Rohstoff-Zeile (Nutzer 2026-09-25: jeder aufgeklappte Indikator
+            // braucht eine Historie). Nur wo Yahoo DASSELBE Instrument fuehrt
+            // (Eisenerz 62% Fe, Gold, WTI) - bei Kohle ist MTF=F API2
+            // Rotterdam, nicht Newcastle: dort bleibt es bei der eigenen,
+            // vorwaerts wachsenden history (Regel 4, kein Ersatzinstrument).
+            const yReihe=y=>{
+              const d=lies("comm_y_"+y.replace(/[^A-Za-z0-9]/g,"_")+".json");
+              const r=d&&d.chart&&d.chart.result&&d.chart.result[0];
+              const ts=r&&r.timestamp,c=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0]&&r.indicators.quote[0].close;
+              if(!Array.isArray(ts)||!Array.isArray(c))return null;
+              const o=[];for(let i=0;i<ts.length;i++){const v=c[i];if(typeof v==="number"&&v>0)o.push([new Date(ts[i]*1000).toISOString().slice(0,10),Number(v.toPrecision(6))]);}
+              return o.slice(-800);
+            };
             let out={};const alt=lies("commodity_data.json");if(alt&&alt.items)out=alt.items;
             let ok=0;
             Object.keys(DEF).forEach(id=>{
@@ -2683,7 +2697,8 @@ jobs:
                 close:isFinite(close)?close:(cur.close??null),
                 perf1m:isFinite(perf)?Math.round(perf*100)/100:(cur.perf1m??null),
                 sigma1m:s?s.sigma:(cur.sigma1m??null),sigmaFrom:def.y,sigmaDays:s?s.tage:(cur.sigmaDays??null),
-                asOf:isFinite(close)?today:(cur.asOf||null),history:hist};
+                asOf:isFinite(close)?today:(cur.asOf||null),history:hist,
+                yhist:(def.y&&id!=="COAL")?(yReihe(def.y)||cur.yhist||null):null};
             });
             if(ok>0){
               fs.writeFileSync("commodity_data.json",JSON.stringify({updated:new Date().toISOString(),items:out}));
@@ -3692,8 +3707,10 @@ jobs:
                 b.atr=atr;
               });
               const tag={};
-              kz.forEach(b=>{if(b.ema!=null&&b.atr!=null)tag[new Date(b.t*1000).toISOString().slice(0,10)]=[r7(b.ema),r7(b.atr)];});
-              const e4=Object.keys(tag).sort().slice(-520).map(d=>[d,tag[d][0],tag[d][1]]);
+              kz.forEach(b=>{if(b.ema!=null&&b.atr!=null)tag[new Date(b.t*1000).toISOString().slice(0,10)]=[r7(b.ema),r7(b.atr),r7(b.c)];});
+              // [Tag, EMA, ATR, Schluss] - der Schluss des letzten 4h-Blocks am
+              // Tagesende speist den Verlaufschart der 4H-Zeile.
+              const e4=Object.keys(tag).sort().slice(-520).map(d=>[d,tag[d][0],tag[d][1],tag[d][2]]);
               const z=kz[kz.length-1];
               out[id]={sym:r.meta&&r.meta.symbol||"",now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
               ok++;

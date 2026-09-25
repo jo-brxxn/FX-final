@@ -17774,3 +17774,34 @@ sondern die ursprüngliche Bauentscheidung des Backfills (`range=3y`, Deckel
 GB), sondern die Dateigröße beim Laden: `price_data.json` ist heute 581 KB,
 der Wächter `check/feedgroesse.js` deckelt bei 900 KB, weil eine 1,3-MB-Datei
 am 2026-09-14 auf dem iPad die 8-s-Frist riss. 10 Jahre OHLC wären ~1,9 MB.
+
+---
+
+## VERSION-CHECK-564 (2026-09-25) — Verlauf für jede aufgeklappte Zeile (Teil 1)
+
+Nutzer: *„jeder Indikator wenn aufgeklappt muss eine Historie haben, wenn
+nicht, hol sie … das ist wichtig"*. Gemessen vor der Änderung: 560 Zeilen,
+davon ~110 ohne Verlauf in 25 Gruppen.
+
+**Aus vorhandenen Feeds ausgelesen (`abgeleiteteReihe`, nichts geschätzt):**
+2Y Yield Gap (eigene 2Y − Ø der anderen 7, je Tag), Trend 1D (Abstand
+Schluss−EMA20 in ATR), Retail (mittlerer Long-Anteil über die Paare aus
+`retailHistory`), Saisonalität (Monatsprofil statt Zeitreihe,
+`seasProfilHtml`). Danach: 466 von 575 Zeilen mit Verlauf.
+
+**Workflow ergänzt** (wirkt ab dem nächsten Lauf): `trend_data.json` e4 mit
+Schluss → Verlauf Trend 4H; `commodity_data.json` `yhist` (Yahoo, ~800 Tage)
+für Eisenerz/Gold/Öl → 1-Monats-Veränderung. Kohle (Yahoo führt nur API2
+Rotterdam, nicht Newcastle) und Milchpulver (keine offene Historie) wachsen
+nur vorwärts aus der eigenen `history`.
+
+**Offen, gemessen im Probelauf `probe-ind-history.yml`:** Die Reihen, die nur
+von Trading-Economics-Seiten kommen (PMIs EUR/GBP/JPY/AUD/CAD/CHF, Core CPI
+AUD/CHF/NZD, PPI CHF, JOLTS/Employment JPY, …), haben keine Historie:
+Investing-Kalender 3 Byte (gesperrt), `sbcharts.investing.com` HTTP 403,
+TE-Seite ohne Chartdaten (`TEChartsMeta` leer). Nächster Versuch:
+`probe-tv-economics.yml` (TradingView-Chart-Websocket für ECONOMICS:*).
+
+**Fund:** Bei DAX, GER100 und den Renditen stehen drei COT-Zeilen ohne
+jeden Wert (es gibt keinen CFTC-Kontrakt) — sie zählen 0, stehen aber in der
+Karte. Nicht angefasst (Entfernen ändert den Divisor, also Scores).

@@ -17365,6 +17365,55 @@ function valHistPts(ind){
   });
   return out;
 }
+// ── Verlauf fuer die Regel-Zeilen (Nutzer 2026-09-25: "jeder Indikator
+// wenn aufgeklappt muss eine Historie haben, wenn nicht, hol sie ... das ist
+// wichtig"). Diese Zeilen haben keinen Kalender-Release, ihre Reihe steckt
+// aber schon in den Feeds - sie wird hier nur ausgelesen, nichts geschaetzt:
+//   2Y Yield Gap  - eigene 2Y minus Mittel der anderen sieben, je Tag
+//   Trend 1D/4H   - Abstand Schluss-EMA20 in ATR (dieselbe Rechnung wie der Score)
+//   Retail        - mittlerer Long-Anteil des Assets ueber seine Paare
+//   Rohstoffe     - 1-Monats-Veraenderung aus den Yahoo-Tagesschluessen
+const _abgelMemo=new Map();
+function abgeleiteteReihe(ind,id){
+  const base=stripPeriodSuffix(ind.name).base,r=ind.research||{};
+  const ccy=id?macroCcyFor(id):null;
+  const memo=(k,fn)=>{const q=[k,BOND_DATA_FEED,PRICE_DATA_FEED,TREND_DATA,SENTIMENT_DATA,COMMODITY_DATA,COT_DATA];const m=_abgelMemo.get(k);if(m&&m.q.every((x,i)=>x===q[i]))return m.v;const v=fn();_abgelMemo.set(k,{q,v});return v;};
+  if(base===ZINSDIFF_IND&&ccy&&FX.includes(ccy))return memo('zd:'+ccy,()=>{
+    const eigen=zinsdiffReihe(ccy),andere=FX.filter(c=>c!==ccy).map(zinsdiffReihe);
+    if(!eigen||andere.some(x=>!x))return null;
+    const zeiger=andere.map(()=>-1),out=[];
+    eigen.forEach(([d,v])=>{
+      const o=andere.map((ser,k)=>{while(zeiger[k]+1<ser.length&&ser[zeiger[k]+1][0]<=d)zeiger[k]++;return zeiger[k]>=0?ser[zeiger[k]][1]:null;});
+      if(o.some(x=>x==null))return;
+      out.push([d,Math.round((v-o.reduce((a,b)=>a+b,0)/o.length)*1000)/1000,null]);
+    });
+    return{pts:out,unit:' pp'};
+  });
+  if(ind.name===TREND_IND.d&&id)return memo('t1:'+id,()=>{
+    const t=trendTagesReihe(id)||[];
+    return{pts:t.filter(z=>z.ema!=null&&z.atr>0).map(z=>[z.d,Math.round((z.c-z.ema)/z.atr*100)/100,null]),unit:' ATR'};
+  });
+  if(ind.name===TREND_IND.h&&id)return memo('t4:'+id,()=>{
+    const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
+    const e=(a&&Array.isArray(a.e4)?a.e4:[]).filter(x=>x.length>=4&&x[2]>0&&x[3]>0);
+    return{pts:e.map(x=>[x[0],Math.round((x[3]-x[1])/x[2]*100)/100,null]),unit:' ATR'};
+  });
+  if(base===RETAIL_IND_NAME&&id)return memo('rt:'+id,()=>{
+    const z=abRetailZeilen(id),H=SENTIMENT_DATA&&SENTIMENT_DATA.retailHistory;
+    if(!z||!z.length||!H)return null;
+    const reihen=z.map(x=>{const m=new Map();(H[x.sym]||[]).forEach(e=>{if(e&&isFinite(+e[1]))m.set(String(e[0]).slice(0,10),x.vorn?+e[1]:100-(+e[1]));});return m;});
+    const tage=[...reihen[0].keys()].filter(d=>reihen.every(m=>m.has(d))).sort();
+    return{pts:tage.map(d=>[d,Math.round(reihen.reduce((s,m)=>s+m.get(d),0)/reihen.length*10)/10,null]),unit:'%'};
+  });
+  const roh=Object.keys(ROHSTOFF_NAME).find(k=>ROHSTOFF_NAME[k]===ind.name);
+  if(roh)return memo('ro:'+roh,()=>{
+    const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[roh];
+    const y=it&&Array.isArray(it.yhist)&&it.yhist.length>30?it.yhist:(it&&Array.isArray(it.history)?it.history:[]);
+    const out=[];for(let i=21;i<y.length;i++){const a=+y[i-21][1],b=+y[i][1];if(a>0&&b>0)out.push([y[i][0],Math.round((b/a-1)*1000)/10,null]);}
+    return{pts:out,unit:'%'};
+  });
+  return null;
+}
 function indChartSeries(ind,symId){
   const own=Array.isArray(ind.chartHist)?ind.chartHist:[];
   if(own.length>=2)return{pts:own,unit:null};
@@ -17376,12 +17425,30 @@ function indChartSeries(ind,symId){
   if(ccy&&BOND_INDS.includes(base)){pts=bondSeriesPts(ccy,base);unit='%';}
   else if(r.cot&&id){pts=cotHistPts(id,base);unit='%';}
   else if(r.sent&&r.sentKey){pts=sentHistPts(r.sentKey);unit=r.sentKey==='aaii'?'%':'';}
+  if(pts.length<2){try{const ab=abgeleiteteReihe(ind,id);if(ab&&ab.pts&&ab.pts.length>=2){pts=ab.pts;unit=ab.unit;}}catch(e){}}
   if(pts.length<2){pts=valHistPts(ind);unit=null;}
   return pts.length>=2?{pts,unit}:{pts:own,unit:null};
 }
 // opts: {noToolbar:true} laesst die Zeitraum-Leiste weg (Insights > Data
 // hat EINE gemeinsame Leiste ueber allen Panels), {group:'x'} haengt den
 // Chart an einen gemeinsamen Hover-Cursor (siehe attachChartHovers).
+function seasProfilHtml(id){
+  const A=SEASONALITY_DATA&&SEASONALITY_DATA.assets&&SEASONALITY_DATA.assets[id];
+  let m=A&&A.months;if(typeof m==='string'){try{m=JSON.parse(m);}catch(e){m=null;}}
+  if(!Array.isArray(m)||m.length<12)return'';
+  const W=720,H=200,pad=24,bw=(W-2*pad)/12;
+  const mx=Math.max(...m.map(x=>Math.abs(+x[1])||0),0.1);
+  const y0=H/2,sk=(H/2-pad)/mx,jetzt=new Date().getMonth()+1;
+  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let sv=`<line x1="${pad}" y1="${y0}" x2="${W-pad}" y2="${y0}" stroke="var(--bd2)" stroke-width="1"/>`;
+  m.forEach(([mo,avg,hit,jahre],i)=>{
+    const v=+avg||0,x=pad+i*bw+bw*0.15,h=Math.abs(v)*sk,col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
+    sv+=`<rect x="${x.toFixed(1)}" y="${(v>0?y0-h:y0).toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${Math.max(1,h).toFixed(1)}" fill="${col}" opacity="${mo===jetzt?1:.55}"${mo===jetzt?' stroke="var(--t0)" stroke-width="1.5"':''}><title>${MN[mo-1]}: average ${v>0?'+':''}${v.toFixed(2)}% · up in ${hit}% of ${jahre} years</title></rect>`;
+    sv+=`<text x="${(pad+i*bw+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${mo===jetzt?'var(--t0)':'var(--t3)'}" font-weight="${mo===jetzt?700:500}">${MN[mo-1]}</text>`;
+  });
+  return`<div class="ind-hist-wrap"><div class="ind-hist-toolbar"><span class="ind-hist-start">Average return per calendar month over ${escH(String(m[0][3]||'?'))} years (${escH(A.proxy||id)}) — the current month is outlined.</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${sv}</svg></div>`;
+}
 function indHistChart(ind,symId,opts){
   opts=opts||{};
   const _cs=indChartSeries(ind,symId);
@@ -17395,6 +17462,10 @@ function indHistChart(ind,symId,opts){
   const legend=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span></div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange',ab0);
   const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${indHistStartNote(all,R)}${legend}</div>`;
+  // Saisonalitaet ist keine Zeitreihe, sondern ein Monatsprofil ueber viele
+  // Jahre - ihr "Verlauf" ist dieses Profil (Nutzer 2026-09-25: jeder
+  // aufgeklappte Indikator braucht eine Historie).
+  if(stripPeriodSuffix(ind.name).base===SEAS_IND_NAME){const sp=seasProfilHtml(symId||symIdOfInd(ind));if(sp)return sp;}
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -23239,7 +23310,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

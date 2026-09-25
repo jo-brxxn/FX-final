@@ -1,0 +1,57 @@
+# Liefert TradingView fuer die ECONOMICS:-Reihen (PMIs & Co.) eine volle
+# Historie? Nutzer 2026-09-25: "jeder Indikator wenn aufgeklappt muss eine
+# Historie haben ... das ist wichtig". Investing (Kalender + sbcharts) war im
+# Probelauf 2026-09-25 gesperrt (3 Byte / HTTP 403), Trading-Economics-Seiten
+# tragen keine Chartdaten (TEChartsMeta leer). Geprueft wird hier der
+# Chart-Websocket von TradingView mit anonymem Token - dieselbe Quelle, die
+# die TradingView-Webseite fuer ECONOMICS:EUMPMI usw. benutzt.
+# Schreibt NICHTS in die Daten.
+name: Probe TradingView economics history
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Websocket history per symbol
+        run: |
+          cat > p.mjs <<'JS'
+          const SYMS=process.argv.slice(2);
+          const rnd=()=>Math.random().toString(36).slice(2,14);
+          const pack=(m,p)=>{const s=JSON.stringify({m,p});return "~m~"+s.length+"~m~"+s;};
+          async function hol(sym){
+            return new Promise(res=>{
+              const ws=new WebSocket("wss://data.tradingview.com/socket.io/websocket?type=chart",{headers:{Origin:"https://www.tradingview.com"}});
+              const cs="cs_"+rnd();let done=false;const fin=v=>{if(done)return;done=true;try{ws.close();}catch(e){}res(v);};
+              const t=setTimeout(()=>fin({sym,err:"timeout"}),20000);
+              ws.onopen=()=>{
+                ws.send(pack("set_auth_token",["unauthorized_user_token"]));
+                ws.send(pack("chart_create_session",[cs,""]));
+                ws.send(pack("resolve_symbol",[cs,"s1","="+JSON.stringify({symbol:sym,adjustment:"splits"})]));
+                ws.send(pack("create_series",[cs,"sds_1","s1","s1","1M",400,""]));
+              };
+              ws.onerror=e=>fin({sym,err:"ws error "+(e.message||"")});
+              ws.onmessage=ev=>{
+                const txt=String(ev.data);
+                if(/~h~/.test(txt)&&!/"m"/.test(txt)){ws.send(txt);return;}
+                txt.split(/~m~\d+~m~/).filter(Boolean).forEach(ch=>{
+                  let j;try{j=JSON.parse(ch);}catch(e){return;}
+                  if(j.m==="symbol_error"){clearTimeout(t);fin({sym,err:"symbol_error "+JSON.stringify(j.p).slice(0,120)});}
+                  if(j.m==="timescale_update"){
+                    const s=j.p&&j.p[1]&&j.p[1].sds_1&&j.p[1].sds_1.s||[];
+                    clearTimeout(t);
+                    const b=s.map(x=>x.v);
+                    fin({sym,n:b.length,first:b[0]&&[new Date(b[0][0]*1000).toISOString().slice(0,10),b[0][4]],last:b.length&&[new Date(b[b.length-1][0]*1000).toISOString().slice(0,10),b[b.length-1][4]]});
+                  }
+                });
+              };
+            });
+          }
+          for(const s of SYMS){const r=await hol(s);console.log(JSON.stringify(r));}
+          JS
+          node p.mjs ECONOMICS:EUMPMI ECONOMICS:EUSPMI ECONOMICS:EUSERPMI ECONOMICS:GBMPMI ECONOMICS:GBSPMI ECONOMICS:GBSERPMI ECONOMICS:JPMPMI ECONOMICS:JPSPMI ECONOMICS:JPSERPMI ECONOMICS:AUMPMI ECONOMICS:AUSPMI ECONOMICS:CAMPMI ECONOMICS:CHMPMI ECONOMICS:CHSPMI ECONOMICS:CHCCPI ECONOMICS:AUCCPI ECONOMICS:CHPPI ECONOMICS:JPEMP ECONOMICS:USMPMI ECONOMICS:USCPI | tee -a $GITHUB_STEP_SUMMARY
