@@ -2801,6 +2801,15 @@ body.res-return-active #resBackBar{display:flex}
    Schrifthierarchie nach docs/design-system.md: Kartendatum = Label (2xs,
    versal, gesperrt), Indikatorname = Body (xs), Wert = Zahl (sm, 800),
    Forecast/Previous = Meta (2xs, t3). */
+/* Werkzeugzeile ueber jedem Chart (Dauerregel 2026-09-26): links Ansicht
+   (Candles|Line, Varianten, Schalter), rechts buendig der Zeitfilter. */
+.chart-leiste{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin:0 0 8px;min-width:0}
+.chart-leiste-l{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-width:0}
+.chart-leiste-r{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;margin-left:auto;min-width:0}
+.chart-leiste-r .ab-rgs,.chart-leiste-r .ind-hist-toolbar,.chart-leiste-r .histp-range,.chart-leiste-r .pc-inchart-range{margin:0}
+.ctyp{flex-wrap:wrap}
+.ctyp{display:inline-flex;gap:4px}
+.px-src-z{display:flex;justify-content:flex-end;margin:6px 0 0}
 .px-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:12px}
 .px-toolbar-sp{flex:1 1 auto}
 .px-modes{display:flex;gap:4px}
@@ -2888,11 +2897,15 @@ body.res-return-active #resBackBar{display:flex}
 /* Data kompakt (2026-09-26): Kopf EINE Zeile, Panels = schmale Kopfzeile +
    Chart, der die gemessene Zelle exakt fuellt (dataRasterFuellen). */
 .data-head{margin-bottom:10px}
-.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px}
+.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px 4px}
+.data-row2{padding:0 12px 0}
+.data-row2 .chart-leiste{margin-bottom:8px}
 .data-h{font:800 var(--fs-lg)/1.2 var(--ff-text);color:var(--t0);margin-right:2px}
 .data-row .cot-filterbar,.data-row .cmp-filter-grp{margin:0}
 .data-row .data-range{margin:0;flex:0 1 auto}
-.data-row-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.data-row-r{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;align-items:center;min-width:0;max-width:100%}
+.data-row-r .cot-filterbar{min-width:0;max-width:100%}
+.data-row-r select{max-width:100%}
 .data-indsel{max-width:240px}
 .data-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .data-grid .cot-card{margin-bottom:0;min-width:0}
@@ -4104,8 +4117,9 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 .edge-dist-row{display:grid;grid-template-columns:78px 1fr 34px;gap:8px;align-items:center;padding:3px 0;font-size:var(--fs-sm)}
 .edge-dist-bar{height:9px;background:var(--bg2);border-radius:2px;overflow:hidden}
 .edge-dist-bar i{display:block;height:100%;background:var(--blue);opacity:.75}
-.news-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-.news-q{flex:1 1 220px;min-width:160px;background:var(--bg2);border:1px solid var(--bd);color:var(--t0);border-radius:var(--rs);padding:5px 9px;font-size:var(--fs-sm)}
+.news-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;margin-bottom:8px}
+.news-tools select{max-width:220px}
+.news-q{flex:0 1 320px;min-width:160px;background:var(--bg2);border:1px solid var(--bd);color:var(--t0);border-radius:var(--rs);padding:5px 9px;font-size:var(--fs-sm)}
 .news-tools select{background:var(--bg2);border:1px solid var(--bd);color:var(--t1);border-radius:var(--rs);padding:5px 8px;font-size:var(--fs-sm)}
 .hl-expand{width:100%;margin-top:6px;font-size:var(--fs-xs);padding:4px 8px;background:none;border:1px solid var(--bd2);color:var(--t2);border-radius:var(--rs);cursor:pointer}
 .hl-expand:hover{color:var(--blue);border-color:var(--blue)}
@@ -5701,7 +5715,13 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 .cot-card-title>.info-b{order:0}
 /* Steht rechts schon ein Element (Filter, "Open"-Link), setzt
    infoKnoepfeEinordnen() (js/main.js) das ⓘ DAHINTER und markiert es. */
-.ii-nach{margin-left:6px!important}
+/* ⚠ Gleiche Spezifitaet wie die margin-left:auto-Regel oben und DANACH -
+   ein nacktes .ii-nach (0,1,0) verlor gegen .cot-card-title>:is(.rinfo)
+   (0,2,0): zwei auto-Raender teilten sich die Zeile, der Filter stand
+   MITTIG statt rechts (gemessen 2026-09-26: 357 px je Seite, Retail/
+   Put-Call/Seasonality). Waechter check/infoi.js + check/einheit.js. */
+.ii-nach,.dw-t>.ii-nach,.ab-tile-hd>.ii-nach,.mx-card-title>.ii-nach,.rub-hdr>.ii-nach,.abc-hd>.ii-nach,
+.cot-card-title>.ii-nach,.dw-hdr>.ii-nach{margin-left:6px!important}
 /* Dashboard: der Titelblock (.dw-t) war nur so breit wie der Titel - er
    bekommt die ganze Zeile, damit das ⓘ an den rechten Rand kann. */
 .dw-hdr>.dw-t{flex:1 1 auto;min-width:0}
@@ -5869,11 +5889,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-572 - Data: bis 8 Panels, Charts fuellen den Bildschirm, kompakter Kopf."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-573 - Einheitliche Filter/Zeitfilter/Candles|Line, Data 2 untereinander, News Custom repariert."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-572</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-573</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -5984,7 +6004,8 @@ window.fxLogoSvg=function(art){
     <div style="font-size:16px;font-weight:700;color:var(--t0)">Carry Trade Scanner</div>
     <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
   </div>
-  <div style="margin-bottom:10px"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:420px"></div>
+  <!-- Suche = seitenweiter Filter -> oben rechts (Dauerregel 2026-09-26) -->
+  <div style="margin-bottom:10px;display:flex;justify-content:flex-end"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:360px"></div>
   <div id="carryLookup"></div>
   <div id="carryBody"></div>
 </div>

@@ -2004,10 +2004,12 @@ function renderSymHistoryPanelRoh(id){
   if(tageAltesModell)_histErkl.push(`* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.`);
 
   const nAlterung=histAgeShow?dayCards.filter(c=>/histp-age/.test(c.detail)).length:0;
-  const bar=`<div class="histp-bar">
-    <div class="histp-range">${(()=>{const mx=histMaxTage(id),l=HIST_RANGES.filter(([,dd])=>dd==='MAX'||dd<mx),an=l.some(([,dd])=>dd===histRange)?histRange:'MAX';
-      return l.map(([lbl,dd])=>`<button class="histp-rbtn${an===dd?' on':''}" onclick="setHistRange('${dd}')">${lbl}</button>`).join('');})()}</div>
-    <button class="histp-agebtn${histAgeShow?' on':''}" onclick="toggleHistAge()" title="The score also moves on days with nothing published: a release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting (see the score model). With this on, every day that crossed that edge names the indicator and the contribution it lost.">${histAgeShow?'✓ ':''}Ageing${nAlterung?` · ${nAlterung}`:''}</button>
+  // Werkzeugzeile nach der Dauerregel 2026-09-26: Ansicht links (Ageing),
+  // Zeitfilter rechts.
+  const bar=`<div class="histp-bar chart-leiste">
+    <div class="chart-leiste-l"><button class="histp-agebtn${histAgeShow?' on':''}" onclick="toggleHistAge()" title="The score also moves on days with nothing published: a release more than ${IND_STALE_CYCLES} of its own cycles overdue stops counting (see the score model). With this on, every day that crossed that edge names the indicator and the contribution it lost.">${histAgeShow?'✓ ':''}Ageing${nAlterung?` · ${nAlterung}`:''}</button></div>
+    <div class="chart-leiste-r"><div class="histp-range">${(()=>{const mx=histMaxTage(id),l=HIST_RANGES.filter(([,dd])=>dd==='MAX'||dd<mx),an=l.some(([,dd])=>dd===histRange)?histRange:'MAX';
+      return l.map(([lbl,dd])=>`<button class="histp-rbtn${an===dd?' on':''}" onclick="setHistRange('${dd}')">${lbl}</button>`).join('');})()}</div></div>
   </div>`;
   // ── Eine Zeile je Tag, flach, mit EINER Kopfzeile ───────────────────
   // Nutzer-Wunsch 2026-09-17: "jeden tag einzeln". Was sich gegenueber der
@@ -6205,14 +6207,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.pxChartTyp!==undefined){setPxChartTypVal(_imp.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6489,7 +6491,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6661,6 +6663,7 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.abChartRange!==undefined){setAbChartRangeVal(cd.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}
         if(cd.abTrendLinien!==undefined){setAbTrendLinienVal(cd.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}
+        if(cd.pxChartTyp!==undefined&&cd.pxChartTyp!==pxChartTyp){setPxChartTypVal(cd.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}pxTypNeuZeichnen();}
         if(cd.regimeCcy!==undefined){setRegimeCcyVal(cd.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}if(curPage==='regime')renderRegime();}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
         if(cd.calCcyFilter!==undefined){calCcyFilter=cd.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}updCalCcySel();}
@@ -8105,6 +8108,36 @@ function preisReiheRechnung(id){return FX.includes(id)?korbReihe(id,false):price
 // Stufen seit 2026-09-25 wie bei allen grossen Charts (Nutzer: "3m 6m 1y 3y
 // 6y 10y max"); gezeigt wird nur, was die Kursreihe hergibt (abRegler).
 const AB_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['MAX',null]];
+// ── Chart-Typ Candles | Line (Nutzer 2026-09-26: "Bei Charts mit
+// preishistorie ... Kerzen und Linie umstellen koennen"; per Rueckfrage
+// "Candles | Line ueberall", Step entfaellt). EINE Einstellung fuer alle
+// Preis-Charts (Price-Karte, Kontext-Charts, Preis-Fenster) - Nutzer-
+// Praeferenz, also Vier-Ecken-Sync wie abTrendLinien (docs/state-sync.md).
+const CHART_TYPEN=[['candle','Candles'],['line','Line']];
+let pxChartTyp=(()=>{try{return localStorage.getItem('fxpro_px_typ')==='line'?'line':'candle';}catch(e){return'candle';}})();
+function setPxChartTypVal(v){pxChartTyp=v==='line'?'line':'candle';}
+function setPxChartTyp(v){
+  try{
+    setPxChartTypVal(v);
+    localStorage.setItem('fxpro_px_typ',pxChartTyp);
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    markLsUpdatedSeen();markPrefEdit();cloudAutoSync();
+  }catch(e){alert('The chart type could not be saved: '+(e&&e.message||e));}
+  pxTypNeuZeichnen();
+}
+function pxTypNeuZeichnen(){
+  try{if(document.querySelector('#detail .ab-ptile,#detail .ab-ktile'))renderDetail();}catch(e){}
+  try{const m=document.getElementById('mPrice');if(m&&m.style.display==='flex')renderPriceChart();}catch(e){}
+}
+function chartTypSchalterHtml(){
+  return`<span class="ctyp" role="group" aria-label="Chart type">${CHART_TYPEN.map(([t,l])=>`<button class="ind-hist-range-btn ctyp-b${pxChartTyp===t?' on':''}" onclick="setPxChartTyp('${t}')" title="${t==='candle'?'One candle per trading day - applies to every price chart':'Line through the daily closes - applies to every price chart'}">${l}</button>`).join('')}</span>`;
+}
+// ── Werkzeugzeile ueber einem Chart (Dauerregel 2026-09-26) ─────────────
+// Links: Ansicht (Candles|Line, Chart-Varianten, Schalter), rechts: der
+// Zeitfilter. Direkt ueber dem Chart, nie in der Titelzeile.
+function chartLeisteHtml(links,rechts){
+  return`<div class="chart-leiste"><div class="chart-leiste-l">${links||''}</div><div class="chart-leiste-r">${rechts||''}</div></div>`;
+}
 function abRegler(id,titel){
   const ab=preisAnfang(id);   // inkl. Archiv (price_hist_meta.json)
   const heute=todayStr();
@@ -8399,6 +8432,8 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
   });
   if(ovSchatten)sv+=`<g class="tr-schatten-g" opacity=".11">${ovSchatten}</g>`;
   const pts=[];
+  const alsLinie=pxChartTyp==='line';
+  if(alsLinie)sv+=`<polyline class="px-linie" points="${k.map(c=>`${xOf(c.d).toFixed(2)},${y(c.c).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
   k.forEach((c,i)=>{
     const mx=xOf(c.d), x=mx-bw/2;
     // Kerzenfarben (Nutzer 2026-09-13, mit zwei Farbflaechen geschickt):
@@ -8410,10 +8445,10 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
     // Docht nur, wenn die Quelle High/Low wirklich mitliefert (c.ohlc) UND
     // sie ueber den Koerper hinausragen - sonst gaebe es einen Strich, der
     // nichts Gemessenes darstellt.
-    if(c.ohlc&&(c.h>Math.max(c.o,c.c)||c.l<Math.min(c.o,c.c))){
+    if(!alsLinie&&c.ohlc&&(c.h>Math.max(c.o,c.c)||c.l<Math.min(c.o,c.c))){
       sv+=`<line x1="${mx.toFixed(2)}" y1="${y(c.h).toFixed(1)}" x2="${mx.toFixed(2)}" y2="${y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
     }
-    sv+=`<rect x="${x.toFixed(2)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(2)}" height="${Math.max(0.8,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
+    if(!alsLinie)sv+=`<rect x="${x.toFixed(2)}" y="${Math.min(yo,yc).toFixed(1)}" width="${bw.toFixed(2)}" height="${Math.max(0.8,Math.abs(yc-yo)).toFixed(1)}" fill="${col}"/>`;
     const diff=c.c-c.o;
     // Nutzer 2026-09-13: "ich will wenn ich drueber hover bei den charts
     // auch den wochentag sehen".
@@ -8524,8 +8559,8 @@ function abKontextHtml(c){
   // Der Zeitfilter gilt fuer ALLE Kacheln gleichzeitig.
   const regler=abRegler(c.id,'Show % of daily candles in every chart');
   return`<div class="ab-ktile">
-    <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}
-      <span class="ab-rgs">${regler}</span></div>
+    <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}</div>
+    ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
     <div class="ab-kgrid">${kacheln}</div>
   </div>`;
 }
@@ -9761,7 +9796,8 @@ function assetPreisKarteHtml(c){
   const kopf=`<div class="ab-tile-hd">
     ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>${FX.includes(c.id)?`<span class="ab-tile-s ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</span>`:''}
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
-    <span class="ab-rgs">${regler}</span></div>
+    </div>
+    ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
     <div class="tr-sws">${schalter}</div>`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
   // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
@@ -16004,8 +16040,11 @@ function corrRegimeCardHtml(){
   const sel=(cur,fn)=>`<select class="btn" onchange="${fn}(this.value)" style="cursor:pointer">${
     ids.map(id=>`<option value="${escH(id)}"${id===cur?' selected':''}>${escH(COT_NAME[id]||id)}</option>`).join('')}</select>`;
   const win=[20,30,60].map(w=>`<button class="hl-tab${corrWin===w?' on':''}" onclick="setCorrWin(${w})">${w}d</button>`).join('');
-  const kopf=`<div class="mx-card-title"><span>Correlation regime${iBtn('corrregime')}</span>
-    <small>${sel(corrA,'setCorrA')} vs ${sel(corrB,'setCorrB')} ${win}</small></div>`;
+  // Filter rechtsbuendig in der Titelzeile, ⓘ als letztes (Dauerregel
+  // 2026-09-26) - vorher standen die Auswahlfelder direkt hinter dem Titel
+  // und das ⓘ mitten in der Zeile.
+  const kopf=`<div class="mx-card-title"><span>Correlation regime</span>
+    <small style="margin-left:auto">${sel(corrA,'setCorrA')} vs ${sel(corrB,'setCorrB')} ${win}</small>${iBtn('corrregime')}</div>`;
   const serie=corrRegimeSeries(corrA,corrB,corrWin);
   if(serie.length<20)return`<div class="mx-card" style="margin-top:12px">${kopf}
     <div class="dw-empty" style="text-align:left">Only ${serie.length} rolling windows available for ${escH(corrA)} and ${escH(corrB)} — the price series need at least ${corrWin+25} common trading days.</div></div>`;
@@ -18454,10 +18493,10 @@ function btReasonCell(ccy,date,ph){
       onchange="setBtReason('${escJH(ccy)}','${escJH(date)}',this.value)">${escH(txt)}</textarea>${quelle}
   </td>`;
 }
-const PRICE_MODES=[['candle','Candles'],['line','Line'],['step','Step']];
-let priceChartAsset=null,priceChartMode='candle';
+// Step entfaellt 2026-09-26 ("Candles | Line ueberall"); der Typ ist der
+// gemeinsame pxChartTyp aller Preis-Charts.
+let priceChartAsset=null;
 let priceRange=6,priceCustomFrom=null,priceCustomTo=null;
-function setPriceMode(m){priceChartMode=m;renderPriceChart();}
 function setPriceRange(v){priceRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderPriceChart();}
 // ⚠ MUSS existieren: timeRangeCustomHtml baut den Handlernamen als String
 // zusammen ("<setFnName>Custom") - siehe die Warnung bei setIndHistRangeCustom.
@@ -18578,10 +18617,13 @@ function renderPriceChart(){
   const pxAb=preisAnfang(id);
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
-  const modeBar=`<div class="px-modes">${PRICE_MODES.map(([m,l])=>`<button class="ind-hist-range-btn${priceChartMode===m?' on':''}" onclick="setPriceMode('${m}')" title="${m==='candle'?'One candle per trading day. The wick is the real measured high and low of that day; the body runs from the previous close to that day\u2019s close. Body and wick come from different sources (TradingView close, Yahoo high/low), and those two cut the day differently \u2014 so the body deliberately is not drawn from the open, which would flip the direction of about half the days.':m==='step'?'Step line - holds the last close until the next one':'Plain line between daily closes'}">${escH(l)}</button>`).join('')}</div>`;
+  const modeBar=chartTypSchalterHtml();
   const rangeBar=`<div class="ind-hist-toolbar" style="margin:0">${timeRangeBarHtml(priceRange,'setPriceRange',null,pxAb)}${timeRangeCustomHtml(priceRange,priceCustomFrom,priceCustomTo,'setPriceRange',pxAb)}</div>`;
   const src=feed&&feed.source?`<a class="px-src" href="${safeUrl(feed.source)}" target="_blank" rel="noopener">Source ↗</a>`:'';
-  const bar=`<div class="px-toolbar">${modeBar}${rangeBar}<div class="px-toolbar-sp"></div>${src}</div>`;
+  // Quelle steht unter dem Chart-Rahmen rechts (nicht mehr in der Leiste:
+  // rechts in der Leiste ist der Platz des Zeitfilters).
+  const bar=chartLeisteHtml(modeBar,rangeBar);
+  const srcZeile=src?`<div class="px-src-z">${src}</div>`:'';
   if(pxWarten){el.innerHTML=bar+ladeLogoHtml('Loading long price history…');return;}
   if(!all||all.length<2){
     el.innerHTML=bar+`<div class="px-empty">No price series for ${escH(sym?(sym.name||id):id)}. price_data.json covers the eight FX currencies plus Gold, Silver, Oil, BTC, DAX, S&amp;P 500 and Nasdaq — nothing is estimated for the rest.</div>`;
@@ -18609,7 +18651,7 @@ function renderPriceChart(){
   // Schwarz fallend), nicht die Bias-Farbe des Assets.
   const dirCol=(v,p)=>p==null?'var(--t3)':(v>=p?'var(--cndl-up)':'var(--cndl-dn)');
   let body='';
-  if(priceChartMode==='candle'){
+  if(pxChartTyp==='candle'){
     // ⚠ EINE Kerzen-Rechnung fuer die ganze App: tagesKerzen(). Hier stand
     // eine zweite, die dasselbe noch einmal ausrechnete - gemessen kam sie
     // auf dieselben 114 Dochte von 128 Kerzen, also kein sichtbarer
@@ -18633,12 +18675,11 @@ function renderPriceChart(){
     use.forEach((p,i)=>{
       const x=xOf(i).toFixed(1),y=yOf(p[1]).toFixed(1);
       if(!i)d+='M'+x+' '+y;
-      else if(priceChartMode==='step')d+=' H'+x+' V'+y;
       else d+=' L'+x+' '+y;
     });
-    const area=d+` L${xOf(n-1).toFixed(1)} ${(H-padB).toFixed(1)} L${xOf(0).toFixed(1)} ${(H-padB).toFixed(1)} Z`;
-    body=`<path d="${area}" fill="var(--blue)" opacity=".09"/>`
-        +`<path d="${d}" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // Dieselbe schlichte Linie wie in der Price-Karte (ohne Flaeche) - ein
+    // Umschalter, eine Darstellung (2026-09-26).
+    body=`<path class="px-linie" d="${d}" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
   // Tage MIT Ereignis bekommen eine leise Markierung auf der Grundlinie -
   // erst dadurch sieht man im Chart, wohin die Kaertchen unten gehoeren.
@@ -18685,7 +18726,7 @@ function renderPriceChart(){
     :`<div class="px-empty" style="margin-top:12px">No releases on record for this asset inside the selected range.</div>`;
   el.innerHTML=bar
     +`<div class="px-chart" id="pxChart">${chartHoverWrap(svg,hpts,null,null,pt=>markPriceCards(pt&&pt.date))}</div>`
-    +strip;
+    +srcZeile+strip;
   attachChartHovers(el);
   const sc=document.getElementById('pxCards');
   if(sc&&!sc._pxWired){sc._pxWired=1;sc.addEventListener('scroll',()=>{
@@ -18912,12 +18953,14 @@ function renderDataTab(){
 }
 // ── Raster der Data-Seite (Nutzerwahl 2026-09-26 "Bildschirm fuellen") ──
 // Die Panels fuellen die freie Hoehe von #pgData; kleiner werden die Charts
-// erst, wenn mehr dazukommen: 1 = ganze Flaeche, 2 = nebeneinander in voller
-// Hoehe, 3-4 = 2x2, 5-6 = 3x2, 7-8 = 4x2. Schmale Fenster: weniger Spalten.
+// erst, wenn mehr dazukommen: 1 = ganze Flaeche, 2 = untereinander (je halbe
+// Hoehe, volle Breite), 3-4 = 2x2, 5-6 = 3x2, 7-8 = 4x2. Schmale Fenster: weniger Spalten.
 // Unter DATA_MIN_CHART_H px Chart wird gescrollt statt weiter gestaucht.
 const DATA_MIN_CHART_H=150;
 function dataRaster(n,breite){
-  let c=n<=1?1:n<=2?2:n<=4?2:n<=6?3:4;
+  // 2 = UNTEREINANDER in voller Breite (Nutzer 2026-09-26: "bei 2 Charts
+  // mach das untereinander").
+  let c=n<=2?1:n<=4?2:n<=6?3:4;
   if(breite<700)c=1;else if(breite<1000)c=Math.min(c,2);
   return{c,r:Math.ceil(n/c)};
 }
@@ -18954,7 +18997,10 @@ function renderDataTabRoh(){
   // Kopf = EINE Zeile. Die Chip-Reihe (je Auswahl ein "✕") ist 2026-09-26
   // entfallen: jedes Panel traegt sein ✕ selbst, die Zaehlung steht am
   // Auswahlknopf - bei 8 Chips kostete die Reihe eine eigene Zeile.
-  const kopf=(sub,chips,mitte,knopf)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span>${modeBar}${mitte}<span class="data-row-r">${knopf}</span></div></div>`;
+  // Dauerregel 2026-09-26: Filter (Asset-/Indikator-Auswahl) rechtsbuendig
+  // in der Titelzeile; darunter die Werkzeugzeile - Ansicht (By asset / By
+  // indicator) links, Zeitfilter rechts.
+  const kopf=(sub,filter,knopf,zeit)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span><span class="data-row-r">${filter}${knopf}</span></div><div class="data-row2">${chartLeisteHtml(modeBar,zeit)}</div></div>`;
   let head,body,n=0;
   if(dataMode==='inds'){
     // ── EIN Asset, bis zu N Indikatoren ──
@@ -18968,7 +19014,7 @@ function renderDataTabRoh(){
       const it=known.includes(b)?(groups.find(g=>g.items.some(x=>x.b===b))||{items:[]}).items.find(x=>x.b===b):null;
       return`<button class="cmp-chip on" onclick="removeDataListInd('${escJH(b)}')" title="Remove this panel">${escH(it?it.n:b)} ✕</button>`;
     }).join('');
-    head=kopf(`One asset · up to ${N} of its indicators side by side · one time range`,chips||'<span class="cmp-filter-none">No indicator selected</span>',assetSel+(dataIndList.length?rangeBarHtml():''),indBtn);
+    head=kopf(`One asset · up to ${N} of its indicators side by side · one time range`,assetSel,indBtn,dataIndList.length?rangeBarHtml():'');
     if(!sym)body=`<div class="cot-empty">Pick an asset above.</div>`;
     else if(!dataIndList.length)body=`<div class="cot-empty">Pick up to ${N} indicators of ${escH(sym.name||sym.id)} above to compare them side by side.</div>`;
     else{n=dataIndList.length;body=`<div class="data-grid">`+dataIndList.map(b=>{
@@ -18995,7 +19041,7 @@ function renderDataTabRoh(){
     const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to ${N} assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${N}</b></button>`;
     const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
     const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn data-indsel" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
-    head=kopf(`Up to ${N} assets side by side · one indicator for all, or one per panel`,chips||'<span class="cmp-filter-none">No asset selected</span>',indPicker+((panels.length&&dataIndBase)?rangeBarHtml():''),addPicker);
+    head=kopf(`Up to ${N} assets side by side · one indicator for all, or one per panel`,indPicker,addPicker,(panels.length&&dataIndBase)?rangeBarHtml():'');
     if(!panels.length)body=`<div class="cot-empty">Pick up to ${N} assets above to see their indicator history side by side.</div>`;
     else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — it sets every panel at once. Each panel can then pick its own.</div>`;
     else{n=panels.length;body=`<div class="data-grid">`+panels.map(sym=>{
@@ -19030,7 +19076,7 @@ function dataRasterFuellen(el,n,jobs){
   // nur EINER Spalte (Telefon) je zwei Panels pro Bildschirmhoehe statt alle
   // gestaucht - dort wird ohnehin gescrollt.
   const minZeile=DATA_MIN_CHART_H+kopfH+14;
-  const sichtbar=c===1?Math.min(r,2):r;
+  const sichtbar=c===1?Math.min(r,2):r;   // 1 Spalte: hoechstens 2 je Bildschirm
   const zeile=Math.max(minZeile,Math.floor((frei-gap*(sichtbar-1))/sichtbar));
   grid.style.gridAutoRows=zeile+'px';
   grid.querySelectorAll('.data-pc[data-k]').forEach(box=>{
@@ -19502,14 +19548,18 @@ function renderNewsTabRoh(){
     .sort((a,b)=>a.localeCompare(b));
   const quellen=[...new Set(alle.map(h=>h.s).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const opt=(v,lbl,cur)=>`<option value="${escH(v)}"${cur===v?' selected':''}>${escH(lbl)}</option>`;
+  // Dauerregel 2026-09-26: seitenweite Filter oben rechts, Zeitfilter in
+  // eigener Zeile darunter rechtsbuendig.
+  // ⚠ timeRangeCustomHtml bekam hier bis 2026-09-26 (from,to,'...Custom')
+  // statt (range,from,to,'<set>') - der erste Parameter war damit nie
+  // 'CUSTOM', "Custom" zeigte gemessen 0 Monatsfelder und tat nichts.
   const kopf=`<div class="news-tools">
     <input class="news-q" type="search" placeholder="Search headlines…" value="${escH(newsTabQuery)}"
       oninput="setNewsTabQuery(this.value)">
     <select onchange="setNewsTabAsset(this.value)">${opt('ALL','All assets',newsTabAsset)}${assetIds.map(id=>opt(id,(COT_NAME[id]||id),newsTabAsset)).join('')}</select>
     <select onchange="setNewsTabSrc(this.value)">${opt('ALL','All sources',newsTabSrc)}${quellen.map(x=>opt(x,x,newsTabSrc)).join('')}</select>
   </div>
-  ${timeRangeBarHtml(newsTabRange,'setNewsTabRange',NEWS_RANGES)}
-  ${newsTabRange==='CUSTOM'?timeRangeCustomHtml(newsTabFrom,newsTabTo,'setNewsTabRangeCustom'):''}`;
+  ${chartLeisteHtml('',timeRangeBarHtml(newsTabRange,'setNewsTabRange',NEWS_RANGES)+timeRangeCustomHtml(newsTabRange,newsTabFrom,newsTabTo,'setNewsTabRange'))}`;
   if(!l.length){
     el.innerHTML=kopf+`<div class="cot-card" style="margin-top:10px"><div class="dw-empty" style="text-align:left">${
       alle.length?'Nothing matches these filters.':'No headlines yet - the hourly workflow fills this from free RSS feeds.'}</div></div>`;
@@ -20919,7 +20969,9 @@ function renderAaiiCard(D){
   }
 
   const ANSICHTEN=[['spread','Spread'],['shares','Shares'],['bars','Weekly bars'],['stack','100% stacked'],['dist','Distribution'],['price','vs S&P 500']];
-  const umschalter=`<div class="stabs aaii-views">${ANSICHTEN.map(([k,l])=>`<button class="st${aaiiView===k?' on':''}" onclick="setAaiiView('${k}')">${escH(l)}</button>`).join('')}</div>`;
+  // Ansicht = linke Seite der Werkzeugzeile, gleiche Knoepfe wie jeder
+  // Zeitfilter (Dauerregel 2026-09-26) - vorher eigene Tab-Zeile darueber.
+  const umschalter=`<span class="ctyp aaii-views">${ANSICHTEN.map(([k,l])=>`<button class="ind-hist-range-btn${aaiiView===k?' on':''}" onclick="setAaiiView('${k}')">${escH(l)}</button>`).join('')}</span>`;
   const inhalt=aaiiView==='shares'?ansichtAnteile():aaiiView==='bars'?ansichtSaeulen():aaiiView==='stack'?ansichtStapel()
     :aaiiView==='dist'?ansichtVerteilung():aaiiView==='price'?ansichtPreis():ansichtSpread();
 
@@ -20983,7 +21035,7 @@ function renderAaiiCard(D){
         <div style="flex:1;min-width:200px">${sentReadBadge(ev)}${ev&&ev.stale?`<div style="color:var(--amber);font-size:var(--fs-xs);margin-top:5px;line-height:1.45">The latest week AAII has published here is <b>${escH(a.date)}</b>. Newer weeks will appear automatically as they are published — nothing is filled in for the gap.</div>`:''}
           <div style="color:var(--t3);font-size:var(--fs-xs);margin-top:5px">Thresholds <b>±20pp</b>, symmetric around zero. Measured on the ${spAll.length} weeks recorded here the spread averages <b>${mittel!=null?(mittel>0?'+':'')+mittel.toFixed(1):'–'}pp</b> and stays inside ±20 about <b>${innerhalb!=null?innerhalb.toFixed(0):'–'}%</b> of the time.</div></div>
       </div>
-      ${umschalter}${rangeBar}${inhalt}${wirkung}
+      ${chartLeisteHtml(umschalter,rangeBar)}${inhalt}${wirkung}
     </div></div>`;
 }
 function legende(paare){
@@ -23608,7 +23660,7 @@ function lgKarte(card){
 // CSS-order, weil manche Titelzeilen eine zweite, volle Zeile tragen (order
 // haette das ⓘ unter diese Zeile geschoben - gemessen 58 px zu tief).
 function infoKnoepfeEinordnen(root){
-  (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd').forEach(h=>{
+  (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd,.mx-card-title').forEach(h=>{
     const i=h.querySelector(':scope>.rinfo,:scope>.info-b,:scope>.dw-t>.rinfo,:scope>.dw-t>.info-b');
     if(!i||i.classList.contains('ii-nach'))return;
     const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs'))).pop();
@@ -23946,7 +23998,7 @@ Object.assign(window,{
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,BT_REAKT,btMeetings,btReleases,btKursReaktion,btSpark,btCellHtml,btReaktZelle,
   btZinspfadChart,btJump,btRender,setBtCcy,setBtCmp,setBtFilter,toggleBtHolds,setBtJahr,openBacktester,
-  PRICE_MODES,openPriceChart,setPriceMode,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
+  CHART_TYPEN,setPxChartTyp,openPriceChart,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
   dataIndFor,setDataIndFor,relinkDataInd,setDataMode,dataIndGroupsOf,openDataIndPicker,closeDataIndPicker,
   renderDataIndPicker,toggleDataListInd,removeDataListInd,
@@ -24091,6 +24143,7 @@ Object.defineProperty(window,'pairOvBack',{get:()=>pairOvBack,set:v=>{pairOvBack
 Object.defineProperty(window,'pairOvRange',{get:()=>pairOvRange,set:v=>{pairOvRange=v;},configurable:true});
 Object.defineProperty(window,'pairOvFrom',{get:()=>pairOvFrom,set:v=>{pairOvFrom=v;},configurable:true});
 Object.defineProperty(window,'pairOvTo',{get:()=>pairOvTo,set:v=>{pairOvTo=v;},configurable:true});
+Object.defineProperty(window,'pxChartTyp',{get:()=>pxChartTyp,set:v=>{setPxChartTypVal(v);},configurable:true});
 Object.defineProperty(window,'abTrendLinien',{get:()=>abTrendLinien,set:v=>{abTrendLinien=v;},configurable:true});
 Object.defineProperty(window,'PRICE_HIST',{get:()=>PRICE_HIST,set:v=>{PRICE_HIST=v;},configurable:true});
 Object.defineProperty(window,'PRICE_HIST_META',{get:()=>PRICE_HIST_META,set:v=>{PRICE_HIST_META=v;},configurable:true});

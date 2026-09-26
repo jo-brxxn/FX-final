@@ -60,6 +60,13 @@ const MIN_SCHATTEN_LAGEN = 3;
     const e = document.getElementById(id); if (e) e.remove(); }); });
   await p.evaluate(() => gotoSym('USD'));
   await p.waitForTimeout(800);
+  // ⚠ Warten, bis die Preis-Karte RUHIG steht: sie schrumpft nach dem Oeffnen
+  // noch ~1 s (gemessen 2026-09-26: 745 -> 733 px, auch auf 572: 715 -> 703).
+  // Die Schattenkante wird an EINER Pixelzeile unter der Unterkante gemessen -
+  // rutscht die Karte zwischen Messung und Foto noch 1 px, landet die Probe
+  // auf der zweiten Schattenzeile (202 statt 192) und der Waechter meldet
+  // einen Schatten, der gar nicht schwaecher ist.
+  { let vor = null; for (let i = 0; i < 30; i++) { const jetzt = await p.evaluate(() => { const k = document.querySelector('.ab-ptile'); return k ? k.getBoundingClientRect().bottom : null; }); if (jetzt != null && vor != null && Math.abs(jetzt - vor) < 0.01) break; vor = jetzt; await p.waitForTimeout(150); } }
 
   // ── 1) Kartentrennung AM BILDSCHIRMPIXEL ─────────────────────────────
   const ziele = await p.evaluate(() => {

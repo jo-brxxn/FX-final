@@ -34,7 +34,8 @@ Nutzer-Farbton; beim Pull `!==undefined`-Check, damit auch "zurück auf
 Auto" = null ankommt), `setupCcyFilter`/`setupFxOnly`
 (Set-ups-Waehrungsfilter/FX-Quick-Filter), `calHighOnly`/`calCcyFilter`
 (Kalender-Filter), `abTrendLinien` (EMA20-Linien 1D/4H im Price-Chart,
-`'d,h'`, seit 2026-09-25), `telegramEnabled`,
+`'d,h'`, seit 2026-09-25), `pxChartTyp` (Candles | Line fuer ALLE
+Preis-Charts, `'candle'`/`'line'`, seit 2026-09-26), `telegramEnabled`,
 `newsSeenTs`, `denseMode`, `appBg` (Hintergrund-Wahl: leer = Current,
 sonst `white`/`marble-light`/`marble-vivid`/`marble-dark`; ⚠ die erlaubten
 Werte stehen doppelt — in `APP_BGS` in `js/main.js` und in der Frueh-Weiche

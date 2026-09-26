@@ -9,9 +9,12 @@
 // Kopf bis zum ersten Chart. Geprueft bei 1180x820, 1-8 Assets:
 //   - bis 8 Panels moeglich, ein 9. wird abgelehnt
 //   - kein Seiten-Scroll (alles auf einem Bildschirm)
-//   - Charthoehe faellt nie mit weniger Panels; 2 Panels = volle Hoehe wie 1
+//   - Charthoehe faellt nie mit weniger Panels; 2 Panels UNTEREINANDER in
+//     voller Breite (Nutzer 2026-09-26), beide auf dem Bildschirm
 //   - jeder Chart passt in seine Zelle (kein Ueberlauf), fuellt sie (>= 90 %)
-//   - Kopf eine Zeile (<= 60 px), Panel-Kopf eine Zeile (<= 40 px)
+//   - Kopf = Titelzeile + Werkzeugzeile (<= 100 px), Panel-Kopf eine Zeile
+//     (<= 40 px); Filter rechtsbuendig in der Titelzeile, Zeitfilter
+//     rechtsbuendig in der Werkzeugzeile (Dauerregel 2026-09-26)
 //   - Datumsbeschriftung bleibt im Chart (nicht abgeschnitten)
 //   node check/datalayout.js [--gegenprobe]  (festes 2-Spalten-Raster mit
 //   200-px-Zeilen wie frueher -> rot)
@@ -42,6 +45,10 @@ const ALLE = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'GOLD'];
       return { scroll: pg.scrollHeight - pg.clientHeight, kopf: kopf ? kopf.offsetHeight : 0,
         ph: Math.max(0, ...[...document.querySelectorAll('#dataBody .data-ph')].map(e => e.offsetHeight)),
         panels: document.querySelectorAll('#dataBody .data-panel').length,
+        pr: [...document.querySelectorAll('#dataBody .data-panel')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.width]; }),
+        filt: (() => { const k = document.querySelector('#dataBody .data-head'), f = k && k.querySelector('.data-row select'), z = k && k.querySelector('.chart-leiste-r'); if (!k || !f) return null; const kr = k.getBoundingClientRect(), fr = f.getBoundingClientRect(), t = k.querySelector('.data-h').getBoundingClientRect();
+          const zb = z && z.querySelector('button') ? z.getBoundingClientRect() : null;
+          return { rechts: kr.right - fr.right, zeile: Math.abs((fr.top + fr.bottom) / 2 - (t.top + t.bottom) / 2), zeitRechts: zb ? kr.right - zb.right : null }; })(),
         boxen: boxen.map(bx => { const sv = bx.querySelector('.ind-hist-wrap svg'); const br = bx.getBoundingClientRect();
           if (!sv) return null; const sr = sv.getBoundingClientRect();
           const txt = [...sv.querySelectorAll('text')].map(t => t.getBoundingClientRect()).filter(r => r.width);
@@ -50,7 +57,11 @@ const ALLE = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'GOLD'];
     });
     if (m.panels !== n) { fail(`${n} ASSETS`, `${m.panels} Panels`); continue; }
     if (m.scroll > 1) fail(`${n} ASSETS SCROLL`, `Seite scrollt ${m.scroll}px - soll auf einen Bildschirm passen`);
-    if (m.kopf > 60) fail('KOPF', `${m.kopf}px hoch (eine Zeile <= 60)`);
+    if (m.kopf > 100) fail('KOPF', `${m.kopf}px hoch (Titel- + Werkzeugzeile <= 100)`);
+    if (m.filt) { if (m.filt.zeile > 8) fail('FILTER', `nicht in der Titelzeile (${m.filt.zeile.toFixed(0)}px daneben)`);
+      if (m.filt.rechts > 170) fail('FILTER', `nicht rechtsbuendig (${m.filt.rechts.toFixed(0)}px bis zum Kartenrand - nur der Auswahlknopf darf rechts davon stehen)`);
+      if (m.filt.zeitRechts != null && m.filt.zeitRechts > 20) fail('ZEITFILTER', `nicht rechtsbuendig (${m.filt.zeitRechts.toFixed(0)}px Luecke)`); }
+    if (n === 2 && m.pr.length === 2 && (Math.abs(m.pr[0][0] - m.pr[1][0]) > 1 || Math.abs(m.pr[0][1] - m.pr[1][1]) > 1)) fail('2 PANELS', 'nicht untereinander');
     if (m.ph > 40) fail('PANEL-KOPF', `${m.ph}px hoch (eine Zeile <= 40)`);
     const bx = m.boxen.filter(Boolean);
     bx.forEach((x, i) => { if (x.ueber) fail(`${n} ASSETS UEBERLAUF`, `Panel ${i + 1}`); if (x.fuell < 0.9) fail(`${n} ASSETS FUELLT NICHT`, `Panel ${i + 1}: ${(x.fuell * 100).toFixed(0)} %`); if (x.raus) fail(`${n} ASSETS LABEL`, `Panel ${i + 1}: ${x.raus} Beschriftung(en) ragen aus dem Chart`); });
@@ -58,7 +69,6 @@ const ALLE = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'GOLD'];
   }
   const ns = Object.keys(hoehe).map(Number).sort((a, c) => a - c);
   ns.forEach((n, i) => { if (i && hoehe[n] > hoehe[ns[i - 1]] + 1) fail('GROESSE', `${n} Panels hoeher als ${ns[i - 1]} (${hoehe[n].toFixed(0)} > ${hoehe[ns[i - 1]].toFixed(0)})`); });
-  if (hoehe[2] != null && hoehe[1] != null && hoehe[2] < hoehe[1] - 2) fail('2 PANELS', `Chart ${hoehe[2].toFixed(0)}px statt voller Hoehe ${hoehe[1].toFixed(0)}px`);
   // 9. Asset wird abgelehnt
   const neun = await p.evaluate(ids => { dataAssets.length = 0; ids.slice(0, 8).forEach(x => dataAssets.push(x)); addDataAsset && addDataAsset(ids[8]); renderDataTab(); return document.querySelectorAll('#dataBody .data-panel').length; }, ALLE).catch(e => 'Fehler ' + e.message);
   if (neun !== 8) fail('MAXIMUM', `nach 9. Asset ${neun} Panels (erwartet 8)`);
@@ -66,5 +76,5 @@ const ALLE = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'GOLD'];
   await b.close();
   if (GEGENPROBE) { if (F.length) { console.log(`datalayout --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('datalayout --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`datalayout: ${F.length} Befund(e)`); F.slice(0, 30).forEach(f => console.log('  ' + f)); process.exit(1); }
-  console.log(`datalayout: ok (1-8 Panels ohne Scroll, Chart ${ns.map(n => n + ':' + hoehe[n].toFixed(0)).join(' ')} px, Kopf eine Zeile, 9. abgelehnt)`);
+  console.log(`datalayout: ok (1-8 Panels ohne Scroll, Chart ${ns.map(n => n + ':' + hoehe[n].toFixed(0)).join(' ')} px, Kopf Titel+Werkzeugzeile, Filter/Zeitfilter rechts, 9. abgelehnt)`);
 })().catch(e => { console.log('datalayout: ABBRUCH ' + e.message); process.exit(1); });

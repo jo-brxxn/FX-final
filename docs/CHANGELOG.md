@@ -18054,3 +18054,52 @@ Breite ausgedünnt (vorher nur nach Punktzahl → bei schmalen Charts
 abgeschnitten). Bei der Standardbreite 720 ändert sich die Ausdünnung nicht.
 
 Wächter `check/datalayout.js` (Gegenprobe: altes festes Raster → rot).
+
+---
+
+## VERSION-CHECK-573 (2026-09-26) — Einheitlichkeit, Candles | Line, Data 2 untereinander
+
+Nutzer: *„Ne bei 2 Charts mach das untereinander. Der Filter für Indikator
+oder Asset soll rechtsbündig sein. Bei Charts mit preishistorie ... Kerzen
+und Linie umstellen können. Ich will auf der gesamten Webseite
+Einheitlichkeit also Filter an den selben Stellen die i dann die
+Zeitfilterbutton schick mir eine Frage mit Möglichkeiten und sag mir wie es
+aktuell ist"*. Den Satz „ab über 4 soll es maximal klein sein" hat der
+Nutzer auf Rückfrage zurückgezogen („Nein vergiss das").
+
+**Bestand vorher (gemessen, 1180×820):** Auswahlfilter an vier Stellen
+(Kartentitel mittig: Retail/Put-Call/Seasonality; Seitenkopf rechts:
+Trends/COT; Data links; Carry links unter dem Titel). Zeitfilter an fünf
+(eigene Zeile rechts: AAII/Put-Call/Trends/Price-Karte; History links; Preis-
+Fenster links hinter Candles/Line/Step; Data mittig; News links).
+Candles/Line nur im Preis-Fenster.
+
+**Wurzel „Filter mittig":** das ⓘ hinter einem rechtsbündigen Filter sollte
+per `.ii-nach` 6 px Abstand haben, verlor aber gegen
+`.cot-card-title>:is(.rinfo,.info-b){margin-left:auto!important}` (0,2,0 gegen
+0,1,0) — zwei auto-Ränder teilten die Zeile (357 px je Seite). Fix mit
+gleicher Spezifität.
+
+**Mitgefunden:** News-„Custom" tat nichts — `timeRangeCustomHtml` bekam
+`(from,to,'setNewsTabRangeCustom')` statt `(range,from,to,'setNewsTabRange')`,
+der erste Parameter war nie `'CUSTOM'` (gemessen: 0 Monatsfelder). Alle
+anderen 10 Aufrufe geprüft, korrekt.
+
+**Umgesetzt:** Regel s. `docs/design-system.md` „Bedienelemente an festen
+Stellen"; `chartLeisteHtml`, `chartTypSchalterHtml`, `pxChartTyp`
+(Vier-Ecken-Sync); Linienmodus in `abKerzenBlock`; Preis-Fenster ohne Step,
+Quelle unter den Chart; History, AAII, Data, News, Matrix-Korrelation, Carry
+angepasst; Data 2 Panels untereinander.
+
+Wächter `check/einheit.js` (25 Seiten/Fenster; Gegenprobe: alle vier Regeln
+rot), `check/datalayout.js` angepasst.
+
+**Nachtrag Wächter `kartenlook`:** meldete auf 573 „Schattenkante 1,243 <
+1,28". Gemessen: die Schattenpixel sind in 572 und 573 identisch (erste
+Zeile unter der Kante 191/192), aber die Price-Karte schrumpft nach dem
+Öffnen noch ~1 s (745 → 733 px; auf 572 ebenso 715 → 703). Der Wächter maß
+die Kante nach festen 800 ms; rutschte die Karte bis zum Foto noch 1 px,
+landete die Probe auf der zweiten Schattenzeile. Jetzt wartet er, bis die
+Karte ruhig steht — Grenze unverändert, gemessen stabil 1,36:1.
+Data am Telefon: Filter + Auswahlknopf dürfen umbrechen (vorher 63 px über
+den Kartenrand, `check/layout.js`/`check/cards.js`).

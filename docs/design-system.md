@@ -1218,3 +1218,29 @@ Paar-Kursen. Wächter `check/korb.js`.
   Panel-Kopf = eine Zeile (Name, Legende, As of/Next, Auswahl, ✕); zu schmal
   → erst Legende, dann As of ausgeblendet (Container-Abfrage).
 - Wächter: `check/datalayout.js`.
+
+## Bedienelemente an festen Stellen (Dauerregel seit 2026-09-26)
+
+Nutzer: *„Ich will auf der gesamten Webseite Einheitlichkeit also Filter an
+den selben Stellen die i dann die Zeitfilterbutton"*; per Rückfrage festgelegt:
+
+- **Auswahlfilter** (Asset-/Indikator-Dropdown, Suche) einer Karte stehen in
+  ihrer **Titelzeile, rechtsbündig**, direkt links vor dem ⓘ. Rechts davon
+  nur noch Knöpfe (z. B. Auswahl-Knopf, ✕) und das ⓘ. Filter, die die ganze
+  Seite betreffen (Trends, COT, Kalender, News, Carry), stehen **oben rechts
+  auf der Seite**.
+- **Zeitfilter** stehen in einer **eigenen Werkzeugzeile direkt über dem
+  Chart, rechtsbündig** — nie in der Titelzeile. Baustein:
+  `chartLeisteHtml(links, rechts)` (`.chart-leiste`).
+- Links in derselben Zeile steht die **Ansicht**: bei Preis-Charts der
+  Umschalter **Candles | Line** (`chartTypSchalterHtml`, eine gemeinsame,
+  synchronisierte Einstellung `pxChartTyp` für Price-Karte, Kontext-Charts
+  und Preis-Fenster; Step entfällt), sonst Chart-Varianten (AAII Spread/
+  Shares/…, History Ageing, Data By asset/By indicator) — in denselben
+  kleinen Knöpfen wie der Zeitfilter.
+- **ⓘ** unverändert rechts oben auf Titelhöhe (Regel vom 2026-09-25); steht
+  davor ein rechtsbündiger Filter, hat es 6 px Abstand statt `auto`
+  (`.ii-nach`, gleiche Spezifität wie die auto-Regel).
+- Ausnahme mit Absicht: Performance Ranking (1D/1W/1M/YTD) ist kein
+  Chart-Zeitraum, sondern das Rangfenster — bleibt als Segment-Leiste.
+- Wächter: `check/einheit.js`.
