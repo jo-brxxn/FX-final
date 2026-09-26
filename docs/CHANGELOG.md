@@ -18329,3 +18329,41 @@ Ansicht formatiert Tausender ohne `toLocaleString` (`check/datum.js`).
 **Zusammenführung (VERSION-CHECK-576):** zwei Sitzungen haben parallel als
 575 auf `main` geschoben (Score-Journal und Y-Achse/ⓘ). Beide Stände
 zusammengeführt, Nummer auf 576 angehoben, damit sie eindeutig bleibt.
+
+---
+
+## VERSION-CHECK-577 (2026-09-26) — Suchfeld gibt nach, Versionsnummer voll sichtbar
+
+Nutzer (iPad-Foto, Kopfzeile endet auf „VERSION-CHECK-5"): *„Mach die search
+Leiste kleiner damit ich den Version Check sehe"*.
+
+**Gemessen (Playwright, vor dem Fix):** das Suchfeld stand auf **allen**
+Breiten ab 761 px fest bei 380 px. Die Regel für mittlere Breiten
+(`@media(max-width:1079px){.hdr-search{max-width:260px}}`) wurde von der
+späteren Kopfzeilen-Regel (`@media(min-width:761px){.hdr-search{flex:0 1
+380px;max-width:380px}}`) überschrieben — gleiche Spezifität, spätere Stelle
+gewinnt. Der Status-Cluster (Saved / LIVE / Uhr / Version) hatte dagegen
+`flex:1;min-width:0;overflow:hidden` und gab als Einziger nach:
+
+| Breite | Status braucht | bekam |
+|---|---|---|
+| 1024 px | 269 px | 181 px |
+| 1194 px (iPad quer) | 354 px | 351 px |
+
+**Fix:** ab 1000 px gibt das **Suchfeld** nach (`.hdr-status{flex:1 0
+auto}`, Suchfeld `min-width:150px`): 1024 px → Suchfeld 204 px, 1194 px →
+374 px, Status jeweils voll 357 px. Unter 1000 px bleibt das alte Kürzen des
+Status — mit der neuen Regel lief die Kopfzeile bei 800–900 px sonst 152 px
+über den Rand (gemessen 952 px bei 800 px Fensterbreite), dort ist schlicht
+kein Platz für beides.
+
+**Wächter** `check/versionssicht.js`: 1024/1180/1194/1366 px — Status nicht
+abgeschnitten, Versionsname innerhalb, Kopfzeile ohne Überlauf. Gegenprobe
+`--gegenprobe` (Suchfeld wieder hart 380 px): 3 Breiten rot.
+⚠ Warum `layout.js`/`cards.js` das nicht gesehen haben: beide melden
+Überlauf, aber `.hdr-status` schneidet mit `overflow:hidden` ab — abgeschnitten
+ist für sie kein Überlauf. Genau die Klasse aus dem Wächter-README („geclippter
+Überlauf zählt nicht als scrollWidth-Wachstum").
+
+**Nummer:** eine parallele Sitzung hatte 576 schon vergeben (Zusammenführung
+Score-Journal + Y-Achse) — deshalb 577.

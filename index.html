@@ -5410,7 +5410,16 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 /* Abstaende und Suchbreite aus dem Bild nur ab Tablet-Breite - auf 390px
    stand die Kopfzeile damit 11px ueber den Rand (check/cards.js). */
 @media(min-width:761px){.hdr{padding:9px 18px;gap:18px}
-  .hdr-search{flex:0 1 380px;max-width:380px;padding:8px 14px}}
+  .hdr-search{flex:0 1 380px;max-width:380px;padding:8px 14px}
+  /* Nutzer 2026-09-26 (iPad-Foto, "VERSION-CHECK-5" abgeschnitten): das
+     Suchfeld stand fest auf 380px, diese Regel ueberschrieb die 260px aus
+     der Mittelbreiten-Media-Query. Gemessen 1194px: Status braucht 354px,
+     bekam 351; 1024px: 269 gegen 181. Jetzt gibt das SUCHFELD nach, der
+     Status (Saved/LIVE/Version) behaelt seine volle Breite. */
+  .hdr-search{min-width:150px}}
+/* Erst ab 1000px: darunter reicht der Platz nicht fuer beides (gemessen 900px:
+   Kopfzeile 952px breit) - dort bleibt das alte Kuerzen des Status. */
+@media(min-width:1000px){.hdr-status{flex:1 0 auto}}
 
 /* ── Feste Icon-Leiste: Symbol, darunter die Beschriftung ── */
 #navSidebar{width:76px;min-width:76px;max-width:76px;padding:10px 7px;gap:4px;
@@ -5944,11 +5953,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-576 - Zusammenfuehrung: Y-Achse an jedem Chart, gemeinsame Skala in Data, fehlende i ergaenzt + Score-Journal (parallel als 575 auf main)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-577 - Suchfeld gibt auf Tablet-Breite nach, damit Status und Versionsnummer voll sichtbar sind."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-576</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-577</span>
     </span>
   </div>
   <div class="hdr-r">

@@ -82,6 +82,7 @@ const PRUEFUNGEN = [
   { n: 'historie',   d: 'Historie: Score-Linie, Alterung nachgerechnet, jeder Tag einzeln', f: 'check/historie.js',  args: [],           browser: true },
   // 2026-09-26: jede Score-Aenderung mit exakter Ursache (Nutzer: "alles was
   // den Score aendert aufgezeichnet ... kein Wert soll leer bleiben").
+  { n: 'versionssicht', d: 'Kopfzeile: Versionsnummer ab 1000px voll sichtbar, Suchfeld gibt nach', f: 'check/versionssicht.js', args: [], browser: true },
   { n: 'journal',    d: 'Score-Journal: jede Bewegung mit Ursache, Teile = Veraenderung, kein leerer Wert', f: 'check/journal.js', args: [], browser: true },
   { n: 'backtester', d: 'Backtester: Sitzungen, Releases, Kursreaktion gegen die Rohdaten', f: 'check/backtester.js',args: [],           browser: true },
   { n: 'erklaerung',d: 'Erklaerungen hinter dem ⓘ, zentriert, nicht in der Karte', f: 'check/erklaerung.js',args: [],        browser: true },
