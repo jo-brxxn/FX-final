@@ -15,6 +15,8 @@
 //                               in jeder Karte)
 //   3. Text in der Karte      < Kartentitel (Median der Textzeilen)
 //   Asset-Seite: Asset-Name (.atitle) > Kartentitel.
+//   4. jede Karte mit Titel hat ein ⓘ (Nutzer 2026-09-26: fehlende ⓘ auf
+//      Trends/COT/Matrix/Data/Regime/Asset-Karten ergaenzt)
 //   node check/hierarchie.js [--gegenprobe]  (Seitentitel 16px + ein
 //   Kartentitel 15px wie vorher -> rot)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
@@ -35,7 +37,7 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
   const perr = []; p.on('pageerror', e => perr.push(String(e)));
   await p.goto(URL); await wartenBisDatenDa(p);
   await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
-  if (GEGENPROBE) await p.addStyleTag({ content: '.pg-titel{font-size:16px!important;font-weight:700!important} .mx-card-title{font-size:15px!important}' });
+  if (GEGENPROBE) await p.addStyleTag({ content: '.pg-titel{font-size:16px!important;font-weight:700!important} .mx-card-title{font-size:15px!important} .tr-card-head>.info-b{display:none!important}' });
   let n = { seiten: 0, karten: 0 };
   for (const z of SEITEN) {
     await p.evaluate(z => { if (z.startsWith('A:')) gotoSym(z.slice(2)); else showTab(z); if (z === 'data') { dataAssets.length = 0; ['USD', 'EUR'].forEach(x => dataAssets.push(x)); if (!dataIndBase) dataIndBase = 'CPI (Headline)'; renderDataTab(); } }, z);
@@ -69,7 +71,7 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
         if (t.closest('[class*="notify"]')) return;   // Sync-Hinweis, keine Ueberschrift
         const rest = blaetter.filter(e => e !== t && !t.contains(e) && e.getBoundingClientRect().top > t.getBoundingClientRect().bottom - 2).map(fs).sort((a, c) => a - c);
         const median = rest.length ? rest[Math.floor(rest.length / 2)] : null;
-        out.karten.push({ name: t.textContent.trim().replace(/\s+/g, ' ').slice(0, 28), cls: String(t.getAttribute('class') || t.parentElement.getAttribute('class') || '').slice(0, 24), fs: fs(t), fw: fw(t), median });
+        out.karten.push({ name: t.textContent.trim().replace(/\s+/g, ' ').slice(0, 28), cls: String(t.getAttribute('class') || t.parentElement.getAttribute('class') || '').slice(0, 24), fs: fs(t), fw: fw(t), median, ii: !![...k.querySelectorAll('.rinfo,.info-b')].some(vis) });
       });
       return out;
     });
@@ -81,6 +83,7 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
     r.karten.forEach(k => {
       n.karten++;
       if (Math.abs(k.fs - 17) > .5 || k.fw !== 700) fail(z + ' KARTENTITEL', `"${k.name}" (${k.cls}) ${k.fs}px/${k.fw} statt 17px/700`);
+      if (!k.ii) fail(z + ' OHNE ⓘ', `"${k.name}" hat keinen Erklaer-Knopf (Nutzer 2026-09-26: jede Karte mit Titel)`);
       if (k.median != null && k.median >= k.fs) fail(z + ' TEXT >= TITEL', `"${k.name}": Text darunter ${k.median}px, Titel ${k.fs}px`);
       r.titel.forEach(t => { if (t.fs <= k.fs) fail(z + ' SEITE <= KARTE', `Seitentitel ${t.fs}px nicht groesser als Kartentitel "${k.name}" ${k.fs}px`); });
     });
@@ -88,7 +91,7 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
   }
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
-  if (GEGENPROBE) { if (F.some(f => f.includes('SEITENTITEL')) && F.some(f => f.includes('KARTENTITEL'))) { console.log(`hierarchie --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('hierarchie --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
+  if (GEGENPROBE) { if (F.some(f => f.includes('SEITENTITEL')) && F.some(f => f.includes('KARTENTITEL')) && F.some(f => f.includes('OHNE ⓘ'))) { console.log(`hierarchie --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('hierarchie --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`hierarchie: ${F.length} Befund(e)`); F.slice(0, 50).forEach(f => console.log('  ' + f)); process.exit(1); }
   console.log(`hierarchie: ok (${n.seiten} Seiten, ${n.karten} Karten: Seitentitel 24px/800 > Kartentitel 17px > Text)`);
 })().catch(e => { console.log('hierarchie: ABBRUCH ' + e.message); process.exit(1); });

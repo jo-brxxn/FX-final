@@ -907,6 +907,8 @@ svg.ic{vertical-align:-2px;flex:none}
 .ab-bar-me{color:var(--t0);font-weight:800}
 /* Verlauf der Retail-Quote - nur da, wo der Feed schon einen hat. */
 .ab-rtv{margin-top:8px}
+/* Y-Beschriftung rechts (Dauerregel 2026-09-26), Hoehe bleibt die der Karte */
+.ab-rtv .ab-plot{min-height:54px}
 .ab-rtv-t{display:flex;justify-content:space-between;gap:8px;font:700 var(--fs-2xs)/1.3 var(--ff-text);
   color:var(--t2);margin-bottom:3px}
 .ab-rtv-t span{color:var(--t3);font-weight:600}
@@ -1775,6 +1777,7 @@ body.no-ui-anim #navSidebar{transition:none}
 .rg-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);
   box-shadow:var(--shadow-card);padding:12px 14px;min-width:0}
 .rg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.rg-top>.info-b{order:99;align-self:flex-start}
 .rg-hd-l{min-width:0}
 .rg-hd-r{text-align:right;flex:0 0 auto}
 /* ⚠ Seit 2026-09-24 nehmen ALLE Kartentitel --fs-kt (17px, Block
@@ -2343,6 +2346,11 @@ body.compact-view .rub-summary{display:block}
 /* ── SCORE TRENDS ── */
 .tr-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .tr-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--bd)}
+/* ⓘ in die Titelzeile, Legende volle Breite darunter (sonst rutschte das ⓘ
+   hinter die lange Legende in die dritte Zeile, 2026-09-26) */
+.tr-card-head>.info-b{order:2}
+.tr-card-head>.tr-card-title{order:1}
+.tr-card-head>:not(.tr-card-title):not(.info-b){order:3;flex-basis:100%}
 .tr-card-title{font-size:var(--fs-kt);font-weight:700;color:var(--t0);letter-spacing:.2px}
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
 .tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--t1);font-family:var(--ff-num)}
@@ -2930,9 +2938,9 @@ body.res-return-active #resBackBar{display:flex}
    (Container-Abfrage), nie ein Umbruch, der dem Chart Hoehe nimmt. */
 .data-panel{container-type:inline-size}
 .data-ph{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:6px 10px 6px 12px;border-bottom:1px solid var(--bd);min-width:0;white-space:nowrap}
-.data-pt{font:700 var(--fs-kt)/1.2 var(--ff-text);color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.data-pt{font:700 var(--fs-kt)/1.2 var(--ff-text);color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 0 auto;max-width:60%}
 .data-pt .px-panel-sub{display:inline;margin:0 0 0 6px}
-.data-ph .px-asof{margin:0;font-size:var(--fs-2xs);flex-wrap:nowrap;overflow:hidden;min-width:0;flex:0 1 auto}
+.data-ph .px-asof{margin:0;font-size:var(--fs-2xs);flex-wrap:nowrap;overflow:hidden;min-width:0;flex:0 1 auto;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
 .data-ph .px-panel-ctrls{margin-left:auto;flex:0 1 auto}
 .data-ph .px-panel-sel{max-width:150px;min-width:0}
 .data-lg{display:inline-flex;gap:8px;font:600 var(--fs-2xs)/1 var(--ff-text);flex:0 0 auto}
@@ -5725,7 +5733,7 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 .info-b::before,.rub-hdr .rinfo::before,.cot-card-title .rinfo::before,.dw-t .rinfo::before{
   inset:auto;left:50%;top:50%;width:var(--ii-kreis);height:var(--ii-kreis);transform:translate(-50%,-50%);box-sizing:border-box;border-width:1.1px}
 .info-b,.rub-hdr .rinfo,.cot-card-title .rinfo,.dw-t .rinfo{font-size:calc(var(--ii-kreis) * .72)}
-.dw-t>.info-b,.ab-tile-hd>.info-b,.mx-card-title>.info-b,.rub-hdr .info-b,.abc-hd>.info-b,
+.dw-t>.info-b,.ab-tile-hd>.info-b,.mx-card-title>.info-b,.rub-hdr .info-b,.abc-hd>.info-b,.tr-card-head>.info-b,.data-row>.info-b,.data-ph>.info-b,.rg-hd>.info-b,.rg-top>.info-b,.dw-hdr>.info-b,.cot-card-title>.info-b,
 .dw-t>.rinfo,.cot-card-title>:is(.rinfo,.info-b),.mx-card-title>.rinfo,.dw-hdr>.rinfo,.rub-hdr>.rinfo{
   margin-left:auto!important;margin-right:-5.5px!important;align-self:center;flex:none}
 .cot-card-title>.info-b{order:0}
@@ -5737,7 +5745,7 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
    MITTIG statt rechts (gemessen 2026-09-26: 357 px je Seite, Retail/
    Put-Call/Seasonality). Waechter check/infoi.js + check/einheit.js. */
 .ii-nach,.dw-t>.ii-nach,.ab-tile-hd>.ii-nach,.mx-card-title>.ii-nach,.rub-hdr>.ii-nach,.abc-hd>.ii-nach,
-.cot-card-title>.ii-nach,.dw-hdr>.ii-nach{margin-left:6px!important}
+.cot-card-title>.ii-nach,.dw-hdr>.ii-nach,.tr-card-head>.ii-nach,.data-row>.ii-nach,.data-ph>.ii-nach{margin-left:6px!important}
 /* Dashboard: der Titelblock (.dw-t) war nur so breit wie der Titel - er
    bekommt die ganze Zeile, damit das ⓘ an den rechten Rand kann. */
 .dw-hdr>.dw-t{flex:1 1 auto;min-width:0}
@@ -5905,11 +5913,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-574 - Schrifthierarchie (Seitentitel 24px, Kartentitel 17px ueberall), neue Wortmarke."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-575 - Y-Achse an jedem Chart, gemeinsame Skala in Data, fehlende i ergaenzt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-574</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-575</span>
     </span>
   </div>
   <div class="hdr-r">

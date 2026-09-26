@@ -1262,3 +1262,32 @@ Klassennamen prüft. `check/hierarchie.js` erkennt Karten an der Form
 (Schatten + Rundung) und prüft jede Seite. Ausnahmen mit eigenem Kopf:
 Dashboard, Data (Kopf = Datenkarte), Asset-Seiten (`.atitle`).
 Regel in `CLAUDE.md` Nr. 9 (gilt immer).
+
+## Y-Achse an jedem Daten-Chart (Dauerregel seit 2026-09-26)
+
+Nutzer: *„immer wenn man sich Daten anschaut will ich eine y
+Achsenbeschriftung haben also egal wo in welchem Grafik oder Chart und in der
+Kategorie data wenn man vergleicht soll sie bei gleichem Indikator gleich sein
+die Beschriftung"*.
+
+- Jeder Chart trägt Y-Werte: runde Teilstriche aus `achsenTicks(lo,hi,n)`
+  (Schritte 1/2/2,5/5 × 10ⁿ) mit gestrichelten Hilfslinien. Unverzerrte SVGs
+  (Indikator-Chart, Preis-Fenster, Saisonalitäts-Profil) als SVG-Text
+  `.y-lbl`; gestreckte SVGs (`preserveAspectRatio="none"`) als HTML
+  (`chartAchsenHtml`, `.cax-y`) oder `.ab-yax` — sonst wird die Schrift
+  mitgestreckt. Preis-Charts: Achse rechts, alle anderen links.
+- **Data:** Panels mit demselben Indikator teilen EINE Y-Skala (Vereinigung
+  der Spannen im gewählten Zeitraum, `dataRasterFuellen` → `opts.yRange`).
+  Verschiedene Indikatoren behalten ihre eigene.
+- Ausgenommen mit Absicht: Sparklines in Listen (zu klein für eine Achse),
+  Tacho-Anzeigen, der Globus der Übersicht.
+- Wächter: `check/yachse.js`.
+
+## ⓘ an jeder Karte mit Titel (seit 2026-09-26)
+
+Jede Karte mit Titelzeile hat ein ⓘ mit Erklärtext (`abInfoBtn`). Ergänzt:
+Trends (4), COT (2), Matrix (3), Seasonality „All assets", Data (Kopf +
+Panels), Regime (Kopf + 7 Szenarien), Asset-Seite Price/Pinned notes/
+Context/Headlines. Ausnahme: Dashboard „Majors" — die Karte hat außerhalb
+des Bearbeitungsmodus bewusst keine Titelzeile. Geprüft von
+`check/hierarchie.js` (Regel 4 dort).

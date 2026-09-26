@@ -1634,6 +1634,18 @@ function histAlterungsWechsel(sym,datum,prevDatum){
 //   yL: [{pct, txt}]     pct = Anteil der HOEHE (0 oben, 100 unten)
 //   xL: [{pct, txt, an}] pct = Anteil der BREITE, an = start|mid|end
 //   opt.yLeft / opt.xTop = wo die jeweilige Achse quer dazu sitzt, in Prozent
+// ── Y-Achse: runde Teilstriche (Dauerregel 2026-09-26: "immer wenn man sich
+// Daten anschaut will ich eine y Achsenbeschriftung haben also egal wo").
+// Schrittweite 1/2/2,5/5 x 10^n, nur Werte innerhalb [lo,hi].
+function achsenTicks(lo,hi,n){
+  const sp=hi-lo;
+  if(!(sp>0)||!isFinite(sp))return[lo];
+  const roh=sp/Math.max(2,n||4),mag=Math.pow(10,Math.floor(Math.log10(roh)));
+  const st=[1,2,2.5,5,10].map(k=>k*mag).find(k=>k>=roh*0.999)||10*mag;
+  const out=[];
+  for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+st*1e-6;v+=st)out.push(Math.abs(v)<st*1e-6?0:+v.toPrecision(12));
+  return out;
+}
 function chartAchsenHtml(yL,xL,opt){
   const o2=opt||{};
   // ⚠ yLeft ist die BREITE des Beschriftungsstreifens, nicht die Position des
@@ -8559,7 +8571,7 @@ function abKontextHtml(c){
   // Der Zeitfilter gilt fuer ALLE Kacheln gleichzeitig.
   const regler=abRegler(c.id,'Show % of daily candles in every chart');
   return`<div class="ab-ktile">
-    <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}</div>
+    <div class="ab-tile-hd">${abTileIcon('Context')}<span class="ab-tile-t">Context</span>${rate}${abInfoBtn('Context',['The markets that move this asset most, on the same time axis as its price: bond yields of the relevant currency, the dollar or equity indices, depending on the asset.','The word next to each title says whether that move is <b>bullish or bearish for this asset</b> — for some pairs a rise is bearish (e.g. rising yields for gold). Policy rate = the current central-bank rate.','Candles or a line and the time range work exactly as in the Price card.'])}</div>
     ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
     <div class="ab-kgrid">${kacheln}</div>
   </div>`;
@@ -8730,7 +8742,7 @@ function abRetailVerlauf(sym){
   </svg>`;
   return{punkte:r.length,html:`<div class="ab-rtv">
     <div class="ab-rtv-t">Long share over time <span>${r.length} readings · 50% line dashed</span></div>
-    ${chartHoverWrap(svg,hp,'height:100%')}</div>`};
+    <div class="ab-plot"><div class="ab-plot-main">${chartHoverWrap(svg,hp,'height:100%')}</div><div class="ab-yax"><span>100%</span><span>50%</span><span>0%</span></div></div></div>`};
 }
 
 // ══ ZWEI NEUE SCORE-BEITRAEGE: SEASONALITY UND RETAIL ══════════════════
@@ -9584,7 +9596,7 @@ function abPinnedHtml(c){
       </span>
     </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. Write one below — new notes from here are pinned straight away.</div>`;
   return`<div class="ab-ntile">
-    <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>
+    <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>${abInfoBtn('Pinned notes',['Your pinned notes for this asset. A note written in the field here is pinned straight away.','The colour of each note follows the bias you gave it. Notes sync across your devices.'])}
       <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
     <div class="ab-nt-add">
       <input class="finp" id="abNoteInp" placeholder="New pinned note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}',true)">
@@ -9795,7 +9807,11 @@ function assetPreisKarteHtml(c){
   const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
     ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>${FX.includes(c.id)?`<span class="ab-tile-s ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</span>`:''}
-    ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
+    ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}${abInfoBtn('Price',[
+      FX.includes(c.id)?`For a currency this is the <b>${escH(KORB_NAME[c.id])}</b>: ${escH(c.id)} against the other seven majors with equal weight, built from the daily closes of the seven pairs — not the rate against the US dollar.`:'Daily price of this asset over the chosen range.',
+      '<b>Candles | Line</b> switches every price chart; the time range applies to every chart on this page. A wick is only drawn where the source delivers a real high and low.',
+      '<b>1D EMA20</b> and <b>4H EMA'+TREND_EMA_H+'</b> with their neutral band (±'+TREND_NEUTRAL_ATR+' × ATR14) are the trend driver. Shading marks where price sits outside the band — blue above, red below. The trend score adds up to ±'+TREND_PKT+' (1D) and ±'+TREND_PKT_H+' (4H) to the asset\'s score.',
+      'The strip below shows the change over 1D, 1W, 1M and year to date.'])}
     </div>
     ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
     <div class="tr-sws">${schalter}</div>`;
@@ -16102,7 +16118,7 @@ function renderCorrCard(){
   }).join('');
   const depthNote=isFinite(depthMin)?(depthMin<60?` · currently based on ${depthMin}+ shared trading days — firms up daily toward the full 60-day window`:''):'';
   return`<div class="mx-card">
-    <div class="mx-card-title"><span>🔗 Correlation &amp; Volatility (60d)</span><small>Pearson r of daily returns — blue = move together (one risk, not two trades), red = move opposite (hedge) · currencies measured vs. USD · diagonal = 20-day realized volatility (annualized)${depthNote} · display-only</small></div>
+    <div class="mx-card-title"><span>🔗 Correlation &amp; Volatility (60d)</span><small>Pearson r of daily returns — blue = move together (one risk, not two trades), red = move opposite (hedge) · currencies measured vs. USD · diagonal = 20-day realized volatility (annualized)${depthNote} · display-only</small>${abInfoBtn('Correlation & Volatility',['<b>Pearson correlation</b> of daily returns over the last 60 trading days; currencies are measured against the US dollar.','Close to <b>+1</b>: the two move together — two positions in them are effectively one risk, not two trades. Close to <b>−1</b>: they move opposite and hedge each other.','The diagonal shows each asset\'s own 20-day realised volatility, annualised. Display only — nothing here enters a score.'])}</div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>`;
 }
@@ -16143,13 +16159,13 @@ function renderMatrixRoh(){
   }).join('');
   el.innerHTML=`
   <div class="mx-card">
-    <div class="mx-card-title"><span>${icn('bars',15)} Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small></div>
+    <div class="mx-card-title"><span>${icn('bars',15)} Currency Strength</span><small>Score · surprise (30d beats−misses) · history now in the "Trends" tab</small>${abInfoBtn('Currency Strength',['Ranks the eight major currencies by their <b>current score</b> — the same score as on each asset page. Bar length is relative to the strongest absolute score.','<b>Surprise</b> counts the data releases of the last 30 days that had a forecast: beats minus misses over the total. It shows whether recent data has been coming in better or worse than expected.'])}</div>
     <div class="mx-rank-head"><div class="mx-rank-pos">#</div><div class="mx-rank-id">CCY</div><div class="mx-rank-bar-wrap"></div><div class="mx-rank-score">Score</div><div class="mx-rank-surp">Surprise</div></div>
     ${rankRows}
     <div class="mx-surp-legend">Surprise = data releases of the last 30 days: beats − misses / total releases with a forecast. E.g. <b>+1/2</b> = 2 releases, net 1 more beat than miss; <b style="color:var(--red)">−7/7</b> = all 7 came in below forecast. <b>0</b> without "/" = no rated releases in the window.</div>
   </div>
   <div class="mx-card">
-    <div class="mx-card-title"><span>${icn('flame',15)} Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small></div>
+    <div class="mx-card-title"><span>${icn('flame',15)} Pair Strength Heatmap</span><small>Row score − Column score · blue = long row / short column, red = opposite</small>${abInfoBtn('Pair Strength Heatmap',['Every cell is the <b>row score minus the column score</b> — the score spread of that pair.','Blue = the row currency is stronger (long row / short column), red = the column currency is stronger. The darker the cell, the larger the gap.','A relative ranking built from the scores — not a price forecast.'])}</div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>
   ${renderCorrCard()}
@@ -16428,9 +16444,16 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   });
   return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
 }
+// ⓘ-Texte der Trends-Karten (Nutzer 2026-09-26: fehlende ⓘ ergaenzen).
+function trendsErkl(title,mitPreis){
+  return[`<b>What it shows:</b> the recorded daily score for <b>${escH(title)}</b> — one point per day from the app's own history. Nothing is back-filled or estimated; a day the app was not opened has no point.`,
+    'Total Score is the sum of every driver. Inflation, Labour Market and Economic Growth are the parts of that sum coming from each macro group, so you can see which group moved the total.',
+    mitPreis?'The dashed line is the price over the same days — it shows whether price followed the score or went its own way.':'Above 0 = bullish, below 0 = bearish. The y-axis is the score itself.',
+    'A step marked as a model change comes from a new version of the score formula, not from the market.'];
+}
 function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
   return`<div class="tr-card">
-    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride)}</div>
+    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride)}${abInfoBtn(title,trendsErkl(title,false))}</div>
     ${scoreTrendChart(ids,dates,vi,base,colorOverride)}
   </div>`;
 }
@@ -16530,7 +16553,7 @@ function scoreVsPriceCard(dates,scoreMap,base,colorOverride,priceSeries,title,bi
   const hasPrice=priceSeries&&priceSeries.some(e=>e[1]!=null);
   const legend=`<div class="tr-legend"><span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||'#888'}"></span>Score</span>${hasPrice?`<span class="tr-leg-item"><span class="tr-leg-dash"></span>Price</span>`:''}</div>`;
   return`<div class="tr-card">
-    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}</div>
+    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${legend}${abInfoBtn(title,trendsErkl(title,true))}</div>
     ${scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap)}
     ${hasPrice?'':'<div style="padding:2px 12px 10px;color:var(--t3);font-size:var(--fs-xs)">No price history yet for this asset/pair &ndash; it grows once price_data.json has a matching date.</div>'}
   </div>`;
@@ -17794,15 +17817,17 @@ function seasProfilHtml(id){
   const A=SEASONALITY_DATA&&SEASONALITY_DATA.assets&&SEASONALITY_DATA.assets[id];
   let m=A&&A.months;if(typeof m==='string'){try{m=JSON.parse(m);}catch(e){m=null;}}
   if(!Array.isArray(m)||m.length<12)return'';
-  const W=720,H=200,pad=24,bw=(W-2*pad)/12;
+  // padL: Platz fuer die Y-Beschriftung (Dauerregel 2026-09-26)
+  const W=720,H=200,pad=24,padL=52,bw=(W-padL-pad)/12;
   const mx=Math.max(...m.map(x=>Math.abs(+x[1])||0),0.1);
   const y0=H/2,sk=(H/2-pad)/mx,jetzt=new Date().getMonth()+1;
   const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  let sv=`<line x1="${pad}" y1="${y0}" x2="${W-pad}" y2="${y0}" stroke="var(--bd2)" stroke-width="1"/>`;
+  let sv=achsenTicks(-mx,mx,4).map(v=>{const yy=y0-v*sk;return`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W-pad}" y2="${yy.toFixed(1)}" stroke="var(--bd)" stroke-width="1" stroke-dasharray="2 3" opacity=".75"/><text class="y-lbl" x="${padL-6}" y="${(yy+3.5).toFixed(1)}" text-anchor="end" font-size="11" fill="var(--t3)">${v>0?'+':''}${+v.toFixed(2)}%</text>`;}).join('');
+  sv+=`<line x1="${padL}" y1="${y0}" x2="${W-pad}" y2="${y0}" stroke="var(--bd2)" stroke-width="1"/>`;
   m.forEach(([mo,avg,hit,jahre],i)=>{
-    const v=+avg||0,x=pad+i*bw+bw*0.15,h=Math.abs(v)*sk,col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
+    const v=+avg||0,x=padL+i*bw+bw*0.15,h=Math.abs(v)*sk,col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
     sv+=`<rect x="${x.toFixed(1)}" y="${(v>0?y0-h:y0).toFixed(1)}" width="${(bw*0.7).toFixed(1)}" height="${Math.max(1,h).toFixed(1)}" fill="${col}" opacity="${mo===jetzt?1:.55}"${mo===jetzt?' stroke="var(--t0)" stroke-width="1.5"':''}><title>${MN[mo-1]}: average ${v>0?'+':''}${v.toFixed(2)}% · up in ${hit}% of ${jahre} years</title></rect>`;
-    sv+=`<text x="${(pad+i*bw+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${mo===jetzt?'var(--t0)':'var(--t3)'}" font-weight="${mo===jetzt?700:500}">${MN[mo-1]}</text>`;
+    sv+=`<text x="${(padL+i*bw+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="${mo===jetzt?'var(--t0)':'var(--t3)'}" font-weight="${mo===jetzt?700:500}">${MN[mo-1]}</text>`;
   });
   return`<div class="ind-hist-wrap"><div class="ind-hist-toolbar"><span class="ind-hist-start">Average return per calendar month over ${escH(String(m[0][3]||'?'))} years (${escH(A.proxy||id)}) — the current month is outlined.</span></div>
     <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${sv}</svg></div>`;
@@ -17869,7 +17894,8 @@ function indHistChart(ind,symId,opts){
   const n=use.length;
   // opts.W/opts.H: Insights > Data zeichnet in EXAKTER Pixelgroesse der Zelle
   // (1 Einheit = 1 px, Schrift bleibt gleich gross, Chart fuellt die Zelle).
-  const W=Math.max(200,Math.round(opts.W||720)),H=Math.max(120,Math.round(opts.H||230)),padL=10,padR=10,padT=24,padB=28;
+  const W=Math.max(200,Math.round(opts.W||720)),H=Math.max(120,Math.round(opts.H||230)),padR=10,padT=24,padB=28;
+  let padL=10;   // waechst mit der Breite der Y-Beschriftung (unten)
   const vals=[];use.forEach(p=>{vals.push(p[1]);if(p[2]!=null)vals.push(p[2]);});
   // Zwei Darstellungsformen, weil zwei voellig verschiedene Datenarten:
   // • RELEASE-Reihen (Kalender-Indikatoren: CPI-Ueberraschung, GDP, PMI ...)
@@ -17890,6 +17916,15 @@ function indHistChart(ind,symId,opts){
     vMin=Math.min(0,...vals);vMax=Math.max(0,...vals);
   }
   if(vMin===vMax){vMin-=1;vMax+=1;}
+  // Data vergleicht gleiche Indikatoren auf GEMEINSAMER Skala (Nutzer
+  // 2026-09-26: "bei gleichem Indikator gleich sein die Beschriftung damit
+  // man ... im Verhaeltnis sehen kann"): opts.meta liefert die eigene
+  // Spanne, opts.yRange setzt die gemeinsame.
+  if(opts.meta){opts.meta.vMin=vMin;opts.meta.vMax=vMax;}
+  if(opts.yRange&&opts.yRange.min<opts.yRange.max){vMin=opts.yRange.min;vMax=opts.yRange.max;}
+  const yTicks=achsenTicks(vMin,vMax,H>=260?5:4);
+  const yTxt=yTicks.map(v=>fmtIndVal(v,_cs.unit!=null?_cs.unit:''));
+  padL=12+Math.max(1,...yTxt.map(t=>String(t).length))*6.4;
   const span=vMax-vMin;
   const yOf=v=>padT+(1-(v-vMin)/span)*(H-padT-padB);
   // Bezugslinie: bei Level-Reihen der erste Punkt des Fensters (dagegen
@@ -18001,7 +18036,9 @@ function indHistChart(ind,symId,opts){
   // JEDES Panel, weil jede Reihe ein anderes Anfangsdatum hat.
   // opts.noLegend: die Legende steht schon im Panel-Kopf (Data, kompakt).
   const toolbar2=opts.noLegend?(startNote?`<div class="ind-hist-legend" style="padding:0 0 4px">${startNote}</div>`:''):opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}${startNote}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${startNote}${legend2}</div>`;
+  const yAchse=yTicks.map((v,k)=>{const yy=yOf(v);return`<line x1="${padL.toFixed(1)}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}" stroke="var(--bd)" stroke-width="1" stroke-dasharray="2 3" opacity=".75"/><text class="y-lbl" x="${(padL-6).toFixed(1)}" y="${(yy+3.5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(yTxt[k])}</text>`;}).join('');
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+    ${yAchse}
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
     ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>`:''}
@@ -18631,7 +18668,8 @@ function renderPriceChart(){
   }
   const use=priceWindow(all);
   const n=use.length;
-  const W=1000,H=330,padL=12,padR=12,padT=26,padB=30;
+  // padR 66: Y-Beschriftung rechts wie in der Price-Karte (Dauerregel 2026-09-26)
+  const W=1000,H=330,padL=12,padR=66,padT=26,padB=30;
   const vals=use.map(p=>p[1]);
   let vMin=Math.min(...vals),vMax=Math.max(...vals);
   const pad=(vMax-vMin)*0.08||Math.abs(vMax||1)*0.01||1;
@@ -18697,7 +18735,10 @@ function renderPriceChart(){
     if(isLast&&i%every!==0&&(i%every)<every*0.6)return;
     xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-10}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
   });
+  const pxZahl=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(2):Math.abs(v)>=1?v.toFixed(3):v.toFixed(4);
+  const yAchse=achsenTicks(vMin,vMax,5).map(v=>{const yy=yOf(v);return`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}" stroke="var(--bd)" stroke-width="1" stroke-dasharray="2 3" opacity=".75"/><text class="y-lbl" x="${W-padR+8}" y="${(yy+3.5).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${pxZahl(v)}</text>`;}).join('');
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
+    ${yAchse}
     <line x1="${padL}" y1="${(H-padB).toFixed(1)}" x2="${W-padR}" y2="${(H-padB).toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${body}${ticks}${xlab}
   </svg>`;
@@ -18992,7 +19033,7 @@ function renderDataTabRoh(){
     const k=panelJobs.length;panelJobs.push(ind?{sym,ind}:null);
     const legend=ind?`<span class="data-lg"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</span>`:'';
     const inner=ind?'':`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
-    return`<div class="cot-card data-panel"><div class="data-ph"><span class="data-pt">${title}</span>${legend}${ind?indAsOfNextHtml(sym.id,ind):''}<span class="px-panel-ctrls">${ctrls||''}</span></div><div class="data-pc" data-k="${k}">${inner}</div></div>`;
+    return`<div class="cot-card data-panel"><div class="data-ph"><span class="data-pt">${title}</span>${legend}${ind?indAsOfNextHtml(sym.id,ind):''}<span class="px-panel-ctrls">${ctrls||''}</span>${abInfoBtn((sym.name||sym.id)+' — '+base,[ind?`<b>${escH(indName(ind))}</b> of ${escH(sym.name||sym.id)}${rub?' ('+escH(rub.name)+')':''}.`:`${escH(sym.name||sym.id)} does not track this indicator.`,'Bars = the released actual, red line = the consensus forecast. "As of" is the latest release, "Next" the next expected one.','If other panels show the same indicator, all of them use the same y-axis scale.'])}</div><div class="data-pc" data-k="${k}">${inner}</div></div>`;
   };
   // Kopf = EINE Zeile. Die Chip-Reihe (je Auswahl ein "✕") ist 2026-09-26
   // entfallen: jedes Panel traegt sein ✕ selbst, die Zaehlung steht am
@@ -19000,7 +19041,7 @@ function renderDataTabRoh(){
   // Dauerregel 2026-09-26: Filter (Asset-/Indikator-Auswahl) rechtsbuendig
   // in der Titelzeile; darunter die Werkzeugzeile - Ansicht (By asset / By
   // indicator) links, Zeitfilter rechts.
-  const kopf=(sub,filter,knopf,zeit)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span><span class="data-row-r">${filter}${knopf}</span></div><div class="data-row2">${chartLeisteHtml(modeBar,zeit)}</div></div>`;
+  const kopf=(sub,filter,knopf,zeit)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span><span class="data-row-r">${filter}${knopf}</span>${abInfoBtn('Data',['Compare up to '+N+' panels. <b>By asset</b> shows one indicator for several assets, <b>By indicator</b> several indicators of one asset. The time range applies to all panels.','Panels showing the <b>same indicator share one y-axis</b>, so their levels can be compared directly. Different indicators keep their own scale.','Bars = the released actual, red line = the consensus forecast; level series such as bond yields are drawn as a line.'])}</div><div class="data-row2">${chartLeisteHtml(modeBar,zeit)}</div></div>`;
   let head,body,n=0;
   if(dataMode==='inds'){
     // ── EIN Asset, bis zu N Indikatoren ──
@@ -19079,11 +19120,27 @@ function dataRasterFuellen(el,n,jobs){
   const sichtbar=c===1?Math.min(r,2):r;   // 1 Spalte: hoechstens 2 je Bildschirm
   const zeile=Math.max(minZeile,Math.floor((frei-gap*(sichtbar-1))/sichtbar));
   grid.style.gridAutoRows=zeile+'px';
+  // Gleicher Indikator in mehreren Panels -> EINE gemeinsame Y-Skala
+  // (Nutzer 2026-09-26), sonst laesst sich "wo steht was im Verhaeltnis"
+  // nicht ablesen. Erst jede Spanne im gewaehlten Zeitraum einsammeln
+  // (opts.meta), dann die Vereinigung als opts.yRange mitgeben.
+  const spannen={};
+  jobs.forEach(job=>{
+    if(!job)return;
+    const base=stripPeriodSuffix(job.ind.name).base,m={};
+    try{indHistChart(job.ind,job.sym.id,{noToolbar:true,noLegend:true,range:dataRange,from:dataCustomFrom,to:dataCustomTo,W:400,H:200,meta:m});}catch(e){return;}
+    if(m.vMin==null||!isFinite(m.vMin))return;
+    const g=spannen[base]||(spannen[base]={min:m.vMin,max:m.vMax,n:0});
+    g.min=Math.min(g.min,m.vMin);g.max=Math.max(g.max,m.vMax);g.n++;
+  });
   grid.querySelectorAll('.data-pc[data-k]').forEach(box=>{
     const job=jobs[+box.dataset.k];if(!job)return;
+    const sp=spannen[stripPeriodSuffix(job.ind.name).base];
+    // window.__dataEigeneSkala: nur fuer die Gegenprobe von check/yachse.js
+    const yRange=sp&&sp.n>1&&!window.__dataEigeneSkala?{min:sp.min,max:sp.max}:null;
     const bs=getComputedStyle(box),px=k=>parseFloat(bs[k])||0;
     const w=box.clientWidth-px('paddingLeft')-px('paddingRight');
-    const zeichne=h=>{box.innerHTML=indHistChart(job.ind,job.sym.id,{noToolbar:true,noLegend:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo,W:w,H:h});};
+    const zeichne=h=>{box.innerHTML=indHistChart(job.ind,job.sym.id,{noToolbar:true,noLegend:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo,W:w,H:h,yRange});};
     const h0=box.clientHeight-px('paddingTop')-px('paddingBottom');
     zeichne(h0);
     // Hinweiszeile (Datenanfang) nimmt Hoehe weg - einmal nachziehen.
@@ -19483,7 +19540,7 @@ function newsAssetSectionHtml(sym){
     </a>`;}).join('');
   return`<div class="rub-card news-card">
     <div class="rub-hdr"><span class="rub-name-static">Headlines</span>
-      <span class="news-card-n">${newsForAsset(sym.id).length}</span></div>
+      <span class="news-card-n">${newsForAsset(sym.id).length}</span>${abInfoBtn('Headlines',['Latest news headlines tagged to this asset, from free RSS feeds. Newest first.','Display only — headlines never change a score. "Go to News" opens the full feed with search and filters.'])}</div>
     <div class="news-card-body">${zeilen}</div>
     ${abGoToHtml('news')}
   </div>`;
@@ -20766,6 +20823,7 @@ function renderAaiiCard(D){
       <line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
       <line x1="${padL}" y1="${y(20).toFixed(1)}" x2="${W-padR}" y2="${y(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
       <line x1="${padL}" y1="${y(-20).toFixed(1)}" x2="${W-padR}" y2="${y(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
+      ${achsenTicks(lo,hi,5).map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
       ${pl(sp,'var(--t3)',1.3)}${pl(gl,'var(--t0)',2.6)}
       <text x="${padL+3}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="10">+20 complacency</text>
       <text x="${padL+3}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="10">−20 capitulation</text>
@@ -20806,6 +20864,7 @@ function renderAaiiCard(D){
       ${flaeche(e=>+e[1],e=>(+e[1])+(+e[2]),'var(--t3)')}
       ${flaeche(e=>(+e[1])+(+e[2]),()=>100,BC.bear)}
       <line x1="${padL}" y1="${y(50).toFixed(1)}" x2="${W-padR}" y2="${y(50).toFixed(1)}" stroke="#fff" stroke-width="1" opacity=".45" stroke-dasharray="5,4"/>
+      ${[0,25,50,75,100].map(v=>`<text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('')}
       ${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(+e[1]/2)/H,
       tip:`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
@@ -20891,7 +20950,8 @@ function renderAaiiCard(D){
       +luecken.map(g=>{const x=padL+spalte*g.i;return`<line x1="${x.toFixed(1)}" y1="12" x2="${x.toFixed(1)}" y2="${HL-24}" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,4"/>`;}).join('');
     const punkte=bu.map((v,i)=>`<circle cx="${xM(i).toFixed(1)}" cy="${yL(v).toFixed(1)}" r="2.6" fill="${BC.bull}"/>`
       +(i%schritt?'':`<text x="${xM(i).toFixed(1)}" y="${(yL(v)-7).toFixed(1)}" fill="${BC.bull}" font-size="10" font-weight="700" text-anchor="middle">${v.toFixed(1)}%</text>`)).join('');
-    const svgL=`<svg viewBox="0 0 ${W} ${HL}" width="100%" preserveAspectRatio="none" style="display:block;height:${HL}px">${pfad}${punkte}</svg>`;
+    const achseL=achsenTicks(lo,hi,3).map(v=>`<line x1="${padL}" y1="${yL(v).toFixed(1)}" x2="${W-padR}" y2="${yL(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(yL(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${+v.toFixed(1)}%</text>`).join('');
+    const svgL=`<svg viewBox="0 0 ${W} ${HL}" width="100%" preserveAspectRatio="none" style="display:block;height:${HL}px">${achseL}${pfad}${punkte}</svg>`;
     const ptsL=bu.map((v,i)=>({fx:xM(i)/W,fy:yL(v)/HL,tip:tip(reihe[i],i)}));
     // ⚠ Luecken NICHT verschweigen. Die Saeulen stehen in gleichem Abstand
     // nebeneinander - fehlt dazwischen eine Woche, sieht man das sonst nicht
@@ -20925,6 +20985,7 @@ function renderAaiiCard(D){
     const xJetzt=padL+Math.max(0,Math.min(1,(spread-lo)/((hi-lo)||1)))*(W-padL-padR);
     const rang=spAll.filter(v=>v<=spread).length/spAll.length*100;
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+      ${achsenTicks(0,max,4).map(c=>`<line x1="${padL}" y1="${y(c).toFixed(1)}" x2="${W-padR}" y2="${y(c).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(c)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${c}w</text>`).join('')}
       ${balken}
       <line x1="${xJetzt.toFixed(1)}" y1="${padT-14}" x2="${xJetzt.toFixed(1)}" y2="${H-padB}" stroke="var(--t0)" stroke-width="2"/>
       <text x="${xJetzt.toFixed(1)}" y="${padT-18}" fill="var(--t0)" font-size="11" font-weight="700" text-anchor="middle">now ${(spread>0?'+':'')+spread.toFixed(1)}</text>
@@ -20959,6 +21020,8 @@ function renderAaiiCard(D){
       <line x1="${padL}" y1="${yS(0).toFixed(1)}" x2="${W-padR}" y2="${yS(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
       <line x1="${padL}" y1="${yS(20).toFixed(1)}" x2="${W-padR}" y2="${yS(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
       <line x1="${padL}" y1="${yS(-20).toFixed(1)}" x2="${W-padR}" y2="${yS(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
+      ${achsenTicks(sLo,sHi,4).map(v=>`<text class="y-lbl" x="${padL-6}" y="${(yS(v)+3).toFixed(1)}" fill="${BC.bull}" font-size="10" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
+      ${achsenTicks(pLo,pHi,3).map(v=>`<text class="y-lbl" x="${W-padR-2}" y="${(yP(v)+3).toFixed(1)}" fill="var(--t2)" font-size="10" text-anchor="end" style="paint-order:stroke;stroke:var(--card);stroke-width:3px">${String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</text>`).join('')}
       ${linieP}${linieS}${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:yS(sp[i])/H,
       tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
@@ -21208,7 +21271,7 @@ function renderCotRoh(){
     cotChartMeta=null;
     const tblRows=rows.slice().sort((a,b)=>b.m.dNetPct-a.m.dNetPct);
     const hasP3=tblRows.some(r=>cotPct3yOf(r.id));
-    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>`;
+    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>${abInfoBtn('Details & weekly change',['The same speculative positioning as a table, sorted by the <b>change in net %</b> versus the previous week — the biggest shifts come first.','Net % = long % − short %. Δ columns compare with the previous weekly report.',hasP3?'<b>3y %ile</b> places today\'s net positioning within its own last ~3 years: 100 = most net-long in that period, 0 = most net-short.':'','Click a row to filter this tab to that symbol.'].filter(Boolean))}`;
     head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th>${hasP3?'<th title="Percentile of the current net positioning within the last ~3 years of weekly reports — 100 = most net-long in 3 years, 0 = most net-short. ⚠ at ≥90 / ≤10 (historically extreme, contrarian caution). Display-only, no score effect.">3y %ile</th>':''}<th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
     body=tblRows.map(r=>{const m=r.m;return`<tr onclick="pickCotFilter('${r.id}')" title="Show ${escH(r.name)} positioning detail — stays on this COT tab">
       <th class="cot-rowh">${escH(r.name)}</th>
@@ -21226,7 +21289,7 @@ function renderCotRoh(){
     </tr>`;}).join('');
   }
   const barsCard=cotFilter?'':`<div class="cot-card">
-      <div class="cot-card-title"><span>${icn('bars',15)} Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small></div>
+      <div class="cot-card-title"><span>${icn('bars',15)} Net Long / Short %</span><small>blue = Long · red = Short · sorted by long share · click opens the symbol</small>${abInfoBtn('Net Long / Short %',['Positions of <b>non-commercial (speculative) traders</b> from the CFTC Commitments of Traders report. Blue is the share of their open contracts that is long, red the share that is short.','Sorted from most long to most short. From '+80+'% on one side the positioning counts as <b>crowded</b> — one-sided bets that tend to unwind sharply once the trend turns.','The report reflects Tuesday\'s positions and is published on Friday. Click a row to open that symbol.'])}</div>
       <div class="cot-bars">${bars}</div>
     </div>`;
   el.innerHTML=ctrl+multiFilter+`
@@ -21309,7 +21372,8 @@ function seasBarChart(months,curMon,curYear){
   // Groesser + groessere Schrift als ein normaler Chart (Nutzer-Feedback
   // 2026-07-12, zweite Runde: das ganze Diagramm soll insgesamt groesser
   // sein, nicht nur die Mindestbreite) - 73px pro Monat, Labels 17px/14px.
-  const W=880,H=260,padT=20,padB=64,padL=10,padR=10;
+  // padL 52: Streifen fuer die Y-Beschriftung (Dauerregel 2026-09-26)
+  const W=880,H=260,padT=20,padB=64,padL=52,padR=10;
   const seasLbl=[];   // Beschriftung liegt als HTML ueber dem SVG
   const iw=(W-padL-padR)/12;
   const cy=curYear||{};
@@ -21359,12 +21423,14 @@ function seasBarChart(months,curMon,curYear){
   }
   // Monatsnamen und Trefferquoten als HTML ueber dem SVG (chartAchsenHtml
   // erklaert den Befund): gestreckt wurden sie mit 1,43x zu breit.
-  const lblHtml=`<div class="cax-lbl">`+seasLbl.map(o=>
+  const yT=achsenTicks(-maxAbs,maxAbs,4);
+  const gitter=yT.map(v=>`<line x1="${padL}" y1="${yOf(v).toFixed(1)}" x2="${W-padR}" y2="${yOf(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" stroke-dasharray="2 3" opacity=".75" vector-effect="non-scaling-stroke"/>`).join('');
+  const lblHtml=`<div class="cax-lbl">`+yT.map(v=>`<span class="cax-y y-lbl" style="top:${(yOf(v)/H*100).toFixed(2)}%;width:${((padL-4)/W*100).toFixed(2)}%">${v>0?'+':''}${+v.toFixed(2)}%</span>`).join('')+seasLbl.map(o=>
     `<span class="cax-x cax-mid seas-mon${o.aktiv?' on':''}" style="left:${(o.cx/W*100).toFixed(2)}%;top:${(monthLblY/H*100).toFixed(2)}%">${escH(SEAS_MON[o.mon-1])}</span>`
    +`<span class="cax-x cax-mid seas-hit" style="left:${(o.cx/W*100).toFixed(2)}%;top:${(hitLblY/H*100).toFixed(2)}%;color:${o.hit>=60?BC.bull:o.hit<=40?BC.bear:'var(--t3)'}">${o.hit}%</span>`
   ).join('')+`</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
-    <line x1="0" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
+    ${gitter}<line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${parts.join('')}
     ${priceOverlay}
   </svg>${lblHtml}`;
@@ -21433,7 +21499,7 @@ function regimeKarteHtml(s){
       <div class="rg-hd-r">
         <div class="rg-grad" style="color:${s.kernOffen?'var(--t3)':f}">${s.grad==null?'–':s.grad+'%'}</div>
         <div class="rg-zahl">${s.erfuellt}/${s.messbar} conditions${s.offen?` · ${s.offen} not measured`:''}</div>
-      </div>
+      </div>${abInfoBtn(s.name,[escH(s.kurz),'The percentage is the share of this scenario\'s <b>measurable</b> conditions that are met right now ('+s.erfuellt+' of '+s.messbar+').','Conditions the app has no data for are listed as not measured and left out of the share. If the core condition is among them, the scenario cannot be confirmed, whatever the number says.','Context for reading the scores — it never changes one.'])}
     </div>
     ${bal}
     ${/* ⚠ Steht hier, nicht in einem Tooltip: dass die entscheidende
@@ -21468,6 +21534,7 @@ function renderRegimeRoh(){
   const waehler=RG_CCYS.map(c=>`<button class="rg-ccy${regimeCcy===c?' on':''}" onclick="setRegimeCcy('${c}')" title="Use ${c} for the currency-specific conditions: yield curve, real yield, CPI and labour market">${c}</button>`).join('');
   el.innerHTML=`
     <div class="rg-top">
+      ${abInfoBtn('Leading regime',['The scenario with the highest share of met conditions among those that have enough measurable conditions.','The currency buttons choose whose yield curve, real yield, CPI and labour market are checked.','Context only — the regime radar never changes a score.'])}
       <div class="rg-top-l">
         <div class="rg-top-lbl">Leading regime</div>
         <div class="rg-top-v" style="color:${fuehrend?regimeFarbe(fuehrend.grad):'var(--t3)'}">${fuehrend?escH(fuehrend.name)+' · '+fuehrend.grad+'%':'None fully covered'}</div>
@@ -21532,7 +21599,7 @@ function renderSeasonalityRoh(){
     </div>`;
   }).join('');
   const ovCard=`<div class="cot-card" style="margin-top:12px">
-    <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span></div>
+    <div class="cot-card-title">All assets in ${SEAS_MON[curMon-1]}<span style="font-weight:500;color:var(--t2);font-size:var(--fs-xs);margin-left:auto">avg return &amp; share of up years · tap a row for the full profile</span>${abInfoBtn('All assets in '+SEAS_MON[curMon-1],['Average return and share of up years of every tracked asset in the <b>current calendar month</b>, from the same ETF-proxy history as the chart above.','Sorted from best to worst average. A context layer only — a month that was strong in the past says nothing certain about this year.','Tap a row to open that asset\'s full monthly profile.'])}</div>
     <div style="padding:12px 14px">${ovRows}</div>
   </div>`;
   el.innerHTML=chartCard+ovCard;
@@ -23660,10 +23727,10 @@ function lgKarte(card){
 // CSS-order, weil manche Titelzeilen eine zweite, volle Zeile tragen (order
 // haette das ⓘ unter diese Zeile geschoben - gemessen 58 px zu tief).
 function infoKnoepfeEinordnen(root){
-  (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd,.mx-card-title').forEach(h=>{
+  (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd,.mx-card-title,.tr-card-head,.data-row,.data-ph,.rub-hdr').forEach(h=>{
     const i=h.querySelector(':scope>.rinfo,:scope>.info-b,:scope>.dw-t>.rinfo,:scope>.dw-t>.info-b');
     if(!i||i.classList.contains('ii-nach'))return;
-    const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs'))).pop();
+    const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs')||c.classList.contains('data-row-r')||c.classList.contains('px-panel-ctrls')||c.classList.contains('tr-legend')||getComputedStyle(c).marginLeft!=='0px'&&c.tagName==='SMALL')).pop();
     if(!anker)return;
     anker.after(i);i.classList.add('ii-nach');
   });

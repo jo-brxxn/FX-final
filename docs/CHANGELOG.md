@@ -18129,3 +18129,38 @@ Schriftzug viel cooler gemacht übernimm das."*
   #128DFF → Lichtkante #7DB8FF → #1687F7) und leichtem Leuchten, „ANALYST
   PRO" weiß 800 mit Schatten; Systemschrift zuerst (iPad: SF Pro Black
   Italic wie im Foto).
+
+---
+
+## VERSION-CHECK-575 (2026-09-26) — Y-Achse überall, gemeinsame Skala in Data, fehlende ⓘ
+
+Nutzer: *„Und die Kritik die du hattest kannst du reparieren ... Und immer
+wenn man sich Daten anschaut will ich eine y Achsenbeschriftung haben also
+egal wo ... in der Kategorie data wenn man vergleicht soll sie bei gleichem
+Indikator gleich sein die Beschriftung"*.
+
+**Y-Achse — Bestand vorher (26 Seiten/Fenster durchsucht):** ohne Y-Werte
+waren der Indikator-Chart (aufgeklappt + alle Data-Panels), die
+Saisonalität (Seite + Indikator-Profil), das Preis-Fenster, AAII Spread /
+100 % / Verteilung / Linie unter den Wochensäulen / vs S&P 500 und der
+Retail-Verlauf der Asset-Seite. Jetzt überall (Wächter `check/yachse.js`,
+67 Charts). Data: gleicher Indikator → gemeinsame Skala (gemessen: USD/EUR/
+JPY/CHF CPI alle 0–2–4; vorher je eigene Skala, CHF 0,1–0,8 sah gleich hoch
+aus wie USD 2,4–4,2).
+Mitgefunden: Data-Panel-Titel wurden bei 4 Panels zu „U…"/„E…" gekürzt
+(Titel schrumpfte im Kopf mit) — Titel schrumpft jetzt nie, „As of" läuft aus.
+
+**ⓘ (die Kritik aus 573):** fehlten auf Trends (4), COT (2), Matrix (3),
+Seasonality „All assets", Data (Kopf + Panels), Regime (Kopf + 7), Asset-
+Seite Price/Pinned notes/Context/Headlines — ergänzt mit Erklärtexten.
+Trends: ⓘ rutschte hinter die lange Legende in Zeile 3 → Titelzeile.
+`check/hierarchie.js` verlangt jetzt ein ⓘ an jeder Karte mit Titel.
+Den Trends-Seitentitel (22 px) hatte 574 schon angeglichen.
+
+**Nachtrag Wächter `erklaerung`:** meldete schwankend „ⓘ-Fenster 6 px neben
+der Mitte" (einmal Inflation, einmal Economic Growth, einmal grün). Gemessen:
+das Fenster ist mittig, aber die Einblend-Animation `modalPopIn` (0,22 s,
+startet 6 px tiefer) lief nach den festen 160 ms manchmal noch (5,6 px bei
+0 ms, 0 px ab ~80–160 ms). Der Wächter wartet jetzt auf das Ende der
+Animation (`getAnimations().finished`). Außerdem: die S&P-Achse der AAII-
+Ansicht formatiert Tausender ohne `toLocaleString` (`check/datum.js`).

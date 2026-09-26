@@ -89,6 +89,11 @@ for (const datei of ['js/main.js', 'js/score.js', 'js/calendar.js', 'js/data-fee
       await p.evaluate(() => document.querySelectorAll('.ov').forEach(o => { o.style.display = 'none'; }));
       try { await knoepfe[i].click({ timeout: 1200 }); } catch (e) { continue; }
       await p.waitForTimeout(160);
+      // ⚠ Erst messen, wenn die Einblend-Animation (modalPopIn, 0,22 s, startet
+      // 6 px tiefer) fertig ist - nach festen 160 ms lief sie je nach Klick-
+      // Zeitpunkt noch und das Fenster "stand 6 px neben der Mitte"
+      // (gemessen 2026-09-26: 5,6 px bei 0 ms, 0 px ab 80-160 ms, schwankend).
+      await p.evaluate(async () => { const m = [...document.querySelectorAll('.ov')].filter(o => getComputedStyle(o).display !== 'none').map(o => o.querySelector('.modal')).find(Boolean); if (m) await Promise.all(m.getAnimations().map(a => a.finished.catch(() => {}))); });
       const r = await p.evaluate(() => {
         const offen = [...document.querySelectorAll('.ov')].filter(o => getComputedStyle(o).display !== 'none');
         if (!offen.length) return { grund: 'kein Fenster ging auf' };
