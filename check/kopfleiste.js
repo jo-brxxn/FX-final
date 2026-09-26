@@ -12,7 +12,11 @@
 //   - Zahnrad so hoch wie die Schrift (±1 px), Schrift/Zahnrad/Regler auf
 //     einer Mittellinie (±1,5 px)
 //   - Flaggenbild blasser als vorher (Deckkraft <= 0,7)
-//   node check/kopfleiste.js [--gegenprobe]  (alte 13-px-Schrift -> rot)
+//   - Nutzer 2026-09-26: fehlt nur ein wenig Breite, schrumpfen Titel +
+//     Unterzeile, statt dass die Knopfleiste in die naechste Zeile rutscht
+//     (DEYIELD bei 1180 px: vorher 89 px tiefer, 5 px fehlten)
+//   node check/kopfleiste.js [--gegenprobe]  (alte 13-px-Schrift + feste
+//   Titelgroesse -> beide Befunde muessen rot sein)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -53,9 +57,22 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     [['Zahnrad', m.gearM], ['Regler', m.swM]].forEach(([n, v]) => { if (v != null && Math.abs(v - m.textM) > 1.5) fail(id + ' MITTELLINIE', `${n} ${(v - m.textM).toFixed(1)}px neben der Schriftmitte`); });
     if (m.deck != null && m.deck > 0.7) fail(id + ' BILD', `Deckkraft ${m.deck}`);
   }
+  // Einzeilig bei knappem Platz: DEYIELD (laengste Unterzeile) bei 1180 px.
+  // Gegenprobe: schmale 13-px-Knoepfe wieder weg (sonst passt es zufaellig),
+  // dafuer die Titelgroesse festnageln.
+  if (GEGENPROBE) await p.evaluate(() => { document.querySelectorAll('style').forEach(t => { if (t.textContent.includes('font-size:13px!important')) t.remove(); });
+    const t = document.createElement('style'); t.textContent = '#detail .ahead .atitle{font-size:38px!important} #detail .ahead .afull{font-size:15px!important}'; document.head.appendChild(t); });
+  await p.evaluate(() => gotoSym('DEYIELD')); await p.waitForTimeout(1200);
+  const z = await p.evaluate(() => {
+    const k = document.querySelector('#detail .ahead'); if (!k) return null;
+    const l = k.querySelector('.ahead-l').getBoundingClientRect(), d = k.querySelector('.dmeta').getBoundingClientRect();
+    return { unter: d.top >= l.bottom - 2, fs: getComputedStyle(k.querySelector('.atitle')).fontSize };
+  });
+  if (!z) fail('DEYIELD', 'kein Asset-Kopf');
+  else if (z.unter) fail('DEYIELD EINZEILIG', `Knopfleiste rutscht unter den Titel (Titel ${z.fs})`);
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
-  if (GEGENPROBE) { if (F.length) { console.log(`kopfleiste --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('kopfleiste --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
+  if (GEGENPROBE) { if (F.some(f => f.includes('SCHRIFT')) && F.some(f => f.includes('EINZEILIG'))) { console.log(`kopfleiste --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('kopfleiste --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`kopfleiste: ${F.length} Befund(e)`); F.forEach(f => console.log('  ' + f)); process.exit(1); }
-  console.log('kopfleiste: ok (GOLD + NZD: 17 px fett, mittig, rechtsbuendig, Zahnrad = Schrifthoehe, eine Mittellinie, Bild blasser)');
+  console.log('kopfleiste: ok (GOLD + NZD: 17 px fett, mittig, rechtsbuendig, Zahnrad = Schrifthoehe, eine Mittellinie, Bild blasser; DEYIELD einzeilig)');
 })().catch(e => { console.log('kopfleiste: ABBRUCH ' + e.message); process.exit(1); });

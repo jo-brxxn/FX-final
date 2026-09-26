@@ -10,7 +10,9 @@
 //   - keine Stufe, die weiter zurueckreicht als die Daten (ausser Max)
 //   - Custom = zwei Monatsfelder, vorbelegt
 //   - Leiste rechtsbuendig (rechter Rand an der Werkzeugleiste)
-//   node check/zeitfilter.js [--gegenprobe]  (schiebt eine "2Y"-Stufe ein -> rot)
+//   - History-Karte reagiert auf den Klick (15D markiert, weniger Tage)
+//   node check/zeitfilter.js [--gegenprobe]  (schiebt eine "2Y"-Stufe ein und
+//   stellt das alte setHistRange nach -> beides rot)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -18,8 +20,10 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const GROSS = ['3M', '6M', '1Y', '3Y', '6Y', '10Y', 'Max', 'MAX', 'Custom'];
+// History-Karte zusaetzlich 15D/1M/2M (Nutzer 2026-09-26)
+const HIST = ['15D', '1M', '2M', ...GROSS];
 const MINI = ['6M', '1Y', '6Y', 'Max', 'Custom'];
-const MON = { '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '6Y': 72, '10Y': 120 };
+const MON = { '1M': 1, '2M': 2, '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '6Y': 72, '10Y': 120 };
 
 (async () => {
   const b = await chromium.launch();
@@ -48,7 +52,17 @@ const MON = { '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '6Y': 72, '10Y': 120 };
   pruefe('PRICE-KARTE', await lies('#detail .ab-ptile .ab-rgs .ab-rg'), GROSS, abP);
   // History
   const abH = await p.evaluate(() => { const h = scoreHist.EUR || []; return h.length ? h[0][0] : null; });
-  pruefe('HISTORY', await lies('#detail .histp-rbtn'), GROSS, abH);
+  pruefe('HISTORY', await lies('#detail .histp-rbtn'), HIST, abH);
+  // Die History-KARTE muss auf den Klick reagieren (bis 2026-09-26 zeichnete
+  // setHistRange nur das Fenster #histBody neu - in der Karte blieb "Max"
+  // markiert und die Liste unveraendert). Gegenprobe: altes Verhalten.
+  if (GEGENPROBE) await p.evaluate(() => { window.setHistRange = d => { window.histRange = d === 'MAX' ? 'MAX' : +d; }; });
+  { const vor = await p.evaluate(() => document.querySelectorAll('#abHistBody .hw-day').length);
+    await p.click('#detail .histp-rbtn:text-is("15D")'); await p.waitForTimeout(400);
+    const n = await p.evaluate(() => ({ on: [...document.querySelectorAll('#abHistBody .histp-rbtn.on')].map(e => e.textContent.trim()).join(), tage: document.querySelectorAll('#abHistBody .hw-day').length }));
+    if (n.on !== '15D' || !(n.tage < vor)) fail('HISTORY-KARTE', `Klick auf 15D wirkt nicht (markiert "${n.on}", ${vor} -> ${n.tage} Tage)`);
+    await p.evaluate(() => { try { setHistRange('MAX'); } catch (e) {} }); await p.waitForTimeout(300); }
+  { const l = await lies('#detail .histp-rbtn'); ['15D', '1M', '2M'].forEach(x => { if (!l.includes(x)) fail('HISTORY', `Stufe ${x} fehlt (Nutzer 2026-09-26)`); }); }
   // aufgeklappter Indikator (Mini)
   const mini = await p.evaluate(() => {
     const s = syms.find(x => x.id === 'EUR'); let ind = null;
@@ -73,7 +87,7 @@ const MON = { '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '6Y': 72, '10Y': 120 };
   if (rb == null || rb > 2) fail('RECHTSBUENDIG', `Leiste endet ${rb}px vor dem rechten Rand`);
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
-  if (GEGENPROBE) { if (F.length) { console.log(`zeitfilter --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('zeitfilter --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
+  if (GEGENPROBE) { if (F.some(f => f.startsWith('HISTORY-KARTE')) && F.length > 1) { console.log(`zeitfilter --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('zeitfilter --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`zeitfilter: ${F.length} Befund(e)`); F.slice(0, 30).forEach(f => console.log('  ' + f)); process.exit(1); }
   console.log('zeitfilter: ok (Price-Karte, History, Mini-Chart, Trends, Data: erlaubte Stufen, nur mit Daten, Custom per Monat, rechtsbuendig)');
 })().catch(e => { console.log('zeitfilter: ABBRUCH ' + e.message); process.exit(1); });

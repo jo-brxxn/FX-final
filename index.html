@@ -958,12 +958,15 @@ svg.ic{vertical-align:-2px;flex:none}
 .tr-sw.on .tr-sw-dot{opacity:1}
 .ab-ptile .tr-sw,.ab-ptile .tr-sw.on{background:var(--bg3);border-color:var(--bd2);color:var(--t3);box-shadow:none}
 .ab-ptile .tr-sw.on{color:var(--t0);border-color:var(--bd2)}
-.tr-sw-d .tr-sw-dot{background:#D4901A}.tr-sw-h .tr-sw-dot{background:#8E5BE0}
-.tr-ema{fill:none;stroke-width:1.6}
-.tr-ema.tr-d{stroke:#D4901A}.tr-ema.tr-h{stroke:#8E5BE0}
+/* 1D-EMA: #7172AC = Kernfarbe der Linie im Nutzerfoto (2026-09-26, Mittel der
+   10 dunkelsten Linienpixel), duenn und ohne Bandraender - "eine cleane Linie
+   und in genau der Farbe". */
+.tr-sw-d .tr-sw-dot{background:#7172AC}.tr-sw-h .tr-sw-dot{background:#8E5BE0}
+.tr-ema{fill:none;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.tr-ema.tr-d{stroke:#7172AC;stroke-width:1.5}.tr-ema.tr-h{stroke:#8E5BE0}
 .tr-band{fill:var(--t3);fill-opacity:.13;stroke:none}
 .tr-bandrand{fill:none;stroke-width:.8;stroke-dasharray:3 2;opacity:.75}
-.tr-bandrand.tr-d{stroke:#D4901A}.tr-bandrand.tr-h{stroke:#8E5BE0}
+.tr-bandrand.tr-h{stroke:#8E5BE0}
 .tr-line .ab-scoreline-n{display:inline-flex;gap:6px;align-items:center}
 .tr-teil b{font-family:var(--ff-num)}
 @media(hover:hover){.ab-rg:not(.on):hover{color:var(--t0)}}
@@ -5844,11 +5847,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-570 - Waehrungen als gleichgewichteter Korb gegen die 7 anderen (Chart, Performance, Trend 1D/4H)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-571 - Bulle vs. Baer im Kopf, Trend-Schattierung im Bias-Ton, 1D-EMA wie Foto, History 15D/1M/2M, Asset-Titel passt sich an."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-570</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-571</span>
     </span>
   </div>
   <div class="hdr-r">

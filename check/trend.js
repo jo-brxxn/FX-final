@@ -13,6 +13,9 @@
 //   C) Price-Karte: beide Schalter, Linie + Band + Score-Zeile; ein Klick
 //      nimmt die Linie weg, ein zweiter bringt sie zurueck.
 //   D) Score-Fenster: eigene Gruppe "Price trend".
+//   F) Nutzer 2026-09-26: Schattierung = exakt der Bias-Ton der Chips (eine
+//      Gruppe mit opacity .11 wie .ab-tile-s, Rechtecke deckend, nichts
+//      stapelt); 1D-EMA #7172AC (Nutzerfoto) ohne gestrichelte Bandraender.
 //   node check/trend.js [--gegenprobe]  (Neutralzone in der App verdoppelt -> rot)
 const fs = require('fs');
 const path = require('path');
@@ -110,6 +113,20 @@ function soll1d(p, id, heute) {
   if (gespeichert !== 'h') fail('SCHALTER GESPEICHERT', `localStorage=${gespeichert}`);
   await p.click('#detail .ab-ptile .tr-sw-d'); await p.waitForTimeout(500);
   if ((await zaehl()).d !== 1) fail('SCHALTER 1D', 'Linie kommt nicht zurueck');
+  // F) Farbton der Schattierung + 1D-Linie
+  if (GEGENPROBE) await p.evaluate(() => { const g = document.querySelector('#detail .ab-ptile .tr-schatten-g'); if (g) g.setAttribute('opacity', '.08');
+    const t = document.createElement('style'); t.textContent = '#detail .tr-ema.tr-d{stroke:#D4901A!important}'; document.head.appendChild(t); });
+  const f = await p.evaluate(() => {
+    const k = document.querySelector('#detail .ab-ptile'), gs = k.querySelectorAll('.tr-schatten-g'), rs = [...k.querySelectorAll('.tr-schatten')];
+    const e = k.querySelector('.tr-ema.tr-d');
+    return { gruppen: gs.length, op: gs[0] ? gs[0].getAttribute('opacity') : null, ausserhalb: rs.filter(r => !r.closest('.tr-schatten-g')).length,
+      eigen: rs.filter(r => r.hasAttribute('fill-opacity') || r.hasAttribute('opacity')).length,
+      stroke: e ? getComputedStyle(e).stroke : null, rand: k.querySelectorAll('.tr-bandrand.tr-d').length };
+  });
+  if (f.gruppen !== 1 || f.ausserhalb || f.eigen) fail('SCHATTIERUNG-STAPEL', `${f.gruppen} Gruppen, ${f.ausserhalb} Flaechen ausserhalb, ${f.eigen} mit eigener Deckkraft (stapeln -> anderer Ton)`);
+  if (f.op !== '.11') fail('SCHATTIERUNG-TON', `Gruppen-Deckkraft ${f.op} statt .11 (Bias-Chip-Ton)`);
+  if (f.stroke !== 'rgb(113, 114, 172)') fail('1D-FARBE', `${f.stroke} statt #7172AC`);
+  if (f.rand) fail('1D-SAUBER', `${f.rand} gestrichelte Bandraender an der 1D-Linie`);
   // D) Score-Fenster
   const g = await p.evaluate(() => { openScoreInfoSym('EUR'); const t = document.getElementById('scoreInfoBody').textContent; closeM('mScoreInfo'); return /Price trend 1D \+ 4H/.test(t); });
   if (!g) fail('SCORE-FENSTER', 'keine Gruppe "Price trend"');
@@ -122,7 +139,7 @@ function soll1d(p, id, heute) {
   if (!h.seas) fail('VERLAUF FEHLT', 'EUR Seasonality: kein Monatsprofil');
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
-  if (GEGENPROBE) { if (F.length) { console.log(`trend --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('trend --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
+  if (GEGENPROBE) { if (F.some(x => x.startsWith('SCHATTIERUNG-TON')) && F.some(x => x.startsWith('1D-FARBE')) && F.length > 2) { console.log(`trend --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('trend --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`trend: ${F.length} Befund(e)`); F.slice(0, 30).forEach(f => console.log('  ' + f)); process.exit(1); }
   console.log(`trend: ok (1D fuer ${n1} Assets unabhaengig nachgerechnet, 4H ${vier ? n4 + ' gegen trend_data.json' : '(Datei fehlt noch)'}, Schalter, Band, Schattierung, Score-Fenster)`);
 })().catch(e => { console.log('trend: ABBRUCH ' + e.message); process.exit(1); });

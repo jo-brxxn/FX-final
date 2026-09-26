@@ -17984,3 +17984,47 @@ Trend 1D danach (2026-09-25): USD +4,53 ATR (+0,75), JPY +2,58 (+0,75),
 EUR −0,15 (0), GBP −1,99, CHF −1,51, CAD −1,21, AUD −1,36, NZD −4,64 (je −0,75).
 Wächter `check/korb.js` (Node-Nachbau, Gegenprobe rot); `check/trend.js`
 rechnet den 1D-Korb ebenfalls unabhängig nach.
+
+---
+
+## VERSION-CHECK-571 (2026-09-26) — Bulle vs. Bär, Trend-Farben, History 15D/1M/2M, Titel passt sich an
+
+Nutzer: *„Mach aus den Fotos den neuen Bären und Bulle. Der Bulle ist links
+dann rechts daneben vs und dann rechts daneben der Bär ... spiegeln das er
+... nach links läuft ... achte auf jedes Detail. Und beim Trend der Bereich
+der gefärbt ist hat eine leicht andere Farbe als die bias Farben ... der 1d
+Ema soll so wie auf dem Foto sein eine cleane Linie und in genau der Farbe.
+Und wenn man Assets ausklappt ist immernoch da kurz ein Stück zu viel ...
+history Karte noch die Zeitfilter 15 Tage 1 Monat und 2 Monate ... wenn der
+Asset Name zu lang ist rutschen die Knöpfe ... eins tiefer"*.
+
+- **Motiv:** `ASSET_MOTIVE.bullbear` neu gezeichnet (Vorlagen: goldenes
+  Bullen-Relief, Grizzly-Stockfoto mit Wasserzeichen → nachgezeichnet, nicht
+  übernommen). Wisch-Ausschnitt `WISCH_VB.bullbear` auf `0 8 420 160`.
+- **Trend-Schattierung:** gemessen vorher Rot #F5E9ED gegen Chip #F4E2E6.
+  Ursachen: 8 % statt 11 % Deckkraft, 1D+4H stapelten, Fläche lag über dem
+  grauen Band. Nachher (Gruppe `.11`, Rechtecke nur Kurs→Bandrand, 0,3 Fach
+  Überstand gegen Haarfugen): Rot #F4E1E5, Blau #DDE8F7 (Chip-Ton rechnerisch
+  #DEE9F8).
+- **1D-EMA:** Farbe aus dem Foto = Mittel der 10 dunkelsten Linienpixel
+  `#7172AC`; 1,5 px, ohne gestrichelte Bandränder.
+- **History:** `15D 1M 2M` vor `3M` (nur History-Fenster/-Karte).
+  **Mitgefundener Fehler:** in der History-KARTE der Asset-Seite taten
+  Zeitregler, Ageing und Punkt-Klick sichtbar nichts — gemessen: nach Klick
+  auf 15D `histRange=15`, markiert blieb „Max", Liste unverändert. Ursache:
+  `setHistRange`/`toggleHistAge`/`histJumpDay` zeichneten nur `#histBody`
+  (das Fenster) neu, obwohl der Kommentar „wirkt auf beide" versprach.
+  Jetzt `histNeuZeichnen()` über alle Orte mit Panel (`#histBody`,
+  `#abHistBody`); Punkt-Klick scrollt nur die eigene Liste, nicht die Seite.
+  Nachher: 15D → 15 Tage/6 Punkte statt 90/12. Wächter `check/zeitfilter.js`
+  klickt 15D in der Karte (Gegenprobe mit altem Verhalten rot).
+- **Asset-Titel:** reproduziert bei 1180 px: `DE Yield` → Knopfleiste 89 px
+  tiefer; Ursache nicht der Name, sondern die Unterzeile „Germany 10-Year
+  Bund Yield (EUR benchmark)" (318 px) — es fehlten 5 px. `kopfTitelEinpassen`
+  schrumpft Name + Unterzeile gemeinsam (nachher 37,2 px, einzeilig). Bei
+  1024 px fehlt für die meisten Assets zu viel → dort bleibt der Umbruch.
+- **Asset-Stapel:** die geschickten Bilder zeigen VERSION-CHECK-564 (vor dem
+  Fix in 567); `check/stapel.js` misst auf 571 konstant 172,66 px.
+- Wächter: `check/kopfleiste.js` (DEYIELD einzeilig), `check/trend.js` (F:
+  Ton + 1D-Linie), `check/zeitfilter.js` (History-Stufen) — jeweils mit
+  Gegenprobe rot.

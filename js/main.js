@@ -993,7 +993,10 @@ const HIST_DAYS=10;
 // Score-Historie des Assets hergibt. ⚠ Die Liste der Score-AENDERUNGEN
 // (scoreLog) reicht wegen des Geraete-Syncs nur 92 Tage zurueck - aeltere
 // Tage zeigen Score und Veraenderung, aber keine einzelnen Bias-Klicks.
-const HIST_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['Max','MAX']];
+// 15D/1M/2M seit 2026-09-26 (Nutzer: "mach bei der history Karte noch die
+// Zeitfilter 15 Tage 1 Monat und 2 Monate ... extra dazu") - nur hier, die
+// Chart-Leisten behalten ihre Stufen.
+const HIST_RANGES=[['15D',15],['1M',30],['2M',60],['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['Max','MAX']];
 function histMaxTage(id){
   const h=(scoreHist&&scoreHist[id])||[];
   const ab=h.length?String(h[0][0]).slice(0,10):null;
@@ -1009,11 +1012,22 @@ let histRange=90,_histSymId=null,_histErkl=[];
 // Tagesliste ist jetzt flach und vollstaendig offen ("jeden tag einzeln"),
 // damit gibt es nichts mehr aufzuklappen - und drei Klick-Ebenen, von denen
 // zwei ins Leere fuehren, sind schlimmer als keine.
+// ⚠ Das Panel steht an ZWEI Orten: im Fenster (#histBody) und als Karte der
+// Asset-Seite (#abHistBody). Bis 2026-09-26 zeichneten Zeitregler, Ageing
+// und Punkt-Klick nur #histBody neu - in der Karte taten die Knoepfe
+// sichtbar nichts (gemessen: histRange 15, markiert blieb "Max").
+// Neu gezeichnet wird jeder Ort, der das Panel gerade traegt.
+function histOrte(){
+  return ['histBody','abHistBody'].map(i=>document.getElementById(i)).filter(el=>el&&el.querySelector('.histp-range'));
+}
+function histNeuZeichnen(){
+  if(!_histSymId)return;
+  histOrte().forEach(el=>{el.innerHTML=renderSymHistoryPanel(_histSymId);});
+}
 function setHistRange(d){
   histRange=d==='MAX'?'MAX':(+d||90);
   histAktivTag=null;
-  const el=document.getElementById('histBody');
-  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
+  histNeuZeichnen();
 }
 // Wochenanfang (Montag) eines Datums - Grundlage der Wochen-Gruppierung.
 function histWeekStart(dateStr){
@@ -1721,16 +1735,21 @@ function histScoreLineChart(items,aktivDatum){
 function histJumpDay(datum){
   try{
     histAktivTag=datum;
-    const wurzel=document.getElementById('histBody')||document;
-    wurzel.querySelectorAll('.hw-day.hw-jump').forEach(e=>e.classList.remove('hw-jump'));
-    const zeile=wurzel.querySelector('.hw-day[data-d="'+datum+'"]');
-    if(zeile){
-      zeile.classList.add('hw-jump');
-      zeile.scrollIntoView({block:'center',behavior:'smooth'});
-    }
-    // Den aktiven Punkt in der Linie mitziehen (nur das SVG neu zeichnen).
-    const halter=wurzel.querySelector('.histl-halter');
-    if(halter&&_histSymId)halter.innerHTML=histScoreLineChart(histLinienDaten,datum);
+    histOrte().forEach(wurzel=>{
+      wurzel.querySelectorAll('.hw-day.hw-jump').forEach(e=>e.classList.remove('hw-jump'));
+      const zeile=wurzel.querySelector('.hw-day[data-d="'+datum+'"]');
+      if(zeile){
+        zeile.classList.add('hw-jump');
+        // Nur die eigene Liste scrollen, nie die Seite (die Karte steht
+        // mitten auf der Asset-Seite - scrollIntoView zoege alles mit).
+        let sc=zeile.parentElement;
+        while(sc&&sc!==wurzel.parentElement){const o=getComputedStyle(sc).overflowY;if((o==='auto'||o==='scroll')&&sc.scrollHeight>sc.clientHeight)break;sc=sc.parentElement;}
+        if(sc&&sc!==wurzel.parentElement){const d=zeile.getBoundingClientRect().top-sc.getBoundingClientRect().top-(sc.clientHeight-zeile.offsetHeight)/2;sc.scrollBy({top:d,behavior:'smooth'});}
+      }
+      // Den aktiven Punkt in der Linie mitziehen (nur das SVG neu zeichnen).
+      const halter=wurzel.querySelector('.histl-halter');
+      if(halter&&_histSymId)halter.innerHTML=histScoreLineChart(histLinienDaten,datum);
+    });
   }catch(e){}
 }
 // Alterung ein-/ausblenden (Nutzer-Wunsch 2026-09-17: "mach das man dann
@@ -1742,8 +1761,7 @@ function histJumpDay(datum){
 let histAgeShow=true,histAktivTag=null,histLinienDaten=[];
 function toggleHistAge(){
   histAgeShow=!histAgeShow;
-  const el=document.getElementById('histBody');
-  if(el&&_histSymId)el.innerHTML=renderSymHistoryPanel(_histSymId);
+  histNeuZeichnen();
 }
 function renderSymHistoryPanel(id){
   const vorher=_histRelMemo;_histRelMemo=vorher||new WeakMap();
@@ -7780,7 +7798,13 @@ function openCardInfo(k){
 // nicht zu blass also wie im Bild", RECHTS HINTER den Tabs.
 // Selbst gezeichnet als SVG (keine Fotos: Groesse, offline, Rechte). Farben am
 // Nutzerbild gemessen (Berge #E3EDF8..#C8DAF0 auf #F1F6FC).
-// Bulle & Baer seit 2026-09-23 als KOEPFE (Nutzerwahl "B: Koepfe" aus einer
+// Bulle & Baer seit 2026-09-26 als GANZKOERPER-DUELL (Nutzer: "Der Bulle ist
+// links dann rechts daneben vs und dann rechts daneben der Baer ... spiegeln
+// das er ... nach links laeuft ... achte auf jedes Detail"; Vorlagen: goldenes
+// Bullen-Relief und Grizzly-Foto). Nachgezeichnet, nicht abgepaust (das
+// Baerenfoto ist ein Stock-Bild mit Wasserzeichen). Bulle stuermt mit
+// gesenktem Kopf, Schwanzquaste hoch; Baer im Profil nach links, Maul offen.
+// Davor (2026-09-23) als KOEPFE (Nutzerwahl "B: Koepfe" aus einer
 // Auswahltafel; "schau im Internet wie der Bulle und der Baer dargestellt
 // ist ... aktuell nicht erkennbar"). Recherche: Bulle stoesst die Hoerner
 // nach OBEN (steigende Kurse), Baer schlaegt nach UNTEN - daher Hoerner
@@ -7810,26 +7834,43 @@ barrel:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
  <path d="M-62 68 Q0 82 62 68 M-62 112 Q0 126 62 112" fill="none" stroke="${ST}" stroke-width="3"/></g>
  <path d="M372 62 C372 62 350 94 350 108 A22 22 0 0 0 394 108 C394 94 372 62 372 62 Z" fill="${F3}" stroke="${ST}" stroke-width="2.5"/>
 </svg>`,
-bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg"><g transform="translate(120 88)">
- <path fill="${DK}" d="M-38 -26 C-62 -34 -76 -56 -72 -80 C-62 -60 -48 -46 -30 -40 Z M38 -26 C62 -34 76 -56 72 -80 C62 -60 48 -46 30 -40 Z"/>
- <path fill="${F3}" stroke="${ST}" stroke-width="2.4" stroke-linejoin="round" d="M-40 -34 C-20 -46 20 -46 40 -34 L58 -38 C64 -30 58 -20 48 -18 C46 0 40 22 30 40 C22 54 10 62 0 62 C-10 62 -22 54 -30 40 C-40 22 -46 0 -48 -18 C-58 -20 -64 -30 -58 -38 Z"/>
- <ellipse cy="44" rx="24" ry="16" fill="${F2}" stroke="${ST}" stroke-width="2.2"/>
- <circle cx="-9" cy="44" r="3.5" fill="${DK}"/><circle cx="9" cy="44" r="3.5" fill="${DK}"/>
- <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M-26 -6 l14 6 M26 -6 l-14 6"/>
- <circle cx="-18" cy="4" r="3" fill="${DK}"/><circle cx="18" cy="4" r="3" fill="${DK}"/>
- <path fill="none" stroke="${ST}" stroke-width="3" d="M-12 56 C-12 70 12 70 12 56"/>
-</g>
-<g transform="translate(300 92)">
- <circle cx="-40" cy="-40" r="18" fill="${F2}" stroke="${ST}" stroke-width="2.4"/><circle cx="40" cy="-40" r="18" fill="${F2}" stroke="${ST}" stroke-width="2.4"/>
- <circle cx="-40" cy="-40" r="8" fill="${F3}"/><circle cx="40" cy="-40" r="8" fill="${F3}"/>
- <path fill="${F2}" stroke="${ST}" stroke-width="2.4" d="M0 -52 C34 -52 56 -30 56 0 C56 34 32 58 0 58 C-32 58 -56 34 -56 0 C-56 -30 -34 -52 0 -52 Z"/>
- <ellipse cy="24" rx="28" ry="22" fill="${F1}" stroke="${ST}" stroke-width="2.2"/>
- <path fill="${DK}" d="M-9 8 L9 8 L0 18 Z"/>
- <path fill="${DK}" d="M-16 30 C-8 44 8 44 16 30 C8 34 -8 34 -16 30 Z"/>
- <path fill="${W}" d="M-12 31 l3 6 l3 -5 Z M6 32 l3 5 l3 -6 Z"/>
- <path fill="none" stroke="${DK}" stroke-width="3" stroke-linecap="round" d="M-30 -18 l14 6 M30 -18 l-14 6"/>
- <circle cx="-20" cy="-6" r="3" fill="${DK}"/><circle cx="20" cy="-6" r="3" fill="${DK}"/>
-</g></svg>`};})();
+bullbear:`<svg viewBox="0 0 420 170" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="220" cy="160" rx="200" ry="7" fill="${F1}"/>
+ <g transform="translate(6 14) scale(.92)"><g>
+ <path fill="none" stroke="${ST}" stroke-width="3" stroke-linecap="round" d="M44 62 C30 52 24 36 34 24 C44 12 62 18 70 14"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M66 16 C74 6 90 6 98 10 C88 12 80 18 70 20 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M60 104 C52 118 44 130 34 140 L30 150 L20 150 L24 140 C34 128 42 112 46 98 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M118 118 C124 130 132 140 138 150 L136 156 L126 156 L128 148 C120 138 112 128 106 120 Z"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M44 64 C60 50 88 36 116 36 C136 36 150 42 160 54 C168 62 174 72 176 84 C180 96 184 108 184 118 C184 128 176 132 168 128 C160 124 154 116 148 110 C144 116 140 120 138 124 C146 132 158 140 166 146 L172 152 L170 158 L158 158 L156 150 C146 144 134 138 124 130 C112 124 100 120 88 122 C82 124 78 126 74 128 C62 134 46 142 32 150 L24 158 L10 158 L14 150 C24 140 40 130 50 118 C44 108 40 96 40 84 C40 76 41 70 44 64 Z"/>
+ <path fill="${DK}" d="M10 158 L24 158 L26 152 L14 150 Z M158 158 L170 158 L172 152 L158 150 Z"/>
+ <path fill="none" stroke="${ST}" stroke-width="1.4" stroke-linecap="round" d="M17 154 l3 4 M163 154 l2 4"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M158 62 C168 58 176 66 176 84 C180 96 184 108 184 118 C184 128 176 132 168 128 C160 124 152 112 150 98 C148 84 150 70 158 62 Z"/>
+ <path fill="${F1}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M168 118 C172 112 182 112 184 118 C184 128 176 132 168 128 C164 126 164 122 168 118 Z"/>
+ <path fill="${DK}" d="M175 121 a2 3 -20 1 0 0.1 0 Z"/>
+ <path fill="${W}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-width="1.4" d="M160 88 C164 84 170 84 172 90 C168 92 164 92 160 88 Z"/>
+ <circle cx="167" cy="88.5" r="1.8" fill="${DK}"/>
+ <path fill="none" stroke="${DK}" stroke-width="2.2" stroke-linecap="round" d="M156 82 C162 78 170 78 176 84"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M150 70 C142 64 136 66 134 72 C140 76 146 76 152 76 Z"/>
+ <path fill="${DK}" stroke="${ST}" stroke-width="1.2" stroke-linejoin="round" d="M156 66 C152 56 156 46 166 42 C160 50 160 58 164 64 Z"/>
+ <path fill="${DK}" stroke="${ST}" stroke-width="1.2" stroke-linejoin="round" d="M162 70 C172 64 184 64 194 70 C198 60 196 52 190 46 C194 58 186 62 176 62 C168 62 162 64 160 68 Z"/>
+ <path fill="none" stroke="${ST}" stroke-width="1.4" stroke-linecap="round" d="M100 42 C92 60 94 82 104 100 M128 44 C140 60 142 80 138 100 M62 72 C74 78 78 92 72 108 M86 110 C96 106 110 108 120 116 M150 102 C156 108 160 116 162 124 M174 96 L178 108 M40 90 C46 88 52 92 54 98"/>
+ <path fill="none" stroke="${F3}" stroke-width="2" stroke-linecap="round" d="M2 146 C6 142 12 144 16 140 M0 136 C4 132 10 134 12 130"/>
+</g></g>
+ <text x="217" y="108" text-anchor="middle" font-family="Arial Black,Arial,Helvetica,sans-serif" font-weight="900" font-style="italic" font-size="30" fill="${F3}" stroke="${DK}" stroke-width="1.6" paint-order="stroke">VS</text>
+ <g transform="translate(418 34) scale(-.92 .92)"><g>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M34 88 C30 104 26 116 22 128 L36 130 C40 118 46 106 52 96 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M116 96 C118 108 118 118 116 128 L132 130 C132 118 130 106 126 96 Z"/>
+ <path fill="${F2}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M12 72 C8 52 22 34 44 30 C64 26 80 24 96 18 C112 12 128 16 138 26 C146 34 154 36 160 36 C168 36 174 40 178 46 L188 50 C191 54 189 58 184 58 L172 58 L160 62 L182 76 C178 82 166 84 156 78 C152 80 148 86 146 92 C146 104 148 114 152 122 C156 126 164 126 166 130 L144 132 C140 120 136 108 130 98 C114 100 94 100 78 98 C72 106 70 116 72 124 C76 126 82 126 84 130 L60 132 C58 122 54 112 48 104 C36 104 22 96 14 84 C12 80 12 76 12 72 Z"/>
+ <path fill="${DK}" d="M160 62 L172 58 L184 58 C182 64 184 70 182 76 Z"/><path fill="${F3}" d="M166 68 C172 68 178 72 180 75 L170 72 Z"/>
+ <path fill="${W}" d="M173 58 l1.5 4 l1.5 -4 Z M179 58 l1.3 3.4 l1.3 -3.4 Z M168 64 l1.6 3.6 l1 -3 Z M177 73 l1 -3.6 l1.8 3.8 Z M172 70.5 l1 -3 l1.4 3.2 Z"/>
+ <path fill="${DK}" d="M185 50 C189 51 190 54 188 56 C186 56 184 54 185 50 Z"/>
+ <path fill="${F3}" stroke="${ST}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d="M142 30 C140 22 146 18 152 22 C154 26 152 30 148 32 Z"/>
+ <path fill="${DK}" d="M162 43 C165 41 168 42 169 45 C166 46 164 45 162 43 Z"/>
+ <path fill="none" stroke="${DK}" stroke-width="2" stroke-linecap="round" d="M158 40 C163 37 169 38 172 42 M174 48 C178 49 182 50 186 50"/>
+ <path fill="none" stroke="${ST}" stroke-width="1.4" stroke-linecap="round" d="M96 22 C94 34 98 44 104 50 M118 20 C114 30 116 40 122 46 M130 26 C128 36 132 46 138 52 M60 32 C58 44 62 54 68 60 M36 40 C32 52 36 62 42 68 M146 48 C150 56 150 66 146 74 M136 60 C140 72 140 84 136 94 M20 60 C24 72 28 80 36 86 M80 60 C88 70 100 76 112 76 M150 104 L150 116 M64 110 L66 120"/>
+ <path fill="none" stroke="${DK}" stroke-width="2" stroke-linecap="round" d="M152 130 C156 132 158 134 158 137 M157 129 C161 131 163 133 163 136 M162 129 C166 131 168 133 168 136 M68 130 C72 132 74 134 74 137 M73 129 C77 131 79 133 79 136 M78 129 C82 131 84 133 84 136"/>
+</g></g>
+</svg>`};})();
 // Szenen fuer Seiten OHNE Asset (Nutzerwahl 2026-09-23 "Stil 1: Szene" aus
 // einer Auswahltafel): erscheinen im Wisch-Uebergang (wischStart). Gleiche
 // Palette wie die Asset-Motive, gleicher 420x170-Raum.
@@ -8331,21 +8372,32 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
   let sv='';
   [0.25,0.75].forEach(f=>{sv+=`<line x1="0" y1="${(3+f*(H-6)).toFixed(1)}" x2="${W}" y2="${(3+f*(H-6)).toFixed(1)}" stroke="var(--bd)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;});
   // Unter den Kerzen: Schattierung und Neutralband; die Linien kommen danach.
-  let ovLinien='';
+  // ⚠ Schattierung = EXAKT der Bias-Ton der Chips (Nutzer 2026-09-26: "der
+  // Bereich der gefaerbt ist hat eine leicht andere Farbe als die bias
+  // Farben"). Gemessen vorher: Rot #F5E9ED statt Chip #F4E2E6 - drei
+  // Ursachen: 8 % statt 11 % Deckkraft, 1D- und 4H-Flaechen stapelten sich
+  // (16 %), und die Flaeche lag ueber dem grauen Neutralband (Grau-Stich).
+  // Jetzt: deckende Rechtecke in EINER Gruppe mit opacity .11 (= die 11 %
+  // der Chips, .ab-tile-s) - Ueberlappungen stapeln nicht mehr - und jede
+  // Flaeche reicht nur vom Schlusskurs bis zum Bandrand, nicht ins Band.
+  let ovLinien='',ovSchatten='';
   ov.forEach(o=>{
     const P=o.pkte.map(p=>({...p,x:xOf(p.d)}));
     if(P.length<2)return;
-    const deck=ov.length>1?0.08:0.12;
     P.forEach(p=>{
       if(!p.pkt)return;
-      const y1=y(p.c),y2=y(p.ema);
-      sv+=`<rect class="tr-schatten" x="${(p.x-fach/2).toFixed(2)}" y="${Math.min(y1,y2).toFixed(1)}" width="${fach.toFixed(2)}" height="${Math.abs(y1-y2).toFixed(1)}" fill="${p.pkt>0?BC.bull:BC.bear}" fill-opacity="${deck}"/>`;
+      const y1=y(p.c),y2=y(p.pkt>0?p.ema+p.band:p.ema-p.band);
+      if(Math.abs(y1-y2)<0.05)return;
+      // je Seite 0,3 Fach Ueberstand: sonst Haarfugen (Kantenglaettung) - in der Gruppe stapelt der Ueberstand nicht
+      ovSchatten+=`<rect class="tr-schatten" x="${(p.x-fach*0.8).toFixed(2)}" y="${Math.min(y1,y2).toFixed(1)}" width="${(fach*1.6).toFixed(2)}" height="${Math.abs(y1-y2).toFixed(1)}" fill="${p.pkt>0?BC.bull:BC.bear}"/>`;
     });
     const ob=P.map(p=>`${p.x.toFixed(2)},${y(p.ema+p.band).toFixed(1)}`),un=P.map(p=>`${p.x.toFixed(2)},${y(p.ema-p.band).toFixed(1)}`);
     sv+=`<polygon class="tr-band tr-band-${o.k}" points="${ob.concat(un.slice().reverse()).join(' ')}"/>`;
-    sv+=`<polyline class="tr-bandrand tr-${o.k}" points="${ob.join(' ')}" vector-effect="non-scaling-stroke"/><polyline class="tr-bandrand tr-${o.k}" points="${un.join(' ')}" vector-effect="non-scaling-stroke"/>`;
+    // 1D ohne gestrichelte Bandraender: "eine cleane Linie" (Nutzer 2026-09-26)
+    if(o.k!=='d')sv+=`<polyline class="tr-bandrand tr-${o.k}" points="${ob.join(' ')}" vector-effect="non-scaling-stroke"/><polyline class="tr-bandrand tr-${o.k}" points="${un.join(' ')}" vector-effect="non-scaling-stroke"/>`;
     ovLinien+=`<polyline class="tr-ema tr-${o.k}" points="${P.map(p=>`${p.x.toFixed(2)},${y(p.ema).toFixed(1)}`).join(' ')}" vector-effect="non-scaling-stroke"/>`;
   });
+  if(ovSchatten)sv+=`<g class="tr-schatten-g" opacity=".11">${ovSchatten}</g>`;
   const pts=[];
   k.forEach((c,i)=>{
     const mx=xOf(c.d), x=mx-bw/2;
@@ -9994,7 +10046,7 @@ function updateSidebarSelection(){
 // sofort an den neuen Inhalt.
 // 1,0 s (Nutzer 2026-09-23: "Animation mindestens doppelt so lang" - vorher 0,5 s).
 const WISCH_MS=1000;
-const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'40 5 330 160',szene:'200 10 210 158'};
+const WISCH_VB={coin:'170 8 240 158',bars:'145 15 255 150',barrel:'190 12 215 152',bullbear:'0 8 420 160',szene:'200 10 210 158'};
 const SEITE_SZENE={over:'overview',dash:'dashboard',pairs:'setups',watch:'watchlist',cal:'calendar',notes:'archive'};
 let _wischOv=null,_wischLaeuft=false,_wischBereit=false;  // _wischOv: gemerkter Stand zwischen wischStart und wischLos
 function wischErlaubt(){
@@ -23499,8 +23551,44 @@ function infoKnoepfeEinordnen(root){
     anker.after(i);i.classList.add('ii-nach');
   });
 }
+// ── Asset-Titel passt sich an, statt die Leiste umzubrechen ─────────────
+// Nutzer 2026-09-26: "wenn der Asset Name zu lang ist rutschen die Knoepfe
+// daneben eins tiefer ... obwohl es nur an ganz bischen fehlt mach dann die
+// schriftgroesse sich anpasst". Gemessen vorher bei 1180 px: "DE Yield" ->
+// .dmeta 89 px tiefer. Der Titel wird in 1-px-Schritten bis KOPF_MIN_PX
+// verkleinert, bis Titel und Leiste in einer Zeile stehen. ⚠ Die Breite der
+// linken Spalte bestimmt oft die UNTERZEILE (.afull), nicht der Name:
+// "Germany 10-Year Bund Yield (EUR benchmark)" = 318 px, der Titel waere
+// schmaler - es fehlten 5 px. Deshalb schrumpfen Titel und Unterzeile
+// GEMEINSAM um denselben Faktor, bis KOPF_MIN_F. Reicht selbst das nicht
+// (schmale Fenster, wo die Leiste ohnehin eine eigene Zeile hat), bleibt die
+// normale Groesse - dann bricht die Zeile wie vorher um.
+const KOPF_MIN_F=0.75;
+function kopfUmgebrochen(k){
+  const l=k.querySelector(':scope>.ahead-l'),d=k.querySelector(':scope>.dmeta');
+  if(!l||!d)return false;
+  const lr=l.getBoundingClientRect(),dr=d.getBoundingClientRect();
+  if(dr.top>=lr.bottom-2)return true;                     // Leiste unter dem Titel
+  const ch=[...d.children].filter(c=>c.offsetParent).map(c=>c.getBoundingClientRect());
+  return ch.length>1&&Math.max(...ch.map(c=>c.top))>=Math.min(...ch.map(c=>c.bottom))-2;  // Leiste in sich umgebrochen
+}
+function kopfTitelEinpassen(root){
+  (root||document).querySelectorAll('.ahead').forEach(k=>{
+    const els=[k.querySelector(':scope>.ahead-l>.atitle'),k.querySelector(':scope>.ahead-l>.afull')].filter(Boolean);
+    if(!els.length)return;
+    els.forEach(e=>{e.style.fontSize='';});
+    if(!kopfUmgebrochen(k))return;
+    const basis=els.map(e=>parseFloat(getComputedStyle(e).fontSize)||0);
+    for(let f=0.98;f>=KOPF_MIN_F-1e-9;f-=0.02){
+      els.forEach((e,i)=>{e.style.fontSize=(basis[i]*f).toFixed(2)+'px';});
+      if(!kopfUmgebrochen(k))return;
+    }
+    els.forEach(e=>{e.style.fontSize='';});
+  });
+}
+try{window.addEventListener('resize',()=>requestAnimationFrame(()=>kopfTitelEinpassen()));}catch(e){}
 let _iiPlan=0;
-try{new MutationObserver(()=>{if(!_iiPlan)_iiPlan=requestAnimationFrame(()=>{_iiPlan=0;infoKnoepfeEinordnen();});})
+try{new MutationObserver(()=>{if(!_iiPlan)_iiPlan=requestAnimationFrame(()=>{_iiPlan=0;infoKnoepfeEinordnen();kopfTitelEinpassen();});})
   .observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
 let _lgPlan=0;
 function lgAlleKarten(){

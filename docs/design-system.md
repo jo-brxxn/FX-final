@@ -1132,6 +1132,25 @@ Motivband `opacity:.6`. Unter ~900 px Breite bricht die Gruppe in eine eigene
 Zeile unter den Titel (kein Platz nebeneinander) — dort rechtsbündig, nicht
 kartenmittig. Wächter `check/kopfleiste.js`.
 
+**Titel passt sich an (seit 2026-09-26):** fehlt nur ein wenig Breite,
+schrumpfen Name UND Unterzeile gemeinsam (`kopfTitelEinpassen`, 2-%-Schritte
+bis 75 %), statt dass die Knopfleiste in die nächste Zeile rutscht — die
+linke Spalte ist oft durch die Unterzeile so breit, nicht durch den Namen.
+Reicht auch 75 % nicht, bleibt die normale Größe und die Zeile bricht um.
+
+**Motiv Aktien/Indizes/Renditen (seit 2026-09-26):** Ganzkörper-Duell —
+Bulle links (stürmt, Kopf gesenkt), „VS" in der Mitte, Bär rechts im Profil
+nach links laufend mit offenem Maul. Palette MOTIV_*, alles inline gefärbt.
+
+## Trend-Overlay in der Price-Karte (seit 2026-09-26)
+
+- Schattierung zwischen Kurs und Bandrand = **exakt der Bias-Chip-Ton**:
+  deckende Rechtecke in EINER `<g opacity=".11">` (wie `.ab-tile-s` mit 11 %),
+  damit 1D- und 4H-Flächen nicht stapeln; nie ins graue Neutralband hinein.
+- 1D-EMA: `#7172AC` (aus dem Nutzerfoto gemessen), 1,5 px, ohne gestrichelte
+  Bandränder. 4H-EMA: `#8E5BE0` mit gestrichelten Rändern.
+- Wächter: `check/trend.js` (Teil F).
+
 ## Warte-Platzhalter = animiertes Logo (Dauerregel seit 2026-09-25)
 
 Nutzer: *„wenn das dann lädt soll das Ladesymbol kommen, generell bei Warten
