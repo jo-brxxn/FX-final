@@ -18028,3 +18028,29 @@ Asset Name zu lang ist rutschen die Knöpfe ... eins tiefer"*.
 - Wächter: `check/kopfleiste.js` (DEYIELD einzeilig), `check/trend.js` (F:
   Ton + 1D-Linie), `check/zeitfilter.js` (History-Stufen) — jeweils mit
   Gegenprobe rot.
+
+---
+
+## VERSION-CHECK-572 (2026-09-26) — Data: bis 8 Panels, Bildschirm füllen, kompakt
+
+Nutzer: *„Mach das man in data bis zu 8 Assets oder halt Indikatoren
+gleichzeitig vergleichen kann. Aber es soll dann so sein das desto mehr
+Assets man hinzufügt das dann auch erst die Charts kleiner werden und nicht
+das wenn man nur 2 ausgewählt hat das schon klein ist und ... Layout ... ein
+bischen verbesserst um Platz zu sparen"*. Per Rückfrage: „Bildschirm füllen"
+und „Kompakt".
+
+Gemessen vorher (1180×820): ab 2 Panels festes 2-Spalten-Raster, Chart je
+~150 px hoch (viewBox 720×230 auf 524 px Breite), ~290 px leer darunter;
+Seitentitel + Kartenkopf + Filterzeile = 230 px bis zum ersten Chart; Panel-
+Kopf + As-of-Zeile + Legende ≈ 110 px je Panel.
+
+Nachher: Kopf 50 px (eine Zeile), Panel-Kopf 36 px; Charthöhe 1 → 609 px,
+2 → 609 px, 3/4/6/8 → 269 px; 1–8 Panels ohne Seiten-Scroll.
+
+Mitbehoben in `indHistChart` (wirkt überall): Datumsbeschriftung wird nach
+Breite ausgedünnt (vorher nur nach Punktzahl → bei schmalen Charts
+überlappend) und am Rand bündig statt mittig gesetzt (vorher „Sep 17, 2"
+abgeschnitten). Bei der Standardbreite 720 ändert sich die Ausdünnung nicht.
+
+Wächter `check/datalayout.js` (Gegenprobe: altes festes Raster → rot).

@@ -1203,3 +1203,18 @@ sind nachgerechnet nur Kurs gegen USD × 100 und taugen dafür nicht. Körbe
 haben nur Schlusskurse → Kerzen ohne Docht. Rechnungen, die an der Marktreaktion
 hängen (Marktrelevanz im Score, Korrelationen, Carry), bleiben bewusst bei den
 Paar-Kursen. Wächter `check/korb.js`.
+
+## Insights > Data (seit 2026-09-26)
+
+- Bis **8** Panels (Assets oder Indikatoren eines Assets), `DATA_MAX_PANELS`.
+- Raster füllt die freie Höhe von `#pgData` (`dataRaster`/`dataRasterFuellen`):
+  1 = ganze Fläche, 2 = nebeneinander in voller Höhe, 3–4 = 2×2, 5–6 = 3×2,
+  7–8 = 4×2; unter 1000 px höchstens 2, unter 700 px 1 Spalte (dann zwei
+  Panels je Bildschirmhöhe, Rest scrollt). Chart nie unter 150 px.
+- Charts werden in **echten Pixeln** der Zelle gezeichnet (`indHistChart`
+  mit `opts.W/opts.H`) — Schrift bleibt gleich groß, der Chart füllt exakt.
+- Kompakt: kein Seitentitel, Kopf = eine Zeile (Modus, Indikator/Asset,
+  Zeitraum, Auswahlknopf), keine Chip-Reihe — jedes Panel trägt sein ✕.
+  Panel-Kopf = eine Zeile (Name, Legende, As of/Next, Auswahl, ✕); zu schmal
+  → erst Legende, dann As of ausgeblendet (Container-Abfrage).
+- Wächter: `check/datalayout.js`.

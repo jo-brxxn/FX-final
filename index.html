@@ -2885,10 +2885,32 @@ body.res-return-active #resBackBar{display:flex}
 @media (hover:hover){.px-panel-sel:hover{border-color:var(--blue);color:var(--t0)}}
 .px-panel-chip{background:rgba(var(--blue-rgb),.14);border:1px solid var(--blue);color:var(--blue);border-radius:999px;padding:3px 8px;font:700 var(--fs-2xs)/1.2 var(--ff-num);cursor:pointer;white-space:nowrap;flex-shrink:0}
 @media(max-width:520px){.px-panel-sel{max-width:120px}}
-.data-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.data-grid.split{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Data kompakt (2026-09-26): Kopf EINE Zeile, Panels = schmale Kopfzeile +
+   Chart, der die gemessene Zelle exakt fuellt (dataRasterFuellen). */
+.data-head{margin-bottom:10px}
+.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px}
+.data-h{font:800 var(--fs-lg)/1.2 var(--ff-text);color:var(--t0);margin-right:2px}
+.data-row .cot-filterbar,.data-row .cmp-filter-grp{margin:0}
+.data-row .data-range{margin:0;flex:0 1 auto}
+.data-row-r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.data-indsel{max-width:240px}
+.data-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
 .data-grid .cot-card{margin-bottom:0;min-width:0}
-@media(max-width:900px){.data-grid.split{grid-template-columns:minmax(0,1fr)}}
+.data-panel{display:flex;flex-direction:column;overflow:hidden}
+/* Panel-Kopf: EINE Zeile. Zu schmal -> erst Legende, dann "As of" weg
+   (Container-Abfrage), nie ein Umbruch, der dem Chart Hoehe nimmt. */
+.data-panel{container-type:inline-size}
+.data-ph{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:6px 10px 6px 12px;border-bottom:1px solid var(--bd);min-width:0;white-space:nowrap}
+.data-pt{font:700 var(--fs-md)/1.2 var(--ff-text);color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.data-pt .px-panel-sub{display:inline;margin:0 0 0 6px}
+.data-ph .px-asof{margin:0;font-size:var(--fs-2xs);flex-wrap:nowrap;overflow:hidden;min-width:0;flex:0 1 auto}
+.data-ph .px-panel-ctrls{margin-left:auto;flex:0 1 auto}
+.data-ph .px-panel-sel{max-width:150px;min-width:0}
+.data-lg{display:inline-flex;gap:8px;font:600 var(--fs-2xs)/1 var(--ff-text);flex:0 0 auto}
+@container (max-width:470px){.data-lg{display:none}}
+@container (max-width:330px){.data-ph .px-asof{display:none}}
+.data-indsel{font:600 var(--fs-sm)/1.2 var(--ff-text)!important;padding:6px 10px!important}
+.data-pc{flex:1 1 auto;min-height:0;padding:6px 10px 4px;overflow:hidden}
 /* ── MATRIX / STRENGTH ── */
 .mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .mx-card-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -2949,8 +2971,8 @@ body.res-return-active #resBackBar{display:flex}
    damit die Forecast-Farbe. Positionsabhaengige Selektoren brechen genau
    dann, wenn ein Element wegfaellt; die Farbe haengt jetzt an der
    Bedeutung, nicht am Platz. */
-.ind-hist-legend .lg-act{color:var(--blue)}
-.ind-hist-legend .lg-fc{color:var(--red)}
+.ind-hist-legend .lg-act,.data-lg .lg-act{color:var(--blue)}
+.ind-hist-legend .lg-fc,.data-lg .lg-fc{color:var(--red)}
 .time-range-custom{display:flex;align-items:center;gap:5px;color:var(--t3);font-size:var(--fs-2xs);white-space:nowrap}
 /* Rate Probabilities: CME-FedWatch-artige Meeting-Pillen + Timeline-Chart
    (Nutzer-Wunsch 2026-07-20). Pillen navigieren per scrollRateProbTo() eine
@@ -5847,11 +5869,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-571 - Bulle vs. Baer im Kopf, Trend-Schattierung im Bias-Ton, 1D-EMA wie Foto, History 15D/1M/2M, Asset-Titel passt sich an."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-572 - Data: bis 8 Panels, Charts fuellen den Bildschirm, kompakter Kopf."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-571</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-572</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -5944,10 +5966,8 @@ window.fxLogoSvg=function(art){
 </div>
 <!-- PAGE: DATA (Nutzer-Wunsch 2026-07-14: Indikator-Verlaufschart-Browser) -->
 <div class="pc" id="pgData" style="display:none">
-  <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Data</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Browse any indicator's release history — actual vs. forecast, up to 3 years</div>
-  </div>
+  <!-- Seitentitel entfallen 2026-09-26 (Nutzerwahl "Kompakt"): der Kopf der
+       Datenkarte traegt "Data" schon, die Flaeche gehoert den Charts. -->
   <div id="dataBody"></div>
 </div>
 <!-- PAGE: RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20: CME-FedWatch-artige Anzeige) -->

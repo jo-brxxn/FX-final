@@ -17828,7 +17828,9 @@ function indHistChart(ind,symId,opts){
   }
   if(use.length<2)use=all.slice(-Math.min(all.length,4)); // Filter zu eng (junger Indikator) -> letzte verfuegbare Punkte statt leer
   const n=use.length;
-  const W=720,H=230,padL=10,padR=10,padT=24,padB=28;
+  // opts.W/opts.H: Insights > Data zeichnet in EXAKTER Pixelgroesse der Zelle
+  // (1 Einheit = 1 px, Schrift bleibt gleich gross, Chart fuellt die Zelle).
+  const W=Math.max(200,Math.round(opts.W||720)),H=Math.max(120,Math.round(opts.H||230)),padL=10,padR=10,padT=24,padB=28;
   const vals=[];use.forEach(p=>{vals.push(p[1]);if(p[2]!=null)vals.push(p[2]);});
   // Zwei Darstellungsformen, weil zwei voellig verschiedene Datenarten:
   // • RELEASE-Reihen (Kalender-Indikatoren: CPI-Ueberraschung, GDP, PMI ...)
@@ -17923,7 +17925,11 @@ function indHistChart(ind,symId,opts){
   // "10 Apr 26" ist rund ein Drittel breiter als das fruehere "10 Apr" (Jahr
   // ist seit 2026-09-05 Pflicht, siehe fmtDayHdr) - deshalb bei Tages-Labels
   // 8 statt 10 Beschriftungen, sonst stossen sie aneinander.
-  const lblEvery=Math.max(1,Math.ceil(n/(dayLbl?8:10)));
+  // Und nie mehr, als in die Breite passen (Data zeichnet seit 2026-09-26 in
+  // echten Pixeln, bei 8 Panels ~230 px breit - dort liefen die Labels
+  // ineinander). Bei der Standardbreite 720 aendert sich nichts.
+  const lblMax=Math.max(2,Math.floor((W-padL-padR)/(dayLbl?78:62)));
+  const lblEvery=Math.max(1,Math.ceil(n/Math.min(dayLbl?8:10,lblMax)));
   const fmtLbl=d=>{
     try{const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en',dayLbl?{day:'numeric',month:'short',year:'2-digit'}:{month:'short',year:'2-digit'});}
     catch(e){return d;}
@@ -17935,7 +17941,11 @@ function indHistChart(ind,symId,opts){
     const isLast=i===n-1;
     if(i%lblEvery!==0&&!isLast)return;
     if(isLast&&i%lblEvery!==0&&(i%lblEvery)<lblEvery*0.6)return;
-    xlab+=`<text x="${xOf(i).toFixed(1)}" y="${H-9}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
+    // Am Rand buendig statt mittig - mittig lief "Oct 24, 25" links und
+    // "Sep 17, 26" rechts aus dem Bild (gemessen 2026-09-26, Data-Panels).
+    const lx=xOf(i),halb=dayLbl?34:26;
+    const an=lx-halb<0?'start':lx+halb>W?'end':'middle',ax=an==='start'?Math.max(1,lx-halb*0.35):an==='end'?Math.min(W-1,lx+halb*0.35):lx;
+    xlab+=`<text x="${ax.toFixed(1)}" y="${H-9}" text-anchor="${an}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtLbl(p[0]))}</text>`;
   });
   // Legende erst jetzt endgueltig: eine Reihe ohne Forecast (Anleihen, COT,
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
@@ -17950,7 +17960,8 @@ function indHistChart(ind,symId,opts){
   // Auf der Insights>Data-Seite tragen die Panels keine eigene Zeitraum-Leiste
   // (eine gemeinsame steht darueber) - der Hinweis gehoert dort trotzdem an
   // JEDES Panel, weil jede Reihe ein anderes Anfangsdatum hat.
-  const toolbar2=opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}${startNote}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${startNote}${legend2}</div>`;
+  // opts.noLegend: die Legende steht schon im Panel-Kopf (Data, kompakt).
+  const toolbar2=opts.noLegend?(startNote?`<div class="ind-hist-legend" style="padding:0 0 4px">${startNote}</div>`:''):opts.noToolbar?`<div class="ind-hist-legend" style="padding:0 0 6px"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}${startNote}</div>`:`<div class="ind-hist-toolbar">${rangeBar}${custom}${startNote}${legend2}</div>`;
   const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
@@ -18698,7 +18709,10 @@ function renderPriceChart(){
 // Die Auswahl bleibt bewusst LOKAL/fluechtig - wie seasAsset/rateProbSel
 // ist sie eine reine Chart-Auswahl, kein persistierter Zustand (siehe die
 // Begruendung an loadPrefs).
-const DATA_MAX_PANELS=4;
+// 8 seit 2026-09-26 (Nutzer: "bis zu 8 Assets oder halt Indikatoren
+// gleichzeitig vergleichen ... desto mehr Assets man hinzufuegt das dann
+// auch erst die Charts kleiner werden"). Raster und Groesse: dataRaster().
+const DATA_MAX_PANELS=8;
 let dataAssets=['USD'],dataIndBase='CPI (Headline)';
 // ── Indikator je Panel: EIN Satz als Prinzip ──────────────────────
 // "denk dir ein Prinzip aus das simpel ist mit dem man noch fuer jedes Asset
@@ -18804,7 +18818,7 @@ function renderDataIndPicker(){
     const on=dataIndList.includes(it.b);
     return`<button class="cmp-chip${on?' on':''}"${!on&&full?' disabled':''} onclick="toggleDataListInd('${escJH(it.b)}')" title="${escH(it.n)}">${escH(it.n)}</button>`;
   }).join('')}</div></div>`).join('')||`<div class="cmp-filter-none">This asset tracks no indicators.</div>`;
-  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to 4 indicators</span><b>${dataIndList.length}/${DATA_MAX_PANELS}</b></div>
+  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to ${DATA_MAX_PANELS} indicators</span><b>${dataIndList.length}/${DATA_MAX_PANELS}</b></div>
     <div class="data-picker-body">${body}</div>
     <div class="data-picker-ft">All of ${escH(sym?(sym.name||sym.id):'this asset')} · every tap is applied right away · closes at 4 or when you tap outside</div>`;
   const r=btn.getBoundingClientRect();
@@ -18881,7 +18895,7 @@ function renderDataAssetPicker(){
   const wl=watchlistedAssetIds(ids),wlSet=new Set(wl);
   const grp=(label,list)=>list.length?`<div class="data-picker-grp"><span class="cmp-filter-lbl">${escH(label)}</span><div class="cmp-filter-grp">${list.map(chip).join('')}</div></div>`:'';
   const body=grp('Watchlist',wl)+SB_CATS.map(cat=>grp(cat.l,cat.ids.filter(id=>ids.includes(id)&&!wlSet.has(id)))).join('');
-  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to 4 assets</span><b>${dataAssets.length}/${DATA_MAX_PANELS}</b></div>
+  el.innerHTML=`<div class="data-picker-hd"><span>Pick up to ${DATA_MAX_PANELS} assets</span><b>${dataAssets.length}/${DATA_MAX_PANELS}</b></div>
     <div class="data-picker-body">${body}</div>
     <div class="data-picker-ft">Every tap is applied right away · closes at 4 or when you tap outside</div>`;
   const r=btn.getBoundingClientRect();
@@ -18896,57 +18910,75 @@ function renderDataTab(){
   const zurueck=scrollHalten(document.getElementById('pgData'));
   try{return renderDataTabRoh.apply(this,arguments);}finally{zurueck();}
 }
+// ── Raster der Data-Seite (Nutzerwahl 2026-09-26 "Bildschirm fuellen") ──
+// Die Panels fuellen die freie Hoehe von #pgData; kleiner werden die Charts
+// erst, wenn mehr dazukommen: 1 = ganze Flaeche, 2 = nebeneinander in voller
+// Hoehe, 3-4 = 2x2, 5-6 = 3x2, 7-8 = 4x2. Schmale Fenster: weniger Spalten.
+// Unter DATA_MIN_CHART_H px Chart wird gescrollt statt weiter gestaucht.
+const DATA_MIN_CHART_H=150;
+function dataRaster(n,breite){
+  let c=n<=1?1:n<=2?2:n<=4?2:n<=6?3:4;
+  if(breite<700)c=1;else if(breite<1000)c=Math.min(c,2);
+  return{c,r:Math.ceil(n/c)};
+}
 function renderDataTabRoh(){
   const el=document.getElementById('dataBody');if(!el)return;
   const ids=[...FX,...syms.filter(s=>isNonFx(s.id)).map(s=>s.id)];
   dataAssets=dataAssets.filter(id=>ids.includes(id)).slice(0,DATA_MAX_PANELS);
   Object.keys(dataIndOverride).forEach(k=>{if(!dataAssets.includes(k))delete dataIndOverride[k];});
   if(dataMode==='inds'&&dataAssets.length>1)dataAssets=[dataAssets[0]];
+  const N=DATA_MAX_PANELS;
   const modeBar=`<div class="px-modes">
-    <button class="ind-hist-range-btn${dataMode==='assets'?' on':''}" onclick="setDataMode('assets')" title="One indicator, up to four assets side by side">By asset</button>
-    <button class="ind-hist-range-btn${dataMode==='inds'?' on':''}" onclick="setDataMode('inds')" title="One asset, up to four of its indicators side by side">By indicator</button>
+    <button class="ind-hist-range-btn${dataMode==='assets'?' on':''}" onclick="setDataMode('assets')" title="One indicator, up to ${N} assets side by side">By asset</button>
+    <button class="ind-hist-range-btn${dataMode==='inds'?' on':''}" onclick="setDataMode('inds')" title="One asset, up to ${N} of its indicators side by side">By indicator</button>
   </div>`;
   // Die Leiste steht im Kopf, die Datentiefe kennt man erst nach den Panels:
   // Platzhalter, am Ende ersetzt (fruehester Punkt ueber alle Panels).
   let dataAb=null;
   const rangeBarHtml=()=>'<!--DATA-RANGE-BAR-->';
-  const rangeBarEcht=()=>`<div class="ind-hist-toolbar" style="margin:0;flex:1 1 auto">${timeRangeBarHtml(dataRange,'setDataRange',TIME_RANGES,dataAb)}${timeRangeCustomHtml(dataRange,dataCustomFrom,dataCustomTo,'setDataRange',dataAb)}</div>`;
-  // Panel-Bausteine sind in beiden Modi identisch - nur woher Asset und
-  // Indikator kommen, unterscheidet sich.
+  const rangeBarEcht=()=>`<div class="ind-hist-toolbar data-range">${timeRangeBarHtml(dataRange,'setDataRange',TIME_RANGES,dataAb)}${timeRangeCustomHtml(dataRange,dataCustomFrom,dataCustomTo,'setDataRange',dataAb)}</div>`;
+  // Panel = schmale Kopfzeile (Name, Legende, As of/Next, Bedienung) + Chart-
+  // Flaeche. Der Chart selbst wird erst NACH dem Layout in die gemessene
+  // Flaeche gezeichnet (panelChart), damit er sie exakt fuellt.
+  const panelJobs=[];
   const panelHtml=(sym,base,title,ctrls)=>{
     const rub=(sym.rubrics||[]).find(r=>(r.indicators||[]).some(i=>stripPeriodSuffix(i.name).base===base));
     const ind=rub&&(rub.indicators||[]).find(i=>stripPeriodSuffix(i.name).base===base);
-    if(ind){const pp=indChartSeries(ind,sym.id).pts;if(pp&&pp.length){const d0=String(pp[0][0]).slice(0,10);if(!dataAb||d0<dataAb)dataAb=d0;}}
-    const inner=ind
-      ?indAsOfNextHtml(sym.id,ind)+indHistChart(ind,sym.id,{noToolbar:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo})
-      :`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
-    return`<div class="cot-card"><div class="cot-card-title">${title}<span class="px-panel-ctrls">${ctrls||''}</span></div><div style="padding:12px 14px">${inner}</div></div>`;
+    let hasFc=false;
+    if(ind){const pp=indChartSeries(ind,sym.id).pts;if(pp&&pp.length){const d0=String(pp[0][0]).slice(0,10);if(!dataAb||d0<dataAb)dataAb=d0;hasFc=pp.some(p=>p[2]!=null);}}
+    const k=panelJobs.length;panelJobs.push(ind?{sym,ind}:null);
+    const legend=ind?`<span class="data-lg"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</span>`:'';
+    const inner=ind?'':`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
+    return`<div class="cot-card data-panel"><div class="data-ph"><span class="data-pt">${title}</span>${legend}${ind?indAsOfNextHtml(sym.id,ind):''}<span class="px-panel-ctrls">${ctrls||''}</span></div><div class="data-pc" data-k="${k}">${inner}</div></div>`;
   };
-  let head,body;
+  // Kopf = EINE Zeile. Die Chip-Reihe (je Auswahl ein "✕") ist 2026-09-26
+  // entfallen: jedes Panel traegt sein ✕ selbst, die Zaehlung steht am
+  // Auswahlknopf - bei 8 Chips kostete die Reihe eine eigene Zeile.
+  const kopf=(sub,chips,mitte,knopf)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span>${modeBar}${mitte}<span class="data-row-r">${knopf}</span></div></div>`;
+  let head,body,n=0;
   if(dataMode==='inds'){
-    // ── EIN Asset, bis zu 4 Indikatoren ──
+    // ── EIN Asset, bis zu N Indikatoren ──
     const sym=syms.find(s=>s.id===dataAssets[0]);
     const groups=sym?dataIndGroupsOf(sym):[];
     const known=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.b)),[]);
-    dataIndList=dataIndList.filter(b=>known.includes(b)).slice(0,DATA_MAX_PANELS);
+    dataIndList=dataIndList.filter(b=>known.includes(b)).slice(0,N);
     const assetSel=`<div class="cot-filterbar">${assetFilterSelect(ids,dataAssets[0]||'','setDataAsset','','The single asset whose indicators are compared',null)}</div>`.replace('<div class="cot-filterbar"><div class="cot-filterbar">','<div class="cot-filterbar">').replace('</div></div>','</div>');
-    const indBtn=`<button class="btn" id="dataIndBtn" onclick="openDataIndPicker()" title="Pick up to 4 indicators of this asset at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Indicators</span> <b style="font-family:var(--ff-num)">${dataIndList.length}/${DATA_MAX_PANELS}</b></button>`;
+    const indBtn=`<button class="btn" id="dataIndBtn" onclick="openDataIndPicker()" title="Pick up to ${N} indicators of this asset at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Indicators</span> <b style="font-family:var(--ff-num)">${dataIndList.length}/${N}</b></button>`;
     const chips=dataIndList.map(b=>{
       const it=known.includes(b)?(groups.find(g=>g.items.some(x=>x.b===b))||{items:[]}).items.find(x=>x.b===b):null;
       return`<button class="cmp-chip on" onclick="removeDataListInd('${escJH(b)}')" title="Remove this panel">${escH(it?it.n:b)} ✕</button>`;
     }).join('');
-    head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">one asset · up to 4 of its indicators side by side · one time range</span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">${modeBar}${indBtn}</span></div>
-      <div class="data-ctrls">${assetSel}<div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No indicator selected</span>'}</div>${dataIndList.length?rangeBarHtml():''}</div></div>`;
+    head=kopf(`One asset · up to ${N} of its indicators side by side · one time range`,chips||'<span class="cmp-filter-none">No indicator selected</span>',assetSel+(dataIndList.length?rangeBarHtml():''),indBtn);
     if(!sym)body=`<div class="cot-empty">Pick an asset above.</div>`;
-    else if(!dataIndList.length)body=`<div class="cot-empty">Pick up to 4 indicators of ${escH(sym.name||sym.id)} above to compare them side by side.</div>`;
-    else body=`<div class="data-grid${dataIndList.length>1?' split':''}">`+dataIndList.map(b=>{
+    else if(!dataIndList.length)body=`<div class="cot-empty">Pick up to ${N} indicators of ${escH(sym.name||sym.id)} above to compare them side by side.</div>`;
+    else{n=dataIndList.length;body=`<div class="data-grid">`+dataIndList.map(b=>{
       const g=groups.find(x=>x.items.some(i=>i.b===b));
       const nm=g?(g.items.find(i=>i.b===b)||{}).n:b;
       const title=`${escH(nm||b)}<span class="px-panel-sub">${escH(g?g.name:'')}</span>`;
       return panelHtml(sym,b,title,`<button class="px-panel-chip" onclick="removeDataListInd('${escJH(b)}')" title="Remove this panel">✕</button>`);
-    }).join('')+`</div>`;
+    }).join('')+`</div>`;}
   }else{
-    // ── EIN Indikator, bis zu 4 Assets (bisheriger Modus) ──
+    // ── EIN Indikator, bis zu N Assets ──
     const panels=dataAssets.map(id=>syms.find(s=>s.id===id)).filter(Boolean);
     const groups=[];
     panels.forEach(sym=>(sym.rubrics||[]).forEach(rub=>{
@@ -18960,28 +18992,61 @@ function renderDataTabRoh(){
     const allBases=groups.reduce((a,g)=>a.concat(g.items.map(i=>i.base)),[]);
     if(dataIndBase&&!allBases.includes(dataIndBase))dataIndBase='';
     const chips=dataAssets.map(id=>`<button class="cmp-chip on${isNonFx(id)?' nf':''}" onclick="removeDataAsset('${escJH(id)}')" title="Remove this panel">${escH(id)} ✕</button>`).join('');
-    const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to 4 assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${DATA_MAX_PANELS}</b></button>`;
+    const addPicker=`<button class="btn" id="dataAddBtn" onclick="openDataAssetPicker()" title="Pick up to ${N} assets at once — every tap is applied right away">${icn('filter',13)}<span style="margin-left:5px">Assets</span> <b style="font-family:var(--ff-num)">${dataAssets.length}/${N}</b></button>`;
     const indOpts=groups.map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.base)}"${dataIndBase===it.base?' selected':''}>${escH(it.name)}</option>`).join('')}</optgroup>`).join('');
-    const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
-    head=`<div class="cot-card"><div class="cot-card-title">Data<span class="data-sub">up to 4 assets side by side · one indicator for all, or one per panel</span><span style="margin-left:auto;display:flex;gap:8px;align-items:center">${modeBar}${addPicker}</span></div>
-      <div class="data-ctrls"><div class="cmp-filter-grp">${chips||'<span class="cmp-filter-none">No asset selected</span>'}</div>${indPicker}${(panels.length&&dataIndBase)?rangeBarHtml():''}</div></div>`;
-    if(!panels.length)body=`<div class="cot-empty">Pick up to 4 assets above to see their indicator history side by side.</div>`;
+    const indPicker=panels.length?`<div class="cot-filterbar"><select class="btn data-indsel" onchange="setDataInd(this.value)" title="Sets every panel at once — a panel dropdown below overrides just that one" style="cursor:pointer"><option value=""${dataIndBase?'':' selected'}>Choose an indicator…</option>${indOpts}</select></div>`:'';
+    head=kopf(`Up to ${N} assets side by side · one indicator for all, or one per panel`,chips||'<span class="cmp-filter-none">No asset selected</span>',indPicker+((panels.length&&dataIndBase)?rangeBarHtml():''),addPicker);
+    if(!panels.length)body=`<div class="cot-empty">Pick up to ${N} assets above to see their indicator history side by side.</div>`;
     else if(!dataIndBase)body=`<div class="cot-empty">Pick an indicator above — it sets every panel at once. Each panel can then pick its own.</div>`;
-    else body=`<div class="data-grid${panels.length>1?' split':''}">`+panels.map(sym=>{
+    else{n=panels.length;body=`<div class="data-grid">`+panels.map(sym=>{
       const base=dataIndFor(sym.id);
       const own=!!dataIndOverride[sym.id];
       const ownOpts=dataIndGroupsOf(sym).map(g=>`<optgroup label="${escH(g.name)}">${g.items.map(it=>`<option value="${escH(it.b)}"${it.b===base?' selected':''}>${escH(it.n)}</option>`).join('')}</optgroup>`).join('');
-      const sel=`<select class="px-panel-sel" onchange="setDataIndFor('${escJH(sym.id)}',this.value)" title="Indicator for this panel only — the picker at the top sets all four">${ownOpts}</select>`;
+      const sel=`<select class="px-panel-sel" onchange="setDataIndFor('${escJH(sym.id)}',this.value)" title="Indicator for this panel only — the picker at the top sets all of them">${ownOpts}</select>`;
       const chip=own?`<button class="px-panel-chip" onclick="relinkDataInd('${escJH(sym.id)}')" title="This panel shows its own indicator — click to follow the shared picker again">Custom ✕</button>`:'';
-      return panelHtml(sym,base,escH(sym.name||sym.id),chip+sel);
-    }).join('')+`</div>`;
+      return panelHtml(sym,base,escH(sym.name||sym.id),chip+sel+`<button class="px-panel-chip" onclick="removeDataAsset('${escJH(sym.id)}')" title="Remove this panel">✕</button>`);
+    }).join('')+`</div>`;}
   }
   el.innerHTML=head.replace('<!--DATA-RANGE-BAR-->',rangeBarEcht())+body;
+  if(n)dataRasterFuellen(el,n,panelJobs);
   attachChartHovers(el);
   // Die Buttons wurden gerade neu gebaut - ein offenes Popup muss sich wieder
   // daran ausrichten und den neuen Stand zeigen. No-ops, solange zu.
   renderDataAssetPicker();renderDataIndPicker();
 }
+// Raster setzen, Zellen messen, dann jeden Chart in seine Flaeche zeichnen.
+function dataRasterFuellen(el,n,jobs){
+  const grid=el.querySelector('.data-grid'),pg=document.getElementById('pgData');
+  if(!grid||!pg)return;
+  const {c,r}=dataRaster(n,grid.clientWidth);
+  const gap=parseFloat(getComputedStyle(grid).rowGap)||10;
+  const cs=getComputedStyle(pg);
+  // Freie Hoehe = sichtbare Hoehe von #pgData minus alles oberhalb des Rasters.
+  const oben=grid.getBoundingClientRect().top-pg.getBoundingClientRect().top+pg.scrollTop-parseFloat(cs.paddingTop);
+  const frei=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-oben;
+  grid.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;
+  const kopfH=(grid.querySelector('.data-ph')||{offsetHeight:40}).offsetHeight;
+  // Mindesthoehe = Chart DATA_MIN_CHART_H + Panel-Kopf + Innenabstand. Bei
+  // nur EINER Spalte (Telefon) je zwei Panels pro Bildschirmhoehe statt alle
+  // gestaucht - dort wird ohnehin gescrollt.
+  const minZeile=DATA_MIN_CHART_H+kopfH+14;
+  const sichtbar=c===1?Math.min(r,2):r;
+  const zeile=Math.max(minZeile,Math.floor((frei-gap*(sichtbar-1))/sichtbar));
+  grid.style.gridAutoRows=zeile+'px';
+  grid.querySelectorAll('.data-pc[data-k]').forEach(box=>{
+    const job=jobs[+box.dataset.k];if(!job)return;
+    const bs=getComputedStyle(box),px=k=>parseFloat(bs[k])||0;
+    const w=box.clientWidth-px('paddingLeft')-px('paddingRight');
+    const zeichne=h=>{box.innerHTML=indHistChart(job.ind,job.sym.id,{noToolbar:true,noLegend:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo,W:w,H:h});};
+    const h0=box.clientHeight-px('paddingTop')-px('paddingBottom');
+    zeichne(h0);
+    // Hinweiszeile (Datenanfang) nimmt Hoehe weg - einmal nachziehen.
+    const ueber=box.scrollHeight-box.clientHeight;
+    if(ueber>0)zeichne(h0-ueber);
+  });
+}
+let _dataRz=0;
+try{window.addEventListener('resize',()=>{clearTimeout(_dataRz);_dataRz=setTimeout(()=>{const pg=document.getElementById('pgData');if(pg&&pg.style.display!=='none'&&pg.offsetParent)renderDataTab();},150);});}catch(e){}
 function sentReadBadge(ev){
   if(!ev)return`<span style="color:var(--t3);font-size:var(--fs-sm)">no data</span>`;
   // Veralteter Stand: sichtbar bleiben, aber ausdruecklich nicht gezaehlt.
