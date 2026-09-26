@@ -17956,3 +17956,31 @@ meldete — der Push-Befehl wartete nur auf den statischen Teil. Rot waren:
   Schriftskala — als benanntes Symbol ausgenommen (eine 11-px-Stufe wäre
   breiter als der 10-px-Kreis).
 - `kartenlook`: kannte `retailGoTo()` als Go-to-Ziel nicht.
+
+---
+
+## VERSION-CHECK-570 (2026-09-26) — Währungen als Korb-Index
+
+Nutzer: *„Ja Bau das zum Korb Index um und sag wie die dann heißen die du
+nimmst. Guck mal im Screenshot die kann man nehmen oder?"* (Screenshot:
+DXY, EURX, SXY, JXY, CXY, AXY, BXY, ZXY).
+
+**Screenshot geprüft:** AXY 70,26 = AUD/USD 0,7026 × 100; ZXY 56,65 =
+NZD/USD × 100; BXY 132,46 = GBP/USD × 100; CXY 70,71 = 100/USD-CAD 1,414;
+JXY 63,57 = 100/USD-JPY 157,3 × 100; SXY 120,70 = 100/USD-CHF 0,8285. Das
+sind KEINE Körbe, sondern der Kurs gegen USD × 100 — also genau das, was die
+App vorher zeigte. DXY ist ein Korb, aber 57,6 % EUR, ohne AUD/NZD, mit SEK.
+
+**Umsetzung:** eigene Körbe `USD Basket` … `NZD Basket` =
+100·exp(ln P_X − Mittel der ln P der sieben anderen), P in USD (JPY je
+100 JPY). Invariante: Produkt aller acht = 100⁸ (gemessen −8·10⁻⁸ in ln).
+Verwendet in Price-Karte (Beschriftung „EUR Basket"), Price-Tab, Kontext-Band,
+Performance-Werten und im Trend-Treiber 1D (App) und 4H (Workflow, aus den
+4h-Blockschlüssen der sieben Paare; `korb:true` in trend_data.json — die App
+zählt 4H bei Währungen nur aus Korb-Daten). Nur Schlüsse → Kerzen ohne
+Docht, ATR Schluss-zu-Schluss. SCORE_MODEL_VERSION 19.
+
+Trend 1D danach (2026-09-25): USD +4,53 ATR (+0,75), JPY +2,58 (+0,75),
+EUR −0,15 (0), GBP −1,99, CHF −1,51, CAD −1,21, AUD −1,36, NZD −4,64 (je −0,75).
+Wächter `check/korb.js` (Node-Nachbau, Gegenprobe rot); `check/trend.js`
+rechnet den 1D-Korb ebenfalls unabhängig nach.

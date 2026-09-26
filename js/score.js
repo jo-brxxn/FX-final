@@ -1749,7 +1749,10 @@ function symScoreCmp(sym){
 // ±0,25 x ATR14 - zwei feste Zeilen in der COT-Data-Karte.
 // 16 -> 17 (2026-09-25 abends): Trend 4H 0,5 statt 0,75 (Nutzer), Summe ±1,25.
 // 17 -> 18 (2026-09-25 nachts): Trend 4H gegen EMA38 statt EMA20 (Nutzer).
-const SCORE_MODEL_VERSION=18;
+// 18 -> 19 (2026-09-26): Trend 1D/4H der acht Waehrungen auf dem Korb-Index
+// (gegen die sieben anderen, gleichgewichtet) statt auf dem Kurs gegen USD;
+// ATR dort Schluss-zu-Schluss (Koerbe haben keine Hochs/Tiefs).
+const SCORE_MODEL_VERSION=19;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

@@ -7975,6 +7975,11 @@ function fetchPriceHistMeta(){
 function preisArchivAb(id){return(PRICE_HIST_META&&PRICE_HIST_META[id])||null;}
 // Fruehester Tag, den es fuer dieses Asset ueberhaupt gibt (Archiv oder Datei).
 function preisAnfang(id){
+  // Korb: er beginnt, wenn ALLE sieben Nicht-USD-Waehrungen Daten haben.
+  if(FX.includes(id)){const an=FX.filter(c=>c!=='USD').map(c=>preisAnfangRoh(c)).filter(Boolean).sort();return an.length===7?an[6]:null;}
+  return preisAnfangRoh(id);
+}
+function preisAnfangRoh(id){
   const s=priceSeriesFor(id),a=preisArchivAb(id);
   const d=Array.isArray(s)&&s.length?String(s[0][0]).slice(0,10):null;
   return a&&(!d||a<d)?a:d;
@@ -7993,6 +7998,10 @@ function ladePreisArchiv(){
 // Datei zurueck, und gibt es dort Archivdaten, die noch nicht geladen sind?
 function preisArchivNoetig(id,tage,von){
   if(PRICE_HIST||preisArchivFehler)return false;
+  if(FX.includes(id))return FX.filter(c=>c!=='USD').some(c=>preisArchivNoetigRoh(c,tage,von));
+  return preisArchivNoetigRoh(id,tage,von);
+}
+function preisArchivNoetigRoh(id,tage,von){
   const s=priceSeriesFor(id),a=preisArchivAb(id);
   if(!Array.isArray(s)||!s.length||!a||a>=s[0][0])return false;
   const start=von||(tage==null?a:dateAddStr(todayStr(),-tage));
@@ -8006,6 +8015,52 @@ function preisReiheLang(id){
   const erst=s[0][0];
   return a.filter(e=>e&&e[0]<erst&&e[1]>0).map(e=>[e[0],inv?1/e[1]:+e[1]]).concat(s);
 }
+// ── KORB-INDEX JE WAEHRUNG (Nutzer 2026-09-26) ───────────────────────────
+// "Bau das zum Korb-Index um". Bis hierhin war der Kurs einer Waehrung ihr
+// Kurs gegen den US-Dollar (EUR = EUR/USD, JPY = 1/USDJPY, USD = DXY) - faellt
+// der Dollar, stieg der EUR-Chart, auch wenn der Euro gegen alles andere
+// schwach war. Die TradingView-"Currency Indices" (AXY, BXY, CXY, JXY, SXY, ZXY)
+// helfen dabei nicht: nachgerechnet sind sie genau dieser Kurs gegen USD x 100
+// (AXY 70,26 = AUD/USD 0,7026). DXY ist ein Korb, aber zu 57,6 % EUR, ohne
+// AUD/NZD und mit SEK.
+// Deshalb eigene, gleichgewichtete Koerbe: Waehrung X gegen die sieben
+// anderen Majors, geometrisches Mittel -
+//     Korb_X = 100 * exp( ln P_X - Mittel_{Y != X} ln P_Y ),
+// P = Wert in USD (P_USD = 1). Nur Tage, an denen alle acht einen Schluss
+// haben. Invariante: das Produkt aller acht Koerbe ist 100^8 (check/korb.js).
+// ⚠ Nur SCHLUSSKURSE: ein Korb-Hoch/-Tief laesst sich aus den Hochs/Tiefs der
+// Paare nicht ehrlich bilden (sie fallen nicht auf denselben Moment) - die
+// Kerzen haben deshalb keinen Docht, und die ATR des Trend-Treibers rechnet
+// Schluss-zu-Schluss (|C - C_vorher|).
+const KORB_NAME={USD:'USD Basket',EUR:'EUR Basket',GBP:'GBP Basket',CHF:'CHF Basket',JPY:'JPY Basket',CAD:'CAD Basket',AUD:'AUD Basket',NZD:'NZD Basket'};
+const _korbMemo=new Map();
+function korbReihe(id,lang){
+  if(!FX.includes(id))return null;
+  const quelle=lang?preisReiheLang:priceSeriesFor;
+  const schl=id+'|'+(lang?1:0);
+  const m=_korbMemo.get(schl);
+  if(m&&m.pd===PRICE_DATA_FEED&&m.ph===(lang?PRICE_HIST:null))return m.r;
+  const andere=FX.filter(c=>c!=='USD');
+  // Yen pro 100 JPY (Marktkonvention, wie JXY) - sonst laege der JPY-Korb
+  // bei ~0,7 und die Rundung fraesse Genauigkeit. Ein fester Faktor aendert
+  // keine Richtung und keine Rendite.
+  const karten=andere.map(c=>{const s=quelle(c);const f=c==='JPY'?Math.log(100):0;const mp=new Map();(Array.isArray(s)?s:[]).forEach(e=>{const v=+e[1];if(e&&v>0&&isFinite(v))mp.set(String(e[0]).slice(0,10),Math.log(v)+f);});return[c,mp];});
+  let r=null;
+  if(karten.every(([,mp])=>mp.size)){
+    const tage=[...karten[0][1].keys()].filter(d=>karten.every(([,mp])=>mp.has(d))&&!istWochenende(d)).sort();
+    r=tage.map(d=>{
+      const ln={USD:0};karten.forEach(([c,mp])=>{ln[c]=mp.get(d);});
+      const rest=FX.filter(c=>c!==id).reduce((a,c)=>a+ln[c],0)/7;
+      return[d,+(100*Math.exp(ln[id]-rest)).toPrecision(7)];
+    });
+  }
+  _korbMemo.set(schl,{pd:PRICE_DATA_FEED,ph:lang?PRICE_HIST:null,r});
+  return r;
+}
+// Die Reihe, die eine KURS-ANZEIGE fuer ein Asset zeigt: Waehrung = Korb,
+// alles andere der eigene Kurs (inkl. Archiv, s. preisReiheLang).
+function preisReiheAnzeige(id){return FX.includes(id)?korbReihe(id,true):preisReiheLang(id);}
+function preisReiheRechnung(id){return FX.includes(id)?korbReihe(id,false):priceSeriesFor(id);}
 // Stufen seit 2026-09-25 wie bei allen grossen Charts (Nutzer: "3m 6m 1y 3y
 // 6y 10y max"); gezeigt wird nur, was die Kursreihe hergibt (abRegler).
 const AB_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',3650],['MAX',null]];
@@ -8366,10 +8421,10 @@ function abKontextReihe(art,assetId){
     case 'y10':   return{reihe:zu2(bondSeriesOhlc(ccy,'10Y Bond Yield')),einheit:'%',quelle:ccy,feed:'bond'};
     case 'y2us':  return{reihe:zu2(bondSeriesOhlc('USD','2Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
     case 'y10us': return{reihe:zu2(bondSeriesOhlc('USD','10Y Bond Yield')),einheit:'%',quelle:'USD',feed:'bond'};
-    case 'dxy':   return{reihe:preisReiheLang('USD'),einheit:'',quelle:'USD',feed:'price'};
+    case 'dxy':   return{reihe:preisReiheAnzeige('USD'),einheit:'',quelle:'USD',feed:'price'};
     case 'spx':   return{reihe:preisReiheLang('SP500'),einheit:'',quelle:'SP500',feed:'price'};
     case 'nas':   return{reihe:preisReiheLang('NAS'),einheit:'',quelle:'NAS',feed:'price'};
-    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:preisReiheLang(q),einheit:'',quelle:q,feed:'price'};}
+    case 'ccy':   {const q=YIELD_CCY[assetId]||'USD';return{reihe:preisReiheAnzeige(q),einheit:'',quelle:q,feed:'price'};}
     case 'vix':   {const D=SENTIMENT_DATA;const v=D&&D.vix;return{reihe:v&&Array.isArray(v.series)?v.series:null,einheit:'',quelle:'VIX',feed:'sentiment'};}
     default:      return{reihe:null,einheit:'',quelle:null,feed:null};
   }
@@ -9023,9 +9078,11 @@ function fetchTrendData(){
 // je Reihen-Objekt (ein neuer Feed ist ein neues Objekt).
 const _trendTagMemo=new Map();
 function trendTagesReihe(id){
-  const roh=priceSeriesFor(id);
+  // Waehrungen: Korb (nur Schluesse -> ATR Schluss-zu-Schluss, s. korbReihe).
+  const korb=FX.includes(id);
+  const roh=korb?korbReihe(id,false):priceSeriesFor(id);
   if(!Array.isArray(roh)||!roh.length)return null;
-  const heute=todayStr(),schl=id+'|'+roh.length+'|'+(roh[roh.length-1]||[])[0]+'|'+heute;
+  const heute=todayStr(),schl=id+'|'+roh.length+'|'+(roh[roh.length-1]||[])[0]+'|'+heute+'|'+(korb?'k':'');
   const m=_trendTagMemo.get(id);
   if(m&&m.roh===PRICE_DATA_FEED&&m.schl===schl)return m.r;
   const zahl=x=>x!=null&&x!==''&&isFinite(Number(x))&&Number(x)>0;
@@ -9037,8 +9094,8 @@ function trendTagesReihe(id){
     if(i===TREND_EMA_N-1)ema=s.slice(0,TREND_EMA_N).reduce((a,x)=>a+Number(x[1]),0)/TREND_EMA_N;
     else if(i>=TREND_EMA_N)ema=c*2/(TREND_EMA_N+1)+ema*(TREND_EMA_N-1)/(TREND_EMA_N+1);
     z.ema=ema;
-    if(i>0&&hl){
-      const pc=Number(s[i-1][1]),tr=Math.max(z.h-z.l,Math.abs(z.h-pc),Math.abs(z.l-pc));
+    if(i>0&&(hl||korb)){
+      const pc=Number(s[i-1][1]),tr=korb?Math.abs(c-pc):Math.max(z.h-z.l,Math.abs(z.h-pc),Math.abs(z.l-pc));
       if(atr==null){trs.push(tr);if(trs.length===TREND_ATR_N)atr=trs.reduce((a,x)=>a+x,0)/TREND_ATR_N;}
       else atr=(atr*(TREND_ATR_N-1)+tr)/TREND_ATR_N;
     }
@@ -9069,12 +9126,13 @@ function trendWerte(id){
   const n=a&&a.now;
   if(!n)out.grund.h='no 4h candles for this asset';
   else if((a.emaN||20)!==TREND_EMA_H)out.grund.h=`4h file still carries EMA${a.emaN||20}, waiting for the EMA${TREND_EMA_H} run`;
+  else if(FX.includes(id)&&!a.korb)out.grund.h='4h file still carries the rate against USD, waiting for the basket run';
   else if(Date.now()-Date.parse(n.ende)>TREND_4H_MAX_ALTER_MS)out.grund.h='last 4h candle is older than 4 days';
   else{out.h=trendUrteil(n.c,n.ema,n.atr,TREND_PKT_H);if(out.h){out.h.stand=n.t;out.h.ende=n.ende;}else out.grund.h='4h values incomplete';}
   return out;
 }
 function trendRegelText(){
-  return`Price trend, max ±${TREND_PKT+TREND_PKT_H}: daily chart ±${TREND_PKT}, 4-hour chart ±${TREND_PKT_H} (the 4-hour side flips more often, so it weighs less). On each, the close of the last FINISHED candle is compared with an EMA: 20 periods on the daily chart, ${TREND_EMA_H} on the 4-hour chart. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
+  return`Price trend, max ±${TREND_PKT+TREND_PKT_H}: daily chart ±${TREND_PKT}, 4-hour chart ±${TREND_PKT_H} (the 4-hour side flips more often, so it weighs less). On each, the close of the last FINISHED candle is compared with an EMA: 20 periods on the daily chart, ${TREND_EMA_H} on the 4-hour chart. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20). For the eight currencies the price is an equal-weight basket against the other seven (e.g. EUR Basket), not the rate against the dollar; baskets have closes only, so their ATR is measured close-to-close.`;
 }
 function trendAbstTxt(u,k){
   const e=k==='h'?'EMA'+TREND_EMA_H:'EMA'+TREND_EMA_N;
@@ -9631,7 +9689,7 @@ function abTrendOverlayDaten(id,k,welche){
     const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
     // Linie nur, wenn die Datei schon EMA38 traegt (sonst stuende eine
     // EMA20-Linie unter dem Schalter "4H EMA38").
-    if(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H)add('h',a.e4);
+    if(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H&&(!FX.includes(id)||a.korb))add('h',a.e4);
   }
   return out;
 }
@@ -9639,9 +9697,9 @@ function assetPreisKarteHtml(c){
   const tage=(AB_RANGES.find(x=>x[0]===abChartRange)||[])[1];
   const warten=preisArchivNoetig(c.id,tage===undefined?90:tage);
   if(warten)ladePreisArchiv();
-  const reihe=preisReiheLang(c.id);
+  const reihe=preisReiheAnzeige(c.id);
   const linien=abTrendLinien.split(',').filter(Boolean);
-  const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price',{trend:linien});
+  const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,FX.includes(c.id)?KORB_NAME[c.id]:(c.name||c.id),'',c.id,null,'price',{trend:linien});
   const w=trendWerte(c.id);
   const schalter=[['d','1D EMA20'],['h','4H EMA'+TREND_EMA_H]].map(([k,l])=>{
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
@@ -9649,7 +9707,7 @@ function assetPreisKarteHtml(c){
   }).join('');
   const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
-    ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>
+    ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>${FX.includes(c.id)?`<span class="ab-tile-s ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</span>`:''}
     ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}
     <span class="ab-rgs">${regler}</span></div>
     <div class="tr-sws">${schalter}</div>`;
@@ -14553,7 +14611,8 @@ function setPerfWindow(w){perfWindow=w;renderDash();}
 // Auch 1W/1M/YTD haengen daran - ihr Fensterbeginn wird jetzt ebenfalls von
 // einem echten Handelstag aus gezaehlt.
 function perfReturn(id,days){
-  const s=ohneWochenende(priceSeriesFor(id),id);
+  // Waehrungen seit 2026-09-26 als Korb (gegen die sieben anderen).
+  const s=ohneWochenende(preisReiheRechnung(id),id);
   if(!Array.isArray(s)||s.length<2)return null;
   const last=s[s.length-1];
   const lastV=Number(last[1]);
@@ -17561,7 +17620,7 @@ function abgeleiteteReihe(ind,id){
   });
   if(ind.name===TREND_IND.h&&id)return memo('t4:'+id,()=>{
     const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
-    const e=(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H?a.e4:[]).filter(x=>x.length>=4&&x[2]>0&&x[3]>0);
+    const e=(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H&&(!FX.includes(id)||a.korb)?a.e4:[]).filter(x=>x.length>=4&&x[2]>0&&x[3]>0);
     return{pts:e.map(x=>[x[0],Math.round((x[3]-x[1])/x[2]*100)/100,null]),unit:' ATR'};
   });
   if(base===RETAIL_IND_NAME&&id)return memo('rt:'+id,()=>{
@@ -18441,7 +18500,7 @@ function renderPriceChart(){
   const id=priceChartAsset;
   const sym=syms.find(s=>s.id===id);
   const ttl=document.getElementById('mPriceTitle');
-  if(ttl)ttl.textContent=(sym?(sym.name||id):id)+' — price';
+  if(ttl)ttl.textContent=(sym?(sym.name||id):id)+(FX.includes(id)?' — '+KORB_NAME[id]+' (vs the other 7, equal weight)':' — price');
   const feed=(typeof PRICE_DATA_FEED!=='undefined'&&PRICE_DATA_FEED)?PRICE_DATA_FEED[id]:null;
   // ⚠ Wochenende raus, bevor IRGENDETWAS gezeichnet wird - nicht erst im
   // Kerzen-Zweig. Sonst haette dieselbe Seite je nach Modus verschiedene
@@ -18452,7 +18511,7 @@ function renderPriceChart(){
   const pxTage=priceRange==='MAX'?null:priceRange==='CUSTOM'?null:Math.round(priceRange*30.44);
   const pxWarten=preisArchivNoetig(id,pxTage,priceRange==='CUSTOM'?(priceCustomFrom||preisArchivAb(id)):null);
   if(pxWarten)ladePreisArchiv();
-  const all=ohneWochenende(preisReiheLang(id),id);
+  const all=ohneWochenende(preisReiheAnzeige(id),id);
   const pxAb=preisAnfang(id);
   // Werkzeugleiste steht IMMER - auch im Leerfall, sonst sieht die Karte
   // aus, als waere sie kaputt statt "fuer dieses Asset gibt es keine Reihe".
@@ -23553,7 +23612,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,retailGoTo,openRetailPartnerPicker,closeRetailPartnerPicker,retailPartnerWaehlen,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,korbReihe,preisReiheAnzeige,preisReiheRechnung,KORB_NAME,retailGoTo,openRetailPartnerPicker,closeRetailPartnerPicker,retailPartnerWaehlen,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

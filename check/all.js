@@ -41,6 +41,7 @@ const PRUEFUNGEN = [
   { n: 'symbole',   d: 'Flaggen ein Stueck, Glanz begrenzt, jede Karte ein Symbol', f: 'check/symbole.js', args: [], browser: true },
   { n: 'uebergang', d: 'Wisch beim Seitenwechsel, Panel, History-Karte fest', f: 'check/uebergang.js', args: [], browser: true },
   { n: 'logo',      d: 'FX-Logo: Ladebildschirm, leere Kartenflaeche, Intro entfernt', f: 'check/logo.js', args: [], browser: true },
+  { n: 'korb',       d: 'Waehrungen als Korb gegen die 7 anderen: Invariante, Node-Nachbau, Price-Karte, Performance', f: 'check/korb.js', args: [], browser: true },
   { n: 'infoi',      d: 'Info-i: 0,6 x Titelschrift, rechts oben auf Titelhoehe, ueberall', f: 'check/infoi.js', args: [], browser: true },
   { n: 'chartpunkte', d: 'Punkte/Labels auf SVG-Charts: Bezugsbox = SVG, Punkte auf dem Knick', f: 'check/chartpunkte.js', args: [], browser: true },
   { n: 'retailwahl', d: 'Go to Retail: Paar-Auswahl (Waehrungen, bei USD + Non-FX getrennt)', f: 'check/retailwahl.js', args: [], browser: true },

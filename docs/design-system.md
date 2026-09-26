@@ -1173,3 +1173,14 @@ Bei den acht Währungen öffnet der Knopf ein Auswahlfenster (`.rtp`): alle
 Paare mit Retail-Buch, je mit Long-Anteil aus Sicht der Währung; bei USD
 zusätzlich getrennt die Nicht-FX-Bücher (Gold, Silber, BTC, Nasdaq).
 Nicht-FX-Assets springen direkt in ihr eines Buch.
+
+## Kurs einer Währung = Korb (seit 2026-09-26)
+
+Price-Karte, Price-Tab, Kontext-Band und Performance-Werte zeigen für die acht
+Währungen den eigenen, gleichgewichteten Korb gegen die sieben anderen
+(`USD Basket`, `EUR Basket`, … — `KORB_NAME`, `korbReihe`), nicht den Kurs
+gegen USD. Die TradingView-„Currency Indices" (AXY, BXY, CXY, JXY, SXY, ZXY)
+sind nachgerechnet nur Kurs gegen USD × 100 und taugen dafür nicht. Körbe
+haben nur Schlusskurse → Kerzen ohne Docht. Rechnungen, die an der Marktreaktion
+hängen (Marktrelevanz im Score, Korrelationen, Carry), bleiben bewusst bei den
+Paar-Kursen. Wächter `check/korb.js`.

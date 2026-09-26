@@ -25,6 +25,22 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const lies = f => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, '..', f), 'utf8')); } catch (e) { return null; } };
 const urteil = (c, ema, atr, g = 0.75) => { const a = (c - ema) / atr; return Math.abs(a) <= 0.25 ? 0 : a > 0 ? g : -g; };
 
+// Korb wie korbReihe() in der App, unabhaengig nachgebaut (2026-09-26).
+const FXL = ['USD', 'EUR', 'GBP', 'CHF', 'JPY', 'CAD', 'AUD', 'NZD'];
+function korbSoll(preise, id, heute) {
+  const nu = FXL.filter(c => c !== 'USD'), wt = d => { const w = new Date(d + 'T00:00:00Z').getUTCDay(); return w !== 0 && w !== 6; };
+  const m = {}; nu.forEach(c => { const p = preise[c]; m[c] = new Map((p.series || []).filter(e => e && +e[1] > 0).map(e => [e[0], Math.log(p.invert ? 1 / e[1] : +e[1]) + (c === 'JPY' ? Math.log(100) : 0)])); });
+  const tage = [...m.EUR.keys()].filter(d => nu.every(c => m[c].has(d)) && wt(d) && d < heute).sort();
+  const s = tage.map(d => { const ln = { USD: 0 }; nu.forEach(c => { ln[c] = m[c].get(d); }); const rest = FXL.filter(c => c !== id).reduce((a, c) => a + ln[c], 0) / 7; return [d, 100 * Math.exp(ln[id] - rest)]; });
+  if (s.length < 34) return null;
+  let ema = 0, atr = null; const tr = [];
+  for (let i = 0; i < s.length; i++) {
+    if (i < 20) ema += s[i][1] / 20; else ema = (s[i][1] - ema) * 2 / 21 + ema;
+    if (i > 0) { const t = Math.abs(s[i][1] - s[i - 1][1]); if (atr == null) { tr.push(t); if (tr.length === 14) atr = tr.reduce((a, b) => a + b) / 14; } else atr = (atr * 13 + t) / 14; }
+  }
+  const c = s[s.length - 1][1];
+  return { pkt: urteil(c, ema, atr), c, ema, atr, d: s[s.length - 1][0] };
+}
 function soll1d(p, id, heute) {
   const z = x => x != null && x !== '' && isFinite(Number(x)) && Number(x) > 0;
   let s = (p.series || []).filter(e => e && e[0] < heute && z(e[1]));
@@ -62,7 +78,7 @@ function soll1d(p, id, heute) {
   // A) 1D
   let n1 = 0;
   Object.keys(preise || {}).forEach(id => {
-    const sl = soll1d(preise[id], id, ist.heute), i = ist.a[id];
+    const sl = FXL.includes(id) ? korbSoll(preise, id, ist.heute) : soll1d(preise[id], id, ist.heute), i = ist.a[id];
     if (!i) return;
     if (!sl) { if (i.d != null) fail('1D OHNE GRUNDLAGE', `${id}: Zeile ${i.d}, Node findet keine 20+14 geschlossenen Tage`); return; }
     n1++;
@@ -73,7 +89,7 @@ function soll1d(p, id, heute) {
   let n4 = 0;
   if (vier && vier.assets) Object.keys(vier.assets).forEach(id => {
     const a = vier.assets[id], i = ist.a[id]; if (!i || !a.now) return;
-    const alt = Date.now() - Date.parse(a.now.ende) > 4 * 864e5 || (a.emaN || 20) !== 38;   // EMA38 seit 2026-09-25
+    const alt = Date.now() - Date.parse(a.now.ende) > 4 * 864e5 || (a.emaN || 20) !== 38 || (FXL.includes(id) && !a.korb);   // EMA38 seit 2026-09-25, Waehrungen als Korb seit 2026-09-26
     const sl = alt ? null : urteil(a.now.c, a.now.ema, a.now.atr, 0.5);   // 4H seit 2026-09-25 abends 0,5
     n4++;
     if ((sl == null ? null : sl) !== i.h) fail('4H FALSCH', `${id}: App ${i.h}, Datei ${sl}${alt ? ' (Block aelter als 4 Tage)' : ''}`);

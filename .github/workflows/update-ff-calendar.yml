@@ -3731,11 +3731,15 @@ jobs:
             const r7=v=>Number(v.toPrecision(7));
             let alt={};try{alt=JSON.parse(fs.readFileSync("trend_data.json","utf8")).assets||{};}catch(e){}
             const out={};let ok=0;
-            ["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD","GOLD","SILVER","OIL","BTC","SP500","NAS","DAX"].forEach(id=>{
-              let j;try{j=JSON.parse(fs.readFileSync("tr_"+id+".json","utf8"));}catch(e){if(alt[id])out[id]=alt[id];return;}
+            const IDS=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD","GOLD","SILVER","OIL","BTC","SP500","NAS","DAX"];
+            const FXL=["USD","EUR","GBP","CHF","JPY","CAD","AUD","NZD"],NU=FXL.filter(c=>c!=="USD");
+            // 1. Durchgang: je Asset die geschlossenen 4h-Bloecke.
+            const KZ={},SYM={};
+            IDS.forEach(id=>{
+              let j;try{j=JSON.parse(fs.readFileSync("tr_"+id+".json","utf8"));}catch(e){return;}
               const r=j&&j.chart&&j.chart.result&&j.chart.result[0];
               const ts=r&&r.timestamp,q=r&&r.indicators&&r.indicators.quote&&r.indicators.quote[0];
-              if(!ts||!q||!ts.length){console.log("[debug] trend "+id+": no bars");if(alt[id])out[id]=alt[id];return;}
+              if(!ts||!q||!ts.length){console.log("[debug] trend "+id+": no bars");return;}
               // 1h -> 4h-Bloecke; ein Block ist GESCHLOSSEN, wenn sein Ende vorbei ist.
               const bl=new Map();
               for(let i=0;i<ts.length;i++){
@@ -3747,8 +3751,26 @@ jobs:
                 if(!b)bl.set(k,{t:k,o,h,l,c});
                 else{b.h=Math.max(b.h,h);b.l=Math.min(b.l,l);b.c=c;}
               }
-              const kz=[...bl.values()].sort((a,b)=>a.t-b.t).filter(b=>b.t+B<=jetzt);
-              if(kz.length<40){console.log("[debug] trend "+id+": only "+kz.length+" closed 4h bars");if(alt[id])out[id]=alt[id];return;}
+              KZ[id]=[...bl.values()].sort((a,b)=>a.t-b.t).filter(b=>b.t+B<=jetzt);
+              SYM[id]=r.meta&&r.meta.symbol||"";
+            });
+            // 2. Korb je Waehrung (Nutzer 2026-09-26: "Bau das zum Korb-Index um"):
+            // gleichgewichtet gegen die sieben anderen, geometrisch, aus den
+            // Block-SCHLUESSEN der sieben Nicht-USD-Paare (USD je Einheit, JPY je
+            // 100 JPY) - dieselbe Formel wie korbReihe() in der App. Nur Bloecke,
+            // in denen alle sieben einen Schluss haben. Ein Korb-Hoch/-Tief gibt
+            // es nicht ehrlich -> ATR Schluss-zu-Schluss.
+            const KORB={};
+            if(NU.every(c=>KZ[c]&&KZ[c].length)){
+              const maps=NU.map(c=>new Map(KZ[c].map(b=>[b.t,Math.log(b.c)+(c==="JPY"?Math.log(100):0)])));
+              const zeiten=[...maps[0].keys()].filter(t=>maps.every(m=>m.has(t))).sort((a,b)=>a-b);
+              FXL.forEach(id=>{KORB[id]=zeiten.map(t=>{const ln={USD:0};NU.forEach((c,k)=>{ln[c]=maps[k].get(t);});
+                const rest=FXL.filter(c=>c!==id).reduce((a,c)=>a+ln[c],0)/7;const v=100*Math.exp(ln[id]-rest);return{t,o:v,h:v,l:v,c:v};});});
+            }else console.log("[debug] trend basket: not all seven USD pairs have 4h bars - currencies keep their old values");
+            IDS.forEach(id=>{
+              const korb=FXL.includes(id);
+              const kz=korb?KORB[id]:KZ[id];
+              if(!kz||kz.length<40){console.log("[debug] trend "+id+": only "+(kz?kz.length:0)+" closed 4h bars");if(alt[id])out[id]=alt[id];return;}
               // EMA38 (Nutzer 2026-09-25: "im 4h Chart ... den 38"; Start: Mittel
               // der ersten 38), ATR14 nach Wilder. emaN steht mit in der Datei,
               // damit die App nie einen EMA20-Wert als EMA38 zaehlt.
@@ -3757,7 +3779,7 @@ jobs:
               kz.forEach((b,i)=>{
                 if(i<N-1){b.ema=null;}else if(i===N-1){ema=kz.slice(0,N).reduce((s,x)=>s+x.c,0)/N;b.ema=ema;}
                 else{ema=b.c*2/(N+1)+ema*(N-1)/(N+1);b.ema=ema;}
-                if(i>0){const pc=kz[i-1].c,tr=Math.max(b.h-b.l,Math.abs(b.h-pc),Math.abs(b.l-pc));
+                if(i>0){const pc=kz[i-1].c,tr=korb?Math.abs(b.c-pc):Math.max(b.h-b.l,Math.abs(b.h-pc),Math.abs(b.l-pc));
                   if(atr==null){trs.push(tr);if(trs.length===14)atr=trs.reduce((s,x)=>s+x,0)/14;}else atr=(atr*13+tr)/14;}
                 b.atr=atr;
               });
@@ -3767,9 +3789,9 @@ jobs:
               // Tagesende speist den Verlaufschart der 4H-Zeile.
               const e4=Object.keys(tag).sort().slice(-520).map(d=>[d,tag[d][0],tag[d][1],tag[d][2]]);
               const z=kz[kz.length-1];
-              out[id]={sym:r.meta&&r.meta.symbol||"",emaN:N,now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
+              out[id]={sym:korb?"basket vs 7":SYM[id],korb,emaN:N,now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
               ok++;
-              console.log("[debug] trend "+id+": "+kz.length+" 4h bars, last "+out[id].now.t+" c="+out[id].now.c+" ema="+out[id].now.ema+" atr="+out[id].now.atr);
+              console.log("[debug] trend "+id+(korb?" (basket)":"")+": "+kz.length+" 4h bars, last "+out[id].now.t+" c="+out[id].now.c+" ema="+out[id].now.ema+" atr="+out[id].now.atr);
             });
             if(ok){fs.writeFileSync("trend_data.json",JSON.stringify({updated:new Date().toISOString(),blocks:"UTC 00/04/08/12/16/20",assets:out}));console.log("trend_data.json: "+ok+"/15 assets");}
             else console.log("trend_data: no 4h bars, keeping existing file");
