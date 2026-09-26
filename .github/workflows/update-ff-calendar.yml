@@ -3749,11 +3749,14 @@ jobs:
               }
               const kz=[...bl.values()].sort((a,b)=>a.t-b.t).filter(b=>b.t+B<=jetzt);
               if(kz.length<40){console.log("[debug] trend "+id+": only "+kz.length+" closed 4h bars");if(alt[id])out[id]=alt[id];return;}
-              // EMA20 (Start: Mittel der ersten 20), ATR14 nach Wilder.
+              // EMA38 (Nutzer 2026-09-25: "im 4h Chart ... den 38"; Start: Mittel
+              // der ersten 38), ATR14 nach Wilder. emaN steht mit in der Datei,
+              // damit die App nie einen EMA20-Wert als EMA38 zaehlt.
+              const N=38;
               let ema=null,atr=null;const trs=[];
               kz.forEach((b,i)=>{
-                if(i<19){b.ema=null;}else if(i===19){ema=kz.slice(0,20).reduce((s,x)=>s+x.c,0)/20;b.ema=ema;}
-                else{ema=b.c*2/21+ema*19/21;b.ema=ema;}
+                if(i<N-1){b.ema=null;}else if(i===N-1){ema=kz.slice(0,N).reduce((s,x)=>s+x.c,0)/N;b.ema=ema;}
+                else{ema=b.c*2/(N+1)+ema*(N-1)/(N+1);b.ema=ema;}
                 if(i>0){const pc=kz[i-1].c,tr=Math.max(b.h-b.l,Math.abs(b.h-pc),Math.abs(b.l-pc));
                   if(atr==null){trs.push(tr);if(trs.length===14)atr=trs.reduce((s,x)=>s+x,0)/14;}else atr=(atr*13+tr)/14;}
                 b.atr=atr;
@@ -3764,7 +3767,7 @@ jobs:
               // Tagesende speist den Verlaufschart der 4H-Zeile.
               const e4=Object.keys(tag).sort().slice(-520).map(d=>[d,tag[d][0],tag[d][1],tag[d][2]]);
               const z=kz[kz.length-1];
-              out[id]={sym:r.meta&&r.meta.symbol||"",now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
+              out[id]={sym:r.meta&&r.meta.symbol||"",emaN:N,now:{t:new Date(z.t*1000).toISOString(),ende:new Date((z.t+B)*1000).toISOString(),c:r7(z.c),ema:r7(z.ema),atr:r7(z.atr)},bars:kz.length,e4};
               ok++;
               console.log("[debug] trend "+id+": "+kz.length+" 4h bars, last "+out[id].now.t+" c="+out[id].now.c+" ema="+out[id].now.ema+" atr="+out[id].now.atr);
             });

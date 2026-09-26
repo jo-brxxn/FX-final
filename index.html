@@ -5583,6 +5583,19 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
 .fxlogo.lg-einmal>.lg-b{animation:lgBogenEin .6s .45s cubic-bezier(.45,0,.2,1) both}
 @keyframes lgKerzeEin{0%{transform:scaleY(0)}100%{transform:scaleY(1)}}
 @keyframes lgBogenEin{0%{transform:translateX(-7%);opacity:0}100%{transform:translateX(0);opacity:1}}
+/* Retail-Paarauswahl (Nutzer 2026-09-25): zentriertes Fenster, Waehrungen
+   und (nur bei USD) Nicht-FX getrennt, je Knopf der Long-Anteil. */
+.rtp{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100001;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 80px);overflow-y:auto;
+  background:var(--card);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shadow-pop);padding:16px 18px 18px;animation:popoverInCenter .16s cubic-bezier(.2,.8,.3,1) both}
+.rtp-kopf{display:flex;align-items:center;justify-content:space-between;gap:12px;font:800 var(--fs-kt)/1.25 var(--ff-text);color:var(--t0)}
+.rtp-x{border:none;background:none;color:var(--t2);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:6px}
+.rtp-grp{font:700 var(--fs-2xs)/1.2 var(--ff-text);letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin:16px 0 8px}
+.rtp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.rtp-opt{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 12px;border:1px solid var(--bd2);border-radius:var(--rss);background:var(--ctl-bg);cursor:pointer;text-align:left}
+.rtp-opt:disabled{opacity:.45;cursor:default}
+@media(hover:hover){.rtp-opt:not(:disabled):hover{border-color:var(--ui-act)}}
+.rtp-n{font:700 var(--fs-base)/1.2 var(--ff-num);color:var(--t0)}
+.rtp-l{font:600 var(--fs-2xs)/1.2 var(--ff-num);color:var(--t3)}
 /* Warte-Platzhalter (Nutzer-Regel 2026-09-25): das animierte Logo, mittig,
    mit kurzer Zeile darunter - ueberall, wo auf Daten gewartet wird. */
 .lade-platz{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:140px;height:100%;width:100%;padding:12px}
@@ -5644,6 +5657,35 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 /* ⚠ Der Kalenderkopf setzt .info-b auf position:static (hoehere Spezifitaet) -
    dann zeichnete ::before den Kreis ueber den ganzen Kopf (479px gemessen). */
 .abc-cal>.abc-hd .info-b{position:relative}
+/* ══ ⓘ: EIN DRITTEL KLEINER, RECHTS OBEN AUF TITELHOEHE (Nutzer 2026-09-25,
+   Dauerregel: "die kleinen Info i muessen sich der Schrift daneben anpassen
+   ... ein Drittel kleiner ... bei den Karten rechts oben in der Ecke aber auf
+   Hoehe der Schrift und das ueberall so"). Kreis = 0,6 x Titelschrift
+   (17 px -> 10 px statt 15 px), Trefferflaeche bleibt 21 px. Der Knopf steht
+   als LETZTES Element der Titelzeile (order) und schiebt sich mit
+   margin-left:auto nach rechts; hat die Zeile schon ein rechtsbuendiges
+   Element (Zeitregler, Datum, Pfeile), steht er direkt dahinter.
+   Waechter: check/infoi.js. */
+:root{--ii-kreis:calc(var(--fs-kt) * .6)}
+.info-b::before,.rub-hdr .rinfo::before,.cot-card-title .rinfo::before,.dw-t .rinfo::before{
+  inset:auto;left:50%;top:50%;width:var(--ii-kreis);height:var(--ii-kreis);transform:translate(-50%,-50%);box-sizing:border-box;border-width:1.1px}
+.info-b,.rub-hdr .rinfo,.cot-card-title .rinfo,.dw-t .rinfo{font-size:calc(var(--ii-kreis) * .72)}
+.dw-t>.info-b,.ab-tile-hd>.info-b,.mx-card-title>.info-b,.rub-hdr .info-b,.abc-hd>.info-b,
+.dw-t>.rinfo,.cot-card-title>:is(.rinfo,.info-b),.mx-card-title>.rinfo,.dw-hdr>.rinfo,.rub-hdr>.rinfo{
+  margin-left:auto!important;margin-right:-5.5px!important;align-self:center;flex:none}
+.cot-card-title>.info-b{order:0}
+/* Steht rechts schon ein Element (Filter, "Open"-Link), setzt
+   infoKnoepfeEinordnen() (js/main.js) das ⓘ DAHINTER und markiert es. */
+.ii-nach{margin-left:6px!important}
+/* Dashboard: der Titelblock (.dw-t) war nur so breit wie der Titel - er
+   bekommt die ganze Zeile, damit das ⓘ an den rechten Rand kann. */
+.dw-hdr>.dw-t{flex:1 1 auto;min-width:0}
+.dw-t:has(>:is(.info-b,.rinfo) ~ [style*="margin-left:auto"])>:is(.info-b,.rinfo),.cot-card-title:has(>:is(.info-b,.rinfo) ~ [style*="margin-left:auto"])>:is(.info-b,.rinfo),
+.ab-tile-hd:has(>.ab-rgs)>.info-b,.ab-tile-hd:has(>.info-b ~ [style*="margin-left:auto"])>.info-b{margin-left:4px!important}
+/* Kalender: der Monat steht mittig zwischen den Pfeilen - das ⓘ sitzt
+   deshalb absolut in der rechten Ecke, der Kopf haelt ihm Platz frei. */
+.abc-cal>.abc-hd{padding-right:22px}
+.abc-cal>.abc-hd .info-b{position:absolute;right:0;top:50%;transform:translateY(-50%);margin:0}
 /* ══ ANGEPINNTE NOTIZEN (Nutzer 2026-09-24: "die Notizen sollen mehr in der
    Bias-Farbe eingefaerbt sein und die Ueberschrift groesser, besser
    lesbar"). Vorher nur ein 3px-Strich links, Flaeche grau, Titel 10/11px.
@@ -5802,11 +5844,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-567 - Trend 4H 0,5; lange Kurshistorie bei Bedarf mit Lade-Logo; Asset-Stapel-Breite fest."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-568 - Info-i 2/3 Groesse rechts oben, Historie-Punkte auf der Linie, 4H EMA38, Retail-Paarauswahl."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-567</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-568</span>
     </span>
   </div>
   <div class="hdr-r">

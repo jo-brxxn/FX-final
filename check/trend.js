@@ -56,7 +56,7 @@ function soll1d(p, id, heute) {
     const heute = todayStr(), o = { heute, a: {} };
     syms.forEach(s => { const r = (s.rubrics || []).find(x => x.name === 'COT Data'); if (!r) return;
       const z = n => { const i = r.indicators.find(x => x.name === n); return i ? i.pkt : null; };
-      o.a[s.id] = { d: z('Trend 1D (EMA20)'), h: z('Trend 4H (EMA20)') }; });
+      o.a[s.id] = { d: z('Trend 1D (EMA20)'), h: z('Trend 4H (EMA38)') }; });
     return o;
   });
   // A) 1D
@@ -73,7 +73,7 @@ function soll1d(p, id, heute) {
   let n4 = 0;
   if (vier && vier.assets) Object.keys(vier.assets).forEach(id => {
     const a = vier.assets[id], i = ist.a[id]; if (!i || !a.now) return;
-    const alt = Date.now() - Date.parse(a.now.ende) > 4 * 864e5;
+    const alt = Date.now() - Date.parse(a.now.ende) > 4 * 864e5 || (a.emaN || 20) !== 38;   // EMA38 seit 2026-09-25
     const sl = alt ? null : urteil(a.now.c, a.now.ema, a.now.atr, 0.5);   // 4H seit 2026-09-25 abends 0,5
     n4++;
     if ((sl == null ? null : sl) !== i.h) fail('4H FALSCH', `${id}: App ${i.h}, Datei ${sl}${alt ? ' (Block aelter als 4 Tage)' : ''}`);

@@ -1136,7 +1136,7 @@ function swCotGruppen(rub){
     if(/Positioning$/.test(b)&&b!=='Retail Positioning'||b===COT_WOW_BASE)g.COT.push(i);
     else if(b==='Retail Positioning')g.Retail.push(i);
     else if(b==='Seasonality')g.Seasonality.push(i);
-    else if(/^Trend (1D|4H) \(EMA20\)$/.test(i.name))g.Trend.push(i);
+    else if(/^Trend (1D|4H) \(EMA\d+\)$/.test(i.name))g.Trend.push(i);
     else g.Sentiment.push(i);
   });
   return g;
@@ -1748,7 +1748,8 @@ function symScoreCmp(sym){
 // geschlossenen 1D- und 4H-Kerze gegen EMA20, je ±0,75, neutral innerhalb
 // ±0,25 x ATR14 - zwei feste Zeilen in der COT-Data-Karte.
 // 16 -> 17 (2026-09-25 abends): Trend 4H 0,5 statt 0,75 (Nutzer), Summe ±1,25.
-const SCORE_MODEL_VERSION=17;
+// 17 -> 18 (2026-09-25 nachts): Trend 4H gegen EMA38 statt EMA20 (Nutzer).
+const SCORE_MODEL_VERSION=18;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

@@ -1148,3 +1148,28 @@ Das Panel ist `max-content` breit; die Score-Spalte hat deshalb eine feste
 Breite (`min-width:5ch`, `tabular-nums`, rechtsbündig). Sonst verschiebt jede
 neue Score-Lieferung bei offenem Panel die rechte Kante. Wächter
 `check/stapel.js`.
+
+## ⓘ-Knöpfe: Größe und Platz (Dauerregel seit 2026-09-25)
+
+Nutzer: *„die kleinen Info i müssen sich der Schrift daneben anpassen … ein
+Drittel kleiner … bei den Karten rechts oben in der Ecke aber auf Höhe der
+Schrift und das überall so"*. Sichtbarer Kreis = `--ii-kreis` = 0,6 ×
+Kartentitel (17 px → 10 px), Trefferfläche bleibt 21 px. Das ⓘ ist das
+rechteste Element der Titelzeile; steht dort schon etwas (Filter,
+„Open"-Link, Zeitregler, Untertitel), setzt `infoKnoepfeEinordnen()` es
+dahinter. Kalender: absolut in der rechten Ecke (der Monat bleibt mittig).
+Wächter `check/infoi.js`.
+
+## HTML-Überlagerung auf SVG-Charts (seit 2026-09-25)
+
+Punkte und Achsenbeschriftung liegen als HTML in `%` über einem gestreckten
+SVG. Die Bezugsbox `.cax` muss **genau** das SVG umschließen — Rahmen,
+Innenabstand und Legende gehören an einen äußeren Container
+(`.histl`/`.bt-pfad`). Wächter `check/chartpunkte.js`.
+
+## Retail: „Go to Retail Sentiment" (seit 2026-09-25)
+
+Bei den acht Währungen öffnet der Knopf ein Auswahlfenster (`.rtp`): alle
+Paare mit Retail-Buch, je mit Long-Anteil aus Sicht der Währung; bei USD
+zusätzlich getrennt die Nicht-FX-Bücher (Gold, Silber, BTC, Nasdaq).
+Nicht-FX-Assets springen direkt in ihr eines Buch.

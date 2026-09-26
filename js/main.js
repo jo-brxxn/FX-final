@@ -1702,14 +1702,18 @@ function histScoreLineChart(items,aktivDatum){
   // (182px) und in der schmalen Karte der Asset-Seite, wo sie 100px bekommt
   // und der Tagesliste den Rest laesst. Ein !important-Ueberschreiben der
   // inline-Hoehe waere die Alternative gewesen - ein Token ist ehrlicher.
-  return`<div class="histl cax"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:var(--histl-h,${H}px)">
+  // ⚠ Rahmen/Innenabstand an .histl, die Bezugsbox .cax INNEN liegt exakt
+  // auf dem SVG (Bugreport 2026-09-25: Punkte sassen neben der Linie - die
+  // %-Lagen bezogen sich auf die gepolsterte Box, 469x110 statt 455x100 px,
+  // bis 5,7 px daneben). Waechter check/chartpunkte.js.
+  return`<div class="histl"><div class="cax"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:var(--histl-h,${H}px)">
     <defs>
       <clipPath id="${uid}o"><rect x="0" y="0" width="${W}" height="${y0.toFixed(1)}"/></clipPath>
       <clipPath id="${uid}u"><rect x="0" y="${y0.toFixed(1)}" width="${W}" height="${(H-y0).toFixed(1)}"/></clipPath>
     </defs>
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd2)" stroke-width="1.2"/>
     ${marke}${linien}
-  </svg>${punkteHtml}${achsen}</div>`;
+  </svg>${punkteHtml}${achsen}</div></div>`;
 }
 // Klick auf einen Punkt der Linie: die zugehoerige Tageszeile hervorheben und
 // ins Bild holen. ⚠ Kein Neu-Rendern der ganzen Liste - das wuerde die
@@ -7648,11 +7652,73 @@ const AB_GOTO_NAME={
 // `stopp` fuer Karten, die SELBST einen onclick tragen (die Kalenderkarte
 // oeffnet als Ganze ein Fenster) - ohne stopPropagation wuerde ein Klick auf
 // den Knopf beides ausloesen: das Fenster UND die Navigation.
+// ── "Go to Retail Sentiment" mit Paar-Auswahl (Nutzer 2026-09-25) ────────
+// "wenn man bei der Karte Retail Sentiment auf Go to Retail geht dann soll
+// ein Fenster kommen, wo man dann auswaehlen kann mit welcher Waehrung man es
+// paaren moechte bzw. welchem Non-FX-Asset, bei USD zumindest - das steht
+// dann aber auch separat: die Waehrungen und Non-FX bei USD".
+// Nur bei den acht Waehrungen; ein Nicht-FX-Asset hat genau ein Buch und
+// geht direkt dorthin. Angeboten wird nur, was es im Retail-Buch gibt (in
+// der Schreibweise des Brokers, z.B. USDJPY); dazu der Long-Anteil in Sicht
+// der gewaehlten Waehrung, damit die Auswahl schon etwas sagt.
+function retailGoTo(){
+  const c=getSym();if(!c)return;
+  if(!FX.includes(c.id)){assetQuickGo('retail');return;}
+  openRetailPartnerPicker(c.id);
+}
+function retailBuch(){
+  const m=new Map();
+  ((SENTIMENT_DATA&&SENTIMENT_DATA.retail)||[]).forEach(r=>{const s=String(r&&r.sym||'').toUpperCase();if(s&&isFinite(+r.long))m.set(s,+r.long);});
+  return m;
+}
+function openRetailPartnerPicker(id){
+  closeRetailPartnerPicker();
+  const buch=retailBuch();
+  const knopf=(sym,label,lang)=>`<button class="rtp-opt" onclick="retailPartnerWaehlen('${escJH(sym)}')" title="Open Retail Sentiment for ${escH(sym)}">
+      <span class="rtp-n">${escH(label)}</span>${lang==null?'':`<span class="rtp-l" style="color:${lang>=RETAIL_AB?BC.bear:lang<=100-RETAIL_AB?BC.bull:'var(--t3)'}">${Math.round(lang)}% long ${escH(id)}</span>`}</button>`;
+  const fx=FX.filter(p=>p!==id).map(p=>{
+    const s=buch.has(id+p)?id+p:buch.has(p+id)?p+id:null;
+    if(!s)return`<button class="rtp-opt" disabled title="The broker publishes no retail book for ${escH(id)}/${escH(p)}"><span class="rtp-n">${escH(id)}/${escH(p)}</span><span class="rtp-l">no data</span></button>`;
+    const lang=s.startsWith(id)?buch.get(s):100-buch.get(s);
+    return knopf(s,s.slice(0,3)+'/'+s.slice(3),lang);
+  }).join('');
+  let nonfx='';
+  if(id==='USD'){
+    const liste=Object.keys(SENT_NONFX_PRICE_ID).filter(s=>buch.has(s)).map(s=>{
+      const aid=SENT_NONFX_PRICE_ID[s],nm=((syms||[]).find(x=>x.id===aid)||{}).name||aid;
+      // Das Buch ist Long ASSET gegen USD - aus USD-Sicht also gedreht.
+      return knopf(s,nm,100-buch.get(s));
+    }).join('');
+    if(liste)nonfx=`<div class="rtp-grp">Non-FX assets (priced in USD)</div><div class="rtp-grid">${liste}</div>`;
+  }
+  const m=document.createElement('div');
+  m.className='rtp';m.id='retailPartnerPicker';m.setAttribute('role','dialog');
+  m.innerHTML=`<div class="rtp-kopf"><span>Retail Sentiment for ${escH(id)} — pair with …</span><button class="rtp-x" onclick="closeRetailPartnerPicker()" aria-label="Close">✕</button></div>
+    <div class="rtp-grp">Currencies</div><div class="rtp-grid">${fx}</div>${nonfx}`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('pointerdown',retailPartnerAussen,true),0);
+}
+function closeRetailPartnerPicker(){
+  const m=document.getElementById('retailPartnerPicker');if(m)m.remove();
+  document.removeEventListener('pointerdown',retailPartnerAussen,true);
+}
+function retailPartnerAussen(e){const m=document.getElementById('retailPartnerPicker');if(m&&!m.contains(e.target))closeRetailPartnerPicker();}
+function retailPartnerWaehlen(sym){
+  closeRetailPartnerPicker();
+  const c=getSym();if(!c)return;
+  // Wie assetQuickGo: Rueckweg zur Asset-Seite merken, dann gefiltert oeffnen.
+  _resReturnActive=true;_quickReturnAssetId=c.id;_quickReturnTab=null;quickReturnMerken();
+  document.body.classList.add('res-return-active');
+  setBackPillTitle(`Back to ${c.name}`);
+  showTab('sent');
+  try{setSentSub('retail');setSentSym(sym);}catch(e){}
+}
 function abGoToHtml(ziel,stopp){
   if(!ziel)return'';
   const name=AB_GOTO_NAME[ziel];
   if(!name)return'';
-  const h=(stopp?'event.stopPropagation();':'')+`assetQuickGo('${ziel}')`;
+  // Retail: bei Waehrungen erst die Paar-Auswahl (retailGoTo).
+  const h=(stopp?'event.stopPropagation();':'')+(ziel==='retail'?'retailGoTo()':`assetQuickGo('${ziel}')`);
   return`<div class="ab-goto"><button class="ab-goto-b" onclick="${h}" title="Open ${escH(name)} with this asset already selected — the back arrow at the top brings you straight back here">Go to ${escH(name)} →</button></div>`;
 }
 // ⚠ Das Ziel steht VORNE, damit die acht Aufrufstellen unangetastet bleiben:
@@ -8928,10 +8994,15 @@ function applyRohstoffFeed(){
 // Docht wird uebersprungen, nicht geschaetzt (Regel 4).
 // 4H kommt aus trend_data.json (Workflow: Yahoo 1h -> 4h-Bloecke UTC
 // 00/04/..., EMA/ATR dort ueber 730 Tage gerechnet).
-const TREND_IND={d:'Trend 1D (EMA20)',h:'Trend 4H (EMA20)'};
+// 4H seit 2026-09-25 mit EMA38 (Nutzer: "kann man im 4h Chart den 50 Ema benutzen?
+// Oder 38 vlt? Ich will den 38"). Der alte Zeilenname wird in applyTrendFeed
+// entfernt, sonst stuende eine Geisterzeile mit Punkten im Score.
+const TREND_IND={d:'Trend 1D (EMA20)',h:'Trend 4H (EMA38)'};
+const TREND_IND_ALT=['Trend 4H (EMA20)'];
+const TREND_EMA_H=38;
 // 4H seit 2026-09-25 abends 0,5 statt 0,75 (Nutzer: "mach 4h auf 0,5" - der
 // 4h-Teil kippt oft innerhalb eines Tages). Summe max ±1,25.
-const TREND_PKT=0.75,TREND_PKT_H=0.5,TREND_NEUTRAL_ATR=0.25,TREND_EMA_N=20,TREND_ATR_N=14;
+const TREND_PKT=0.75,TREND_PKT_H=0.5,TREND_NEUTRAL_ATR=0.25,TREND_EMA_N=20,TREND_ATR_N=14;   // TREND_EMA_N = 1D
 // Ein 4h-Stand, dessen Block laenger als 4 Tage vorbei ist, zaehlt nicht
 // (Wochenende bei FX ~2,1 Tage).
 const TREND_4H_MAX_ALTER_MS=4*86400000;
@@ -8993,17 +9064,19 @@ function trendWerte(id){
   const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
   const n=a&&a.now;
   if(!n)out.grund.h='no 4h candles for this asset';
+  else if((a.emaN||20)!==TREND_EMA_H)out.grund.h=`4h file still carries EMA${a.emaN||20}, waiting for the EMA${TREND_EMA_H} run`;
   else if(Date.now()-Date.parse(n.ende)>TREND_4H_MAX_ALTER_MS)out.grund.h='last 4h candle is older than 4 days';
   else{out.h=trendUrteil(n.c,n.ema,n.atr,TREND_PKT_H);if(out.h){out.h.stand=n.t;out.h.ende=n.ende;}else out.grund.h='4h values incomplete';}
   return out;
 }
 function trendRegelText(){
-  return`Price trend, max ±${TREND_PKT+TREND_PKT_H}: daily chart ±${TREND_PKT}, 4-hour chart ±${TREND_PKT_H} (the 4-hour side flips more often, so it weighs less). On each, the close of the last FINISHED candle is compared with its 20-period EMA. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
+  return`Price trend, max ±${TREND_PKT+TREND_PKT_H}: daily chart ±${TREND_PKT}, 4-hour chart ±${TREND_PKT_H} (the 4-hour side flips more often, so it weighs less). On each, the close of the last FINISHED candle is compared with an EMA: 20 periods on the daily chart, ${TREND_EMA_H} on the 4-hour chart. More than ${TREND_NEUTRAL_ATR} × ATR(14) above → bullish; more than ${TREND_NEUTRAL_ATR} × ATR(14) below → bearish; inside that band → neutral 0. The daily candles are the ones in the price chart; 4-hour candles are built from Yahoo hourly bars in fixed UTC blocks (00, 04, 08, 12, 16, 20).`;
 }
-function trendAbstTxt(u){
+function trendAbstTxt(u,k){
+  const e=k==='h'?'EMA'+TREND_EMA_H:'EMA'+TREND_EMA_N;
   if(!u)return'–';
   const a=Math.abs(u.abst).toFixed(2);
-  return u.pkt===0?`${a} ATR ${u.abst>=0?'above':'below'} EMA20 — inside ±${TREND_NEUTRAL_ATR}`:`${a} ATR ${u.abst>0?'above':'below'} EMA20`;
+  return u.pkt===0?`${a} ATR ${u.abst>=0?'above':'below'} ${e} — inside ±${TREND_NEUTRAL_ATR}`:`${a} ATR ${u.abst>0?'above':'below'} ${e}`;
 }
 function applyTrendFeed(){
   if(!Array.isArray(syms))return false;
@@ -9014,6 +9087,10 @@ function applyTrendFeed(){
     const rub=(sym.rubrics||[]).find(r=>r&&r.name==='COT Data');
     if(!rub||!Array.isArray(rub.indicators))return;
     const w=trendWerte(sym.id);
+    // Umbenannte Zeile (4H EMA20 -> EMA38) samt ihren Punkten entfernen.
+    const vorAlt=rub.indicators.length;
+    rub.indicators=rub.indicators.filter(i=>!(i&&TREND_IND_ALT.includes(i.name)));
+    if(rub.indicators.length!==vorAlt)changed=true;
     [['d',preisDa],['h',vierDa]].forEach(([k,da])=>{
       // Quelle noch nicht geladen -> nichts anfassen (wie applySeasRetailFeed).
       if(!da)return;
@@ -9022,7 +9099,7 @@ function applyTrendFeed(){
       if(!u){if(idx>=0){rub.indicators.splice(idx,1);changed=true;}return;}
       let ind=idx>=0?rub.indicators[idx]:null;
       if(!ind){ind={id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]};rub.indicators.push(ind);changed=true;}
-      const act=trendAbstTxt(u),prev='EMA20 '+u.ema.toPrecision(6)+' · ATR '+u.atr.toPrecision(3);
+      const act=trendAbstTxt(u,k),prev=(k==='h'?'EMA'+TREND_EMA_H:'EMA'+TREND_EMA_N)+' '+u.ema.toPrecision(6)+' · ATR '+u.atr.toPrecision(3);
       const stand=k==='d'?u.stand:String(u.stand).slice(0,16).replace('T',' ')+' UTC';
       const r=ind.research||{};
       if(!(r.trend&&r.actual===act&&r.previous===prev&&r.stand===stand)){
@@ -9054,7 +9131,7 @@ function abTrendScoreZeile(c){
     const ind=rub&&(rub.indicators||[]).find(i=>i&&i.name===TREND_IND[k]);
     const v=ind?Math.round(indScore(ind,rub)*100)/100:null;
     const col=v>0?BC.bull:v<0?BC.bear:'var(--t3)';
-    const tip=w[k]?trendAbstTxt(w[k]):(w.grund[k]||'no data');
+    const tip=w[k]?trendAbstTxt(w[k],k):(w.grund[k]||'no data');
     return{v,html:`<span class="tr-teil" title="${escH(tip)}">${k==='d'?'1D':'4H'} <b style="color:${col}">${v==null?'–':(v>0?'+':'')+v}</b></span>`};
   };
   const d=teil('d'),h=teil('h');
@@ -9548,7 +9625,9 @@ function abTrendOverlayDaten(id,k,welche){
   }
   if(welche.includes('h')){
     const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
-    if(a&&Array.isArray(a.e4))add('h',a.e4);
+    // Linie nur, wenn die Datei schon EMA38 traegt (sonst stuende eine
+    // EMA20-Linie unter dem Schalter "4H EMA38").
+    if(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H)add('h',a.e4);
   }
   return out;
 }
@@ -9560,9 +9639,9 @@ function assetPreisKarteHtml(c){
   const linien=abTrendLinien.split(',').filter(Boolean);
   const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,c.name||c.id,'',c.id,null,'price',{trend:linien});
   const w=trendWerte(c.id);
-  const schalter=[['d','1D EMA20'],['h','4H EMA20']].map(([k,l])=>{
+  const schalter=[['d','1D EMA20'],['h','4H EMA'+TREND_EMA_H]].map(([k,l])=>{
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
-    return`<button class="ab-rg tr-sw tr-sw-${k}${linien.includes(k)?' on':''}" onclick="toggleAbTrendLinie('${k}')" title="${escH(da?`Show or hide the ${k==='d'?'daily':'4-hour'} EMA20 with its neutral band (±${TREND_NEUTRAL_ATR} × ATR14)`:`No ${k==='d'?'daily':'4-hour'} trend data for this asset yet`)}"><span class="tr-sw-dot"></span>${l}</button>`;
+    return`<button class="ab-rg tr-sw tr-sw-${k}${linien.includes(k)?' on':''}" onclick="toggleAbTrendLinie('${k}')" title="${escH(da?`Show or hide the ${k==='d'?'daily EMA20':'4-hour EMA'+TREND_EMA_H} with its neutral band (±${TREND_NEUTRAL_ATR} × ATR14)`:`No ${k==='d'?'daily':'4-hour'} trend data for this asset yet`)}"><span class="tr-sw-dot"></span>${l}</button>`;
   }).join('');
   const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
@@ -10581,7 +10660,7 @@ const FLIP_CAUSE_TXT={
   sentiment:'Cause: new sentiment data (put/call, AAII, retail, ...).',
   bond:'Cause: new bond/yield data.',
   seasonality:'Cause: new seasonality averages.',
-  trend:'Cause: price trend changed (close vs EMA20 on the daily or 4-hour chart).',
+  trend:'Cause: price trend changed (close vs EMA20 on the daily chart or EMA38 on the 4-hour chart).',
   sync:'Cause: state adopted from another tab/device (sync).',
   backup:'Cause: local backup restored.',
   undo:'Cause: undo/redo.'
@@ -11445,7 +11524,7 @@ function summarizeCot(sym,rub){
 }
 // Welche Nicht-Positionierungs-Indikatoren der COT-Karte im Kartentext
 // namentlich genannt werden, wenn sie wirklich etwas beitragen.
-const SUM_COT_EXTRA={'Seasonality':'seasonality','Retail Positioning':'the retail book','Trend 1D (EMA20)':'the daily trend','Trend 4H (EMA20)':'the 4-hour trend'};
+const SUM_COT_EXTRA={'Seasonality':'seasonality','Retail Positioning':'the retail book','Trend 1D (EMA20)':'the daily trend','Trend 4H (EMA38)':'the 4-hour trend'};
 // ⚠ summarizeRiskEnv() ist weg (2026-09-13, mit der Risk-Environment-Karte).
 const RUB_SUMMARIZERS={
   'Inflation':summarizeInflation,'Labour Market':summarizeLabour,'Economic Growth':summarizeGrowth,
@@ -17478,7 +17557,7 @@ function abgeleiteteReihe(ind,id){
   });
   if(ind.name===TREND_IND.h&&id)return memo('t4:'+id,()=>{
     const a=TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[id];
-    const e=(a&&Array.isArray(a.e4)?a.e4:[]).filter(x=>x.length>=4&&x[2]>0&&x[3]>0);
+    const e=(a&&Array.isArray(a.e4)&&(a.emaN||20)===TREND_EMA_H?a.e4:[]).filter(x=>x.length>=4&&x[2]>0&&x[3]>0);
     return{pts:e.map(x=>[x[0],Math.round((x[3]-x[1])/x[2]*100)/100,null]),unit:' ATR'};
   });
   if(base===RETAIL_IND_NAME&&id)return memo('rt:'+id,()=>{
@@ -18033,11 +18112,12 @@ function btZinspfadChart(meetings,aktiv,ccy,vglMeetings,vglCcy){
       ({pct:xOf(m.date)/W*100,txt:fmtMonShort(m.date),an:i===0?'start':i===2?'end':'mid'})),
     {yLeft:(padL-6)/W*100,xTop:(H-padB+10)/H*100});
   const legende=vgl?`<div class="bt-pfad-leg"><span><i class="bt-leg-s"></i>${escH(ccy)}</span><span><i class="bt-leg-d"></i>${escH(vglCcy)}</span></div>`:'';
-  return`<div class="bt-pfad cax">${legende}<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
+  // Bezugsbox .cax exakt auf dem SVG - siehe histScoreLineChart.
+  return`<div class="bt-pfad">${legende}<div class="cax"><svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
     <line x1="${padL}" y1="${yOf(lo).toFixed(1)}" x2="${W-padR}" y2="${yOf(lo).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
     ${vgl}
     <path d="${treppe(ms)}" fill="none" stroke="var(--accent)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
-  </svg>${markerHtml}${achsen}</div>`;
+  </svg>${markerHtml}${achsen}</div></div>`;
 }
 // Klick auf einen Marker: Zeile hervorheben und ins Bild holen. Wie in der
 // Historie ohne Neu-Rendern der Liste - das wuerde die Scrollposition
@@ -23340,6 +23420,25 @@ function lgKarte(card){
   // unten mittig in der freien Flaeche, mit etwas Abstand zum Fuss
   lg.style.top=Math.round(m.unten-m.top-hoehe-Math.min(18,m.frei*0.08))+'px';
 }
+// ── ⓘ in die rechte obere Ecke (Nutzer-Regel 2026-09-25) ────────────────
+// Die CSS-Regel (index.html, "EIN DRITTEL KLEINER") schiebt das ⓘ an den
+// rechten Rand der Titelzeile. Steht dort schon ein rechtsbuendiges Element
+// (Filter in .cot-card-title, "Open"-Link in .dw-hdr), wuerde das ⓘ davor
+// landen - hier wird es einmal dahinter gesetzt. Ueber DOM-Reihenfolge statt
+// CSS-order, weil manche Titelzeilen eine zweite, volle Zeile tragen (order
+// haette das ⓘ unter diese Zeile geschoben - gemessen 58 px zu tief).
+function infoKnoepfeEinordnen(root){
+  (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd').forEach(h=>{
+    const i=h.querySelector(':scope>.rinfo,:scope>.info-b,:scope>.dw-t>.rinfo,:scope>.dw-t>.info-b');
+    if(!i||i.classList.contains('ii-nach'))return;
+    const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs'))).pop();
+    if(!anker)return;
+    anker.after(i);i.classList.add('ii-nach');
+  });
+}
+let _iiPlan=0;
+try{new MutationObserver(()=>{if(!_iiPlan)_iiPlan=requestAnimationFrame(()=>{_iiPlan=0;infoKnoepfeEinordnen();});})
+  .observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
 let _lgPlan=0;
 function lgAlleKarten(){
   _lgPlan=0;
@@ -23450,7 +23549,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,retailGoTo,openRetailPartnerPicker,closeRetailPartnerPicker,retailPartnerWaehlen,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

@@ -17906,3 +17906,37 @@ wurde; mit proportionalen Ziffern (iPad-Systemschrift) mehr. Jede
 Score-Lieferung bei offenem Panel verschob die Kante. Fix: feste Score-Spalte
 (5ch, tabular-nums). Breite jetzt 172,7 px, konstant für Scores `0`…`-10.8`.
 Wächter `check/stapel.js`, Gegenprobe rot.
+
+---
+
+## VERSION-CHECK-568 (2026-09-25/26) — ⓘ, Historie-Punkte, 4H EMA38, Retail-Auswahl
+
+**ⓘ** (Dauerregel, s. design-system.md). Gemessen vorher: Kreis 15 px neben
+17 px Titel; Dashboard-ⓘ 101–187 px vom rechten Rand (direkt hinter dem
+Titel, `.dw-t` war nur titelbreit), Insights-Karten bis 1022 px daneben
+(Inline-`margin-left:6px`), Asset-Kacheln vor dem Untertitel. Nachher: 26 ⓘ,
+Kreis 10 px, rechts oben, auf Titelhöhe. Umgesetzt per CSS (Größe/Position)
++ `infoKnoepfeEinordnen()` (DOM-Reihenfolge hinter rechtsbündigen Elementen
+— CSS-`order` hätte das ⓘ in Karten mit zweiter Titelzeile 58 px nach unten
+geschoben, gemessen).
+
+**Historie-Punkte** (Nutzer: *„stell sicher das die perfekt mittig auf der
+Linie sitzen"*). Gemessen: Punkte bis 5,7 px seitlich / 2 px vertikal neben
+dem Knick, weil ihre %-Lage sich auf die gepolsterte Box `.histl` (469×110)
+bezog, die Linie aufs SVG darin (455×100). Dieselbe Klasse im
+Backtester-Chart (`.bt-pfad`, Polster + Legende). Fix: innere `.cax`-Box
+exakt ums SVG. Nachher: 33 Punkte ±0,05 px. Wächter `check/chartpunkte.js`.
+
+**4H EMA38** (Nutzer: *„kann man im 4h Chart den 50 Ema benutzen? Oder 38
+vlt? Ich will den 38"*). Workflow rechnet EMA38 und schreibt `emaN:38`; die
+App zählt 4H nur, wenn die Datei EMA38 trägt (sonst stünde ein EMA20-Wert
+unter EMA38). Zeile heißt jetzt `Trend 4H (EMA38)`, die alte wird samt
+Punkten entfernt. SCORE_MODEL_VERSION 18.
+
+**Retail-Auswahl** (Nutzer: *„wenn man … auf Go to retail geht dann soll ein
+Fenster kommen wo man … auswählen kann mit welcher Währung man es paaren
+möchte bzw. welchem Non-FX-Asset bei USD … separat"*). Wächter
+`check/retailwahl.js`.
+
+**Kurs-Archiv verifiziert:** `price_hist.json` 599 KB (Deckel 900),
+15 Assets ab 2016-09-26.
