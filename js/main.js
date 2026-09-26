@@ -13775,7 +13775,7 @@ function researchSideTitleHtml(){
     </div>`;
   })():'';
   return`<div class="rterm-side-title">
-    <div class="rterm-title-big">Archive</div>
+    <div class="rterm-title-big pg-titel">Archive</div>
     ${assetLine}
   </div>`;
 }

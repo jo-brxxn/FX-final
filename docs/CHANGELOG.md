@@ -18103,3 +18103,29 @@ landete die Probe auf der zweiten Schattenzeile. Jetzt wartet er, bis die
 Karte ruhig steht — Grenze unverändert, gemessen stabil 1,36:1.
 Data am Telefon: Filter + Auswahlknopf dürfen umbrechen (vorher 63 px über
 den Kartenrand, `check/layout.js`/`check/cards.js`).
+
+---
+
+## VERSION-CHECK-574 (2026-09-26) — Schrifthierarchie überall, neue Wortmarke
+
+Nutzer (Foto Retail Sentiment, Kopf VERSION-CHECK-572): *„Schau der Filter
+ist nicht ganz rechts? Reparier das und guck ob das wo anders auch noch so
+ist und überprüf gleichzeitig überall auch nochmal die Schriften
+Hierarchien. Füg das auch als Regel ein ... Pflicht ... oben links ist der
+Schriftzug viel cooler gemacht übernimm das."*
+
+- **Filter:** das Foto zeigt 572; der Fehler (ⓘ-Spezifität) ist in 573
+  behoben. Auf 574 gemessen: Filter endet 15 px vor dem ⓘ, `check/einheit.js`
+  prüft alle Karten.
+- **Hierarchie** (gemessen vorher): Seitentitel 16px/700 auf 11 Seiten —
+  kleiner als die Kartentitel (17px); Trends 22px/800, Archive 26px;
+  Matrix-Kartentitel 15px, Trends-Kartentitel 18px/800, Data-Panels 15px,
+  Data-Kopf 800. Jetzt: `.pg-titel` 24px/800 + `.pg-sub`, alle Kartentitel
+  17px/700. `check/kartentitel.js` hatte Matrix/Data nicht gesehen (feste
+  Klassenliste, um `.mx-card-title/.data-h/.data-pt` ergänzt);
+  neuer Wächter `check/hierarchie.js` erkennt Karten an der Form.
+  Pflichtregel `CLAUDE.md` Nr. 9.
+- **Wortmarke:** „FX" schwer kursiv mit Glanzverlauf (am Foto gemessen:
+  #128DFF → Lichtkante #7DB8FF → #1687F7) und leichtem Leuchten, „ANALYST
+  PRO" weiß 800 mit Schatten; Systemschrift zuerst (iPad: SF Pro Black
+  Italic wie im Foto).

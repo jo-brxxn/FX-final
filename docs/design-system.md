@@ -1244,3 +1244,21 @@ den selben Stellen die i dann die Zeitfilterbutton"*; per Rückfrage festgelegt:
 - Ausnahme mit Absicht: Performance Ranking (1D/1W/1M/YTD) ist kein
   Chart-Zeitraum, sondern das Rangfenster — bleibt als Segment-Leiste.
 - Wächter: `check/einheit.js`.
+
+## Schrifthierarchie — Pflichtprüfung bei jeder Änderung (seit 2026-09-26)
+
+| Stufe | Wert | Klasse |
+|---|---|---|
+| Seitentitel | `--fs-xl` 24px / 800 | `.pg-titel` (Untertitel `.pg-sub`, `--fs-sm`) |
+| Asset-Name (Asset-Seite) | 38px / 800 | `.atitle` (passt sich an, `kopfTitelEinpassen`) |
+| Kartentitel | `--fs-kt` 17px / 700 | alle Kartenköpfe, auch Panels (Data) |
+| Text in Karten | < Kartentitel | Skala `--fs-base`…`--fs-2xs` |
+
+Gemessen vorher (2026-09-26): Seitentitel 16px/700 auf 11 Seiten — kleiner
+als die Kartentitel (17px) darunter; Trends 22px, Archive 26px; Matrix-
+Kartentitel 15px, Trends-Kartentitel 18px/800, Data-Panels 15px.
+`check/kartentitel.js` sah Matrix/Data nicht, weil er eine feste Liste von
+Klassennamen prüft. `check/hierarchie.js` erkennt Karten an der Form
+(Schatten + Rundung) und prüft jede Seite. Ausnahmen mit eigenem Kopf:
+Dashboard, Data (Kopf = Datenkarte), Asset-Seiten (`.atitle`).
+Regel in `CLAUDE.md` Nr. 9 (gilt immer).

@@ -107,6 +107,15 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
    5. **Wächter ergänzen**, wo die Klasse automatisch prüfbar ist
       (`check/`) — mit Gegenprobe, dass er den Fehler wirklich rot meldet.
 
+9. **Schrifthierarchie bei JEDER Änderung prüfen — Pflicht** (Nutzer-Regel
+   2026-09-26: *„immer wenn man was hinzufügt oder ändert überprüft werden
+   soll und sie Pflicht ist"*). Seitentitel `.pg-titel` 24px/800 > Kartentitel
+   17px/700 (`--fs-kt`) > Text; nur Stufen der Skala. Neue Seite → `.pg-titel`
+   + `.pg-sub`, neue Karte → Titel mit `--fs-kt`. Geprüft von
+   `check/hierarchie.js` (erkennt Karten an der Form, nicht am Klassennamen)
+   + `check/typo.js` + `check/kartentitel.js`. Details:
+   `docs/design-system.md` „Schrifthierarchie".
+
 ## Meta-Grundsatz: wo eine neue Regel hingehört
 
 **Jede dauerhafte Nutzer-Präferenz muss dokumentiert werden** (Nutzer-Wunsch

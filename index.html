@@ -387,13 +387,29 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
 /* Logo wie im Referenz-Foto (Nutzer-Wunsch 2026-07-25): "FX" kraeftig/gross
    in Blau abgesetzt, "Analyst Pro" schmaler/heller daneben - statt einer
    einheitlich eingefaerbten Wortmarke. */
-.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:baseline;gap:5px}
+/* ══ SEITENTITEL (Dauerregel Schrifthierarchie 2026-09-26) ════════════
+   Seitentitel = --fs-xl (24px) 800, Untertitel --fs-sm. Vorher 16px/700 -
+   KLEINER als die Kartentitel darunter (--fs-kt 17px): die Hierarchie war
+   auf 11 Seiten umgedreht; Trends 22px, Archive 26px. Waechter
+   check/hierarchie.js. */
+.pg-titel{font:800 var(--fs-xl)/1.15 var(--ff-text);color:var(--t0);letter-spacing:-.2px}
+.pg-sub{font:400 var(--fs-sm)/1.4 var(--ff-num);color:var(--t2);margin-top:3px}
+.logo{flex-shrink:0;font-size:21px;letter-spacing:.2px;text-transform:uppercase;display:flex;align-items:center;gap:9px}
 /* "FX" tritt in einem tiefen, kraeftigen Blau hervor (Nutzer-Wunsch
    2026-08-23) - derselbe Farbton wie der Profil-Kreis und die aktive
    Tab-/Asset-Markierung (siehe --blue-Wiederverwendung unten), damit die
    Kopfzeile EINE konsistente Akzentfarbe hat statt mehrerer Blautoene. */
-.logo-fx{font-weight:900;color:var(--blue);font-size:1.15em;letter-spacing:.5px}
-.logo-rest{font-weight:700;color:var(--t0);opacity:.92;font-size:.72em;letter-spacing:.5px}
+/* Wortmarke seit 2026-09-26 nach dem Nutzer-Foto ("oben links ist der
+   Schriftzug viel cooler gemacht uebernimm das"): "FX" schwer und kursiv mit
+   Glanzverlauf - Farben am Foto gemessen: oben #128DFF, Lichtkante in der
+   Mitte #7DB8FF, unten #1687F7 - plus leichtes Leuchten; "ANALYST PRO" weiss,
+   fett, mit weichem Schatten. padding-right: die Kursive ragt sonst aus
+   der Textbox, und background-clip:text schnitte das X ab. */
+.logo-fx{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:900;font-style:italic;font-size:1.5em;line-height:1;letter-spacing:-.5px;padding:0 .1em 0 0;
+  background:linear-gradient(180deg,#128DFF 0%,#3C9EFF 30%,#7DB8FF 46%,#2E93FF 62%,#1687F7 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 6px rgba(18,141,255,.38)) drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.logo-rest{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;font-weight:800;color:#F4F7FC;font-size:.8em;letter-spacing:.6px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 /* Suchfeld links neben dem Logo (Koyfin-Referenz-Screenshot, Nutzer-Wunsch
    2026-08-21) statt eines Icon-Buttons rechts - oeffnet beim Klick weiterhin
    dasselbe #mSearch-Modal, nur die Einstiegsstelle ist jetzt prominent und
@@ -2327,7 +2343,7 @@ body.compact-view .rub-summary{display:block}
 /* ── SCORE TRENDS ── */
 .tr-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin-bottom:14px;box-shadow:0 2px 14px rgba(0,0,0,.22)}
 .tr-card-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--bd)}
-.tr-card-title{font-size:18px;font-weight:800;color:var(--t0);letter-spacing:.2px}
+.tr-card-title{font-size:var(--fs-kt);font-weight:700;color:var(--t0);letter-spacing:.2px}
 .tr-legend{display:flex;flex-wrap:wrap;gap:9px}
 .tr-leg-item{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-xs);color:var(--t1);font-family:var(--ff-num)}
 .tr-leg-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
@@ -2405,7 +2421,7 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
    (Nutzer-Korrektur 2026-08-04), deutlich groesser als die vorherige
    kleine Titel-/Chip-Variante innerhalb der Box. */
 .rterm-side-title{padding:2px 4px 12px}
-.rterm-title-big{font-size:26px;font-weight:800;color:var(--t0);letter-spacing:-.2px}
+.rterm-title-big{font-size:var(--fs-xl);font-weight:800;color:var(--t0);letter-spacing:-.2px}
 .rterm-side-asset{display:flex;align-items:baseline;gap:8px;margin-top:6px;flex-wrap:wrap}
 .rterm-side-asset-flag{line-height:0;display:inline-flex}
 .rterm-side-asset-ticker{font-size:22px;font-weight:800;color:var(--t0)}
@@ -2900,7 +2916,7 @@ body.res-return-active #resBackBar{display:flex}
 .data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px 4px}
 .data-row2{padding:0 12px 0}
 .data-row2 .chart-leiste{margin-bottom:8px}
-.data-h{font:800 var(--fs-lg)/1.2 var(--ff-text);color:var(--t0);margin-right:2px}
+.data-h{font:700 var(--fs-kt)/1.2 var(--ff-text);color:var(--t0);margin-right:2px}
 .data-row .cot-filterbar,.data-row .cmp-filter-grp{margin:0}
 .data-row .data-range{margin:0;flex:0 1 auto}
 .data-row-r{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;align-items:center;min-width:0;max-width:100%}
@@ -2914,7 +2930,7 @@ body.res-return-active #resBackBar{display:flex}
    (Container-Abfrage), nie ein Umbruch, der dem Chart Hoehe nimmt. */
 .data-panel{container-type:inline-size}
 .data-ph{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:6px 10px 6px 12px;border-bottom:1px solid var(--bd);min-width:0;white-space:nowrap}
-.data-pt{font:700 var(--fs-md)/1.2 var(--ff-text);color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.data-pt{font:700 var(--fs-kt)/1.2 var(--ff-text);color:var(--t0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
 .data-pt .px-panel-sub{display:inline;margin:0 0 0 6px}
 .data-ph .px-asof{margin:0;font-size:var(--fs-2xs);flex-wrap:nowrap;overflow:hidden;min-width:0;flex:0 1 auto}
 .data-ph .px-panel-ctrls{margin-left:auto;flex:0 1 auto}
@@ -2926,7 +2942,7 @@ body.res-return-active #resBackBar{display:flex}
 .data-pc{flex:1 1 auto;min-height:0;padding:6px 10px 4px;overflow:hidden}
 /* ── MATRIX / STRENGTH ── */
 .mx-card{background:linear-gradient(180deg,var(--bg2),var(--bg1));border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 14px rgba(0,0,0,.22)}
-.mx-card-title{font-size:var(--fs-md);font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mx-card-title{font-size:var(--fs-kt);font-weight:700;color:var(--t0);padding:11px 14px;border-bottom:1px solid var(--bd);background:linear-gradient(180deg,var(--bg4),var(--bg3));display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .mx-card-title small{font-weight:500;color:var(--t3);font-size:var(--fs-2xs);font-family:var(--ff-num)}
 .mx-rank-head,.mx-rank-row{display:grid;grid-template-columns:26px 48px 1fr 52px 74px 56px;align-items:center;gap:9px;padding:7px 14px}
 .mx-rank-head{font-size:var(--fs-2xs);letter-spacing:.5px;text-transform:uppercase;color:var(--t2);font-family:var(--ff-num);border-bottom:1px solid var(--bd)}
@@ -5889,11 +5905,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-573 - Einheitliche Filter/Zeitfilter/Candles|Line, Data 2 untereinander, News Custom repariert."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-574 - Schrifthierarchie (Seitentitel 24px, Kartentitel 17px ueberall), neue Wortmarke."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-573</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-574</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -5925,15 +5941,15 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: MATRIX -->
 <div class="pc" id="pgMx" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Strength Matrix</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Live currency-strength ranking, score trend &amp; data-surprise momentum · pair heatmap from the single-currency scores</div>
+    <div class="pg-titel">Strength Matrix</div>
+    <div class="pg-sub">Live currency-strength ranking, score trend &amp; data-surprise momentum · pair heatmap from the single-currency scores</div>
   </div>
   <div id="mxBody"></div>
 </div>
 <!-- PAGE: TRENDS (Score-Verlauf) -->
 <div class="pc" id="pgTrends" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:22px;font-weight:800;color:var(--t0);letter-spacing:.2px">Score Trends</div><div style="font-size:var(--fs-sm);color:var(--t3);margin-top:2px;font-family:var(--ff-num)">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
+    <div><div class="pg-titel">Score Trends</div><div class="pg-sub">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
@@ -5947,30 +5963,30 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: COT -->
 <div class="pc" id="pgCot" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">COT Report</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Non-Commercial net long / short positioning (%) &amp; weekly change · source: CFTC</div>
+    <div class="pg-titel">COT Report</div>
+    <div class="pg-sub">Non-Commercial net long / short positioning (%) &amp; weekly change · source: CFTC</div>
   </div>
   <div id="cotBody"></div>
 </div>
 <!-- PAGE: MARKET SENTIMENT -->
 <div class="pc" id="pgSent" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Market Sentiment</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Contrarian crowd sentiment &amp; options positioning · Fear &amp; Greed, Put/Call, VIX · read against the crowd at extremes</div>
+    <div class="pg-titel">Market Sentiment</div>
+    <div class="pg-sub">Contrarian crowd sentiment &amp; options positioning · Fear &amp; Greed, Put/Call, VIX · read against the crowd at extremes</div>
   </div>
   <div id="sentBody"></div>
 </div>
 <div class="pc" id="pgNews" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">News</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Economic headlines from free RSS feeds &middot; last 3 days in depth, then only the more relevant ones, 35 days back &middot; display-only, no score impact</div>
+    <div class="pg-titel">News</div>
+    <div class="pg-sub">Economic headlines from free RSS feeds &middot; last 3 days in depth, then only the more relevant ones, 35 days back &middot; display-only, no score impact</div>
   </div>
   <div id="newsBody"></div>
 </div>
 <div class="pc" id="pgSeas" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Seasonality</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
+    <div class="pg-titel">Seasonality</div>
+    <div class="pg-sub">Average calendar-month return &amp; hit rate over the last 15 years · source: Yahoo Finance (ETF proxies) · context layer, not a signal</div>
   </div>
   <div id="seasBody"></div>
 </div>
@@ -5979,8 +5995,8 @@ window.fxLogoSvg=function(art){
      Webseite hinzufügen"). Abgestimmt: Stufe 1 als eigener Tab. -->
 <div class="pc" id="pgRegime" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Regime Radar</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Seven market scenarios, each checked against live data &middot; context for reading the scores &mdash; it never changes one</div>
+    <div class="pg-titel">Regime Radar</div>
+    <div class="pg-sub">Seven market scenarios, each checked against live data &middot; context for reading the scores &mdash; it never changes one</div>
   </div>
   <div id="regimeBody"></div>
 </div>
@@ -5993,16 +6009,16 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20: CME-FedWatch-artige Anzeige) -->
 <div class="pc" id="pgRate" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Rate Probabilities</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Market-implied Fed hike/hold/cut odds per FOMC meeting, from 30-Day Fed Funds futures · display-only, no score effect</div>
+    <div class="pg-titel">Rate Probabilities</div>
+    <div class="pg-sub">Market-implied Fed hike/hold/cut odds per FOMC meeting, from 30-Day Fed Funds futures · display-only, no score effect</div>
   </div>
   <div id="rateBody"></div>
 </div>
 <!-- PAGE: CARRY TRADE SCANNER -->
 <div class="pc" id="pgCarry" style="display:none">
   <div style="margin-bottom:11px">
-    <div style="font-size:16px;font-weight:700;color:var(--t0)">Carry Trade Scanner</div>
-    <div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
+    <div class="pg-titel">Carry Trade Scanner</div>
+    <div class="pg-sub">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
   </div>
   <!-- Suche = seitenweiter Filter -> oben rechts (Dauerregel 2026-09-26) -->
   <div style="margin-bottom:10px;display:flex;justify-content:flex-end"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:360px"></div>
@@ -6012,7 +6028,7 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: PAIRS -->
 <div class="pc" id="pgPairs" style="display:none">
   <div id="pairsHdr" style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Set-ups</div><div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
+    <div><div class="pg-titel">Set-ups</div><div class="pg-sub">All pairs & assets sorted into bullish / neutral / bearish columns</div></div>
     <div style="display:flex;gap:6px">
       <button class="btn" onclick="openPriceAlertM()" title="Get notified when a pair or asset crosses a price level"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="btn-lbl"> Price Alert</span></button>
       <button class="btn g" onclick="openAddPair()">＋ Add Pair</button>
@@ -6023,7 +6039,7 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: WATCHLIST (Nutzer-Wunsch 2026-08-07) -->
 <div class="pc" id="pgWatch" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Watchlist</div><div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Everything you starred in Set-ups &mdash; with price, carry, positioning, the next event and your own notes</div></div>
+    <div><div class="pg-titel">Watchlist</div><div class="pg-sub">Everything you starred in Set-ups &mdash; with price, carry, positioning, the next event and your own notes</div></div>
     <button class="btn g" onclick="openAddPair('Watchlist')">&#65291; Add pair</button>
   </div>
   <div id="watchBody"></div>
@@ -6052,7 +6068,7 @@ window.fxLogoSvg=function(art){
 <!-- PAGE: CALENDAR -->
 <div class="pc" id="pgCal" style="display:none">
   <div style="margin-bottom:11px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px">
-    <div><div style="font-size:16px;font-weight:700;color:var(--t0)">Economic Calendar</div><div style="font-size:var(--fs-sm);color:var(--t2);margin-top:1px;font-family:var(--ff-num)">Upcoming events · sorted by date</div></div>
+    <div><div class="pg-titel">Economic Calendar</div><div class="pg-sub">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <span id="ffLastUpd" style="font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num)"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>

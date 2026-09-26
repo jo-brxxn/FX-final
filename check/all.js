@@ -47,6 +47,7 @@ const PRUEFUNGEN = [
   { n: 'retailwahl', d: 'Go to Retail: Paar-Auswahl (Waehrungen, bei USD + Non-FX getrennt)', f: 'check/retailwahl.js', args: [], browser: true },
   { n: 'stapel',     d: 'Asset-Stapel: Panelbreite haengt nicht an den Scores', f: 'check/stapel.js', args: [], browser: true },
   { n: 'archiv',     d: 'Lange Kurshistorie erst bei Bedarf, Lade-Logo, Scores unberuehrt', f: 'check/archiv.js', args: [], browser: true },
+  { n: 'hierarchie', d: 'Schrifthierarchie: Seitentitel 24/800 > Kartentitel 17/700 > Text, alle Seiten', f: 'check/hierarchie.js', args: [], browser: true },
   { n: 'einheit', d: 'Filter/Zeitfilter/ⓘ/Candles|Line an festen Stellen auf allen Seiten', f: 'check/einheit.js', args: [], browser: true },
   { n: 'datalayout', d: 'Data: bis 8 Panels, Charts fuellen den Bildschirm, kompakter Kopf', f: 'check/datalayout.js', args: [], browser: true },
   { n: 'kopfleiste', d: 'Asset-Kopf: Knoepfe gross, mittig, rechtsbuendig, Zahnrad = Schrifthoehe', f: 'check/kopfleiste.js', args: [], browser: true },
