@@ -68,6 +68,31 @@ und `save()`s eigener Change-Diff es daher nicht automatisch erkennt) —
 bumpt `fxpro_updated`+ruft `cloudAutoSync()` selbst auf, wenn sich etwas
 geändert hat.
 
+## Sonderfall `scoreJournal` (Score-Journal, seit 2026-09-26): Merge + Kette
+
+Dritter Fall der Art, vor der der `scoreHist`-Abschnitt warnt. `scoreJournal`
+(`js/journal.js`, Schlüssel `fxpro_scorejournal`) liegt bewusst **außerhalb**
+von `snap()` (Undo darf das Protokoll nicht zurücknehmen) und ist an allen vier
+Stellen angebunden: `cloudPush` (`data.scoreJournal`), `cloudPull` und
+`importData` (`jrUebernehmen()`), `exportData`. Die Save-Funktion ist
+`jrErfassen()` in `recordScoreHist()` — bumpt `fxpro_updated` und ruft
+`cloudAutoSync()` über `recordScoreHist()` mit auf.
+
+Merge-Regeln (`mergeScoreJournal`):
+- **Läufe:** Vereinigung nach `id` — zwei Geräte zeichnen disjunkte Zeiten auf.
+- **Basis je Asset:** die JÜNGERE gewinnt. Sie MUSS mitsynchronisiert werden,
+  sonst zerlegt ein Gerät die nächste Änderung gegen seinen eigenen, älteren
+  Stand und zählt Bewegungen doppelt, die das andere schon aufgezeichnet hat.
+- **Doppelte Aufzeichnung** (beide Geräte gleichzeitig offen) löst die
+  Anzeige, nicht der Merge: `jrKette()` nimmt vom jüngsten Eintrag rückwärts
+  immer den nächsten, der VOR dem Beginn des späteren endet. Ein Eintrag
+  bekommt nie eine Zeit vor seiner Basis (Uhren zweier Geräte weichen ab).
+- `offen` (wann die App je Tag offen war): frühester Beginn, spätestes Ende.
+  `seit` (erster Schnappschuss überhaupt): Minimum.
+
+Geprüft von `check/journal.js` (Stufe F: drei Läufe zweier Geräte, jüngere
+Basis, Kette = +1,0 ohne Doppelzählung; Stufe H: alle vier Anbindungen).
+
 ## Sonderfall `research`/`researchFolders` (Notizen/Ordner/Papierkorb): Merge statt Overwrite + `navigator.locks`
 
 **Zweiter Sonderfall genau der Art, vor der der `scoreHist`-Abschnitt oben

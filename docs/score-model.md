@@ -52,6 +52,35 @@ Einschätzungen, überall neutral), der Edge-Tab. **Nicht im Score:** Momentum
 Geprüft von `check/regeln.js` (Zinsdifferenz und Rohstoffe unabhängig aus den
 Rohdateien nachgerechnet) und `check/seasretail.js` (Retail-Tabelle).
 
+## ⚠️ Score-Journal: jede Änderung wird mit Ursache aufgezeichnet (seit 2026-09-26)
+
+Nutzer-Auftrag: *„alles was den Score ändert aufgezeichnet … auch wenn es nur
+0,1 ist … immer den Grund daneben ausführlich … kein Wert soll leer
+bleiben"*. Umsetzung: `js/journal.js`, Herleitung und Messwerte in
+`docs/CHANGELOG.md` (VERSION-CHECK-575).
+
+- **Zustandsvergleich, kein Auslöser-Raten.** Je Asset ein Schnappschuss aller
+  Indikator-Beiträge; ändert sich die angezeigte Zahl (auch 0,1) oder ein
+  diskreter Eingang um ≥ 0,05, wird die Differenz exakt zerlegt:
+  `faktor_neu × Σ ΔBeitrag` (je Indikator) + `roh_alt × Δfaktor`
+  (Vergleichsfaktor) + Rundung. Die Teile ergeben IMMER die angezeigte
+  Änderung.
+- **Keine zweite Formel.** Beiträge aus `indScore`/`indScoreParts`, Faktoren aus
+  `indNormBreakdown`. Ein neuer Score-Treiber wird damit AUTOMATISCH erfasst.
+  Für einen lesbaren Text braucht eine neue Regel-Art aber einen Zweig in
+  `jrTyp()`/`jrEingabeText()` (sonst steht dort nur der rohe `research.actual`).
+- **⚠ Bei jedem `SCORE_MODEL_VERSION`-Bump eine englische Zeile in
+  `JR_MODELL_NOTIZ` (`js/journal.js`).** Sonst steht an einem Modellwechsel in
+  der History „score model vA → vB" ohne Inhalt. `check/journal.js` (Stufe H)
+  wird rot, wenn die aktuelle Version fehlt.
+- Modellwechsel sind seitdem eine **benannte Ursache**, keine Verweigerung: die
+  History zeigt die Tagesänderung immer (vorher „n/c"). Der Grundsatz von
+  2026-08-30 (Formel-Umstellung nicht als Marktbewegung ausgeben) bleibt
+  erfüllt, weil die Zeile den Wechsel ausdrücklich nennt.
+- **Nie mitten im Feed-Durchlauf aufzeichnen:** `bootFetchScoreFeeds` sperrt
+  das Journal, bis `recomputeAuto` gelaufen ist (dieselbe Lehre wie
+  `scoreHistAufzeichenbar()`).
+
 ## Was in den Score einfliesst
 
 | Bestandteil | Gewicht | Bemerkung |

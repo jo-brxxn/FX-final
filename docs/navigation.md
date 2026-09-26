@@ -964,6 +964,20 @@ Zwei Eigenschaften sind bewusst so und werden von `check/score.js` geprüft:
 `pruneScoreLog` hält `HIST_MAX_RANGE+2` Tage — gedeckelt, weil `scoreLog` im
 Cross-Device-Sync hängt.
 
+⚠ **Seit 2026-09-26 ist das `auto`-Protokoll NICHT mehr die Quelle der
+Ursachen.** Es sah prinzipiell nur Bewegungen mit gesetztem Auslöser —
+gemessen: ein Kurs-Update bewegte 11 von 23 Assets, protokolliert 0. Die
+History liest an jedem Tag, den das **Score-Journal** (`js/journal.js`,
+`docs/score-model.md`) aufgezeichnet hat, dessen exakte Zerlegung je Indikator:
+Kopfzeile *Current score · Today · N recorded changes* (nur im Fenster), je
+Ursache eine Zeile mit Betrag und sichtbarer Begründung, darunter die
+Zeitleiste der Einzeländerungen. Die Beträge ergeben exakt die Tagesänderung.
+Tage vor dem Journal zeigen weiter die Bausteine unten (Events, Karten-Split,
+Alterung), aber nie mehr einen leeren Wert: Δ steht immer (Modellwechsel als
+benannte Ursache statt „n/c"), laufende Zeilen ohne Tageswirkung tragen
+„n/r" mit Erklärung. `scoreLog` bleibt für manuelle Änderungen (Beschriftung
+„set by you") und den Globus-Feed.
+
 ### Aufschlüsselung der Tagesbewegung (`histDeltaParts`)
 
 ⚠ **Der angezeigte Score und die Kartenwerte liegen NICHT auf derselben
