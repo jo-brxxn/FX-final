@@ -278,7 +278,10 @@ const MIN_SCHATTEN_LAGEN = 3;
       // die erlaubte Zielart ist jetzt zweigeteilt, und der Klicktest unten
       // prueft fuer diese Art, dass das Fenster wirklich aufgeht.
       const mm = h.match(/open([A-Za-z]+)Modal\(/);
-      raus.ziele.push(m ? m[1] : mm ? 'modal:' + mm[1] : 'KEIN gueltiges Ziel: ' + h.slice(0, 40));
+      // Retail seit 2026-09-25: retailGoTo() = Paar-Auswahl, danach Retail Sentiment
+      // (geprueft in check/retailwahl.js, inkl. Klick bis ins Buch).
+      const rt = /retailGoTo\(\)/.test(h);
+      raus.ziele.push(m ? m[1] : rt ? 'retail' : mm ? 'modal:' + mm[1] : 'KEIN gueltiges Ziel: ' + h.slice(0, 40));
     }));
     return raus;
   }, KARTEN_SEL);

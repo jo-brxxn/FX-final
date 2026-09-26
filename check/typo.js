@@ -153,6 +153,11 @@ const NAH = 1.0;           // Unterschied < 1px zwischen Nachbarn = zu nah
     // 13,3333px entsteht aus einer rem/em-Rechnung, nicht aus einer
     // gewaehlten Groesse - und liegt genau 0,33px neben der 13er-Stufe.
     { klasse: 'btn', grund: 'Rundungsrest einer rem-Rechnung, 0,33px neben der Stufe' },
+    // Das kursive i IM ⓘ-Kreis ist ein Symbol, keine Schrift: es waechst mit
+    // dem Kreis (0,72 x Kreis, Nutzer-Regel 2026-09-25 "ein Drittel kleiner").
+    // Eine Skalenstufe (11px) waere breiter als der 10-px-Kreis.
+    { klasse: 'rinfo', grund: 'Symbol im ⓘ-Kreis, skaliert mit dem Kreis (check/infoi.js)' },
+    { klasse: 'info-b', grund: 'Symbol im ⓘ-Kreis, skaliert mit dem Kreis (check/infoi.js)' },
   ];
   const istAusnahme = kl => SEITEN_AUSNAHMEN.some(a => String(kl).split(/\s+/).includes(a.klasse));
 

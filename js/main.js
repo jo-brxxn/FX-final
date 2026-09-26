@@ -8012,7 +8012,11 @@ const AB_RANGES=[['3M',90],['6M',182],['1Y',365],['3Y',1095],['6Y',2190],['10Y',
 function abRegler(id,titel){
   const ab=preisAnfang(id);   // inkl. Archiv (price_hist_meta.json)
   const heute=todayStr();
-  const liste=AB_RANGES.filter(([,t])=>t==null||!ab||dateAddStr(heute,-t)>ab);
+  // Grenze in Kalendermonaten wie rangeCutoffStr (10Y = 120 Monate, nicht
+  // 3650 Tage) - sonst erschien 10Y bei Daten ab genau vor 10 Jahren als
+  // Knopf, der dasselbe zeigt wie Max (check/zeitfilter.js, 2026-09-26).
+  const MON={'3M':3,'6M':6,'1Y':12,'3Y':36,'6Y':72,'10Y':120};
+  const liste=AB_RANGES.filter(([l,t])=>t==null||!ab||(MON[l]?rangeCutoffStr(MON[l]):dateAddStr(heute,-t))>ab);
   const an=liste.some(([l])=>l===abChartRange)?abChartRange:'MAX';
   return liste.map(([lbl])=>`<button class="ab-rg${an===lbl?' on':''}" onclick="setAbChartRange('${lbl}')" title="${escH(titel.replace('%',lbl))}">${lbl}</button>`).join('');
 }

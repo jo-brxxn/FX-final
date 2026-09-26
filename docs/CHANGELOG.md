@@ -17940,3 +17940,19 @@ möchte bzw. welchem Non-FX-Asset bei USD … separat"*). Wächter
 
 **Kurs-Archiv verifiziert:** `price_hist.json` 599 KB (Deckel 900),
 15 Assets ab 2016-09-26.
+
+---
+
+## VERSION-CHECK-569 (2026-09-26) — Korrektur: 568 ging mit roter Suite raus
+
+**Mein Fehler:** 568 wurde gepusht, obwohl `check/all.js` drei Wächter rot
+meldete — der Push-Befehl wartete nur auf den statischen Teil. Rot waren:
+- `zeitfilter`: 6Y/10Y als „ohne Wirkung" gemeldet, weil der Wächter das
+  neue Kurs-Archiv nicht kannte (jetzt `preisAnfang`). Danach echter Fund:
+  die Price-Karte rechnete 10Y als 3650 Tage, der Rest der App als 120
+  Monate — bei Daten ab genau vor 10 Jahren stand ein 10Y-Knopf, der
+  dasselbe zeigt wie Max. `abRegler` rechnet jetzt in Monaten.
+- `typo`: das kursive i im ⓘ-Kreis (7,3 px) liegt nicht auf der
+  Schriftskala — als benanntes Symbol ausgenommen (eine 11-px-Stufe wäre
+  breiter als der 10-px-Kreis).
+- `kartenlook`: kannte `retailGoTo()` als Go-to-Ziel nicht.

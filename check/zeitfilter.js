@@ -43,7 +43,8 @@ const MON = { '3M': 3, '6M': 6, '1Y': 12, '3Y': 36, '6Y': 72, '10Y': 120 };
     if (ab) l.forEach(x => { if (MON[x]) { const c = new Date(); c.setMonth(c.getMonth() - MON[x]); if (c.toISOString().slice(0, 10) <= ab) fail(ort, `${x} reicht hinter den Datenanfang ${ab} (Knopf ohne Wirkung)`); } });
   };
   // Price-Karte
-  const abP = await p.evaluate(() => { const r = priceSeriesFor('EUR'); return r && r.length ? r[0][0] : null; });
+  // Datenanfang inkl. Kurs-Archiv (price_hist_meta.json, seit 2026-09-25)
+  const abP = await p.evaluate(() => preisAnfang('EUR'));
   pruefe('PRICE-KARTE', await lies('#detail .ab-ptile .ab-rgs .ab-rg'), GROSS, abP);
   // History
   const abH = await p.evaluate(() => { const h = scoreHist.EUR || []; return h.length ? h[0][0] : null; });
