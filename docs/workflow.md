@@ -56,7 +56,10 @@ VERSION-CHECK-243.") — nicht nur im Code bumpen, auch im Chat mitteilen.
 Wird zusätzlich von `check/rules.js` erzwungen (siehe `check/README.md`) —
 ebenso `SCORE_MODEL_VERSION` (bei Score-Formel-Änderungen, siehe
 `docs/score-model.md`) und `SUMMARY_ENGINE_VERSION` (bei
-Formulierungs-Logik-Änderungen).
+Formulierungs-Logik-Änderungen). Zu jedem `SCORE_MODEL_VERSION`-Bump gehört
+seit 2026-09-26 eine englische Zeile in `JR_MODELL_NOTIZ` (`js/journal.js`),
+die sagt, was sich geändert hat — sie steht als Ursache in der History
+(`check/journal.js` Stufe H).
 
 ## Bugfixes: IMMER erst reproduzieren, dann dokumentieren (Nutzer-Wunsch 2026-08-31)
 

@@ -80,6 +80,9 @@ const PRUEFUNGEN = [
   { n: 'kartenlook',d: 'Kartenoptik und Kopfleiste der Asset-Seite', f: 'check/kartenlook.js', args: [], browser: true },
   { n: 'regime',     d: 'Regime Radar: Zahlen gegen die Rohdaten, Nenner, Kernbedingung',  f: 'check/regime.js',    args: [],           browser: true },
   { n: 'historie',   d: 'Historie: Score-Linie, Alterung nachgerechnet, jeder Tag einzeln', f: 'check/historie.js',  args: [],           browser: true },
+  // 2026-09-26: jede Score-Aenderung mit exakter Ursache (Nutzer: "alles was
+  // den Score aendert aufgezeichnet ... kein Wert soll leer bleiben").
+  { n: 'journal',    d: 'Score-Journal: jede Bewegung mit Ursache, Teile = Veraenderung, kein leerer Wert', f: 'check/journal.js', args: [], browser: true },
   { n: 'backtester', d: 'Backtester: Sitzungen, Releases, Kursreaktion gegen die Rohdaten', f: 'check/backtester.js',args: [],           browser: true },
   { n: 'erklaerung',d: 'Erklaerungen hinter dem ⓘ, zentriert, nicht in der Karte', f: 'check/erklaerung.js',args: [],        browser: true },
 ];

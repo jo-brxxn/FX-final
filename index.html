@@ -4240,6 +4240,37 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    ueber die ganze Zeile. */
 .histp-age{background:rgba(var(--amber-rgb),.07);border-radius:5px;padding:2px 6px!important}
 .histp-agetag{font:800 var(--fs-2xs)/1.3 var(--ff-num);letter-spacing:.3px;text-transform:uppercase;color:var(--amber);background:rgba(var(--amber-rgb),.12);border-radius:4px;padding:0 4px;margin-left:5px;white-space:nowrap}
+/* ── Score-Journal in der History (Nutzer-Auftrag 2026-09-26) ─────────────
+   "was ist der aktuelle Score dann wie hat er sich heute veraendert und dann
+   ... der Grund wie viel dadurch und warum". Kopfzeile = aktueller Score +
+   heutige Veraenderung; je Ursache EINE Zeile: Pfeil, Name (+ Karte), Betrag,
+   und die Begruendung SICHTBAR darunter (nicht nur im Tooltip - "immer den
+   Grund daneben ausfuehrlich"). Schrift nur aus der Skala: Name --fs-sm,
+   Begruendung --fs-xs, Etiketten --fs-2xs (Regel 9, Schrifthierarchie). */
+.jr-kopf{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding:8px 12px;margin:0 0 10px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--bg2);font:500 var(--fs-sm)/1.4 var(--ff-num);color:var(--t2)}
+.jr-kopf b{font-weight:800}
+/* In der schmalen History-KARTE der Asset-Seite nicht: dort ist die
+   Tagesliste ohnehin knapp (siehe .ab-htile oben), und Score + heutige
+   Veraenderung stehen in der Heute-Zeile direkt darunter. Das Fenster
+   ("Open full history") zeigt die Kopfzeile. */
+.ab-htile .jr-kopf{display:none}
+.jr-k3{color:var(--t3);font-size:var(--fs-xs)}
+.jr-tag{display:flex;flex-direction:column;gap:6px;min-width:0}
+.jr-z{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:7px;row-gap:2px;align-items:baseline}
+.jr-pf{font:800 var(--fs-sm)/1.3 var(--ff-text);text-align:center}
+.jr-nm{font:600 var(--fs-sm)/1.35 var(--ff-text);color:var(--t1);min-width:0;overflow-wrap:anywhere}
+.jr-kt{font:700 var(--fs-2xs)/1.3 var(--ff-num);color:var(--t3);border:1px solid var(--bd);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+.jr-v{font:800 var(--fs-2xs)/1.3 var(--ff-num);border:1px solid;border-radius:20px;padding:1px 6px;white-space:nowrap}
+.jr-why{grid-column:2/-1;font:400 var(--fs-xs)/1.45 var(--ff-text);color:var(--t2);overflow-wrap:anywhere}
+.jr-regel{margin-top:2px}
+.jr-regel summary,.jr-lauf summary{cursor:pointer;color:var(--t3);font:600 var(--fs-xs)/1.4 var(--ff-text)}
+.jr-lauf{margin-top:2px;border-top:1px dashed var(--bd);padding-top:4px}
+.jr-l{display:grid;grid-template-columns:40px auto minmax(0,1fr);gap:8px;align-items:baseline;padding:2px 0;font:500 var(--fs-xs)/1.4 var(--ff-num);color:var(--t2)}
+.jr-lt{color:var(--t3)}
+.jr-ld{font-weight:700;white-space:nowrap}
+.jr-lw{min-width:0;overflow-wrap:anywhere;color:var(--t3)}
+.hw-modell{font-style:normal;color:var(--t2)}
+.histp-brk-hd{font:600 var(--fs-2xs)/1.3 var(--ff-text);color:var(--t3);align-self:center}
 @media(max-width:640px){
   .hw-cols,.hw-day{grid-template-columns:minmax(90px,1fr) 54px 48px;}
   .hw-cols span:nth-child(4){display:none}
@@ -5913,11 +5944,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-575 - Y-Achse an jedem Chart, gemeinsame Skala in Data, fehlende i ergaenzt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-576 - Zusammenfuehrung: Y-Achse an jedem Chart, gemeinsame Skala in Data, fehlende i ergaenzt + Score-Journal (parallel als 575 auf main)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-575</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-576</span>
     </span>
   </div>
   <div class="hdr-r">

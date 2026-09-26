@@ -479,7 +479,10 @@ const gruen = (m) => console.log('  ✓ ' + m);
   //   1. Bei einem vergangenen Release muss die Zahl von indScoreParts(heute)
   //      ABWEICHEN, sobald der Decay gewirkt hat. Sonst ist es wieder der Stand.
   //   2. Laufende Zustaende (Bond/COT/Sentiment) fuehren keine Beitrags-Reihe
-  //      je Tag - sie duerfen KEINE Zahl behaupten, sondern zeigen einen Strich.
+  //      je Tag - sie duerfen KEINE Zahl behaupten. Seit 2026-09-26 steht dort
+  //      statt eines Strichs ausdruecklich "n/r" (not recorded) mit Erklaerung
+  //      - Nutzer: "kein Wert soll leer bleiben". An Tagen MIT Score-Journal
+  //      steht der exakt aufgezeichnete Beitrag (check/journal.js).
   //   3. Die Zahl steht auf derselben Skala wie Delta und Kartenzerlegung
   //      (roh x Fairness-Faktor). Sonst sind es wieder zwei Massstaebe.
   // ⚠ Modus normalized, aus demselben Grund wie bei G0: ohne Decay ist der
@@ -566,39 +569,48 @@ const gruen = (m) => console.log('  ✓ ' + m);
       + ' - Delta und Kartenzerlegung rechnen mit dem Faktor, die Event-Zahl muss das auch.');
   else gruen(`${h2.zeilen.length} Event-Zahl(en) auf derselben Skala wie Delta und Kartenzerlegung (Faktor ${h2.faktor})`);
 
-  // ── H2) DIE WOCHENSUMME FOLGT DERSELBEN VERGLEICHSREGEL ────────────
-  // Sie rechnete stur "letzter minus erster Tag" - quer ueber einen
-  // Modellwechsel, den die Tageszeile daneben mit "n/c" verweigert. Im
-  // gemeldeten Screenshot stand oben "+2,3 this week", waehrend die heutige
-  // Zeile sagte, sie sei mit gestern nicht vergleichbar.
-  console.log('\n── H2) Wochensumme und Tagesdelta folgen derselben Regel ──');
-  // ⚠ Geprueft werden die ENDEN der Woche, nicht jeder n/c-Tag darin: die
-  // Summe ist "letzter minus erster Tag", ein taglosen Tag in der MITTE macht
-  // diese beiden nicht unvergleichbar (erster Entwurf hat genau das
-  // faelschlich gemeldet). Ein Modellwechsel ZWISCHEN den Enden ist dagegen
-  // genau der Fall aus dem Bugreport: Sonntag unter Modell 13, Montag unter
-  // 12, und oben stand trotzdem "+2,3 this week".
+  // ── H2) DIE WOCHENSUMME NENNT EINEN MODELLWECHSEL AUSDRUECKLICH ─────
+  // Geschichte: bis 2026-09-20 rechnete die Summe stur "letzter minus erster
+  // Tag" quer ueber einen Modellwechsel, den die Tageszeile daneben mit "n/c"
+  // verweigerte - zwei Aussagen, die sich widersprachen. Der Fix damals: die
+  // Summe ebenfalls verweigern ("not comparable").
+  // ⚠ SEIT 2026-09-26 GILT DIE UMGEKEHRTE REGEL (Nutzer-Auftrag: "kein Wert
+  // soll leer bleiben alles muss nachvollziehbar sein"): Tageszeile UND
+  // Wochensumme zeigen die Zahl immer - der Widerspruch ist trotzdem weg, weil
+  // BEIDE den Modellwechsel ausdruecklich nennen. Geprueft wird deshalb: ueber
+  // einen Wechsel hinweg MUSS "(incl. model change)" dastehen, ohne Wechsel
+  // darf es NICHT dastehen, und "not comparable" gibt es nicht mehr.
+  // ⚠ Geprueft werden die ENDEN der Woche (Summe = letzter minus erster Tag).
   // Sichtbares Merkmal: das Sternchen am Tagesscore markiert einen Eintrag aus
   // einem FRUEHEREN Modell. Tragen die beiden Enden es unterschiedlich, liegt
   // dazwischen ein Wechsel.
-  const h3 = await p.evaluate(() => {
+  // Gegenprobe: node check/historie.js --gegenprobe-woche entfernt den Zusatz
+  // aus dem DOM, bevor gemessen wird - dann muss diese Stufe rot werden.
+  console.log('\n── H2) Wochensumme nennt einen Modellwechsel ausdruecklich ──');
+  const h3 = await p.evaluate((gegen) => {
     const div = document.createElement('div'); div.innerHTML = renderSymHistoryPanel('USD');
+    if (gegen) div.querySelectorAll('.hw-hd-n').forEach(e => { e.textContent = e.textContent.replace(' (incl. model change)', ''); });
     return [...div.querySelectorAll('.hw-week')].map(w => {
       const mitScore = [...w.querySelectorAll('.hw-day')]
         .map(t => ((t.querySelector('.hw-sc') || {}).textContent || '').trim())
-        .filter(x => x && x !== '–');
+        .filter(x => x && x !== '–' && x !== 'none');
       return { summe: ((w.querySelector('.hw-hd-n') || {}).textContent || '').trim(),
         erstesAlt: mitScore.length ? /\*/.test(mitScore[mitScore.length - 1]) : null,
         letztesAlt: mitScore.length ? /\*/.test(mitScore[0]) : null,
         n: mitScore.length };
     });
-  });
-  const widerspruch = h3.filter(w => w.n >= 2 && w.erstesAlt !== w.letztesAlt && /this week/.test(w.summe));
-  if (widerspruch.length)
-    rot(`${widerspruch.length} Woche(n) nennen eine Summe ("${widerspruch[0].summe}"), obwohl ihre beiden Enden unter `
-      + `VERSCHIEDENEN Score-Modellen aufgezeichnet sind. Genau das stand im Bugreport: oben eine Wochensumme, `
-      + `unten "n/c" fuer denselben Uebergang.`);
-  else gruen(`${h3.length} Wochen: keine nennt eine Summe ueber einen Modellwechsel hinweg`);
+  }, process.argv.includes('--gegenprobe-woche'));
+  const ohneHinweis = h3.filter(w => w.n >= 2 && w.erstesAlt !== w.letztesAlt && !/incl\. model change/.test(w.summe));
+  const falscherHinweis = h3.filter(w => w.n >= 2 && w.erstesAlt === w.letztesAlt && /incl\. model change/.test(w.summe) && !w.erstesAlt);
+  const leer = h3.filter(w => /not comparable/.test(w.summe));
+  const mitWechsel = h3.filter(w => w.n >= 2 && w.erstesAlt !== w.letztesAlt).length;
+  if (leer.length) rot(`${leer.length} Woche(n) sagen noch "not comparable" statt einer Zahl mit Begruendung`);
+  else if (ohneHinweis.length)
+    rot(`${ohneHinweis.length} Woche(n) nennen eine Summe ("${ohneHinweis[0].summe}") ueber einen Modellwechsel hinweg, `
+      + `OHNE ihn zu nennen - genau der Widerspruch aus dem Bugreport 2026-09-20.`);
+  else if (falscherHinweis.length)
+    rot(`${falscherHinweis.length} Woche(n) behaupten einen Modellwechsel, obwohl beide Enden unter dem aktuellen Modell stehen`);
+  else gruen(`${h3.length} Wochen: jede Summe steht als Zahl, ${mitWechsel} ueber einen Modellwechsel hinweg mit ausdruecklichem Hinweis`);
 
   // ── I) KEIN TAGESWERT AUS DEM BOOTZUSTAND ──────────────────────────
   // Nutzer-Bugreport 2026-09-22, vierter Anlauf am selben Thema, Screenshot

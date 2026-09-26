@@ -43,7 +43,7 @@ betrifft.
 | Thema | Datei |
 |---|---|
 | Cross-Device-Sync für persistierten State (Muster + gebundene Felder) | `docs/state-sync.md` |
-| Score-Modell (Formel, Normierung, Altersgrenze, Stärke 1-10, Versionierung) | `docs/score-model.md` |
+| Score-Modell (Formel, Normierung, Altersgrenze, Stärke 1-10, Versionierung, **Score-Journal** = jede Änderung mit Ursache in der History) | `docs/score-model.md` |
 | Indikator-Datenquellen (Investing.com/Fallback-Policy, PMI/Trading-Economics-Scraping, Awaiting-Value, allgemeine Daten-Grundsätze) | `docs/data-sources.md` |
 | Design-System (Schrift, Typografie-Skala, wiederkehrende UI-Bausteine, **Kerzen-Regeln**) | `docs/design-system.md` |
 | Navigation/Sidebar/Dashboard-Layout (Koyfin-Umbau, Mehrfach-Dashboards, Klick-/Animationsregeln) | `docs/navigation.md` |
@@ -71,8 +71,10 @@ passenden Datei (oder `docs/CHANGELOG.md`) nachschlagen, nicht raten.
 3. **VERSION-CHECK-Nummer bei JEDER `index.html`-Änderung bumpen** — auch bei
    kleinen Bugfixes ohne UI-Sichtbarkeit — und die neue Nummer als letzten
    Satz der Chat-Antwort nennen. Bei Score-Formel-Änderungen zusätzlich
-   `SCORE_MODEL_VERSION`, bei Formulierungs-Logik `SUMMARY_ENGINE_VERSION`.
-   Erzwungen von `check/rules.js`. Details: `docs/workflow.md`.
+   `SCORE_MODEL_VERSION` (plus eine englische Zeile in `JR_MODELL_NOTIZ`,
+   `js/journal.js` — sonst steht der Modellwechsel ohne Inhalt in der
+   History), bei Formulierungs-Logik `SUMMARY_ENGINE_VERSION`.
+   Erzwungen von `check/rules.js` bzw. `check/journal.js`. Details: `docs/workflow.md`.
 4. **Nie schätzen/raten/hart eintragen.** Fehlt ein echter Wert aus einer
    Live-Quelle, erzeugt das eine Dashboard-Meldung statt eines geschätzten
    Werts. Policy-Details: `docs/data-sources.md`.

@@ -7,6 +7,11 @@ import {ASSET_CARDS,ASSET_GRAPHS,KONTEXT_ART,assetContextFor} from './assetlayou
 // Regime Radar: die Szenario-Rechnung liegt in einem eigenen Modul, weil sie
 // NUR liest und mit dem Score nichts zu tun hat (siehe Kopf von regime.js).
 import {RG_CCYS,REGIME_MIN_BED,regimeStand,rgKurve,rgRealzins,rgVix,rgVol,rgSpreizung,rgRisk,rgPutCall,rgHafen,rgDollarBreite,rgDrawdown,rgRendite,rgCpiTrend,rgArbeitslos,rgClaims,rgUeberraschung,rgProduktivitaet} from './regime.js';
+// Score-Journal: jede Score-Aenderung mit exakter Ursache je Indikator
+// (Nutzer-Auftrag 2026-09-26, siehe Kopf von journal.js). Zirkulaerer Import
+// wie bei regime.js - journal.js liest syms/trendAssets/scoreLog von hier.
+import {scoreJournal,loadScoreJournal,jrErfassen,jrBootFertig,jrSperren,jrFreigeben,jrAnlassMerken,jrUebernehmen,
+  jrTagesBlock,jrKopfHtml,jrBeginn,jrSeit,jrTagVon,jrUhr,jrModellText,JR_TAGE,JOURNAL_KEY} from './journal.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -28,7 +33,9 @@ export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScor
   // Genau das habe ich beim Bauen einmal verwechselt - die Namen standen
   // nur in der Bruecke, und der Browser brach die ganze Datei mit
   // "does not provide an export named 'bondSeriesPts'" ab: weisse Seite.
-  bondSeriesPts,bondSpreadPts,ohneWochenende,SENTIMENT_DATA};
+  bondSeriesPts,bondSpreadPts,ohneWochenende,SENTIMENT_DATA,
+  // Was js/journal.js von hier liest (zirkulaerer Import, siehe dort).
+  scoreLog,trendAssets,indName,saveQuotaFail};
 // ── EINFARBIGER ICON-SATZ (Nutzer-Wunsch 2026-08-23) ───────────────────────
 // "mach davor die Flagge aber ohne Farben also eine Art icon aber schon die
 // richtige Form und nicht animiert und bei Gold und dem Rest auch gleich".
@@ -1817,10 +1824,11 @@ function renderSymHistoryPanelRoh(id){
     // Ein Wert aus einem frueheren Score-Modell ist NICHT mit heute vergleichbar.
     const altesModell=histMap[d.date]!=null&&histOld[d.date];
     const scoreCol=dayScore==null?'var(--t3)':altesModell?'var(--t3)':scoreColor(dayScore);
-    const scoreLbl=(dayScore!=null?(dayScore>0?'+':'')+dayScore:'–')+(altesModell?' *':'');
+    const scoreLbl=(dayScore!=null?(dayScore>0?'+':'')+dayScore:'none')+(altesModell?' *':'');
     const scoreTip=dayScore==null?'No recorded score for this day'
       :altesModell?'Recorded under an earlier version of the score model, so it is not comparable to today’s value. The number is shown unchanged — it is what was recorded — but it was produced by a different calculation.'
       :(isToday?'Current live score':'Recorded score at the end of this day')+' (same value as in Trends)';
+    let nichtAufgezeichnet=0;
     const evHtml=evs.map(ev=>{
       const b=histEvtBias(ev);   // Richtung folgt der Tageswirkung (siehe biasOf)
       const col=BC[b]||BC.neu;
@@ -1846,10 +1854,18 @@ function renderSymHistoryPanelRoh(id){
       const cmpTag=(histCmp[d.date]!=null&&histCmp[d.date]>0)?histCmp[d.date]
                   :(sym?symCmpFactor(sym):1);
       const effWert=ev.scWirkung==null?null:Math.round(ev.scWirkung*cmpTag*100)/100;
-      const eff=effWert!=null?fmtHistEff(effWert):'–';
+      // ⚠ Kein "–" mehr (Nutzer-Auftrag 2026-09-26: "kein Wert soll leer
+      // bleiben"). Laufend gemessene Zeilen (COT, Renditen, Sentiment) haben
+      // fuer Tage VOR dem Score-Journal keine gespeicherte Tageswirkung - das
+      // wird jetzt ausdruecklich gesagt ("n/r" = not recorded, Erklaerung
+      // einmal je Tag unter den Zeilen), statt einen Strich stehen zu lassen.
+      // Tage MIT Journal zeigen diese Zeilen gar nicht mehr, dort steht der
+      // exakt aufgezeichnete Beitrag.
+      if(effWert==null)nichtAufgezeichnet++;
+      const eff=effWert!=null?fmtHistEff(effWert):'n/r';
       const effTip=effWert==null
-        ? 'Continuously measured — it has no per-day contribution history, so no daily effect can be shown for it. '
-          +'The card split below carries this day\u2019s movement.'
+        ? 'Not recorded: this row is measured continuously, and its effect on this day was not stored — the score journal, which records every change with its amount, started later. '
+          +'The card split below carries this day\u2019s recorded movement.'
           +(ev.sc!=null?' Its contribution to today\u2019s score is '+fmtHistEff(ev.sc)+'.':'')
         : effWert===0
           ? histZeroReason(ev)
@@ -1920,33 +1936,41 @@ function renderSymHistoryPanelRoh(id){
     const prevTag=prevDate!=null?histTag[prevDate]:null;
     const vergleichbar=histTagsComparable(dTag,prevTag);
     const bekannteGrenze=dTag!=null&&prevTag!=null&&!vergleichbar;
-    const delta=(dayScore!=null&&prevScore!=null&&vergleichbar)?Math.round((dayScore-prevScore)*10)/10:null;
+    // ⚠ SEIT 2026-09-26 STEHT DIE VERAENDERUNG IMMER DA (Nutzer-Auftrag: "kein
+    // Wert soll leer bleiben alles muss nachvollziehbar sein"). Bis dahin
+    // verweigerte die Zeile bei einem Modellwechsel die Zahl ("n/c") - gemessen
+    // an 184 von 690 Tageszeilen (23 Assets, 30 Tage), und in jedem Wochenkopf
+    // "not comparable". Die Sorge dahinter bleibt richtig: eine Formel-
+    // Umstellung darf nicht als Marktbewegung ausgegeben werden. Die Loesung ist
+    // aber nicht, die Zahl zu verschweigen, sondern sie ZU BEGRUENDEN: der
+    // Nutzer hat diese Bewegung auf dem Bildschirm gesehen. Das Journal zerlegt
+    // sie ab jetzt exakt (Modell-Anteil je Indikator), fuer aeltere Tage steht
+    // der Modellwechsel als ausdrueckliche Ursache in der Zeile.
+    const delta=(dayScore!=null&&prevScore!=null)?Math.round((dayScore-prevScore)*10)/10:null;
+    const unbekannteHerkunft=delta!=null&&!vergleichbar&&!bekannteGrenze;
     const dCol=delta==null?'var(--t3)':delta>0?BC.bull:delta<0?BC.bear:'var(--t3)';
     const dTxt=delta==null?'':(delta>0?'+':'')+delta;
+    // ── Score-Journal: die exakte Zerlegung, wo es mitgeschrieben hat ──────
+    const jr=jrTagesBlock(id,d.date,{histDelta:delta,prevScore,prevDatum:prevDate,offenLauf:isToday});
     // Woher kam die Bewegung? Aus den je Tag aufgezeichneten Rubrikwerten
     // laesst sich das fuer Inflation/Labour Market/Economic Growth exakt
     // ablesen. Was uebrig bleibt, stammt aus den nicht aufgezeichneten Karten
     // (Interest Rates, COT Data, Risk Environment) oder aus dem
     // Fairness-Faktor - das wird auch so benannt und NICHT einer Karte
     // zugeschrieben, die es gar nicht war.
-    const parts=histDeltaParts(d.date,prevDate,delta,histMap,histRub,histCmp,histRaw,HIST_RUB_NAMES,histRest);
-    const brk=parts.length?`<div class="histp-brk">${parts.map(p=>
+    // ⚠ Nur noch fuer Tage OHNE Journal - dort ist sie die beste vorhandene
+    // Auskunft. Bei einem Modellwechsel enthaelt sie den Formel-Anteil mit, das
+    // steht dann ausdruecklich davor.
+    const parts=jr.n?[]:histDeltaParts(d.date,prevDate,delta,histMap,histRub,histCmp,histRaw,HIST_RUB_NAMES,histRest);
+    const brk=parts.length?`<div class="histp-brk">${bekannteGrenze?'<span class="histp-brk-hd">Card split (includes the model change):</span>':''}${parts.map(p=>
       `<span class="histp-brk-i" title="${escH(p.tip)}"><span class="histp-brk-n">${escH(p.name)}</span><span class="histp-brk-v" style="color:${p.v>0?BC.bull:p.v<0?BC.bear:'var(--t3)'}">${(p.v>0?'+':'')+p.v}</span></span>`).join('')}</div>`:'';
-    // "Alles begruendet": bewegt sich der Score ohne Release, ohne manuelle
-    // Aenderung und ohne aufgezeichnete automatische Ursache, wird genau
-    // gesagt, was noch bekannt ist - statt einer erfundenen Erklaerung.
-    // bekannteGrenze bekommt eine EIGENE Meldung statt "No change." - der
-    // Score hat sich moeglicherweise sehr wohl geaendert, nur eben durch
-    // einen Modell-/Modus-Wechsel und nicht durch ein echtes Ereignis -
-    // "No change" waere hier selbst wieder eine erfundene Aussage. Bei
-    // UNBEKANNTER Herkunft (keinDelta, aber kein bekannter Tag-Unterschied -
-    // die taglose Frühzeit) bleibt es dagegen wie bisher stumm.
-    const has=!!(evs.length||manual.length||delta||bekannteGrenze);
+    const has=!!(evs.length||manual.length||delta||bekannteGrenze||jr.n);
     // ── Was die Bewegung ALLEIN DURCHS ALTER verursacht hat ─────────────
     // Nutzer-Wunsch 2026-09-17. Steht in JEDER Tageszeile, nicht nur an
     // Tagen ohne Release: ein Indikator kann auch an einem Veroeffentlichungs-
     // tag durch die Altersgrenze fallen, und dann sind es zwei Ursachen.
-    const alterung=histAgeShow&&prevDate?histAlterungsWechsel(sym,d.date,prevDate):[];
+    // (An Journal-Tagen steht die Alterung exakt im Journal - kein zweites Mal.)
+    const alterung=!jr.n&&histAgeShow&&prevDate?histAlterungsWechsel(sym,d.date,prevDate):[];
     const ageHtml=alterung.map(a=>
       `<div class="histp-evt histp-age">
         <span class="histp-time">age</span>
@@ -1968,18 +1992,81 @@ function renderSymHistoryPanelRoh(id){
     // noetigen Kartenwerte fuer BEIDE Tage vor oder nicht.
     const zerlegbar=prevDate!=null&&histCmp[d.date]!=null&&histRaw[d.date]!=null
       &&histCmp[prevDate]!=null&&histRaw[prevDate]!=null;
+    // Seit wann schreibt das Journal fuer dieses Asset mit? Davor gibt es nur
+    // Tageswerte - das wird gesagt, statt eine Luecke unkommentiert zu lassen.
+    const jrAb=jrBeginn(id),jrAbTag=jrAb?jrTagVon(jrAb):null;
+    const vorJournal=!jrAbTag||d.date<jrAbTag;
+    const jrAbTxt=jrAbTag?fmtDayShort(jrAbTag)+' '+jrUhr(jrAb):'the next start of this version';
+    // Lag der Tag schon IM Journal, dessen Einzelheiten inzwischen aus
+    // Platzgruenden entfernt sind? Dann heisst er nicht "vor dem Journal".
+    const jrSeitTag=jrSeit()?jrTagVon(jrSeit()):null;
+    const abgelaufen=vorJournal&&jrSeitTag!=null&&d.date>=jrSeitTag;
+    const jrLueckeTxt=abgelaufen
+      ?`The score journal recorded this day, but its details have been removed since — they are kept for about ${JR_TAGE} days, less when storage is tight.`
+      :`This day predates the score journal, which records every change with its cause from ${jrAbTxt}.`;
+    // Modellwechsel als eigene, ausdrueckliche Ursache (Tage ohne Journal).
+    const modellHtml=(!jr.n&&bekannteGrenze&&delta!=null)
+      ?`<div class="hw-none hw-modell">Score model changed between these two days: ${escH(jrModellText(prevTag,dTag)||'an earlier score model')}. The change of ${escH(dTxt||'0')} therefore includes the new calculation, not only new data${parts.length?' — the card split below shows where it landed':''}. ${escH(jrLueckeTxt)}</div>`
+      :(!jr.n&&unbekannteHerkunft)
+      ?`<div class="hw-none hw-modell">One of these two days was recorded before the score model was tagged (before Aug 9, 26), so the change of ${escH(dTxt||'0')} can include model updates as well as new data.</div>`:'';
     // Nichts veroeffentlicht, nichts von Hand geaendert, nichts gealtert.
     // ⚠ Der Nutzer wollte hier ausdruecklich "No data released" lesen und
     // KEINE zusammengefasste Sammelzeile ("jeden tag einzeln"). Der Satz
     // sagt genau das, was bekannt ist - und nicht "no recorded cause", was
     // wie ein Fehler der App klingt, obwohl an dem Tag einfach nichts war.
-    const leer=(!evs.length&&!manual.length&&!alterung.length)
-      ?`<div class="hw-none">No data released${delta?` — but the score moved ${dTxt}`+(parts.length?', see the card split below':(!histAgeShow?'. Switch on "ageing" above to see whether the age limit caused it':zerlegbar?'. Nothing crossed the age limit either':'. One of the two days was recorded without the card values needed to split it, so the cause cannot be named for this day')):''}.</div>`
+    // ⚠ Seit dem Score-Journal (2026-09-26) sagt er zusaetzlich, WARUM es an
+    // einem Tag ohne Journal-Eintrag keine genauere Ursache gibt - und an
+    // einem Tag MIT Journal-Abdeckung, ob die App ueberhaupt offen war.
+    // Exakter Score beider Tage, wo Rohscore und Faktor aufgezeichnet sind
+    // (seit 2026-08-23 bzw. seit 2026-09-20 auch in der Server-Historie). Damit
+    // laesst sich ein reiner Rundungssprung belegen: NZD 21.->22.09. stand
+    // exakt bei 1,843 -> 1,854 (+0,011) und zeigte trotzdem +1,8 -> +1,9.
+    const exaktHeute=(histRaw[d.date]!=null&&histCmp[d.date]!=null)?histRaw[d.date]*histCmp[d.date]:null;
+    const exaktVor=(prevDate&&histRaw[prevDate]!=null&&histCmp[prevDate]!=null)?histRaw[prevDate]*histCmp[prevDate]:null;
+    const exaktTxt=(exaktHeute!=null&&exaktVor!=null)
+      ?` Exactly the score went from ${(exaktVor>0?'+':'')+exaktVor.toFixed(3)} to ${(exaktHeute>0?'+':'')+exaktHeute.toFixed(3)} (${(exaktHeute-exaktVor>=0?'+':'')+(exaktHeute-exaktVor).toFixed(3)})`
+        +(Math.abs(exaktHeute-exaktVor)<0.1&&delta&&Math.abs(delta)<=0.1?', so the shown change of '+dTxt+' is mostly the rounding to one decimal.':'.')
       :'';
+    let leerTxt='';
+    if(!jr.n&&!evs.length&&!manual.length&&!alterung.length){
+      if(bekannteGrenze){
+        // Der Modellwechsel steht schon ausdruecklich darueber - hier nur noch
+        // die Tatsache, kein zweiter Erklaerungsversuch derselben Zahl.
+        leerTxt='No data released on this day.'+exaktTxt;
+      }else if(!delta){
+        leerTxt=!vorJournal
+          ?(jr.offen?`No change: the app was open ${jrUhr(jr.offen[0])}–${jrUhr(jr.offen[1])} and the score did not move.`
+                    :'No change: no device had the app open on this day, so the value is the last one synced.')
+          :'No data released and no change.';
+      }else if(!vorJournal){
+        leerTxt=`The recorded value moved ${dTxt}, but the score journal (recording since ${jrAbTxt}) captured no change on this day — this value was recorded by a device without the journal or by the server from an older sync.`;
+      }else{
+        // ⚠ Nur sagen, was feststeht. "the move came from weighting" war eine
+        // Vermutung: an einem Tag ohne Release bewegen sich auch die laufend
+        // gemessenen Zeilen (COT, Retail, Trend, Renditen), und die stehen hier
+        // nicht als Ereignis. Genannt werden deshalb alle MOEGLICHEN Quellen.
+        leerTxt=`No data released — but the score moved ${dTxt}.`+exaktTxt
+          +(parts.length?' The card split below shows where it landed.'
+            :(!histAgeShow?' Switch on "Ageing" above to see whether the age limit caused it.'
+              :zerlegbar?' The recorded card values show no movement of 0.1 or more on any card.'
+              :' One of the two days was recorded without the card values needed to split it.'))
+          +(histAgeShow?' Nothing crossed the age limit.':'')
+          +` Possible sources, not split one by one for this day: ageing of releases, market relevance, the comparability factor and the continuously measured rows (COT, retail, trend, yields). ${jrLueckeTxt}`;
+      }
+    }
+    const leer=leerTxt?`<div class="hw-none">${escH(leerTxt)}</div>`:'';
+    const exaktZeile=(!jr.n&&!leerTxt&&delta&&!parts.length&&exaktTxt)?`<div class="hw-none">Day change ${escH(dTxt)}.${escH(exaktTxt)}</div>`:'';
+    const nrHinweis=(!jr.n&&nichtAufgezeichnet)?`<div class="hw-none">n/r = not recorded: ${nichtAufgezeichnet===1?'this row is':'these rows are'} measured continuously (COT, yields, sentiment), and ${abgelaufen?'the journal details of this day have been removed since':'before the score journal their effect per day was not stored'}.${parts.length?' Their card’s recorded movement is in the split below.':''}</div>`:'';
+    // An Journal-Tagen stehen die Ursachen exakt im Journal. Veroeffentlichungen,
+    // die den Score NICHT bewegt haben (im Rahmen der Erwartung, oder die
+    // Einstufung war schon vorher dieselbe), gehoeren trotzdem in die Zeile -
+    // sonst fragt man sich, wo der CPI des Tages geblieben ist.
+    const ohneWirkung=jr.n?evs.filter(ev=>ev.scWirkung===0):[];
+    const ohneHtml=ohneWirkung.length?`<div class="hw-none">Also released on this day without moving the score: ${escH(ohneWirkung.map(ev=>ev.name+' '+(ev.actual!=null&&ev.actual!==''?ev.actual:'')+(ev.forecast!=null&&ev.forecast!==''&&!ev.bond?' vs fc '+ev.forecast:'')).join(', '))}.</div>`:'';
     return{date:d.date,score:dayScore,delta,has,isToday,
-      ursache:!!(evs.length||manual.length||alterung.length),
-      scoreCol,scoreLbl,scoreTip,dCol,dTxt,bekannteGrenze,
-      detail:`${evHtml}${manHtml}${ageHtml}${leer}${brk}`};
+      ursache:!!(evs.length||manual.length||alterung.length||jr.n),
+      scoreCol,scoreLbl,scoreTip,dCol,dTxt,bekannteGrenze,jrN:jr.n,
+      detail:jr.n?jr.html+ohneHtml:`${evHtml}${manHtml}${ageHtml}${modellHtml}${leer}${exaktZeile}${nrHinweis}${brk}`};
   });
   // ── Nach Wochen gruppieren (Montag-Start) ──
   const weeks=[];
@@ -2012,7 +2099,8 @@ function renderSymHistoryPanelRoh(id){
   // `_histErkl` wird hier gefuellt und von abHistorieKarteHtml/openHistModal
   // gelesen - die beiden bauen die Kopfzeile, nicht diese Funktion.
   _histErkl=['One row per day: the score at the end of that day, the change against the previous recorded day, and what moved it.',
-    'The line above is the same series. Days with no release still move, because a release more than '+IND_STALE_CYCLES+' of its own cycles overdue stops counting — switch on "Ageing" to see which indicator crossed that edge.'];
+    'Since the score journal (from '+(jrBeginn(id)?fmtDayShort(jrTagVon(jrBeginn(id))):'the first start of this version')+'), every change of the shown score — even 0.1 — is recorded with its exact cause: new releases, rule inputs (COT, retail, trend, yields), ageing of releases, market relevance, the comparability factor, model changes and rounding. The amounts always add up to the change of the day.',
+    'The line above is the same series. Days before the journal show what was recorded then: releases, the card split and the ageing edge — switch on "Ageing" to see which indicator crossed it.'];
   if(tageAltesModell)_histErkl.push(`* ${tageAltesModell} ${tageAltesModell===1?'day was':'days were'} recorded under an earlier version of the score model and cannot be compared with today’s value. The numbers are shown unchanged; the series rebuilds itself day by day.`);
 
   const nAlterung=histAgeShow?dayCards.filter(c=>/histp-age/.test(c.detail)).length:0;
@@ -2051,26 +2139,36 @@ function renderSymHistoryPanelRoh(id){
     const last=scored.length?scored[0]:null;
     const wochenTagsGleich=!!(first&&last&&histTagsComparable(histTag[first.date]!=null?histTag[first.date]:(first.isToday?SCORE_MODEL_TAG():null),
                                                              histTag[last.date]!=null?histTag[last.date]:(last.isToday?SCORE_MODEL_TAG():null)));
-    const net=(first&&last&&wochenTagsGleich)?Math.round((last.score-first.score)*10)/10:null;
+    // ⚠ Seit 2026-09-26 steht das Netto IMMER da (vorher "not comparable" in
+    // jedem Wochenkopf, sobald das Modell wechselte) - mit dem Modellwechsel als
+    // ausdruecklichem Zusatz, derselbe Grundsatz wie in der Tageszeile.
+    const net=(first&&last)?Math.round((last.score-first.score)*10)/10:null;
     const netTip=net==null
-      ?(first&&last?'The score model changed during this week, so the two ends are not comparable - the same rule the daily change follows.'
-                   :'No recorded change across this week')
-      :'Net move across this week';
+      ?'Only one recorded day in this week, so there is no net move yet'
+      :wochenTagsGleich?'Net move across this week (last recorded day minus first)'
+      :'Net move across this week. It includes a change of the score model, so part of it is the new calculation — see the days marked in this week.';
     const netCol=net==null?'var(--t3)':net>0?BC.bull:net<0?BC.bear:'var(--t3)';
     const zeilen=w.cards.map(c=>
       `<div class="hw-day${c.isToday?' hw-today':''}${c.date===histAktivTag?' hw-jump':''}" data-d="${escH(c.date)}">
         <div class="hw-d1"><span class="hw-dt">${escH(fmtDayHdr(c.date))}</span>${c.isToday?'<span class="hw-now">Today</span>':''}</div>
         <div class="hw-d2"><span class="hw-sc" style="color:${c.scoreCol};border-color:${c.scoreCol}" title="${escH(c.scoreTip)}">${escH(c.scoreLbl)}</span></div>
-        <div class="hw-d3"><span class="hw-dl" style="color:${c.dCol}" title="${c.bekannteGrenze?'The score model changed on this day (or the day before), so the two days are not compared':'Change against the previous recorded day'}">${escH(c.dTxt||(c.bekannteGrenze?'n/c':'·'))}</span></div>
+        <div class="hw-d3"><span class="hw-dl" style="color:${c.dCol}" title="${escH(c.score==null?'No score was recorded on this day':c.delta==null?'First recorded day in this range — there is no earlier day to compare with':c.bekannteGrenze?'Change against the previous recorded day. It includes a change of the score model — the explanation next to it says which part':'Change against the previous recorded day')}">${escH(c.score==null?'none':c.delta==null?'start':(c.dTxt||'0')+(c.bekannteGrenze&&!c.jrN?' *':''))}</span></div>
         <div class="hw-d4">${c.detail}</div>
       </div>`).join('');
     return`<div class="hw-week">
       <div class="hw-hd"><span class="hw-hd-r">${escH(fmtDayShort(w.start))} – ${escH(fmtDayShort(dateAddStr(w.start,6)))}</span>
-        <span class="hw-hd-n" style="color:${netCol}" title="${escH(netTip)}">${net==null?(wochenTagsGleich?'no recorded change':'not comparable'):((net>0?'+':'')+net+' this week')}</span></div>
+        <span class="hw-hd-n" style="color:${netCol}" title="${escH(netTip)}">${net==null?'one recorded day':((net>0?'+':'')+net+' this week'+(wochenTagsGleich?'':' (incl. model change)'))}</span></div>
       ${zeilen}
     </div>`;
   }).join('');
-  return`<div class="histp">${bar}${linie}
+  // Kopfzeile: aktueller Score, heutige Veraenderung, heutige Eintraege -
+  // Nutzer 2026-09-26: "was ist der aktuelle Score dann wie hat er sich heute
+  // veraendert und dann ... der Grund".
+  const heuteKarte=dayCards.find(c=>c.isToday);
+  let vortagScore=null,vortag=null;
+  for(const c of dayCards){if(!c.isToday&&c.score!=null){vortagScore=c.score;vortag=c.date;break;}}
+  const kopf=jrKopfHtml(id,heuteKarte&&heuteKarte.score!=null?heuteKarte.score:liveScore,vortagScore,vortag,heuteKarte?heuteKarte.jrN:0);
+  return`<div class="histp">${bar}${kopf}${linie}
     <div class="hw-cols"><span>Day</span><span>Score</span><span>Δ</span><span>What moved it</span></div>
     <div class="hw-list">${wochen}</div></div>`;
 }
@@ -5105,6 +5203,9 @@ const SNAP_ENTBEHRLICH=[
   ['fxpro_backups','local backups'],
   ['fxpro_cot_hist_cache','the COT history cache'],
   ['fxpro_scorehist','the score history cache'],
+  // Letzte Stufe: das Score-Journal ist NICHT wiederherstellbar, aber es ist
+  // ein Protokoll - die eigenen Daten des Nutzers gehen immer vor.
+  ['fxpro_scorejournal','the score journal (causes of past score changes)'],
 ];
 function schreibeSnapshot(s){
   try{localStorage.setItem(SK,s);saveQuotaOk();return;}catch(e){if(!istQuotaFehler(e))throw e;}
@@ -5232,6 +5333,8 @@ function storageRows(){
   ['fxpro_scorehist','fxpro_cot_hist_cache'].forEach(k=>{
     const v=localStorage.getItem(k);if(v&&v.length>1024)rows.push({n:k,kb:kb(v.length),hint:'Cache, rebuilds itself.',loesch:k});
   });
+  {const v=localStorage.getItem(JOURNAL_KEY);if(v&&v.length>1024)rows.push({n:'Score journal',kb:kb(v.length),
+    hint:'Every score change with its cause, kept '+JR_TAGE+' days and synced. It cannot be rebuilt, so there is no delete button here.'});}
   return rows.sort((a,b)=>b.kb-a.kb);
 }
 function openStorageInfo(){
@@ -6218,7 +6321,7 @@ function saveSoon(){
 // passieren) plus die Nicht-Snap-Felder, exakt wie cloudPush() es macht.
 function exportData(){
   const data=JSON.parse(snap());
-  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreMode=scoreMode;
+  data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.scoreMode=scoreMode;
   data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
@@ -6226,7 +6329,7 @@ function exportData(){
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.pxChartTyp!==undefined){setPxChartTypVal(_imp.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(_imp.scoreJournal){try{jrUebernehmen(_imp.scoreJournal);}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.pxChartTyp!==undefined){setPxChartTypVal(_imp.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6503,7 +6606,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6664,6 +6767,12 @@ async function cloudPull(manual,forceOverwrite){
       // andere Historie loeschen (genau das war der gemeldete Bug:
       // Handy-Historie viel kuerzer als iPad-Historie).
       if(cd.scoreHist){scoreHist=mergeScoreHist(cd.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
+      // Score-Journal: ebenfalls mergen statt ueberschreiben (Vereinigung der
+      // Eintraege, je Asset gewinnt die juengere Basis) - aus demselben Grund
+      // wie scoreHist. Die Basis MUSS mitkommen: sonst zerlegt dieses Geraet
+      // die naechste Aenderung gegen seinen eigenen, aelteren Stand und zaehlt
+      // Bewegungen doppelt, die das andere Geraet schon aufgezeichnet hat.
+      if(cd.scoreJournal){try{jrUebernehmen(cd.scoreJournal);}catch(e){}}
       // Set-ups-/Kalender-/Compare-Filter (Audit-Agent-Fund 2026-07-20,
       // gleiches Muster wie compactLevel/designHue oben): bei anstehender
       // lokaler Praeferenz-Aenderung (prefPending) die lokalen Werte in
@@ -11882,6 +11991,9 @@ function _bewegungZuschreibbar(vorher,jetzt,tag){
 }
 let _lastSettledScores=null,_lastSettledStamp=null;
 function recomputeAuto(){
+  // Anlass fuers Score-Journal merken (nur Beschriftung - die Ursache selbst
+  // ermittelt das Journal aus dem Zustandsvergleich, nie aus diesem Tag).
+  try{jrAnlassMerken(_flipCauseTag);}catch(e){}
   const stamp=_feedStamp();
   // `before` ist nur brauchbar, wenn der eingeschwungene Stand aus denselben
   // Daten stammt - sonst steckt in der Differenz eine Feed-Lieferung, die
@@ -15766,8 +15878,14 @@ function recordScoreHist(){
     // chartHist/IND_HIST_RANGES/COT-3y%ile anderswo in der App schon nutzen.
     if(arr.length>1100)arr.splice(0,arr.length-1100);
   });
-  if(changed){
-    try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}
+  // Score-Journal (seit 2026-09-26): im SELBEN Moment wie der Tageswert, damit
+  // der letzte Eintrag eines Tages per Konstruktion auf dem aufgezeichneten
+  // Wert endet. Es entscheidet selbst, ob es aktiv ist (erst nach dem ersten
+  // vollstaendigen Feed-Durchlauf, nie mitten in einem) - siehe journal.js.
+  let jrNeu=false;
+  try{jrNeu=jrErfassen();}catch(e){jrNeu=false;}
+  if(changed||jrNeu){
+    if(changed){try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}
     // scoreHist liegt ausserhalb von snap() (siehe Kommentar oben), daher
     // bumpt save()s eigener snap()-Diff-Check das hier NICHT automatisch -
     // ohne den expliziten Bump+Sync-Anstoss wuerde eine reine Score-History-
@@ -23258,7 +23376,7 @@ applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
 applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();applyFxTheme();renderFxThemeGrid();applyAppBg();renderAppBgGrid();
 loadTabStacks();renderTabBar();
-loadScoreHist();recordScoreHist();
+loadScoreHist();loadScoreJournal();recordScoreHist();
 const _seedCleaned=cleanLegacySeedEvts();
 const _researchCalChanged=applyResearchToCal();
 if(processCalEvts()||_researchCalChanged||_seedCleaned)save();
@@ -23325,6 +23443,16 @@ updFFLastUpd();
 // Ausserhalb des Boots (manueller Refresh-Button, minuetlicher Poll) rufen
 // die einzelnen autoFetchX()-Funktionen weiterhin wie gehabt sofort/einzeln.
 async function bootFetchScoreFeeds(){
+  // ⚠ Score-Journal SPERREN, solange die Feeds einzeln eintreffen: jeder Feed
+  // wird sofort angewandt, der Neuaufbau (recomputeAuto) kommt aber erst, wenn
+  // alle da sind. Ein save() aus dem 15-s-Takt dazwischen wuerde sonst einen
+  // halb aktualisierten Stand als Aenderung protokollieren (z.B. USD-CPI neu,
+  // die gespiegelte Gold-Zeile noch alt) - dieselbe Fehlerklasse, die bei
+  // scoreHist viermal gemeldet wurde. Freigegeben wird im finally, damit ein
+  // Fehler die Aufzeichnung nicht dauerhaft abstellt.
+  jrSperren();
+  let _jrFrei=false;const jrFrei=()=>{if(!_jrFrei){_jrFrei=true;jrFreigeben();}};
+  try{
   const results=await Promise.all([
     fetchIndData().then(()=>{try{return applyIndDataFeed();}catch(e){return false;}}),
     fetchBondData().then(()=>{try{return applyBondDataFeed();}catch(e){return false;}}),
@@ -23358,8 +23486,12 @@ async function bootFetchScoreFeeds(){
     if(!indCh)_flipCauseTag=bondCh?'bond':cotCh?'cot':sentCh?'sentiment':null;
     recomputeAuto();
     _flipCauseTag=null;
+    // Freigabe VOR save(): save() zeichnet (ueber recordScoreHist) auf, und
+    // genau dieser Stand ist der fertige.
+    jrFrei();jrBootFertig();
     save();renderSidebar();
   }
+  }finally{jrFrei();jrBootFertig();}
   // ⚠ IMMER einmal aufzeichnen, sobald die Feeds durch sind - nicht nur wenn
   // sich etwas geaendert hat. Der Boot-Aufruf in INIT laeuft jetzt bewusst ins
   // Leere (scoreHistAufzeichenbar), also braucht der Tag hier seinen Eintrag.

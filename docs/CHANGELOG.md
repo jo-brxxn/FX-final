@@ -18132,6 +18132,167 @@ Schriftzug viel cooler gemacht übernimm das."*
 
 ---
 
+## VERSION-CHECK-575 (2026-09-26) — Score-Journal: jede Score-Änderung mit Ursache, Betrag und Begründung
+
+Nutzer (Auftrag per `/goal`, drei Fotos der History NZD/USD): *„Mehrmals am
+Tag ändert sich der Score aber es werden keine Gründe dafür aufgezeichnet ich
+möchte das alles was den Score ändert aufgezeichnet wird und in history
+gezeigt wird auch wenn es nur 0,1 ist ich will es sehen und immer den Grund
+daneben ausführlich. Es soll gezeigt werden was ist der aktuelle Score dann
+wie hat er sich heute verändert und dann wie also der Grund wie viel dadurch
+und warum kein Wert soll leer bleiben alles muss nachvollziehbar sein das hat
+oberste Priorität"*.
+
+### Reproduziert und gemessen (vor dem Fix, Playwright, echter Datenstand)
+
+- **History, 23 Assets × 30 Tage = 690 Tageszeilen:** 184× „n/c" (Änderung
+  wegen Modellwechsel verweigert), 190 Tage mit Bewegung und **gar keiner**
+  Ursache („cannot be named" / „Nothing crossed the age limit either"), 34
+  Tage nur mit Karten-Split, **111 von 301** Ereigniszeilen mit „–" als
+  Wirkung, 74 Tage, an denen die Einzelwirkungen nicht zur Tagesänderung
+  aufgingen (> 0,15 daneben). Jeder Wochenkopf mit Modellwechsel: „not
+  comparable".
+- **Kurs-Update** (der 10-Minuten-Takt, simuliert mit −3 % auf die letzten
+  drei Kerzen): **11 von 23 Assets bewegt** (CAD −0,3 → +1,4, CHF +1 → +2,6,
+  SP500 −1,4 → −2,6, EUR −0,4 → −1) — protokolliert: **0 Einträge**.
+- **Ein Tag Alterung** (Uhr per `page.clock` einen Tag vor, keine
+  Veröffentlichung): 9 Assets um 0,1 bewegt — protokolliert: **0**.
+
+### Ursache (belegt, nicht vermutet)
+
+Das bisherige Protokoll (`_logAutoScoreShifts` in `recomputeAuto`) schreibt
+nur, wenn **genau ein bekannter Auslöser** gesetzt ist (`_flipCauseTag`) UND
+sich seit dem letzten eingeschwungenen Stand kein fremder Feed geändert hat
+(`_bewegungZuschreibbar`). `price` steht absichtlich nicht in
+`FEED_ERKLAERT_VON` — also ist jede Bewegung aus Preisen (1D-Trend seit v16,
+Marktrelevanz seit v13) strukturell unprotokollierbar: `nachPreisFeed` setzt
+zwar `'trend'`, aber das neue `PRICE_DATA_FEED`-Objekt macht die Bewegung
+„nicht zuschreibbar". Zeit (Decay), der Vergleichsfaktor (`symCmpFactor`,
+hängt an den Indikatorzahlen ALLER FX-Majors) und Modellwechsel haben gar
+keinen Auslöser. Das ist keine Lücke, die man stopfen kann: der Ansatz
+„Ursache = Auslöser" sieht diese Quellen prinzipiell nicht. Die History
+selbst kannte nur Tageswerte (Karten-Ebene) plus rekonstruierte
+Release-Wirkungen.
+
+**Nebenbefund, echte Ursache der NZD-Wackler vom 21.–23.09.** (Foto 1: −0,1,
++0,1, −0,1 ohne Grund): der exakte Score lag bei **+1,843 ↔ +1,854** — reine
+Rundungssprünge um 1,85, die Karten bewegten sich um weniger als 0,1.
+
+### Fix: `js/journal.js` (neues Modul)
+
+**Zustand vergleichen statt Auslöser raten.** Je Asset ein Schnappschuss aller
+Indikator-Beiträge (`indScore`/`indScoreParts`/`indNormBreakdown` — dieselben
+Funktionen wie der Score, keine zweite Formel) plus Eingaben (Datum, Wert-
+Text, Bias, Status fest/normal/veraltet, Gewicht, Faktoren). Bei jeder
+Aufzeichnung (`recordScoreHist` → `jrErfassen`) ein neuer; weicht die
+**angezeigte** Zahl ab (auch 0,1) oder bewegt sich ein diskreter Eingang um
+≥ 0,05, entsteht ein Eintrag, algebraisch exakt zerlegt:
+
+    neu − alt = faktor_neu × Σ(Beitrag_neu − Beitrag_alt)   je Indikator
+              + roh_alt × (faktor_neu − faktor_alt)          Vergleichsfaktor
+              + Rundung auf eine Nachkommastelle              ausgewiesen
+
+Ursachenarten: neuer Release/Wert, Regel-Eingang (COT, Retail, Trend,
+Renditen, Zinsdifferenz, Rohstoffe) mit Vorher/Nachher-Text, Bias (mit „set by
+you at HH:MM" aus `scoreLog`, bei gespiegelten Assets in der Quellwährung
+gesucht), Gewicht, Altersgrenze, Alterung/Marktrelevanz/Überraschungs-
+Maßstab (je Art gebündelt, fünf größte einzeln), Vergleichsfaktor (mit der
+Währung, deren Indikatorzahl sich änderte), **Modellwechsel** (gleiche
+Eingaben, anderer Beitrag; Text aus `JR_MODELL_NOTIZ`), Rundung.
+
+- **Kein Zwischenstand:** Aufzeichnung erst nach dem ersten vollständigen
+  Feed-Durchlauf, gesperrt während `bootFetchScoreFeeds` (Feeds werden einzeln
+  angewandt, `recomputeAuto` erst danach) — dieselbe Lehre wie bei
+  `scoreHistAufzeichenbar()`.
+- **Sync (Regel 1):** eigener Schlüssel `fxpro_scorejournal` (nicht in
+  `snap()`, sonst nähme Undo das Protokoll mit), `cloudPush`/`cloudPull`/
+  Export/Import, Merge: Vereinigung der Läufe, jüngere Basis gewinnt; die
+  Anzeige baut je Asset eine **Kette** vom jüngsten Eintrag rückwärts (jeder
+  Vorgänger endet vor dem Beginn des Nachfolgers) — zwei gleichzeitig offene
+  Geräte zählen dieselbe Bewegung nie doppelt.
+- **Größe (gemessen):** erste Fassung 7.645 Zeichen für einen Lauf mit 11
+  Assets → verdichtet (Wörterbuch je Lauf für Schlüssel/Texte, stetige
+  Ursachen gebündelt, nur der geänderte Faktor, drei Nachkommastellen) auf
+  4.585. Basis aller 23 Assets ≈ 88.000 Zeichen. Aufbewahrung bis 92 Tage,
+  Deckel 650.000 Zeichen (älteste Läufe zuerst).
+- **Leistung:** `jrErfassen` 13 ms ohne Änderung (läuft mit jedem `save()`).
+
+### History
+
+- **Kopfzeile** im Fenster: *Current score* · *Today* (gegen den Vortag) ·
+  Zahl der heutigen Änderungen (in der schmalen Karte der Asset-Seite
+  ausgeblendet — dort steht beides in der Heute-Zeile).
+- **Journal-Tage:** je Ursache eine Zeile — Pfeil, Name + Karte, Betrag, und die
+  **Begründung sichtbar darunter** (nicht nur im Tooltip); Regeltext als
+  „How this rule scores" aufklappbar; darunter die Zeitleiste aller
+  Einzeländerungen des Tages mit Uhrzeit, von → nach. Die Beträge ergeben
+  **exakt** die Tagesänderung; was vor dem Journal-Start lag, steht als
+  eigene Zeile „Not covered by the journal".
+- **Δ nie mehr leer:** die Zahl steht immer, auch über einen Modellwechsel;
+  der Wechsel wird mit Versionsnotizen als Ursache benannt (bisher „n/c").
+  Wochenkopf: Summe mit „(incl. model change)" statt „not comparable".
+- **Tage vor dem Journal:** „–" → „n/r" (not recorded) mit Erklärung; exakter
+  Score aus Rohscore × Faktor, wo aufgezeichnet („Exactly the score went from
+  +1.843 to +1.854 … mostly the rounding"); statt der Vermutung „the move came
+  from weighting" die vollständige Liste möglicher Quellen (an Tagen ohne
+  Release bewegen sich auch COT, Retail, Trend, Renditen).
+
+### Gemessen nach dem Fix
+
+`check/journal.js`: Kurs-Update 11 bewegte Assets, **11 mit Eintrag**, Teile =
+angezeigte Änderung in jedem Eintrag; identischer Sync 0 Einträge; manuelle
+Änderung als „set by you"; zwei Tage Alterung 7 Einträge, 6 mit „Ageing of
+releases", Summen exakt; Modellwechsel erkannt; Merge ohne Doppelzählung;
+History **690 Zeilen: 0× „n/c", 0× „not comparable", 0× „–", jede Zeile mit
+Zahl und Text, 21 Journal-Tage exakt aufgehend**; Schrift der neuen Zeilen aus
+der Skala. **Gegenprobe** `--gegenprobe` (Journal stillgelegt): Stufe A rot —
+„11 Assets haben sich bewegt, 11 davon OHNE Journal-Eintrag".
+
+**Geräte-Abgleich Ende-zu-Ende** (Stufe J, zwei Browser-Kontexte, Supabase
+nachgebildet): Gerät A ändert USD, `cloudPush` trägt das Journal mit; Gerät B
+zieht beim Start, zeigt genau **einen** Eintrag „set by you at …" und zeichnet
+dieselbe Bewegung nicht noch einmal auf. Gegenprobe `--gegenprobe-sync`
+(Journal aus dem Push entfernt): rot.
+
+**Beim Gegenlesen gefunden und behoben** (vor dem Push):
+- Der gemerkte Anlass („sync" vom Start-Pull, „manual" nach einem Klick ohne
+  Score-Wirkung) blieb bis zu zwei Minuten stehen und hätte den nächsten,
+  fremden Eintrag beschriftet („your change" an einem Kurs-Update). Jetzt bei
+  jedem `recomputeAuto` überschrieben (auch mit null) und nach jeder Erfassung
+  gelöscht.
+- Zwei offene Tabs: letzter Schreiber gewinnt → Einträge des anderen Tabs
+  weg. `jrSchreiben` merged jetzt vorher mit dem Stand auf der Platte.
+- Ein beschädigter Sync-Eintrag hätte die History werfen lassen: `jrKette`
+  nimmt nur wohlgeformte Einträge.
+- „It now counts +0.75 (before −0.75)" neben „+1.64" war nicht nachrechenbar
+  — der Satz nennt jetzt den Vergleichsfaktor (×1.09 → +1.64).
+
+### Fehlerklasse gesucht
+
+- Leere Werte in der History: „–" (Ereigniswirkung, Score), „·"/„n/c"
+  (Δ-Spalte), „not comparable"/„no recorded change" (Wochenkopf) — alle
+  ersetzt (Δ ohne Vortag: „start", Tag ohne Wert: „none", je mit Tooltip).
+- `check/historie.js` H2 erzwang das alte Verhalten (Wochensumme über einen
+  Modellwechsel verweigern) → umgestellt auf „Summe steht, Wechsel wird
+  ausdrücklich genannt", Gegenprobe `--gegenprobe-woche` rot.
+- `check/datum.js` prüft eine **feste Dateiliste** — das neue Modul fehlte
+  darin (dieselbe Klasse wie beim Modul-Umbau 2026-08-25, `docs/module-split.md`).
+  Ergänzt; Feed-Datumsangaben in den Begründungen („daily candle 2026-09-25")
+  jetzt im App-Format mit zweistelligem Jahr.
+- `check/typo.js`/`check/hierarchie.js` sehen die Journal-Zeilen nicht (sie
+  entstehen erst nach einer Änderung) → eigene Stufe I in `check/journal.js`.
+
+### Grenzen (ehrlich)
+
+- Tage **vor** dem Journal lassen sich nicht nachträglich auf Indikatoren
+  zerlegen — es wurde damals nichts gespeichert. Sie zeigen, was aufgezeichnet
+  ist, und sagen, was fehlt.
+- Tage, an denen kein Gerät offen war, tragen den zuletzt synchronisierten Wert
+  (Server-Historie); die Bewegung dazwischen erscheint beim nächsten Öffnen
+  als ein Eintrag „covers everything since …".
+- Das alte `scoreLog`-`auto`-Protokoll bleibt unverändert bestehen (Globus-Feed,
+  Wächter G/G2); an Journal-Tagen zeigt die History nur noch das Journal.
+
 ## VERSION-CHECK-575 (2026-09-26) — Y-Achse überall, gemeinsame Skala in Data, fehlende ⓘ
 
 Nutzer: *„Und die Kritik die du hattest kannst du reparieren ... Und immer
@@ -18164,3 +18325,7 @@ startet 6 px tiefer) lief nach den festen 160 ms manchmal noch (5,6 px bei
 0 ms, 0 px ab ~80–160 ms). Der Wächter wartet jetzt auf das Ende der
 Animation (`getAnimations().finished`). Außerdem: die S&P-Achse der AAII-
 Ansicht formatiert Tausender ohne `toLocaleString` (`check/datum.js`).
+
+**Zusammenführung (VERSION-CHECK-576):** zwei Sitzungen haben parallel als
+575 auf `main` geschoben (Score-Journal und Y-Achse/ⓘ). Beide Stände
+zusammengeführt, Nummer auf 576 angehoben, damit sie eindeutig bleibt.

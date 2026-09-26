@@ -35,7 +35,7 @@ const path = require('path');
 const WURZEL = path.join(__dirname, '..');
 const QUELLEN = ['js/main.js', 'js/score.js', 'js/calendar.js', 'js/data-feeds.js',
   'js/globe.js', 'js/constants.js', 'js/regime.js', 'js/quickcapture.js',
-  'js/assetlayout.js', 'index.html'];
+  'js/assetlayout.js', 'js/journal.js', 'index.html'];
 
 // Die vier zentralen Formatierer. Sie DUERFEN toLocaleDateString direkt
 // aufrufen - sie sind die Stelle, an der die Regel einmal steht.
