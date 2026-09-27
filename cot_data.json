@@ -1,6 +1,6 @@
 {
  "report_date": "2026-09-22",
- "updated": "2026-09-25T19:50:39.702Z",
+ "updated": "2026-09-27T11:39:21.733Z",
  "symbols": {
   "EUR": {
    "long": 220708,
@@ -167,7 +167,8 @@
      "oi": 821689
     }
    ],
-   "contract": "EURO FX - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "EURO FX - CHICAGO MERCANTILE EXCHANGE",
+   "code": "099741"
   },
   "GBP": {
    "long": 54455,
@@ -334,7 +335,8 @@
      "oi": 244925
     }
    ],
-   "contract": "BRITISH POUND - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "BRITISH POUND - CHICAGO MERCANTILE EXCHANGE",
+   "code": "096742"
   },
   "JPY": {
    "long": 192274,
@@ -501,7 +503,8 @@
      "oi": 378701
     }
    ],
-   "contract": "JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE",
+   "code": "097741"
   },
   "CHF": {
    "long": 22189,
@@ -668,7 +671,8 @@
      "oi": 133495
     }
    ],
-   "contract": "SWISS FRANC - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "SWISS FRANC - CHICAGO MERCANTILE EXCHANGE",
+   "code": "092741"
   },
   "CAD": {
    "long": 86030,
@@ -835,7 +839,8 @@
      "oi": 311085
     }
    ],
-   "contract": "CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE",
+   "code": "090741"
   },
   "AUD": {
    "long": 108533,
@@ -1002,7 +1007,8 @@
      "oi": 306488
     }
    ],
-   "contract": "AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE",
+   "code": "232741"
   },
   "NZD": {
    "long": 21571,
@@ -1169,7 +1175,8 @@
      "oi": 101377
     }
    ],
-   "contract": "NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE",
+   "code": "112741"
   },
   "USD": {
    "long": 27768,
@@ -1336,7 +1343,8 @@
      "oi": 46328
     }
    ],
-   "contract": "USD INDEX - ICE FUTURES U.S."
+   "contract": "USD INDEX - ICE FUTURES U.S.",
+   "code": "098662"
   },
   "BTC": {
    "long": 211194,
@@ -1503,7 +1511,8 @@
      "oi": 226420
     }
    ],
-   "contract": "NANO BITCOIN PERP STYLE - COINBASE DERIVATIVES, LLC"
+   "contract": "NANO BITCOIN PERP STYLE - COINBASE DERIVATIVES, LLC",
+   "code": "133LM4"
   },
   "GOLD": {
    "long": 253982,
@@ -1670,7 +1679,8 @@
      "oi": 412800
     }
    ],
-   "contract": "GOLD - COMMODITY EXCHANGE INC."
+   "contract": "GOLD - COMMODITY EXCHANGE INC.",
+   "code": "088691"
   },
   "SILVER": {
    "long": 34701,
@@ -1837,7 +1847,8 @@
      "oi": 106474
     }
    ],
-   "contract": "SILVER - COMMODITY EXCHANGE INC."
+   "contract": "SILVER - COMMODITY EXCHANGE INC.",
+   "code": "084691"
   },
   "OIL": {
    "long": 72520,
@@ -2004,7 +2015,8 @@
      "oi": 734302
     }
    ],
-   "contract": "CRUDE OIL, LIGHT SWEET-WTI - ICE FUTURES EUROPE"
+   "contract": "CRUDE OIL, LIGHT SWEET-WTI - ICE FUTURES EUROPE",
+   "code": "067411"
   },
   "SP500": {
    "long": 218043,
@@ -2171,7 +2183,8 @@
      "oi": 1890653
     }
    ],
-   "contract": "E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "E-MINI S&P 500 - CHICAGO MERCANTILE EXCHANGE",
+   "code": "13874A"
   },
   "NAS": {
    "long": 86951,
@@ -2338,7 +2351,8 @@
      "oi": 298319
     }
    ],
-   "contract": "NASDAQ-100 CONSOLIDATED - CHICAGO MERCANTILE EXCHANGE"
+   "contract": "NASDAQ-100 CONSOLIDATED - CHICAGO MERCANTILE EXCHANGE",
+   "code": "20974+"
   }
  },
  "pct3y": {
