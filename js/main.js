@@ -10336,8 +10336,10 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
   if(!detailBody)return mainRow;
   // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
   // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
-  const cmpBtn=`<div class="ind-data-act"><button class="btn ind-cmp-btn" onclick="event.stopPropagation();indCompareGo('${escJH(ind.id)}')" title="Open Insights &gt; Data with ${escH(getSym().name||getSym().id)} and this indicator already selected — add up to three more assets there">${icn('bars',13)}<span>Compare</span></button></div>`;
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${cmpBtn}${isOpen?indHistChart(ind):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  // Seit 2026-09-27 klein in der Legendenzeile des Charts (Nutzer: "Compare
+  // Button muss kleiner in gleiche Zeile wie actual und forecast") statt als
+  // eigene Zeile darueber - siehe indAssetChartOpts().
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -10346,6 +10348,15 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
 // (Edit-Mode-Controls) und waehrend der Bias-Picker gerade offen ist (der
 // oeffnet sich per Long-Press auf derselben Zeile nach 450ms - ein Klick beim
 // Loslassen soll dann nicht zusaetzlich die Detail-Zeile umschalten).
+// Aufgeklappte Indikator-Charts der Asset-Seite: Compare-Knopf in der
+// Legendenzeile und EIN gemeinsamer Cursor (Nutzer 2026-09-27: "wenn ich in
+// einem Chart so reingeblickt habe und die Details aufzeigen das in den
+// anderen geoeffneten Charts an der gleichen Stelle ... Wie im compare
+// Modus") - Gruppe 'ind', abgeglichen wird ueber das DATUM (attachChartHovers).
+function indAssetChartOpts(ind){
+  const c=getSym()||{};
+  return{group:'ind',cmp:`<button class="btn ind-cmp-btn" onclick="event.stopPropagation();indCompareGo('${escJH(ind.id)}')" title="Open Insights &gt; Data with ${escH(c.name||c.id||'')} and this indicator already selected — add up to three more assets there">${icn('bars',11)}<span>Compare</span></button>`};
+}
 function toggleIndDetailRow(ev,indId){
   if(ev.target.closest('button,a,[role="button"]'))return;
   if(document.getElementById('biasPicker'))return;
@@ -10363,7 +10374,7 @@ function toggleIndDetailRow(ev,indId){
   const holder=tr.querySelector('.ind-hist-holder');
   if(!holder||holder.dataset.filled)return;
   const ind=findIndById(indId);if(!ind)return;
-  holder.innerHTML=indHistChart(ind);
+  holder.innerHTML=indHistChart(ind,undefined,indAssetChartOpts(ind));
   holder.dataset.filled='1';
   attachChartHovers(holder);
 }
@@ -17874,9 +17885,23 @@ function attachChartHovers(root){
     // gibt also immer einen naechsten Punkt.
     w._chvShowAt=fx=>{
       const pts=_chvReg[w.dataset.chv]||[];
-      const r=w.getBoundingClientRect();if(!r.width||!pts.length){hide();return;}
+      if(!pts.length){hide();return null;}
       const f=Math.max(0,Math.min(1,fx));
       let best=pts[0],bd=1e9;pts.forEach(p=>{const d=Math.abs(p.fx-f);if(d<bd){bd=d;best=p;}});
+      return w._chvShowPt(best);
+    };
+    // Gruppen-Partner mit Datum (p.t, 'YYYY-MM-DD'): der Stand AN diesem Tag =
+    // der letzte Punkt am oder vor dem Datum. Vor dem ersten Punkt der Reihe
+    // gibt es keinen Stand - dann bleibt der Partner leer, statt einen
+    // spaeteren Wert als "damals" auszugeben.
+    w._chvShowAtT=t=>{
+      const pts=_chvReg[w.dataset.chv]||[];
+      let best=null;pts.forEach(p=>{if(p.t&&p.t<=t&&(!best||p.t>=best.t))best=p;});
+      if(!best){hide();return null;}
+      return w._chvShowPt(best);
+    };
+    w._chvShowPt=best=>{
+      const r=w.getBoundingClientRect();if(!r.width||!best){hide();return null;}
       const px=best.fx*r.width,py=best.fy*r.height;
       // Duenne graue Linie SENKRECHT vom Punkt bis zum Boden des Diagramms
       // ("dort zieht sich dann auch eine duenne graue Linie senkrecht zum
@@ -17887,6 +17912,7 @@ function attachChartHovers(root){
       if(dot){dot.style.left=px+'px';dot.style.top=py+'px';dot.style.borderColor=best.col||'var(--t3)';dot.style.display='';}
       if(tip){tip.innerHTML=best.tip;tip.style.display='';const tw=tip.offsetWidth||120;tip.style.left=Math.max(tw/2+2,Math.min(r.width-tw/2-2,px))+'px';tip.style.top=Math.max(4,py)+'px';}
       const cb=_chvPick[w.dataset.chv];if(cb)try{cb(best);}catch(e){}
+      return best;
     };
     // Diagramme mit derselben data-chv-group (Insights > Data, bis zu 4
     // Panels) teilen sich den Cursor: alle zeigen denselben Zeitpunkt, sonst
@@ -17894,10 +17920,20 @@ function attachChartHovers(root){
     // gehoert.
     const grp=w.dataset.chvGroup||'';
     const peers=()=>grp?[...document.querySelectorAll('.chv[data-chv-group="'+grp+'"]')]:[w];
+    // ⚠ Abgeglichen wird ueber das DATUM, nicht ueber die Position im Chart
+    // (Nutzer 2026-09-27, Asset-Seite). Die x-Achse der Indikator-Charts ist
+    // pro Release gleichmaessig verteilt, nicht pro Kalendertag: bei gleicher
+    // Position zeigte ein Monats-Indikator neben einem Quartals-Indikator
+    // (oder zwei Reihen mit anderem Anfang) zwei verschiedene Zeitpunkte -
+    // auch in Insights > Data, wo die Gruppe seit 2026-09-26 ueber die
+    // Position lief. Punkte ohne Datum bleiben beim alten Weg.
     const move=cx=>{
       const r=w.getBoundingClientRect();if(!r.width)return;
       const fx=(cx-r.left)/r.width;
-      peers().forEach(p=>{if(p._chvShowAt)p._chvShowAt(fx);});
+      const best=w._chvShowAt(fx);
+      peers().forEach(p=>{if(p===w)return;
+        if(best&&best.t&&p._chvShowAtT&&!window.__chvNachPosition)p._chvShowAtT(best.t);
+        else if(p._chvShowAt)p._chvShowAt(fx);});
     };
     const leave=()=>peers().forEach(p=>{if(p._chvHide)p._chvHide();});
     w.addEventListener('mouseenter',e=>move(e.clientX));
@@ -18250,13 +18286,14 @@ function indHistChart(ind,symId,opts){
   const CF=opts.range!=null?opts.from:indHistCustomFrom,CT=opts.range!=null?opts.to:indHistCustomTo;
   const ab0=all.length?all[0][0]:null;
   const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange',MINI_RANGES,ab0);
-  const legend=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span></div>`;
+  const cmp=opts.cmp||'';
+  const legend=`<div class="ind-hist-legend${cmp?' mit-cmp':''}"><span class="lg-act">■ Actual</span><span class="lg-fc">— Forecast</span>${cmp}</div>`;
   const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange',ab0);
   const toolbar=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${indHistStartNote(all,R)}${legend}</div>`;
   // Saisonalitaet ist keine Zeitreihe, sondern ein Monatsprofil ueber viele
   // Jahre - ihr "Verlauf" ist dieses Profil (Nutzer 2026-09-25: jeder
   // aufgeklappte Indikator braucht eine Historie).
-  if(stripPeriodSuffix(ind.name).base===SEAS_IND_NAME){const sp=seasProfilHtml(symId||symIdOfInd(ind));if(sp)return sp;}
+  if(stripPeriodSuffix(ind.name).base===SEAS_IND_NAME){const sp=seasProfilHtml(symId||symIdOfInd(ind));if(sp)return(cmp?`<div class="ind-hist-legend mit-cmp">${cmp}</div>`:'')+sp;}
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -18432,7 +18469,7 @@ function indHistChart(ind,symId,opts){
   // Legende erst jetzt endgueltig: eine Reihe ohne Forecast (Anleihen, COT,
   // Sentiment) soll keine Forecast-Linie ankuendigen, die es nicht gibt.
   const hasFc=use.some(p=>p[2]!=null);
-  const legend2=`<div class="ind-hist-legend"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}</div>`;
+  const legend2=`<div class="ind-hist-legend${cmp?' mit-cmp':''}"><span class="lg-act">■ Actual</span>${hasFc?'<span class="lg-fc">— Forecast</span>':''}${cmp}</div>`;
   // ⚠ Der Hinweis muss HIER stehen, nicht nur an `toolbar` weiter oben: diese
   // zweite Leiste ist die, die der gezeichnete Chart wirklich ausgibt (die
   // erste bekommt nur der Leerzustand zu sehen). Beim Einbau 2026-09-07 war
@@ -18455,7 +18492,7 @@ function indHistChart(ind,symId,opts){
   </svg>`;
   const hpts=use.map((p,i)=>{
     let lbl;try{lbl=fmtDayHdr(p[0]);}catch(e){lbl=p[0];}
-    return{fx:xOf(i)/W,fy:yOf(p[1])/H,col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
+    return{fx:xOf(i)/W,fy:yOf(p[1])/H,t:p[0],col:'var(--blue)',tip:`<div class="chv-tip-d">${escH(lbl)}</div>Actual: <b>${escH(fmtV(p[1]))}</b>${p[2]!=null?' · Forecast: <b>'+escH(fmtV(p[2]))+'</b>':''}`};
   });
   return`<div class="ind-hist-wrap">${toolbar2}${chartHoverWrap(svg,hpts,null,opts.group)}</div>`;
 }

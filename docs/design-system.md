@@ -1336,3 +1336,14 @@ als gestrichelte Linie mit Punkten ueber den Balken - **fest, ohne Schalter**
 (Nutzer: „ohne Button nicht abschaltbar"). Eine Skala fuer Balken und Linie
 (max ueber beide); Punkt und Strich sitzen in `.ab-sb-bars` jeder Spalte,
 Null = Mitte. Legende „This year so far". Geprueft von `check/seasvsprice.js`.
+
+## Gemeinsamer Cursor ueber das DATUM (seit 2026-09-27)
+
+Charts einer `data-chv-group` (Insights > Data: `'data'`, aufgeklappte
+Indikatoren der Asset-Seite: `'ind'`) teilen den Cursor. Abgeglichen wird
+ueber das Datum der Hover-Punkte (`t`), nicht ueber die Position: der
+Partner zeigt seinen letzten Punkt AM oder VOR dem Tag, davor nichts. Die
+x-Achse der Indikator-Charts ist pro Release verteilt - gleiche Position
+hiess vorher verschiedene Tage. Punkte ohne `t` bleiben beim Positions-
+Abgleich. Der Compare-Knopf eines aufgeklappten Indikators sitzt klein
+rechts in der Legendenzeile (Actual/Forecast). Geprueft von `check/chartsync.js`.

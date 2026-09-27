@@ -18516,3 +18516,37 @@ an (heute − 3). Die Gegenprobe meldet weiter rot.
 
 Nebenbefund daraus: Zu Wochenbeginn stammt die ganze Past-Liste aus dem Archiv. Die
 TradingView-Namen gelten dann auch für die letzten Tage.
+
+## VERSION-CHECK-581 (2026-09-27) — Gemeinsamer Cursor über das Datum, Compare in der Legende
+
+**Wunsch** (Bildschirmfoto, NZD, iPad): „Compare Button muss kleiner in gleiche Zeile wie
+actual und forecast und es muss wenn ich in einem Chart so reingeblickt habe und die Details
+aufzeigen das in den anderen geöffneten Charts an der gleichen Stelle sein … Wie im compare
+Modus“. Das Bildschirmfoto zeigte noch VERSION-CHECK-578; das Gerät war also nicht auf dem
+neuesten Stand.
+
+**Compare:** Der Knopf hatte eine eigene Zeile über dem Chart (`.ind-data-act`, 36 px). Er
+sitzt jetzt klein (20 px) rechts in der Legendenzeile, gebaut von `indAssetChartOpts()`.
+
+**Cursor:** Die aufgeklappten Indikator-Charts der Asset-Seite bilden die Gruppe `'ind'`,
+über alle Karten hinweg.
+
+**Befund zum Vorbild „compare Modus“:** Die Gruppe in Insights > Data glich über die
+**Position** im Chart ab (Anteil der Breite). Die x-Achse ist aber pro Release verteilt,
+nicht pro Tag.
+
+**Gemessen (Gegenprobe des Wächters):**
+- Chart 1 auf 08.07.26: Chart 2 zeigte den 04.08.26, also einen Release aus der Zukunft.
+  Richtig wäre der 05.05.26.
+- Chart 1 auf 08.10.25: Chart 2 zeigte den 04.11.25, obwohl es zu dem Zeitpunkt noch
+  keinen Wert gab.
+
+Derselbe Fehler steckte im Data-Vergleich, sobald Reihen verschieden oft erscheinen oder
+verschieden früh beginnen.
+
+**Wurzel-Fix in `attachChartHovers`:** Hover-Punkte tragen ihr Datum (`t`). Partner zeigen
+den letzten eigenen Punkt am oder vor diesem Tag, davor nichts. Das gilt für Data und die
+Asset-Seite gleichermaßen. Punkte ohne Datum laufen weiter über die Position.
+
+**Wächter `check/chartsync.js`:** 7 Stellen, zwei Karten. Die Gegenprobe
+(`__chvNachPosition`) meldet rot.
