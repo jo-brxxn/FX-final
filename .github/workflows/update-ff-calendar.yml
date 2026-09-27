@@ -3974,20 +3974,20 @@ jobs:
             try{rows=JSON.parse(fs.readFileSync("cot_raw.json","utf8"));}catch(e){console.log("cot: raw unreadable, keeping existing file");process.exit(0);}
             if(!Array.isArray(rows)||!rows.length){console.log("cot: empty/invalid raw, keeping existing file");process.exit(0);}
             const MARKETS=[
-              {id:"EUR", inc:/EURO FX/, exc:/MICRO/},
-              {id:"GBP", inc:/BRITISH POUND/, exc:/MICRO/},
-              {id:"JPY", inc:/JAPANESE YEN/, exc:/MICRO/},
-              {id:"CHF", inc:/SWISS FRANC/, exc:/MICRO/},
-              {id:"CAD", inc:/CANADIAN DOLLAR/, exc:/MICRO/},
-              {id:"AUD", inc:/AUSTRALIAN DOLLAR/, exc:/MICRO/},
-              {id:"NZD", inc:/(NZ DOLLAR|NEW ZEALAND DOLLAR)/, exc:/MICRO/},
-              {id:"USD", inc:/(U\.?S\.?\s*DOLLAR INDEX|USD INDEX)/, exc:/MICRO/},
-              {id:"BTC", inc:/BITCOIN/, exc:/(MICRO|YIELD|ETHER|EVENT)/},
-              {id:"GOLD", inc:/^GOLD - /, exc:/(MICRO|KILO)/},
-              {id:"SILVER", inc:/^SILVER - /, exc:/MICRO/},
-              {id:"OIL", inc:/CRUDE OIL, LIGHT SWEET/, exc:/(MICRO|CALENDAR|BULLET|FINANCIAL|NYMEX OTHER|MIDLAND|GULF|WTI AVERAGE)/},
-              {id:"SP500", inc:/E-MINI S&P 500/, exc:/(MICRO|ESG|GROWTH|VALUE|DIVIDEND|ANNUAL|QUARTER|CONSU|FINANCIAL|HEALTH|TECH|UTIL|MATERIAL|INDUSTRIAL|ENERGY|REAL|COMMUNICATION)/},
-              {id:"NAS", inc:/(NASDAQ-100|E-MINI NASDAQ)/, exc:/MICRO/}
+              {id:"EUR", code:"099741", inc:/EURO FX/, exc:/MICRO/},
+              {id:"GBP", code:"096742", inc:/BRITISH POUND/, exc:/MICRO/},
+              {id:"JPY", code:"097741", inc:/JAPANESE YEN/, exc:/MICRO/},
+              {id:"CHF", code:"092741", inc:/SWISS FRANC/, exc:/MICRO/},
+              {id:"CAD", code:"090741", inc:/CANADIAN DOLLAR/, exc:/MICRO/},
+              {id:"AUD", code:"232741", inc:/AUSTRALIAN DOLLAR/, exc:/MICRO/},
+              {id:"NZD", code:"112741", inc:/(NZ DOLLAR|NEW ZEALAND DOLLAR)/, exc:/MICRO/},
+              {id:"USD", code:"098662", inc:/(U\.?S\.?\s*DOLLAR INDEX|USD INDEX)/, exc:/MICRO/},
+              {id:"BTC", code:"133741", inc:/BITCOIN/, exc:/(MICRO|NANO|PERP|YIELD|ETHER|EVENT)/},
+              {id:"GOLD", code:"088691", inc:/^GOLD - /, exc:/(MICRO|KILO)/},
+              {id:"SILVER", code:"084691", inc:/^SILVER - /, exc:/MICRO/},
+              {id:"OIL", code:"067651", inc:/(CRUDE OIL, LIGHT SWEET|WTI-PHYSICAL)/, exc:/(MICRO|CALENDAR|BULLET|FINANCIAL|NYMEX OTHER|MIDLAND|GULF|WTI AVERAGE)/},
+              {id:"SP500", code:"13874A", inc:/E-MINI S&P 500/, exc:/(MICRO|ESG|GROWTH|VALUE|DIVIDEND|ANNUAL|QUARTER|CONSU|FINANCIAL|HEALTH|TECH|UTIL|MATERIAL|INDUSTRIAL|ENERGY|REAL|COMMUNICATION)/},
+              {id:"NAS", code:"20974+", inc:/(NASDAQ-100|E-MINI NASDAQ)/, exc:/MICRO/}
             ];
             // Pro Markt bis zu HIST_LEN Wochen sammeln (Zeilen kommen bereits
             // global nach report_date DESC sortiert -> je Markt automatisch
@@ -4012,8 +4012,19 @@ jobs:
               (byMarket[nm]=byMarket[nm]||[]).push(r);
             }
             const descByDate=(a,b)=>String(b.report_date_as_yyyy_mm_dd||"").localeCompare(String(a.report_date_as_yyyy_mm_dd||""));
+            // Nutzer 2026-09-27 (COT-Historie): "groesstes Open Interest" hat
+            // zwei Maerkte falsch gewaehlt - BTC landete auf "NANO BITCOIN PERP
+            // STYLE - COINBASE" (0,01 BTC je Kontrakt -> viele Kontrakte, aber
+            // kein Grossspekulanten-Markt, erst seit 2025), OIL auf ICE-WTI,
+            // weil CFTC den NYMEX-Kontrakt in "WTI-PHYSICAL" umbenannt hat.
+            // Deshalb zuerst der FESTE Referenz-Kontraktcode (CME/NYMEX/COMEX/
+            // ICE-Leitkontrakt); nur wenn der im Report fehlt, die alte Suche.
+            const byCode={};
+            for(const r of rows){const c=String(r.cftc_contract_market_code||"").trim();if(c&&!byCode[c])byCode[c]=(r.market_and_exchange_names||"").toUpperCase();}
             for(const mk of MARKETS){
-              const cands=Object.keys(byMarket).filter(nm=>mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))&&!/CROSS RATE/.test(nm));
+              const pin=mk.code&&byCode[mk.code];
+              if(mk.code&&!pin)console.log("cot: reference code "+mk.code+" ("+mk.id+") not in report, falling back to name search");
+              const cands=pin?[pin]:Object.keys(byMarket).filter(nm=>mk.inc.test(nm)&&!(mk.exc&&mk.exc.test(nm))&&!/CROSS RATE/.test(nm));
               if(!cands.length)continue;
               let best=null,bestOi=-1;
               for(const nm of cands){
@@ -4078,7 +4089,7 @@ jobs:
       - name: Build 10y COT history -> cot_hist.json
         continue-on-error: true
         run: |
-          if node -e 'try{const fs=require("fs");const d=JSON.parse(fs.readFileSync("cot_data.json","utf8"));const h=JSON.parse(fs.readFileSync("cot_hist.json","utf8"));process.exit(h.report_date===d.report_date?0:1);}catch(e){process.exit(1);}'; then
+          if node -e 'try{const fs=require("fs");const d=JSON.parse(fs.readFileSync("cot_data.json","utf8"));const h=JSON.parse(fs.readFileSync("cot_hist.json","utf8"));const sig=Object.keys(d.symbols||{}).map(k=>k+"="+d.symbols[k].code).join(",");process.exit(h.report_date===d.report_date&&h.codes===sig?0:1);}catch(e){process.exit(1);}'; then
             echo "[debug] cot_hist: current report already in the archive, skipping"; exit 0
           fi
           URL=$(node -e '
@@ -4112,7 +4123,8 @@ jobs:
             const ids=Object.keys(out);
             if(!ids.length){console.log("cot_hist: nothing matched, keeping existing file");process.exit(0);}
             ids.forEach(id=>console.log("  cot_hist "+id+": "+out[id].length+" reports "+out[id][0][0]+" .. "+out[id][out[id].length-1][0]));
-            fs.writeFileSync("cot_hist.json",JSON.stringify({report_date:d.report_date,updated:new Date().toISOString(),note:"[date, noncomm long, noncomm short, open interest] per weekly CFTC report, ~10 years",assets:out}));
+            const sig=Object.keys(d.symbols||{}).map(k=>k+"="+d.symbols[k].code).join(",");
+            fs.writeFileSync("cot_hist.json",JSON.stringify({report_date:d.report_date,codes:sig,updated:new Date().toISOString(),note:"[date, noncomm long, noncomm short, open interest] per weekly CFTC report, ~10 years",assets:out}));
             console.log("cot_hist.json: "+ids.length+" markets, "+Math.round(fs.statSync("cot_hist.json").size/1024)+" KB");
           '
           rm -f cot_hist_raw.json
@@ -4130,7 +4142,7 @@ jobs:
       - name: Enrich cot_data.json with 3y net-position percentile
         continue-on-error: true
         run: |
-          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("cot_data.json","utf8"));process.exit(d.pct3y&&d.pct3y.report_date===d.report_date?0:1);}catch(e){process.exit(1);}'; then
+          if node -e 'try{const d=JSON.parse(require("fs").readFileSync("cot_data.json","utf8"));const sig=Object.keys(d.symbols||{}).map(k=>k+"="+d.symbols[k].contract).join("|");process.exit(d.pct3y&&d.pct3y.report_date===d.report_date&&d.pct3y.contracts===sig?0:1);}catch(e){process.exit(1);}'; then
             echo "[debug] cot pct3y: current report already enriched, skipping"
             exit 0
           fi
@@ -4173,7 +4185,7 @@ jobs:
               log.push(id+"="+data[id].pct+"%("+hist.length+"w)");
             });
             if(Object.keys(data).length>=5){
-              d.pct3y={report_date:d.report_date,updated:new Date().toISOString(),data};
+              d.pct3y={report_date:d.report_date,contracts:Object.keys(d.symbols||{}).map(k=>k+"="+d.symbols[k].contract).join("|"),updated:new Date().toISOString(),data};
               fs.writeFileSync("cot_data.json",JSON.stringify(d,null,1));
               console.log("cot pct3y written: "+log.join(" | "));
             }else console.log("cot pct3y: too few markets ("+log.join(" | ")+"), skipping");

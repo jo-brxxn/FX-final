@@ -18401,3 +18401,32 @@ Assets mit Kurs-Chart; Gegenprobe Korb statt USD + ohne Anleihe-Feed rot).
 Workflow-Lauf — die App zeigt bis dahin die 26 Wochen und „Loading…".
 
 **Nummer:** parallel hat eine andere Sitzung 577 (Suchfeld) auf `main` gelegt — dieser Stand ist deshalb 578.
+
+## 2026-09-27 — COT: falscher Kontrakt bei BTC und OIL (nur Workflow, kein VERSION-CHECK)
+
+**Befund nach dem ersten Lauf von `cot_hist.json`:** 13 Märkte mit je 548 Reports
+(2016-03-29 .. 2026-09-22), BTC aber nur 62 Reports ab 2025-07-22. Ursache, belegt
+aus `cot_data.json`: Die Kontraktwahl „größtes Open Interest“ traf
+- **BTC:** `NANO BITCOIN PERP STYLE - COINBASE DERIVATIVES, LLC` (Code 133LM4, OI 226.420).
+  Das ist ein 0,01-BTC-Kontrakt, der erst seit 2025 existiert. Viele Kontrakte heißen hier
+  nicht „großer Markt“. Richtig ist CME `BITCOIN` (133741).
+- **OIL:** `CRUDE OIL, LIGHT SWEET-WTI - ICE FUTURES EUROPE` (067411), weil die CFTC den
+  NYMEX-Leitkontrakt in `WTI-PHYSICAL - NEW YORK MERCANTILE EXCHANGE` (067651) umbenannt hat.
+  Die Regex fand ihn deshalb nicht.
+
+Beides war schon vor der Historie falsch: COT-Karte, Score-Beitrag und `pct3y`. Bei BTC
+fehlte das 3y-Perzentil ganz (zu dünn).
+
+**Fix (Wurzel):** Jeder Markt bekommt einen festen Referenz-Kontraktcode (`code:` in
+`MARKETS`), der vor der Namenssuche gilt. Die alte Suche bleibt als Fallback, mit
+Protokollzeile. Zusätzlich schließt der Fallback für BTC NANO/PERP aus, und für OIL
+greift das Muster jetzt auch bei `WTI-PHYSICAL`.
+
+`cot_hist.json` und `pct3y` bauen jetzt auch dann neu, wenn sich die Kontrakt-Signatur
+ändert, nicht nur bei einem neuen Report. Dafür dienen die Felder `codes` und `contracts`.
+
+**Fehlerklasse:** Alle 14 Kontrakte wurden geprüft. Die übrigen 12 sind die
+Leitkontrakte, deren Codes jetzt fest eingetragen sind.
+
+**Folge:** Die COT-Werte von BTC und OIL springen einmalig auf den echten
+Großspekulanten-Markt, deshalb ändert sich ihr COT-Score-Beitrag.
