@@ -50,12 +50,14 @@ function archivJahr(y, liveTag) {
   const liveTag = await p.evaluate(gp => {
     ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
     if (gp) window.__calpOhneTagesregel = true;
-    const heute = todayStr();
-    const t = getSymEventsAll('USD').filter(ev => isEvtPast(ev) && ev.date < heute).map(ev => ev.date).sort();
-    return t.length ? t[t.length - 1] : null;
+    // Eigener vergangener Live-Termin statt des Feed-Stands: ff_calendar.json
+    // beginnt sonntags mit der neuen FF-Woche und kennt dann KEINEN
+    // vergangenen Tag (am 2026-09-27 so rot gelaufen).
+    const tag = dateAddStr(todayStr(), -3);
+    calEvts.push({ id: 'calpast-test', name: 'Live Test Release', date: tag, time: '14:30', currencies: 'USD', impact: 'high', actual: '1', forecast: '2', previous: '3', notes: '', src: 'ff' });
+    return tag;
   }, GEGENPROBE);
-  if (!liveTag) fail('Voraussetzung', 'der Live-Kalender kennt keinen vergangenen USD-Tag');
-  const VON = new Date(Date.now() - 400 * TAG).toISOString().slice(0, 10);
+    const VON = new Date(Date.now() - 400 * TAG).toISOString().slice(0, 10);
   await p.route('**/cal_hist/meta.json*', r => r.fulfill({ json: { von: VON, jahre: [+VON.slice(0, 4), new Date().getFullYear()].filter((x, i, a) => a.indexOf(x) === i) } }));
   await p.route(/cal_hist\/\d{4}\.json/, r => r.fulfill({ json: archivJahr(+r.request().url().match(/(\d{4})\.json/)[1], liveTag) }));
   await p.evaluate(() => gotoSym('USD'));
@@ -93,6 +95,7 @@ function archivJahr(y, liveTag) {
   if (reihenfolge.zukunft) fail('A', `${reihenfolge.zukunft} Termin(e) aus der Zukunft in der Liste`);
   // B)
   const doppel = await p.evaluate(tag => calpDaten('USD').evts.filter(e => e.date === tag).map(e => e.name), liveTag);
+  if (!doppel.includes('Live Test Release')) fail('B', `der Live-Termin am ${liveTag} fehlt in der Liste`);
   if (doppel.some(n => /Duplicate Of Live Day/.test(n))) fail('B', `am Live-Tag ${liveTag} steht zusaetzlich eine Archivzeile (Doppelquelle)`);
   // A) High-only
   const nurHigh = await p.evaluate(() => { const alt = calHighOnly; setCalHighOnlyVal(true); const r = calpDaten('USD').evts.filter(e => evtImpact(e) !== 'high').length; setCalHighOnlyVal(alt); return r; });

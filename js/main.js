@@ -9681,7 +9681,16 @@ function abGrafikHtml(art,c){
       :'Seasonality has not loaded yet — it is computed once a day into seasonality_data.json.'));
   const jetzt=new Date().getMonth()+1;
   const monate=A.months.slice().sort((a,b)=>a[0]-b[0]);
-  const max=Math.max(...monate.map(m=>Math.abs(+m[1])))||1;
+  // "vs Price" fest eingebaut (Nutzer 2026-09-27: "Bei der seasonality Karte
+  // bei Assets fehlt der Umschaltbare vs Price mach das Fest darein ohne
+  // Button nicht abschaltbar"): der tatsaechliche Verlauf des laufenden
+  // Jahres je Monat als gestrichelte Linie ueber den Balken - DIESELBE Reihe
+  // wie im Seasonality-Tab (seasCurYearReturns, echte Kurse, gleiche
+  // Vorzeichen-Drehung). Die Skala umfasst Balken UND Linie, sonst liefe ein
+  // starker Monat des laufenden Jahres aus der Kachel.
+  let cy={};try{cy=seasCurYearReturns(c.id,A.inv)||{};}catch(e){cy={};}
+  const max=Math.max(...monate.map(m=>Math.abs(+m[1])),...Object.values(cy).filter(isFinite).map(Math.abs))||1;
+  const cyY=v=>(50-v/max*50).toFixed(2);
   const hp=[];
   const balken=monate.map((mo,i)=>{
     const[nr,avg,hit,jahre]=mo;
@@ -9690,7 +9699,13 @@ function abGrafikHtml(art,c){
     hp.push({fx:(i+0.5)/12,fy:+avg>=0?0.3:0.7,col:f,
       tip:`<div class="chv-tip-d">${SEAS_MON[nr-1]} · ${jahre} years</div>`
         +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Average</span><b style="color:${f}">${+avg>0?'+':''}${(+avg).toFixed(2)}%</b></div>`
-        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Up in</span><b>${hit}% of years</b></div>`});
+        +`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">Up in</span><b>${hit}% of years</b></div>`
+        +(cy[nr]!=null?`<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:var(--t3)">This year so far</span><b style="color:${biasCss(cy[nr]>=0?'bull':'bear')}">${cy[nr]>0?'+':''}${cy[nr].toFixed(2)}%</b></div>`:'')});
+    // Punkt des laufenden Jahres + Strich zum naechsten Monat. Beides sitzt
+    // IN der Balkenflaeche der Spalte (.ab-sb-bars), die Null ist deren Mitte
+    // - dieselbe Bezugslinie wie die Balken, ohne nachtraegliches Messen.
+    const nx=cy[nr+1];
+    const cyHtml=cy[nr]==null?'':`${nx!=null?`<svg class="ab-sb-cyl" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="${cyY(cy[nr])}" x2="100" y2="${cyY(nx)}" vector-effect="non-scaling-stroke"/></svg>`:''}<b class="ab-sb-cy" style="top:${cyY(cy[nr])}%"></b>`;
     // ⚠ Der laufende Monat wird MARKIERT, nicht nur eingefaerbt (Nutzer
     // 2026-09-14: "in der Grafik wird auch immer der aktuelle Monat
     // markiert"). Bis hierher tat `.on` nur eines: das Monatskuerzel
@@ -9700,8 +9715,8 @@ function abGrafikHtml(art,c){
     // Kapsel darunter. Der Balken des laufenden Monats ist damit auch
     // dann auffindbar, wenn sein Ausschlag der kleinste im Jahr ist.
     return`<span class="ab-sb${nr===jetzt?' on':''}"${nr===jetzt?` title="Current month — ${escH(SEAS_MON[nr-1])}"`:''}>
-      <span class="ab-sb-up">${+avg>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
-      <span class="ab-sb-dn">${+avg<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
+      <span class="ab-sb-bars"><span class="ab-sb-up">${+avg>=0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>
+      <span class="ab-sb-dn">${+avg<0?`<i style="height:${pct}%;background:${f}"></i>`:''}</span>${cyHtml}</span>
       <span class="ab-sb-l">${SEAS_MON[nr-1][0]}</span></span>`;
   }).join('');
   const cur=monate.find(m=>m[0]===jetzt);
@@ -9718,6 +9733,7 @@ function abGrafikHtml(art,c){
     `<span class="ab-tile-s">${escH(A.proxy||'')} · ${cur?cur[3]:'–'}y</span>`,
     `<div class="ab-big" style="color:${cur?biasCss(+cur[1]>=0?'bull':'bear'):'var(--t3)'}">${cur?`${+cur[1]>0?'+':''}${(+cur[1]).toFixed(2)}% in ${SEAS_MON[jetzt-1]}`:'–'}</div>
      ${chartHoverWrap(`<div class="ab-seas">${balken}</div>`,hp,'flex:1 1 auto;display:flex;min-height:64px')}
+     ${Object.keys(cy).length?`<div class="ab-seas-leg"><span class="tr-leg-dash"></span>This year so far</div>`:''}
      <div class="ab-foot">
        <span><span class="ab-foot-l">Up in</span> <b>${cur?cur[2]:'–'}%</b> <span class="ab-foot-n">of years</span></span>
        <span><span class="ab-foot-l">Sample</span> <b>${cur?cur[3]:'–'}</b> <span class="ab-foot-n">years</span></span>
@@ -9725,6 +9741,7 @@ function abGrafikHtml(art,c){
      </div>
      ${abScoreZeile(c,SEAS_IND_NAME,sb&&sb.grund)}`,null,
     [`Average calendar-month move over ${cur?cur[3]:'–'} years, from ${escH(A.proxy||'a long-run price proxy')}${A.inv?', inverted so the sign matches this asset':''}.`,
+     `The dashed line is this year's actual move month by month on the same scale, so you see at a glance whether ${escH(new Date().getFullYear()+'')} follows the pattern.`,
      `"Aligned" means the average return and the hit rate point the same way — ${escH(SEAS_MON[jetzt-1])} ${stark?'does':'does not'}.`,
      escH(seasRegelText())]);
 }

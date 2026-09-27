@@ -1327,3 +1327,12 @@ ist `calTableHtml` mit `datesDesc` (juengster Tag oben; Restzeit nur bis
 Quelle: Live-Kalender (`calEvts`), sonst Archiv. Mehr als 200 Zeilen →
 „Show older". In der Karte scrollt nur die Liste (`overscroll-behavior:none`).
 Geprüft von `check/calpast.js`.
+
+## Seasonality-Kachel: laufendes Jahr fest (seit 2026-09-27)
+
+Die Seasonality-Kachel der Asset-Seite zeigt wie der Seasonality-Tab den
+tatsaechlichen Verlauf des laufenden Jahres je Monat (`seasCurYearReturns`)
+als gestrichelte Linie mit Punkten ueber den Balken - **fest, ohne Schalter**
+(Nutzer: „ohne Button nicht abschaltbar"). Eine Skala fuer Balken und Linie
+(max ueber beide); Punkt und Strich sitzen in `.ab-sb-bars` jeder Spalte,
+Null = Mitte. Legende „This year so far". Geprueft von `check/seasvsprice.js`.

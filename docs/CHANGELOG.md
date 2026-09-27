@@ -18475,3 +18475,44 @@ voran. Nebeneffekt: `canonKey` erkennt diese Zeilen jetzt auch als dieselben wie
 bei nur 400 Tagen Archiv angeboten, weil jede Stufe erschien, sobald die Daten über die
 vorige hinausreichten. Die Regel ist jetzt „Stufe nur bei voller Abdeckung“. Die Gegenprobe
 (Ein-Quelle-Regel aus) meldet die Doppelzeile am Live-Tag rot.
+
+## VERSION-CHECK-580 (2026-09-27) — Seasonality-Kachel: laufendes Jahr fest
+
+**Wunsch:** „Bei der seasonality Karte bei Assets fehlt der Umschaltbare vs Price mach das
+Fest darein ohne Button nicht abschaltbar“.
+
+**Ausgangslage:** Der Seasonality-Tab hatte die Überlagerung „This year so far“ schon seit
+2026-08-12 fest drin (`seasCurYearReturns`, echte Kurse). Der Kachel auf der Asset-Seite
+fehlte sie.
+
+**Umsetzung:**
+- **Kachel:** Dieselbe Reihe liegt jetzt als gestrichelte Linie mit Punkten über den
+  CSS-Balken. Die Skala ist gemeinsam: Maximum über Balken und Punkte.
+- **Ohne Nachmessen:** Punkt und Strich sitzen je Spalte in der neuen Balkenfläche
+  `.ab-sb-bars`. Der Strich ist genau eine Spaltenbreite plus 3 px Lücke lang und endet
+  damit auf der Mitte der Nachbarspalte.
+- **Gleiche Spaltenhöhe:** Das Monatskürzel hat jetzt in allen Spalten dasselbe Polster.
+  Vorher war nur die Kapsel des laufenden Monats 2 px höher, ihr Punkt hätte daneben
+  gesessen.
+- **Rest:** Tooltip mit „This year so far“, Legende darunter, ⓘ-Satz ergänzt.
+
+**Messung (1280 und 390 px, EUR/GOLD/JPY):**
+- Alle 12 Spalten haben dieselbe Balkenhöhe (99,5 bzw. 143 bzw. 49 px).
+- Der Punkt liegt 0,01 px neben der Spaltenmitte.
+- Die Strichbreite ist gleich dem Spaltenabstand (28,9 bzw. 22,9 px).
+
+**Folge der gemeinsamen Skala:** Schwankt das laufende Jahr stark, werden die Balken flach.
+JPY hat Monatswerte von ±3–4 % gegenüber Durchschnitten von ±0,5 %. Das ist gewollt: Eine
+eigene Skala würde den Vergleich verfälschen.
+
+**Wächter `check/seasvsprice.js`:** 15 Kacheln und 135 Punkte, jeweils ±1 px auf der
+Balkenskala. Die Gegenprobe (Punkte per CSS aus) meldet rot.
+
+**Nachtrag Wächter `calpast.js` (gleicher Tag):** Der Wächter lief am Sonntagabend rot mit
+„Live-Kalender kennt keinen vergangenen USD-Tag“. Die App ist dabei nicht kaputt: Die neue
+FF-Woche hatte begonnen, und `ff_calendar.json` fängt dann erst bei 2026-09-28 an. Der
+Wächter hing also vom Datenstand ab. Er legt jetzt seinen eigenen vergangenen Live-Termin
+an (heute − 3). Die Gegenprobe meldet weiter rot.
+
+Nebenbefund daraus: Zu Wochenbeginn stammt die ganze Past-Liste aus dem Archiv. Die
+TradingView-Namen gelten dann auch für die letzten Tage.
