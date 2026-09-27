@@ -171,8 +171,13 @@ jobs:
               if(!impact)return;
               const t=new Date(ev.date).getTime();
               if(isNaN(t)||t<lo||t>hi)return;
-              const title=String(ev.title||ev.indicator||"").trim();
-              if(!title)return;
+              // Land voranstellen (2026-09-27): TradingView nennt es nicht im
+              // Titel, deutsche und Eurozonen-Inflation hiessen sonst beide nur
+              // "Inflation Rate YoY" unter EUR. canonKey macht aus "German" ein
+              // "germany" - so matcht die Zeile auch den FF-Namen.
+              const VORSATZ={DE:"German ",FR:"French ",IT:"Italian ",ES:"Spanish "};
+              const title=((VORSATZ[ev.country]||"")+String(ev.title||ev.indicator||"").trim()).trim();
+              if(!title||title===(VORSATZ[ev.country]||"").trim())return;
               const k=ccy+"|"+canonKey(title)+"|"+etDay(ev.date);
               if(have.has(k))return;
               have.add(k);
@@ -5483,6 +5488,113 @@ jobs:
           node news_parse.js
           rm -f news_rss_*.xml news_parse.js
 
+      # ── KALENDER-ARCHIV (cal_hist/<Jahr>.json) ─────────────────────────
+      # Nutzer 2026-09-27: "eine Liste die die vergangenen 2 Wochen abspiegelt
+      # mit allen events die fuer das Asset passiert sind mit dem actual" - per
+      # Rueckfrage in Kalender-Karte UND -Fenster, mit Zeitfilter bis 10 Jahre.
+      # ff_calendar.json reicht nur ~3 Tage zurueck. Quelle ist derselbe
+      # TradingView-Kalender wie oben (echte Actual/Forecast/Previous). Alle
+      # Wichtigkeiten werden gespeichert: die App stuft score-treibende Events
+      # selbst hoch (evtImpact), das geht nur, wenn sie auch Low-Zeilen kennt.
+      # Je Jahr eine Datei, die App laedt nur die Jahre, die ihr Filter braucht.
+      # Jeder Lauf frischt die letzten 21 Tage auf (Actuals, Revisionen) und
+      # fuellt rueckwaerts bis 10 Jahre auf - hoechstens MAX_ABRUFE Monatsfenster
+      # pro Lauf (API-Limit ~2000 Events je Abruf), der Rest folgt stuendlich.
+      - name: Build calendar archive -> cal_hist/
+        continue-on-error: true
+        run: |
+          cat > cal_hist_build.js <<'CALJS'
+          const fs=require("fs");
+          const DIR="cal_hist";
+          const LAENDER="US,EU,DE,FR,IT,ES,GB,JP,CA,AU,NZ,CH,CN";
+          const TV2CCY={US:"USD",EU:"EUR",DE:"EUR",FR:"EUR",IT:"EUR",ES:"EUR",GB:"GBP",JP:"JPY",CA:"CAD",AU:"AUD",NZ:"NZD",CH:"CHF",CN:"CNY"};
+          // TradingView nennt das Land nicht im Titel - ohne Vorsatz waeren
+          // deutsche und Eurozonen-Inflation zwei gleichnamige EUR-Zeilen.
+          const VORSATZ={DE:"German ",FR:"French ",IT:"Italian ",ES:"Spanish "};
+          const ZIEL_TAGE=Math.round(10*365.25), FENSTER=30, MAX_ABRUFE=45;
+          const UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+          const TAG=864e5;
+          function fmtVal(v,unit,scale){
+            if(v==null||v==="")return "";
+            let s=String(v);
+            if(unit==="%")s+="%";
+            else if(scale)s+=String(scale).toUpperCase();
+            return s;
+          }
+          async function hole(von,bis){
+            const url="https://economic-calendar.tradingview.com/events?from="+new Date(von).toISOString()+"&to="+new Date(bis).toISOString()+"&countries="+LAENDER;
+            for(let v=0;v<2;v++){
+              try{
+                const r=await fetch(url,{headers:{"User-Agent":UA,Origin:"https://www.tradingview.com"},signal:AbortSignal.timeout(40000)});
+                if(r.ok){const j=await r.json();const a=Array.isArray(j)?j:(j&&Array.isArray(j.result)?j.result:null);if(a)return a;}
+              }catch(e){}
+              await new Promise(z=>setTimeout(z,3000));
+            }
+            return null;
+          }
+          function zeile(ev){
+            const ccy=TV2CCY[ev.country];if(!ccy)return null;
+            const t=new Date(ev.date).getTime();if(isNaN(t))return null;
+            const titel=String(ev.title||ev.indicator||"").trim();if(!titel)return null;
+            const imp=Number(ev.importance);
+            return[new Date(t).toISOString().slice(0,16)+"Z",ccy,(VORSATZ[ev.country]||"")+titel,isFinite(imp)?imp:-1,
+              ev.actual!=null?fmtVal(ev.actual,ev.unit,ev.scale):"",fmtVal(ev.forecast,ev.unit,ev.scale),fmtVal(ev.previous,ev.unit,ev.scale)];
+          }
+          const jahre={};const geaendert=new Set();
+          function jahr(y){
+            if(!jahre[y]){let d=null;try{d=JSON.parse(fs.readFileSync(DIR+"/"+y+".json","utf8"));}catch(e){}
+              jahre[y]=new Map(((d&&d.ev)||[]).map(z=>[z[0]+"|"+z[1]+"|"+z[2],z]));}
+            return jahre[y];
+          }
+          function einlegen(evs){
+            let n=0;
+            evs.forEach(ev=>{const z=zeile(ev);if(!z)return;const y=z[0].slice(0,4);const m=jahr(y);const k=z[0]+"|"+z[1]+"|"+z[2];
+              const alt=m.get(k);if(alt&&JSON.stringify(alt)===JSON.stringify(z))return;m.set(k,z);geaendert.add(y);n++;});
+            return n;
+          }
+          (async()=>{
+            fs.mkdirSync(DIR,{recursive:true});
+            let meta={};try{meta=JSON.parse(fs.readFileSync(DIR+"/meta.json","utf8"));}catch(e){}
+            const jetzt=Date.now();
+            let abrufe=0;
+            // 1) Juengste 21 Tage (plus 2 voraus, damit heutige Termine ihr
+            //    Actual bekommen) - immer.
+            const neu=await hole(jetzt-21*TAG,jetzt+2*TAG);abrufe++;
+            if(!neu){console.log("cal_hist: recent window unavailable, keeping archive");process.exit(0);}
+            console.log("cal_hist recent: "+neu.length+" events, "+einlegen(neu.filter(e=>new Date(e.date).getTime()<=jetzt))+" new/changed");
+            // 2) Rueckwaerts auffuellen bis 10 Jahre bzw. bis die Quelle leer ist.
+            const ziel=jetzt-ZIEL_TAGE*TAG;
+            let von=meta.von?new Date(meta.von+"T00:00:00Z").getTime():jetzt-21*TAG;
+            let leerFolge=0;
+            while(!meta.ende&&von>ziel&&abrufe<MAX_ABRUFE){
+              const a=Math.max(ziel,von-FENSTER*TAG);
+              const evs=await hole(a,von);abrufe++;
+              if(!evs){console.log("cal_hist: backfill window "+new Date(a).toISOString().slice(0,10)+" failed, retry next run");break;}
+              if(evs.length>=1900)console.log("cal_hist WARN: "+evs.length+" events in one window - API limit may cut it");
+              einlegen(evs);
+              leerFolge=evs.length?0:leerFolge+1;
+              von=a;
+              meta.von=new Date(von).toISOString().slice(0,10);
+              // Drei leere Monate in Folge: die Quelle reicht nicht weiter zurueck.
+              if(leerFolge>=3){meta.ende="source";console.log("cal_hist: source has no data before "+meta.von);}
+              await new Promise(z=>setTimeout(z,1200));
+            }
+            if(von<=ziel&&!meta.ende)meta.ende="10y";
+            geaendert.forEach(y=>{
+              const ev=[...jahre[y].values()].sort((p,q)=>p[0].localeCompare(q[0]));
+              fs.writeFileSync(DIR+"/"+y+".json",JSON.stringify({y:+y,note:"[utc time, currency, title, importance 1 high/0 medium/-1 low, actual, forecast, previous]",ev}));
+            });
+            const dateien=fs.readdirSync(DIR).filter(f=>/^\d{4}\.json$/.test(f)).sort();
+            meta.jahre=dateien.map(f=>+f.slice(0,4));
+            if(geaendert.size||!meta.updated)meta.updated=new Date().toISOString();
+            fs.writeFileSync(DIR+"/meta.json",JSON.stringify(meta));
+            const kb=dateien.reduce((s,f)=>s+fs.statSync(DIR+"/"+f).size,0)/1024;
+            console.log("cal_hist: "+abrufe+" requests, archive from "+meta.von+(meta.ende?" ("+meta.ende+")":" (backfill continues)")+", years "+meta.jahre.join(",")+", "+Math.round(kb)+" KB, changed "+[...geaendert].join(","));
+          })();
+          CALJS
+          node cal_hist_build.js
+          rm -f cal_hist_build.js
+
       - name: Cleanup temp files
         run: rm -f thisweek.json nextweek.json fxstreet.json te.json te_pages.json tepage_*.html invcal.json tv.json tv_wide.json tv_recent.json tv_hist_*.json alt_actuals.json ffhtml_*.html cot_raw.json cot_pct_url.txt cot_pct_raw.json stooq_*.csv stooq_meta.txt news_marketaux.json
 
@@ -5494,6 +5606,7 @@ jobs:
           [ -f bond_data.json ] && git add bond_data.json
           [ -f cot_data.json ] && git add cot_data.json
           [ -f cot_hist.json ] && git add cot_hist.json
+          [ -d cal_hist ] && git add cal_hist
           [ -f price_data.json ] && git add price_data.json
           [ -f commodity_data.json ] && git add commodity_data.json
           [ -f trend_data.json ] && git add trend_data.json
