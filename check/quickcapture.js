@@ -11,7 +11,7 @@ const { qcZerlegen } = require('../js/quickcapture.js');
 
 // Dieselbe Asset-Liste, die die App kennt.
 const ERLAUBT = ['USD','EUR','GBP','CHF','JPY','CAD','AUD','NZD',
-                 'GOLD','SILVER','OIL','BTC','SP500','NAS','DAX','GER100'];
+                 'GOLD','SILVER','OIL','BTC','SP500','NAS','DAX'];
 
 const FAELLE = [
   {

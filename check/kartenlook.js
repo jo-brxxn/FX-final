@@ -189,7 +189,7 @@ const MIN_SCHATTEN_LAGEN = 3;
   // Dazu die Reihen-Ueberschriften, die der Nutzer ausdruecklich behalten
   // wollte, mit seiner Obergrenze ("nicht zu viel gliedern").
   const KOPF_BREITEN = [[1920, 1080], [1500, 1000], [1280, 900], [820, 1180], [390, 844]];
-  const KOPF_ASSETS = ['USD', 'GOLD', 'SP500', 'GER100', 'USYIELD', 'NZYIELD'];
+  const KOPF_ASSETS = ['USD', 'GOLD', 'SP500', 'DAX', 'USYIELD', 'NZYIELD'];
   let kopfGeprueft = 0, mitStreifen = 0, ohneStreifen = 0;
   for (const [w, h] of KOPF_BREITEN) {
     await p.setViewportSize({ width: w, height: h });

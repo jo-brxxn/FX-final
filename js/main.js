@@ -363,7 +363,7 @@ const SB_CATS=[
   {l:'Crypto',ids:['BTC']},
   {l:'Metals',ids:['GOLD','SILVER']},
   {l:'Energy',ids:['OIL']},
-  {l:'Indices',ids:['SP500','NAS','DAX','GER100']},
+  {l:'Indices',ids:['SP500','NAS','DAX']},
   // Nutzer-Wunsch 2026-08-24: "Fueg bitte yields als neue Asset Kategorie
   // hinzu... Mach auch schon die Assets darein" - ein Yield-Asset pro FX-
   // Major, in derselben Reihenfolge wie SB_CATS.FX (siehe YIELD_CCY).
@@ -650,7 +650,9 @@ import {
 // ── USD-DRIVEN ASSETS (Rohstoffe/Krypto/Indizes/Aktien ohne eigenes FX-Paar) ──
 // Diese Symbole reagieren primär auf den globalen USD-Makro-/Zinszyklus,
 // daher gelten USD-Nachrichten/Makro-Rubriken auch für sie.
-const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','DAX','GER100'];
+// GER100 am 2026-09-27 entfernt (Nutzer: "Entfern ger100" - "Germany 100"
+// ist kein echter Index, es gab keine Kursreihe dafuer).
+const NONFX_IDS=['BTC','GOLD','SILVER','OIL','SP500','NAS','DAX'];
 // Kategorie eines Symbols ('fx','crypto','metal','energy','index','stock'): für
 // eingebaute Symbole aus ASSET_CLASS, für selbst hinzugefügte aus der beim
 // Hinzufügen gewählten Kategorie (customIds[].cls).
@@ -4048,7 +4050,7 @@ function mkR(texts,b){return texts.map(t=>({id:uid(),text:t,bias:b,imp:false}));
 const CB_MAP={USD:'the Fed (Federal Reserve)',EUR:'the ECB (European Central Bank)',GBP:'the BoE (Bank of England)',CHF:'the SNB (Swiss National Bank)',JPY:'the BoJ (Bank of Japan)',CAD:'the BoC (Bank of Canada)',AUD:'the RBA (Reserve Bank of Australia)',NZD:'the RBNZ (Reserve Bank of New Zealand)'};
 function cbName(id){return CB_MAP[id]||'the Fed (Federal Reserve)';}
 function cbDat(id){return cbName(id).replace(/^die /,'der ');}
-const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',DAX:'index',GER100:'index',
+const ASSET_CLASS={USD:'fx',EUR:'fx',GBP:'fx',CHF:'fx',JPY:'fx',CAD:'fx',AUD:'fx',NZD:'fx',BTC:'crypto',GOLD:'metal',SILVER:'metal',OIL:'energy',SP500:'index',NAS:'index',DAX:'index',
   USYIELD:'yield',DEYIELD:'yield',GBYIELD:'yield',CHYIELD:'yield',JPYIELD:'yield',CAYIELD:'yield',AUYIELD:'yield',NZYIELD:'yield'};
 
 // ── Info texts for the 5 standard rubrics (Specific tab) ──
@@ -4144,10 +4146,6 @@ const DEF=[
     rubrics:mkRubs(),noteRubs:[],notes:''},
   {id:'DAX',name:'DAX',full:'DAX 40 (Germany)',bias:'neu',linkCcy:'EUR',
     genBull:mkR(['Export-heavy German blue chips benefit from a weaker EUR','ECB easing cycle supports equity valuations'],'bull'),
-    genBear:mkR(['High dependency on global/China demand and trade cycle','Energy-cost sensitivity of German industry'],'bear'),
-    rubrics:mkRubs(),noteRubs:[],notes:''},
-  {id:'GER100',name:'GER 100',full:'Germany 100',bias:'neu',linkCcy:'EUR',
-    genBull:mkR(['Broader German large-/mid-cap exposure than the DAX 40','ECB easing cycle supports equity valuations'],'bull'),
     genBear:mkR(['High dependency on global/China demand and trade cycle','Energy-cost sensitivity of German industry'],'bear'),
     rubrics:mkRubs(),noteRubs:[],notes:''},
   // Yields-Kategorie (Nutzer-Wunsch 2026-08-24): ein Yield-Asset pro FX-
@@ -5495,8 +5493,26 @@ function sanitizeSnapIds(d){
 // Assets dadurch wieder entfernt. Nur ECHT FEHLENDE DEF-Eintraege (per id)
 // werden ergaenzt - nichts an vorhandenen/vom Nutzer veraenderten Symbolen
 // wird angefasst.
+// Entfernte Standard-Assets (GER100 seit 2026-09-27). Ein gespeicherter oder
+// synchronisierter Stand bringt sie ueber applySnap() wieder mit - hier fallen
+// sie raus. Eigene Notizen des Assets gehen dabei NICHT verloren: sie wandern
+// zum Ziel-Asset (GER100 -> DAX).
+const ENTFERNTE_SYMS={GER100:'DAX'};
+function entfernteSymsBereinigen(){
+  if(!Array.isArray(syms))return;
+  Object.keys(ENTFERNTE_SYMS).forEach(alt=>{
+    const a=syms.find(s=>s&&s.id===alt);if(!a)return;
+    const ziel=syms.find(s=>s&&s.id===ENTFERNTE_SYMS[alt]);
+    if(ziel){
+      if(Array.isArray(a.noteRubs)&&a.noteRubs.length)ziel.noteRubs=(ziel.noteRubs||[]).concat(a.noteRubs);
+      if(a.notes&&String(a.notes).trim())ziel.notes=((ziel.notes||'')+(ziel.notes?'\n\n':'')+'[from GER 100] '+a.notes).trim();
+    }
+    syms=syms.filter(s=>!(s&&s.id===alt));
+  });
+}
 function ensureBuiltinSyms(){
   if(!Array.isArray(syms))return;
+  entfernteSymsBereinigen();
   const have=new Set(syms.map(s=>s&&s.id));
   DEF.forEach(d=>{if(!have.has(d.id))syms.push({...d});});
 }
@@ -6322,14 +6338,14 @@ function saveSoon(){
 function exportData(){
   const data=JSON.parse(snap());
   data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.scoreMode=scoreMode;
-  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+  data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.cotVsPrice=cotVsPrice;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
   const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(data,null,2));
   a.download='fx-analyst-'+new Date().toISOString().slice(0,10)+'.json';a.click();
 }
 function importData(input){
   const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(_imp.scoreJournal){try{jrUebernehmen(_imp.scoreJournal);}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.pxChartTyp!==undefined){setPxChartTypVal(_imp.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
+  r.onload=e=>{try{pushU();applySnap(e.target.result);const _imp=JSON.parse(e.target.result);if(Array.isArray(_imp.tabStacks)){tabStacks=_imp.tabStacks;tabStacksOhneEntfernte(tabStacks);saveTabStacks();renderTabBar();}if(_imp.compactLevel!==undefined||_imp.compactView!==undefined){compactView=normCompactLevel(_imp.compactLevel!==undefined?_imp.compactLevel:_imp.compactView);localStorage.setItem('fxpro_compactview',String(compactView));applyCompactView();updCompactSw();}if(_imp.pinEnabled!==undefined){pinEnabled=_imp.pinEnabled;try{localStorage.setItem('fxpro_pin_enabled',pinEnabled?'1':'0');}catch(e){}updPinToggleBtn();if(!pinEnabled){try{sessionStorage.setItem('fxpro_unlocked','1');}catch(e){}const ov=document.getElementById('lockScreen');if(ov)ov.style.display='none';}}if(typeof _imp.newsSeenTs==='string'&&_imp.newsSeenTs>newsSeenTs){newsSeenTs=_imp.newsSeenTs;try{localStorage.setItem('fxpro_news_seen',newsSeenTs);}catch(e){}}if(_imp.assetAnimEnabled!==undefined){assetAnimEnabled=_imp.assetAnimEnabled;try{localStorage.setItem('fxpro_asset_anim_enabled',assetAnimEnabled?'1':'0');}catch(e){}applyAssetAnim();updAssetAnimToggleBtn();}if(_imp.denseMode!==undefined){denseMode=!!_imp.denseMode;try{localStorage.setItem('fxpro_dense',denseMode?'1':'0');}catch(e){}applyDenseMode();updDenseToggleBtn();}if(_imp.fxTheme!==undefined){fxTheme=FX_THEME_IDS.includes(_imp.fxTheme)?_imp.fxTheme:'';try{fxTheme?localStorage.setItem('fxpro_theme',fxTheme):localStorage.removeItem('fxpro_theme');}catch(e){}applyFxTheme();renderFxThemeGrid();}if(_imp.appBg!==undefined){appBg=APP_BG_IDS.includes(_imp.appBg)?_imp.appBg:'';try{appBg?localStorage.setItem('fxpro_bg',appBg):localStorage.removeItem('fxpro_bg');}catch(e){}applyAppBg();renderAppBgGrid();}if(_imp.uiAnimEnabled!==undefined){uiAnimEnabled=_imp.uiAnimEnabled;try{localStorage.setItem('fxpro_ui_anim_enabled',uiAnimEnabled?'1':'0');}catch(e){}applyUiAnim();updUiAnimToggleBtn();}if(_imp.dataAnimEnabled!==undefined){dataAnimEnabled=_imp.dataAnimEnabled;try{localStorage.setItem('fxpro_data_anim_enabled',dataAnimEnabled?'1':'0');}catch(e){}applyDataAnim();updDataAnimToggleBtn();}if(_imp.telegramEnabled!==undefined){telegramEnabled=_imp.telegramEnabled;try{localStorage.setItem('fxpro_telegram_enabled',telegramEnabled?'1':'0');}catch(e){}updTelegramToggleBtn();}updAllAnimToggleBtn();if(_imp.scoreHist){scoreHist=mergeScoreHist(_imp.scoreHist,scoreHist);try{localStorage.setItem(SCOREHIST_KEY,JSON.stringify(scoreHist));}catch(e){}}if(_imp.scoreJournal){try{jrUebernehmen(_imp.scoreJournal);}catch(e){}}if(Array.isArray(_imp.setupCcyFilter)){setupCcyFilter=_imp.setupCcyFilter.filter(c=>FX.includes(c));saveSetupCcy();}if(_imp.setupFxOnly!==undefined){setupFxOnly=_imp.setupFxOnly;try{localStorage.setItem('fxpro_setup_fxonly',setupFxOnly?'1':'0');}catch(e){}}if(_imp.abChartRange!==undefined){setAbChartRangeVal(_imp.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}if(_imp.abTrendLinien!==undefined){setAbTrendLinienVal(_imp.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}if(_imp.cotVsPrice!==undefined){setCotVsPriceVal(_imp.cotVsPrice);try{localStorage.setItem('fxpro_cot_vs_price',cotVsPrice?'1':'0');}catch(e){}}if(_imp.pxChartTyp!==undefined){setPxChartTypVal(_imp.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}}if(_imp.regimeCcy!==undefined){setRegimeCcyVal(_imp.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}}if(_imp.calHighOnly!==undefined){calHighOnly=_imp.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}}if(_imp.calCcyFilter!==undefined){calCcyFilter=_imp.calCcyFilter;try{localStorage.setItem('fxpro_cal_ccy',calCcyFilter);}catch(e){}}processCalEvts();save();renderSidebar();rerender();alert('Imported!');}catch(err){alert('Invalid file.');}};
   r.readAsText(f);input.value='';
 }
 
@@ -6606,7 +6622,7 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.cotVsPrice=cotVsPrice;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6784,6 +6800,7 @@ async function cloudPull(manual,forceOverwrite){
         if(cd.setupYieldsOnly!==undefined){setupYieldsOnly=cd.setupYieldsOnly;try{localStorage.setItem('fxpro_setup_yieldsonly',setupYieldsOnly?'1':'0');}catch(e){}}
         if(cd.abChartRange!==undefined){setAbChartRangeVal(cd.abChartRange);try{localStorage.setItem('fxpro_ab_range',abChartRange);}catch(e){}}
         if(cd.abTrendLinien!==undefined){setAbTrendLinienVal(cd.abTrendLinien);try{localStorage.setItem('fxpro_ab_trendlines',abTrendLinien);}catch(e){}}
+        if(cd.cotVsPrice!==undefined&&!!cd.cotVsPrice!==cotVsPrice){setCotVsPriceVal(cd.cotVsPrice);try{localStorage.setItem('fxpro_cot_vs_price',cotVsPrice?'1':'0');}catch(e){}if(curPage==='cot')renderCot();}
         if(cd.pxChartTyp!==undefined&&cd.pxChartTyp!==pxChartTyp){setPxChartTypVal(cd.pxChartTyp);try{localStorage.setItem('fxpro_px_typ',pxChartTyp);}catch(e){}pxTypNeuZeichnen();}
         if(cd.regimeCcy!==undefined){setRegimeCcyVal(cd.regimeCcy);try{localStorage.setItem('fxpro_regime_ccy',regimeCcy);}catch(e){}if(curPage==='regime')renderRegime();}
         if(cd.calHighOnly!==undefined){calHighOnly=cd.calHighOnly;try{localStorage.setItem('fxpro_cal_highonly',calHighOnly?'1':'0');}catch(e){}updCalHighBtn();}
@@ -8145,6 +8162,7 @@ function preisAnfang(id){
   return preisAnfangRoh(id);
 }
 function preisAnfangRoh(id){
+  if(YIELD_CCY[id]){const r=renditePreisReihe(id);return r?r[0][0]:null;}
   const s=priceSeriesFor(id),a=preisArchivAb(id);
   const d=Array.isArray(s)&&s.length?String(s[0][0]).slice(0,10):null;
   return a&&(!d||a<d)?a:d;
@@ -8167,12 +8185,25 @@ function preisArchivNoetig(id,tage,von){
   return preisArchivNoetigRoh(id,tage,von);
 }
 function preisArchivNoetigRoh(id,tage,von){
+  if(YIELD_CCY[id])return false;
   const s=priceSeriesFor(id),a=preisArchivAb(id);
   if(!Array.isArray(s)||!s.length||!a||a>=s[0][0])return false;
   const start=von||(tage==null?a:dateAddStr(todayStr(),-tage));
   return start<s[0][0];
 }
+// Renditen-Assets (US Yield ...) haben keinen Kurs in price_data.json - ihr
+// "Preis" ist die 10-jaehrige Rendite selbst (bond_data.json, TradingView
+// TVC:xx10Y). Bis 2026-09-27 blieb ihre Price-Karte leer (Nutzer: "bei
+// manchen Assets gibt es noch gar keinen Preis"). ⚠ Nur fuer die ANZEIGE -
+// priceSeriesFor() bleibt ohne sie, sonst tauchten Renditen ungefragt in
+// Top Movers, Korrelationen und Performance-Ranglisten auf.
+function renditePreisReihe(id){
+  const ccy=YIELD_CCY[id];if(!ccy)return null;
+  const r=bondSeriesOhlc(ccy,'10Y Bond Yield');
+  return r.length?r:null;
+}
 function preisReiheLang(id){
+  if(YIELD_CCY[id])return renditePreisReihe(id);
   const s=priceSeriesFor(id);
   const a=PRICE_HIST&&PRICE_HIST[id];
   if(!Array.isArray(s)||!s.length||!Array.isArray(a)||!a.length)return s;
@@ -8583,7 +8614,7 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
   sv+=ovLinien;
   const pct=k[0].o?((k[k.length-1].c-k[0].o)/Math.abs(k[0].o)*100):0;
   const svg=`<svg class="ab-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${sv}</svg>`;
-  const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${zahl(v)}</span>`).join('');
+  const skala=[hi,(hi+lo)/2,lo].map(v=>`<span>${zahl(v)}${escH(einheit||'')}</span>`).join('');
   // Die Achse beschriftet die HANDELSTAGE des Fensters - dieselbe Liste, aus
   // der auch die Kerzen ihre Position bekommen. Damit steht unter allen
   // Charts derselbe Zeitraum, und die genannten Tage sind auch wirklich Tage
@@ -9824,6 +9855,15 @@ function renderSpecTab(c){
 // und NICHT etwa ein hochgerechneter Wert (Projekt-Grundsatz: nie schaetzen).
 function assetPerfStripHtml(c){
   const feedWeg=typeof DATA_LIVE_OK!=='undefined'&&DATA_LIVE_OK.price===false;
+  if(YIELD_CCY[c.id]){
+    const zellen=PERF_WINDOWS.map(([lbl,days])=>{
+      const r=renditeAenderung(c.id,days);
+      const val=r?`${r.bp>0?'+':''}${Math.round(r.bp)} bp`:'–';
+      const col=!r?'var(--t3)':r.bp>0.5?'var(--green)':r.bp<-0.5?'var(--red)':'var(--t2)';
+      return`<div class="aperf-c" title="${escH(r?`${lbl}: ${r.from} → ${r.to} (1 bp = 0.01 percentage points)`:`No yield history covering ${lbl} yet`)}"><div class="aperf-l">${escH(lbl)}</div><div class="aperf-v" style="color:${col}">${escH(val)}</div></div>`;
+    }).join('');
+    return`<div class="aperf"><span class="aperf-t">YIELD</span>${zellen}</div>`;
+  }
   const cells=PERF_WINDOWS.map(([lbl,days])=>{
     const r=perfReturn(c.id,days);
     const val=r?`${r.pct>0?'+':''}${r.pct.toFixed(2)}%`:'–';
@@ -9907,7 +9947,7 @@ function assetPreisKarteHtml(c){
   if(warten)ladePreisArchiv();
   const reihe=preisReiheAnzeige(c.id);
   const linien=abTrendLinien.split(',').filter(Boolean);
-  const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,FX.includes(c.id)?KORB_NAME[c.id]:(c.name||c.id),'',c.id,null,'price',{trend:linien});
+  const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,FX.includes(c.id)?KORB_NAME[c.id]:YIELD_CCY[c.id]?(c.full||c.name||c.id):(c.name||c.id),YIELD_CCY[c.id]?'%':'',c.id,null,YIELD_CCY[c.id]?'bond':'price',{trend:linien});
   const w=trendWerte(c.id);
   const schalter=[['d','1D EMA20'],['h','4H EMA'+TREND_EMA_H]].map(([k,l])=>{
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
@@ -9916,14 +9956,20 @@ function assetPreisKarteHtml(c){
   const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
     ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>${FX.includes(c.id)?`<span class="ab-tile-s ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</span>`:''}
-    ${ch.leer?'':`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}${abInfoBtn('Price',[
+    ${ch.leer?'':YIELD_CCY[c.id]?(()=>{
+      // Rendite: Aenderung im Fenster in Basispunkten (letzter Schluss minus
+      // Vortagesschluss vor dem Fenster, aus ch.pct zurueckgerechnet).
+      const rr=renditePreisReihe(c.id),last=rr?+rr[rr.length-1][1]:null;
+      const bp=last!=null?(last-last/(1+ch.pct/100))*100:null;
+      return bp==null?'':`<span class="ab-tile-s" style="color:${bp>0.5?'var(--green)':bp<-0.5?'var(--red)':'var(--t2)'}">${bp>0?'+':''}${Math.round(bp)} bp</span>`;
+    })():`<span class="ab-tile-s" style="color:${biasCss(ch.pct>0.15?'bull':ch.pct<-0.15?'bear':'neu')}">${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%</span>`}${abInfoBtn('Price',[
       FX.includes(c.id)?`For a currency this is the <b>${escH(KORB_NAME[c.id])}</b>: ${escH(c.id)} against the other seven majors with equal weight, built from the daily closes of the seven pairs — not the rate against the US dollar.`:'Daily price of this asset over the chosen range.',
       '<b>Candles | Line</b> switches every price chart; the time range applies to every chart on this page. A wick is only drawn where the source delivers a real high and low.',
       '<b>1D EMA20</b> and <b>4H EMA'+TREND_EMA_H+'</b> with their neutral band (±'+TREND_NEUTRAL_ATR+' × ATR14) are the trend driver. Shading marks where price sits outside the band — blue above, red below. The trend score adds up to ±'+TREND_PKT+' (1D) and ±'+TREND_PKT_H+' (4H) to the asset\'s score.',
       'The strip below shows the change over 1D, 1W, 1M and year to date.'])}
     </div>
     ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
-    <div class="tr-sws">${schalter}</div>`;
+    ${YIELD_CCY[c.id]?'':`<div class="tr-sws">${schalter}</div>`}`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
   // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
   // der Kopfleiste. Die Leiste ist am selben Tag auf Nutzer-Wunsch wieder
@@ -9933,7 +9979,7 @@ function assetPreisKarteHtml(c){
     ${kopf}
     <div class="ab-pk-chart">${ch.html}</div>
     ${fuss}
-    ${abTrendScoreZeile(c)}
+    ${YIELD_CCY[c.id]?'':abTrendScoreZeile(c)}
     ${assetPerfStripHtml(c)}
     ${abGoToHtml('trends')}
   </div>`;
@@ -14826,6 +14872,19 @@ function setPerfWindow(w){perfWindow=w;renderDash();}
 // auch sonntags und behaelt seine sieben Tage, dort zeigt "1D" den Sonntag.
 // Auch 1W/1M/YTD haengen daran - ihr Fensterbeginn wird jetzt ebenfalls von
 // einem echten Handelstag aus gezaehlt.
+// Renditen: Aenderung in Basispunkten statt Prozent (eine Rendite von 4,00 %
+// auf 4,10 % ist +10 bp, nicht +2,5 %). Gleiche Fensterlogik wie perfReturn.
+function renditeAenderung(id,days){
+  const s=renditePreisReihe(id);
+  if(!Array.isArray(s)||s.length<2)return null;
+  const last=s[s.length-1];let cutoff;
+  if(days==null)cutoff=String(new Date().getUTCFullYear())+'-01-01';
+  else{const d=new Date(last[0]+'T00:00:00Z');d.setUTCDate(d.getUTCDate()-days);cutoff=d.toISOString().slice(0,10);}
+  let base=null;for(let i=0;i<s.length;i++){if(s[i][0]<=cutoff)base=s[i];else break;}
+  if(!base)base=s[0];
+  if(base[0]===last[0])return null;
+  return{bp:(Number(last[1])-Number(base[1]))*100,from:base[0],to:last[0]};
+}
 function perfReturn(id,days){
   // Waehrungen seit 2026-09-26 als Korb (gegen die sieben anderen).
   const s=ohneWochenende(preisReiheRechnung(id),id);
@@ -16841,7 +16900,7 @@ let cotRefreshing=false;
 let cotRefreshNote='';         // kurzer Status-Hinweis nach manuellem Refresh
 let cotCdTimer=null;           // Countdown-Intervall (laeuft nur auf der COT-Seite)
 const COT_SYMS=['USD','EUR','GBP','JPY','CHF','CAD','AUD','NZD','GOLD','SILVER','OIL','BTC','SP500','NAS'];
-const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq',DAX:'DAX',GER100:'Germany 100',
+const COT_NAME={USD:'USD',EUR:'EUR',GBP:'GBP',JPY:'JPY',CHF:'CHF',CAD:'CAD',AUD:'AUD',NZD:'NZD',GOLD:'Gold',SILVER:'Silver',OIL:'WTI Oil',BTC:'BTC',SP500:'S&P 500',NAS:'Nasdaq',DAX:'DAX',
   USYIELD:'US Yield',DEYIELD:'DE Yield',GBYIELD:'GB Yield',CHYIELD:'CH Yield',JPYIELD:'JP Yield',CAYIELD:'CA Yield',AUYIELD:'AU Yield',NZYIELD:'NZ Yield'};
 // Lokaler Cache der zuletzt gesehenen Historie. Die stuendlich geschriebene
 // cot_data.json kann (z.B. direkt nach diesem Feature-Rollout, oder wenn der
@@ -17124,20 +17183,23 @@ function cotNiceAxis(maxStack){
   const step=(norm<=1?1:norm<=2?2:norm<=5?5:10)*mag;
   return{max,step};
 }
-function cotHistChart(history,availWidth,meta){
+function cotHistChart(history,availWidth,meta,opt){
   if(!Array.isArray(history)||history.length<2)return'';
   const n=history.length;
-  const leftPad=44,rightPad=52,topPad=10,chartH=360,bottomPad=26;
-  const minPerBar=16;
+  const preis=opt&&Array.isArray(opt.preis)&&opt.preis.some(v=>v!=null)?opt.preis:null;
+  // Mit Kurs: zweite Achse ganz rechts (Kontrakte bleiben direkt am Plot).
+  const leftPad=44,rightPad=preis?118:52,topPad=10,chartH=360,bottomPad=26;
+  // Viele Reports (bis 10 Jahre): schmalere Balken statt 8000 px Scrollen.
+  const minPerBar=n>80?0.8:16;
   const usableW=Math.max((availWidth||0)-leftPad-rightPad,n*minPerBar);
-  const perBar=usableW/n,barW=Math.max(4,perBar*0.62);
+  const perBar=usableW/n,barW=Math.max(n>80?0.6:4,perBar*0.62);
   const w=leftPad+rightPad+n*perBar,h=topPad+chartH+bottomPad;
   const y0=topPad+chartH;
   const rawMax=Math.max(...history.map(e=>(+e.long||0)+(+e.short||0)));
   const ax=cotNiceAxis(rawMax);
   const yPct=p=>y0-(p/100)*chartH;
   const yVal=v=>y0-(v/ax.max)*chartH;
-  if(meta)Object.assign(meta,{leftPad,rightPad,topPad,chartH,bottomPad,perBar,barW,n,y0,yPct});
+  if(meta)Object.assign(meta,{leftPad,rightPad,topPad,chartH,bottomPad,perBar,barW,n,y0,yPct,preis});
   let svg=`<svg class="cot-hist-svg" width="${w.toFixed(1)}" height="${h}" viewBox="0 0 ${w.toFixed(1)} ${h}">`;
   // Linke Achse (0-100%, alle 25%)
   for(let p=0;p<=100;p+=25){
@@ -17156,6 +17218,7 @@ function cotHistChart(history,availWidth,meta){
     svg+=`<text x="${xR+7}" y="${(y+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t3)">${cotNum(v)}</text>`;
   }
   // Balken + Datumsbeschriftung
+  const lblJede=Math.max(1,Math.ceil(64/perBar));
   const linePts=[];
   history.forEach((e,i)=>{
     const x=leftPad+i*perBar;
@@ -17166,12 +17229,30 @@ function cotHistChart(history,availWidth,meta){
     svg+=`<rect class="cot-bar-in" style="${barDelay}" x="${x.toFixed(1)}" y="${(y0-longH-shortH).toFixed(1)}" width="${barW.toFixed(1)}" height="${shortH.toFixed(1)}" fill="${BC.bear}"/>`;
     const tot=L+S,lp=tot>0?L/tot*100:50;
     linePts.push((x+barW/2).toFixed(1)+','+yPct(lp).toFixed(1));
-    let d;try{const dt=new Date(e.date+'T00:00:00');d=(dt.getMonth()+1)+'/'+dt.getDate();}catch(err){d=e.date;}
-    svg+=`<text x="${(x+barW/2).toFixed(1)}" y="${(y0+14).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(d)}</text>`;
+    // Datum mit Jahr (Dauerregel), ausgeduennt nach Platz: ~64 px je Label.
+    // Letzter Report immer beschriftet; ein regulaeres Label zu nah davor faellt weg.
+    if(i===n-1||(i%lblJede===0&&(n-1-i)>=lblJede&&(i===0||i>=lblJede*1.5))){
+      const d=fmtDayShort(e.date,true);
+      const lx=x+barW/2,an=i===0?'start':i===n-1?'end':'middle';
+      svg+=`<text x="${(an==='start'?x:an==='end'?x+barW:lx).toFixed(1)}" y="${(y0+14).toFixed(1)}" text-anchor="${an}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(d)}</text>`;
+    }
   });
   const linePtsStr=linePts.join(' ');
   svg+=`<polyline points="${linePtsStr}" fill="none" stroke="#fff" stroke-width="3.4" opacity="0.55"/>`;
   svg+=`<polyline points="${linePtsStr}" fill="none" stroke="#000" stroke-width="1.6"/>`;
+  // vs Price: gestrichelte Kurslinie auf den Report-Tagen der Balken, eigene
+  // Achse ganz rechts (Beschriftung in der Linienfarbe).
+  if(preis){
+    const pv=preis.filter(v=>v!=null);
+    let pLo=Math.min(...pv),pHi=Math.max(...pv);const pad=(pHi-pLo)*0.08||Math.abs(pHi||1)*0.02;pLo-=pad;pHi+=pad;
+    const yP=v=>topPad+(1-(v-pLo)/((pHi-pLo)||1))*chartH;
+    if(meta){meta.yP=yP;}
+    const xP=leftPad+n*perBar+56;
+    achsenTicks(pLo,pHi,5).forEach(v=>{const y=yP(v);svg+=`<line x1="${xP-4}" y1="${y.toFixed(1)}" x2="${xP}" y2="${y.toFixed(1)}" stroke="var(--t0)" stroke-width="1"/><text class="y-lbl" x="${xP+3}" y="${(y+3).toFixed(1)}" text-anchor="start" style="font-size:var(--fs-2xs);fill:var(--t0)">${escH(cotPreisTxt(v))}</text>`;});
+    let d='',auf=false;
+    preis.forEach((v,i)=>{if(v==null){auf=false;return;}const x=(leftPad+i*perBar+barW/2).toFixed(1),y=yP(v).toFixed(1);d+=(auf?' L':' M')+x+' '+y;auf=true;});
+    svg+=`<path class="cot-preis" d="${d.trim()}" fill="none" stroke="var(--card)" stroke-width="4" opacity=".7"/><path class="cot-preis" d="${d.trim()}" fill="none" stroke="var(--t0)" stroke-width="1.8" stroke-dasharray="5,4" stroke-linejoin="round"/>`;
+  }
   // Hover/Touch: pro Balken eine unsichtbare, ueber die volle Hoehe reichende
   // Hit-Flaeche (oben drauf, damit sie alle Zeigerereignisse abfaengt), plus
   // eine senkrechte Hilfslinie und ein Punkt auf der Long-%-Linie, die per JS
@@ -17191,6 +17272,67 @@ function cotHistChart(history,availWidth,meta){
 // Δ Net %-Aenderung gegenueber dem vorherigen Report, jeweils in den
 // Bias-Farben (BC.bull/BC.bear/BC.neu) eingefaerbt - inkl. eines Punkts auf
 // der schwarzen Long-%-Linie zur Markierung des ausgewaehlten Balkens.
+// ── COT: 10-Jahres-Historie + vs Price (Nutzer 2026-09-27) ──────────────
+// "bei cot wenn man ein Asset ausgewaehlt hat ein vs Price einschalten ...
+// Der muss zu den Balken passen. Und die ganze Historie" - per Rueckfrage:
+// gestrichelte Kurslinie ueber den Balken mit eigener Achse ganz rechts,
+// 10 Jahre Historie. cot_data.json traegt nur 26 Wochen; cot_hist.json
+// (Workflow, per CFTC-Kontraktcode) wird erst geladen, wenn ein Asset
+// gewaehlt ist - wie price_hist.json.
+let COT_HIST=null,_cotHistP=null,cotHistFehler=false;
+function ladeCotArchiv(){
+  if(COT_HIST||cotHistFehler)return Promise.resolve(COT_HIST);
+  if(_cotHistP)return _cotHistP;
+  _cotHistP=fetch(DATA_BASE+'cot_hist.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'})
+    .then(r=>r.ok?r.json():null)
+    .then(d=>{if(d&&d.assets)COT_HIST=d.assets;else cotHistFehler=true;})
+    .catch(()=>{cotHistFehler=true;})
+    .then(()=>{_cotHistP=null;try{if(curPage==='cot')renderCot();}catch(e){}return COT_HIST;});
+  return _cotHistP;
+}
+// Archiv + die 26 aktuellen Wochen (die aktuellen gewinnen bei gleichem Tag).
+function cotHistVoll(id,kurz){
+  const m=new Map();
+  ((COT_HIST&&COT_HIST[id])||[]).forEach(e=>{if(Array.isArray(e)&&e[0])m.set(e[0],{date:e[0],long:+e[1]||0,short:+e[2]||0,oi:+e[3]||0});});
+  (Array.isArray(kurz)?kurz:[]).forEach(e=>{if(e&&e.date)m.set(e.date,e);});
+  return[...m.values()].sort((a,b)=>a.date.localeCompare(b.date));
+}
+// Zeitraum: Ansicht, nicht persistiert (wie der Data-Zeitraum).
+let cotHistRange=12,cotHistFrom=null,cotHistTo=null;
+function setCotHistRange(v){cotHistRange=(v==='MAX'||v==='CUSTOM')?v:+v;renderCot();}
+function setCotHistRangeCustom(a,b){cotHistFrom=a||null;cotHistTo=b||null;renderCot();}
+// vs Price: Nutzer-Praeferenz -> Vier-Ecken-Sync (docs/state-sync.md).
+let cotVsPrice=(()=>{try{return localStorage.getItem('fxpro_cot_vs_price')==='1';}catch(e){return false;}})();
+function setCotVsPriceVal(v){cotVsPrice=!!v;}
+function toggleCotVsPrice(){
+  try{
+    cotVsPrice=!cotVsPrice;
+    localStorage.setItem('fxpro_cot_vs_price',cotVsPrice?'1':'0');
+    localStorage.setItem('fxpro_updated',new Date().toISOString());
+    markLsUpdatedSeen();markPrefEdit();cloudAutoSync();
+  }catch(e){alert('The setting could not be saved: '+(e&&e.message||e));}
+  renderCot();
+}
+// Kurs in KONTRAKTRICHTUNG: die CFTC-Futures laufen gegen den US-Dollar
+// (Euro-FX-Future = EUR/USD, Yen-Future = Yen in USD, Dollar-Index = DXY) -
+// deshalb preisReiheLang (Wert in USD, invertiert wo noetig), NICHT der Korb.
+// Nur so steigt die Linie, wenn die Long-Seite der Balken gewinnt.
+function cotPreisReihe(id){
+  // window.__cotKorbTest: nur fuer die Gegenprobe von check/cotpreis.js
+  const s=window.__cotKorbTest&&FX.includes(id)?korbReihe(id,true):preisReiheLang(id);
+  return Array.isArray(s)&&s.length?s:null;
+}
+// Schluss am Report-Tag (Dienstag); fehlt er (Feiertag), der letzte davor,
+// hoechstens 5 Tage zurueck - sonst keine Marke statt einer geratenen.
+function cotPreisAm(reihe,datum){
+  if(!reihe)return null;
+  let lo=0,hi=reihe.length-1,best=-1;
+  while(lo<=hi){const mid=(lo+hi)>>1;if(reihe[mid][0]<=datum){best=mid;lo=mid+1;}else hi=mid-1;}
+  if(best<0)return null;
+  const tage=(Date.parse(datum)-Date.parse(reihe[best][0]))/864e5;
+  return tage<=5?+reihe[best][1]:null;
+}
+function cotPreisTxt(v){if(v==null||!isFinite(v))return'–';const a=Math.abs(v);return a>=1000?String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,','):a>=100?v.toFixed(1):a>=1?v.toFixed(3):v.toPrecision(3);}
 let cotChartMeta=null;
 function cotBiasColor(v){return v>0?BC.bull:v<0?BC.bear:BC.neu;}
 function cotChartShowIdx(i){
@@ -17210,7 +17352,7 @@ function cotChartShowIdx(i){
   tip.innerHTML=`<div class="cot-tip-date">${escH(dt)}</div>
     <div class="cot-tip-row"><span>Net Bullish Positioning</span><b style="color:${BC.bull}">${m.longPct.toFixed(1)}%</b></div>
     <div class="cot-tip-row"><span>Net Bearish Positioning</span><b style="color:${BC.bear}">${m.shortPct.toFixed(1)}%</b></div>
-    <div class="cot-tip-row"><span>Δ Net % (wk)</span><b style="color:${cotBiasColor(m.dNetPct)}">${m.dNetPct==null?'–':cotPct(m.dNetPct,true)}</b></div>`;
+    <div class="cot-tip-row"><span>Δ Net % (wk)</span><b style="color:${cotBiasColor(m.dNetPct)}">${m.dNetPct==null?'–':cotPct(m.dNetPct,true)}</b></div>${meta.preis?`<div class="cot-tip-row"><span>Price (report day)</span><b>${escH(cotPreisTxt(meta.preis[i]))}</b></div>`:''}`;
   tip.style.display='block';
   const wrapRect=wrap.getBoundingClientRect(),svgRect=svg.getBoundingClientRect();
   const scale=svgRect.width/parseFloat(svg.getAttribute('width'));
@@ -19913,7 +20055,7 @@ const SENT_NONFX_SYMS=new Set(['XAUUSD','XAGUSD','BTCUSD','US500','NAS100','USOI
 // Broker-Symbol -> unsere Asset-ID, fuer den Preis-Vergleich in der Retail-
 // Sentiment-Historie (priceSeriesFor/resolvePairPriceSeries erwarten unsere
 // IDs, nicht den Myfxbook-Symbolnamen).
-const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL',GER40:'GER100',GER30:'GER100',DE40:'GER100',DE30:'GER100',GRXEUR:'GER100',DAX40:'GER100',DAX30:'GER100'};
+const SENT_NONFX_PRICE_ID={XAUUSD:'GOLD',XAGUSD:'SILVER',BTCUSD:'BTC',US500:'SP500',NAS100:'NAS',USOIL:'OIL',GER40:'DAX',GER30:'DAX',DE40:'DAX',DE30:'DAX',GRXEUR:'DAX',DAX40:'DAX',DAX30:'DAX'};
 function sentSymPriceSeries(sym){
   const id=SENT_NONFX_PRICE_ID[sym];
   if(id)return priceSeriesFor(id);
@@ -21347,14 +21489,28 @@ function renderCotRoh(){
   // ist; ansonsten die normale Symbol-Vergleichstabelle (alle Assets).
   let histCard='',tblTitle,head,body;
   if(cotFilter){
-    let histArr=(COT_DATA.symbols[cotFilter]||{}).history;
+    let histArr=cotHistVoll(cotFilter,(COT_DATA.symbols[cotFilter]||{}).history);
+    if(!COT_HIST&&!cotHistFehler)ladeCotArchiv();
     if(!Array.isArray(histArr)||!histArr.length){
       const m0=cotMetrics(COT_DATA.symbols[cotFilter]);
       histArr=m0?[{date:COT_DATA.report_date,long:m0.L,short:m0.S,oi:m0.oi}]:[];
     }
+    // Zeitraum (Werkzeugzeile ueber dem Chart, Dauerregel 2026-09-26).
+    const cotAb=histArr.length?histArr[0].date:null;
+    const vorher=new Map();histArr.forEach((e,i)=>{if(i)vorher.set(e.date,histArr[i-1]);});
+    const drin=new Set(filterDatesByRange(histArr.map(e=>e.date),cotHistRange,cotHistFrom,cotHistTo));
+    const imFenster=histArr.filter(e=>drin.has(e.date));
+    if(imFenster.length>=2)histArr=imFenster;
+    // vs Price: Kurs in Kontraktrichtung, bei langem Fenster mit Archiv.
+    const pxReihe=cotPreisReihe(cotFilter);
+    if(cotVsPrice&&pxReihe&&histArr.length&&histArr[0].date<pxReihe[0][0])ladePreisArchiv();
+    const preisJeBalken=cotVsPrice&&pxReihe?histArr.map(e=>cotPreisAm(pxReihe,e.date)):null;
     const availWidth=(el.clientWidth||el.parentElement&&el.parentElement.clientWidth||window.innerWidth)-4;
     const chartMeta={};
-    const chartSvg=cotHistChart(histArr,availWidth,chartMeta);
+    const chartSvg=cotHistChart(histArr,availWidth,chartMeta,{preis:preisJeBalken});
+    const vsBtn=pxReihe?`<button class="ind-hist-range-btn${cotVsPrice?' on':''}" onclick="toggleCotVsPrice()" title="Overlay the price on the report days of the bars (Tuesday close, in the direction of the futures contract: ${escH(cotFilter==='USD'?'US Dollar Index':cotFilter+' in USD')})">vs Price</button>`:'';
+    const zeitBar=`<div class="ind-hist-toolbar">${timeRangeBarHtml(cotHistRange,'setCotHistRange',TIME_RANGES,cotAb)}${timeRangeCustomHtml(cotHistRange,cotHistFrom,cotHistTo,'setCotHistRange',cotAb)}</div>`;
+    const ladeHinweis=!COT_HIST&&!cotHistFehler?ladeLogoHtml('Loading the 10-year report history…'):'';
     cotChartMeta=chartSvg?{...chartMeta,history:histArr}:null;
     // Crowded-Hinweis auch in der Einzel-Asset-Ansicht (der Balken-Chart mit
     // seinem Badge ist hier ausgeblendet). Reiner Anzeige-Hinweis - fliesst
@@ -21366,12 +21522,13 @@ function renderCotRoh(){
     const p3=cotPct3yOf(cotFilter);
     const p3Note=p3?`<div class="cot-meta">3-year percentile: today&#39;s net positioning is at the <b>${Math.round(p3.pct)}th percentile</b> of its own last ~3 years (${p3.n} weekly reports)${p3.pct>=90?` · <span style="color:var(--amber)">⚠ historically extreme long — crowded trade, contrarian caution</span>`:p3.pct<=10?` · <span style="color:var(--amber)">⚠ historically extreme short — crowded trade, contrarian caution</span>`:''} · display-only</div>`:'';
     histCard=`<div class="cot-card">
-      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span>${fCrowded}<small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale) · hover/tap a bar for details</small></div>
+      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span>${fCrowded}<small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)${cotVsPrice&&pxReihe?' · dashed = price (far right scale)':''} · hover/tap a bar for details</small></div>
+      <div style="padding:10px 14px 0">${chartLeisteHtml(vsBtn,zeitBar)}</div>${ladeHinweis}
       ${chartSvg?`<div class="cot-hist-wrap" id="cotHistWrap"><div class="cot-tip" id="cotHoverTip" style="display:none"></div>${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
     </div>`+p3Note;
     tblTitle=`<span>📋 Report-by-report history — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>newest first · Δ = change vs. the previous report</small>`;
     head=`<tr><th class="cot-corner">Date</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
-    const rowsDesc=histArr.map((e,i)=>({e,m:cotHistRowMetrics(e,histArr[i-1])})).reverse();
+    const rowsDesc=histArr.map(e=>({e,m:cotHistRowMetrics(e,vorher.get(e.date))})).reverse();
     body=rowsDesc.map(({e,m})=>{if(!m)return'';return`<tr>
       <th class="cot-rowh">${escH(fmtDayHdr(e.date))}</th>
       <td class="cot-c-long">${m.longPct.toFixed(1)}%</td>
@@ -24197,7 +24354,7 @@ Object.assign(window,{
   btReasonKey,btReasonText,btReasonIsSeed,setBtReason,btReasonCell,
   BT_AREAS,BT_LOOKBACK,BT_REAKT,btMeetings,btReleases,btKursReaktion,btSpark,btCellHtml,btReaktZelle,
   btZinspfadChart,btJump,btRender,setBtCcy,setBtCmp,setBtFilter,toggleBtHolds,setBtJahr,openBacktester,
-  CHART_TYPEN,setPxChartTyp,openPriceChart,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
+  CHART_TYPEN,setPxChartTyp,toggleCotVsPrice,setCotHistRange,setCotHistRangeCustom,openPriceChart,setPriceRange,setPriceRangeCustom,priceEventsByDay,renderPriceChart,
   drawPriceConnectors,markPriceCards,priceWindow,
   dataIndFor,setDataIndFor,relinkDataInd,setDataMode,dataIndGroupsOf,openDataIndPicker,closeDataIndPicker,
   renderDataIndPicker,toggleDataListInd,removeDataListInd,
@@ -24342,6 +24499,8 @@ Object.defineProperty(window,'pairOvBack',{get:()=>pairOvBack,set:v=>{pairOvBack
 Object.defineProperty(window,'pairOvRange',{get:()=>pairOvRange,set:v=>{pairOvRange=v;},configurable:true});
 Object.defineProperty(window,'pairOvFrom',{get:()=>pairOvFrom,set:v=>{pairOvFrom=v;},configurable:true});
 Object.defineProperty(window,'pairOvTo',{get:()=>pairOvTo,set:v=>{pairOvTo=v;},configurable:true});
+Object.defineProperty(window,'cotVsPrice',{get:()=>cotVsPrice,set:v=>{setCotVsPriceVal(v);},configurable:true});
+Object.defineProperty(window,'COT_HIST',{get:()=>COT_HIST,set:v=>{COT_HIST=v;},configurable:true});
 Object.defineProperty(window,'pxChartTyp',{get:()=>pxChartTyp,set:v=>{setPxChartTypVal(v);},configurable:true});
 Object.defineProperty(window,'abTrendLinien',{get:()=>abTrendLinien,set:v=>{abTrendLinien=v;},configurable:true});
 Object.defineProperty(window,'PRICE_HIST',{get:()=>PRICE_HIST,set:v=>{PRICE_HIST=v;},configurable:true});

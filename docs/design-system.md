@@ -1291,3 +1291,26 @@ Panels), Regime (Kopf + 7 Szenarien), Asset-Seite Price/Pinned notes/
 Context/Headlines. Ausnahme: Dashboard „Majors" — die Karte hat außerhalb
 des Bearbeitungsmodus bewusst keine Titelzeile. Geprüft von
 `check/hierarchie.js` (Regel 4 dort).
+
+## COT-Verlauf: vs Price und 10-Jahres-Historie (seit 2026-09-27)
+
+- Einzel-Asset-Ansicht: Werkzeugzeile über dem Chart — links **vs Price**
+  (synchronisiert, `cotVsPrice`), rechts Zeitfilter 3M…10Y/Max/Custom.
+- Kurslinie gestrichelt auf den **Report-Tagen der Balken** (Dienstagsschluss,
+  letzter Schluss ≤ Tag, höchstens 5 Tage alt), in **Kontraktrichtung**:
+  CFTC-Futures laufen gegen USD — EUR = EUR/USD, JPY = Yen in USD
+  (1/USDJPY), USD = Dollar-Index. NICHT der Korb der Asset-Seite.
+  Eigene Preis-Achse ganz rechts, Kontrakte-Achse bleibt am Plot.
+- Historie: `cot_hist.json` (Workflow, ~10 Jahre, per CFTC-Kontraktcode),
+  lazy geladen wie `price_hist.json`; bei vielen Reports schmalere Balken
+  statt Scrollen, Datum mit Jahr, ausgedünnt nach Platz.
+- Wächter: `check/cotpreis.js`.
+
+## Kurs je Asset (seit 2026-09-27)
+
+Jedes Asset hat eine Price-Karte mit Chart. Renditen-Assets zeigen ihre
+10-jährige Rendite (`bond_data.json`, `renditePreisReihe`) — nur in der
+Anzeige, nicht in Movers/Korrelationen; Achse in %, Änderungen in bp, keine
+Trend-Schalter (es gibt für Renditen keinen Trend-Treiber). GER100 ist
+entfernt (kein echter Index). ETH: Kursquellen im Workflow (TradingView
+COINBASE:ETHUSD, Yahoo ETH-USD).

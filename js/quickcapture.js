@@ -41,7 +41,6 @@ const QC_WORT = {
   SP500: ['sp500', 's&p', 'spx', 's&p500'],
   NAS: ['nas', 'nasdaq', 'ndx'],
   DAX: ['dax', 'ger40'],
-  GER100: ['ger100'],
 };
 // Notenbank -> Waehrung. Ein Text ueber die Fed handelt vom Dollar, auch
 // wenn das Wort "Dollar" nicht vorkommt.

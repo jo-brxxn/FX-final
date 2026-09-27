@@ -251,4 +251,4 @@ export function aiIndex(accent) {
           fill="none" stroke="${accent}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     <circle class="ai-tick-dot" cx="29.6" cy="6.6" r="1.5" fill="${accent}"/>`;
 }
-export const AI_INDEX_ACCENT = { SP500: '#4FA3F7', NAS: '#7C7CF0', DAX: '#F0C24F', GER100: '#F0C24F' };
+export const AI_INDEX_ACCENT = { SP500: '#4FA3F7', NAS: '#7C7CF0', DAX: '#F0C24F' };

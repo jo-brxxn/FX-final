@@ -18367,3 +18367,37 @@ ist für sie kein Überlauf. Genau die Klasse aus dem Wächter-README („geclip
 
 **Nummer:** eine parallele Sitzung hatte 576 schon vergeben (Zusammenführung
 Score-Journal + Y-Achse) — deshalb 577.
+
+## VERSION-CHECK-578 (2026-09-27) — COT vs Price, 10 Jahre COT, fehlende Kurse
+
+Nutzer: *„Ich will bei cot wenn man ein Asset ausgewählt hat ein vs Price
+einschalten können. Der muss zu den Balken passen. Und die ganze Historie und
+guck mal bei manchen Assets gibt es noch gar keinen Preis also guck wo das so
+ist und reparier das"*. Per Rückfrage: Linie über den Balken, 10 Jahre,
+GER 100 entfernen („Entfern ger100").
+
+**Bestand vorher (gemessen):** COT-Historie nur 26 Wochen (ab 2026-03-31,
+`HIST_LEN=26` im Workflow). Ohne Kurs-Chart: GER100 und alle 8 Renditen
+(„No daily series for this window"). ETH (vom Nutzer hinzugefügt) hatte
+keine Kursquelle.
+
+**Umgesetzt:**
+- Workflow: Kontraktcode je Markt, neuer Schritt `cot_hist.json` (10,5 Jahre
+  per `cftc_contract_market_code`, nur bei neuem Report). ETH in TradingView-,
+  Yahoo-Backfill- und Archiv-Quellen; Archiv baut neu, wenn ein Asset fehlt.
+- App: Werkzeugzeile mit vs Price (sync) + Zeitfilter; Kurslinie in
+  Kontraktrichtung (preisReiheLang, nicht der Korb) auf den Balkenmitten,
+  Achse ganz rechts, Tooltip mit Kurs; ≈520 Balken passen ohne Scrollen,
+  Datumslabels mit Jahr ohne Überlappung.
+- Renditen: 10Y-Rendite als Kurs (nur Anzeige), Achse %, bp statt %,
+  Trend-Schalter ausgeblendet (sonst Knöpfe ohne Wirkung, Regel 6).
+- GER100 entfernt (Code, Listen, Notiz-Seed, Retail-Zuordnung GER40→DAX);
+  gespeicherter/synchronisierter Stand wird beim Laden bereinigt, Notizen
+  wandern zum DAX (getestet).
+
+Wächter `check/cotpreis.js` (52 Report-Tage EUR+JPY exakt nachgerechnet, 23
+Assets mit Kurs-Chart; Gegenprobe Korb statt USD + ohne Anleihe-Feed rot).
+⚠ `cot_hist.json` und die ETH-Kurse entstehen erst beim nächsten
+Workflow-Lauf — die App zeigt bis dahin die 26 Wochen und „Loading…".
+
+**Nummer:** parallel hat eine andere Sitzung 577 (Suchfeld) auf `main` gelegt — dieser Stand ist deshalb 578.
