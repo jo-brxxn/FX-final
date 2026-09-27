@@ -47,6 +47,11 @@ Animations-Schalter aus demselben Vier-Schalter-Satz), `dashboards`/
 über `snap()`/`applySnap()`, kein manuelles Wiring nötig). Details/
 Fundgeschichte einzelner Felder ggf. in `docs/CHANGELOG.md` nachschlagen.
 
+**Bewusst NICHT synchronisiert (nur Sitzung):** `abCalSicht` (Kalender-Karte
+Month | Past) und `calpRange` (Zeitfilter der Past-Liste) - die Karte startet
+immer im Monat, die Liste immer bei 2W, wie `cotHistRange`. Wird daraus je
+eine Praeferenz, die bleiben soll, gilt das Vier-Ecken-Muster oben.
+
 ## Sonderfall `scoreHist`: Merge statt Overwrite
 
 **`scoreHist` (Score-Verlauf für Trends/History, Stand 2026-07-20) ist ein

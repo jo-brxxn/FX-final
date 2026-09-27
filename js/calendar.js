@@ -307,6 +307,8 @@ function calTableHtml(evts,opts){
   // Welche Tage werden gerendert? Mit opts.allDates wird ein lückenloses Fenster
   // gezeichnet (auch Tage ganz ohne News), sonst nur Tage mit Events.
   const dates=(opts.allDates&&opts.allDates.length)?opts.allDates:Object.keys(byDate).sort();
+  // Rueckblick-Listen (Past Releases) zeigen den juengsten Tag zuoberst.
+  if(opts.datesDesc)dates.reverse();
   // ID-Präfix, damit Haupt- und Mini-Kalender keine doppelten Element-IDs
   // erzeugen (sonst würde toggleCalDay den falschen Tag auf-/zuklappen).
   const pfx=opts.idPrefix||'';
@@ -341,7 +343,7 @@ function calTableHtml(evts,opts){
       // Bewusst countdownLbl statt countdownHtml: der Tages-Header traegt bei
       // heute schon "🔥 TODAY" als auffaellige Markierung, ein zweites
       // Ausrufezeichen daneben waere doppelt gemoppelt.
-      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 TODAY':''}</span><span class="cal-day-cd">${countdownLbl(date)}</span></div>`;
+      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 TODAY':''}</span><span class="cal-day-cd">${opts.datesDesc&&daysUntil(date)<-30?'':countdownLbl(date)}</span></div>`;
       html+=n?(nowHere?renderToday(dayEvts):dayEvts.map(rows).join('')):(nowHere?nowMarker+`<div class="cal-empty-day">No events</div>`:`<div class="cal-empty-day">No events</div>`);
     }
   });
@@ -450,4 +452,4 @@ export {
 // toggleCompactView/setCalCcyFilter werden aus per innerHTML gerendertem
 // Markup aufgerufen) und fuer check/score.js, das todayStr() im Browser-
 // Kontext als globalen Bezeichner aufruft.
-Object.assign(window,{toggleCalHighOnly,toggleCalDay,toggleCompactView,setCalCcyFilter,todayStr});
+Object.assign(window,{toggleCalHighOnly,toggleCalDay,toggleCompactView,setCalCcyFilter,todayStr,isEvtPast,evtImpact,dateAddStr});

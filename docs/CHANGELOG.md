@@ -18430,3 +18430,48 @@ Leitkontrakte, deren Codes jetzt fest eingetragen sind.
 
 **Folge:** Die COT-Werte von BTC und OIL springen einmalig auf den echten
 Großspekulanten-Markt, deshalb ändert sich ihr COT-Score-Beitrag.
+
+## VERSION-CHECK-579 (2026-09-27) — Past Releases in Kalender-Karte und -Fenster
+
+**Wunsch:** „Ich will noch irgendwo bei Assets haben eine Liste die die vergangenen 2 Wochen
+abspiegelt mit allen events die für das Asset passiert sind mit dem actual also so aufgebaut
+wie der Kalender.“ Auf Rückfrage gewählt:
+- **Ort:** „im Kalender“, dann „Beides“, also Kalender-Karte und Kalender-Fenster.
+- **Zeitraum:** „für unbegrenzt viele Wochen zurück … Zeitfilter“, festgelegt auf 10 Jahre.
+- **Umfang:** High + Medium.
+
+**Daten:** `ff_calendar.json` reicht nur rund 3 Tage zurück, `calEvts` rund 10 Tage. Neu ist
+der Workflow-Schritt „Build calendar archive → cal_hist/“:
+- **Quelle:** TradingView-Kalender, 13 Länder, alle Wichtigkeiten. Low-Zeilen werden
+  mitgespeichert, weil `evtImpact` score-treibende Low-Termine auf High hebt.
+- **Ablage:** je Jahr eine Datei, Zeilen im Format `[utc, ccy, title, imp, actual, forecast, previous]`.
+- **Aktualisierung:** Jeder Lauf frischt die letzten 21 Tage auf.
+- **Auffüllen:** Rückwärts mit bis zu 45 Monatsfenstern pro Lauf, bis 10 Jahre erreicht sind
+  oder die Quelle 3 Monate in Folge leer bleibt (`meta.ende`).
+- **Test:** Lokal mit nachgestellter API, weil TradingView aus dem Container gesperrt ist.
+  Ergebnis: 3 Läufe bis Quellenende, danach 1 Abruf je Lauf.
+
+**Nebenbefund (Fehlerklasse):** TradingView nennt das Land nicht im Titel. Deutsche und
+Eurozonen-Inflation standen deshalb beide als EUR „Inflation Rate YoY“ im Kalender, im
+Schritt „Add upcoming events“ genauso. Beide Stellen setzen jetzt German/French/Italian/Spanish
+voran. Nebeneffekt: `canonKey` erkennt diese Zeilen jetzt auch als dieselben wie die FF-Namen.
+
+**App:**
+- **Werkzeugzeile:** Month | Past plus Zeitfilter.
+- **Eine Quelle je Tag:** Kennt der Live-Kalender einen Tag, gewinnt er, sonst das Archiv.
+  So entstehen keine Doppelzeilen aus zwei Schreibweisen desselben Termins.
+- **Laden:** Das Archiv wird pro Jahr erst bei Bedarf geladen, mit Lade-Logo. Fehlt es, steht
+  ein Hinweis da.
+- **Bestehender Filter:** „High-impact only“ aus der Kalender-Leiste gilt mit.
+
+**Messung (Playwright, nachgestelltes Archiv):**
+- Karte bei 1000 px: 433×463, Liste 348 px scrollt in der Karte. Bei 390 px kein
+  horizontales Scrollen, Leiste 27 px hoch.
+- Hover-Abblassen `.cal-row.cal-past:hover` (.75) hat die Liste beim Überfahren blass
+  gemacht. Behoben mit der Überschreibung `:hover`.
+- Restzeit „3500d ago“ bei alten Tagen: beschränkt auf 30 Tage.
+
+**Wächter `check/calpast.js`:** Der erste Lauf hat einen echten Fehler gefunden. „5Y“ wurde
+bei nur 400 Tagen Archiv angeboten, weil jede Stufe erschien, sobald die Daten über die
+vorige hinausreichten. Die Regel ist jetzt „Stufe nur bei voller Abdeckung“. Die Gegenprobe
+(Ein-Quelle-Regel aus) meldet die Doppelzeile am Live-Tag rot.

@@ -48,6 +48,7 @@ const PRUEFUNGEN = [
   { n: 'stapel',     d: 'Asset-Stapel: Panelbreite haengt nicht an den Scores', f: 'check/stapel.js', args: [], browser: true },
   { n: 'archiv',     d: 'Lange Kurshistorie erst bei Bedarf, Lade-Logo, Scores unberuehrt', f: 'check/archiv.js', args: [], browser: true },
   { n: 'cotpreis', d: 'COT vs Price auf den Balken (Kurs gegen USD nachgerechnet), jedes Asset mit Kurs-Chart', f: 'check/cotpreis.js', args: [], browser: true },
+  { n: 'calpast', d: 'Past Releases: Liste je Asset in Kalender-Karte und -Fenster, eine Quelle je Tag, Zeitfilter bis zur Archivtiefe', f: 'check/calpast.js', args: [], browser: true },
   { n: 'yachse', d: 'Y-Beschriftung an jedem Daten-Chart, Data: gleicher Indikator = gleiche Skala', f: 'check/yachse.js', args: [], browser: true },
   { n: 'hierarchie', d: 'Schrifthierarchie: Seitentitel 24/800 > Kartentitel 17/700 > Text, alle Seiten', f: 'check/hierarchie.js', args: [], browser: true },
   { n: 'einheit', d: 'Filter/Zeitfilter/ⓘ/Candles|Line an festen Stellen auf allen Seiten', f: 'check/einheit.js', args: [], browser: true },

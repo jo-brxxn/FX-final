@@ -1733,6 +1733,17 @@ body.no-ui-anim #navSidebar{transition:none}
 /* In der Kalenderkarte liegt der Knopf auf der Karten-eigenen Klickflaeche -
    dort etwas Luft nach unten, damit er nicht am Rand klebt. */
 .abc-cal .ab-goto{padding-top:5px}
+/* Past Releases (2026-09-27): Liste statt Monatsraster. In der Karte
+   scrollt NUR die Liste - flex-basis 0, damit sie die Kartenhoehe der Reihe
+   nicht aufblaest; min-height fuer die Einspalten-Ansicht (dort gibt keine
+   Nachbarkarte eine Hoehe vor). Alle Zeilen sind vergangen - das Abblassen
+   des Kalenders (.cal-past) waere hier nur eine blasse Liste. */
+.calp-karte .calp{flex:1 1 0;min-height:230px;overflow:auto;overscroll-behavior:none;margin:0 -2px}
+.calp.gross{max-height:62vh;overflow:auto;overscroll-behavior:none;border:1px solid var(--bd);border-radius:10px}
+.calp .cal-row.cal-past,.calp .cal-row.cal-past:hover{opacity:1}
+.calp .cal-day-hdr{position:sticky;top:0;z-index:1}
+.calp-mehr{display:block;margin:8px auto}
+.abc-cal .chart-leiste{margin-bottom:6px}
 /* ⚠ GEMESSEN 2026-09-16: die drei Makro-Karten der Asset-Seite werden von
    ihrer Flex-Zeile auf GLEICHE HOEHE gestreckt - 498px bei Inhalten von
    323 bis 425px. `.rub-card` war aber display:block und padding:0, also
@@ -5953,11 +5964,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-578 - COT vs Price + 10 Jahre Historie, Renditen mit Kurs-Chart, GER100 entfernt, ETH-Kurse (+ parallel 577: Suchfeld auf Tablet-Breite)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-579 - Past Releases: Liste der vergangenen Termine je Asset in Kalender-Karte und -Fenster, Zeitfilter bis 10 Jahre (Archiv cal_hist)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-578</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-579</span>
     </span>
   </div>
   <div class="hdr-r">

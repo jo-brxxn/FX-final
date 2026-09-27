@@ -1314,3 +1314,16 @@ Anzeige, nicht in Movers/Korrelationen; Achse in %, Änderungen in bp, keine
 Trend-Schalter (es gibt für Renditen keinen Trend-Treiber). GER100 ist
 entfernt (kein echter Index). ETH: Kursquellen im Workflow (TradingView
 COINBASE:ETHUSD, Yahoo ETH-USD).
+
+## Past Releases im Kalender (seit 2026-09-27)
+
+Kalender-Karte der Asset-Seite UND Kalender-Fenster haben die Werkzeugzeile
+`chartLeisteHtml`: links **Month | Past**, rechts (nur bei Past) der
+Zeitfilter **2W / 1M / 3M / 6M / 1Y / 5Y / 10Y**. Eine Stufe erscheint erst,
+wenn das Archiv (`cal_hist/meta.json` → `von`) sie VOLL abdeckt. Die Liste
+ist `calTableHtml` mit `datesDesc` (juengster Tag oben; Restzeit nur bis
+30 Tage zurueck), nicht abgeblasst (alles ist vergangen), High + Medium über
+`evtImpact`, der Filter „High-impact only" gilt mit. Pro Tag genau eine
+Quelle: Live-Kalender (`calEvts`), sonst Archiv. Mehr als 200 Zeilen →
+„Show older". In der Karte scrollt nur die Liste (`overscroll-behavior:none`).
+Geprüft von `check/calpast.js`.

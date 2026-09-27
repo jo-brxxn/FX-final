@@ -7635,7 +7635,8 @@ function assetMonthCalHtml(c,gross){
   const calErkl=[von&&bis
       ?`Past days are dimmed but keep their dot: before the feed window they show the recorded releases of this asset's indicators with their actual values. Future days beyond the window are dimmed because they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
       :'No calendar data has loaded for this asset yet.',
-    'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.']
+    'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.',
+    '<b>Past</b> lists every high- and medium-impact release of this asset with its actual value, newest day first — up to 10 years back with the time filter. Actual in green or red: better or worse than the forecast for this asset.']
     .concat(calHighOnly?['The card is currently filtered to <b>high-impact</b> releases only.']:[]);
   const infoSlot=abInfoBtn('Calendar',calErkl);
 
@@ -7676,6 +7677,7 @@ function assetMonthCalHtml(c,gross){
         ${gross?'':abTileIcon('Calendar')}<span class="abc-mon">${AB_MONATE[monat].toUpperCase()}${jahr!==heute.getFullYear()?' '+jahr:''}</span>${gross?'':infoSlot}
         <span class="abc-navs"><button class="abc-nav" onclick="event.stopPropagation();abCalShift(-1)" title="Previous month">‹</button><button class="abc-nav" onclick="event.stopPropagation();abCalShift(1)" title="Next month">›</button></span>
       </div>
+      ${gross?'':calSichtLeisteHtml()}
       <div class="abc-grid">
         ${AB_WOCHENTAGE.map((w,i)=>`<span class="abc-w${i>=5?' we':''}">${w}</span>`).join('')}
         ${zellen}
@@ -7692,6 +7694,12 @@ function assetMonthCalHtml(c,gross){
   const zeitraum=`<div class="abc-foot abc-range">${von&&bis
       ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>`
       :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>`;
+  if(abCalSicht==='past')return`<div class="abc-cal calp-karte" onclick="openAssetCal()" title="Open the full calendar for this asset">
+      <div class="abc-hd">${abTileIcon('Calendar')}<span class="abc-mon">PAST RELEASES</span>${infoSlot}</div>
+      ${calSichtLeisteHtml()}
+      ${calpListeHtml(c,false)}
+      ${abGoToHtml('cal',true)}
+    </div>`;
   return`<div class="abc-cal" onclick="openAssetCal()" title="Open the full calendar for this asset">
       ${raster}
       ${zeitraum}
@@ -7759,7 +7767,11 @@ function renderAssetCalBody(){
       <span class="abc-u-t">${escH(ev.time||'—')}</span>
     </button>`;}).join('')
     :`<div class="abc-empty">Nothing upcoming in the published window.</div>`;
-  el.innerHTML=`${calToolbarHtml()}
+  if(abCalSicht==='past'){
+    el.innerHTML=`${calToolbarHtml()}${calSichtLeisteHtml()}${calpListeHtml(c,true)}`;
+    return;
+  }
+  el.innerHTML=`${calToolbarHtml()}${calSichtLeisteHtml()}
     <div class="acm-grid">
       <div class="acm-cal">${assetMonthCalHtml(c,true)}</div>
       <div class="acm-day">
@@ -7771,6 +7783,125 @@ function renderAssetCalBody(){
         <div class="abc-day-list">${naechste}</div>
       </div>
     </div>`;
+}
+// ══ PAST RELEASES (Kalender-Karte + -Fenster) ══════════════════════════
+// Nutzer 2026-09-27: "Ich will noch irgendwo bei Assets haben eine Liste die
+// die vergangenen 2 Wochen abspiegelt mit allen events die fuer das Asset
+// passiert sind mit dem actual also so aufgebaut wie der Kalender. Einfach
+// nur das man das schnell als Ueberblick hat" - per Rueckfrage: in der
+// Kalender-Karte UND im Kalender-Fenster ("Beides"), "fuer unbegrenzt viele
+// Wochen zurueck ... auch den Zeitfilter" -> 10 Jahre (so tief wie Kurs- und
+// COT-Archiv), High + Medium.
+// Quellen: die juengsten Tage aus calEvts (DERSELBE Bestand wie jeder andere
+// Kalender - identische Namen/Werte), alles davor aus cal_hist/<Jahr>.json
+// (TradingView-Archiv, Workflow). Pro Tag gilt genau EINE Quelle: kennt der
+// Live-Kalender einen Tag fuer dieses Asset, gewinnt er, sonst das Archiv -
+// so entstehen keine Doppelzeilen aus zwei Schreibweisen desselben Termins.
+// Die Wichtigkeit laeuft durch evtImpact() wie ueberall (score-treibende
+// Termine sind High, CNY Medium); der Filter "High-impact only" der
+// Kalender-Leiste gilt auch hier - sonst zeigten zwei Kalender verschiedene
+// Mengen fuer denselben Tag.
+// Sicht und Zeitraum sind bewusst nur Sitzungs-Zustand (wie cotHistRange):
+// die Karte startet immer im Monat, die Liste immer bei 2W.
+let abCalSicht='month';        // 'month' | 'past'
+let calpRange='2W';
+let calpLimit=200;             // so viele Zeilen werden gezeichnet, Rest per "Show older"
+const CALP_RANGES=[['2W',14],['1M',30],['3M',91],['6M',182],['1Y',365],['5Y',1826],['10Y',3653]];
+const CAL_ARCHIV={meta:null,metaStatus:'',jahre:{},status:{}};
+function calpNeuZeichnen(){
+  try{if(document.querySelector('#detail .abc-cal'))renderDetail();}catch(e){}
+  try{if(abCalOffen)renderAssetCalBody();}catch(e){}
+}
+function setAbCalSicht(v){abCalSicht=v==='past'?'past':'month';calpLimit=200;calpNeuZeichnen();}
+function setCalpRange(v){if(CALP_RANGES.some(r=>r[0]===v)){calpRange=v;calpLimit=200;}calpNeuZeichnen();}
+function calpMehr(){calpLimit+=400;calpNeuZeichnen();}
+async function calArchivMetaLaden(){
+  if(CAL_ARCHIV.metaStatus)return;
+  CAL_ARCHIV.metaStatus='laedt';
+  try{
+    const r=await fetch(DATA_BASE+'cal_hist/meta.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    CAL_ARCHIV.meta=await r.json();CAL_ARCHIV.metaStatus='ok';
+  }catch(e){CAL_ARCHIV.metaStatus='fehlt';}
+  calpNeuZeichnen();
+}
+async function calArchivJahrLaden(y){
+  if(CAL_ARCHIV.status[y])return;
+  CAL_ARCHIV.status[y]='laedt';
+  try{
+    const r=await fetch(DATA_BASE+'cal_hist/'+y+'.json',{signal:AbortSignal.timeout(FEED_TIMEOUT_MS)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    CAL_ARCHIV.jahre[y]=((d&&d.ev)||[]).map(calArchivZeileZuEvt).filter(Boolean);
+    CAL_ARCHIV.status[y]='ok';
+  }catch(e){CAL_ARCHIV.status[y]='fehler';}
+  calpNeuZeichnen();
+}
+// [utc, ccy, title, importance 1/0/-1, actual, forecast, previous] -> Kalender-
+// Event in lokaler Zeit, wie fetchFF() es aus dem FF-Feed baut.
+function calArchivZeileZuEvt(z){
+  if(!Array.isArray(z)||z.length<7)return null;
+  const d=new Date(z[0]);if(isNaN(d))return null;
+  const date=abTagStr(d);
+  const time=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  return{id:'arch:'+z[1]+':'+z[2]+':'+z[0],name:String(z[2]||''),date,time,currencies:String(z[1]||''),
+    impact:z[3]===1?'high':z[3]===0?'medium':'low',actual:String(z[4]||''),forecast:String(z[5]||''),previous:String(z[6]||''),src:'arch'};
+}
+function calpTage(){return(CALP_RANGES.find(r=>r[0]===calpRange)||CALP_RANGES[0])[1];}
+// Welche Zeitraeume gibt es wirklich? Nur die, die das Archiv voll abdeckt -
+// ein "5Y", das nur 13 Monate zeigt, waere eine falsche Beschriftung. Waehrend
+// der Workflow rueckwaerts auffuellt, kommen die langen Stufen nach und nach dazu.
+function calpRangesVerfuegbar(){
+  const m=CAL_ARCHIV.meta,heute=todayStr();
+  const von=m&&m.von?m.von:null;
+  return CALP_RANGES.filter(([,t],i)=>i===0||(von&&dateAddStr(heute,-t)>=von));
+}
+// Liefert {evts, laedt, fehlt}. evts: vergangene Events des Assets im Zeitraum,
+// neuester Tag zuerst, im Tag nach Uhrzeit.
+function calpDaten(assetId){
+  const heute=todayStr(),ab=dateAddStr(heute,-calpTage());
+  const ids=eventSrcIds(assetId);
+  const passt=ev=>ids.some(x=>evtMatchesSym(ev,x));
+  const sicht=ev=>{const i=evtImpact(ev);return calHighOnly?i==='high':(i==='high'||i==='medium');};
+  const live=getSymEventsAll(assetId).filter(ev=>ev.date>=ab&&isEvtPast(ev));
+  const liveTage=new Set(live.map(ev=>ev.date));
+  if(!CAL_ARCHIV.metaStatus)calArchivMetaLaden();
+  let laedt=CAL_ARCHIV.metaStatus==='laedt',fehlt=CAL_ARCHIV.metaStatus==='fehlt';
+  const arch=[];
+  if(CAL_ARCHIV.meta){
+    const jahre=(CAL_ARCHIV.meta.jahre||[]).filter(y=>y>=+ab.slice(0,4));
+    jahre.forEach(y=>{
+      const st=CAL_ARCHIV.status[y];
+      if(!st){calArchivJahrLaden(y);laedt=true;return;}
+      if(st==='laedt'){laedt=true;return;}
+      if(st==='fehler'){fehlt=true;return;}
+      CAL_ARCHIV.jahre[y].forEach(ev=>{if(ev.date>=ab&&(window.__calpOhneTagesregel||!liveTage.has(ev.date))&&passt(ev)&&isEvtPast(ev))arch.push(ev);});
+    });
+  }
+  const evts=live.concat(arch).filter(sicht)
+    .sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):b.date.localeCompare(a.date));
+  return{evts,laedt,fehlt};
+}
+// Die Werkzeugzeile (Dauerregel 2026-09-26): links die Ansicht, rechts der
+// Zeitfilter - im Monat gibt es keinen Zeitfilter.
+function calSichtLeisteHtml(){
+  const sw=`<span class="ctyp calp-sw" role="group" aria-label="Calendar view">${[['month','Month'],['past','Past']].map(([v,l])=>
+    `<button class="ind-hist-range-btn ctyp-b${abCalSicht===v?' on':''}" onclick="event.stopPropagation();setAbCalSicht('${v}')" title="${v==='month'?'Month grid with upcoming and past days':'List of past releases for this asset with their actual values'}">${l}</button>`).join('')}</span>`;
+  const rg=abCalSicht==='past'?calpRangesVerfuegbar().map(([l])=>
+    `<button class="ind-hist-range-btn${calpRange===l?' on':''}" onclick="event.stopPropagation();setCalpRange('${l}')" title="Past releases of the last ${escH(l)}">${l}</button>`).join(''):'';
+  return chartLeisteHtml(sw,rg);
+}
+function calpListeHtml(c,gross){
+  const {evts,laedt,fehlt}=calpDaten(c.id);
+  const gezeigt=evts.slice(0,calpLimit);
+  const tabelle=gezeigt.length?calTableHtml(gezeigt,{compact:!gross,symId:c.id,datesDesc:true}):'';
+  const mehr=evts.length>gezeigt.length
+    ?`<button class="btn calp-mehr" onclick="event.stopPropagation();calpMehr()" title="Show the next older releases">Show older (${evts.length-gezeigt.length} more)</button>`:'';
+  const hinweis=laedt?ladeLogoHtml('Loading the release archive …')
+    :fehlt?`<div class="abc-empty">The long release archive is not available yet — only the last days from the live calendar are shown.</div>`:'';
+  const leer=!gezeigt.length&&!laedt
+    ?`<div class="abc-empty">No ${calHighOnly?'high-impact ':'high- or medium-impact '}release for this asset in the last ${escH(calpRange)}.</div>`:'';
+  return`<div class="calp${gross?' gross':''}">${tabelle}${leer}${hinweis}${mehr}</div>`;
 }
 // ══ NEUE ASSET-SEITE (Layout-Umbau 2026-09-13) ═════════════════════════
 //
@@ -24231,7 +24362,7 @@ Object.assign(window,{
   seasBiasFor,retailBiasFor,abScoreZeile,applySeasRetailFeed,SEAS_IND_NAME,RETAIL_IND_NAME,
   SEAS_HIT_HOCH,SEAS_HIT_TIEF,RETAIL_AB,RETAIL_STIMME,retailAenderung,retailStimme,cotPunkte,cotRegelText,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
-  assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
+  assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,setAbCalSicht,setCalpRange,calpMehr,calpDaten,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,flaggenBandHtml,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
