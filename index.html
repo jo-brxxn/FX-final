@@ -2541,6 +2541,11 @@ body.res-return-active #resBackBar{display:flex}
 .ab-qrow{grid-column:1 / -1}
 .ab-qzeile{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .ab-qzeile .aql{min-height:46px;justify-content:center}
+/* Nutzer 2026-09-28: "Bring die Schrift bei den quicklinks auf die gleiche
+   Groesse wie bei den Karten" - Kartentitel-Stufe 17px/700 (--fs-kt), Symbol
+   mitgezogen. Nur die Zeile der Asset-Seite, nicht die Watchlist-Knoepfe. */
+.ab-qzeile .aql{font:700 var(--fs-kt)/1.2 var(--ff-text);gap:9px}
+.ab-qzeile .aql svg{width:18px;height:18px}
 .aqr-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .aql{display:flex;align-items:center;justify-content:center;gap:7px;padding:0 10px;min-height:42px;border:1px solid var(--chrome-line);background:var(--chrome-quick);color:#C3D0E6;border-radius:var(--rs);font:700 var(--fs-sm)/1.2 var(--ff-text);cursor:pointer;min-width:0}
 .aql span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -5980,11 +5985,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-583 - Kalender: Monat und Past aus EINER Quelle, fehlende Actuals aus der Indikator-Historie (+-1 Tag), gleicher Release nicht mehr doppelt."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-584 - Quicklinks der Asset-Seite in Kartentitel-Groesse (17px/700)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-583</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-584</span>
     </span>
   </div>
   <div class="hdr-r">

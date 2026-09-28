@@ -18645,3 +18645,17 @@ dort ebenfalls ±1 Tag.
 **Wächter:** `check/calpast.js` G. Das Nachstell-Archiv enthält einen USD-Manufacturing-PMI
 ohne Actual um 23:00 UTC. Monat und Past müssen das Actual aus `historyFull` zeigen, einmal
 und nicht doppelt. Gegenprobe `__calpOhneHistorie`: rot.
+
+## VERSION-CHECK-584 (2026-09-28) — Quicklinks in Kartentitel-Größe
+
+**Wunsch** (Bildschirmfoto AUD, Quicklink-Zeile markiert): „Bring die Schrift bei den quicklinks
+auf die gleiche Größe wie bei den Karten“.
+
+**Gemessen vorher:** `.aql` hatte 700 `var(--fs-sm)`, die Kartentitel (`.ab-tile-t`) haben
+17px/700 (`--fs-kt`).
+
+**Änderung:** `.ab-qzeile .aql` bekommt 17px/700 und ein 18-px-Symbol, nur in der Zeile der
+Asset-Seite; die Watchlist-Knöpfe bleiben unverändert.
+
+**Gemessen danach:** Bei 1366, 1000 und 390 px stehen alle vier Quicklinks auf 17px/700,
+keiner ist abgeschnitten. „Trends“, „Price“ und „Pinned notes“ sind gleich groß.
