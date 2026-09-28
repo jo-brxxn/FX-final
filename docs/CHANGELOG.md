@@ -18550,3 +18550,60 @@ Asset-Seite gleichermaßen. Punkte ohne Datum laufen weiter über die Position.
 
 **Wächter `check/chartsync.js`:** 7 Stellen, zwei Karten. Die Gegenprobe
 (`__chvNachPosition`) meldet rot.
+
+## VERSION-CHECK-582 (2026-09-28) — Rohstoffe über 1D EMA20, Score-Modell 20; High-impact-Filter in der Past-Liste
+
+**Wunsch Rohstoffe:** „wenn man bei Assets guckt nach Preisen zu anderen Assets wie Öl oder
+Gold oder Kupfer … nicht das macht wie aktuell sondern sich die preishistorie holt und darauf
+einen 1d 20ema legt den man dann auch wie bei den Assets beim Trend sehen kann … Score
+Einfluss erhöhen wenn es so und so viel Tage über dem Ema ist“.
+
+**Auf Rückfrage gewählt:**
+- **Stufen:** ±0,5, ab 10 Tagen auf derselben Seite ±0,75, ab 20 Tagen ±1.
+- **Band:** wie beim Asset-Trend (±0,25 × ATR14, Schluss-zu-Schluss).
+- **Coal und Dairy:** eigene Aufzeichnung statt Stellvertreter.
+- **Kupfer:** kommt nicht in den Korb (etwa 4 % der AU-Exporte).
+
+**Vorher (bis Modell 19):** 1-Monats-Veränderung geteilt durch die typische Monatsbewegung,
+Milch mit festen 2 %/5 %.
+
+**Datenbefund:** Der Workflow zeichnete `history` seit 2026-09-24 auch am Samstag und Sonntag
+auf, jeweils mit dem Freitagskurs. Für einen EMA20 wären das 2 von 7 Tagen Verzerrung.
+Behoben: nur noch Handelstage, alte Wochenendzeilen fallen weg. Eisenerz, Gold und Öl nutzen
+die Yahoo-Tagesschlüsse (`yhist`, 800 Tage). Coal und Dairy haben 2 von 20 Tagen und zählen
+0 mit „building up“ (`n/20d`).
+
+**Umsetzung:**
+- `rohstoffTrend`: EMA20 und ATR14 gleich wie `trendTagesReihe` (Korb-Modus), Urteil über
+  `trendUrteil`, Tage auf derselben Seite rückwärts gezählt.
+- Die Zeilen heißen jetzt `… (EMA20)`. Die alten `(1M)`-Zeilen werden entfernt, sonst stünden
+  Geisterzeilen im Score.
+- **Verlaufschart:** Trend-Chart mit Linie, EMA, Band und Schattierung
+  (`rohstoffTrendChartHtml`), Hover mit Datum für den gemeinsamen Cursor.
+- **Zu Data:** Abstand in ATR.
+- **Score-Fenster und Journal:** neue Texte.
+- **Modell:** `SCORE_MODEL_VERSION` 19 → 20, dazu die Zeile in `JR_MODELL_NOTIZ`.
+
+**Messung (2026-09-28):**
+
+| Asset | Rohstoff | Lage | Beitrag |
+|---|---|---|---|
+| AUD | Iron Ore | −0,97 ATR, 4 Tage unter der EMA | −0,25 |
+| AUD | Gold | −1,81 ATR, 5 Tage unter der EMA | −0,1 |
+| AUD | Coal | Aufbau | 0 |
+| CAD | Crude Oil | −0,89 ATR, 1 Tag unter der EMA | −0,5 |
+| NZD | Dairy | Aufbau | 0 |
+
+**Nachbesserung:**
+- ACT „building up“ lief aus der Spalte, jetzt `2/20d`. „−0.97 ATR“ ragte bei 1180 px 5 px heraus (`check/zellen.js`), jetzt mit einer Nachkommastelle, der Chart-Tooltip zeigt zwei.
+- ACT war ungefärbt (`actualColor` ohne Forecast), jetzt Bias-Farbe wie bei den Anleihen.
+- „AS OF: –“ zeigt jetzt das Schlussdatum.
+
+**Wächter `check/regeln.js` C:** Rechnet die neue Regel unabhängig nach. Gegenprobe von Hand:
+Stufe 0,5 → 0,6 meldet dreimal rot.
+
+**Wunsch Filter:** „Bau bitte noch einen high impact Filter bei der history ein die du eben
+hinzugefügt hast“. Die Past-Karte hat jetzt „High impact“ in der Titelzeile vor dem ⓘ,
+derselbe Schalter `calHighOnly` wie in der Kalender-Leiste, geräteübergreifend. Gemessen bei
+USD 2W: 67 → 19 Zeilen. `check/calpast.js` F prüft das; das Nachstell-Archiv hat dafür eine
+echte Medium-Zeile bekommen (Retail Sales wird als score-treibend automatisch zu High).

@@ -34,6 +34,7 @@ function archivJahr(y, liveTag) {
     ev.push([iso(12.5), 'USD', 'Archive Retail Sales MoM', 0, '0.4%', '0.2%', '0.1%']);
     ev.push([iso(14), 'USD', 'Archive ISM Manufacturing PMI', 1, '49.1', '50.2', '49.8']);
     ev.push([iso(15), 'USD', 'Archive Low Thing', -1, '1', '1', '1']);
+    ev.push([iso(16), 'USD', 'Archive Redbook YoY', 0, '5.1%', '', '4.9%']);
     ev.push([iso(13), 'EUR', 'Archive German Inflation Rate YoY', 1, '2.1%', '2.3%', '2.2%']);
   }
   // Eine Archivzeile an einem Tag, den der Live-Kalender schon kennt.
@@ -123,7 +124,22 @@ function archivJahr(y, liveTag) {
   if (f.sw[0] !== 'Past' || !f.rows) fail('D', `das Fenster zeigt nicht dieselbe Past-Liste (${f.sw.join()} / ${f.rows} Zeilen)`);
   await p.click('#assetCalBody .calp-sw button:first-child'); await p.waitForTimeout(300);
   if (!(await p.evaluate(() => !!document.querySelector('#assetCalBody .acm-grid')))) fail('E', '"Month" im Fenster bringt das Raster nicht zurueck');
+  // F) High-impact-Filter in der Titelzeile (Nutzer 2026-09-27) - im Fenster
+  //    steht noch die Past-Liste? Dann erst schliessen, der Filter sitzt in der Karte.
   await p.evaluate(() => closeAssetCal());
+  await p.evaluate(() => setAbCalSicht('past')); await p.waitForTimeout(300);
+  const hf = await p.evaluate(() => { const b = document.querySelector('#detail .abc-cal .abc-hd .calp-high'); return b ? { on: b.classList.contains('on'), vor: calpDaten('USD').evts.filter(e => evtImpact(e) !== 'high').length } : null; });
+  if (!hf) fail('F', 'kein High-impact-Filter in der Titelzeile der Past-Karte');
+  else {
+    await p.click('#detail .abc-cal .abc-hd .calp-high'); await p.waitForTimeout(400);
+    const nach = await p.evaluate(() => ({ on: document.querySelector('#detail .abc-cal .abc-hd .calp-high').classList.contains('on'), rest: calpDaten('USD').evts.filter(e => evtImpact(e) !== 'high').length, fenster: document.getElementById('mAssetCal').style.display === 'flex' }));
+    if (!(hf.vor > 0)) fail('F', 'Voraussetzung: keine Medium-Zeile in der Liste');
+    if (nach.on === hf.on) fail('F', 'der Filter schaltet nicht um');
+    if (nach.on && nach.rest) fail('F', `"High impact" an, aber ${nach.rest} Nicht-High-Zeile(n) in der Liste`);
+    if (nach.fenster) fail('F', 'der Klick auf den Filter oeffnet zusaetzlich das Fenster');
+    await p.click('#detail .abc-cal .abc-hd .calp-high'); await p.waitForTimeout(300);
+  }
+  await p.evaluate(() => setAbCalSicht('month')); await p.waitForTimeout(200);
   if (!(await p.evaluate(() => !!document.querySelector('#detail .abc-cal .abc-grid')))) fail('E', '"Month" gilt nicht auch fuer die Karte');
   if (perr.length) fail('Seitenfehler', perr.slice(0, 3).join(' | '));
   await b.close();

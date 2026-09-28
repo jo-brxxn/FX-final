@@ -82,6 +82,7 @@ const JR_MODELL_NOTIZ={
   17:'Trend 4H weighs 0.5 instead of 0.75',
   18:'Trend 4H is measured against EMA38 instead of EMA20',
   19:'Trend 1D/4H of the eight currencies is measured on a basket against the other seven instead of against USD',
+  20:'commodities for AUD/NZD/CAD follow the daily EMA20 (±0.5, ±0.75 after 10 days on one side, ±1 after 20) instead of the 1-month change',
 };
 
 // ── Zustand ────────────────────────────────────────────────────────────────
@@ -181,7 +182,8 @@ function jrEingabeText(ind){
   switch(jrTyp(ind)){
     case't':return(a||'?')+(p?' ('+p+')':'')+(r.stand?' · '+(r.trend==='d'?'daily':'4-hour')+' candle '+jrDatum(r.stand):'');
     case'z':return'2Y gap '+(a||'?')+(p?' vs '+p+(r.prevDate?' on '+jrDatum(r.prevDate):''):'')+(r.bp!=null?' → '+(r.bp>0?'+':'')+r.bp+' bp':'');
-    case'm':return'1-month change '+(a||'?')+' vs typical '+(v(r.mass)||p||'?')+(r.z!=null&&isFinite(r.z)?' = '+(+r.z).toFixed(2)+' typical moves':'')+(r.gewicht!=null?' · weight '+r.gewicht:'')+(r.frisch===false?' · data older than 7 days':'');
+    case'm':if(r.ema20)return r.aufbau?'own daily record building up ('+(v(r.mass)||'?')+') · counts 0':'close '+(a||'?')+' vs EMA20 · '+(v(r.mass)||'')+' · step '+r.stufe+(r.gewicht!=null?' · weight '+r.gewicht:'')+(r.frisch===false?' · data older than 7 days':'');
+      return'1-month change '+(a||'?')+' vs typical '+(v(r.mass)||p||'?')+(r.z!=null&&isFinite(r.z)?' = '+(+r.z).toFixed(2)+' typical moves':'')+(r.gewicht!=null?' · weight '+r.gewicht:'')+(r.frisch===false?' · data older than 7 days':'');
     case'c':return(a||'?')+(p?' (week before '+p+')':'')+(r.date?' · report '+jrDatum(r.date):'');
     case'b':return(a||'?')+(p?' vs '+p+' (21-day avg)':'')+(r.bondColor==='bond-up'?' · 5-day avg above 21-day avg':r.bondColor==='bond-down'?' · 5-day avg below 21-day avg':' · inside the dead band');
     case's':return(a||'?')+(p?' (before '+p+')':'')+(r.date?' · '+jrDatum(r.date):'');

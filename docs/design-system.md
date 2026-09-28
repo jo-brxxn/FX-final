@@ -1347,3 +1347,14 @@ x-Achse der Indikator-Charts ist pro Release verteilt - gleiche Position
 hiess vorher verschiedene Tage. Punkte ohne `t` bleiben beim Positions-
 Abgleich. Der Compare-Knopf eines aufgeklappten Indikators sitzt klein
 rechts in der Legendenzeile (Actual/Forecast). Geprueft von `check/chartsync.js`.
+
+## Rohstoff-Zeilen: Trend-Chart (seit 2026-09-28)
+
+Eine aufgeklappte Rohstoff-Zeile (`… (EMA20)`) zeigt keinen Balkenverlauf,
+sondern Schlusskurs-Linie + EMA20 (#7172AC) + Neutralband ±0,25 × ATR14 +
+Schattierung Kurs↔Bandrand in Bias-Farbe (Gruppe opacity .11) - dieselben
+Klassen wie das Trend-Overlay der Price-Karte (`rohstoffTrendChartHtml`).
+ACT = Abstand zur EMA in ATR (Bias-Farbe), Zeitraum = Mini-Leiste. Solange
+die eigene Aufzeichnung unter 20 Tagen liegt: ACT `n/20d`, Chart-Text
+„Building up“. Past-Liste: Filter „High impact“ in der Titelzeile vor dem ⓘ
+(derselbe Schalter wie „High-impact only“ der Kalender-Leiste).

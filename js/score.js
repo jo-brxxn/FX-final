@@ -899,7 +899,10 @@ function scoreInfoIndRow(ind,rub){
       erkl=`${r.trend==='d'?'Daily':'4-hour'} candle closed ${escH(r.stand||'?')}: ${escH(r.actual||'?')} · ${escH(r.previous||'')}`;
       regel=W.trendRegelText?W.trendRegelText():'';
     }else if(r.rohstoff){
-      erkl=`1-month change ${escH(r.actual||'?')} · yardstick ${escH(r.mass||r.previous||'?')}${r.z!=null?` → ${r.z.toFixed(2)} typical moves`:''} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`;
+      erkl=r.ema20
+        ?(r.aufbau?`Building up its own daily record: ${escH(r.mass||'')} · counts 0 until the EMA20 exists`
+          :`Close ${escH(r.stand||'?')}: ${escH(r.actual||'?')} vs EMA20 · ${escH(r.mass||'')} → step ${r.stufe} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`)
+        :`1-month change ${escH(r.actual||'?')} · yardstick ${escH(r.mass||r.previous||'?')}${r.z!=null?` → ${r.z.toFixed(2)} typical moves`:''} · weight ${r.gewicht}${r.frisch===false?' · data too old, counts 0':''}`;
       regel=W.rohstoffRegelText?W.rohstoffRegelText(W.macroCcyFor?W.macroCcyFor((rub&&rub._symId)||selId):''):'';
     }else erkl=escH(r.actual||'');
     return`<div class="si-card ${biasCls}">
@@ -1752,7 +1755,10 @@ function symScoreCmp(sym){
 // 18 -> 19 (2026-09-26): Trend 1D/4H der acht Waehrungen auf dem Korb-Index
 // (gegen die sieben anderen, gleichgewichtet) statt auf dem Kurs gegen USD;
 // ATR dort Schluss-zu-Schluss (Koerbe haben keine Hochs/Tiefs).
-const SCORE_MODEL_VERSION=19;
+// 19 -> 20 (2026-09-28): Rohstoffe fuer AUD/NZD/CAD ueber den 1D-EMA20 statt
+// ueber die 1-Monats-Veraenderung (Nutzer): ausserhalb ±0,25 x ATR14 ±0,5,
+// ab 10 Tagen auf derselben Seite ±0,75, ab 20 ±1, mal Exportgewicht.
+const SCORE_MODEL_VERSION=20;
 function SCORE_MODEL_TAG(){return SCORE_MODEL_VERSION+':'+scoreMode;}
 // Stammt ein scoreHist-Eintrag aus DIESER Rechnung? Eintraege ohne Tag sind
 // alt (der Tag kam erst 2026-08-08 dazu) und zaehlen daher als fremd.

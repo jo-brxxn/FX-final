@@ -86,21 +86,39 @@ function zinsSoll(bond, ccy) {
   if (bond) FX.forEach(c => { const soll = zinsSoll(bond, c); if (soll == null) return; const ist = bz.gap[c];
     if (ist == null) fail('ZINSDIFFERENZ FEHLT', c); else if (Math.abs(ist - soll) > 1e-9) fail('ZINSDIFFERENZ', `${c}: ${ist} statt ${soll} (unabhaengig aus bond_data.json)`); });
 
-  // C) Rohstoffe: AUD/NZD/CAD gegen commodity_data.json nachgerechnet
+  // C) Rohstoffe: AUD/NZD/CAD gegen commodity_data.json nachgerechnet.
+  // Seit Modell 20 (2026-09-28): Schluss des letzten geschlossenen Handelstags
+  // gegen EMA20, neutral innerhalb ±0,25 x ATR14 (Schluss-zu-Schluss, Wilder),
+  // ausserhalb ±0,5, ab 10 Tagen auf derselben Seite ±0,75, ab 20 ±1, mal
+  // Gewicht; unter 20 Tagen Reihe 0; aelter als 7 Tage 0. Hier UNABHAENGIG
+  // von der App-Funktion gerechnet.
   const com = lies('commodity_data.json');
   if (com && com.items) {
-    const KORB = { AUD: [['IRON', 'Iron Ore (1M)', 0.5], ['COAL', 'Coal (1M)', 0.3], ['GOLD', 'Gold (1M)', 0.2]], NZD: [['DAIRY', 'Dairy (1M)', 1]], CAD: [['OIL', 'Crude Oil (1M)', 1]] };
-    const ist = await p.evaluate(() => { const o = {}; ['AUD', 'NZD', 'CAD'].forEach(id => { const s = syms.find(x => x.id === id), r = s.rubrics.find(x => x.name === 'Economic Growth'); o[id] = {}; r.indicators.forEach(i => { if (/\(1M\)$/.test(i.name)) o[id][i.name] = indScore(i, r); }); }); return o; });
+    const KORB = { AUD: [['IRON', 'Iron Ore (EMA20)', 0.5], ['COAL', 'Coal (EMA20)', 0.3], ['GOLD', 'Gold (EMA20)', 0.2]], NZD: [['DAIRY', 'Dairy (EMA20)', 1]], CAD: [['OIL', 'Crude Oil (EMA20)', 1]] };
+    const heute = await p.evaluate(() => todayStr());
+    const ist = await p.evaluate(() => { const o = {}; ['AUD', 'NZD', 'CAD'].forEach(id => { const s = syms.find(x => x.id === id), r = s.rubrics.find(x => x.name === 'Economic Growth'); o[id] = {}; r.indicators.forEach(i => { if (/\((1M|EMA20)\)$/.test(i.name)) o[id][i.name] = indScore(i, r); }); }); return o; });
+    const soll = it => {
+      const q = Array.isArray(it.yhist) && it.yhist.length > 20 ? it.yhist : (it.history || []);
+      const m = new Map(); q.forEach(e => { const d = String(e[0]).slice(0, 10), v = +e[1], w = new Date(d + 'T00:00:00Z').getUTCDay(); if (d < heute && v > 0 && w > 0 && w < 6) m.set(d, v); });
+      const x = [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      let ema = null, atr = null; const tr = [], seite = [];
+      x.forEach(([d, c], i) => {
+        if (i === 19) ema = x.slice(0, 20).reduce((a, y) => a + y[1], 0) / 20; else if (i > 19) ema = c * 2 / 21 + ema * 19 / 21;
+        if (i > 0) { const t = Math.abs(c - x[i - 1][1]); if (atr == null) { tr.push(t); if (tr.length === 14) atr = tr.reduce((a, y) => a + y, 0) / 14; } else atr = (atr * 13 + t) / 14; }
+        seite.push(ema != null && atr > 0 ? (Math.abs((c - ema) / atr) <= 0.25 ? 0 : Math.sign(c - ema)) : null);
+      });
+      const s0 = seite[seite.length - 1]; if (s0 == null) return 0;
+      let n = 0; if (s0) for (let i = seite.length - 1; i >= 0 && seite[i] === s0; i--) n++;
+      const alt = Math.round((Date.parse(heute) - Date.parse(x[x.length - 1][0])) / 864e5);
+      return alt > 7 ? 0 : s0 * (n >= 20 ? 1 : n >= 10 ? 0.75 : s0 ? 0.5 : 0);
+    };
     Object.keys(KORB).forEach(c => KORB[c].forEach(([id, name, g]) => {
-      const it = com.items[id]; if (!it || it.perf1m == null) return;
-      const alt = it.asOf ? Math.round((Date.parse(new Date().toISOString().slice(0, 10)) - Date.parse(it.asOf)) / 864e5) : 99;
-      let st = 0;
-      if (id === 'DAIRY') st = Math.abs(it.perf1m) >= 5 ? 1 : Math.abs(it.perf1m) >= 2 ? 0.5 : 0;
-      else if (it.sigma1m > 0) { const z = it.perf1m / it.sigma1m; st = Math.abs(z) >= 2 ? 1 : Math.abs(z) >= 1 ? 0.5 : 0; } else return;
-      const soll = alt <= 7 ? Math.round(Math.sign(it.perf1m) * st * g * 100) / 100 : 0;
+      const it = com.items[id]; if (!it) return;
+      const sl = Math.round(soll(it) * g * 1000) / 1000;
       const v = ist[c][name];
       if (v == null) fail('ROHSTOFF-ZEILE FEHLT', `${c}: ${name}`);
-      else if (Math.abs(v - soll) > 0.006) fail('ROHSTOFF-REGEL', `${c} ${name}: ${v} statt ${soll}`);
+      else if (Math.abs(v - sl) > 0.006) fail('ROHSTOFF-REGEL', `${c} ${name}: ${v} statt ${sl}`);
+      if (Object.keys(ist[c]).some(n => /\(1M\)$/.test(n))) fail('ROHSTOFF-ALTZEILE', `${c}: alte (1M)-Zeile steht noch im Score`);
     }));
   }
 

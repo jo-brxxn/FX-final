@@ -7695,7 +7695,7 @@ function assetMonthCalHtml(c,gross){
       ?`Covers <b>${escH(fmtDayHdr(von))}</b> – <b>${escH(fmtDayHdr(bis))}</b>`
       :'No calendar data for this asset yet.'}${calHighOnly?' · <b>High-impact only</b>':''}</div>`;
   if(abCalSicht==='past')return`<div class="abc-cal calp-karte" onclick="openAssetCal()" title="Open the full calendar for this asset">
-      <div class="abc-hd">${abTileIcon('Calendar')}<span class="abc-mon">PAST RELEASES</span>${infoSlot}</div>
+      <div class="abc-hd">${abTileIcon('Calendar')}<span class="abc-mon">PAST RELEASES</span>${/* Nutzer 2026-09-27: "Bau bitte noch einen high impact Filter bei der history ein" - derselbe Schalter wie in der Kalender-Leiste (calHighOnly, geraeteuebergreifend), als Filter in der Titelzeile vor dem ⓘ (Dauerregel). */''}<button class="ind-hist-range-btn calp-high${calHighOnly?' on':''}" onclick="event.stopPropagation();toggleCalHighOnly()" title="${calHighOnly?'Showing high-impact releases only — tap to show high and medium':'Showing high- and medium-impact releases — tap for high impact only'}">High impact</button>${infoSlot}</div>
       ${calSichtLeisteHtml()}
       ${calpListeHtml(c,false)}
       ${abGoToHtml('cal',true)}
@@ -9344,32 +9344,133 @@ function applyZinsDiffFeed(){
 // Exportanteil (Recherche 2026-09-24): Australien Eisenerz 18,0 %, Kohle
 // 11,0 %, Gold 7,3 % der Warenexporte -> 0,5/0,3/0,2; Neuseeland Milch
 // ~31-35 % -> 1,0; Kanada Oel ~13 % (Energie 20 %) -> 1,0.
-// Signal: die 1-Monats-Veraenderung des Preises (TradingView), gemessen an
-// der typischen Monatsbewegung dieses Rohstoffs (5 Jahre Yahoo-Historie):
-// ab 1 typischen Bewegung ±0,5, ab 2 ±1 - mal Gewicht. Milch ohne Historie:
-// feste GDT-Schwellen, ab 2 % ±0,5, ab 5 % ±1. Steht in der Wachstums-Karte.
+// Signal seit 2026-09-28 (Nutzer: "nicht das macht wie aktuell sondern sich
+// die preishistorie holt und darauf einen 1d 20ema legt den man dann auch wie
+// bei den Assets beim Trend sehen kann ... und man kann ja den Score Einfluss
+// erhoehen wenn es so und so viel Tage ueber dem Ema ist"). Per Rueckfrage:
+//   Schluss des letzten GESCHLOSSENEN Tages gegen EMA20, neutral innerhalb
+//   ±0,25 x ATR14 (wie der Asset-Trend, trendUrteil) - ATR Schluss-zu-Schluss,
+//   es gibt nur Schlusskurse (wie bei den Waehrungskoerben).
+//   Ausserhalb: ±0,5; seit >=10 Handelstagen durchgehend auf derselben Seite
+//   ±0,75; seit >=20 ±1 - mal Exportgewicht.
+// Reihe: Eisenerz/Gold/Oel = Yahoo-Tagesschluesse (yhist, dasselbe Instrument),
+// Kohle/Milch = die eigene Aufzeichnung des Workflows (history, seit
+// 2026-09-24, nur Handelstage) - bis 20 Tage da sind, zaehlt die Zeile 0 und
+// sagt "building up" (Regel 4, kein Ersatzinstrument).
+// Vorher (bis Modell 19): 1-Monats-Veraenderung gegen die typische
+// Monatsbewegung, Milch mit festen GDT-Schwellen.
 const ROHSTOFF_KORB={AUD:[['IRON',0.5],['COAL',0.3],['GOLD',0.2]],NZD:[['DAIRY',1]],CAD:[['OIL',1]]};
-const ROHSTOFF_NAME={IRON:'Iron Ore (1M)',COAL:'Coal (1M)',GOLD:'Gold (1M)',DAIRY:'Dairy (1M)',OIL:'Crude Oil (1M)'};
-const ROHSTOFF_FEST={DAIRY:[[5,1],[2,0.5]]},ROHSTOFF_Z=[[2,1],[1,0.5]],ROHSTOFF_MAX_ALTER=7;
+const ROHSTOFF_NAME={IRON:'Iron Ore (EMA20)',COAL:'Coal (EMA20)',GOLD:'Gold (EMA20)',DAIRY:'Dairy (EMA20)',OIL:'Crude Oil (EMA20)'};
+const ROHSTOFF_NAME_ALT=['Iron Ore (1M)','Coal (1M)','Gold (1M)','Dairy (1M)','Crude Oil (1M)'];
+const ROHSTOFF_STUFEN=[[20,1],[10,0.75],[1,0.5]],ROHSTOFF_MAX_ALTER=7;
+const ROHSTOFF_KURZ=id=>ROHSTOFF_NAME[id].replace(' (EMA20)','');
+// Geschlossene Handelstage (ohne Wochenende, ohne heute), aelteste zuerst.
+function rohstoffReihe(id){
+  const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[id];
+  if(!it)return[];
+  const quelle=Array.isArray(it.yhist)&&it.yhist.length>TREND_EMA_N?it.yhist:(Array.isArray(it.history)?it.history:[]);
+  const heute=todayStr(),m=new Map();
+  quelle.forEach(e=>{const d=e&&String(e[0]).slice(0,10),v=e&&Number(e[1]);if(d&&d<heute&&v>0&&!istWochenende(d))m.set(d,v);});
+  return[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+}
+const _rohMemo=new Map();
+function rohstoffTrend(id){
+  const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[id];
+  const schl=todayStr();
+  const m=_rohMemo.get(id);if(m&&m.it===it&&m.schl===schl)return m.v;
+  const s=rohstoffReihe(id),r=[];let ema=null,atr=null;const trs=[];
+  s.forEach(([d,c],i)=>{
+    if(i===TREND_EMA_N-1)ema=s.slice(0,TREND_EMA_N).reduce((a,x)=>a+x[1],0)/TREND_EMA_N;
+    else if(i>=TREND_EMA_N)ema=c*2/(TREND_EMA_N+1)+ema*(TREND_EMA_N-1)/(TREND_EMA_N+1);
+    if(i>0){const tr=Math.abs(c-s[i-1][1]);
+      if(atr==null){trs.push(tr);if(trs.length===TREND_ATR_N)atr=trs.reduce((a,x)=>a+x,0)/TREND_ATR_N;}
+      else atr=(atr*(TREND_ATR_N-1)+tr)/TREND_ATR_N;}
+    const u=ema!=null&&atr!=null?trendUrteil(c,ema,atr,1):null;
+    r.push({d,c,ema,atr,seite:u?Math.sign(u.pkt):null,abst:u?u.abst:null});
+  });
+  const last=r.length?r[r.length-1]:null;
+  let tage=0;
+  if(last&&last.seite)for(let i=r.length-1;i>=0&&r[i].seite===last.seite;i--)tage++;
+  const v={r,last,tage,n:s.length};
+  _rohMemo.set(id,{it,schl,v});
+  return v;
+}
 function rohstoffWert(id,gewicht){
   const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[id];
-  if(!it||it.perf1m==null||!isFinite(+it.perf1m))return null;
-  const perf=+it.perf1m;
-  const alt=it.asOf?Math.round((Date.parse(todayStr())-Date.parse(it.asOf))/864e5):null;
-  const frisch=alt!=null&&alt<=ROHSTOFF_MAX_ALTER;
-  let stufe=0,z=null,mass=null;
-  if(ROHSTOFF_FEST[id]){const st=ROHSTOFF_FEST[id].find(([ab])=>Math.abs(perf)>=ab);stufe=st?st[1]:0;mass='fixed 2% / 5%';}
-  else if(it.sigma1m!=null&&+it.sigma1m>0){z=perf/(+it.sigma1m);const st=ROHSTOFF_Z.find(([ab])=>Math.abs(z)>=ab);stufe=st?st[1]:0;mass='±'+(+it.sigma1m).toFixed(1)+'% typical';}
-  else return null;
-  const pkt=frisch?Math.round(Math.sign(perf)*stufe*gewicht*1000)/1000:0;
-  return{id,it,perf,z,stufe,gewicht,pkt,mass,frisch,alt};
+  if(!it)return null;
+  const t=rohstoffTrend(id),last=t.last;
+  if(!last||last.seite==null)return{id,it,gewicht,aufbau:true,n:t.n,pkt:0,frisch:false,stufe:0,tage:0,seite:0};
+  const alt=Math.round((Date.parse(todayStr())-Date.parse(last.d))/864e5);
+  const frisch=alt<=ROHSTOFF_MAX_ALTER;
+  const st=last.seite?ROHSTOFF_STUFEN.find(([ab])=>t.tage>=ab):null,stufe=st?st[1]:0;
+  const pkt=frisch?Math.round(last.seite*stufe*gewicht*1000)/1000:0;
+  return{id,it,gewicht,aufbau:false,n:t.n,last,tage:t.tage,seite:last.seite,abst:last.abst,stufe,pkt,frisch,alt};
+}
+// Verlaufschart einer Rohstoff-Zeile: Schlusskurs (Linie), EMA20, Neutralband
+// ±0,25 x ATR14, Flaeche Kurs<->Bandrand in Bias-Farbe - dieselben Klassen
+// (tr-band/tr-ema/tr-schatten-g, opacity .11) wie das Trend-Overlay der
+// Price-Karte. Zeitraum = die Mini-Leiste der Indikator-Charts; Hover-Punkte
+// tragen das Datum (gemeinsamer Cursor der Gruppe 'ind').
+function rohstoffTrendChartHtml(id,opts,cmp){
+  opts=opts||{};
+  const t=rohstoffTrend(id),alle=t.r;
+  const ab0=alle.length?alle[0].d:null;
+  const rangeBar=timeRangeBarHtml(indHistRange,'setIndHistRange',MINI_RANGES,ab0);
+  const custom=timeRangeCustomHtml(indHistRange,indHistCustomFrom,indHistCustomTo,'setIndHistRange',ab0);
+  const legend=`<div class="ind-hist-legend${cmp?' mit-cmp':''}"><span class="lg-act">— Close</span><span style="color:#7172AC">— EMA20</span>${cmp||''}</div>`;
+  const kopf=opts.noToolbar?'':`<div class="ind-hist-toolbar">${rangeBar}${custom}${legend}</div>`;
+  const mitEma=alle.filter(z=>z.ema!=null&&z.atr!=null);
+  if(mitEma.length<2){
+    return`<div class="ind-hist-wrap">${kopf}<div class="ind-hist-empty">Building up: ${t.n} of ${TREND_EMA_N} trading days recorded. There is no free daily history for this commodity, so the app records its own close each day — the EMA20 and the score start once ${TREND_EMA_N} days are there. Until then this row counts 0.</div></div>`;
+  }
+  const R=indHistRange;let use;
+  if(R==='MAX')use=mitEma;
+  else if(R==='CUSTOM')use=mitEma.filter(z=>(!indHistCustomFrom||z.d>=indHistCustomFrom)&&(!indHistCustomTo||z.d<=indHistCustomTo));
+  else{const c=new Date();c.setMonth(c.getMonth()-R);const cs=c.toISOString().slice(0,10);use=mitEma.filter(z=>z.d>=cs);}
+  if(use.length<2)use=mitEma.slice(-Math.min(mitEma.length,20));
+  const n=use.length,W=720,H=230,padT=12,padB=28,padR=10;
+  let lo=Infinity,hi=-Infinity;
+  use.forEach(z=>{const b=TREND_NEUTRAL_ATR*z.atr;lo=Math.min(lo,z.c,z.ema-b);hi=Math.max(hi,z.c,z.ema+b);});
+  const pad=(hi-lo)*0.06||hi*0.01||1;lo-=pad;hi+=pad;
+  const ticks=achsenTicks(lo,hi,4);
+  const fmtP=v=>Math.abs(v)>=1000?v.toFixed(0):Math.abs(v)>=100?v.toFixed(1):v.toFixed(2);
+  const yTxt=ticks.map(fmtP);
+  const padL=12+Math.max(1,...yTxt.map(x=>x.length))*6.4;
+  const yOf=v=>padT+(1-(v-lo)/(hi-lo))*(H-padT-padB);
+  const fach=(W-padL-padR)/n,xOf=i=>padL+(i+0.5)*fach;
+  let sv=ticks.map((v,k)=>{const yy=yOf(v);return`<line x1="${padL.toFixed(1)}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}" stroke="var(--bd)" stroke-width="1" stroke-dasharray="2 3" opacity=".75"/><text class="y-lbl" x="${(padL-6).toFixed(1)}" y="${(yy+3.5).toFixed(1)}" text-anchor="end" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(yTxt[k])}</text>`;}).join('');
+  const ob=use.map((z,i)=>`${xOf(i).toFixed(1)},${yOf(z.ema+TREND_NEUTRAL_ATR*z.atr).toFixed(1)}`),un=use.map((z,i)=>`${xOf(i).toFixed(1)},${yOf(z.ema-TREND_NEUTRAL_ATR*z.atr).toFixed(1)}`);
+  sv+=`<polygon class="tr-band tr-band-d" points="${ob.concat(un.slice().reverse()).join(' ')}"/>`;
+  let schatten='';
+  use.forEach((z,i)=>{
+    if(!z.seite)return;
+    const y1=yOf(z.c),y2=yOf(z.seite>0?z.ema+TREND_NEUTRAL_ATR*z.atr:z.ema-TREND_NEUTRAL_ATR*z.atr);
+    if(Math.abs(y1-y2)<0.05)return;
+    schatten+=`<rect x="${(xOf(i)-fach*0.8).toFixed(2)}" y="${Math.min(y1,y2).toFixed(1)}" width="${(fach*1.6).toFixed(2)}" height="${Math.abs(y1-y2).toFixed(1)}" fill="${z.seite>0?BC.bull:BC.bear}"/>`;
+  });
+  if(schatten)sv+=`<g class="tr-schatten-g" opacity=".11">${schatten}</g>`;
+  sv+=`<polyline class="tr-ema tr-d" points="${use.map((z,i)=>`${xOf(i).toFixed(1)},${yOf(z.ema).toFixed(1)}`).join(' ')}"/>`;
+  sv+=`<polyline points="${use.map((z,i)=>`${xOf(i).toFixed(1)},${yOf(z.c).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>`;
+  const l=use[n-1];
+  sv+=`<circle cx="${xOf(n-1).toFixed(1)}" cy="${yOf(l.c).toFixed(1)}" r="3.2" fill="var(--blue)"/>`;
+  // x-Beschriftung: hoechstens 6, am Rand buendig.
+  const jede=Math.max(1,Math.ceil(n/6));
+  use.forEach((z,i)=>{
+    if(i%jede!==0&&i!==n-1)return;
+    if(i===n-1&&i%jede!==0&&(i%jede)<jede*0.6)return;
+    const lx=xOf(i),an=lx-30<0?'start':lx+30>W?'end':'middle';
+    sv+=`<text x="${lx.toFixed(1)}" y="${H-9}" text-anchor="${an}" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(fmtDayShort(z.d,true))}</text>`;
+  });
+  const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-width:100%">${sv}</svg>`;
+  const lage=z=>z.seite>0?`<b style="color:${BC.bull}">${z.abst.toFixed(2)} ATR above</b>`:z.seite<0?`<b style="color:${BC.bear}">${Math.abs(z.abst).toFixed(2)} ATR below</b>`:`inside the band (${z.abst>=0?'+':''}${z.abst.toFixed(2)} ATR)`;
+  const hp=use.map((z,i)=>({fx:xOf(i)/W,fy:yOf(z.c)/H,t:z.d,col:z.seite>0?BC.bull:z.seite<0?BC.bear:'var(--t3)',
+    tip:`<div class="chv-tip-d">${escH(fmtDayHdr(z.d))}</div>Close <b>${escH(fmtP(z.c))}</b> · EMA20 ${escH(fmtP(z.ema))}<br>${lage(z)}`}));
+  return`<div class="ind-hist-wrap">${kopf}${chartHoverWrap(svg,hp,null,opts.group)}</div>`;
 }
 function rohstoffRegelText(ccy){
   const k=ROHSTOFF_KORB[ccy];if(!k)return'';
-  return`${k.map(([id,g])=>ROHSTOFF_NAME[id].replace(' (1M)','')+' '+g).join(', ')} (weights by share of exports). Each counts its 1-month price change: `
-    +(k.some(([id])=>!ROHSTOFF_FEST[id])?`measured against that commodity's typical 1-month move (5 years of history) — one typical move or more → ±0.5, two or more → ±1`:'')
-    +(k.some(([id])=>ROHSTOFF_FEST[id])?`${k.some(([id])=>!ROHSTOFF_FEST[id])?'; ':''}dairy uses the fixed auction thresholds: 2% or more → ±0.5, 5% or more → ±1`:'')
-    +`, times the weight. Rising prices support the currency. Data older than ${ROHSTOFF_MAX_ALTER} days counts 0.`;
+  return`${k.map(([id,g])=>ROHSTOFF_KURZ(id)+' '+g).join(', ')} (weights by share of exports). Each is read like the price trend: the close of the last finished day against its EMA20, neutral within ±${TREND_NEUTRAL_ATR} × ATR14 (close-to-close). Outside the band → ±0.5; on the same side for ${ROHSTOFF_STUFEN[1][0]}+ trading days in a row → ±0.75; for ${ROHSTOFF_STUFEN[0][0]}+ → ±1; times the weight. Rising prices support the currency. `
+    +`Iron ore, gold and oil use Yahoo daily closes; coal and dairy have no free history, so their own daily record builds up and counts 0 until ${TREND_EMA_N} days are there. Data older than ${ROHSTOFF_MAX_ALTER} days counts 0.`;
 }
 function applyRohstoffFeed(){
   if(!COMMODITY_DATA||!Array.isArray(syms))return false;
@@ -9383,7 +9484,9 @@ function applyRohstoffFeed(){
     const soll=new Set(korb.map(([id])=>ROHSTOFF_NAME[id]));
     // Zeilen, die hier nicht (mehr) hingehoeren, raus.
     const vorher=rub.indicators.length;
-    rub.indicators=rub.indicators.filter(i=>!(Object.values(ROHSTOFF_NAME).includes(i.name)&&!soll.has(i.name)));
+    // Alte Zeilennamen "(1M)" (bis Modell 19) fallen immer weg - sonst stuende
+    // eine Geisterzeile mit ihren letzten Punkten im Score.
+    rub.indicators=rub.indicators.filter(i=>!(ROHSTOFF_NAME_ALT.includes(i.name)||(Object.values(ROHSTOFF_NAME).includes(i.name)&&!soll.has(i.name))));
     if(rub.indicators.length!==vorher)changed=true;
     korb.forEach(([id,g])=>{
       const w=rohstoffWert(id,g),name=ROHSTOFF_NAME[id];
@@ -9392,13 +9495,15 @@ function applyRohstoffFeed(){
       let ind=idx>=0?rub.indicators[idx]:null;
       if(!ind){ind={id:uid(),name,bias:'neu',imp:false,date:'',interval:'',points:[]};rub.indicators.push(ind);changed=true;}
       const pkt=regel==='inverse'?-w.pkt:w.pkt,bias=pkt>0?'bull':pkt<0?'bear':'neu';
-      const act=(w.perf>0?'+':'')+w.perf.toFixed(1)+'%',prev=w.mass;
+      // ACT = Abstand zur EMA20 in ATR (wie die Trend-Zeilen), "mass" = seit
+      // wie vielen Tagen auf dieser Seite - steht im Score-Fenster/Journal.
+      const act=w.aufbau?`${w.n}/${TREND_EMA_N}d`:(w.abst>=0?'+':'')+w.abst.toFixed(1)+' ATR';
+      const prev=w.aufbau?`${w.n}/${TREND_EMA_N} days`:w.seite?`${w.tage}d ${w.seite>0?'above':'below'} EMA20`:'inside the band';
+      const stand=w.aufbau?(w.it.asOf||''):w.last.d;
       const r=ind.research||{};
-      // ⚠ Der Massstab gehoert NICHT in PREV (2026-09-25, NZD-Screenshot):
-      // "±10.6% typical" ist kein Vorwert und ragte 19-25 px aus der Spalte.
-      if(!(r.rohstoff&&r.actual===act&&r.mass===prev&&r.previous==null&&r.stand===w.it.asOf)){
-        ind.research={actual:act,forecast:null,previous:null,mass:prev,stand:w.it.asOf,source:'https://www.tradingview.com/symbols/'+String(w.it.ticker||'').replace(':','-').replace('!',''),rohstoff:true,
-          cotColor:w.perf>0?'bond-up':w.perf<0?'bond-down':'bond-flat',gewicht:g,z:w.z,frisch:w.frisch};
+      if(!(r.rohstoff&&r.ema20&&r.actual===act&&r.mass===prev&&r.stand===stand&&r.frisch===w.frisch&&r.stufe===w.stufe)){
+        ind.research={actual:act,forecast:null,previous:null,mass:prev,stand,date:w.aufbau?null:stand,source:'https://www.tradingview.com/symbols/'+String(w.it.ticker||'').replace(':','-').replace('!',''),rohstoff:true,ema20:true,
+          cotColor:w.seite>0?'bond-up':w.seite<0?'bond-down':'bond-flat',gewicht:g,frisch:w.frisch,aufbau:w.aufbau,tage:w.tage,stufe:w.stufe,abst:w.aufbau?null:w.abst};
         changed=true;
       }
       if(ind.bias!==bias){ind.bias=bias;changed=true;}
@@ -10282,7 +10387,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     // dem Bias ab - applyCotDataFeed und applySeasRetailFeed. Dieses hier
     // war die einzige Kopie mit der Richtung.
     const biasFarbe=b=>(b==='bull'||b==='sbull')?'bond-up':(b==='bear'||b==='sbear')?'bond-down':'bond-flat';
-    const ac=r.bond?biasFarbe(ind.bias):(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},getSym().id);
+    const ac=(r.bond||r.rohstoff)?biasFarbe(ind.bias):(r.cot||r.sent)?r.cotColor:actualColor({name:ind.name,actual:r.actual,forecast:r.forecast,previous:r.previous},getSym().id);
     const dt=fmtResearchDateFull(r.date);
     const A=splitResearchVal(r.actual),F=splitResearchVal(r.forecast),P=splitResearchVal(r.previous);
     const note2=A.note2?`${A.note2.period}: ${A.note2.val}`:null;
@@ -18190,10 +18295,9 @@ function abgeleiteteReihe(ind,id){
   });
   const roh=Object.keys(ROHSTOFF_NAME).find(k=>ROHSTOFF_NAME[k]===ind.name);
   if(roh)return memo('ro:'+roh,()=>{
-    const it=COMMODITY_DATA&&COMMODITY_DATA.items&&COMMODITY_DATA.items[roh];
-    const y=it&&Array.isArray(it.yhist)&&it.yhist.length>30?it.yhist:(it&&Array.isArray(it.history)?it.history:[]);
-    const out=[];for(let i=21;i<y.length;i++){const a=+y[i-21][1],b=+y[i][1];if(a>0&&b>0)out.push([y[i][0],Math.round((b/a-1)*1000)/10,null]);}
-    return{pts:out,unit:'%'};
+    // Seit 2026-09-28: Abstand Schluss-EMA20 in ATR (dieselbe Rechnung wie
+    // der Score), wie die Trend-Zeilen - fuer Insights > Data.
+    return{pts:rohstoffTrend(roh).r.filter(z=>z.abst!=null).map(z=>[z.d,Math.round(z.abst*100)/100,null]),unit:' ATR'};
   });
   return null;
 }
@@ -18294,6 +18398,10 @@ function indHistChart(ind,symId,opts){
   // Jahre - ihr "Verlauf" ist dieses Profil (Nutzer 2026-09-25: jeder
   // aufgeklappte Indikator braucht eine Historie).
   if(stripPeriodSuffix(ind.name).base===SEAS_IND_NAME){const sp=seasProfilHtml(symId||symIdOfInd(ind));if(sp)return(cmp?`<div class="ind-hist-legend mit-cmp">${cmp}</div>`:'')+sp;}
+  // Rohstoff: Kurs mit EMA20, Neutralband und Schattierung - dieselbe Sicht
+  // wie der Trend in der Price-Karte (Nutzer 2026-09-28).
+  const rohId=Object.keys(ROHSTOFF_NAME).find(k=>ROHSTOFF_NAME[k]===ind.name);
+  if(rohId)return rohstoffTrendChartHtml(rohId,opts,cmp);
   if(all.length<2){
     // Zwei GRUNDVERSCHIEDENE Faelle, die vorher denselben Satz bekamen und
     // deshalb beide wie ein Fehler aussahen (Nutzer-Bugreport 2026-09-02):
@@ -24358,7 +24466,7 @@ setInterval(()=>{
 // nie per Regex/Handschrift.
 Object.assign(window,{
   // Feste-Punkte-Regeln (2026-09-24) - das Score-Fenster in js/score.js liest sie ueber window.
-  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,korbReihe,preisReiheAnzeige,preisReiheRechnung,KORB_NAME,retailGoTo,openRetailPartnerPicker,closeRetailPartnerPicker,retailPartnerWaehlen,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
+  retailBiasFor,retailRegelText,cotRegelText,cotPunkte,zinsdiffRegelText,trendRegelText,trendWerte,trendTagesReihe,applyTrendFeed,korbReihe,preisReiheAnzeige,preisReiheRechnung,KORB_NAME,retailGoTo,openRetailPartnerPicker,closeRetailPartnerPicker,retailPartnerWaehlen,ladeLogoHtml,ladePreisArchiv,preisReiheLang,preisArchivNoetig,preisAnfang,fetchPriceHistMeta,TREND_PKT_H,tvEconReihe,fetchTvEconData,TVECON_MAP,seasProfilHtml,abgeleiteteReihe,setDataRange,setDataRangeCustom,rangesFuerTiefe,MINI_RANGES,toggleAbTrendLinie,setAbTrendLinienVal,abTrendOverlayDaten,fetchTrendData,nachPreisFeed,TREND_IND,TREND_PKT,TREND_NEUTRAL_ATR,zinsdiffFuer,rohstoffRegelText,rohstoffWert,rohstoffTrend,rohstoffReihe,ROHSTOFF_NAME,ROHSTOFF_KORB,applyZinsDiffFeed,applyRohstoffFeed,macroCcyFor,
   // Backtester: sechs Handler an inline onclick=/onchange= (Waehrungs-
   // Umschalter, Vergleichsbank, Hike/Cut-Filter, Holds, Jahresauswahl, Klick
   // auf einen Marker der Treppenkurve). Ohne diese Zeile wirft jeder von

@@ -2696,8 +2696,12 @@ jobs:
               const def=DEF[id],row=rows.find(r=>r.s===def.tv);
               const cur=out[id]||{};
               const close=row&&row.d?Number(row.d[0]):NaN,perf=row&&row.d?Number(row.d[1]):NaN;
-              let hist=Array.isArray(cur.history)?cur.history.filter(e=>e&&e[0]!==today):[];
-              if(isFinite(close)){hist.push([today,close]);ok++;}
+              // Nur Handelstage aufzeichnen (2026-09-28): die App legt einen
+              // EMA20 ueber diese Reihe - Sa/So trugen den Freitagskurs doppelt
+              // und haetten die EMA um 2 von 7 Tagen verzerrt.
+              const wtag=new Date(today+"T00:00:00Z").getUTCDay(),handelstag=wtag>0&&wtag<6;
+              let hist=Array.isArray(cur.history)?cur.history.filter(e=>{if(!e||e[0]===today)return false;const w=new Date(e[0]+"T00:00:00Z").getUTCDay();return w>0&&w<6;}):[];
+              if(isFinite(close)){if(handelstag)hist.push([today,close]);ok++;}
               hist=hist.slice(-400);
               const s=def.y?sigma(def.y):null;
               out[id]={name:def.name,ticker:def.tv,note:def.note,
