@@ -2920,7 +2920,10 @@ function applyResearchToCal(){
       if(!matcher)return;
       calEvts.forEach(ev=>{
         if(ev.actual)return;
-        if(ev.date!==e.releaseDate)return;
+        // +-1 Tag (2026-09-27): releaseDate ist das Datum am Veroeffentlichungsort
+        // bzw. UTC, ev.date das Ortsdatum - AUD-Releases um 23:00 UTC liegen
+        // hier schon auf dem Folgetag und bekamen nie ihr Actual.
+        if(Math.abs(Date.parse(ev.date+'T00:00:00Z')-Date.parse(String(e.releaseDate).slice(0,10)+'T00:00:00Z'))>864e5)return;
         if(!evtMatchesSym(ev,ccy))return;
         if(!matcher(ev.name,ccy))return;
         ev.actual=splitResearchVal(e.actual).val;
@@ -7567,10 +7570,15 @@ function abCalPick(tag){abCalTag=tag;renderDetail();}
  *  Feed-Beginn) die aus der Indikator-Historie rekonstruierten Releases. */
 function abCalNachTag(assetId){
   const map={};
+  const add=ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);};
+  // Vergangene Tage ab dem Anfang des gezeigten Monats aus calVergangen() -
+  // DIESELBEN Termine mit denselben Werten wie die Past-Liste (2026-09-27).
+  const h=new Date();const anker=new Date(h.getFullYear(),h.getMonth()+abCalMonat,1);
+  const ab=abTagStr(anker)<todayStr()?abTagStr(anker):null;
   const feed=getSymEventsAll(assetId);
-  feed.forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
-  const start=feed.length?feed[0].date:null;
-  abCalRekonstruiert(assetId,start).forEach(ev=>{(map[ev.date]=map[ev.date]||[]).push(ev);});
+  feed.filter(ev=>!isEvtPast(ev)||!ab||ev.date<ab).forEach(add);
+  if(ab)calVergangen(assetId,ab).evts.forEach(add);
+  else abCalRekonstruiert(assetId,feed.length?feed[0].date:null).forEach(add);
   return map;
 }
 /** Wie weit reicht der Kalender-Feed fuer dieses Asset (ohne Rekonstruktion). */
@@ -7856,19 +7864,30 @@ function calpRangesVerfuegbar(){
   const von=m&&m.von?m.von:null;
   return CALP_RANGES.filter(([,t],i)=>i===0||(von&&dateAddStr(heute,-t)>=von));
 }
-// Liefert {evts, laedt, fehlt}. evts: vergangene Events des Assets im Zeitraum,
-// neuester Tag zuerst, im Tag nach Uhrzeit.
-function calpDaten(assetId){
-  const heute=todayStr(),ab=dateAddStr(heute,-calpTage());
+// ══ VERGANGENE TERMINE EINES ASSETS - EINE Quelle fuer Monat UND Past ══
+// Nutzer 2026-09-27 (zwei Bildschirmfotos AUD): "Es wird das gleiche
+// angezeigt und einmal mit und einmal ohne Daten also die Daten sind da es
+// ist nur falsch verknuepft". Gemessen: der Monat zeigte am 22.09. "Manufacturing
+// PMI, Actual 49.30" (Rekonstruktion aus ind_data.json), die Past-Liste am
+// 23.09. 01:00 "S&P Global Manufacturing PMI Flash" ohne Werte (TradingView-
+// Archiv: Actual leer). Derselbe Release - 22.09. 23:00 UTC = 23.09. 01:00
+// Ortszeit - aus zwei Quellen, die nie abgeglichen wurden.
+// Jetzt fuer beide Sichten:
+//   1. Live-Kalender, fuer Tage ohne Live-Eintrag das Archiv (eine Quelle je Tag);
+//   2. fehlt einem vergangenen Termin das Actual, kommt es aus der Indikator-
+//      Historie (historyFull) - gleicher Name laut CAL_RESEARCH_MATCHERS,
+//      Datum +-1 Tag (UTC-Datum der Historie vs. Ortsdatum des Termins);
+//   3. Historien-Releases ohne passenden Termin bleiben als eigene Zeile.
+// Low-Impact-Termine fallen hier weg (der Kalender importiert nur High/Medium).
+function calVergangen(assetId,ab){
   const ids=eventSrcIds(assetId);
   const passt=ev=>ids.some(x=>evtMatchesSym(ev,x));
-  const sicht=ev=>{const i=evtImpact(ev);return calHighOnly?i==='high':(i==='high'||i==='medium');};
-  const live=getSymEventsAll(assetId).filter(ev=>ev.date>=ab&&isEvtPast(ev));
+  const live=getSymEventsAll(assetId).filter(ev=>(!ab||ev.date>=ab)&&isEvtPast(ev));
   const liveTage=new Set(live.map(ev=>ev.date));
   if(!CAL_ARCHIV.metaStatus)calArchivMetaLaden();
   let laedt=CAL_ARCHIV.metaStatus==='laedt',fehlt=CAL_ARCHIV.metaStatus==='fehlt';
   const arch=[];
-  if(CAL_ARCHIV.meta){
+  if(CAL_ARCHIV.meta&&ab){
     const jahre=(CAL_ARCHIV.meta.jahre||[]).filter(y=>y>=+ab.slice(0,4));
     jahre.forEach(y=>{
       const st=CAL_ARCHIV.status[y];
@@ -7878,9 +7897,36 @@ function calpDaten(assetId){
       CAL_ARCHIV.jahre[y].forEach(ev=>{if(ev.date>=ab&&(window.__calpOhneTagesregel||!liveTage.has(ev.date))&&passt(ev)&&isEvtPast(ev))arch.push(ev);});
     });
   }
-  const evts=live.concat(arch).filter(sicht)
-    .sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):b.date.localeCompare(a.date));
+  const roh=live.concat(arch).filter(ev=>evtImpact(ev)!=='low');
+  // Indikator-Historie nach Datum, damit der Abgleich bei 10 Jahren nicht
+  // quadratisch wird.
+  const rek=window.__calpOhneHistorie?[]:abCalRekonstruiert(assetId,null).filter(r=>!ab||r.date>=dateAddStr(ab,-1));
+  const nachTag=new Map();rek.forEach(r=>{(nachTag.get(r.date)||nachTag.set(r.date,[]).get(r.date)).push(r);});
+  const benutzt=new Set();
+  const evts=roh.map(ev=>{
+    let best=null,bd=9;
+    [-1,0,1].forEach(k=>{(nachTag.get(dateAddStr(ev.date,k))||[]).forEach(r=>{
+      if(benutzt.has(r.id)||!evtMatchesSym(ev,r.currencies))return;
+      const m=CAL_RESEARCH_MATCHERS[r.name];if(!m||!m(ev.name,r.currencies))return;
+      if(Math.abs(k)<bd){bd=Math.abs(k);best=r;}
+    });});
+    if(!best)return ev;
+    benutzt.add(best.id);
+    if(ev.actual)return ev;
+    return{...ev,actual:best.actual,forecast:ev.forecast||best.forecast,previous:ev.previous||best.previous,ausHistorie:true};
+  });
+  rek.forEach(r=>{if(!benutzt.has(r.id)&&(!ab||r.date>=ab))evts.push(r);});
   return{evts,laedt,fehlt};
+}
+// Liefert {evts, laedt, fehlt}. evts: vergangene Events des Assets im Zeitraum,
+// neuester Tag zuerst, im Tag nach Uhrzeit.
+function calpDaten(assetId){
+  const heute=todayStr(),ab=dateAddStr(heute,-calpTage());
+  const sicht=ev=>{const i=evtImpact(ev);return calHighOnly?i==='high':(i==='high'||i==='medium');};
+  const v=calVergangen(assetId,ab);
+  const evts=v.evts.filter(sicht)
+    .sort((a,b)=>a.date===b.date?String(a.time||'').localeCompare(String(b.time||'')):b.date.localeCompare(a.date));
+  return{evts,laedt:v.laedt,fehlt:v.fehlt};
 }
 // Die Werkzeugzeile (Dauerregel 2026-09-26): links die Ansicht, rechts der
 // Zeitfilter - im Monat gibt es keinen Zeitfilter.
@@ -24524,7 +24570,7 @@ Object.assign(window,{
   seasBiasFor,retailBiasFor,abScoreZeile,applySeasRetailFeed,SEAS_IND_NAME,RETAIL_IND_NAME,
   SEAS_HIT_HOCH,SEAS_HIT_TIEF,RETAIL_AB,RETAIL_STIMME,retailAenderung,retailStimme,cotPunkte,cotRegelText,
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
-  assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,setAbCalSicht,setCalpRange,calpMehr,calpDaten,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
+  assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,setAbCalSicht,setCalpRange,calpMehr,calpDaten,calVergangen,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
   AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,flaggenBandHtml,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,

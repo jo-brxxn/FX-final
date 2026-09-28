@@ -18607,3 +18607,41 @@ hinzugefügt hast“. Die Past-Karte hat jetzt „High impact“ in der Titelzei
 derselbe Schalter `calHighOnly` wie in der Kalender-Leiste, geräteübergreifend. Gemessen bei
 USD 2W: 67 → 19 Zeilen. `check/calpast.js` F prüft das; das Nachstell-Archiv hat dafür eine
 echte Medium-Zeile bekommen (Retail Sales wird als score-treibend automatisch zu High).
+
+## VERSION-CHECK-583 (2026-09-27/28) — Monat und Past aus einer Quelle, fehlende Actuals aus der Historie
+
+**Bug** (zwei Bildschirmfotos AUD, iPad, noch VERSION-CHECK-579): „Es wird das gleiche angezeigt
+und einmal mit und einmal ohne Daten also die Daten sind da es ist nur falsch verknüpft“.
+- Der Monat zeigte am 22.09. „Manufacturing PMI, Actual 49.30“.
+- Die Past-Liste zeigte am 23.09. um 01:00 „S&P Global Manufacturing PMI Flash“ ohne Werte.
+
+**Reproduziert (Daten):**
+- `cal_hist/2026.json` enthält `['2026-09-22T23:00Z','AUD','S&P Global Manufacturing PMI Flash',0,'','','']`;
+  TradingView führt das Actual der AU-Flash-PMIs nicht.
+- `ind_data.json` enthält dagegen für den 22.09. den Wert 49.30.
+
+Es ist derselbe Release. 22.09. 23:00 UTC ist in Deutschland schon der 23.09. um 01:00.
+
+**Ursache:** Die zwei Sichten nutzten zwei Quellen und haben sie nie abgeglichen:
+- Der Monat nahm die Rekonstruktion aus der Indikator-Historie (vor dem Feed-Beginn).
+- Die Past-Liste nahm das Archiv.
+
+**Fix (Wurzel):** `calVergangen()` ist die eine Quelle für beide Sichten.
+1. Zuerst der Live-Kalender, sonst das Archiv (eine Quelle je Tag).
+2. Fehlt das Actual, kommt es aus `historyFull`: gleicher Name laut
+   `CAL_RESEARCH_MATCHERS`, Datum ±1 Tag.
+3. Historien-Releases ohne Gegenstück bleiben als eigene Zeile.
+4. Low-Impact fällt weg.
+
+Der Monat nimmt ab dem Anfang des gezeigten Monats dieselben Termine.
+
+**Gemessen danach (AUD):** Monat und Past zeigen dieselben zwei PMI-Termine mit 49.30 und
+51.40, dazu die Arbeitsmarktdaten vom 24.09. Es gibt keine zweite Zeile mehr.
+
+**Fehlerklasse:** `applyResearchToCal` trug Recherche-Werte nur bei exakt gleichem Datum in
+den Live-Kalender ein. AUD-Releases um 23:00 UTC bekamen deshalb nie ihr Actual. Jetzt gilt
+dort ebenfalls ±1 Tag.
+
+**Wächter:** `check/calpast.js` G. Das Nachstell-Archiv enthält einen USD-Manufacturing-PMI
+ohne Actual um 23:00 UTC. Monat und Past müssen das Actual aus `historyFull` zeigen, einmal
+und nicht doppelt. Gegenprobe `__calpOhneHistorie`: rot.

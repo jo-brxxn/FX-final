@@ -25,20 +25,23 @@ const GEGENPROBE = process.argv.includes('--gegenprobe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 const TAG = 864e5;
-function archivJahr(y, liveTag) {
+function archivJahr(y, liveTag, hist) {
   const ev = [];
   const ende = Math.min(Date.parse((y + 1) + '-01-01'), Date.now() - TAG);
   for (let t = Date.parse(y + '-01-01'); t < ende; t += TAG) {
     const d = new Date(t); if (d.getUTCDay() % 6 === 0) continue;
     const iso = h => new Date(t + h * 36e5).toISOString().slice(0, 16) + 'Z';
     ev.push([iso(12.5), 'USD', 'Archive Retail Sales MoM', 0, '0.4%', '0.2%', '0.1%']);
-    ev.push([iso(14), 'USD', 'Archive ISM Manufacturing PMI', 1, '49.1', '50.2', '49.8']);
+    ev.push([iso(14), 'USD', 'Archive ISM Factory Index', 1, '49.1', '50.2', '49.8']);
     ev.push([iso(15), 'USD', 'Archive Low Thing', -1, '1', '1', '1']);
     ev.push([iso(16), 'USD', 'Archive Redbook YoY', 0, '5.1%', '', '4.9%']);
     ev.push([iso(13), 'EUR', 'Archive German Inflation Rate YoY', 1, '2.1%', '2.3%', '2.2%']);
   }
   // Eine Archivzeile an einem Tag, den der Live-Kalender schon kennt.
   if (liveTag && liveTag.startsWith(String(y))) ev.push([liveTag + 'T11:00Z', 'USD', 'Archive Duplicate Of Live Day', 1, '1', '2', '3']);
+  // G) derselbe Release wie in der Indikator-Historie, aber OHNE Actual (wie
+  //    TradingView bei den AUD-Flash-PMIs) - um 23:00 UTC, also am Rand des Tages.
+  if (hist && hist.d.startsWith(String(y))) ev.push([hist.d + 'T23:00Z', 'USD', 'Archive Manufacturing PMI Check', 1, '', '', '']);
   return { y, ev };
 }
 
@@ -50,7 +53,7 @@ function archivJahr(y, liveTag) {
   await p.goto(URL); await wartenBisDatenDa(p);
   const liveTag = await p.evaluate(gp => {
     ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
-    if (gp) window.__calpOhneTagesregel = true;
+    if (gp) { window.__calpOhneTagesregel = true; window.__calpOhneHistorie = true; }
     // Eigener vergangener Live-Termin statt des Feed-Stands: ff_calendar.json
     // beginnt sonntags mit der neuen FF-Woche und kennt dann KEINEN
     // vergangenen Tag (am 2026-09-27 so rot gelaufen).
@@ -60,7 +63,12 @@ function archivJahr(y, liveTag) {
   }, GEGENPROBE);
     const VON = new Date(Date.now() - 400 * TAG).toISOString().slice(0, 10);
   await p.route('**/cal_hist/meta.json*', r => r.fulfill({ json: { von: VON, jahre: [+VON.slice(0, 4), new Date().getFullYear()].filter((x, i, a) => a.indexOf(x) === i) } }));
-  await p.route(/cal_hist\/\d{4}\.json/, r => r.fulfill({ json: archivJahr(+r.request().url().match(/(\d{4})\.json/)[1], liveTag) }));
+  const hist = await p.evaluate(() => {
+    const e = IND_DATA_FEED && IND_DATA_FEED.USD && IND_DATA_FEED.USD['Manufacturing PMI'];
+    const h = e && Array.isArray(e.historyFull) ? e.historyFull.filter(x => x && x[1] != null && String(x[0]) < dateAddStr(todayStr(), -20) && String(x[0]) > dateAddStr(todayStr(), -300)) : [];
+    const x = h[h.length - 1]; return x ? { d: String(x[0]).slice(0, 10), a: String(x[1]) } : null;
+  });
+  await p.route(/cal_hist\/\d{4}\.json/, r => r.fulfill({ json: archivJahr(+r.request().url().match(/(\d{4})\.json/)[1], liveTag, hist) }));
   await p.evaluate(() => gotoSym('USD'));
   await p.waitForTimeout(400);
 
@@ -141,6 +149,24 @@ function archivJahr(y, liveTag) {
   }
   await p.evaluate(() => setAbCalSicht('month')); await p.waitForTimeout(200);
   if (!(await p.evaluate(() => !!document.querySelector('#detail .abc-cal .abc-grid')))) fail('E', '"Month" gilt nicht auch fuer die Karte');
+  // G) Monat und Past zeigen denselben Release mit demselben Actual (Nutzer
+  //    2026-09-27, AUD-Flash-PMI: einmal mit, einmal ohne Daten).
+  if (!hist) fail('G', 'Voraussetzung: keine USD-Manufacturing-PMI-Historie in ind_data.json');
+  else {
+    const g = await p.evaluate(h => {
+      calpRange = '1Y';
+      const past = calpDaten('USD').evts.filter(e => /Manufacturing PMI Check/.test(e.name));
+      const d0 = new Date(h.d + 'T12:00:00'), jetzt = new Date();
+      abCalMonat = (d0.getFullYear() - jetzt.getFullYear()) * 12 + d0.getMonth() - jetzt.getMonth();
+      const m = abCalNachTag('USD'); abCalMonat = 0;
+      const alle = Object.values(m).flat();
+      return { past: past.map(e => e.actual), monat: alle.filter(e => /Manufacturing PMI Check/.test(e.name)).map(e => e.actual),
+        doppelt: alle.filter(e => e.rekonstruiert && e.name === 'Manufacturing PMI' && Math.abs(Date.parse(e.date) - Date.parse(h.d)) <= 864e5).length };
+    }, hist);
+    if (g.past.length !== 1 || g.past[0] !== hist.a) fail('G', `Past: ${JSON.stringify(g.past)} statt Actual ${hist.a} aus der Historie (${hist.d})`);
+    if (g.monat.length !== 1 || g.monat[0] !== hist.a) fail('G', `Monat: ${JSON.stringify(g.monat)} statt Actual ${hist.a}`);
+    if (g.doppelt) fail('G', 'der Release steht zusaetzlich als eigene Historien-Zeile im Monat');
+  }
   if (perr.length) fail('Seitenfehler', perr.slice(0, 3).join(' | '));
   await b.close();
   if (F.length) { console.log('✗ Past Releases:\n  ' + F.join('\n  ')); process.exit(1); }
