@@ -1025,6 +1025,10 @@ svg.ic{vertical-align:-2px;flex:none}
 @media(hover:hover){.ab-k-go:hover{color:var(--accent)}}
 .ab-nt-add{display:flex;gap:6px;margin-bottom:8px}
 .ab-nt-add .finp{flex:1 1 auto;min-width:0}
+/* Einstieg "New pinned note" (2026-09-30): sieht aus wie das fruehere
+   Eingabefeld an derselben Stelle, oeffnet aber den vollen Notiz-Editor. */
+.ab-nt-neu{text-align:left;color:var(--t3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(hover:hover){.ab-nt-neu:hover{border-color:var(--bd2);color:var(--t1)}}
 .ab-nt-qc{margin-left:6px;border:1px solid var(--bd2);background:none;color:var(--t2);border-radius:var(--rss);
   font-size:var(--fs-xs);padding:3px 7px;cursor:pointer}
 @media(hover:hover){.ab-nt-qc:hover{border-color:var(--accent);color:var(--accent)}}
@@ -4433,28 +4437,30 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
 /* ── NACHFRAGE BEI UNGESPEICHERTEN EINGABEN (Nutzer-Bugreport 2026-09-01) ──
    "wenn man eine Notiz hinzufuegt und man neben das Fenster schliesst, ist
    das was man eingegeben hat weg". Der generische Overlay-Klick-Handler
-   schloss jedes Fenster kommentarlos. Jetzt fragt ein zentriertes Fenster
-   mit drei eindeutigen Wegen nach - Farben aus der BIAS-Palette dieser App
-   (Nutzer-Vorgabe): rot = bearish/verwerfen, grau = neutral/speichern,
-   blau = bullish/weiterbearbeiten. Registrierung: MODAL_GUARDS in
-   js/main.js. */
+   schloss jedes Fenster kommentarlos. Seitdem fragt ein kleines zentriertes
+   Fenster nach. Registrierung: MODAL_GUARDS in js/main.js.
+   Seit 2026-09-30 genau zwei Knoepfe in den BIAS-Farben (Nutzer: "in bias
+   Farbe bearish nein und in bullish Farbe ja speichern"): "No, delete" auf
+   --bias-bear, "Yes, save" auf --bias-bull, nebeneinander. Vorher waren es
+   drei, mit Blau auf "Keep editing" statt auf Speichern. Zurueck ins
+   Fenster: Klick neben die Nachfrage oder Escape (.uc-hint sagt es). */
 #mUnsaved{z-index:100060}
-#mUnsaved .modal{max-width:min(430px,94vw);text-align:center;padding:24px 22px}
+#mUnsaved .modal{max-width:min(400px,94vw);text-align:center;padding:24px 22px 18px}
 .uc-txt{font-size:var(--fs-base);color:var(--t2);line-height:1.6;margin-bottom:18px}
-.uc-btns{display:flex;flex-direction:column;gap:8px}
+.uc-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .uc-btn{width:100%;padding:11px 14px;border-radius:var(--rs);font-size:var(--fs-base);font-weight:700;
   cursor:pointer;border:1px solid transparent;font-family:var(--ff-text);transition:filter .14s,background .14s}
 @media (hover:hover){.uc-btn:hover{filter:brightness(1.08)}}
-.uc-discard{background:var(--red);border-color:var(--red);color:var(--on-accent)}
-.uc-save{background:var(--bg4);border-color:var(--bd2);color:var(--t0)}
-.uc-keep{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
+.uc-no{background:var(--bias-bear);border-color:var(--bias-bear);color:var(--on-accent)}
+.uc-yes{background:var(--bias-bull);border-color:var(--bias-bull);color:var(--on-accent)}
+.uc-hint{font-size:var(--fs-xs);color:var(--t3);margin-top:12px;line-height:1.5}
 .ov{position:fixed;inset:0;background:rgba(31,35,40,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:18px;animation:ovFadeIn .18s ease both}
 /* ⚠ .modal.acm-modal statt nur .acm-modal: die Basisregel .modal setzt
    max-width auf min(720px,94vw). Mit gleicher Spezifitaet entscheidet die
    Reihenfolge - die erste Fassung stand weiter oben in der Datei und blieb
    deshalb wirkungslos (gemessen 720 statt 1020px). */
 .modal.acm-modal{max-width:min(1020px,94vw)}
-.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:22px;width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
+.modal{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);--m-px:22px;padding:22px var(--m-px);width:100%;max-width:min(720px,94vw);max-height:90vh;max-height:calc(100dvh - 36px);overflow-y:auto;box-shadow:var(--shadow-pop);animation:modalPopIn .22s cubic-bezier(.2,.8,.3,1) both}
 .modal h3{font-size:var(--fs-md);font-weight:700;color:var(--t0);margin-bottom:12px}
 /* ── NOTIZ ALS VOLLSEITE (Nutzer-Entscheid 2026-09-19) ───────────────────
    Aus dem Archiv heraus oeffnet eine Notiz NICHT mehr als kleines Fenster,
@@ -4470,20 +4476,41 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    ⚠ .res-nbody statt eines inline style="min-height": ein Inline-Wert
    schlaegt JEDE Regel hier und haette die Vollseite auf 170px festgenagelt. */
 .res-nbody{margin-bottom:8px;min-height:170px}
+.res-chk-row{display:flex;flex-wrap:wrap;gap:6px 18px}
+.res-chk{display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--t2);cursor:pointer}
 /* ⚠ .res-note-modal statt style="max-width:640px" am Element: ein Inline-Wert
    schlaegt JEDE Regel hier. Genau daran ist die Vollseite im ersten Anlauf
    haengengeblieben - sie war ueber die ganze Hoehe da, aber weiter nur 640px
    breit (gemessen: modal 640x1000 in einem 1500px-Fenster). */
 .res-note-modal{max-width:640px}
 .ov.res-note-page{background:var(--bg1);padding:0;align-items:stretch;justify-content:center;animation:none}
-.ov.res-note-page>.res-note-modal{max-width:min(980px,100%);width:100%;max-height:none;height:100dvh;border:0;border-radius:0;box-shadow:none;animation:none;padding:20px clamp(16px,5vw,56px) 24px}
+.ov.res-note-page>.res-note-modal{max-width:min(980px,100%);width:100%;max-height:none;height:100dvh;border:0;border-radius:0;box-shadow:none;animation:none;--m-px:clamp(16px,5vw,56px);padding:20px var(--m-px) 24px}
 .ov.res-note-page .res-nbody{min-height:min(48vh,520px)}
-@media(max-width:700px){.ov.res-note-page>.modal{padding:16px 16px 20px}}
+@media(max-width:700px){.ov.res-note-page>.modal{--m-px:16px;padding:16px var(--m-px) 20px}}
 .m-inp{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:var(--fs-base);outline:none;font-family:var(--ff-text);margin-bottom:10px}
 .dm-lbl{font-size:var(--fs-2xs);color:var(--t3);font-weight:700;font-family:var(--ff-num);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
 .m-inp:focus{border-color:rgba(var(--blue-rgb),.27)}.m-inp::placeholder{color:var(--t3)}
 .m-sel{width:100%;background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:8px 10px;color:var(--t0);font-size:var(--fs-base);outline:none;font-family:var(--ff-text);margin-bottom:10px;cursor:pointer;max-height:180px}
 .m-btns{display:flex;gap:7px;justify-content:flex-end}
+/* ── FUSSLEISTE FEST UNTEN (Nutzer-Wunsch 2026-09-30) ──────────────────
+   "manchmal muss man lange scrollen bis man da ist ich will das die jetzt
+   in einer eigenen Leiste fest fixiert da stehen". GEMESSEN vorher: in den
+   Einstellungen stand "Save" 1554px unter der Fensterunterkante (1500x1000),
+   in der Hilfe 222px - erreichbar nur durch Scrollen.
+   Die Leiste ist das letzte Kind des Fensters und klebt per sticky an dessen
+   Unterkante, solange der Inhalt darueber scrollt. Randlos ueber die volle
+   Breite (negativer Rand = Innenabstand --m-px), mit eigener Flaeche und
+   Trennlinie, damit darunter durchlaufender Text nicht durchscheint.
+   ⚠ Das Fenster verliert dafuer seinen unteren Innenabstand (:has) - sonst
+   klebte die Leiste 22px UEBER der Unterkante, und der Text liefe in diesem
+   Streifen sichtbar unter ihr durch. Den Abstand nach unten traegt jetzt
+   die Leiste selbst.
+   ⚠ --m-px muss an JEDER Regel stehen, die den seitlichen Innenabstand
+   eines Fensters aendert - sonst ragt die Leiste heraus oder endet vor dem
+   Rand (check/eingaben.js misst beides). */
+.modal>.m-btns:last-child{position:sticky;bottom:0;z-index:3;background:var(--bg2);border-top:1px solid var(--bd);
+  margin:14px calc(-1 * var(--m-px,22px)) 0;padding:12px var(--m-px,22px) 16px;flex-wrap:wrap}
+.modal:has(>.m-btns:last-child){padding-bottom:0}
 @media(max-width:520px){.dp{padding:10px}.fg2,.fg3{grid-template-columns:1fr}.atitle{font-size:26px}}
 /* ── SETTINGS-SCHALTERZEILEN (Nutzer-Wunsch 2026-08-22: aufgeraeumt,
    schmaler, echte Umschalter statt Text-Buttons). .set-row ersetzt den
@@ -4563,7 +4590,7 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .dw-add,.dw-sel{font-size:var(--fs-base)}
   .dw-chip-x,.dw-del{font-size:16px}
   .dw-nav{font-size:var(--fs-sm);padding:3px 6px}
-  .modal{max-width:min(720px,94vw);padding:20px}
+  .modal{max-width:min(720px,94vw);--m-px:20px;padding:20px var(--m-px)}
   .modal h3{font-size:var(--fs-lg)}
     .lock-logo{font-size:28px}
   .lock-pad{grid-template-columns:repeat(3,68px);gap:16px}
@@ -5985,11 +6012,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-584 - Quicklinks der Asset-Seite in Kartentitel-Groesse (17px/700)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-585 - Kein Fenster verliert mehr Eingaben (Nachfrage Yes, save / No, delete), Knopfleiste fest unten, Pinned notes oeffnen den vollen Notiz-Editor."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-584</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-585</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6126,7 +6153,7 @@ window.fxLogoSvg=function(art){
 </div>
 
 <!-- MODAL: Preis-Alerts (Level ueber-/unterschritten -> Telegram) -->
-<div class="ov" id="mPriceAlert" style="display:none" onclick="if(event.target===this)closeM('mPriceAlert')">
+<div class="ov" id="mPriceAlert" style="display:none">
   <div class="modal" style="max-width:430px">
     <h3>Price Alerts</h3>
     <div class="help-p" style="margin-bottom:10px">Get a message when a pair or asset crosses a level. Checked against the hourly price feed via Telegram (same setup as event alerts). An alert fires once and shows "fired" in the list until you delete it.</div>
@@ -6142,7 +6169,7 @@ window.fxLogoSvg=function(art){
       <button class="btn g" onclick="createPriceAlert()">＋ Create alert</button>
     </div>
     <div id="paList" style="margin-top:12px"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn" onclick="closeM('mPriceAlert')">Close</button></div>
+    <div class="m-btns" style="margin-top:12px"><button class="btn" onclick="closeMGuarded('mPriceAlert')">Close</button></div>
   </div>
 </div>
 <!-- PAGE: CALENDAR -->
@@ -6188,20 +6215,25 @@ window.fxLogoSvg=function(art){
   <div id="resWrap"></div>
 </div>
 <!-- MODAL: ARCHIVE NOTE -->
-<!-- Ungespeicherte Eingaben: zentrierte Nachfrage mit drei Wegen. Wird von
+<!-- Ungespeicherte Eingaben: kleine zentrierte Nachfrage. Wird von
      closeMGuarded() geoeffnet, sobald ein in MODAL_GUARDS registriertes
-     Fenster mit ungespeicherten Aenderungen geschlossen werden soll. Der
-     Hintergrund-Klick liegt bewusst auf "Keep editing" - der harmloseste
-     der drei Wege. -->
+     Fenster mit ungespeicherten Aenderungen geschlossen werden soll.
+     Nutzer 2026-09-30: "ein kleines Fenster ... mit der Frage ob man es
+     speichern will und dann in bias Farbe bearish nein und in bullish Farbe
+     ja speichern also auf Englisch und no delete" - deshalb genau ZWEI
+     Knoepfe: "No, delete" bearish, "Yes, save" bullish (vorher drei, und
+     Blau lag auf "Keep editing" statt auf Speichern).
+     Zurueck ins Fenster geht es weiter per Klick neben diese Nachfrage oder
+     Escape - der harmloseste Weg, der Satz darunter sagt es. -->
 <div class="ov" id="mUnsaved" style="display:none" onclick="if(event.target===this)unsavedKeepEditing()">
   <div class="modal">
-    <h3>Unsaved changes</h3>
-    <p class="uc-txt">This note has not been saved yet. What do you want to do?</p>
+    <h3>Save changes?</h3>
+    <p class="uc-txt" id="ucTxt">What you entered here has not been saved yet.</p>
     <div class="uc-btns">
-      <button class="uc-btn uc-discard" onclick="unsavedDiscard()">Discard &amp; close</button>
-      <button class="uc-btn uc-save" onclick="unsavedSave()">Save &amp; close</button>
-      <button class="uc-btn uc-keep" onclick="unsavedKeepEditing()">Keep editing</button>
+      <button class="uc-btn uc-no" onclick="unsavedDiscard()">No, delete</button>
+      <button class="uc-btn uc-yes" onclick="unsavedSave()">Yes, save</button>
     </div>
+    <p class="uc-hint">Tap outside this box to keep editing.</p>
   </div>
 </div>
 <!-- ══ SCHNELLERFASSUNG (Nutzer-Wunsch 2026-09-08) ═══════════════════════
@@ -6253,7 +6285,7 @@ window.fxLogoSvg=function(art){
       </div>
     </div>
     <div class="m-btns" style="margin-top:12px">
-      <button class="btn" onclick="closeM('mQuickNote')">Cancel</button>
+      <button class="btn" onclick="closeMGuarded('mQuickNote')">Cancel</button>
       <button class="btn g" id="qcSaveBtn" onclick="qcSpeichern()" disabled>Save note</button>
     </div>
   </div>
@@ -6292,7 +6324,14 @@ window.fxLogoSvg=function(art){
       </div>
     </div>
     <div style="margin-bottom:8px"><div class="res-flbl">Related calendar event</div><select class="finp" id="resNEvt"></select></div>
-    <label style="display:flex;align-items:center;gap:7px;font-size:var(--fs-sm);color:var(--t2);cursor:pointer"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
+    <!-- Pin (Nutzer-Wunsch 2026-09-30: aus "Pinned notes" oeffnet das volle
+         Fenster, "man alles einstellen kann") - vorher war der Pin nur ueber
+         den 📌-Knopf in den Listen erreichbar und fuer neue Notizen eine
+         stille Entscheidung. -->
+    <div class="res-chk-row">
+      <label class="res-chk"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
+      <label class="res-chk"><input type="checkbox" id="resNPin"> 📌 Pinned — shows on the asset page and the watchlist</label>
+    </div>
     <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeMGuarded('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
   </div>
 </div>
@@ -6353,7 +6392,7 @@ window.fxLogoSvg=function(art){
       <option value="index">Index</option>
       <option value="stock">Stock</option>
     </select>
-    <div class="m-btns"><button class="btn" onclick="closeM('mAddSym')">Cancel</button><button class="btn g" onclick="confirmAddSym()">Add</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mAddSym')">Cancel</button><button class="btn g" onclick="confirmAddSym()">Add</button></div>
   </div>
 </div>
 <!-- MODAL: Asset-Einstellungen (Verbindung & Auto-Bias) -->
@@ -6406,7 +6445,7 @@ window.fxLogoSvg=function(art){
     <input class="m-inp" id="mPairCustom" placeholder="e.g. USD/NOK (custom)">
     <div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:4px;letter-spacing:1px">CATEGORY</div>
     <select class="m-sel" id="mPairCat" size="1" style="max-height:40px;margin-bottom:10px"></select>
-    <div class="m-btns"><button class="btn" onclick="closeM('mAddPair')">Cancel</button><button class="btn g" onclick="confirmAddPair()">Add</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mAddPair')">Cancel</button><button class="btn g" onclick="confirmAddPair()">Add</button></div>
   </div>
 </div>
 <!-- MODAL: Date -->
@@ -6415,7 +6454,7 @@ window.fxLogoSvg=function(art){
   <div class="modal">
     <h3 id="mRenameTitle">Rename</h3>
     <input class="m-inp" id="mRenameInp" placeholder="New name...">
-    <div class="m-btns"><button class="btn" onclick="closeM('mRename')">Cancel</button><button class="btn g" onclick="confirmRename()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mRename')">Cancel</button><button class="btn g" onclick="confirmRename()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Del Sym -->
@@ -6434,7 +6473,7 @@ window.fxLogoSvg=function(art){
     <div id="mInfoStd" style="display:none;font-size:var(--fs-sm);color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;margin:0 0 10px"></div>
     <div id="mInfoNotesLbl" style="display:none;font-size:var(--fs-xs);color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">YOUR NOTES</div>
     <textarea class="nbox" id="mInfoTxt" style="min-height:140px" placeholder="Enter explanation..."></textarea>
-    <div class="m-btns"><button class="btn" onclick="closeM('mInfo')">Close</button><button class="btn g" onclick="saveInfoM()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mInfo')">Close</button><button class="btn g" onclick="saveInfoM()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Carry-Detail (Klick auf das Δ%-Badge bei den Set-ups) -->
@@ -6503,7 +6542,7 @@ window.fxLogoSvg=function(art){
     <textarea class="nbox" id="evtAlertTxt" style="min-height:110px"></textarea>
     <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertFFLink"> Append the Forex Factory link</label>
     <div style="font-size:var(--fs-xs);color:var(--t3);margin-top:6px">Sent via the Telegram bot at the event's release time.</div>
-    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlert')">Cancel</button><button class="btn" id="evtAlertRemoveBtn" style="display:none;color:var(--red)" onclick="removeEvtAlert()">Remove alert</button><button class="btn g" onclick="saveEvtAlert()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mEvtAlert')">Cancel</button><button class="btn" id="evtAlertRemoveBtn" style="display:none;color:var(--red)" onclick="removeEvtAlert()">Remove alert</button><button class="btn g" onclick="saveEvtAlert()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Custom-Alarm (frei waehlbarer Name/Datum/Uhrzeit/Nachricht, kein Kalender-Event) -->
@@ -6525,7 +6564,7 @@ window.fxLogoSvg=function(art){
     <div style="font-size:var(--fs-xs);color:var(--t3);margin:8px 0 5px;font-weight:600;font-family:var(--ff-num)">MESSAGE</div>
     <textarea class="nbox" id="evtAlertCustomTxt" style="min-height:90px" placeholder="What should the Telegram message say?"></textarea>
     <label class="evt-alert-ff-chk"><input type="checkbox" id="evtAlertCustomFFLink"> Append the Forex Factory link</label>
-    <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertCustom')">Cancel</button><button class="btn" id="evtAlertCustomRemoveBtn" style="display:none;color:var(--red)" onclick="removeCustomEvtAlert()">Remove alert</button><button class="btn g" onclick="saveCustomEvtAlert()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mEvtAlertCustom')">Cancel</button><button class="btn" id="evtAlertCustomRemoveBtn" style="display:none;color:var(--red)" onclick="removeCustomEvtAlert()">Remove alert</button><button class="btn g" onclick="saveCustomEvtAlert()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Rate-Watch-Link bearbeiten -->
@@ -6534,7 +6573,7 @@ window.fxLogoSvg=function(art){
     <h3>📈 Rate Expectations Link (<span id="mRateWatchSym"></span>)</h3>
     <p style="font-size:var(--fs-base);color:var(--t1);margin-bottom:10px;line-height:1.5">This link opens via the icon in the "Interest Rates" card. You can change it here.</p>
     <input class="m-inp" id="mRateWatchInp" placeholder="https://..." inputmode="url">
-    <div class="m-btns"><button class="btn" onclick="closeM('mRateWatch')">Cancel</button><button class="btn" onclick="resetRateWatch()">Default</button><button class="btn g" onclick="saveRateWatch()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mRateWatch')">Cancel</button><button class="btn" onclick="resetRateWatch()">Default</button><button class="btn g" onclick="saveRateWatch()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Indikator-Quellen-Link bearbeiten -->
@@ -6543,7 +6582,7 @@ window.fxLogoSvg=function(art){
     <h3>🔗 Edit Source Link</h3>
     <p style="font-size:var(--fs-base);color:var(--t1);margin-bottom:10px;line-height:1.5">Long-pressing the source link in the expanded indicator opens this field. You can change the link here.</p>
     <input class="m-inp" id="mIndLinkInp" placeholder="https://..." inputmode="url">
-    <div class="m-btns"><button class="btn" onclick="closeM('mIndLink')">Cancel</button><button class="btn" onclick="resetIndLink()">Default</button><button class="btn g" onclick="saveIndLink()">Save</button></div>
+    <div class="m-btns"><button class="btn" onclick="closeMGuarded('mIndLink')">Cancel</button><button class="btn" onclick="resetIndLink()">Default</button><button class="btn g" onclick="saveIndLink()">Save</button></div>
   </div>
 </div>
 <!-- MODAL: Cloud Sync -->
@@ -6623,7 +6662,7 @@ window.fxLogoSvg=function(art){
     <input class="m-inp" id="cloudSyncId" placeholder="e.g. my-fx-tracker">
     <div id="cloudStatus" style="font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <div class="m-btns">
-      <button class="btn" onclick="closeM('mCloud')">Close</button>
+      <button class="btn" onclick="closeMGuarded('mCloud')">Close</button>
       <button class="btn" onclick="cloudPull(true)">⬇ Download</button>
       <button class="btn" onclick="cloudPush(true)">⬆ Upload</button>
       <button class="btn g" onclick="saveCloudCfg()">Save</button>

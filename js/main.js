@@ -3434,8 +3434,15 @@ function openQuickNote(vorbelegung,assetVor){
     pre.hidden=!_qcAssetVor;
     pre.textContent=_qcAssetVor?`Filed on ${sym?sym.name:_qcAssetVor} — you can change that below.`:'';
   }
+  // Die Zerlegung eines vorbelegten Texts laeuft VOR openM(): dort wird der
+  // Stand fuer die Ungespeichert-Nachfrage aufgenommen. Danach waere schon
+  // die Vorbelegung eine "ungespeicherte Aenderung".
+  // ⚠ Das Feld zuerst leeren: qcTitle behielt sonst den Titel der LETZTEN
+  // Erfassung, und ein verworfener Text staende beim naechsten Mal wieder da.
+  const tit=document.getElementById('qcTitle');if(tit)tit.value='';
+  if(inp&&inp.value)qcAnalyse();
   openM('mQuickNote');
-  if(inp){inp.focus();if(inp.value)qcAnalyse();}
+  if(inp)inp.focus();
 }
 // Aus der Watchlist heraus: wie newResNoteForAsset(), nur mit der
 // Schnellerfassung statt des leeren Formulars. Solange Platz ist, wird die
@@ -6430,6 +6437,10 @@ function saveCloudCfg(){
   const syncId=document.getElementById('cloudSyncId').value.trim();
   if(!url||!key||!syncId){alert('Please fill in URL, API key and Sync ID.');return;}
   localStorage.setItem(CLOUD_CFG_KEY,JSON.stringify({username,url,key,syncId}));
+  // Das Fenster bleibt nach "Save" offen (Statuszeile zeigt den Sync).
+  // Ab hier IST das der gespeicherte Stand - sonst fragte ein Klick daneben
+  // gleich darauf "Save changes?" nach etwas, das laengst gespeichert ist.
+  guardArm('mCloud');
   updProfile();
   setCloudStatus('Saved. Syncing...');
   // manual:true fuer die Status-Rueckmeldung ("Downloaded"/Fehlertext),
@@ -6869,8 +6880,13 @@ let selId='USD',curSub='specific',curPage='dash',curFxMode='fx';
 function getSym(){return syms.find(c=>c.id===selId)||syms[0];}
 
 // ══ MODAL SYSTEM ════════════════════════════════════════════════════
-function openM(id){document.getElementById(id).style.display='flex';}
-function closeM(id){document.getElementById(id).style.display='none';}
+// openM/closeM schalten den Eingabe-Schutz (unten) gleich mit scharf bzw.
+// ab. Dadurch gilt er fuer JEDEN Oeffnungsweg eines geschuetzten Fensters -
+// auch fuer einen, der erst spaeter dazukommt. ⚠ try/catch, weil openM
+// schon beim Laden des Moduls laufen kann (Erststart-Hilfe, Cloud-Fenster
+// aus dem Sperrbildschirm), bevor MODAL_GUARDS weiter unten existiert.
+function openM(id){document.getElementById(id).style.display='flex';try{guardArm(id);}catch(e){}}
+function closeM(id){document.getElementById(id).style.display='none';try{guardDisarm(id);}catch(e){}}
 
 // ── Schutz vor verlorenen Eingaben ─────────────────────────────────────
 // Nutzer-Bugreport 2026-09-01: "wenn man eine Notiz oder ein Rezept
@@ -6879,31 +6895,83 @@ function closeM(id){document.getElementById(id).style.display='none';}
 // er schliesst JEDES .ov-Fenster sofort, ohne zu fragen, ob darin gerade
 // etwas Ungespeichertes steht.
 //
-// MODAL_GUARDS ist die Registrierstelle: ein Eintrag {dirty, save} macht ein
-// Fenster "geschuetzt". Ab dann laeuft jeder Schliess-Weg (Klick daneben,
-// Cancel-Button) ueber closeMGuarded() und zeigt bei ungespeicherten
-// Eingaben das zentrierte Fenster #mUnsaved mit drei Wegen:
-// verwerfen (rot/bearish) - speichern (grau) - weiterbearbeiten (blau/bullish).
+// 2026-09-30 nachgemessen (Nutzer: "zumindest bei den Notizen ist das noch
+// irgendwo der Fall? Sonst mach dort ueberall ..."): registriert war nur der
+// Notiz-Editor - und der nur auf zwei von vier Oeffnungswegen. Ueber
+// "+ New note" auf der Asset-Seite (newResNoteIn) und auf der Watchlist
+// (newResNoteForAsset) wurde der Vergleichsstand nie gesetzt, die Nachfrage
+// blieb stumm, der Text war weg. Ebenso ohne Schutz: Quick capture und neun
+// weitere Eingabefenster, dazu ein Escape-Pfad, der an allem vorbei schloss.
+// Messwerte: docs/CHANGELOG.md, 2026-09-30.
 //
-// ⚠ Ein neues Eingabe-Fenster gehoert HIER eingetragen, nicht mit einer
-// eigenen Sonderloesung versehen - sonst hat die naechste Eingabemaske
-// denselben Datenverlust wieder.
+// Seitdem EIN Mechanismus statt eines Vergleichsstands je Fenster:
+//   registerModalGuard(id,{felder,extra,save,was})
+//     felder - die Ids der Eingabefelder, die zaehlen (Schalter, die sofort
+//              wirken, gehoeren NICHT hinein - sonst fragt das Fenster nach
+//              etwas, das laengst gespeichert ist)
+//     extra  - Zustand, der in keinem Feld steht (Ordner-Chips, Bias ...)
+//     save   - speichert und schliesst; bricht es ab (Pflichtfeld leer),
+//              bleibt das Fenster mit allen Eingaben offen
+//     was    - Subjekt fuer den Satz in der Nachfrage
+// openM() nimmt den Stand beim Oeffnen auf, "ungespeichert" heisst: jetzt
+// anders als beim Oeffnen. Jeder Schliess-Weg ohne Speichern (Klick daneben,
+// Escape, Cancel/Close) laeuft ueber closeMGuarded() und zeigt dann #mUnsaved.
+//
+// ⚠ Ein neues Eingabe-Fenster gehoert HIER eingetragen (MODAL_GUARD_TABELLE
+// unten), nicht mit einer eigenen Sonderloesung versehen - sonst hat die
+// naechste Eingabemaske denselben Datenverlust wieder. check/eingaben.js
+// meldet jedes Fenster mit Textfeld, das weder eingetragen noch begruendet
+// ausgenommen ist.
 const MODAL_GUARDS={};
+const _guardBase={};
 let _unsavedFor=null;
-function registerModalGuard(id,dirty,save){MODAL_GUARDS[id]={dirty,save};}
+function registerModalGuard(id,opt){MODAL_GUARDS[id]=opt||{};}
+function _guardFeldWert(e){
+  if(!e)return'';
+  if(e.type==='checkbox')return e.checked?'1':'0';
+  // Nur Leerzeichen getippt ist keine Eingabe, die man verlieren kann.
+  return String(e.value==null?'':e.value).trim();
+}
+function guardStand(id){
+  const g=MODAL_GUARDS[id];if(!g)return null;
+  const werte=(g.felder||[]).map(fid=>_guardFeldWert(document.getElementById(fid)));
+  let extra='';
+  if(g.extra){try{extra=g.extra();}catch(e){extra='';}}
+  return{werte,sig:JSON.stringify([werte,extra])};
+}
+function guardArm(id){if(MODAL_GUARDS[id])_guardBase[id]=guardStand(id);}
+function guardDisarm(id){delete _guardBase[id];}
 function modalIsDirty(id){
-  const g=MODAL_GUARDS[id];
-  if(!g)return false;
-  try{return !!g.dirty();}catch(e){return false;}
+  const g=MODAL_GUARDS[id],b=_guardBase[id];
+  if(!g||!b)return false;
+  try{return guardStand(id).sig!==b.sig;}catch(e){return false;}
+}
+// "No, delete" heisst: die Eingaben sind WEG. Einige Fenster setzen ihre
+// Felder beim naechsten Oeffnen nicht zurueck (Add symbol, Price alert) -
+// ohne diesen Schritt stuende das "Verworfene" dort beim naechsten Mal wieder.
+function guardVerwerfen(id){
+  const g=MODAL_GUARDS[id],b=_guardBase[id];if(!g||!b)return;
+  (g.felder||[]).forEach((fid,i)=>{
+    const e=document.getElementById(fid);if(!e)return;
+    if(e.type==='checkbox')e.checked=b.werte[i]==='1';else e.value=b.werte[i];
+  });
 }
 function closeMGuarded(id){
-  if(modalIsDirty(id)){_unsavedFor=id;openM('mUnsaved');return;}
+  if(modalIsDirty(id)){
+    _unsavedFor=id;
+    const g=MODAL_GUARDS[id];
+    let was='';try{was=typeof g.was==='function'?g.was():g.was;}catch(e){}
+    const t=document.getElementById('ucTxt');
+    if(t)t.textContent=(was||'What you entered here')+' has not been saved yet.';
+    openM('mUnsaved');
+    return;
+  }
   closeM(id);
 }
 function unsavedDiscard(){
   const id=_unsavedFor;_unsavedFor=null;
   closeM('mUnsaved');
-  if(id)closeM(id);
+  if(id){guardVerwerfen(id);closeM(id);}
 }
 function unsavedSave(){
   const id=_unsavedFor;_unsavedFor=null;
@@ -6912,15 +6980,54 @@ function unsavedSave(){
   // Die Save-Funktion schliesst das Fenster selbst, WENN sie durchlaeuft.
   // Bricht sie ab (z.B. Notiz ohne Titel und ohne Text), bleibt das Fenster
   // offen - genau richtig, sonst waeren die Eingaben trotz "Speichern" weg.
-  if(g&&g.save){try{g.save();}catch(e){alert('Could not save: '+e.message);}}
+  if(g&&g.save){try{g.save();}catch(e){alert('Could not save: '+(e&&e.message||e)+'\nYour input is still in the window.');}}
 }
 function unsavedKeepEditing(){_unsavedFor=null;closeM('mUnsaved');}
+// ── Die geschuetzten Fenster ──────────────────────────────────────────
+// Bewusst NICHT eingetragen (check/eingaben.js kennt dieselbe Liste):
+//   mSearch          - ein Suchbegriff ist keine Eingabe, die man speichert
+//   mEvtAlertPicker  - nur eine Auswahl, "Next" fuehrt erst zum Formular
+//   mAssetCfg/mCcyCfg und die Schalter in mCloud - wirken sofort beim Klick
+const MODAL_GUARD_TABELLE={
+  mResNote:{felder:['resNTitle','resNBody','resNTags','resNFav','resNPin','resNEvt'],
+    extra:()=>JSON.stringify([(_resFids||[]).slice().sort(),_resBias]),
+    save:()=>saveResNote(),was:'This note'},
+  mQuickNote:{felder:['qcInput','qcTitle'],
+    extra:()=>_qcStand?JSON.stringify([_qcStand.assets,_qcStand.bias,_qcStand.tags]):'',
+    save:()=>qcSpeichern(),was:'This note'},
+  // Nur das Level zaehlt: Ziel und Richtung allein sind noch kein Alarm.
+  // createPriceAlert() schliesst das Fenster nicht (man legt dort oft
+  // mehrere Alarme nacheinander an) - deshalb hier erst nach Erfolg.
+  mPriceAlert:{felder:['paLevel'],
+    save:()=>{const n=(priceAlerts||[]).length;createPriceAlert();if((priceAlerts||[]).length>n)closeM('mPriceAlert');},
+    was:'This price alert'},
+  mAddSym:{felder:['mSymTicker','mSymFull'],save:()=>confirmAddSym(),was:'This symbol'},
+  // Die Kategorie allein ist keine Eingabe - sie ist beim Oeffnen schon vorgewaehlt.
+  mAddPair:{felder:['mPairSel','mPairCustom'],save:()=>confirmAddPair(),was:'This pair'},
+  mRename:{felder:['mRenameInp'],save:()=>confirmRename(),
+    was:()=>{const e=document.getElementById('mRenameInp');return e&&e.tagName==='SELECT'?'This widget':'The new name';}},
+  mInfo:{felder:['mInfoTxt'],save:()=>saveInfoM(),was:'Your note'},
+  mEvtAlert:{felder:['evtAlertTxt','evtAlertFFLink'],save:()=>saveEvtAlert(),was:'This alert'},
+  mEvtAlertCustom:{felder:['evtAlertCustomName','evtAlertCustomDate','evtAlertCustomTime','evtAlertCustomTxt','evtAlertCustomFFLink'],
+    save:()=>saveCustomEvtAlert(),was:'This alert'},
+  mRateWatch:{felder:['mRateWatchInp'],save:()=>saveRateWatch(),was:'This link'},
+  mIndLink:{felder:['mIndLinkInp'],save:()=>saveIndLink(),was:'This link'},
+  // Nur die vier Zugangsfelder - die Schalter darueber speichern sofort.
+  // saveCloudCfg() laesst das Fenster offen und setzt bei Erfolg den
+  // Vergleichsstand neu; "Yes, save" schliesst deshalb erst danach.
+  mCloud:{felder:['cloudUsername','cloudUrl','cloudKey','cloudSyncId'],
+    save:()=>{saveCloudCfg();if(!modalIsDirty('mCloud'))closeM('mCloud');},was:'Your sync settings'},
+};
+Object.keys(MODAL_GUARD_TABELLE).forEach(id=>registerModalGuard(id,MODAL_GUARD_TABELLE[id]));
 // Klick/Tipp NEBEN das geoeffnete Fenster (auf den abgedunkelten Overlay-
 // Hintergrund) schliesst es - gilt einheitlich fuer alle Modals (.ov).
 // Der pointerdown-Anker verhindert, dass eine Textauswahl, die im Fenster
 // beginnt und auf dem Hintergrund endet (Click-Target = Overlay), das
 // Fenster ungewollt zuklappt: geschlossen wird nur, wenn der Druck auch
 // AUF dem Hintergrund begonnen hat.
+// ⚠ Ein eigenes onclick="closeM(...)" am Overlay eines geschuetzten
+// Fensters liefe VOR diesem Handler und am Schutz vorbei (so war es bei
+// mPriceAlert) - geschuetzte Overlays tragen deshalb keins.
 let _ovPressId=null;
 document.addEventListener('pointerdown',ev=>{
   _ovPressId=(ev.target&&ev.target.classList&&ev.target.classList.contains('ov'))?ev.target.id:null;
@@ -6931,10 +7038,19 @@ document.addEventListener('click',ev=>{
   if(t&&t.classList&&t.classList.contains('ov')&&t.id===_ovPressId)closeMGuarded(t.id);
   _ovPressId=null;
 });
+// Escape schliesst das OBERSTE offene Fenster dieser Liste - ueber denselben
+// Schutz wie der Klick daneben. Bis 2026-09-30 setzte es display:none direkt
+// und nahm Eingaben in sieben Fenstern ohne Nachfrage mit.
+// Steht die Nachfrage offen, fuehrt Escape zurueck ins Fenster (der
+// harmlose Weg, wie der Klick neben die Nachfrage).
+const ESC_MODALS=['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mRateWatch','mIndLink','mBackup','mTrash',
+  'mQuickNote','mResNote','mPriceAlert','mEvtAlert','mEvtAlertCustom'];
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){
-    ['mAddSym','mAssetCfg','mHist','mAddPair','mRename','mDelSym','mInfo','mCloud','mRateWatch','mIndLink','mBackup','mTrash'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  }
+  if(e.key!=='Escape')return;
+  const nf=document.getElementById('mUnsaved');
+  if(nf&&nf.style.display!=='none'){unsavedKeepEditing();return;}
+  const offen=[...document.querySelectorAll('.ov')].filter(o=>ESC_MODALS.includes(o.id)&&o.style.display!=='none');
+  if(offen.length)closeMGuarded(offen[offen.length-1].id);
 });
 
 // ══ SIDEBAR ════════════════════════════════════════════════════════
@@ -7181,7 +7297,7 @@ function renderSidebar(){
   // ⚠ Nur im Bearbeitungsmodus (und wenn gar kein Asset da ist, sonst kaeme
   // man nie wieder an ein neues heran).
   if(bearb||!syms.length){
-    html+=`<button class="np np-addsym" onclick="openM('mAddSym')" data-tip="Symbol hinzufuegen" aria-label="Symbol hinzufuegen"><span class="np-ic">＋</span><span class="np-lbl">Add symbol</span></button>`;
+    html+=`<button class="np np-addsym" onclick="openAddSym()" data-tip="Add symbol" aria-label="Add symbol"><span class="np-ic">＋</span><span class="np-lbl">Add symbol</span></button>`;
   }
   if(bearb){
     html+=`<button class="np np-editdone" onclick="setSbEdit(false)" data-tip="Fertig" aria-label="Bearbeiten beenden"><span class="np-ic">✓</span><span class="np-lbl">Done</span></button>`;
@@ -9915,49 +10031,13 @@ function abNotizen(assetId){
       return String(b.up||b.ts||'').localeCompare(String(a.up||a.ts||''));
     });
 }
-function abNotesHtml(c){
-  const list=abNotizen(c.id);
-  const zeilen=list.map((n,i)=>`<div class="ab-nt${n.hl?' hl':''}" style="--nb:${biasCss(n.bias||'neu')}">
-      <button class="ab-nt-hl${n.hl?' on':''}" onclick="abNoteHl('${escJH(n.id)}')" title="${n.hl?'Remove highlight':'Mark as important'}">${n.hl?'★':'☆'}</button>
-      <button class="ab-nt-tx" onclick="openResNote('${escJH(n.id)}')" title="Open this note">
-        <span class="ab-nt-ti">${escH(n.title||'Untitled note')}</span>
-        ${n.body?`<span class="ab-nt-bd">${escH(n.body.replace(/\s+/g,' ').slice(0,90))}</span>`:''}
-      </button>
-      <span class="ab-nt-mv">
-        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',-1)" ${i===0?'disabled':''} title="Move up">▲</button>
-        <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',1)" ${i===list.length-1?'disabled':''} title="Move down">▼</button>
-      </span>
-    </div>`).join('')||`<div class="ab-nt-empty">No notes on ${escH(c.name)} yet. Write one above — it saves as you go.</div>`;
-  return`<div class="ab-ntile">
-    <div class="ab-tile-hd">${abTileIcon('Notes')}<span class="ab-tile-t">Notes</span><span class="ab-tile-s">${list.length}</span>
-      <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
-    <div class="ab-nt-add">
-      <input class="finp" id="abNoteInp" placeholder="New note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}')">
-      <button class="btn g" onclick="abNoteAdd('${escJH(c.id)}')">＋</button>
-    </div>
-    <div class="ab-nt-list">${zeilen}</div>
-  </div>`;
-}
-function abNoteAdd(assetId,anpinnen){
-  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6).
-  try{
-    const inp=document.getElementById('abNoteInp');
-    const txt=(inp&&inp.value||'').trim();
-    if(!txt)return;
-    const fid=researchGenFidFor(assetId);
-    const jetzt=new Date().toISOString();
-    pushU();
-    // ord kleiner als alles Vorhandene: neue Notizen stehen oben.
-    const min=Math.min(0,...abNotizen(assetId).map(n=>typeof n.ord==='number'?n.ord:0));
-    research.notes.push({id:uid(),fids:[fid].filter(Boolean),
-      title:txt.slice(0,90),body:txt,tags:[],fav:false,pin:!!anpinnen,arch:false,hl:false,
-      ord:min-1,ts:jetzt,up:jetzt,bias:'neu',asset:fid?'':assetId});
-    if(inp)inp.value='';
-    save();rerenderNotesHost();
-  }catch(e){
-    alert('The note could not be saved: '+(e&&e.message||e)+'\nYour text is still in the box.');
-  }
-}
+// ⚠ Die Einzeilen-Eingabe (abNoteAdd, Feld #abNoteInp) und die volle
+// Notes-Karte (abNotesHtml) sind am 2026-09-30 entfallen. Die Karte war seit
+// dem Umbau auf "Pinned notes" nirgends mehr eingebaut; die Eingabe ersetzt
+// der Nutzer-Wunsch "wenn man bei den pinned Notes eine neue Notiz schreiben
+// will dann will ich das sich direkt das Fenster oeffnet und man alles
+// einstellen kann" - siehe abPinnedHtml. Die Reihenfolge-Regel der Eingabe
+// (neue Notiz oben, n.ord) haelt jetzt saveResNote().
 function abNoteHl(id){
   try{
     const n=resNotes().find(x=>x.id===id);if(!n)return;
@@ -10033,13 +10113,18 @@ function abPinnedHtml(c){
         <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',1)" ${i===list.length-1?'disabled':''} title="Move down">▼</button>
         <button onclick="togResPin('${escJH(n.id)}')" title="Unpin">📌</button>
       </span>
-    </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. Write one below — new notes from here are pinned straight away.</div>`;
+    </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. New notes from here are pinned straight away.</div>`;
+  // Nutzer 2026-09-30: "Wenn man bei den pinned Notes eine neue Notiz
+  // schreiben will dann will ich das sich direkt das Fenster oeffnet und man
+  // alles einstellen kann". Deshalb kein Eingabefeld mehr, sondern ein
+  // Einstieg in derselben Form an derselben Stelle: ein Tipp oeffnet den
+  // vollstaendigen Notiz-Editor (Titel, Text, Ordner, Tags, Bias, Event,
+  // Favorit, Pin) - vorbelegt mit diesem Asset und angepinnt.
   return`<div class="ab-ntile">
-    <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>${abInfoBtn('Pinned notes',['Your pinned notes for this asset. A note written in the field here is pinned straight away.','The colour of each note follows the bias you gave it. Notes sync across your devices.'])}
+    <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>${abInfoBtn('Pinned notes',['Your pinned notes for this asset. "New pinned note" opens the full note window — title, text, folders, tags, bias and the related event, all in one place. The note is pinned straight away; you can untick that in the window.','The colour of each note follows the bias you gave it. Notes sync across your devices.'])}
       <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
     <div class="ab-nt-add">
-      <input class="finp" id="abNoteInp" placeholder="New pinned note on ${escH(c.name)}…" onkeydown="if(event.key==='Enter')abNoteAdd('${escJH(c.id)}',true)">
-      <button class="btn g" onclick="abNoteAdd('${escJH(c.id)}',true)">＋</button>
+      <button type="button" class="finp ab-nt-neu" onclick="newResNoteForAsset('${escJH(c.id)}')" title="Opens the note window with everything to set — pinned to ${escH(c.name)}">＋ New pinned note on ${escH(c.name)}…</button>
     </div>
     <div class="ab-nt-list">${zeilen}</div>
     ${abGoToHtml('notes')}
@@ -11041,6 +11126,16 @@ function cloneRubsFromUSD(){
     id:uid(),name:r.name,bias:'neu',imp:false,summary:'',
     indicators:(r.indicators||[]).map(i=>({id:uid(),name:i.name,bias:'neu',imp:false,date:'',interval:i.interval||'',points:[]}))
   }));
+}
+// Frisches Formular bei jedem Oeffnen (2026-09-30). Vorher oeffnete der
+// Knopf das Fenster direkt per openM('mAddSym') - die Felder behielten den
+// Stand vom letzten Mal, und ein per "No, delete" verworfener Ticker stuende
+// beim naechsten Oeffnen wieder da.
+function openAddSym(){
+  const t=document.getElementById('mSymTicker'),f=document.getElementById('mSymFull'),c=document.getElementById('mSymCls');
+  if(t)t.value='';if(f)f.value='';if(c)c.value='fx';
+  openM('mAddSym');
+  setTimeout(()=>{if(t)t.focus();},50);
 }
 function confirmAddSym(){
   const ticker=document.getElementById('mSymTicker').value.trim().toUpperCase();
@@ -13076,13 +13171,16 @@ function watchInvolvedAssets(name){
   const a=nonFxLegAssetId(name);
   return a?[a]:[];
 }
-// Aus der Watchlist angelegte Notizen werden - solange Platz ist - direkt
-// angepinnt. Sonst haette man eine Notiz genau an der Stelle angelegt, an der
-// sie danach nicht auftaucht.
+// Aus der Watchlist angelegte Notizen werden direkt angepinnt. Sonst haette
+// man eine Notiz genau an der Stelle angelegt, an der sie danach nicht
+// auftaucht. _resAutoPin traegt das nur noch fuer die Schnellerfassung
+// (quickNoteForAsset/qcSpeichern) - der Notiz-Editor zeigt es als Haken.
 let _resAutoPin=null;
+// Seit 2026-09-30 als sichtbarer, abwaehlbarer Haken im Fenster (vorher
+// ein stilles _resAutoPin, das nur griff, wenn die Notiz im Ordner dieses
+// Assets blieb). Derselbe Einstieg dient der Pinned-notes-Karte.
 function newResNoteForAsset(assetId){
-  newResNoteIn(assetId,'');
-  _resAutoPin=assetId;
+  newResNoteIn(assetId,'',true);
 }
 // Die angepinnten Notizen je beteiligtem Asset - dieselbe Quelle wie die
 // Notes-Karte auf der Assets-Seite (assetPinnedNotes), kein zweiter Nachbau.
@@ -13536,6 +13634,9 @@ function openPriceAlertM(){
     const p=currentPriceOf(t);
     return`<option value="${escH(t)}">${escH(t)}${p!=null?` — now ${fmtPriceTick(p)}`:''}</option>`;
   }).join('')||'<option value="">No priceable pairs/assets yet</option>';
+  // Jedes Oeffnen mit leerem Level: ein halb getipptes, beim letzten Mal
+  // verworfenes Level darf nicht still wieder auftauchen.
+  const lv=document.getElementById('paLevel');if(lv)lv.value='';
   renderPriceAlertList();
   openM('mPriceAlert');
 }
@@ -14604,9 +14705,13 @@ function researchNotesPanelHtml(assetId,fid){
 // Wie newResNote(), aber mit explizitem Asset+Ordner statt aus dem alten
 // entfallenen resSel-Zustand abzuleiten (der Baum kennt Asset und Ordner
 // bereits genau).
-function newResNoteIn(assetId,fid){
+// anpinnen: die Notiz wird angeheftet - sichtbar als Haken im Fenster und
+// dort abwaehlbar (Pinned-notes-Karte, Watchlist). ⚠ Alles wird VOR dem
+// Oeffnen gefuellt: openM() nimmt den Stand fuer die Ungespeichert-Nachfrage
+// auf, ein spaeter gesetzter Haken saehe dort wie eine Eingabe des Nutzers aus.
+function newResNoteIn(assetId,fid,anpinnen){
   _resEditId=null;
-  resFillNoteModal({title:'',body:'',fids:[fid||researchGenFidFor(assetId)].filter(Boolean),tags:[],fav:false});
+  resFillNoteModal({title:'',body:'',fids:[fid||researchGenFidFor(assetId)].filter(Boolean),tags:[],fav:false,pin:!!anpinnen});
   resOpenNoteShell();
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
@@ -14616,16 +14721,10 @@ function togResFav(id){
 }
 // ── Notiz-Editor (Modal) ──
 let _resEditId=null;
-// Schnappschuss beim Oeffnen. Der Vergleich gegen den aktuellen Formular-
-// Inhalt sagt, ob ungespeicherte Arbeit drinsteckt (siehe MODAL_GUARDS).
-let _resNoteBase=null;
-function resNoteSnapshot(){
-  const g=id=>{const e=document.getElementById(id);return e?(e.type==='checkbox'?(e.checked?'1':'0'):e.value):'';};
-  return JSON.stringify([g('resNTitle'),g('resNBody'),g('resNTags'),g('resNFav'),
-    (_resFids||[]).slice().sort(),_resBias,(document.getElementById('resNEvt')||{}).value||'']);
-}
-function resNoteDirty(){return _resNoteBase!==null&&resNoteSnapshot()!==_resNoteBase;}
-registerModalGuard('mResNote',resNoteDirty,()=>saveResNote());
+// Ob ungespeicherte Arbeit drinsteckt, sagt seit 2026-09-30 der gemeinsame
+// Schutz (MODAL_GUARD_TABELLE.mResNote): openM() nimmt den Stand beim
+// Oeffnen auf. Vorher hielt der Editor einen eigenen Vergleichsstand
+// (_resNoteBase) - und zwei der vier Oeffnungswege setzten ihn nie.
 // Nutzer-Entscheid 2026-09-19: aus dem Archiv heraus oeffnet eine Notiz als
 // ganze Seite, von der Asset-Seite und der Watchlist aus weiterhin als
 // Fenster (dort ist sie ein Seitenschritt, kein Arbeitsplatz). ⚠ Die Klasse
@@ -14641,7 +14740,6 @@ function newResNote(){
   _resEditId=null;
   resFillNoteModal({title:'',body:'',fids:[],tags:[],fav:false});
   resOpenNoteShell();
-  _resNoteBase=resNoteSnapshot();
   setTimeout(()=>{const t=document.getElementById('resNTitle');if(t)t.focus();},60);
 }
 function openResNote(id){
@@ -14649,7 +14747,6 @@ function openResNote(id){
   _resEditId=id;
   resFillNoteModal(n);
   resOpenNoteShell();
-  _resNoteBase=resNoteSnapshot();
 }
 // 3-stufiger Bias statt der frueheren 2-stufigen "Richtung" (Nutzer-Wunsch
 // 2026-08-30: "deutlich ob sie neutral bullish oder bearish sind") - rein
@@ -14704,6 +14801,12 @@ function resFillNoteModal(n){
   document.getElementById('resNBody').value=n.body||'';
   document.getElementById('resNTags').value=(n.tags||[]).join(', ');
   document.getElementById('resNFav').checked=!!n.fav;
+  // Archivierte Notizen tragen keinen Pin (archiveResNote loest ihn, und
+  // assetPinnedNotes zeigt sie nicht) - ein anwaehlbarer Haken dort waere
+  // eine Einstellung ohne Wirkung.
+  const pinEl=document.getElementById('resNPin');
+  if(pinEl){pinEl.checked=!!n.pin&&!n.arch;pinEl.disabled=!!n.arch;
+    pinEl.title=n.arch?'Archived notes cannot be pinned — move the note back to Current first':'';}
   _resFids=Array.isArray(n.fids)?n.fids.slice():[];
   resRenderPlaces();
   // "Places"-Zeile: Asset-Auswahl bestimmt, aus welchem Asset-Ordnerbaum als
@@ -14732,17 +14835,38 @@ function saveResNote(){
   const now=new Date().toISOString();
   const evt=(document.getElementById('resNEvt')||{}).value||null;
   const primaryAsset=document.getElementById('resNPlaceAsset').value||'';
-  pushU();
-  if(_resEditId){
-    const n=resNotes().find(x=>x.id===_resEditId);
-    if(n){if(n.seed&&!n.replacesSeed)n.replacesSeed=n.id;n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
-  }else{
-    if(_resAutoPin&&resNoteAssetIds({fids}).includes(_resAutoPin))var _pinNeu=true;
-    research.notes.push({id:uid(),fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin:!!_pinNeu,arch:false,ts:now,up:now,bias:_resBias,evt:evt,asset:primaryAsset&&!fids.length?primaryAsset:''});
+  const pinEl=document.getElementById('resNPin');
+  const pin=!!(pinEl&&pinEl.checked&&!pinEl.disabled);
+  // ⚠ Kein Schreibpfad ohne try/catch mit sichtbarer Meldung (Regel 6) -
+  // seit 2026-09-30 ist das hier auch der Weg der Pinned-notes-Karte, deren
+  // Einzeilen-Eingabe (abNoteAdd) das bereits hatte. Scheitert es, bleibt
+  // das Fenster mit allem Getippten offen.
+  try{
+    pushU();
+    if(_resEditId){
+      const n=resNotes().find(x=>x.id===_resEditId);
+      if(n){if(n.seed&&!n.replacesSeed)n.replacesSeed=n.id;n.title=title||researchTitleFrom(body);n.body=body;n.tags=tags;n.fids=fids;n.fav=fav;n.pin=n.arch?false:pin;n.up=now;n.bias=_resBias;n.evt=evt;delete n.seed;}
+    }else{
+      const asset=primaryAsset&&!fids.length?primaryAsset:'';
+      // Neue Notizen stehen in der Asset-Reihenfolge (n.ord, Pinned-notes-
+      // Karte) OBEN - so wie es die fruehere Einzeilen-Eingabe der Karte
+      // (abNoteAdd) gehalten hat. Ohne ord landete sie hinter allen
+      // sortierten Notizen, also ganz unten.
+      const ids=resNoteAssetIds({fids,asset});
+      const ords=resNotes().filter(x=>x&&typeof x.ord==='number'&&resNoteAssetIds(x).some(a=>ids.includes(a))).map(x=>x.ord);
+      const id=uid();
+      research.notes.push({id,fids:fids,title:title||researchTitleFrom(body),body:body,tags:tags,fav:fav,pin,arch:false,ord:Math.min(0,...ords)-1,ts:now,up:now,bias:_resBias,evt:evt,asset});
+      // Scheitert gleich save(), aktualisiert ein zweites "Save" DIESE
+      // Notiz, statt eine zweite gleiche anzulegen.
+      _resEditId=id;
+    }
+    _resAutoPin=null;
+    save();
+  }catch(e){
+    alert('The note could not be saved: '+(e&&e.message||e)+'\nYour text is still in the window.');
+    return;
   }
-  _resAutoPin=null;
-  _resNoteBase=null;
-  save();closeM('mResNote');rerenderNotesHost();
+  closeM('mResNote');rerenderNotesHost();
 }
 // Loeschen DIREKT aus der Notizliste (Nutzer-Wunsch 2026-09-19: "Dann kann
 // ich selber die Notiz loeschen oder ins Archiv verschieben") - bis dahin
@@ -14769,7 +14893,6 @@ function delResNote(){
   const n=resNotes().find(x=>x.id===_resEditId);
   if(n)trashResNote(n);
   research.notes=resNotes().filter(x=>x.id!==_resEditId);
-  _resNoteBase=null;
   save();closeM('mResNote');rerenderNotesHost();
 }
 
@@ -16035,10 +16158,29 @@ function delWidget(id){
 
 // rename widget using rename modal
 let _renameCb=null;
+// mRename dient zwei Zwecken: Umbenennen (Textfeld) und "Add Dashboard
+// Widget" (Auswahlliste an derselben Stelle, dieselbe Id).
+// ⚠ Bis 2026-09-30 wurde das Textfeld nur nach einem ERFOLGREICHEN
+// Hinzufuegen zurueckgetauscht. Nach Cancel oder Klick daneben blieb die
+// Liste stehen, und das naechste "Rename" schrieb den Widget-Titel in eine
+// Liste von Widget-Typen - gemessen: <select>, Wert "" statt "Watchlist",
+// Save tat nichts. Deshalb stellt jetzt JEDER Oeffnungsweg sein Feld selbst her.
+function renameFeldAls(tag){
+  const alt=document.getElementById('mRenameInp');
+  if(alt&&alt.tagName===tag)return alt;
+  const neu=document.createElement(tag.toLowerCase());
+  neu.className='m-inp';neu.id='mRenameInp';
+  if(tag==='INPUT'){
+    neu.placeholder='New name...';
+    neu.addEventListener('keydown',e=>{if(e.key==='Enter')confirmRename();});
+  }
+  if(alt)alt.replaceWith(neu);
+  return neu;
+}
 function renameWidget(id){
   const w=widgets.find(x=>x.id===id);if(!w)return;
   document.getElementById('mRenameTitle').textContent='Rename Widget';
-  document.getElementById('mRenameInp').value=w.title||'';
+  renameFeldAls('INPUT').value=w.title||'';
   _renameCb=v=>{pushU();w.title=v;save();renderDash();};
   openM('mRename');setTimeout(()=>document.getElementById('mRenameInp').focus(),50);
 }
@@ -16048,24 +16190,15 @@ function confirmRename(){
 document.getElementById('mRenameInp')?.addEventListener('keydown',e=>{if(e.key==='Enter')confirmRename();});
 
 function addWidget(){
-  // Use rename modal with a select
+  // Use rename modal with a select (renameFeldAls tauscht es beim naechsten
+  // Umbenennen zurueck - egal, wie dieses Fenster geschlossen wurde).
   document.getElementById('mRenameTitle').textContent='Add Dashboard Widget';
-  const inp=document.getElementById('mRenameInp');
-  // Temporarily replace with select
-  const sel=document.createElement('select');
-  sel.className='m-inp';sel.id='mRenameInp';
+  const sel=renameFeldAls('SELECT');
   sel.innerHTML=W_TYPES.map((t,i)=>`<option value="${i}">${t.label}</option>`).join('');
-  inp.replaceWith(sel);
   _renameCb=v=>{
     const idx=parseInt(v);const t=W_TYPES[idx];if(!t)return;
     pushU();widgets.push({id:uid(),type:t.type,title:t.label,order:widgets.length,content:''});
     save();renderDash();
-    // restore input
-    const s2=document.getElementById('mRenameInp');
-    const newInp=document.createElement('input');
-    newInp.className='m-inp';newInp.id='mRenameInp';newInp.placeholder='New name...';
-    newInp.addEventListener('keydown',e=>{if(e.key==='Enter')confirmRename();});
-    s2.replaceWith(newInp);
   };
   openM('mRename');
 }
@@ -24561,7 +24694,7 @@ Object.assign(window,{
   // Erklaerung oeffnet sich nie (CLAUDE.md Regel 6). abInfoBtn steht mit
   // dabei, damit die Waechter den Knopf ohne Nachbau erzeugen koennen.
   openCardInfo,abInfoBtn,abInfoKey,
-  renderAssetBoard,abNoteAdd,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abNotesHtml,abQuickGridHtml,abPinnedHtml,abHistorieKarteHtml,
+  renderAssetBoard,abNoteHl,abNoteMove,abKontextHtml,abGrafikHtml,abQuickGridHtml,abPinnedHtml,abHistorieKarteHtml,
   abBiasWort,abDreht,yieldBiasFor,abKerzenBlock,abKontextReihe,abTagesKerzen,abImZeitraum,abFenster,
   assetPreisKarteHtml,abFeedFehltHinweis,abDochtGrund,abQuickZeileHtml,  // Kerzen-Bausteine und die Wochenend-Regel: von den Waechtern direkt
   // aufgerufen, damit die Regel geprueft wird und nicht nur dasteht.
@@ -24620,7 +24753,7 @@ Object.assign(window,{
   updateSidebarSelection,selSym,gotoSym,setSub,getRub,getInd,syncMacroRub,pullMacroFromCcy,rubAutoDerived,setRubBias,
   openBiasPicker,biasPickerChoose,closeBiasPicker,biasPickerOutside,togRubImp,togRubCollapse,delRub,mvRub,addRub,
   openInfoM,saveInfoM,setIndBias,syncIndOrderGlobal,syncMacroIndAddRemove,delInd,mvInd,addInd,cloneRubsFromUSD,
-  confirmAddSym,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,
+  confirmAddSym,openAddSym,renameFeldAls,FX_LINK_CCYS,escJs,escJH,openAssetCfg,renderAssetCfgBody,assetCfgApply,setAssetLinkCcy,
   setAssetDeriveRule,toggleAssetSync,openDelSym,confirmDelSym,autoPairBias,BIAS_LBL,flipCauseLines,FLIP_CAUSE_TXT,
   flipCauseBlock,queueScoreFlipAlert,triggerFlipGlow,setSuppressBiasFlipAlerts,recomputeAllSymBiases,
   recomputeAllPairBiases,rubAutoBiasNeeded,RUB_AUTO_BIAS_THRESHOLD,recomputeRubricAutoBias,SUM_PHRASE,sumPhrase,IND_FAMILY,indFamily,RUB_TREND_WORDS,RUB_TREND_DEFAULT,rubTrendWord,
@@ -24723,7 +24856,7 @@ Object.assign(window,{
   rateProbTimelineChart,rateProbSafeTargetX,scrollRateProbTo,TERM_FARBEN,termStructureData,termStructureCardHtml,
   renderRateProb,PAGE_IDS,TAB_ORDER,TABS,TABSTACKS_KEY,loadTabStacks,saveTabStacks,stackOf,tabIdFor,selectTab,
   TAB_ICONS,TAB_ICON_STACK,npIconSvg,tabBtnHtml,syncNavExpanded,ASSET_STACK_ID,renderTabBar,tabPressStart,tabPressEnd,
-  closeMGuarded,unsavedDiscard,unsavedSave,unsavedKeepEditing,registerModalGuard,resNoteDirty,
+  closeMGuarded,unsavedDiscard,unsavedSave,unsavedKeepEditing,registerModalGuard,modalIsDirty,MODAL_GUARDS,MODAL_GUARD_TABELLE,ESC_MODALS,guardArm,guardStand,
   onTabClick,onStackClick,createStack,addTabToStack,removeTabFromStack,dissolveStack,closeTabMenu,tabMenuOutside,
   openTabMenu,triggerEnterAnim,showTab,rerender,parsePolicyRate,CARRY_CACHE_KEY,loadRateCache,saveRateCache,rateInfo,
   realRateInfo,yieldSpreadSeries,carryRows,carryRowHTML,setRealRateSort,realRateTableHtml,setSpreadPair,

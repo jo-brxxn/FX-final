@@ -1358,3 +1358,25 @@ ACT = Abstand zur EMA in ATR (Bias-Farbe), Zeitraum = Mini-Leiste. Solange
 die eigene Aufzeichnung unter 20 Tagen liegt: ACT `n/20d`, Chart-Text
 „Building up“. Past-Liste: Filter „High impact“ in der Titelzeile vor dem ⓘ
 (derselbe Schalter wie „High-impact only“ der Kalender-Leiste).
+
+## Fenster (Modals): Knopfleiste fest unten, Nachfrage bei ungespeicherten Eingaben (Dauerregel seit 2026-09-30)
+
+Nutzer: *„ich will das die [Buttons Save und so] jetzt in einer eigenen Leiste fest fixiert da
+stehen“* und *„wenn man das Fenster durch wegdrücken schließt … ein kleines Fenster … mit der
+Frage ob man es speichern will … bearish nein und in bullish Farbe ja speichern“*.
+
+- **Knopfleiste:** die Knöpfe eines Fensters stehen IMMER in `<div class="m-btns">` als
+  **letztes Kind** von `.modal`. Dann klebt die Leiste per CSS an der Fensterunterkante,
+  randlos, mit Trennlinie — kein Scrollen bis „Save“. Eine Fußzeile mit eigenem
+  `style="display:flex…"` statt `.m-btns` klebt nicht (so war es bei Price alerts).
+  Wer den seitlichen Innenabstand eines Fensters ändert, setzt `--m-px` mit.
+- **Ungespeicherte Eingaben:** jedes Fenster mit Eingabefeld steht in `MODAL_GUARD_TABELLE`
+  (`js/main.js`: Felder, optional Zustand ohne Feld, Save-Funktion, Subjekt für den Satz)
+  und hat einen Öffner in `check/eingaben.js`. Cancel/Close rufen `closeMGuarded()`, nie
+  `closeM()`; das Overlay trägt kein eigenes `onclick`. Ausnahmen nur mit Grund in beiden
+  Listen (Suche; Einstellungen, die sofort wirken).
+- **Nachfrage:** „Save changes?“, genau zwei Knöpfe — **„No, delete“** auf `--bias-bear`,
+  **„Yes, save“** auf `--bias-bull`. Zurück ins Fenster: Klick neben die Nachfrage oder Escape.
+- **Neue Notizen aus einer Karte** öffnen den vollständigen Editor (kein Einzeilen-Feld in der
+  Karte); Vorbelegungen wie der Pin stehen sichtbar als Haken im Editor, nie still im Hintergrund.
+- Wächter: `check/eingaben.js`.

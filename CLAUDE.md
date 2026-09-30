@@ -45,7 +45,7 @@ betrifft.
 | Cross-Device-Sync für persistierten State (Muster + gebundene Felder) | `docs/state-sync.md` |
 | Score-Modell (Formel, Normierung, Altersgrenze, Stärke 1-10, Versionierung, **Score-Journal** = jede Änderung mit Ursache in der History) | `docs/score-model.md` |
 | Indikator-Datenquellen (Investing.com/Fallback-Policy, PMI/Trading-Economics-Scraping, Awaiting-Value, allgemeine Daten-Grundsätze) | `docs/data-sources.md` |
-| Design-System (Schrift, Typografie-Skala, wiederkehrende UI-Bausteine, **Kerzen-Regeln**) | `docs/design-system.md` |
+| Design-System (Schrift, Typografie-Skala, wiederkehrende UI-Bausteine, **Kerzen-Regeln**, **Fenster: feste Knopfleiste + Nachfrage bei ungespeicherten Eingaben**) | `docs/design-system.md` |
 | Navigation/Sidebar/Dashboard-Layout (Koyfin-Umbau, Mehrfach-Dashboards, Klick-/Animationsregeln) | `docs/navigation.md` |
 | Arbeits-Workflow (OK einholen, Version-Bump, Push-Regeln, Syntax-Checks) | `docs/workflow.md` |
 | Modul-Aufteilung von `index.html` in `js/*.js` (Vorgehen, window-Bruecke, AST-Verifikation) | `docs/module-split.md` |

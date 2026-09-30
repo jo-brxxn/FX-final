@@ -18659,3 +18659,96 @@ Asset-Seite; die Watchlist-Knöpfe bleiben unverändert.
 
 **Gemessen danach:** Bei 1366, 1000 und 390 px stehen alle vier Quicklinks auf 17px/700,
 keiner ist abgeschnitten. „Trends“, „Price“ und „Pinned notes“ sind gleich groß.
+
+## VERSION-CHECK-585 (2026-09-30) — Kein Fenster verliert Eingaben, Knopfleiste fest unten, Pinned notes → voller Editor
+
+**Wunsch** (drei Teile in einer Nachricht):
+1. „Wenn man bei den pinned Notes eine neue Notiz schreiben will dann will ich das sich direkt
+   das Fenster öffnet und man alles einstellen kann“.
+2. „… unten bei den Fenstern die Buttons Save und so aber manchmal muss man lange scrollen bis
+   man da ist ich will das die jetzt in einer eigenen Leiste fest fixiert da stehen“.
+3. „wenn man in einem Fenster ist und dort was ausfüllt und dann neben das Fenster geht ist ja
+   das ausgefüllte Weg zumindest bei den Notizen ist das noch irgendwo der Fall? Sonst mach dort
+   überall … ein kleines Fenster … mit der Frage ob man es speichern will und dann in bias Farbe
+   bearish nein und in bullish Farbe ja speichern also auf Englisch und no delete“.
+
+**Reproduziert** (Playwright, echte Klicks, 1500×1000; Text tippen → schließen → wieder öffnen):
+
+| Fenster / Öffnungsweg | Klick daneben | Escape | Cancel/Close |
+|---|---|---|---|
+| Notiz über „+ New note“ Asset-Seite (`newResNoteIn`) | zu, Text **weg** | nichts | zu, Text **weg** |
+| Notiz von der Watchlist (`newResNoteForAsset`) | zu, Text **weg** | nichts | zu, Text **weg** |
+| Notiz aus dem Archiv (`newResNote`) / bestehende (`openResNote`) | Nachfrage | nichts | Nachfrage |
+| Quick capture | zu, Text **weg** | nichts | zu, Text **weg** |
+| Add pair, Rename, Info-Notiz, Rate-Link, Quellen-Link, Cloud-Zugang | zu, **weg** | zu, **weg** | zu, **weg** |
+| Custom Telegram Alert | zu, **weg** | nichts | zu, **weg** |
+| Price alert, Add symbol | zu, ohne Nachfrage (Feld blieb zufällig stehen) | — | zu |
+
+Ja, bei den Notizen war es noch der Fall — auf genau den beiden Wegen, die man auf der
+Asset-Seite und der Watchlist benutzt. **Ursache an der Wurzel:** der Schutz vom 2026-09-01
+hielt EINEN eigenen Vergleichsstand (`_resNoteBase`), den jede Öffnen-Funktion selbst setzen
+musste; `newResNoteIn()` und `newResNoteForAsset()` taten es nie, `resNoteDirty()` meldete
+deshalb immer „nichts geändert“. Dazu schloss Escape per `style.display='none'` an allem
+vorbei, und `mPriceAlert` hatte ein eigenes `onclick="closeM(…)"` am Overlay, das VOR dem
+Schutz lief.
+
+**Knopfleiste gemessen:** „Save“ der Einstellungen stand 1554 px unter der Fensterunterkante
+(1500×1000; 1708 px bei 390×844), in der Hilfe 222 px — nur per Scrollen erreichbar.
+
+**Änderung:**
+- **Ein Mechanismus statt eines Vergleichsstands je Fenster** (`js/main.js`,
+  `MODAL_GUARD_TABELLE`): jedes Eingabefenster nennt seine Felder (+ Zustand ohne Feld, z. B.
+  Ordner-Chips/Bias der Notiz), `openM()` nimmt den Stand beim Öffnen auf, `closeM()` gibt ihn
+  frei. Damit kann kein Öffnungsweg den Schutz mehr vergessen. 12 Fenster eingetragen:
+  Notiz-Editor, Quick capture, Price alerts, Add symbol, Add pair, Rename/Add widget,
+  Info-Notiz, Telegram-Alert, Custom-Alert, Rate-Link, Quellen-Link, Cloud-Zugang (nur die vier
+  Textfelder — die Schalter darüber speichern sofort). Bewusst ausgenommen (mit Grund im Code
+  und im Wächter): Suche, Event-Auswahl vor dem Alert-Formular, Asset-/Stärke-Einstellungen
+  (wirken sofort).
+- **Jeder Schließ-Weg ohne Speichern fragt**: Klick daneben, Escape (jetzt über dieselbe
+  Funktion, oberstes Fenster zuerst), Cancel/Close.
+- **Nachfrage** „Save changes?“ mit genau zwei Knöpfen: **„No, delete“** auf `--bias-bear`,
+  **„Yes, save“** auf `--bias-bull` (vorher drei Knöpfe, Blau lag auf „Keep editing“, „Save“
+  war grau). Der Satz nennt, was fehlt („This note has not been saved yet.“). Zurück ins Fenster:
+  Klick neben die Nachfrage oder Escape; die Zeile „Tap outside this box to keep editing.“ sagt
+  es. „No, delete“ setzt die Felder auf den Stand beim Öffnen zurück — Add symbol und Price alert
+  leerten ihre Felder beim nächsten Öffnen nicht, das „Gelöschte“ stünde sonst wieder da
+  (`openAddSym()` neu, `openPriceAlertM()` leert das Level).
+- **Knopfleiste fest unten:** `.modal > .m-btns:last-child` klebt per `position:sticky` an der
+  Fensterunterkante, randlos (negativer Rand = Innenabstand `--m-px`), eigene Fläche und
+  Trennlinie; das Fenster verliert dafür seinen unteren Innenabstand (`:has`), sonst klebte die
+  Leiste 22 px darüber und Text liefe darunter sichtbar durch. Price alert bekam dafür dieselbe
+  `.m-btns`-Leiste wie alle anderen.
+- **Pinned notes:** das Einzeilen-Feld ist weg; an seiner Stelle und in seiner Form steht der
+  Einstieg „＋ New pinned note on USD…“, der den vollständigen Editor öffnet (Titel, Text,
+  Ordner, Tags, Bias, Event, Favorit), vorbelegt mit dem Asset. Der Pin ist jetzt ein
+  **sichtbarer Haken im Editor** („📌 Pinned — shows on the asset page and the watchlist“),
+  vorher war er für neue Notizen eine stille Entscheidung (`_resAutoPin`, griff nur, wenn die
+  Notiz im Ordner dieses Assets blieb). Neue Notizen stehen wie bisher oben (`n.ord`, jetzt in
+  `saveResNote`). `saveResNote` hat jetzt `try/catch` mit sichtbarer Meldung (Regel 6) und legt
+  bei einem zweiten „Save“ nach einem Fehler keine Doppelnotiz an.
+- Tote Reste entfernt: `abNotesHtml` (seit dem Umbau auf „Pinned notes“ nirgends eingebaut) und
+  `abNoteAdd`.
+
+**Nebenbefund (Fehlerklasse „Fenster behält Zustand vom letzten Mal“), mitbehoben:** nach einem
+abgebrochenen „Add Dashboard Widget“ blieb im Rename-Fenster die Auswahlliste stehen — das
+nächste „Rename“ zeigte gemessen ein `<select>` mit Wert „“ statt „Watchlist“, Save tat
+nichts. Jetzt stellt jeder Öffnungsweg sein Feld selbst her (`renameFeldAls`).
+
+**Im eigenen Entwurf gefunden und behoben:** „Save“ der Einstellungen lässt das Fenster offen
+(Statuszeile zeigt den Sync). Der Vergleichsstand blieb auf dem Stand beim Öffnen — ein Klick
+daneben fragte danach „Save changes?“ nach etwas längst Gespeichertem. `saveCloudCfg()` setzt
+den Stand jetzt nach dem Speichern neu; Wächter C prüft beide Fenster, die nach dem eigenen
+Speichern offen bleiben (Price alert, Settings) — mit auskommentierter Zeile rot.
+
+**Gemessen danach:** 54 Schließ-Vorgänge mit Eingabe (12 Fenster, 18 Öffnungswege, je Klick
+daneben/Escape/Cancel) — jeder fragt nach; dieselben ohne Eingabe (auch Quick capture mit
+vorbelegtem Text) — kein einziger Fehlalarm. „No, delete“ schließt und leert, „Yes, save“
+speichert (Editor und Quick capture), Klick neben die Nachfrage führt mit unversehrtem Text
+zurück. 102 Knopfleisten (33 Fenster + Notiz-Vollseite, je 3 Viewports) liegen bei überlaufendem
+Inhalt an der Unterkante (±1 px), randlos, ohne Querscrollen; „Save“ der Einstellungen jetzt
+981 px bei 982 px Fensterunterkante.
+
+**Wächter:** `check/eingaben.js` (A–E, siehe `check/README.md`), Gegenproben
+`--gegenprobe-schutz` (Quick capture ohne Schutz → rot mit „Fenster zu, Eingabe weg“) und
+`--gegenprobe-leiste` (Leiste nicht sticky → rot, z. B. „Abstand zur Unterkante -2145px“).
