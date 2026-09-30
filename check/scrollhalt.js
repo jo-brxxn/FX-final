@@ -16,6 +16,8 @@
 // sich nicht verschieben.
 //   node check/scrollhalt.js [--gegenprobe]   (Zuruecksetzen blockiert -> muss rot werden)
 // Dazu die "Back"-Pille nach einem Quick-Link: zurueck an die alte Scrollposition.
+// Und (seit 2026-09-30): nach renderDetail aendert sich im naechsten Frame
+// keine Kopfhoehe mehr (sonst springt der Inhalt auf dem iPad trotz Halten).
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -167,11 +169,55 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   back.forEach(r => { if (!r.ok || Math.abs(r.nach - r.vor) > 20) fail('ZURUECK NICHT AN DIE ALTE STELLE', `${r.weg}, dann "Back": scrollTop ${r.vor} -> ${r.nach} (Nutzer 2026-09-23: "wenn man back drueckt soll man zur alten Position kommen")`); });
   if (back.length < 3) fail('ZU WENIG GEPRUEFT', `nur ${back.length} Rueckwege geprueft`);
   if (geklickt < 60) fail('ZU WENIG GEPRUEFT', `nur ${geklickt} Bedienelemente geklickt - Selektoren veraltet?`);
+  // NACHJUSTIERT NACH DEM ZURUECKSETZEN (gefunden 2026-09-30): renderDetail
+  // setzt den Scrollstand synchron zurueck. Was danach erst im naechsten
+  // Frame (rAF) noch Hoehen aendert - Asset-Kopf einpassen, i einordnen -,
+  // verschiebt auf dem iPad den Inhalt (WebKit hat keinen Scroll-Anker;
+  // Chromium gleicht es aus, deshalb sah man es nur an der Zahl: 1200 ->
+  // 1147). Gemessen: Kopf 163 -> 110px, COT-Kopf 43 -> 51px. Ob der Kopf
+  // umbricht, haengt an den Daten des Tages (am 2026-09-26 bei 1000px nicht,
+  // am 2026-09-30 schon) - deshalb wird der Umbruch hier ERZWUNGEN: ein
+  // mit der Schrift wachsender Platzhalter hinter dem Titel.
+  // Gegenprobe: das synchrone Einpassen direkt nach renderDetail wieder
+  // zuruecknehmen -> der naechste Frame aendert den Kopf -> rot.
+  const nachj = await p.evaluate(async (gp) => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(() => r()));
+    const st = document.createElement('style');
+    document.head.appendChild(st);
+    document.querySelectorAll('.ov').forEach(o => o.style.display = 'none');
+    const out = []; let umgebrochen = 0;
+    for (const sym of ['USD', 'GOLD']) {
+      gotoSym(sym); await sleep(300);
+      const det = document.getElementById('detail');
+      const mess = () => [...det.querySelectorAll('.ahead,.ab-tile-hd,.rub-hdr,.dw-hdr')].map(e => Math.round(e.getBoundingClientRect().height));
+      // Platzhalterbreite suchen, bei der der Kopf umbricht UND sich durch
+      // Verkleinern (bis 75%) wieder einpassen laesst - nur dann gibt es
+      // eine Nachjustierung, die zu spaet kommen koennte.
+      let t = null;
+      for (const em of [0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5]) {
+        st.textContent = em ? `.ahead .atitle::after{content:"";display:inline-block;width:${em}em}` : '';
+        renderDetail();
+        t = det.querySelector('.ahead .atitle');
+        if (t && t.style.fontSize) break;
+      }
+      if (t && t.style.fontSize) umgebrochen++;
+      if (gp) det.querySelectorAll('.ahead .atitle,.ahead .afull').forEach(e => { e.style.fontSize = ''; });
+      const sofort = mess();
+      await raf(); await raf(); await sleep(100);
+      const spaeter = mess();
+      const d = sofort.map((h, i) => spaeter[i] - h).filter(x => Math.abs(x) > 1);
+      if (d.length) out.push(`${sym}: ${d.length} Koepfe aendern ihre Hoehe erst im Frame NACH renderDetail (${d.slice(0, 4).join(', ')} px)`);
+    }
+    st.remove();
+    return { out, umgebrochen };
+  }, GEGENPROBE);
+  nachj.out.forEach(f => fail('NACHJUSTIERT NACH DEM ZURUECKSETZEN', `${f} - auf dem iPad springt der Inhalt um diese Hoehe (scrollHalten muss infoKnoepfeEinordnen/kopfTitelEinpassen VOR dem Zuruecksetzen aufrufen)`));
+  if (!nachj.umgebrochen) fail('ZU WENIG GEPRUEFT', 'erzwungener Kopfumbruch griff nicht - der Kopf wurde nirgends eingepasst');
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
   if (GEGENPROBE) {
-    const ok = F.some(x => x.startsWith('SPRUNG BEIM NEUZEICHNEN'));
-    console.log(ok ? 'scrollhalt --gegenprobe: ok (fehlendes Zuruecksetzen wird gemeldet)' : 'scrollhalt --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
+    const ok = F.some(x => x.startsWith('SPRUNG BEIM NEUZEICHNEN')) && F.some(x => x.startsWith('NACHJUSTIERT NACH DEM ZURUECKSETZEN'));
+    console.log(ok ? 'scrollhalt --gegenprobe: ok (fehlendes Zuruecksetzen und Nachjustieren im naechsten Frame werden gemeldet)' : 'scrollhalt --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
   }
   if (F.length) { console.log(`scrollhalt: ${F.length} Befund(e)\n  ` + F.slice(0, 30).join('\n  ')); process.exit(1); }
   console.log(`scrollhalt: ok (${geklickt} Bedienelemente auf USD, GOLD, Matrix, Seasonality, Carry und Calendar plus ${rs.n} Seiten ohne Klick neu gezeichnet, bei nachgestelltem WebKit-Verhalten - Scrollstand bleibt)`);

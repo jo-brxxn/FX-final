@@ -18752,3 +18752,33 @@ Inhalt an der Unterkante (±1 px), randlos, ohne Querscrollen; „Save“ der Ei
 **Wächter:** `check/eingaben.js` (A–E, siehe `check/README.md`), Gegenproben
 `--gegenprobe-schutz` (Quick capture ohne Schutz → rot mit „Fenster zu, Eingabe weg“) und
 `--gegenprobe-leiste` (Leiste nicht sticky → rot, z. B. „Abstand zur Unterkante -2145px“).
+
+### Beim Gesamtlauf gefunden: Scrollsprung auf dem iPad (war auch auf `main` rot)
+
+`check/scrollhalt.js` meldete 12 Befunde, alle mit demselben Sprung um 52/53 px (z. B.
+Zeitraum-Knopf „1Y“: scrollTop 4363 → 4311; „Back“ nach Trends/Calendar/Data: 1200 → 1148).
+**Nicht aus dieser Änderung:** auf dem unveränderten `main` (6e3286aa) identisch rot, ebenso
+auf 577–582 — am 2026-09-26 war 577 noch grün. Also datenabhängig.
+
+**Gemessen** (1000×695, USD, WebKit-Kürzung nachgestellt): direkt nach `renderDetail()` ist der
+Asset-Kopf 163 px hoch, einen Frame später 110 px; der Kopf der COT-Karte 43 → 51 px. Grund:
+`kopfTitelEinpassen()` (Titel verkleinern, wenn der Kopf umbricht) und `infoKnoepfeEinordnen()`
+liefen nur per `requestAnimationFrame` aus einem MutationObserver — NACH `scrollZurueck()`.
+Chromium gleicht das mit seinem Scroll-Anker aus (deshalb nur als Zahl sichtbar), Safari hat
+keinen Scroll-Anker: auf dem iPad sprang der Inhalt bei jedem Zeitraum-Knopf und nach „Back“
+sichtbar. Datenabhängig, weil der Kopf erst mit der heutigen Meta-Leiste bei 1000 px umbricht.
+
+**Fix an der Wurzel:** die Rücksetz-Funktion von `scrollHalten()` ruft beide Nachjustierungen
+jetzt synchron VOR dem Zurücksetzen auf (beide idempotent; der rAF-Lauf danach ändert nichts
+mehr). **Fehlerklasse gesucht:** alle 16 Seiten-Renderfunktionen neu gezeichnet und die
+Kopfhöhen direkt danach gegen einen Frame später verglichen (1000×695 und 1500×1000). Alter
+Stand: nur die Asset-Seite bei 1000 px (−53 px Asset-Kopf, +8 px COT-Kopf), alle anderen 0.
+Neuer Stand: überall 0. Der Fix sitzt trotzdem in `scrollHalten` statt nur in `renderDetail`,
+damit jede der 15 Render-Funktionen mit gehaltenem Scrollstand abgedeckt ist, sobald eine
+andere Seite umbrechende Köpfe bekommt. Auf der Asset-Seite bleibt scrollTop jetzt 1200.
+
+**Wächter:** neue Stufe „NACHJUSTIERT NACH DEM ZURUECKSETZEN“ in `scrollhalt.js` — erzwingt den
+Kopfumbruch (mitwachsender Platzhalter hinter dem Titel, Breite wird gesucht, bis das Einpassen
+greift), damit sie nicht vom Datenstand des Tages abhängt, und prüft, dass im Frame nach
+`renderDetail` keine Kopfhöhe mehr wechselt. Gegen den alten Code rot (COT-Kopf +8 px bei USD
+und GOLD), `--gegenprobe` meldet beide Stufen.

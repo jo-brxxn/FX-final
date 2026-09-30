@@ -606,12 +606,27 @@ function ar(el){if(!el)return;el.style.height='auto';el.style.height=(el.scrollH
 // exakt demselben Inhalt; merken + zuruecksetzen -> 1500 bleibt. Chromium
 // kuerzt erst am Ende des Durchlaufs und zeigt den Fehler nie - deshalb
 // blieb er in allen Pruefskripten unsichtbar.
+// ⚠ Seit 2026-09-30 laufen VOR dem Zuruecksetzen die beiden Nachjustierungen,
+// die der MutationObserver bei kopfTitelEinpassen sonst erst im NAECHSTEN
+// Frame (rAF) macht: i-Knoepfe einordnen und den Asset-Kopf einpassen.
+// Gemessen bei 1000px (USD): frisch gezeichnet ist der Asset-Kopf 163px hoch,
+// eingepasst 110px; der Kopf der COT-Karte waechst durch das Einordnen des i
+// von 43 auf 51px. Der Stand wurde VOR beidem gesetzt - Chromium gleicht das
+// per Scroll-Anker aus (scrollTop 1200 -> 1147), Safari/iPad kennt keinen
+// Scroll-Anker: dort sprang der Inhalt bei jedem Zeitraum-Knopf und nach
+// "Back" sichtbar um 53px (check/scrollhalt.js, 12 Befunde). Hier statt in
+// renderDetail, weil alle 15 Render-Funktionen mit scrollHalten dieselben
+// i-Koepfe tragen koennen. Beide sind idempotent; der rAF-Lauf danach
+// aendert nichts mehr.
 function scrollHalten(el){
   const l=[];
   for(let x=el;x&&x.nodeType===1;x=x.parentElement)if(x.scrollTop)l.push([x,x.scrollTop]);
   const se=document.scrollingElement;
   if(se&&se.scrollTop&&!l.some(([x])=>x===se))l.push([se,se.scrollTop]);
-  return()=>l.forEach(([x,t])=>{if(x.scrollTop!==t)x.scrollTop=t;});
+  return()=>{
+    if(el){try{infoKnoepfeEinordnen(el);kopfTitelEinpassen(el);}catch(e){}}
+    l.forEach(([x,t])=>{if(x.scrollTop!==t)x.scrollTop=t;});
+  };
 }
 function arAlle(els){
   const l=[...els].filter(Boolean);
@@ -7391,6 +7406,9 @@ function renderDetail(){
     ${renderSpecTab(c)}
   </div>`;
   arAlle(document.querySelectorAll('.rtxt,.rub-summary-txt,.nt-item-tx'));
+  // scrollZurueck() passt vorher Asset-Kopf und i-Knoepfe ein (siehe
+  // scrollHalten, 2026-09-30) - sonst aenderten sie ihre Hoehe erst im
+  // naechsten Frame, und auf dem iPad sprang der Inhalt um 53px.
   scrollZurueck();                              // nach den Textfeld-Hoehen: dann stimmt die Gesamthoehe
   attachChartHovers(document.getElementById('detail'));
   // Sidebar-Zahlen und den Score im Detail-Kopf aus EINER frischen Rechnung
