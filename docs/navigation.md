@@ -24,6 +24,14 @@ per Rückfrage festgelegt:
   und beim Tipp daneben. Vom 2026-09-22 bis dahin klappten Gruppen „richtig
   klein" unter dem Symbol auf. Kein Stapel öffnet mehr von selbst beim
   Seitenwechsel; hervorgehoben wird er über `.has-active`.
+- **Panels klappen von der Leistenkante nach rechts auf, nie darüber
+  hinaus** (Dauerregel seit 2026-09-30, dritte Meldung: *„dann klappt erst
+  ein kleiner Teil zu viel aus der dann verschwindet ich will das der nicht
+  mitausklappt"*). Aufgedeckt wird per `clip-path` von `inset(0 100% 0 0)`
+  auf das volle Feld; das Panel steht dabei von Anfang an an seiner
+  Endposition. **Kein `transform`/Einschieben von links** — das frühere
+  `translateX(-10px)` legte das Panel ~150 ms 10 px über die Symbolleiste.
+  Kein Bild der Animation ist größer als das Endbild (`check/stapel.js`).
 - **Asset-Panel so breit wie der Inhalt** (`width:max-content`, 2026-09-23:
   *„der Name des Assets und der Score enger beisammen"*): der Score steht
   direkt rechts neben der Namensspalte und bleibt untereinander bündig.

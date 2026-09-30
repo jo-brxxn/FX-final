@@ -5513,9 +5513,27 @@ body.anim-paused *,body.anim-paused *::before,body.anim-paused *::after{animatio
   width:max-content;min-width:180px;max-width:min(280px,calc(100vw - 76px));
   max-height:none;margin:0;padding:12px 8px 16px;gap:2px;overflow-y:auto;overflow-x:hidden;z-index:60;
   background:var(--rail-bg);border-right:1px solid var(--rail-edge);box-shadow:14px 0 34px rgba(8,15,30,.32);
-  transform:translateX(-10px);opacity:0;visibility:hidden;
-  transition:transform .18s cubic-bezier(.4,0,.2,1),opacity .14s ease,visibility .18s}
-#navSidebar .np-sub-wrap.open{transform:none;opacity:1;visibility:visible}
+  clip-path:inset(0 100% 0 0);opacity:0;visibility:hidden;
+  transition:clip-path .2s cubic-bezier(.4,0,.2,1),opacity .14s ease,visibility .2s}
+/* ⚠ AUFKLAPPEN PER clip-path, NICHT MEHR PER translateX (Nutzer 2026-09-30,
+   dritte Meldung nach 2026-09-23 und -25: "wenn man den Asset Stapel
+   ausklappt dann klappt erst ein kleiner Teil zu viel aus der dann
+   verschwindet ich will das der nicht mitausklappt"). GEMESSEN (1180x820,
+   Touch, Bild fuer Bild): das Panel startete mit translateX(-10px) bei
+   x=66 statt 76 - die ersten ~150 ms lag es 10px UEBER der Symbolleiste,
+   deckte deren Trennlinie ab und glitt dann zurueck; genau dieser Streifen
+   war der Teil, der "zu viel" aufging und wieder verschwand. Jetzt steht
+   das Panel von Anfang an an seiner Endposition und wird von der
+   Leistenkante nach rechts aufgedeckt - kein Bild ist groesser als das
+   Endbild. Das Freigeben nach oben/unten/rechts (negative Werte) laesst
+   den Schatten stehen; links bleibt 0, sonst laege er wieder auf der Leiste.
+   Waechter: check/stapel.js (jedes Bild der Animation gegen das Endbild). */
+#navSidebar .np-sub-wrap.open{clip-path:inset(-60px -80px -60px 0);opacity:1;visibility:visible}
+/* Der Animations-Schalter der Einstellungen und "Bewegung reduzieren"
+   erreichten das Panel nicht: die Sammelregel body.no-ui-anim .np-sub-wrap
+   (0,2,1) verlor gegen #navSidebar .np-sub-wrap (1,1,0). */
+body.no-ui-anim #navSidebar .np-sub-wrap{transition:none}
+@media(prefers-reduced-motion:reduce){#navSidebar .np-sub-wrap{transition:none}}
 /* Eintraege im Panel: Zeile mit Symbol + Name, wie die Asset-Zeilen. */
 #navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;
   width:100%;padding:8px 12px;border:none;border-radius:8px;text-align:left;white-space:nowrap;
@@ -6012,11 +6030,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-585 - Kein Fenster verliert mehr Eingaben (Nachfrage Yes, save / No, delete), Knopfleiste fest unten, Pinned notes oeffnen den vollen Notiz-Editor; Asset-Seite springt auf dem iPad beim Neuzeichnen nicht mehr um 53px."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-586 - Asset-Stapel klappt nicht mehr ueber die Leiste hinaus; nichts springt nach dem Cloud-Abgleich zurueck (Drei-Wege-Abgleich, Push und Pull nacheinander)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-585</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-586</span>
     </span>
   </div>
   <div class="hdr-r">

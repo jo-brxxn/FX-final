@@ -18782,3 +18782,79 @@ Kopfumbruch (mitwachsender Platzhalter hinter dem Titel, Breite wird gesucht, bi
 greift), damit sie nicht vom Datenstand des Tages abhängt, und prüft, dass im Frame nach
 `renderDetail` keine Kopfhöhe mehr wechselt. Gegen den alten Code rot (COT-Kopf +8 px bei USD
 und GOLD), `--gegenprobe` meldet beide Stufen.
+
+## VERSION-CHECK-586 (2026-09-30) — Asset-Stapel ohne Überschuss, nichts springt zurück
+
+**Wunsch:** *„Schau dir mal ganz genau was passiert wenn man den Asset Stapel ausklappt dann
+klappt erst ein kleiner Teil zu viel aus der dann verschwindet ich will das der nicht
+mitausklappt der Teil. Und manchmal wenn ich ein paar button drücke und generell Eingaben mache
+dann kommt aufeinmal ein Moment und dann gehen die Buttons zurück auf den Zustand von davor. Ich
+glaube das jst vorallem bei den neuen Sachen aber Check das überall mal und wenn es wirklich ein
+Problem ist richte Sachen ein das das nicht nach jeder Änderung so ist weil das war schonmal so“*
+
+### 1. Asset-Stapel: der „Teil zu viel“ (dritte Meldung nach 2026-09-23 und -25)
+
+**Gemessen** (1180×820, Touch, jedes Bild per `requestAnimationFrame`, dazu Standbilder bei
+zehnfach verlangsamter Animation): das Panel startete mit `translateX(-10px)` bei x=66 statt 76
+und glitt in ~150 ms an seinen Platz. In dieser Zeit lag es 10 px über der Symbolleiste und
+deckte deren Trennlinie ab — genau der Streifen, der „zu viel“ aufging und wieder verschwand.
+Breite konstant 172,7 px, andere Panels unsichtbar (die Spur vom 23.09. war es nicht).
+**Fix:** Aufdecken per `clip-path` von der Leistenkante nach rechts (`inset(0 100% 0 0)` →
+volles Feld, rechts/oben/unten Luft für den Schatten, links 0). Das Panel steht von Anfang an
+an seiner Endposition; gilt für alle Stapel. **Nebenbefund:** der Animations-Schalter der
+Einstellungen und „Bewegung reduzieren“ erreichten das Panel nie — die Sammelregel
+`body.no-ui-anim .np-sub-wrap` (0,2,1) verlor gegen `#navSidebar .np-sub-wrap` (1,1,0);
+eigene Regeln ergänzt.
+**Wächter:** `check/stapel.js` prüft jetzt jedes Bild des Aufklappens aller Stapel (67 Bilder,
+keins größer als das Endbild); gegen den alten Stand rot (7 Bilder bei x=66,2),
+`--gegenprobe-aufklappen` rot.
+
+### 2. Zurückspringende Buttons
+
+**Überall gemessen, im laufenden Betrieb:** Messwerkzeug klickt auf allen 16 Seiten jedes
+Bedienelement und löst danach die automatischen Ereignisse aus — Minuten-Neuzeichnen
+(Dashboard/Matrix/Kalender), Datenupdate (`recomputeAuto` + Preis-Feed), Übernahme desselben
+Stands (anderer Tab/Aufwachen). **Ergebnis: auf keiner Seite springt dabei etwas zurück.**
+Markierungs-Prüfung: 61 speichernde Klicks, einer ohne Nutzer-Markierung — die
+Vorschlagszeilen der leeren Dashboard-Watchlist riefen `setWatched()` direkt auf (kein
+`pushU`, kein `save`); jetzt `toggleWatch()`.
+
+**Reproduziert mit nachgestellter Cloud** (echte Klicks, Supabase per `page.route` ersetzt):
+App öffnen, der Start-Abgleich braucht 3 s, in der Zeit ein Paar auf die Watchlist und einen
+Indikator-Bias setzen → als die Antwort kam, waren **beide wieder auf dem alten Stand**;
+Candles|Line blieb (geschützte Einstellung). Ursache: `cloudPull` ersetzte per
+`applySnap(cd)` den ganzen Kernzustand, `prefPending` schützte nur die Einstellungen daneben.
+Und die Cloud-Version ist beim Öffnen fast immer eine andere, weil jedes Gerät Verlauf und
+Journal automatisch hochlädt — deshalb „manchmal“ und „ein Moment“ (das Neuzeichnen nach dem
+Abgleich). Dieselbe Klasse wie 2026-07-07/-26/-27, nur eine Ebene tiefer.
+
+Beim Bau des Wächters zwei weitere echte Befunde:
+- **Push während des Pulls:** eine Eingabe während des Start-Pulls löste nach 1,5 s schon einen
+  Push aus — der überschrieb in der Cloud die Änderungen des anderen Geräts; mit eigenen
+  offenen Änderungen prüfte der Push die Cloud gar nicht erst.
+- **Markierung zu früh gelöscht:** ein Push löschte „noch nicht oben“ auch für eine Eingabe,
+  die WÄHREND des Push passierte; der nächste fremde Stand zog sie dann weg.
+
+**Fix an der Wurzel** (Regeln in `docs/state-sync.md`):
+1. `syncMerge3(basis,lokal,cloud)` — Drei-Wege-Abgleich im Pull: was dieses Gerät seit dem
+   letzten gemeinsamen Stand (`_syncBasis`) geändert hat, bleibt; alles andere kommt aus der
+   Cloud; Listen mit `id` je Eintrag (anlegen/löschen auf beiden Seiten).
+2. `syncSeriell` — Push und Pull nie gleichzeitig; der Push gleicht auch mit eigenen offenen
+   Änderungen erst ab (außer ohne bekannte Basis, dann wie bisher).
+3. `_userEditZaehler` — die Markierung wird nur gelöscht, wenn seit dem Start des Schritts
+   keine neue Eingabe kam.
+
+**Gemessen danach:** 24 speichernde Klicks während des angehaltenen Abgleichs (96 geänderte
+Felder) bleiben, alle 14 Felder des anderen Geräts kommen an; Eingabe während des Push bleibt
+markiert und geht hoch; ohne eigene Eingabe kommen Änderung, neuer Eintrag und Löschung an.
+**Wächter:** `check/zurueck.js` (A–D) — klickt sich selbst durch alle Bedienelemente, neue
+Funktionen sind also ohne gepflegte Liste dabei. Gegen den alten Stand rot (96/96
+zurückgesprungen, 1 unmarkierter Klick, Push-Stufe rot); Gegenproben `--gegenprobe-abgleich`,
+`--gegenprobe-markierung`, `--gegenprobe-push` rot.
+
+**Nicht geändert, zur Entscheidung:** rund 35 Ansichts-Filter werden gar nicht gespeichert und
+stehen nach einem Neuladen (auf dem iPad nach längerer Pause im Hintergrund) wieder auf
+Standard — u. a. Performance-Zeitraum und Headlines-Filter (Dashboard), Korrelations-Paare
+(Matrix), Zeitraum und Paar-Modus (Trends), COT-Filter, Sentiment-Unterseite,
+Seasonality-Asset, News-Filter, Data-Modus/-Zeitraum, Carry-Sortierung/-Paar/-Laufzeit,
+History-Ageing. Teils bewusst so festgelegt (Kalender-Karte Month|Past, Past-Zeitraum).

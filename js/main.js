@@ -5166,6 +5166,14 @@ let uStack=[],rStack=[];
 // noch nicht hochgeladene Aenderung nach einem schnellen Reload fuer einen
 // reinen Auto-Refresh halten und den fremden Cloud-Stand drueberziehen.
 let _lastUserEditTs=0,_userEditedSinceSync=localStorage.getItem('fxpro_user_pending')==='1';
+// Zaehlt JEDE Nutzer-Aenderung (pushU, markPrefEdit, markUserEditTs). Push
+// und Pull merken sich den Stand beim Start und loeschen die Markierung
+// "noch nicht oben" am Ende nur, wenn seitdem keine neue dazukam - sonst
+// galt eine Eingabe, die WAEHREND eines laufenden Abgleichs passierte, als
+// schon hochgeladen, und der naechste fremde Stand zog sie wieder weg
+// (Nutzer 2026-09-30: "dann gehen die Buttons zurueck auf den Zustand von
+// davor").
+let _userEditZaehler=0;
 let _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
 // Setter statt Direktzugriff, damit importierende Module (z.B. js/score.js)
 // den Wert setzen koennen - Import-Bindings sind schreibgeschuetzt von
@@ -5179,7 +5187,7 @@ function markUserSynced(){_userEditedSinceSync=false;try{localStorage.removeItem
 // Toggle als "nur Auto-Refresh" ein, ersetzte den Push durch einen Pull
 // und zog die ALTE Cloud-Stufe drueber - der Hide-Button "sprang zurueck",
 // sobald irgendein anderes Geraet zwischenzeitlich gepusht hatte.
-function markPrefEdit(){_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
+function markPrefEdit(){_userEditZaehler++;_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
 // ── Manuelles Score-Aenderungs-Log ──────────────────────────────────
 // Protokolliert JEDE vom Nutzer selbst ausgeloeste Score-Aenderung
 // (Indikator-Bias per Klick, ★-Wichtig-Toggle) mit Zeitstempel, alt->neu
@@ -5415,7 +5423,7 @@ function researchForSnap(){
 // zusaetzlich auf das Geraet.
 const SNAP_REPLACER=(k,v)=>k==='chartHist'?undefined:v;
 function snap(){return JSON.stringify({syms,pairCats,pairs,noteCats,research:researchForSnap(),researchFolders,researchAnalysis,calEvts,widgets,dashRemovedTypes,customIds,rubOrder,sbOrder,catOrder,rateWatchCustom,indLinkCustom,btReasons,seedNoteFlags,dashV,eventAlerts,priceAlerts,scoreLog},SNAP_REPLACER);}
-function pushU(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
+function pushU(){_userEditZaehler++;_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}uStack.push(snap());if(uStack.length>60)uStack.shift();rStack=[];updUB();}
 // Sicherheits-Grenze fuer JEDEN Weg, wie Zustand von aussen in die App kommt
 // (Cloud-Sync, Datei-Import, Undo/Redo/Backup) - applySnap() ist dafuer laut
 // CLAUDE.md-Grundsatz der EINE gemeinsame Trichter. Symbol-IDs werden an
@@ -5616,7 +5624,7 @@ function applySnap(s){const d=sanitizeSnapIds(JSON.parse(s));
 // save()s Multi-Tab-Schutz noch cloudPush()s optimistische Versionspruefung
 // einen Undo/Redo-Klick als eigene Nutzeraktion (Nutzer-Bugreport 2026-07-27,
 // gleiche Bug-Klasse wie toggleMwSym/die Notes-Funktionen).
-function markUserEditTs(){_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
+function markUserEditTs(){_userEditZaehler++;_lastUserEditTs=Date.now();_userEditedSinceSync=true;try{localStorage.setItem('fxpro_user_pending','1');}catch(e){}}
 function doUndo(){if(!uStack.length)return;markUserEditTs();rStack.push(snap());_flipCauseTag='undo';applySnap(uStack.pop());_flipCauseTag=null;save();renderSidebar();rerender();updUB();}
 function doRedo(){if(!rStack.length)return;markUserEditTs();uStack.push(snap());_flipCauseTag='undo';applySnap(rStack.pop());_flipCauseTag=null;save();renderSidebar();rerender();updUB();}
 function updUB(){document.getElementById('undoBtn').disabled=!uStack.length;document.getElementById('redoBtn').disabled=!rStack.length;}
@@ -6616,10 +6624,73 @@ document.addEventListener('keydown',e=>{
     if(p){e.preventDefault();showTab('watch');const el=document.getElementById('pgWatch');if(el)el.scrollTop=0;}
   }
 });
+// ── DREI-WEGE-ABGLEICH beim Cloud-Pull (2026-09-30) ────────────────────
+// basis = der letzte Stand, den dieses Geraet und die Cloud GEMEINSAM hatten
+//         (_syncBasis: nach jedem Push/Pull, beim Start ohne Offenes)
+// lokal = dieses Geraet jetzt, mit Aenderungen, die noch nicht oben sind
+// cloud = was gerade aus der Cloud kommt
+// Je Feld: hat DIESES Geraet es seit der Basis geaendert, gilt lokal - der
+// Nutzer hat es gerade eben getan und sieht es vor sich. Sonst die Cloud.
+// Listen, deren Eintraege eine id tragen (Assets, Karten, Indikatoren,
+// Paare, Widgets, Notizen, Alarme), werden je Eintrag abgeglichen: lokal
+// angelegte bleiben, anderswo angelegte kommen dazu, lokal geloeschte
+// bleiben weg. Listen ohne id sind ein Wert (lokal geaendert -> lokal).
+// ⚠ Ohne Basis (Start mit nicht hochgeladenen Aenderungen, bis der erste
+// Push durch ist) wird nicht abgeglichen - dann gilt wie bisher die Cloud.
+// Waechter: check/zurueck.js.
+let _syncBasis=null;
+function syncMerge3(basis,lokal,cloud){
+  const gleich=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
+  if(gleich(lokal,basis))return cloud;
+  if(gleich(cloud,basis))return lokal;
+  const obj=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
+  if(obj(lokal)&&obj(cloud)&&obj(basis)){
+    const out={};
+    new Set([...Object.keys(basis),...Object.keys(lokal),...Object.keys(cloud)]).forEach(k=>{
+      const v=syncMerge3(basis[k],lokal[k],cloud[k]);
+      if(v!==undefined)out[k]=v;
+    });
+    return out;
+  }
+  const idListe=a=>Array.isArray(a)&&a.every(e=>e!==null&&typeof e==='object'&&(typeof e.id==='string'||typeof e.id==='number'));
+  if(idListe(lokal)&&idListe(cloud)&&idListe(basis)&&(lokal.length||cloud.length)){
+    const B=new Map(basis.map(e=>[e.id,e])),L=new Map(lokal.map(e=>[e.id,e])),C=new Map(cloud.map(e=>[e.id,e]));
+    const bIds=basis.map(e=>e.id),lIds=lokal.map(e=>e.id),cIds=cloud.map(e=>e.id);
+    // Reihenfolge: hat dieses Geraet umsortiert/angelegt/geloescht, seine;
+    // sonst die der Cloud. Was nur in der anderen Liste steht, haengt hinten an.
+    const reihe=gleich(lIds,bIds)?cIds.concat(lIds.filter(id=>!C.has(id))):lIds.concat(cIds.filter(id=>!L.has(id)));
+    const out=[];
+    reihe.forEach(id=>{
+      const b=B.get(id),l=L.get(id),c=C.get(id);
+      if(l!==undefined&&c!==undefined){out.push(syncMerge3(b,l,c));return;}
+      if(l!==undefined){                 // nur lokal
+        if(b===undefined||!gleich(l,b))out.push(l);   // lokal angelegt oder lokal geaendert
+        return;                          // anderswo geloescht, hier unveraendert -> weg
+      }
+      if(c!==undefined&&b===undefined)out.push(c);    // anderswo angelegt
+      // in Basis und Cloud, lokal geloescht -> bleibt weg
+    });
+    return out;
+  }
+  return lokal;
+}
 // Gibt true/false zurueck (Erfolg/Misserfolg), damit z.B. der
 // Online-Reconnect-Handler (siehe unten) einen fehlgeschlagenen Push
 // automatisch nochmal versuchen kann.
-async function cloudPush(manual){
+// ⚠ Push und Pull laufen NIE gleichzeitig (Warteschlange, 2026-09-30).
+// Gemessen: beim Oeffnen der App war der Start-Pull noch unterwegs, eine
+// Eingabe loeste nach 1,5 s schon einen Push aus - der ueberschrieb in der
+// Cloud die Aenderungen des anderen Geraets, und die verspaetete
+// Pull-Antwort passte danach nicht mehr zur Basis des Drei-Wege-Abgleichs.
+// Jetzt wartet jeder Schritt, bis der vorige fertig ist; der Push nach einer
+// Eingabe kommt also erst NACH dem Abgleich und traegt beide Staende.
+// Innerhalb eines Schritts wird die Roh-Funktion direkt gerufen (sonst
+// wartete ein Schritt auf sich selbst).
+let _syncKette=Promise.resolve();
+function syncSeriell(fn){const lauf=_syncKette.then(fn,fn);_syncKette=lauf.catch(()=>{});return lauf;}
+function cloudPush(manual){return syncSeriell(()=>cloudPushRoh(manual));}
+function cloudPull(manual,forceOverwrite){return syncSeriell(()=>cloudPullRoh(manual,forceOverwrite));}
+async function cloudPushRoh(manual){
   const cfg=getCloudCfg();if(!cfg)return false;
   try{
     // Optimistische Versionspruefung (nur Auto-Pushes): hat ein ANDERES
@@ -6630,7 +6701,16 @@ async function cloudPush(manual){
     // ein stundenlang im Hintergrund offenes iPad mit seinem naechsten
     // Auto-Refresh-Push die frischen Handy-Aenderungen aus der Cloud.
     const userPending=_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1';
-    if(!manual&&!userPending){
+    // ⚠ Seit 2026-09-30 AUCH mit eigenen, noch nicht hochgeladenen
+    // Aenderungen: vorher lud der Push dann ohne Blick in die Cloud hoch und
+    // ueberschrieb, was das andere Geraet inzwischen geaendert hatte (dort
+    // "sprang" es dann beim naechsten Abgleich zurueck). Mit dem
+    // Drei-Wege-Abgleich (syncMerge3) bleiben die eigenen Aenderungen beim
+    // Pull erhalten; cloudPull stoesst danach selbst den Push des
+    // zusammengefuehrten Stands an. Ohne gemeinsame Basis (_syncBasis) geht
+    // das nicht - dann wie bisher direkt hochladen, sonst waeren die eigenen
+    // Aenderungen weg.
+    if(!manual&&(!userPending||_syncBasis)){
       try{
         const chk=await fetch(cfg.url+'/rest/v1/fx_sync?id=eq.'+encodeURIComponent(cfg.syncId)+'&select=updated_at',{
           headers:cloudHeaders(cfg),signal:AbortSignal.timeout(10000)
@@ -6639,7 +6719,7 @@ async function cloudPush(manual){
           const rows=await chk.json();
           const seen=localStorage.getItem('fxpro_cloud_seen');
           if(rows.length&&seen&&rows[0].updated_at!==seen){
-            await cloudPull(false);
+            await cloudPullRoh(false);
             return true;
           }
         }
@@ -6651,7 +6731,9 @@ async function cloudPush(manual){
     // Boolean fuer Geraete mit noch gecachter alter App-Version im Format,
     // das sie verstehen (sonst wuerde deren naechster Push die Stufe
     // zuruecksetzen - siehe cloudPull-Kommentar).
-    const data=JSON.parse(snap());data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.cotVsPrice=cotVsPrice;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
+    const z0=_userEditZaehler;
+    const gesendet=snap();
+    const data=JSON.parse(gesendet);data.tabStacks=tabStacks;data.compactView=compactView>=1;data.compactLevel=compactView;data.pinEnabled=pinEnabled;data.assetAnimEnabled=assetAnimEnabled;data.uiAnimEnabled=uiAnimEnabled;data.dataAnimEnabled=dataAnimEnabled;data.telegramEnabled=telegramEnabled;data.scoreHist=scoreHist;data.scoreJournal=scoreJournal;data.setupCcyFilter=setupCcyFilter;data.setupFxOnly=setupFxOnly;data.setupNonFxOnly=setupNonFxOnly;data.setupYieldsOnly=setupYieldsOnly;data.abChartRange=abChartRange;data.abTrendLinien=abTrendLinien;data.pxChartTyp=pxChartTyp;data.cotVsPrice=cotVsPrice;data.calHighOnly=calHighOnly;data.calCcyFilter=calCcyFilter;data.regimeCcy=regimeCcy;data.scoreMode=scoreMode;data.newsSeenTs=newsSeenTs;data.denseMode=denseMode;data.fxTheme=fxTheme;data.appBg=appBg;
     // Kompakter Score-Schnappschuss fuer serverseitige Reports (weekly-report.yml)
     // UND fuer die serverseitige Score-Historie (update-ff-calendar.yml,
     // "Fetch score snapshot from cloud sync" Schritt -> score_hist.json,
@@ -6707,7 +6789,10 @@ async function cloudPush(manual){
     // (kein Größenvergleich von Uhren verschiedener Geräte) -> kein einseitiger
     // Sync-Ausfall mehr durch abweichende iPad/PC-Uhrzeiten.
     localStorage.setItem('fxpro_cloud_seen',sentUpdated);
-    markUserSynced();
+    // Das ist ab jetzt der gemeinsame Stand von Geraet und Cloud (Basis fuer
+    // den Drei-Wege-Abgleich in cloudPull).
+    _syncBasis=gesendet;
+    if(_userEditZaehler===z0)markUserSynced();
     if(manual)setCloudStatus('✓ Uploaded: '+fmtStamp(Date.now()));
     return true;
   }catch(e){
@@ -6731,7 +6816,7 @@ async function cloudPush(manual){
 // und alle Hintergrund-Pulls), aber saveCloudCfg() setzt sie explizit auf
 // false - der Nutzer wollte dort nur die Zugangsdaten testen, nicht seine
 // gerade getroffene Wahl verwerfen.
-async function cloudPull(manual,forceOverwrite){
+async function cloudPullRoh(manual,forceOverwrite){
   if(forceOverwrite===undefined)forceOverwrite=manual;
   const cfg=getCloudCfg();if(!cfg){if(manual)setCloudStatus('Please save first.');return;}
   // Beim Start einen evtl. anstehenden Auto-Push (vom Kalender-Refresh) abbrechen
@@ -6744,7 +6829,7 @@ async function cloudPull(manual,forceOverwrite){
     if(!res.ok)throw new Error('HTTP '+res.status);
     const rows=await res.json();
     if(!rows.length){
-      if(manual){setCloudStatus('No cloud data found – uploading local data...');await cloudPush(true);}
+      if(manual){setCloudStatus('No cloud data found – uploading local data...');await cloudPushRoh(true);}
       return;
     }
     const cloudUpdated=rows[0].updated_at;
@@ -6766,7 +6851,30 @@ async function cloudPull(manual,forceOverwrite){
       // WICHTIG: vor pushU() lesen - pushU() setzt das Flag selbst.
       const prefPending=!forceOverwrite&&(_userEditedSinceSync||localStorage.getItem('fxpro_user_pending')==='1');
       saveLocalBackup('Before cloud download ('+(manual?'manual':'auto')+')');
-      pushU();_flipCauseTag='sync';applySnap(JSON.stringify(cd));_flipCauseTag=null;
+      const lokalVorher=snap();
+      pushU();const z0=_userEditZaehler;
+      _flipCauseTag='sync';applySnap(JSON.stringify(cd));_flipCauseTag=null;
+      // ⚠ DREI-WEGE-ABGLEICH (Nutzer 2026-09-30: "manchmal wenn ich ein paar
+      // button druecke ... kommt auf einmal ein Moment und dann gehen die
+      // Buttons zurueck auf den Zustand von davor"). GEMESSEN mit
+      // nachgestellter Cloud: App oeffnen, der Abgleich braucht 3 s, in der
+      // Zeit ein Paar auf die Watchlist und einen Indikator-Bias setzen -
+      // als die Antwort ankam, waren BEIDE wieder weg. applySnap(cd) ersetzte
+      // den ganzen Kernzustand; der prefPending-Schutz deckte nur die
+      // Einstellungen daneben ab. Und die Cloud-Version ist beim Oeffnen
+      // fast immer eine andere: jedes Geraet laedt Verlauf und Journal
+      // automatisch hoch.
+      // Jetzt: Felder, die DIESES Geraet seit dem letzten gemeinsamen Stand
+      // (_syncBasis) geaendert hat, bleiben; alles andere kommt aus der
+      // Cloud. Ein manueller Download (forceOverwrite) uebernimmt weiter alles.
+      const cloudSnap=snap();
+      if(prefPending&&_syncBasis&&lokalVorher!==_syncBasis){
+        try{
+          const zusammen=syncMerge3(JSON.parse(_syncBasis),JSON.parse(lokalVorher),JSON.parse(cloudSnap));
+          _flipCauseTag='sync';applySnap(JSON.stringify(zusammen));_flipCauseTag=null;
+        }catch(e){console.warn('Drei-Wege-Abgleich fehlgeschlagen, Cloud-Stand bleibt:',e);}
+      }
+      _syncBasis=cloudSnap;
       // prefPending muss VOR diesen beiden Zeilen ausgewertet sein (ist es,
       // siehe oben) - tabStacks fehlte der Schutz bisher
       // (Nutzer-Bugreport 2026-07-27), obwohl seine Save-Funktion
@@ -6872,8 +6980,13 @@ async function cloudPull(manual,forceOverwrite){
         localStorage.setItem('fxpro_updated',new Date().toISOString());
         _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
         cloudAutoSync();
-      }else{
+      }else if(_userEditZaehler===z0){
         markUserSynced();
+      }else{
+        // Eingabe WAEHREND des Abgleichs: bleibt markiert und geht hoch.
+        localStorage.setItem('fxpro_updated',new Date().toISOString());
+        _lsUpdatedSeen=localStorage.getItem('fxpro_updated');
+        cloudAutoSync();
       }
       renderSidebar();rerender();updUB();
       if(manual)setCloudStatus('✓ Downloaded: '+fmtStamp(cloudUpdated));
@@ -15814,7 +15927,7 @@ function renderDash(){
         wlBody=sugg.length?`<div class="dw-note" style="margin:0 0 7px">Nothing on your watchlist yet — the strongest pairs right now:</div>
           <div class="wl-table">${sugg.map(s=>{
             const parts=s.name.split('/');
-            return`<div class="wl-row wl-click" onclick="setWatched('${escJH(s.name)}',true);renderDash()" title="Add ${escH(s.name)} to the watchlist">
+            return`<div class="wl-row wl-click" onclick="toggleWatch('${escJH(s.name)}')" title="Add ${escH(s.name)} to the watchlist">
               <span class="wl-icons">${assetIconHtml(parts[0],17)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],17)}</span>
               <span class="wl-name">${escH(s.name)}</span>
               ${wlChg(tickerInfoForItem('pair',s.name))}
@@ -24019,6 +24132,10 @@ document.addEventListener('visibilitychange',()=>{
 
 // ══ INIT ══════════════════════════════════════════════════════════
 loadState();
+// Gemeinsamer Stand fuer den Drei-Wege-Abgleich (syncMerge3): nur wenn der
+// letzte Schritt ein Abgleich war. Stehen noch nicht hochgeladene Aenderungen
+// an, laeuft beim Start erst der Push - der setzt die Basis dann selbst.
+try{if(getCloudCfg()&&localStorage.getItem('fxpro_updated')===localStorage.getItem('fxpro_cloud_seen'))_syncBasis=snap();}catch(e){}
 applyCompactView();
 applyAssetAnim();updAssetAnimToggleBtn();
 applyUiAnim();updUiAnimToggleBtn();applyDataAnim();updDataAnimToggleBtn();updAllAnimToggleBtn();updTelegramToggleBtn();applyDenseMode();updDenseToggleBtn();applyFxTheme();renderFxThemeGrid();applyAppBg();renderAppBgGrid();
@@ -24756,7 +24873,7 @@ Object.assign(window,{
   researchDelFolder,resEditPressStart,resEditPressMove,resEditPressEnd,toggleResEditMode,researchNodeRow,
   researchTitleFrom,migrateResearch,migrateResearchNoteFields,migrateLegacyAssetNotesIntoResearch,
   migrateResearchToAssetFolders,LEGACY_SEED_EVTS,mkCalEvts,cleanLegacySeedEvts,mkWidgets,markLsUpdatedSeen,
-  markUserSynced,markPrefEdit,pruneScoreLog,logScoreChange,snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,
+  markUserSynced,markPrefEdit,syncMerge3,pruneScoreLog,logScoreChange,snap,pushU,SAFE_ID_RE,SAFE_UID_RE,sanitizeSnapIds,
   ensureBuiltinSyms,applySnap,markUserEditTs,doUndo,doRedo,updUB,BACKUP_KEY,saveLocalBackup,openBackupM,
   restoreLocalBackup,TRASH_TTL_MS,trashResNote,pruneResearchTrash,mergeResearchTrash,trashEntryLabel,openTrashM,
   restoreTrashItem,permaDeleteTrashItem,
@@ -24933,6 +25050,8 @@ Object.defineProperty(window,'uStack',{get:()=>uStack,set:v=>{uStack=v;},configu
 Object.defineProperty(window,'rStack',{get:()=>rStack,set:v=>{rStack=v;},configurable:true});
 Object.defineProperty(window,'_lastUserEditTs',{get:()=>_lastUserEditTs,set:v=>{_lastUserEditTs=v;},configurable:true});
 Object.defineProperty(window,'_userEditedSinceSync',{get:()=>_userEditedSinceSync,set:v=>{_userEditedSinceSync=v;},configurable:true});
+Object.defineProperty(window,'_syncBasis',{get:()=>_syncBasis,set:v=>{_syncBasis=v;},configurable:true});
+Object.defineProperty(window,'_userEditZaehler',{get:()=>_userEditZaehler,set:v=>{_userEditZaehler=v;},configurable:true});
 Object.defineProperty(window,'_lsUpdatedSeen',{get:()=>_lsUpdatedSeen,set:v=>{_lsUpdatedSeen=v;},configurable:true});
 Object.defineProperty(window,'scoreLog',{get:()=>scoreLog,set:v=>{scoreLog=v;},configurable:true});
 Object.defineProperty(window,'syms',{get:()=>syms,set:v=>{syms=v;},configurable:true});

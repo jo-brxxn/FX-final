@@ -136,6 +136,39 @@ Fix, zwei Ebenen:
 
 Details/Reproduktionsmethode: `docs/CHANGELOG.md`, Einträge vom 2026-09-01.
 
+## Drei-Wege-Abgleich, Warteschlange, Zähler (seit 2026-09-30) — nichts springt zurück
+
+Nutzer: *„wenn ich ein paar button drücke … kommt auf einmal ein Moment und dann
+gehen die Buttons zurück auf den Zustand von davor … das war schonmal so"*.
+Gemessen: der Pull beim Öffnen/Zurückkommen ersetzte per `applySnap(cd)` den
+GANZEN Kernzustand — was während des Abgleichs getippt wurde, war danach weg.
+`prefPending` schützte nur die Einstellungen daneben. Drei Bausteine:
+
+1. **`syncMerge3(basis,lokal,cloud)`** in `cloudPull`: je Feld gilt lokal, wenn
+   DIESES Gerät es seit dem letzten gemeinsamen Stand (`_syncBasis`) geändert
+   hat, sonst die Cloud. Listen mit `id` je Eintrag (lokal angelegt bleibt,
+   anderswo angelegt kommt dazu, lokal gelöscht bleibt weg). `_syncBasis` wird
+   gesetzt beim Start (nur wenn nichts Offenes ansteht), nach jedem Push (der
+   gesendete Stand) und nach jedem Pull (der Cloud-Stand, wie diese App ihn
+   serialisiert). Ohne Basis kein Abgleich — dann wie früher.
+2. **Warteschlange `syncSeriell`**: `cloudPush`/`cloudPull` laufen nie
+   gleichzeitig. Vorher startete eine Eingabe während des Start-Pulls schon
+   einen Push, der die Änderungen des anderen Geräts in der Cloud
+   überschrieb. Innerhalb eines Schritts die Roh-Funktionen
+   (`cloudPushRoh`/`cloudPullRoh`) rufen, sonst wartet er auf sich selbst.
+   Der Push prüft jetzt auch MIT eigenen offenen Änderungen zuerst die
+   Cloud-Version und gleicht vorher ab (außer ohne Basis).
+3. **`_userEditZaehler`**: Push und Pull löschen die Markierung „noch nicht
+   oben" nur, wenn seit ihrem Start keine neue Eingabe dazukam.
+
+**Regel für jede neue Funktion:** jede Nutzer-Aktion, die gespeicherten
+Zustand ändert, ruft `pushU()` (Kernzustand in `snap()`) oder `markPrefEdit()`
+(Einstellung außerhalb von `snap()`) auf — sonst ersetzt der nächste Push sie
+durch einen Pull des fremden Stands. Eine Liste dafür muss niemand pflegen:
+`check/zurueck.js` klickt sich durch alle Bedienelemente aller Seiten und meldet
+jeden speichernden Klick ohne Markierung, und es spielt den Abgleich während
+der Eingabe mit allem durch, was dort gespeichert wird.
+
 ## `markPrefEdit()` in der Save-Funktion nicht vergessen
 
 **Zusätzlich in der Save-Funktion `markPrefEdit()` aufrufen** (2. Ursache des
