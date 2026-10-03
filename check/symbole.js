@@ -13,9 +13,12 @@
 // Geprueft wird deshalb:
 //   A) jede Flagge ist EIN Stueck (genau ein <use> auf ihr Motiv, keine
 //      Streifen-Clips), Glanz und Falten liegen IN der Clip-Welle, der Rand
-//      ist da, und im Flaggen-Motiv steht kein reines Weiss mehr;
+//      ist da, und im Flaggen-Motiv steht kein reines Weiss mehr; seit
+//      2026-10-03 zusaetzlich: die Welle bewegt sich im FILMSTREIFEN, und
+//      live laeuft keine Animation mehr (kein SMIL, kein CSS auf Symbol-Teilen);
 //   B) der Glanz ist am Bildschirm nie ausserhalb der Flagge zu sehen
-//      (Pixelvergleich: Flaggenumgebung bleibt Grundfarbe, egal wann);
+//      (Pixelvergleich: Flaggenumgebung bleibt Grundfarbe, egal wann - seit
+//      2026-10-03 am Filmstreifen, angehalten auf sechs Zeitpunkte);
 //   C) jeder sichtbare Kartenkopf auf 11 Seiten traegt GENAU EIN Symbol, und
 //      in den Sentiment-Reitern steht kein Emoji mehr.
 //   D) Nutzer 2026-09-23: "in manche Flaggen gehoeren Sterne aber da sind nur
@@ -70,8 +73,28 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     if (!r.rand) fail('RAND FEHLT', `${r.id}: kein .ai-rim - weisse Flaechen verschwinden sonst auf dem hellen Grund (JPY)`);
     if (r.weiss) fail('REINES WEISS IN DER FLAGGE', `${r.id}: fill="#fff" im Motiv - auf #F8FAFD unsichtbar (AI_FLAG_WHITE verwenden)`);
   });
-  const smil = await p.evaluate(() => !!document.querySelector('#aiWave animate[attributeName="d"]'));
-  if (!smil) fail('WELLE STEHT', 'die Clip-Welle #aiWave hat keine Animation');
+  // Seit 2026-10-03 laeuft die Bewegung als FILMSTREIFEN (js/main.js,
+  // FILMSTREIFEN): die Welle muss sich IM FILM bewegen, und live darf nichts
+  // mehr laufen - weder SMIL in den Vorlagen noch CSS-Animationen auf den
+  // Symbol-Teilen (das war die Leerlauf-Last, siehe check/performance.js E).
+  const film = await p.evaluate(async () => {
+    const out = [];
+    for (const id of AI_FLAG_IDS) {
+      const f = aiFilm(id, 34);
+      if (!f) { out.push({ id, film: false }); continue; }
+      const txt = await (await fetch(f.url)).text();
+      const wellen = new Set([...txt.matchAll(/<clipPath id="w\d+"[^>]*><path d="([^"]+)"/g)].map(m => m[1]));
+      out.push({ id, film: true, n: f.n, wellen: wellen.size });
+    }
+    const live = document.getAnimations().filter(a => /^ai(Sheen|Drip|MetalSheen|Tick|TickDot)$/.test(a.animationName || '') && !(a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.ai-probe'))).length;
+    return { out, smil: document.querySelectorAll('#aiDefs animate, #aiDefs animateTransform').length, live };
+  });
+  film.out.forEach(r => {
+    if (!r.film) fail('WELLE STEHT', `${r.id}: kein Filmstreifen - die Flagge steht still`);
+    else if (r.wellen < r.n / 2) fail('WELLE STEHT', `${r.id}: nur ${r.wellen} verschiedene Wellenformen in ${r.n} Bildern`);
+  });
+  if (film.smil) fail('LIVE-ANIMATION', `${film.smil} SMIL-Animationen in #aiDefs - sie laufen auch fuer unsichtbare Symbole und ziehen die ganze Seite mit`);
+  if (film.live) fail('LIVE-ANIMATION', `${film.live} CSS-Animationen auf Symbol-Teilen laufen live statt im Film`);
 
   // ── B) Glanz am Bildschirm nie ausserhalb ──────────────────────────
   await p.evaluate(g => {
@@ -79,18 +102,24 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     // Dunkler Testgrund: auf dem fast weissen Seitengrund ist ein Glanz mit
     // 42 % Weiss nicht messbar (erste Fassung war dadurch blind - Gegenprobe).
     d.style.cssText = 'position:fixed;left:0;top:0;z-index:999999;background:#6F84A6;padding:60px;width:520px;height:320px';
+    // Gegenprobe: Glanz im Film ausserhalb der Welle bauen (Haken in aiFilm)
+    if (g) window.__gpGlanzOhneClip = true;
     d.innerHTML = assetIconHtml('JPY', 160);
-    if (g) d.querySelector('g[clip-path]').removeAttribute('clip-path');
     document.body.appendChild(d);
   }, GEGENPROBE);
+  // Der Film wird im Leerlauf gebaut - warten, bis er laeuft.
+  await p.waitForFunction(() => { const w = document.querySelector('#symTest .ai-wrap'); return w && w.classList.contains('ai-film-on'); }, null, { timeout: 15000 }).catch(() => fail('FILM FEHLT', 'JPY 160px: der Filmstreifen erschien nicht'));
   const rahmen = await p.evaluate(() => { const r = document.querySelector('#symTest .ai-svg').getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }; });
   let ausserhalb = 0;
   for (const t of [300, 900, 1500, 2100, 2700, 3300]) {
-    await p.evaluate(t => document.querySelectorAll('#symTest .ai-sheen').forEach(e => e.getAnimations().forEach(a => { a.pause(); a.currentTime = t; })), t);
-    await p.waitForTimeout(40);
-    // Streifen links und rechts NEBEN der Flagge (16 px Abstand, Schatten ausgenommen)
-    for (const x of [rahmen.x - 40, rahmen.x + rahmen.w + 24]) {
-      const buf = await p.screenshot({ clip: { x, y: rahmen.y + 10, width: 16, height: rahmen.h - 20 } });
+    await p.evaluate(t => document.querySelectorAll('#symTest .ai-film').forEach(e => e.getAnimations().forEach(a => { a.pause(); a.effect.updateTiming({ delay: 0 }); a.currentTime = t; })), t);
+    await p.waitForTimeout(120);
+    // Streifen NEBEN der Flagge: weit daneben (der alte Fehler, 100 px) und
+    // direkt am Rand (2 px) - seit dem Filmstreifen schneidet dessen Fenster
+    // alles jenseits von 2 px ab, ein unbeschnittener Glanz zeigte sich nur
+    // noch dort.
+    for (const [x, b] of [[rahmen.x - 40, 16], [rahmen.x + rahmen.w + 24, 16], [rahmen.x - 2, 2], [rahmen.x + rahmen.w, 2]]) {
+      const buf = await p.screenshot({ clip: { x, y: rahmen.y + 10, width: b, height: rahmen.h - 20 } });
       // Pixel im Browser auswerten (keine PNG-Bibliothek noetig).
       const hell = await p.evaluate(async b64 => {
         const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
@@ -101,7 +130,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
         for (let i = 0; i < d.length; i += 4) if (d[i] > 140 && d[i + 1] > 160) n++;
         return n;
       }, buf.toString('base64'));
-      if (hell > 20) ausserhalb++;
+      if (hell > (b === 2 ? 6 : 20)) ausserhalb++;
     }
   }
   if (ausserhalb) fail('GLANZ AUSSERHALB DER FLAGGE', `${ausserhalb} Messungen neben der Flagge zeigen den weissen Glanz`);

@@ -300,18 +300,46 @@ function globeHorizonPoint(a,b,lon0,R){
 // dabei nie veraendert/neu geladen - nur die Sichtbarkeits-KLIPPUNG pro Frame
 // ist jetzt geometrisch sauber, das Land taucht dadurch glatt am Kugelrand
 // ab/auf statt in Bruchstuecken zu verschwinden/wiederzuerscheinen.
+// ⚠ Rechnet dieselbe Projektion wie globeProject, aber ohne Winkelfunktionen
+// pro Punkt und Bild (2026-10-03, Performance): sin/cos von Breite und Laenge
+// jedes Kuestenpunkts stehen fest und liegen einmal je Ring im Cache, die
+// Drehung um lon0 ist dann nur noch das Additionstheorem
+// sin(l-l0)=sin l·cos l0-cos l·sin l0. Vorher je Bild ~2.000-x-mal sin/cos
+// plus ein Objekt pro Punkt - gemessen 728-837 ms je 4 s, die groesste
+// Einzelposten der Overview-Seite. Ergebnis identisch (Pruefung im
+// CHANGELOG: gleiche d-Zeichenkette fuer 360 Drehwinkel).
+const _globePre=new WeakMap();
+let _gpX=new Float64Array(0),_gpY=new Float64Array(0),_gpV=new Uint8Array(0);
+function globeRingPre(pts){
+  let a=_globePre.get(pts);
+  if(!a){
+    a=new Float64Array(pts.length*4);
+    for(let i=0;i<pts.length;i++){
+      const f=pts[i][0]*Math.PI/180,l=pts[i][1]*Math.PI/180;
+      a[4*i]=Math.sin(f);a[4*i+1]=Math.cos(f);a[4*i+2]=Math.sin(l);a[4*i+3]=Math.cos(l);
+    }
+    _globePre.set(pts,a);
+  }
+  return a;
+}
 function globePathD(pts,lon0,R,cx,cy){
   const n=pts.length;
-  const proj=pts.map(p=>globeProject(p[0],p[1],lon0,R));
-  const out=[];
+  if(_gpX.length<n){_gpX=new Float64Array(n);_gpY=new Float64Array(n);_gpV=new Uint8Array(n);}
+  const pre=globeRingPre(pts),l0=lon0*Math.PI/180,s0=Math.sin(l0),c0=Math.cos(l0);
+  const sL=Math.sin(GLOBE_LAT0),cL=Math.cos(GLOBE_LAT0);
   for(let i=0;i<n;i++){
-    const curPt=pts[i],curP=proj[i],nxtPt=pts[(i+1)%n],nxtP=proj[(i+1)%n];
-    if(curP.vis)out.push(curP);
-    if(curP.vis!==nxtP.vis)out.push(globeHorizonPoint(curPt,nxtPt,lon0,R));
+    const sf=pre[4*i],cf=pre[4*i+1],sl=pre[4*i+2],cl=pre[4*i+3];
+    const sinl=sl*c0-cl*s0,cosl=cl*c0+sl*s0;
+    _gpX[i]=R*cf*sinl;_gpY[i]=-R*(cL*sf-sL*cf*cosl);_gpV[i]=(sL*sf+cL*cf*cosl)>0?1:0;
   }
-  if(!out.length)return'';
-  return'M'+(cx+out[0].x).toFixed(1)+' '+(cy+out[0].y).toFixed(1)+
-    out.slice(1).map(p=>'L'+(cx+p.x).toFixed(1)+' '+(cy+p.y).toFixed(1)).join('')+'Z';
+  let d='';
+  const add=(x,y)=>{d+=(d?'L':'M')+(cx+x).toFixed(1)+' '+(cy+y).toFixed(1);};
+  for(let i=0;i<n;i++){
+    const j=i+1<n?i+1:0;
+    if(_gpV[i])add(_gpX[i],_gpY[i]);
+    if(_gpV[i]!==_gpV[j]){const h=globeHorizonPoint(pts[i],pts[j],lon0,R);add(h.x,h.y);}
+  }
+  return d?d+'Z':'';
 }
 // Statisches SVG-Geruest EINMALIG bauen: alle Pfade/Punkte/Marker existieren schon
 // (zunaechst leer), spaeter werden nur noch ihre Attribute aktualisiert. Dadurch wird
@@ -547,13 +575,19 @@ function globeUpdateOne(st){
   }
   // Marker (Waehrungspunkt + Label)
   const visMarkers=[];
+  // Der Score im Label aendert sich nur mit den Daten, nicht mit der Drehung -
+  // symScoreCmp rechnet aber jedes Mal den kompletten Asset-Score. Pro Bild
+  // fuer jeden sichtbaren Marker kostete das gemessen 254 ms je 4 s
+  // (2026-10-03). Jetzt hoechstens einmal pro Sekunde je Asset.
+  const jetzt=performance.now();
+  if(!st.scZeit||jetzt-st.scZeit>1000){st.sc={};st.scZeit=jetzt;}
   Object.keys(GLOBE_GEO).forEach(id=>{
     const m=st.markers[id];if(!m)return;
     const sym=syms.find(s=>s.id===id);
     const p=sym?globeProject(GLOBE_GEO[id][0],GLOBE_GEO[id][1],lon0,R):{vis:false};
     if(!p.vis){m.g.style.display='none';return;}
     m.g.style.display='';
-    const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=symScoreCmp(sym);
+    const x=cx+p.x,y=cy+p.y,col=BC[sym.bias]||'#888',sc=id in st.sc?st.sc[id]:(st.sc[id]=symScoreCmp(sym));
     m.circle.setAttribute('cx',x.toFixed(1));m.circle.setAttribute('cy',y.toFixed(1));m.circle.setAttribute('fill',col);
     if(m.ping){m.ping.setAttribute('cx',x.toFixed(1));m.ping.setAttribute('cy',y.toFixed(1));m.ping.setAttribute('stroke',col);}
     const label=`${id} ${(sc>0?'+':'')+(Math.round(sc*10)/10)}`;
@@ -586,7 +620,9 @@ function globeUpdateOne(st){
     if(fixed){
       v.m.text.setAttribute('text-anchor',fixed.anchor);
       v.m.text.setAttribute('x',(v.x+fixed.dx).toFixed(1));v.m.text.setAttribute('y',(v.y+fixed.dy).toFixed(1));v.m.text.setAttribute('fill',v.col);
-      v.m.text.textContent=v.label;
+      // nur bei Aenderung schreiben: jedes textContent= ist eine DOM-Mutation
+      // und weckt die Beobachter der Seite (siehe nurTextMutation, main.js)
+      if(v.m.text.textContent!==v.label)v.m.text.textContent=v.label;
       return;
     }
     // Generische Kollisionsvermeidung fuer alle anderen Waehrungen: kollidierende
@@ -602,12 +638,12 @@ function globeUpdateOne(st){
     placedLbl.push({x:v.x,ly:v.y+off,halfW});
     v.m.text.setAttribute('text-anchor','middle');
     v.m.text.setAttribute('x',v.x.toFixed(1));v.m.text.setAttribute('y',(v.y+off).toFixed(1));v.m.text.setAttribute('fill',v.col);
-    v.m.text.textContent=v.label;
+    if(v.m.text.textContent!==v.label)v.m.text.textContent=v.label;
   });
   // HUD-Readout "Scan position" folgt der echten Rotation live mit (jeden
   // Frame, wie die Marker selbst) - kein Extra-Interval noetig.
   const lonEl=document.getElementById('hudLon');
-  if(lonEl)lonEl.textContent=globeHudLonTxt();
+  if(lonEl){const t=globeHudLonTxt();if(lonEl.textContent!==t)lonEl.textContent=t;}
   globeUpdateSweep(st);
 }
 // Radar-Sweep folgt IMMER der aktuellen Jet-Position (Nutzer-Wunsch

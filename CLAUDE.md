@@ -50,6 +50,7 @@ betrifft.
 | Arbeits-Workflow (OK einholen, Version-Bump, Push-Regeln, Syntax-Checks) | `docs/workflow.md` |
 | Modul-Aufteilung von `index.html` in `js/*.js` (Vorgehen, window-Bruecke, AST-Verifikation) | `docs/module-split.md` |
 | **Regime Radar** (Szenarien, Bausteine, die drei Schutzregeln) | `docs/regime.md` |
+| **Performance** (Endlos-Animationen nur transform/opacity, Gruppen- statt Einzel-Animation, Ticker nur Text, eine Seite = ein Aufbau, erst messen dann schreiben) | `docs/performance.md` |
 | Prüfskripte (`check/*.js`), was sie prüfen und warum | `check/README.md` |
 | Volle Änderungshistorie (jeder Bugfix/jede Iteration mit Datum) | `docs/CHANGELOG.md` |
 

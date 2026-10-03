@@ -185,14 +185,13 @@ function aiDefsSvg() {
       <clipPath id="aiUjB"><path d="M0,0 H18 V12 H0Z M18,12 H36 V24 H18Z"/></clipPath>
       <clipPath id="aiBarClip"><path d="M8.2,9.6 h19.6 l2.6,9.4 h-24.8Z M10.6,5.4 h14.8 l2.4,4.2 h-19.6Z"/></clipPath>
       <clipPath id="aiCoinClip"><circle cx="18" cy="12" r="9.4"/></clipPath>
-      <clipPath id="aiWave" clipPathUnits="userSpaceOnUse"><path d="${aiWellenPfad(0)}">${aiWellenAnim()}</path></clipPath>
+      <clipPath id="aiWave" clipPathUnits="userSpaceOnUse"><path d="${aiWellenPfad(0)}"/></clipPath>
       <linearGradient id="aiFoldG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${AI_WELLE_L}" y2="0" spreadMethod="repeat">
         <stop offset="0" stop-color="#000" stop-opacity=".09"/>
         <stop offset=".5" stop-color="#fff" stop-opacity=".14"/>
         <stop offset="1" stop-color="#000" stop-opacity=".09"/>
-        <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="${AI_WELLE_L} 0" dur="${AI_WELLE_T}s" repeatCount="indefinite"/>
       </linearGradient>
-      <path id="aiRim" d="${aiWellenPfad(0)}" fill="none" vector-effect="non-scaling-stroke">${aiWellenAnim()}</path>
+      <path id="aiRim" d="${aiWellenPfad(0)}" fill="none" vector-effect="non-scaling-stroke"/>
       <linearGradient id="aiSheenG" x1="0" y1="0" x2="1" y2="0">
         <stop offset="0" stop-color="#fff" stop-opacity="0"/>
         <stop offset=".45" stop-color="#fff" stop-opacity=".42"/>
@@ -221,16 +220,13 @@ function aiDefsSvg() {
 // versetzte Stuecke gerissen, die Unterkante ein Saegezahn mit Luecken. Mit
 // 4 Streifen bei kleinen Icons war die Welle zudem sichtbar in Stufen.
 // JETZT: die Flagge bleibt EIN Stueck. Es bewegt sich nur ihr Umriss
-// (eine gemeinsame, per SMIL animierte Clip-Welle in 24 Stuetzbildern) und
-// ein Faltenschatten, der im selben Takt ueber den Stoff laeuft. Weil alle
-// Flaggen dieselbe Welle aus den Defs benutzen, wird EINE Animation
-// gerechnet statt 190 Streifengruppen (das war der Grund fuer die frueheren
-// 4-Streifen-Kompromisse). SMIL statt CSS, weil iOS Safari den
-// Pfad-Umriss (d) nicht per CSS animiert.
+// (Clip-Welle) und ein Faltenschatten, der im selben Takt ueber den Stoff
+// laeuft. ⚠ Seit 2026-10-03 laeuft das NICHT mehr live (SMIL in den Defs),
+// sondern als vorberechneter FILMSTREIFEN - siehe "FILMSTREIFEN" unten.
 // Die Welle schneidet nur NACH INNEN (Ober- und Unterkante wandern gemeinsam
 // um hoechstens AI_WELLE_A): nach aussen gaebe es keinen Stoff, der Umriss
 // liefe ins Leere.
-const AI_WELLE_L = 24, AI_WELLE_T = 1.8, AI_WELLE_A = 1.5, AI_WELLE_BILDER = 24, AI_WELLE_PUNKTE = 37;
+const AI_WELLE_L = 24, AI_WELLE_T = 1.8, AI_WELLE_A = 1.5, AI_WELLE_PUNKTE = 37;
 const AI_FLAG_WHITE = '#EEF2F8';
 function aiWellenPfad(phase) {
   const top = [], bot = [];
@@ -244,10 +240,6 @@ function aiWellenPfad(phase) {
   }
   return 'M' + top.join(' L') + ' L' + bot.reverse().join(' L') + ' Z';
 }
-function aiWellenAnim() {
-  const v = Array.from({length: AI_WELLE_BILDER + 1}, (_, k) => aiWellenPfad(k / AI_WELLE_BILDER)).join(';');
-  return `<animate attributeName="d" dur="${AI_WELLE_T}s" repeatCount="indefinite" values="${v}"/>`;
-}
 
 const AI_FLAG_IDS = Object.keys(AI_FLAGS);
 
@@ -260,6 +252,199 @@ function aiEnsureDefs() {
   if (_aiDefsDone || !document.body) return;
   _aiDefsDone = true;
   document.body.insertAdjacentHTML('afterbegin', aiDefsSvg());
+}
+
+// ══ FILMSTREIFEN: Dauerbewegung ohne Arbeit pro Bild (2026-10-03) ═════════
+// Nutzer: "die Animationen werden nur ganz am Anfang einmal geladen dann nur
+// wiederholt das ist nicht anspruchsvoll. Bau das besser".
+// GEMESSEN vorher (Chromium, Asset-Seite, 4 s Leerlauf): 1439 ms Hauptthread
+// (Paint 520, PrePaint 280, Layerize 204, Layout 135) - bei EINEM sichtbaren
+// Symbol. Selbst mit ALLEN Symbolen ausgeblendet noch 557 ms: die SMIL-Welle
+// und die CSS-Animationen lagen in den GETEILTEN Vorlagen (#aiDefs) und
+// liefen dort fuer sich weiter; jeder Takt zog die Render-Pipeline der ganzen
+// Seite mit (Layout der <use>-Kopien, Layerize ueber alle Ebenen). Beides aus:
+// 33 ms. Im Seiten-Wisch bei 4x gedrosselter CPU: Median 50 ms je Bild statt 17.
+// JETZT: jede Bewegung wird EINMAL als senkrechter Streifen aus Einzelbildern
+// gebaut (SVG-Bild, 30 Bilder/s) - aus DENSELBEN Quellen wie vorher: Welle
+// und Falten aus aiWellenPfad/AI_WELLE_*, Glanz/Tropfen/Metallglanz/Index-
+// Linie aus den CSS-Keyframes (aiFilmTabellen tastet sie ab, statt sie
+// nachzubauen). Danach schiebt nur noch die GPU den Streifen um je ein Bild
+// weiter (transform + steps()) - auf dem Hauptthread passiert pro Bild NICHTS.
+// Alle Symbole laufen auf der gemeinsamen Uhr (negative animation-delay aus
+// performance.now()), ein Neuzeichnen der Seite setzt sie also nicht zurueck.
+// Die Vorlagen (#aiDefs) enthalten seither keine einzige Animation mehr; das
+// statische Symbol darunter zeigt die Ruhelage (AUS-Schalter, Fallback).
+// ⚠ Einzige Abweichung: der Flaggen-Glanz laeuft in 3,6 s statt 3,4 s, damit
+// Welle (2 x 1,8 s) und Glanz in EINEN Zyklus passen (sonst 30,6 s = 918 Bilder).
+const AI_FILM_FPS = 30, AI_FILM_RAND = 2;     // Rand in px um das Symbol: Platz fuer den Schatten
+const _aiFilme = new Map(), _aiFilmBereit = new Set();
+let _aiTab = null;
+// Tastet die CSS-Keyframes einmal ab (pausierte Animationen auf einer
+// unsichtbaren Probe, danach wieder entfernt) - so stimmt der Film exakt mit
+// dem CSS ueberein, auch dort, wo CSS still interpoliert (aiTick-Deckkraft).
+function aiFilmTabellen() {
+  if (_aiTab) return _aiTab;
+  const d = document.createElement('div');
+  d.className = 'ai-probe';
+  d.style.cssText = 'position:fixed;left:-400px;top:0;width:36px;height:24px;visibility:hidden;pointer-events:none';
+  d.innerHTML = '<svg viewBox="0 0 36 24" width="36" height="24"><rect class="ai-sheen" width="14" height="24"/>'
+    + '<path class="ai-drip" d="M18,3 L19,5 L17,5Z"/><path class="ai-sheen-el" d="M2,22 L10,2 L14,2Z"/>'
+    + '<path class="ai-tick" d="M6.4,16.4 L29.6,6.6"/><circle class="ai-tick-dot" cx="29.6" cy="6.6" r="1.5"/></svg>';
+  document.body.appendChild(d);
+  const tab = {};
+  try {
+    for (const k of ['ai-sheen', 'ai-drip', 'ai-sheen-el', 'ai-tick', 'ai-tick-dot']) {
+      const el = d.querySelector('.' + k), a = el.getAnimations()[0];
+      if (!a) { tab[k] = null; continue; }
+      a.pause();
+      const dauer = a.effect.getComputedTiming().duration;
+      tab[k] = { dauer, probe: t => {
+        a.currentTime = ((t % dauer) + dauer) % dauer;
+        const cs = getComputedStyle(el);
+        return { tf: cs.transform, to: cs.transformOrigin, op: +cs.opacity, dash: parseFloat(cs.strokeDashoffset) || 0, r: parseFloat(cs.r) };
+      } };
+    }
+    // Einmal fuer alle Bilder auslesen, damit die Probe sofort wieder weg kann.
+    const reihe = (k, dauer, n, f) => tab[k] ? Array.from({ length: n }, (_, i) => tab[k].probe(i * dauer / n * (f || 1))) : null;
+    const flagDauer = 2 * AI_WELLE_T * 1000, nF = Math.round(flagDauer / 1000 * AI_FILM_FPS);
+    const s = tab['ai-sheen'];
+    _aiTab = {
+      flagge: { dauer: flagDauer, n: nF, glanz: reihe('ai-sheen', flagDauer, nF, s ? s.dauer / flagDauer : 1) },
+    };
+    for (const [art, k, k2] of [['oel', 'ai-drip'], ['metall', 'ai-sheen-el'], ['index', 'ai-tick', 'ai-tick-dot']]) {
+      if (!tab[k]) continue;
+      const dauer = tab[k].dauer, n = Math.round(dauer / 1000 * AI_FILM_FPS);
+      _aiTab[art] = { dauer, n, a: reihe(k, dauer, n), b: k2 ? reihe(k2, dauer, n) : null };
+    }
+  } finally { d.remove(); }
+  return _aiTab;
+}
+function aiFilmArt(id) {
+  if (AI_FLAG_IDS.indexOf(id) !== -1) return 'flagge';
+  if (AI_INDEX_ACCENT[id]) return 'index';
+  const sym = AI_SYMBOLS[id] || '';
+  if (sym.indexOf('ai-drip') !== -1) return 'oel';
+  if (sym.indexOf('ai-sheen-el') !== -1) return 'metall';
+  return null;
+}
+// CSS-transform (Matrix) samt transform-origin als SVG-Attribut.
+function aiTfAttr(w) {
+  if (!w || !w.tf || w.tf === 'none') return '';
+  const o = (w.to || '0 0').split(' ').map(parseFloat);
+  const m = w.tf.replace(/^matrix\(|\)$/g, '');
+  return o[0] || o[1] ? `translate(${o[0]} ${o[1]}) matrix(${m}) translate(${-o[0]} ${-o[1]})` : `matrix(${m})`;
+}
+// Alles, worauf ein Vorlagen-Element per href/url(#..) verweist, mitnehmen.
+function aiFilmDefs(startIds) {
+  const ser = new XMLSerializer(), da = new Set(), teile = [];
+  const nimm = id => {
+    if (da.has(id)) return; da.add(id);
+    const el = document.querySelector('#aiDefs [id="' + id + '"]'); if (!el) return;
+    const txt = ser.serializeToString(el);
+    teile.push(txt);
+    for (const m of txt.matchAll(/(?:href="#|url\(#)([\w-]+)/g)) nimm(m[1]);
+  };
+  startIds.forEach(nimm);
+  return teile.join('');
+}
+// Film fuer EIN Symbol in EINER Hoehe (px, ganzzahlig): Blob-URL eines
+// senkrechten SVG-Streifens, Bild k um k*Abstand nach unten versetzt.
+function aiFilm(id, h) {
+  const art = aiFilmArt(id);
+  if (!art || !Number.isInteger(h)) return null;
+  const key = id + '|' + h;
+  if (_aiFilme.has(key)) return _aiFilme.get(key);
+  let f = null;
+  try {
+    const T = aiFilmTabellen()[art];
+    if (!T) throw new Error('keine Abtastung fuer ' + art);   // -> null, zwischengespeichert
+    const sk = h / 24, mu = AI_FILM_RAND / sk, Pu = 24 + 2 * mu, w = Math.round(h * 1.5 * 10) / 10;
+    let defs, bild;
+    if (art === 'flagge') {
+      // Welle/Falten wie bisher: eine Wellenlaenge (AI_WELLE_L) je AI_WELLE_T,
+      // im Film zwei Wellen je Zyklus. Schatten = .ai-flag (drop-shadow 0 .5px 1px).
+      defs = aiFilmDefs(['ai-' + id, 'aiFoldG', 'aiShadeG', 'aiSheenG'])
+        + `<filter id="fS" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="${(0.5 / sk).toFixed(3)}" stdDeviation="${(0.5 / sk).toFixed(3)}" flood-color="rgb(15,25,40)" flood-opacity=".3"/></filter>`;
+      bild = k => {
+        const t = k / T.n, ph = (2 * t) % 1, welle = aiWellenPfad(ph);
+        const g = T.glanz ? T.glanz[k] : null, gx = g && g.tf !== 'none' ? aiTfAttr(g) : 'translate(-14 0)';
+        return `<clipPath id="w${k}" clipPathUnits="userSpaceOnUse"><path d="${welle}"/></clipPath>`
+          + `<g filter="url(#fS)"><g clip-path="url(#w${k})"><use href="#ai-${id}" width="36" height="24"/>`
+          + `<rect x="${-AI_WELLE_L}" width="${36 + AI_WELLE_L}" height="24" fill="url(#aiFoldG)" style="mix-blend-mode:multiply" transform="translate(${(AI_WELLE_L * ph).toFixed(3)} 0)"/>`
+          + `<rect width="36" height="24" fill="url(#aiShadeG)"/>`
+          + (window.__gpGlanzOhneClip ? '</g>' : '')   // Gegenprobe check/symbole.js B
+          + `<rect width="14" height="24" fill="url(#aiSheenG)" opacity=".85" transform="${gx}"/>` + (window.__gpGlanzOhneClip ? '' : '</g>')
+          + `<path d="${welle}" fill="none" stroke="rgba(20,32,56,.24)" stroke-width=".6" vector-effect="non-scaling-stroke"/></g>`;
+      };
+    } else {
+      // Nicht-Flaggen: das Symbol selbst, das bewegte Element je Bild mit den
+      // abgetasteten Werten als feste Attribute.
+      const sym = document.querySelector('#aiDefs [id="ai-' + id + '"]');
+      if (!sym) throw new Error('Vorlage fehlt: ai-' + id);
+      const ser = new XMLSerializer(), roh = [...sym.childNodes];
+      const innen = roh.filter(n => !(n.nodeType === 1 && n.tagName.toLowerCase() === 'defs'));
+      const symDefs = roh.filter(n => n.nodeType === 1 && n.tagName.toLowerCase() === 'defs').map(n => [...n.childNodes].map(c => ser.serializeToString(c)).join('')).join('');
+      const refs = [...sym.innerHTML.matchAll(/(?:href="#|url\(#)([\w-]+)/g)].map(m => m[1]).filter(r => !sym.querySelector('[id="' + r + '"]'));
+      defs = symDefs + aiFilmDefs(refs);
+      bild = k => {
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        innen.forEach(n => g.appendChild(n.cloneNode(true)));
+        const a = T.a[k], b = T.b ? T.b[k] : null;
+        g.querySelectorAll('.ai-drip').forEach(e => { e.setAttribute('transform', aiTfAttr(a)); e.setAttribute('opacity', a.op); });
+        g.querySelectorAll('.ai-sheen-el').forEach(e => { const tf = aiTfAttr(a); if (tf) e.setAttribute('transform', tf); });
+        g.querySelectorAll('.ai-tick').forEach(e => { e.setAttribute('stroke-dasharray', '46'); e.setAttribute('stroke-dashoffset', a.dash); e.setAttribute('opacity', a.op); });
+        if (b) g.querySelectorAll('.ai-tick-dot').forEach(e => { e.setAttribute('opacity', b.op); if (isFinite(b.r)) e.setAttribute('r', b.r); });
+        return [...g.childNodes].map(c => ser.serializeToString(c)).join('');
+      };
+    }
+    let body = '';
+    for (let k = 0; k < T.n; k++) body += `<g transform="translate(0 ${(k * Pu).toFixed(4)})">${bild(k)}</g>`;
+    const W = w + 2 * AI_FILM_RAND, H = T.n * (h + 2 * AI_FILM_RAND);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="${(-mu).toFixed(4)} ${(-mu).toFixed(4)} ${(W / sk).toFixed(4)} ${(T.n * Pu).toFixed(4)}" preserveAspectRatio="none"><defs>${defs}</defs>${body}</svg>`;
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    f = { key, url, n: T.n, dauer: T.dauer, W, P: h + 2 * AI_FILM_RAND };
+    // Vorladen: sobald das Bild einmal dekodiert ist, steht es jedem weiteren
+    // Symbol derselben Groesse SOFORT zur Verfuegung (kein Aufblitzen der
+    // Ruhelage beim minuetlichen Neuzeichnen).
+    const im = new Image(); im.src = url;
+    (im.decode ? im.decode() : Promise.resolve()).then(() => _aiFilmBereit.add(key)).catch(() => {});
+  } catch (e) { f = null; }
+  _aiFilme.set(key, f);
+  return f;
+}
+
+function aiFilmFenster(f, img) {
+  return `<span class="ai-film-win" data-film="${f.key}" style="left:${-AI_FILM_RAND}px;top:${-AI_FILM_RAND}px;width:${f.W}px;height:${f.P}px">${img}</span>`;
+}
+// Der Film laeuft auf der GEMEINSAMEN Uhr: negative Verzoegerung = Phase jetzt.
+function aiFilmImg(f) {
+  return `<img class="ai-film" alt="" src="${f.url}" style="width:${f.W}px;height:${f.n * f.P}px;animation-duration:${f.dauer}ms;animation-timing-function:steps(${f.n});animation-delay:${-Math.round(performance.now() % f.dauer)}ms"`
+    + (_aiFilmBereit.has(f.key) ? '' : ` onload="this.parentNode.parentNode.classList.add('ai-film-on')"`) + `>`;
+}
+// Fehlende Filme im Leerlauf bauen und in alle wartenden Fenster setzen -
+// je Durchgang nur so viele, wie in die Leerlaufzeit passen.
+let _aiFilmPlan = 0;
+function aiFilmPlanen() {
+  if (_aiFilmPlan) return;
+  _aiFilmPlan = window.requestIdleCallback ? requestIdleCallback(aiFilmeNachziehen, { timeout: 700 }) : setTimeout(aiFilmeNachziehen, 60);
+}
+function aiFilmeNachziehen(frist) {
+  _aiFilmPlan = 0;
+  const offen = new Map();
+  document.querySelectorAll('.ai-film-win[data-film]:empty').forEach(w => {
+    const k = w.dataset.film; if (!offen.has(k)) offen.set(k, []); offen.get(k).push(w);
+  });
+  const t0 = performance.now();
+  for (const [k, fenster] of offen) {
+    const zeit = frist && frist.timeRemaining ? frist.timeRemaining() > 3 : performance.now() - t0 < 12;
+    if (!zeit) { aiFilmPlanen(); return; }
+    const i = k.lastIndexOf('|'), f = _aiFilme.has(k) ? _aiFilme.get(k) : aiFilm(k.slice(0, i), +k.slice(i + 1));
+    if (!f) continue;
+    fenster.forEach(w => {
+      w.innerHTML = aiFilmImg(f);
+      if (_aiFilmBereit.has(k)) w.parentNode.classList.add('ai-film-on');
+    });
+  }
 }
 
 /* Ein Icon. `size` ist die HOEHE in px; die Breite folgt aus 3:2.
@@ -282,9 +467,22 @@ function assetIconHtml(id, size, gezeichnet) {
       + `<rect class="ai-sheen" width="14" height="24" fill="url(#aiSheenG)"/></g>`
       + `<use class="ai-rim" href="#aiRim"/>`
     : `<use href="#ai-${id}"/>`;
-  return `<span class="ai-wrap${gezeichnet ? ' ai-gezeichnet' : ''}" style="width:${w}px;height:${h}px">`
+  // Film obenauf (siehe FILMSTREIFEN); das statische Symbol darunter bleibt
+  // die Ruhelage fuer AUS und solange der Film noch nicht fertig ist.
+  // Gezeichnete Flaggen (Wisch, Kopf-Band) stehen bewusst still.
+  // ⚠ Ein noch nicht gebauter Film wird NICHT hier gebaut, sondern im
+  // Leerlauf nachgezogen (aiFilmeNachziehen): gemessen 5 ms je Film, beim
+  // ersten Dashboard 15 Filme = 75 ms (4x gedrosselt 268 ms) im Aufbau.
+  let film = '', an = '';
+  const key = id + '|' + h;
+  if (!gezeichnet && aiFilmArt(id) && Number.isInteger(h)) {
+    const f = _aiFilme.get(key);
+    if (f) { film = aiFilmFenster(f, aiFilmImg(f)); if (_aiFilmBereit.has(key)) an = ' ai-film-on'; }
+    else if (f === undefined) { film = aiFilmFenster({ key, W: w + 2 * AI_FILM_RAND, P: h + 2 * AI_FILM_RAND }, ''); aiFilmPlanen(); }
+  }
+  return `<span class="ai-wrap${gezeichnet ? ' ai-gezeichnet' : ''}${an}" style="width:${w}px;height:${h}px">`
        + `<svg class="ai-svg${isFlag ? ' ai-flag' : ''}" viewBox="0 0 36 24" width="${w}" height="${h}" aria-hidden="true">${inner}</svg>`
-       + `</span>`;
+       + film + `</span>`;
 }
 
 const SK='fxpro_v1';
@@ -400,10 +598,24 @@ function sbCatsOptgroups(ids,optHtml){
   }).join('');
   return wlGroup+groups;
 }
+// ✕ neben einem Asset-Dropdown, das eine "alle"-Ansicht hat (Nutzer
+// 2026-10-03: "bei den Filtern mit drop-down wo man dann das Asset ...
+// auswaehlt und es dort aber eine Ansicht gibt mit allen Symbolen das es
+// neben dem Filter einen Button gibt um den Filter zurueckzusetzen" - per
+// Rueckfrage: "✕" nur, solange ein einzelnes Asset gewaehlt ist). Ein
+// Baustein fuer alle sechs Stellen: Trends, Calendar, News, Sentiment, COT,
+// Put/Call. Statische Kopfleisten (Trends, Calendar) tragen den Knopf mit
+// hidden-Attribut und schalten ihn beim Zeichnen (filterResetSync).
+function filterResetHtml(onclick,allLabel,id){
+  const t=escH('Reset filter — back to '+String(allLabel).replace(/<[^>]*>/g,''));
+  return`<button class="btn flt-x"${id?` id="${id}"`:''} onclick="${onclick}" title="${t}" aria-label="${t}">✕</button>`;
+}
+function filterResetSync(id,aktiv){const x=document.getElementById(id);if(x)x.hidden=!aktiv;}
 function assetFilterSelect(ids,selected,onChange,allLabel,titleAttr,labelFn){
   const optHtml=id=>`<option value="${escH(id)}"${selected===id?' selected':''}>${labelFn?labelFn(id):escH(COT_NAME[id]||id)}</option>`;
   const head=allLabel?`<option value=""${selected?'':' selected'}>${allLabel}</option>`:'';
-  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${sbCatsOptgroups(ids,optHtml)}</select></div>`;
+  const x=allLabel&&selected?filterResetHtml(`${onChange}('')`,allLabel):'';
+  return`<div class="cot-filterbar"><select class="btn" onchange="${onChange}(this.value)" title="${escH(titleAttr)}" style="cursor:pointer">${head}${sbCatsOptgroups(ids,optHtml)}</select>${x}</div>`;
 }
 // ── Mehrfach-Waehrungsfilter (Chips + All/FX/Non-FX/Yields), ERGAENZEND zum
 // Einzel-Dropdown oben (Nutzer-Wunsch 2026-08-24: "bei set ups gibt es den
@@ -7307,8 +7519,8 @@ function sbClick(id){
   _sbWahl++;
   // Auch im Bearbeitungsmodus navigiert ein Klick ganz normal - der Modus
   // bleibt dabei an, damit man mehrere Eintraege nacheinander sortieren kann.
-  if(curPage!=='cur')showTab('cur',null,'fx');
-  selSym(id);
+  // Von einer anderen Seite ueber gotoSym: ein Aufbau statt zwei (siehe dort).
+  if(curPage!=='cur')gotoSym(id);else selSym(id);
   // Asset-Panel (seit 2026-09-22) nach der Wahl schliessen - auch wenn man
   // schon auf der Asset-Seite war (dann laeuft showTab() nicht durch und
   // schliesst es nicht). Im Bearbeitungsmodus bleibt es offen, damit man
@@ -8063,8 +8275,23 @@ let calpRange='2W';
 let calpLimit=200;             // so viele Zeilen werden gezeichnet, Rest per "Show older"
 const CALP_RANGES=[['2W',14],['1M',30],['3M',91],['6M',182],['1Y',365],['5Y',1826],['10Y',3653]];
 const CAL_ARCHIV={meta:null,metaStatus:'',jahre:{},status:{}};
+// Nur die Kalenderkarte tauschen, nicht die ganze Asset-Seite (2026-10-03,
+// Performance): das Archiv trifft beim ersten Asset jeder Sitzung ein, also
+// mitten im Seiten-Wisch - der volle Neuaufbau kostete dort gemessen 557 ms
+// (4x gedrosselt) und liess den Wisch stocken. Die Karte ist die einzige
+// Stelle der Seite, die das Archiv liest (abCalNachTag/calVergangen). Passt
+// der Aufbau nicht (andere Ansicht), bleibt es beim vollen renderDetail.
 function calpNeuZeichnen(){
-  try{if(document.querySelector('#detail .abc-cal'))renderDetail();}catch(e){}
+  try{
+    const k=document.querySelector('#detail .abc-cal');
+    if(k){
+      const c=getSym(),t=document.createElement('template');
+      if(c&&k.parentElement&&k.parentElement.classList.contains('ab-col'))t.innerHTML=assetMonthCalHtml(c).trim();
+      const neu=t.content.firstElementChild;
+      if(neu&&t.content.childElementCount===1&&neu.classList.contains('abc-cal'))k.replaceWith(neu);
+      else renderDetail();
+    }
+  }catch(e){}
   try{if(abCalOffen)renderAssetCalBody();}catch(e){}
 }
 function setAbCalSicht(v){abCalSicht=v==='past'?'past':'month';calpLimit=200;calpNeuZeichnen();}
@@ -8077,10 +8304,18 @@ async function calArchivMetaLaden(){
     const r=await fetch(DATA_BASE+'cal_hist/meta.json?t='+Date.now(),{signal:AbortSignal.timeout(FEED_TIMEOUT_MS),cache:'no-store'});
     if(!r.ok)throw new Error('HTTP '+r.status);
     CAL_ARCHIV.meta=await r.json();CAL_ARCHIV.metaStatus='ok';
-  }catch(e){CAL_ARCHIV.metaStatus='fehlt';}
+    // Die Jahre, die Monat und 2W immer brauchen, gleich mitladen und erst
+    // DANACH einmal neu zeichnen (2026-10-03, Performance): vorher kamen
+    // Meta und Jahr nacheinander, jedes mit eigenem vollen renderDetail -
+    // gemessen zwei Neuaufbauten samt Seiten-Layout (je ~25 ms Layout +
+    // ~50 ms Skript) beim ersten Asset jeder Sitzung.
+    const jj=CAL_ARCHIV.meta&&CAL_ARCHIV.meta.jahre||[];
+    const noetig=[...new Set([new Date().getFullYear(),new Date(Date.now()-31*864e5).getFullYear()])].filter(y=>jj.includes(y));
+    await Promise.all(noetig.map(y=>calArchivJahrLaden(y,true)));
+  }catch(e){CAL_ARCHIV.metaStatus=CAL_ARCHIV.metaStatus==='ok'?'ok':'fehlt';}
   calpNeuZeichnen();
 }
-async function calArchivJahrLaden(y){
+async function calArchivJahrLaden(y,still){
   if(CAL_ARCHIV.status[y])return;
   CAL_ARCHIV.status[y]='laedt';
   try{
@@ -8090,7 +8325,7 @@ async function calArchivJahrLaden(y){
     CAL_ARCHIV.jahre[y]=((d&&d.ev)||[]).map(calArchivZeileZuEvt).filter(Boolean);
     CAL_ARCHIV.status[y]='ok';
   }catch(e){CAL_ARCHIV.status[y]='fehler';}
-  calpNeuZeichnen();
+  if(!still)calpNeuZeichnen();
 }
 // [utc, ccy, title, importance 1/0/-1, actual, forecast, previous] -> Kalender-
 // Event in lokaler Zeit, wie fetchFF() es aus dem FF-Feed baut.
@@ -10989,9 +11224,17 @@ function selSym(id){wischStart();selId=id;curSub='specific';updateSidebarSelecti
 // Springt von anderswo (z.B. Dashboard-Widgets) zu einem Symbol auf der
 // Assets-Seite (FX und Non-FX sind seit 2026-08-03 EIN gemeinsamer Tab -
 // Nutzer-Wunsch "Non-FX unter FX anreihen", siehe TABS/renderSidebar).
+// ⚠ selId VOR showTab setzen (2026-10-03, Performance): showTab('cur')
+// zeichnet die Asset-Seite ohnehin - vorher mit dem ALTEN Asset, danach
+// zeichnete selSym sie fuer das neue gleich noch einmal. Gemessen: zwei volle
+// renderDetail + zwei Seiten-Layouts (98 + 25 ms) je Sprung vom Dashboard.
+// Danach nur noch das, was selSym zusaetzlich tut.
 function gotoSym(id){
+  wischStart();
+  selId=id;curSub='specific';
   showTab('cur',null,'fx');
-  selSym(id);
+  updateSidebarSelection();
+  const d=document.getElementById('detail');if(d){d.scrollTop=0;const dp=d.querySelector('.dp');if(dp)dp.classList.add('detail-fade');}
 }
 function setSub(s){curSub=s;renderDetail();const dp=document.querySelector('#detail .dp');if(dp)dp.classList.add('detail-fade');}
 // ══ ACTIONS – RUBRICS ═══════════════════════════════════════════════
@@ -17169,10 +17412,10 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
     if(useBiasColor){
       svg+=biasLineSegments(pts);
-      pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`;});
+      svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`).join('')+'</g>';
     }else{
       if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-      pts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`;});
+      svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`).join('')+'</g>';
     }
   });
   dates.forEach((d,i)=>{
@@ -17274,14 +17517,14 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
   if(useBiasColor){
     svg+=biasLineSegments(scorePts,true);
-    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${BC[biasGroup(p.bias)]||col}" stroke="var(--bg1)" stroke-width="1.2"/>`;});
+    svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${BC[biasGroup(p.bias)]||col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
   }else{
     if(scorePts.length>1){
       const ptsStr=scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
       svg+=`<polyline points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>`;
       svg+=`<polyline class="tr-line-in" pathLength="1" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     }
-    scorePts.forEach((p,pi)=>{svg+=`<circle class="tr-dot-in" style="animation-delay:${Math.min(280+pi*16,1100)}ms" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${col}" stroke="var(--bg1)" stroke-width="1.2"/>`;});
+    svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
   }
   dates.forEach((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
@@ -17325,6 +17568,7 @@ function renderTrendsRoh(){
     if(sel.innerHTML!==opts)sel.innerHTML=opts;
     sel.value=trendsFilter==='PAIR'?'ALL':trendsFilter;
   }
+  filterResetSync('trendsCcyX',trendsFilter!=='ALL'&&trendsFilter!=='PAIR');
   const pairBtn=document.getElementById('trendsPairBtn');
   if(pairBtn)pairBtn.classList.toggle('active',trendsFilter==='PAIR');
   const pairWrap=document.getElementById('trendsPairWrap');
@@ -17704,7 +17948,15 @@ function cotTickCountdown(){
   if(!ts){el.textContent='–';return;}
   let diff=ts-Date.now();if(diff<0)diff=0;
   const d=Math.floor(diff/864e5),h=Math.floor(diff%864e5/36e5),mi=Math.floor(diff%36e5/6e4),s=Math.floor(diff%6e4/1e3);
-  el.innerHTML=`<b>${d}</b>d <b>${String(h).padStart(2,'0')}</b>h <b>${String(mi).padStart(2,'0')}</b>m <b>${String(s).padStart(2,'0')}</b>s`;
+  // Nur die Ziffern umschreiben, das Geruest einmal bauen (2026-10-03,
+  // Performance): ein innerHTML je Sekunde ist eine Element-Mutation und
+  // loeste jede Sekunde die volle Karten-Vermessung der Seite aus (gemessen
+  // ~250 getBoundingClientRect je Sekunde). Ziffern sind reiner Text
+  // (siehe nurTextMutation).
+  const teile=[String(d),String(h).padStart(2,'0'),String(mi).padStart(2,'0'),String(s).padStart(2,'0')];
+  const bs=el.querySelectorAll(':scope>b');
+  if(bs.length===4)bs.forEach((b,i)=>{if(b.textContent!==teile[i])b.textContent=teile[i];});
+  else el.innerHTML=`<b>${teile[0]}</b>d <b>${teile[1]}</b>h <b>${teile[2]}</b>m <b>${teile[3]}</b>s`;
 }
 // Leitet aus {long,short,dLong,dShort,oi,dOi} alle Kennzahlen ab.
 function cotMetrics(s){
@@ -20476,7 +20728,7 @@ function renderNewsTabRoh(){
   const kopf=`<div class="news-tools">
     <input class="news-q" type="search" placeholder="Search headlines…" value="${escH(newsTabQuery)}"
       oninput="setNewsTabQuery(this.value)">
-    <select onchange="setNewsTabAsset(this.value)">${opt('ALL','All assets',newsTabAsset)}${assetIds.map(id=>opt(id,(COT_NAME[id]||id),newsTabAsset)).join('')}</select>
+    <select onchange="setNewsTabAsset(this.value)">${opt('ALL','All assets',newsTabAsset)}${assetIds.map(id=>opt(id,(COT_NAME[id]||id),newsTabAsset)).join('')}</select>${newsTabAsset!=='ALL'?filterResetHtml("setNewsTabAsset('ALL')",'All assets'):''}
     <select onchange="setNewsTabSrc(this.value)">${opt('ALL','All sources',newsTabSrc)}${quellen.map(x=>opt(x,x,newsTabSrc)).join('')}</select>
   </div>
   ${chartLeisteHtml('',timeRangeBarHtml(newsTabRange,'setNewsTabRange',NEWS_RANGES)+timeRangeCustomHtml(newsTabRange,newsTabFrom,newsTabTo,'setNewsTabRange'))}`;
@@ -20703,7 +20955,7 @@ function sentFilterBar(){
   const nonFxGroups=SB_CATS.filter(c=>c.l!=='FX').map(cat=>
     grp(cat.l,nonFx.filter(s=>cat.ids.includes(SENT_NONFX_PRICE_ID[s])))).join('');
   const opts=`<option value=""${sentSym?'':' selected'}>All symbols</option>${grp('Watchlist',wl)}${grp('FX Pairs',fxPairs)}${nonFxGroups}`;
-  return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select></div>`;
+  return`<div class="cot-filterbar"><select class="btn" onchange="setSentSym(this.value)" title="Filter by symbol" style="cursor:pointer">${opts}</select>${sentSym?filterResetHtml("setSentSym('')",'All symbols'):''}</div>`;
 }
 // Asset-Filter fuer Put/Call Ratio + Net Options Flow: '' = markt-weite OCC-
 // Summe (alle US-Optionsboersen), sonst der ETF-Proxy des gewaehlten Assets
@@ -23810,10 +24062,10 @@ try{localStorage.removeItem('fxpro_intro_anim_enabled');}catch(e){}
 // Save-Funktion (unten), cloudPush, cloudPull mit prefPending-Schutz und
 // Export/Import (siehe CLAUDE.md, "WICHTIGSTE REGEL").
 let assetAnimEnabled=localStorage.getItem('fxpro_asset_anim_enabled')!=='0';
-function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);
-  // Die Flaggenwelle ist SMIL (siehe aiWellenAnim) - die CSS-Regel
-  // body.no-asset-anim haelt sie nicht an, deshalb hier ausdruecklich.
-  try{const d=document.getElementById('aiDefs');if(d){if(assetAnimEnabled)d.unpauseAnimations();else{d.pauseAnimations();d.setCurrentTime(0);}}}catch(e){}}
+// Seit 2026-10-03 laufen alle Bewegungen als Filmstreifen (siehe FILMSTREIFEN,
+// assetIconHtml) - body.no-asset-anim blendet sie aus, das statische Symbol
+// darunter zeigt die Ruhelage. Kein SMIL mehr, das gesondert anzuhalten waere.
+function applyAssetAnim(){document.body.classList.toggle('no-asset-anim',!assetAnimEnabled);}
 function updAssetAnimToggleBtn(){const b=document.getElementById('assetAnimToggleBtn');if(b)b.checked=assetAnimEnabled;}
 function toggleAssetAnimEnabled(){
   assetAnimEnabled=!assetAnimEnabled;
@@ -24548,7 +24800,21 @@ function kartenIconsNachtragen(root){
     if(inp)h.insertBefore(span,inp);else h.insertBefore(span,h.firstChild);
   });
 }
-try{new MutationObserver(()=>kartenIconsNachtragen()).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
+// Reine Textwechsel (Live-Uhr und COT-Countdown jede Sekunde, die Globus-
+// Beschriftung und "Scan position" in JEDEM Bild) fuegen kein Element hinzu
+// und entfernen keins - fuer Kartensymbole, ⓘ-Einordnen und Titel-Einpassen
+// ohne Belang. Bis 2026-10-03 loesten sie trotzdem jedes Mal die volle
+// Runde aus: gemessen auf Overview je 4 s 212 ms querySelectorAll + 146 ms
+// lgAlleKarten, nur weil der Globus seine Beschriftung neu schrieb.
+function nurTextMutation(ms){
+  if(window.__gpNurText)return false;          // Gegenprobe check/performance.js
+  return ms.every(m=>{
+    for(const x of m.addedNodes)if(x.nodeType===1)return false;
+    for(const x of m.removedNodes)if(x.nodeType===1)return false;
+    return true;
+  });
+}
+try{new MutationObserver(ms=>{if(!nurTextMutation(ms))kartenIconsNachtragen();}).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
 
 // ══ FX-LOGO IN FREIER KARTENFLAECHE (Nutzer 2026-09-24) ═══════════════
 // "auch wenn Karten keine Daten haben soll das schonmal in der Karte stehen
@@ -24593,8 +24859,8 @@ function lgFreiraum(card){
 // es in einer Karte, die schon einmal vermessen war (sie ist gewachsen),
 // einmal lg-einmal; sonst still.
 function lgLaedt(){return !Object.keys(DATA_SRC_LABEL).every(k=>k in DATA_LIVE_OK);}
-function lgKarte(card){
-  const m=lgFreiraum(card);
+function lgKarte(card,m){
+  if(m===undefined)m=lgFreiraum(card);
   const schonGesehen=!!card.__lgGesehen;card.__lgGesehen=true;
   let lg=card.querySelector(':scope > .lg-frei');
   if(!m||m.frei<LG_MIN_FREI){if(lg){lg.remove();card.classList.remove('lg-host');}return;}
@@ -24622,11 +24888,15 @@ function lgKarte(card){
 // landen - hier wird es einmal dahinter gesetzt. Ueber DOM-Reihenfolge statt
 // CSS-order, weil manche Titelzeilen eine zweite, volle Zeile tragen (order
 // haette das ⓘ unter diese Zeile geschoben - gemessen 58 px zu tief).
+// ⚠ tagName VOR getComputedStyle pruefen: marginLeft liefert den berechneten
+// Wert und erzwingt dafuer ein Layout - nach jedem anker.after() neu. In der
+// alten Reihenfolge lief das fuer JEDES Kind jeder Titelzeile (gemessen
+// 2026-10-03: 45-52 ms auf Trends, auch im scrollHalten-Pfad).
 function infoKnoepfeEinordnen(root){
   (root||document).querySelectorAll('.dw-hdr,.cot-card-title,.ab-tile-hd,.mx-card-title,.tr-card-head,.data-row,.data-ph,.rub-hdr').forEach(h=>{
     const i=h.querySelector(':scope>.rinfo,:scope>.info-b,:scope>.dw-t>.rinfo,:scope>.dw-t>.info-b');
     if(!i||i.classList.contains('ii-nach'))return;
-    const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs')||c.classList.contains('data-row-r')||c.classList.contains('px-panel-ctrls')||c.classList.contains('tr-legend')||getComputedStyle(c).marginLeft!=='0px'&&c.tagName==='SMALL')).pop();
+    const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs')||c.classList.contains('data-row-r')||c.classList.contains('px-panel-ctrls')||c.classList.contains('tr-legend')||c.tagName==='SMALL'&&getComputedStyle(c).marginLeft!=='0px')).pop();
     if(!anker)return;
     anker.after(i);i.classList.add('ii-nach');
   });
@@ -24659,21 +24929,37 @@ function kopfTitelEinpassen(root){
     els.forEach(e=>{e.style.fontSize='';});
     if(!kopfUmgebrochen(k))return;
     const basis=els.map(e=>parseFloat(getComputedStyle(e).fontSize)||0);
-    for(let f=0.98;f>=KOPF_MIN_F-1e-9;f-=0.02){
-      els.forEach((e,i)=>{e.style.fontSize=(basis[i]*f).toFixed(2)+'px';});
-      if(!kopfUmgebrochen(k))return;
-    }
-    els.forEach(e=>{e.style.fontSize='';});
+    // Dieselben Stufen wie bisher (0,98 ... 0,76), aber per Halbierung statt
+    // Stufe fuer Stufe (2026-10-03, Performance): jede Probe erzwingt ein
+    // Layout, linear waren es bis zu 12, so hoechstens 5. Kleinere Schrift
+    // bricht nie eher um als groessere - die Suche findet also dieselbe,
+    // groesste passende Stufe.
+    const stufen=[];for(let f=0.98;f>=KOPF_MIN_F-1e-9;f-=0.02)stufen.push(f);
+    const setz=f=>els.forEach((e,i)=>{e.style.fontSize=(basis[i]*f).toFixed(2)+'px';});
+    setz(stufen[stufen.length-1]);
+    if(kopfUmgebrochen(k)){els.forEach(e=>{e.style.fontSize='';});return;}
+    let lo=0,hi=stufen.length-1;              // stufen[hi] passt sicher
+    while(lo<hi){const mid=(lo+hi)>>1;setz(stufen[mid]);if(kopfUmgebrochen(k))lo=mid+1;else hi=mid;}
+    setz(stufen[hi]);
   });
 }
 try{window.addEventListener('resize',()=>requestAnimationFrame(()=>kopfTitelEinpassen()));}catch(e){}
 let _iiPlan=0;
-try{new MutationObserver(()=>{if(!_iiPlan)_iiPlan=requestAnimationFrame(()=>{_iiPlan=0;infoKnoepfeEinordnen();kopfTitelEinpassen();});})
+// Textwechsel nur dann, wenn er im Asset-Kopf passiert (dort haengt die
+// Einpassung an der Textbreite) - siehe nurTextMutation.
+try{new MutationObserver(ms=>{if(nurTextMutation(ms)&&!ms.some(m=>m.target.closest&&m.target.closest('.ahead')))return;if(!_iiPlan)_iiPlan=requestAnimationFrame(()=>{_iiPlan=0;infoKnoepfeEinordnen();kopfTitelEinpassen();});})
   .observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});}catch(e){}
-let _lgPlan=0;
+let _lgPlan=0,_lgTextPlan=0;const _lgTextKarten=new Set();
+// ⚠ ERST alle Karten messen, DANN alle Logos setzen (2026-10-03,
+// Performance): abwechselnd messen/schreiben erzwang nach jeder Karte ein
+// neues Layout - gemessen 118 ms (4x gedrosselt) mitten im Seiten-Wisch.
+// Das Logo liegt absolut (.lg-frei) und verschiebt keine andere Karte, die
+// Messungen bleiben also gueltig.
 function lgAlleKarten(){
   _lgPlan=0;
-  document.querySelectorAll(LG_KARTEN).forEach(c=>{if(c.offsetParent||c.querySelector(':scope > .lg-frei'))lgKarte(c);});
+  const karten=[...document.querySelectorAll(LG_KARTEN)].filter(c=>c.offsetParent||c.querySelector(':scope > .lg-frei'));
+  const mess=karten.map(c=>lgFreiraum(c));
+  karten.forEach((c,i)=>lgKarte(c,mess[i]));
 }
 function lgPlanen(){if(!_lgPlan)_lgPlan=requestAnimationFrame(()=>requestAnimationFrame(lgAlleKarten));}
 try{
@@ -24682,6 +24968,17 @@ try{
   new MutationObserver(ms=>{
     // eigene Logo-Einfuegungen loesen keinen neuen Durchlauf aus
     if(ms.every(m=>[...m.addedNodes,...m.removedNodes].every(n=>n.nodeType===1&&n.classList.contains('lg-frei'))))return;
+    // Reiner Textwechsel: nur die Karten nachmessen, in denen er passiert und
+    // die ein Logo tragen (der Text koennte ihm den Platz nehmen) - nicht
+    // alle Karten der Seite (siehe nurTextMutation).
+    if(nurTextMutation(ms)){
+      ms.forEach(m=>{const k=m.target.closest&&m.target.closest(LG_KARTEN);if(k&&k.querySelector(':scope > .lg-frei'))_lgTextKarten.add(k);});
+      if(_lgTextKarten.size&&!_lgTextPlan)_lgTextPlan=requestAnimationFrame(()=>{
+        _lgTextPlan=0;const ks=[..._lgTextKarten].filter(k=>k.isConnected);_lgTextKarten.clear();
+        const mess=ks.map(k=>lgFreiraum(k));ks.forEach((k,i)=>lgKarte(k,mess[i]));
+      });
+      return;
+    }
     lgBeobachten();lgPlanen();
   }).observe(document.getElementById('pageArea')||document.body,{childList:true,subtree:true});
   window.addEventListener('resize',lgPlanen);
@@ -24840,7 +25137,7 @@ Object.assign(window,{
   setAbChartRange,setAbChartRangeVal,AB_RANGES,AB_INVERS_KLASSEN,AB_INVERS_ARTEN,
   assetMonthCalHtml,abCalShift,abCalPick,openAssetCal,closeAssetCal,renderAssetCalBody,setAbCalSicht,setCalpRange,calpMehr,calpDaten,calVergangen,abCalNachTag,abTagStr,AB_MONATE,AB_WOCHENTAGE,
   openRecoverM,recoverNotiz,recoverAlle,notizenAusSicherungen,
-  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiWellenAnim,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,flaggenBandHtml,
+  AI_GLYPH_FRAME,_gPunkte,_gSterne,AI_GLYPHS,AI_GLYPH_BOND_BADGE,AI_GLYPH_INDEX,assetGlyphHtml,aiDefsSvg,AI_WELLE_L,AI_WELLE_T,AI_WELLE_A,aiWellenPfad,aiFilm,aiFilmTabellen,AI_FLAG_WHITE,WISCH_MS,wischFlaggeHtml,flaggenBandHtml,
   AI_FLAG_IDS,aiEnsureDefs,assetIconHtml,SK,DATA_BASE,FEED_TIMEOUT_MS,DATA_LIVE_OK,
   DATA_SRC_LABEL,ALL_PAIRS,SETUP_CAT,NODIR_CAT,FX_PAIRS,SB_CATS,assetFilterSelect,multiAssetFilterBarHtml,
   applyMultiAssetFilter,uid,escH,safeUrl,ICONS,icn,ar,mvArr,NONFX_IDS,assetCls,isNonFx,macroSyncIds,isCrypto,

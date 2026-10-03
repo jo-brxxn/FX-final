@@ -180,7 +180,15 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   // mit der Schrift wachsender Platzhalter hinter dem Titel.
   // Gegenprobe: das synchrone Einpassen direkt nach renderDetail wieder
   // zuruecknehmen -> der naechste Frame aendert den Kopf -> rot.
-  const nachj = await p.evaluate(async (gp) => {
+  // ⚠ Seit 2026-10-03 auch ueber die Fensterbreite gesucht: bei 1000px brach
+  // der Kopf mit dem Datenstand dieses Tages schon OHNE Platzhalter um und
+  // liess sich auch mit 75 % Schrift nicht einpassen (laengere "Next event"-
+  // Zeile) - der Waechter meldete "zu wenig geprueft", auch auf main. Er
+  // probiert deshalb 1000/1180/1280px und Platzhalter bis 8em in 0,5er-Stufen.
+  let nachj = { out: [], umgebrochen: 0 };
+  for (const breite of [1000, 1180, 1280]) {
+  await p.setViewportSize({ width: breite, height: 695 });
+  const teil = await p.evaluate(async (gp) => {
     const sleep = ms => new Promise(r => setTimeout(r, ms)), raf = () => new Promise(r => requestAnimationFrame(() => r()));
     const st = document.createElement('style');
     document.head.appendChild(st);
@@ -194,7 +202,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       // Verkleinern (bis 75%) wieder einpassen laesst - nur dann gibt es
       // eine Nachjustierung, die zu spaet kommen koennte.
       let t = null;
-      for (const em of [0, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5]) {
+      for (const em of [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8]) {
         st.textContent = em ? `.ahead .atitle::after{content:"";display:inline-block;width:${em}em}` : '';
         renderDetail();
         t = det.querySelector('.ahead .atitle');
@@ -211,6 +219,10 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     st.remove();
     return { out, umgebrochen };
   }, GEGENPROBE);
+  nachj.out.push(...teil.out.map(x => `${breite}px ${x}`)); nachj.umgebrochen += teil.umgebrochen;
+  if (teil.umgebrochen) break;
+  }
+  await p.setViewportSize({ width: 1000, height: 695 });
   nachj.out.forEach(f => fail('NACHJUSTIERT NACH DEM ZURUECKSETZEN', `${f} - auf dem iPad springt der Inhalt um diese Hoehe (scrollHalten muss infoKnoepfeEinordnen/kopfTitelEinpassen VOR dem Zuruecksetzen aufrufen)`));
   if (!nachj.umgebrochen) fail('ZU WENIG GEPRUEFT', 'erzwungener Kopfumbruch griff nicht - der Kopf wurde nirgends eingepasst');
   perr.forEach(e => fail('PAGEERROR', e));

@@ -29,6 +29,12 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
   const p = await (await b.newContext({ viewport: { width: 1000, height: 695 }, serviceWorkers: 'block' })).newPage();
   await p.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1'); localStorage.setItem('fxpro_intro_anim_enabled', '0'); } catch (e) {} });
   const perr = []; p.on('pageerror', e => perr.push(String(e)));
+  // ⚠ Seit 2026-09-27 fuellt das Kalender-Archiv (cal_hist/) die Tage vor dem
+  // Live-Feed, die Rekonstruktion aus der Historie tritt dahinter zurueck -
+  // B/C pruefen aber genau DIE (das Archiv prueft check/calpast.js). Ohne
+  // Archiv laeuft hier also der Historien-Pfad allein, wie er gemeint ist.
+  // (Bis 2026-09-30 gruen, weil das Archiv im Pruef-Fenster oft noch nicht da war.)
+  await p.route(/cal_hist\//, r => r.fulfill({ status: 404, body: '' }));
   await p.goto(URL); await wartenBisDatenDa(p);
   const r = await p.evaluate(gp => {
     ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
@@ -69,9 +75,17 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
   else {
     const t = r.tage.find(x => x.n === +tagSoll.slice(8, 10));
     if (tagSoll.startsWith(r.monat) && (!t || t.dotOp === null)) fail('PUNKT FEHLT', `${tagSoll}: ${soll[tagSoll].length} Release(s) in ind_data.json, aber kein Punkt im Raster`);
-    const ist = await p.evaluate(tag => { openAssetCal(tag);
-      return [...document.querySelectorAll('#assetCalBody .acm-day .abc-e')].map(e => ({ name: e.querySelector('.abc-e-n').textContent.trim(), vorbei: e.classList.contains('vorbei'),
-        werte: [...e.querySelectorAll('.abc-v')].map(v => v.textContent.trim()), op: +getComputedStyle(e).opacity })); }, tagSoll);
+    // ⚠ Zum Monat des Prueftags blaettern (wie ein Nutzer mit ‹/›): das Fenster
+    // zeigt den Tag nur im angezeigten Monat. Am Monatsanfang liegt der
+    // Prueftag im Vormonat - ohne Blaettern zeigte es einen Oktober-Tag.
+    const ist = await p.evaluate(tag => {
+      const d0 = new Date(tag + 'T12:00:00'), jetzt = new Date();
+      const versatz = (d0.getFullYear() - jetzt.getFullYear()) * 12 + d0.getMonth() - jetzt.getMonth();
+      abCalShift(versatz); openAssetCal(tag);
+      const out = [...document.querySelectorAll('#assetCalBody .acm-day .abc-e')].map(e => ({ name: e.querySelector('.abc-e-n').textContent.trim(), vorbei: e.classList.contains('vorbei'),
+        werte: [...e.querySelectorAll('.abc-v')].map(v => v.textContent.trim()), op: +getComputedStyle(e).opacity }));
+      closeAssetCal(); abCalShift(-versatz);
+      return out; }, tagSoll);
     soll[tagSoll].forEach(s => {
       const e = ist.find(x => x.name === s.base);
       if (!e) { fail('EINTRAG FEHLT', `${tagSoll}: ${s.base} (Actual ${s.a}) steht nicht im Tagesfenster`); return; }

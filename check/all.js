@@ -90,6 +90,9 @@ const PRUEFUNGEN = [
   { n: 'journal',    d: 'Score-Journal: jede Bewegung mit Ursache, Teile = Veraenderung, kein leerer Wert', f: 'check/journal.js', args: [], browser: true },
   { n: 'zurueck',    d: 'Nichts springt zurueck: Abgleich waehrend der Eingabe, jede Nutzer-Aenderung markiert, Push waehrend der Eingabe', f: 'check/zurueck.js', args: [], browser: true },
   { n: 'eingaben',   d: 'Kein Fenster verliert Eingaben beim Schliessen, Nachfrage in Bias-Farben, Knopfleiste fest unten', f: 'check/eingaben.js', args: [], browser: true },
+  // 2026-10-03: "es ruckelt ... Animationen nicht clean ... hakt" - zaehlt statt zu stoppen.
+  { n: 'filterreset', d: '✕ neben Asset-Dropdowns mit "alle"-Ansicht: nur bei Auswahl, direkt daneben, setzt zurueck', f: 'check/filterreset.js', args: [], browser: true },
+  { n: 'performance', d: 'Endlos-Animationen nur transform/opacity, max. 400 gleichzeitig, nichts haengt nach, Leerlauf ohne Vermessung, ein Aufbau je Asset-Wechsel', f: 'check/performance.js', args: [], browser: true },
   { n: 'backtester', d: 'Backtester: Sitzungen, Releases, Kursreaktion gegen die Rohdaten', f: 'check/backtester.js',args: [],           browser: true },
   { n: 'erklaerung',d: 'Erklaerungen hinter dem ⓘ, zentriert, nicht in der Karte', f: 'check/erklaerung.js',args: [],        browser: true },
 ];

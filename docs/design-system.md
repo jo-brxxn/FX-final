@@ -579,6 +579,13 @@ auf Textur 2026-09-04). Nach links ausgeblendet per Maske.
 und stand als harter Block da — jetzt 510 px, die Maske greift.
 
 ### Flaggen (seit 2026-09-23): ein Stück, Welle nur am Umriss
+⚠ **Seit 2026-10-03 laufen alle Asset-Symbol-Bewegungen als vorberechneter
+Filmstreifen** (`aiFilm`, Abschnitt „FILMSTREIFEN" in `js/main.js`), nicht
+mehr live per SMIL/CSS: die GPU schiebt einen fertigen Streifen, der
+Hauptthread tut pro Bild nichts. Eine neue Bewegung eines Asset-Symbols wird
+deshalb NICHT als Live-Animation gebaut, sondern als Keyframes auf
+`.ai-probe` (werden abgetastet) plus Einbau in `aiFilm`. Details/Messung:
+`docs/performance.md`.
 Nie wieder zerschneiden: Streifen, die einzeln bewegt werden, reißen Lücken
 auf. Bewegt werden nur der gemeinsame Umriss `#aiWave` (SMIL) und der
 Faltenverlauf `#aiFoldG`; Glanz/Falten liegen IN der Welle; `.ai-rim` als Rand;
@@ -1229,6 +1236,15 @@ den selben Stellen die i dann die Zeitfilterbutton"*; per Rückfrage festgelegt:
   nur noch Knöpfe (z. B. Auswahl-Knopf, ✕) und das ⓘ. Filter, die die ganze
   Seite betreffen (Trends, COT, Kalender, News, Carry), stehen **oben rechts
   auf der Seite**.
+- **✕ neben Asset-Dropdowns** (Dauerregel seit 2026-10-03, Nutzer: *„neben
+  dem Filter einen Button … um den Filter zurückzusetzen also zurück auf alle
+  Symbole"*, per Rückfrage „✕ nur bei aktivem Filter"): jedes Asset-Dropdown
+  mit einer „alle"-Ansicht bekommt direkt rechts daneben ein `✕`
+  (`filterResetHtml`, Optik `.btn.flt-x`, gleiche Höhe), sichtbar NUR,
+  solange ein einzelnes Asset gewählt ist; Klick → zurück auf „alle".
+  Bestand: Trends, Calendar, News, Sentiment/Retail, COT, Put/Call.
+  `assetFilterSelect` bringt es automatisch mit, sobald ein `allLabel`
+  gesetzt ist. Geprüft von `check/filterreset.js`.
 - **Zeitfilter** stehen in einer **eigenen Werkzeugzeile direkt über dem
   Chart, rechtsbündig** — nie in der Titelzeile. Baustein:
   `chartLeisteHtml(links, rechts)` (`.chart-leiste`).

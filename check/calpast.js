@@ -157,8 +157,13 @@ function archivJahr(y, liveTag, hist) {
       calpRange = '1Y';
       const past = calpDaten('USD').evts.filter(e => /Manufacturing PMI Check/.test(e.name));
       const d0 = new Date(h.d + 'T12:00:00'), jetzt = new Date();
-      abCalMonat = (d0.getFullYear() - jetzt.getFullYear()) * 12 + d0.getMonth() - jetzt.getMonth();
-      const m = abCalNachTag('USD'); abCalMonat = 0;
+      // ⚠ Ueber die echte Bedienfunktion blaettern: abCalMonat ist eine
+      // Modul-Variable ohne Schreib-Bruecke - eine Zuweisung von hier landete
+      // wirkungslos auf window. Bis 2026-09-30 lag der gepruefte Release
+      // zufaellig im laufenden Monat, ab dem Monatswechsel war G rot.
+      const versatz = (d0.getFullYear() - jetzt.getFullYear()) * 12 + d0.getMonth() - jetzt.getMonth();
+      abCalShift(versatz);
+      const m = abCalNachTag('USD'); abCalShift(-versatz);
       const alle = Object.values(m).flat();
       return { past: past.map(e => e.actual), monat: alle.filter(e => /Manufacturing PMI Check/.test(e.name)).map(e => e.actual),
         doppelt: alle.filter(e => e.rekonstruiert && e.name === 'Manufacturing PMI' && Math.abs(Date.parse(e.date) - Date.parse(h.d)) <= 864e5).length };

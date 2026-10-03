@@ -438,6 +438,7 @@ function setCalCcyFilter(v){
 function updCalCcySel(){
   const sel=document.getElementById('calCcySel');if(!sel)return;
   sel.value=calCcyFilter;
+  const x=document.getElementById('calCcyX');if(x)x.hidden=calCcyFilter==='ALL';   // ✕ neben dem Filter, siehe filterResetHtml
 }
 
 export {

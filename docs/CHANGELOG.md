@@ -18858,3 +18858,131 @@ Standard — u. a. Performance-Zeitraum und Headlines-Filter (Dashboard), Korrel
 (Matrix), Zeitraum und Paar-Modus (Trends), COT-Filter, Sentiment-Unterseite,
 Seasonality-Asset, News-Filter, Data-Modus/-Zeitraum, Carry-Sortierung/-Paar/-Laufzeit,
 History-Ageing. Teils bewusst so festgelegt (Kalender-Karte Month|Past, Past-Zeitraum).
+
+## VERSION-CHECK-587 (2026-10-03) — Performance: Ruckeln, Haken, lange Wechsel
+
+Nutzer: *„Die Webseite hat Performance Probleme also es ruckelt manchmal und Animationen und
+so sind einfach nicht clean und es hakt und braucht teilweise länger zu laden"*.
+Dauerregeln daraus: `docs/performance.md`. Wächter: `check/performance.js`.
+
+**Gemessen** (Playwright-Chromium, 1180×820; „4×" = CPU per CDP 4-fach gedrosselt, grob ein
+schwaches Gerät): Long Tasks (PerformanceObserver), Bildabstände (rAF), CDP-Profiler
+(Eigen-/Gesamtzeit je Funktion), Ablaufspur `devtools.timeline` (PrePaint/Paint/Layout mit
+JS-Aufrufer), `document.getAnimations()`.
+
+| Befund | vorher | nachher |
+|---|---|---|
+| Trends: jeder der 3292 Punkte mit eigener Einblend-Animation (Versatz je Punkt) | 3363 Animationen gleichzeitig, PrePaint 2130 ms, längste Aufgabe 2287 ms, danach ~250 ms je Bild solange sie liefen | 106–118 Animationen, längste Aufgabe 211 ms |
+| Wisch GBP → Trends / Trends → Calendar: Stillstand bis zum Start | 2287 ms / 2,2 s | 185 ms / 115 ms |
+| Einblendungen mit `fill-mode both/forwards` blieben als Effekt hängen | Carry 28 festgehaltene `listRowIn` | 0 (`backwards`) |
+| Dashboard → Asset (`gotoSym`, `sbClick` im Panel): `showTab('cur')` zeichnete das ALTE Asset, danach `selSym` das neue; beim ersten Asset der Sitzung zwei weitere volle `renderDetail`, als Archiv-Meta und Archiv-Jahr nacheinander eintrafen | 4 `renderDetail` + Seiten-Layouts (98/25/25/27 ms); Panel-Wahl 342 ms Long Task (4×: 1497 ms) | 1 Aufbau + Tausch nur der Kalenderkarte; 243 ms (4×: 957 ms); `gotoSym` synchron 105–165 ms statt 213–293 ms |
+| Archiv-Neuaufbau mitten im Wisch (4×) | 557 ms-Aufgabe im Wisch | weg |
+| `lgAlleKarten`: messen/schreiben abwechselnd je Karte | 118 ms (4×) | 57 ms (4×) |
+| `infoKnoepfeEinordnen`: `getComputedStyle(c).marginLeft` (erzwingt Layout) VOR dem `tagName`-Test, für jedes Kind jeder Titelzeile | 45–52 ms auf Trends | entfällt |
+| `indMarketWeight`: Kursreihe → Bewegungen für JEDEN Indikator neu | 105–124 ms je Preis-Takt/`recordScoreHist` | einmal je Asset (`mktMovesFor`); 580 Werte (293 ≠ 1) bit-gleich zum alten Code |
+| Dashboard-Leerlauf (Asset-Animationen aus): `cotNotifyPulse` animierte `box-shadow` | Paint 608 ms je 4 s | 3 ms (Puls über `opacity` eines `::after`, Bild verglichen: gleich) |
+| `livePulse` (Live-Data-Widget): `box-shadow`-spread | malt je Bild | `::after` mit `scale`+`opacity` |
+| COT-Countdown: `innerHTML` mit vier `<b>` jede Sekunde → Element-Mutation → volle Karten-Vermessung | ~250 `getBoundingClientRect`/s | 0 (nur Ziffern als Text) |
+| Overview/Globus: Label-`textContent` in jedem Bild → Beobachter jedes Bild; `symScoreCmp` je Marker je Bild; `globePathD` mit sin/cos je Punkt je Bild | JS 1687 ms je 4 s (querySelectorAll 212, lgAlleKarten 146, symScoreCmp 254, globePathD 728–837), Raster 5313 ms | JS 867 ms, globePathD 410 ms, Raster 3646 ms; Pfad-Zeichenkette für 227.520 Vergleiche (2 Küsten-Fassungen × 360 Winkel) zeichengleich |
+| `globeScanDrift`: `background-position` über die ganze Kugel | malt je Bild | `transform` auf `::before` (42 px = 14 Linien, nahtlos) |
+
+**Fehlerklasse gesucht:** alle Endlos-Animationen geprüft (18; malend waren außer den drei
+umgebauten nur SVG-interne im Globus/Asset-Symbol und der Lade-Shimmer — begründete
+Ausnahmen im Wächter). Alle `setInterval`/rAF-Ticker: Live-Uhren schreiben schon Text, die
+Kopf-Uhr liegt außerhalb von `#pageArea`; der COT-Countdown war der einzige Element-Ticker.
+Alle `showTab('cur')`+`selSym`-Folgen: `gotoSym` und `sbClick` (beide behoben).
+`kopfTitelEinpassen` probiert die 12 Schriftstufen per Halbierung (≤ 5 Layouts statt ≤ 12).
+
+**Nicht das Problem** (gemessen, deshalb unverändert): der Clip-Wisch selbst — ohne
+Asset-Animationen sind die Bilder im Wisch mit und ohne Clip gleich (4×: Median 17 ms);
+Layout der Asset-Seite warm ~30 ms (fast nur das Karten-Raster), keine CSS-Eigenschaft
+(container-type, Filter, Grid, SVG) machte es messbar teurer.
+
+**Offen, Entscheidung des Nutzers:** Dauer-Animationen der Asset-Symbole (Flaggen-Welle per
+SMIL in `#aiDefs`, Glanz, Öltropfen, Index-Linie), nachgemessen nach allen Fixes:
+Asset-Seite im Leerlauf 28 % Hauptthread (aus: 1 %), Dashboard 33 % (aus: 1 %; vor dem
+cotNotify-Fix waren es auch „aus" noch 22 %), Watchlist 5 % (aus: 0 %); im Wisch
+bei 4× Median 50 ms je Bild (≈ 20 fps) gegen 17 ms ohne. Containment-Varianten auf `#aiDefs`
+brachten nichts (siehe Messung 2026-10-03 in dieser Sitzung).
+
+**Wächter:** `check/performance.js` (S, A–D, 12 Seiten, zählt statt zu stoppen). Gegen den
+alten Stand: S rot (cotNotifyPulse, livePulse, globeScanDrift); Gegenproben
+`--gegenprobe-punkte` (Trends 3410 Animationen), `--gegenprobe-fill` (Carry 29 festgehalten),
+`--gegenprobe-text` (COT 502 Messungen in 2 s), `--gegenprobe-doppelt` (2 Aufbauten) — alle rot.
+
+### Nachtrag 1 (gleicher Tag): Asset-Symbole als Filmstreifen
+
+Auf die Frage, ob die Dauer-Animationen der Asset-Symbole kürzer laufen sollen (Entscheidungsvorlage
+oben), Nutzer: *„Das kann nicht sein dann baust du das falsch die Animationen werden nur ganz am Anfang
+einmal geladen dann nur wiederholt das ist nicht anspruchsvoll. Bau das besser"*.
+
+**Gemessen** (Asset-Seite, 4 s Leerlauf, Varianten): Auf der Seite war genau EIN animiertes Symbol
+sichtbar (18 weitere ausgeblendet) — trotzdem 1439 ms Hauptthread (Paint 520, PrePaint 280, Layerize
+204, Layout 135). Alle Symbole `display:none`: **557 ms**. Nur SMIL pausiert: 870. Nur CSS aus: 1504.
+Beides aus: 33. Eigene Ebene je Symbol (`will-change`) und Containment änderten nichts.
+**Ursache:** Die Animationen lagen in den GETEILTEN Vorlagen `#aiDefs` (SMIL `animate d` auf der
+Clip-Welle und am Rand, `animateTransform` am Faltenverlauf, CSS-Animationen auf den Elementen in den
+`<symbol>`s) und liefen dort unabhängig davon, ob irgendein Symbol sichtbar war; jeder Takt zog die
+Render-Pipeline der ganzen Seite mit (Layout der `<use>`-Kopien, Layerize über alle Ebenen).
+
+**Fix an der Wurzel:** jede Bewegung einmal als senkrechter Filmstreifen (SVG-Bild, Blob-URL, 30
+Bilder/s) aus denselben Quellen — Welle/Falten aus `aiWellenPfad`/`AI_WELLE_*`, Glanz/Öltropfen/
+Metallglanz/Index-Linie aus den CSS-Keyframes, abgetastet auf einer pausierten Probe
+(`aiFilmTabellen`), damit auch stille CSS-Interpolationen (aiTick-Deckkraft über den ganzen Zyklus)
+exakt übernommen werden. Abgespielt per `transform: translateY` mit `steps(n)` (GPU), gemeinsame Uhr
+über negative `animation-delay`. Vorlagen ohne jede Animation; das statische Symbol darunter zeigt die
+Ruhelage (AUS-Schalter, bis der Film dekodiert ist). Filme werden im Leerlauf gebaut
+(`aiFilmeNachziehen`, gemessen 5 ms je Film, 15 Filme = 75 ms bzw. 268 ms bei 4×). Einzige
+Abweichung: Flaggen-Glanz 3,6 statt 3,4 s je Durchgang (sonst passen Welle 2×1,8 s und Glanz erst nach
+30,6 s = 918 Bildern in einen Zyklus). Gezeichnete Flaggen (Wisch, Kopf-Band) stehen wie bisher still.
+
+**Bildvergleich** alt (live, eingefroren) gegen neu (Film) bei 5 Zeitpunkten, 7 Symbole à 96 px:
+mittlere Abweichung 0,29–0,5 von 255. (Zwei Testfehler unterwegs: `currentTime` einer CSS-Animation
+zählt die negative Verzögerung mit; Animationen in `<use>`-Kopien lassen sich im alten Stand nicht
+anhalten — Referenz deshalb inline gebaut.)
+
+**Nachher:** Leerlauf Asset-Seite 1108 → 17 ms je 4 s (28 % → 0 %), Dashboard 1338 → 13–17 ms
+(33 % → 0 %); Wisch bei 4× Drossel Median 50 → 17 ms je Bild (= ohne Animationen); Start: Daten nach
+1968 ms, lange Aufgaben 896 ms gesamt. ⚠ WebKit nicht gemessen (Playwright-WebKit-Download in der
+Cloud gesperrt) — iPad-Prüfung steht aus.
+
+**Wächter:** `performance.js` E (kein SMIL, nichts live, jedes sichtbare Symbol als Film, Filme nur
+`transform`; `--gegenprobe-smil` rot), `symbole.js` umgestellt: „Welle steht" prüft jetzt die
+verschiedenen Wellenformen IM Film (statt SMIL), dazu „keine Live-Animation"; der Glanz-Pixeltest
+(B) läuft am angehaltenen Film und misst zusätzlich den 2-px-Rand direkt an der Flagge — das
+Filmfenster schneidet alles weiter außen ab, der alte Fehler (100 px daneben) ist baulich
+ausgeschlossen, ein unbeschnittener Glanz zeigte sich nur noch dort (`--gegenprobe` per
+`window.__gpGlanzOhneClip` rot).
+
+### Nachtrag 2: ✕ neben Asset-Filtern
+
+Nutzer (auf die Frage nach den ~35 ungespeicherten Ansichts-Filtern): *„Lass das so und ich will das
+bei den Filtern mit drop-down wo man dann das Asset oder so auswählt und es dort aber eine Ansicht gibt
+mit allen Symbolen das es neben dem Filter einen Button gibt um den Filter zurückzusetzen also zurück
+auf alle Symbole kommt"*; per Rückfrage „✕ nur bei aktivem Filter". Filter bleiben ungespeichert.
+Gefunden: sechs Asset-Dropdowns mit „alle"-Ansicht — Trends (All assets), Calendar (All currencies),
+News (All assets), Sentiment/Retail (All symbols), COT (All assets), Put/Call (Market-wide). Ohne
+„alle"-Ansicht und deshalb ohne ✕: Data, Seasonality, Correlation regime, Rate differential.
+Baustein `filterResetHtml` (`.btn.flt-x`); `assetFilterSelect` bringt ihn mit, sobald `allLabel`
+gesetzt ist. Beim Bau gemessen: COT-✕ 9 px niedriger als das Dropdown (größerer Innenabstand in
+`.cot-filterbar`) → `align-self:stretch`. Wächter `check/filterreset.js` (echte Eingaben; Gegenprobe rot).
+
+### Nachtrag 3: drei Wächter, die seit dem Monatswechsel auch auf `main` rot waren
+
+Beim Gesamtlauf rot — und gegen den unveränderten Stand (`main`, eigener Server) genauso. Alle drei
+hingen am Datum bzw. Datenstand, keiner an einem App-Fehler:
+- **`calpast.js` G** (*„Monat: [] statt Actual 54.6"*): der Test setzte `abCalMonat` aus der Seite —
+  eine Modul-Variable ohne Schreib-Brücke, die Zuweisung landete wirkungslos auf `window`. Bis
+  30.09. lag der geprüfte Release (01.09.) zufällig im laufenden Monat. Jetzt blättert er über die
+  echte Bedienfunktion `abCalShift`.
+- **`kalender.js`** (*„Inflation Expectations fehlt / ISM Services PMI unbelegt"*): `openAssetCal(tag)`
+  mit einem September-Tag im Oktober-Raster — das Fenster zeigt nur Tage des angezeigten Monats
+  (die App ruft es auch nur so auf), es stand also ein Oktober-Termin darin. Dazu prüfen B/C die
+  Rekonstruktion aus der Historie, während seit 27.09. das Archiv diese Tage füllt (geprüft von
+  `calpast.js`); bis 30.09. grün, weil das Archiv im Prüf-Fenster oft noch nicht da war. Jetzt:
+  zum Monat blättern, Archiv im Test abgeschaltet (Route 404).
+- **`scrollhalt.js`** (*„erzwungener Kopfumbruch griff nicht"*): bei 1000 px brach der Asset-Kopf
+  mit der heutigen, längeren „Next event"-Zeile schon ohne Platzhalter um und ließ sich auch mit
+  75 % Schrift nicht einpassen — es gab keine Platzhalterbreite „umgebrochen UND einpassbar".
+  Jetzt Suche über 1000/1180/1280 px und Platzhalter bis 8 em (gefunden bei 1180 px: USD 4 em,
+  GOLD 2,5 em). Alle Gegenproben weiter rot.

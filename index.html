@@ -3129,6 +3129,12 @@ body.res-return-active #resBackBar{display:flex}
    sichtbare Platzierung ihn braucht (sent/seas/data hatten ihn ohnehin
    ueberschrieben). Wer Abstand braucht, setzt ihn am Container. */
 .cot-filterbar{display:flex;align-items:center;gap:10px;min-width:0}
+/* ✕ neben einem Asset-Filter (filterResetHtml): gleiche Hoehe wie das
+   Dropdown (.btn), nur so breit wie das Zeichen. hidden muss gegen .btn
+   (display:inline-flex) gewinnen. */
+.flt-x{flex:0 0 auto;padding-left:10px;padding-right:10px;line-height:1}
+.flt-x[hidden]{display:none}
+.cot-filterbar>.flt-x{align-self:stretch}
 /* min-width:0 auf dem <select> selbst (Bugreport/Waechter-Fund 2026-08-31,
    layout+cards: "Data"/Seasonality-Karte lief auf Mobile ueber den Rand
    hinaus): ein <select> ohne feste Breite bemisst sich in Chromium an
@@ -3155,8 +3161,16 @@ body.res-return-active #resBackBar{display:flex}
    Farbverlauf - jetzt dieselbe Rand-Streifen-Konvention wie die Score-
    Karten (neutraler Grund, farbiger linker Streifen), Text/Icon tragen
    die Akzentfarbe statt der ganzen Flaeche. */
-@keyframes cotNotifyPulse{0%,100%{box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}50%{box-shadow:0 2px 16px rgba(var(--blue-rgb),.18)}}
-.cot-notify-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.18);animation:cotNotifyPulse 1.8s ease-in-out infinite}
+/* Puls ueber die DECKKRAFT eines Pseudo-Elements statt ueber box-shadow
+   (2026-10-03, Performance): eine box-shadow-Animation malt die Karte in
+   jedem Bild neu - gemessen 608 ms Paint je 4 s Leerlauf auf dem Dashboard,
+   solange die Karte stand. opacity laeuft auf der GPU. Gleiches Bild:
+   Ruhe-Schatten .08/10px, auf dem Hoehepunkt kommt .11/16px dazu (zusammen
+   ~.18 wie vorher). Die Sync-Karte pulst nicht und behaelt .18/10px. */
+@keyframes cotNotifyPulse{0%,100%{opacity:0}50%{opacity:1}}
+.cot-notify-card{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:7px 9px;margin-bottom:6px;border-radius:var(--rss);cursor:pointer;background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--blue);color:var(--t0);box-shadow:0 2px 10px rgba(var(--blue-rgb),.18)}
+.cot-notify-card:not(.sync-notify-card){box-shadow:0 2px 10px rgba(var(--blue-rgb),.08)}
+.cot-notify-card:not(.sync-notify-card)::after{content:'';position:absolute;inset:-1px -1px -1px -3px;border-radius:inherit;pointer-events:none;box-shadow:0 2px 16px rgba(var(--blue-rgb),.11);opacity:0;animation:cotNotifyPulse 1.8s ease-in-out infinite}
 .cot-notify-ic{font-size:14px}
 .cot-notify-txt{font-weight:800;font-size:var(--fs-sm);letter-spacing:.2px;color:var(--green)}
 .cot-notify-sub{font-size:var(--fs-2xs);opacity:.75;margin-left:2px;color:var(--t2);flex-basis:100%}
@@ -3682,9 +3696,16 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    (background-position), bewusst KEIN filter:blur (dokumentierte Blur-Perf-
    Lehre) und sehr niedrige Deckkraft, damit die eigentlichen Marker/Labels
    nicht darunter leiden. */
-.globe-hud-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.05;background:repeating-linear-gradient(0deg,#dff4ff 0 1px,transparent 1px 3px);animation:globeScanDrift 7s linear infinite}
-@keyframes globeScanDrift{0%{background-position:0 0}100%{background-position:0 42px}}
-@media(prefers-reduced-motion:reduce){.globe-hud-scan{animation:none}}
+/* Die Linien wandern per transform statt per background-position
+   (2026-10-03, Performance): background-position malt die ganze Flaeche in
+   jedem Bild neu, transform verschiebt nur eine fertige Ebene. Dafuer ist
+   die Linienflaeche (::before) 42 px hoeher als die Kugel und wird von
+   .globe-hud-scan beschnitten; 42 px = 14 Linienabstaende, die Schleife
+   bleibt nahtlos wie vorher. */
+.globe-hud-scan{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.05;overflow:hidden}
+.globe-hud-scan::before{content:'';position:absolute;left:0;right:0;top:-42px;bottom:0;background:repeating-linear-gradient(0deg,#dff4ff 0 1px,transparent 1px 3px);animation:globeScanDrift 7s linear infinite}
+@keyframes globeScanDrift{0%{transform:translateY(0)}100%{transform:translateY(42px)}}
+@media(prefers-reduced-motion:reduce){.globe-hud-scan::before{animation:none}}
 /* Zusaetzliche HUD-Badges (Nutzer-Wunsch 2026-07-27 "noch mehr
    Ueberwachungsmodus-Objekte"): "TRACKING" oben mittig zwischen den Eck-
    Klammern, "SIGNAL" unten mittig - beides reine Modus-/Status-Label wie
@@ -3762,8 +3783,15 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .hie-time{font-size:var(--fs-xs);color:var(--t3);width:40px;text-align:right;flex-shrink:0;font-family:var(--ff-num)}
 .live-data-wrap{display:flex;flex-direction:column;gap:12px}
 .live-data-top{display:flex;align-items:center;gap:8px}
-.live-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;animation:livePulse 2s infinite}
-@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(79,155,255,.5)}70%{box-shadow:0 0 0 8px rgba(79,155,255,0)}100%{box-shadow:0 0 0 0 rgba(79,155,255,0)}}
+/* Ring per transform+opacity statt box-shadow-spread (2026-10-03,
+   Performance, Begruendung wie bei .cot-notify-card): ::after ist die
+   Scheibe, die von 9 px auf 25 px waechst (= spread 0 -> 8 px) und dabei
+   ausblendet; ::before ist der Punkt selbst und liegt darueber. */
+.live-dot{position:relative;isolation:isolate;width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.live-dot::before,.live-dot::after{content:'';position:absolute;inset:0;border-radius:50%}
+.live-dot::before{background:var(--blue);z-index:1}
+.live-dot::after{background:rgb(79,155,255);opacity:0;animation:livePulse 2s infinite}
+@keyframes livePulse{0%{transform:scale(1);opacity:.5}70%{transform:scale(2.778);opacity:0}100%{transform:scale(1);opacity:0}}
 .live-data-lbl{font-size:var(--fs-base);font-weight:800;letter-spacing:1.5px;color:var(--blue)}
 .live-clock{font-size:var(--fs-base);font-weight:700;color:var(--t1);font-family:var(--ff-num);margin-left:auto}
 .live-data-sub{font-size:var(--fs-xs);color:var(--t3);margin-top:-6px}
@@ -4890,18 +4918,27 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
 @keyframes pageFadeIn{0%{opacity:0;transform:translateY(9px)}100%{opacity:1;transform:translateY(0)}}
 .page-fade-in{animation:pageFadeIn var(--enter-dur) cubic-bezier(.16,.84,.44,1) both}
 /* ── ANIMATIONEN: Chart-Einzug, Listen-Stagger, Score-/Bias-Wechsel, FLIP ── */
+/* Einblendungen enden im natuerlichen Zustand (opacity 1, keine Verschiebung)
+   und laufen deshalb mit fill-mode "backwards" statt "both"/"forwards": eine
+   fertige Animation mit "both" bleibt als Effekt am Element haengen und wird
+   vom Browser bei jedem Bild weiter mitgefuehrt (2026-10-03, Performance).
+   Ausnahme: .tr-halo-fade endet bei .7 und braucht deshalb "both". */
 @keyframes cotBarIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
-.cot-bar-in{animation:cotBarIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) both}
+.cot-bar-in{animation:cotBarIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) backwards}
 @keyframes trDraw{0%{stroke-dashoffset:1}100%{stroke-dashoffset:0}}
-.tr-line-in{stroke-dasharray:1;animation:trDraw var(--enter-dur) ease forwards}
+.tr-line-in{stroke-dasharray:1;animation:trDraw var(--enter-dur) ease}
 @keyframes trFadeIn{0%{opacity:0}100%{opacity:1}}
-.tr-line-fade{animation:trFadeIn var(--enter-dur) ease both}
+.tr-line-fade{animation:trFadeIn var(--enter-dur) ease backwards}
 @keyframes trHaloFadeIn{0%{opacity:0}100%{opacity:0.7}}
 .tr-halo-fade{animation:trHaloFadeIn var(--enter-dur) ease both}
-@keyframes trDotIn{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
-.tr-dot-in{animation:trDotIn var(--enter-dur) ease both;transform-box:fill-box;transform-origin:center}
+/* Punkte eines Trend-Charts blenden als GRUPPE ein, nicht jeder einzeln
+   (2026-10-03, Performance): vorher hatte jeder Punkt eine eigene
+   Animation mit Versatz - auf der Trends-Seite 3292 gleichzeitig, das
+   kostete 2,1 s PrePaint und danach ~250 ms je Bild, solange sie liefen.
+   Eine Animation pro Datenreihe sieht fast gleich aus und kostet nichts. */
+.tr-dots-in{animation:trFadeIn var(--enter-dur) ease .28s backwards}
 @keyframes listRowIn{0%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
-.list-in{animation:listRowIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) both}
+.list-in{animation:listRowIn var(--enter-dur) cubic-bezier(.2,.7,.3,1) backwards}
 @keyframes scorePop{0%{transform:scale(1)}35%{transform:scale(1.35)}100%{transform:scale(1)}}
 .score-pop{animation:scorePop .5s cubic-bezier(.3,1.4,.5,1)}
 @keyframes biasFlip{0%{transform:rotateX(85deg);opacity:.2}100%{transform:rotateX(0);opacity:1}}
@@ -5364,7 +5401,18 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
 
 /* ===== Asset-Symbole (Flaggen/Rohstoffe) ===== */
 
-.ai-wrap{display:inline-block;vertical-align:-.18em;line-height:0;flex:0 0 auto}
+.ai-wrap{position:relative;display:inline-block;vertical-align:-.18em;line-height:0;flex:0 0 auto}
+/* Filmstreifen (2026-10-03, siehe FILMSTREIFEN in js/main.js): die GPU schiebt
+   den fertigen Streifen um je ein Bild weiter, der Hauptthread tut pro Bild
+   nichts. Das statische Symbol darunter ist die Ruhelage: sichtbar bei AUS und
+   bis der Film dekodiert ist (.ai-film-on). */
+.ai-film-win{position:absolute;overflow:hidden;pointer-events:none;display:none}
+.ai-wrap.ai-film-on>.ai-film-win{display:block}
+.ai-wrap.ai-film-on>.ai-svg{visibility:hidden}
+.ai-film{display:block;max-width:none;will-change:transform;animation-name:aiFilm;animation-iteration-count:infinite}
+@keyframes aiFilm{to{transform:translateY(-100%)}}
+body.no-asset-anim .ai-wrap>.ai-film-win{display:none}
+body.no-asset-anim .ai-wrap>.ai-svg{visibility:visible}
 .ai-svg{display:block;overflow:visible}
 /* Flaggen bekommen einen echten Schlagschatten + minimal gerundete Ecken -
    das hebt sie vom Untergrund ab, ohne bunt zu werden. */
@@ -5379,12 +5427,15 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
 .ai-fold{pointer-events:none;mix-blend-mode:multiply}
 /* Wandernder Glanz = das Licht, das ueber die Falte laeuft. Reines
    translate, also Compositor-Arbeit statt Repaint. */
-.ai-sheen{animation:aiSheen 3.4s linear infinite;opacity:.85}
+/* ⚠ Die Bewegungen laufen NUR noch auf der Abtast-Probe (.ai-probe, siehe
+   aiFilmTabellen) - dort werden sie einmal in Einzelbilder uebersetzt. Ein
+   live laufendes Symbol gibt es nicht mehr (2026-10-03). */
+.ai-probe .ai-sheen{animation:aiSheen 3.4s linear infinite}
 @keyframes aiSheen{0%{transform:translateX(-14px)}55%,100%{transform:translateX(36px)}}
 .ai-shade{pointer-events:none}
 
 /* Oel: ein Tropfen loest sich, faellt und zerplatzt - Kernwunsch des Nutzers. */
-.ai-drip{animation:aiDrip 3.4s cubic-bezier(.45,0,.75,.35) infinite;transform-origin:18px 4px}
+.ai-probe .ai-drip{animation:aiDrip 3.4s cubic-bezier(.45,0,.75,.35) infinite;transform-origin:18px 4px}
 @keyframes aiDrip{
   0%,42%{transform:translateY(0) scale(.55);opacity:0}
   50%   {transform:translateY(0) scale(1);opacity:1}
@@ -5392,25 +5443,20 @@ table.si-ftab td:last-child{text-align:right;color:var(--t0);font-weight:800}
   100%  {transform:translateY(12px) scale(1.35,.3);opacity:0}
 }
 /* Metall: schmaler Lichtreflex wandert ueber den Barren/die Muenze. */
-.ai-sheen-el{animation:aiMetalSheen 3.8s ease-in-out infinite}
+.ai-probe .ai-sheen-el{animation:aiMetalSheen 3.8s ease-in-out infinite}
 @keyframes aiMetalSheen{0%,100%{transform:translateX(0)}55%,100%{transform:translateX(34px)}}
 /* Index: der Kursverlauf zeichnet sich immer wieder neu, der Punkt am Ende
    erscheint erst, wenn die Linie dort angekommen ist. */
-.ai-tick{stroke-dasharray:46;stroke-dashoffset:46;animation:aiTick 4.5s ease-in-out infinite}
+.ai-probe .ai-tick{stroke-dasharray:46;stroke-dashoffset:46;animation:aiTick 4.5s ease-in-out infinite}
 @keyframes aiTick{0%{stroke-dashoffset:46}45%,88%{stroke-dashoffset:0}100%{stroke-dashoffset:0;opacity:0}}
-.ai-tick-dot{animation:aiTickDot 4.5s ease-in-out infinite}
+.ai-probe .ai-tick-dot{animation:aiTickDot 4.5s ease-in-out infinite}
 @keyframes aiTickDot{0%,40%{opacity:0;r:0}52%,88%{opacity:1;r:1.5}100%{opacity:0;r:1.5}}
 
-/* AUS: eine einzige Regel haelt jede Dauerbewegung an. Die Icons bleiben in
-   ihrer Ruhelage sichtbar - kein Layout-Sprung, keine leeren Kaesten. */
-body.no-asset-anim .ai-sheen,
-body.no-asset-anim .ai-drip,
-body.no-asset-anim .ai-sheen-el,
-body.no-asset-anim .ai-tick,
-body.no-asset-anim .ai-tick-dot{animation:none}
-body.no-asset-anim .ai-sheen,
-body.no-asset-anim .ai-drip{opacity:0}
-body.no-asset-anim .ai-tick{stroke-dashoffset:0}
+/* RUHELAGE des statischen Symbols (AUS, Fallback, Vorlagen) - dieselbe wie
+   bisher bei AUS: Glanz und Tropfen weg, Index-Linie ganz gezeichnet. */
+.ai-sheen,.ai-drip{opacity:0}
+.ai-tick{stroke-dasharray:46;stroke-dashoffset:0}
+.ai-probe .ai-sheen,.ai-probe .ai-drip{opacity:1}
 
 
 /* ═══ BEDIEN-ICONS: KEINE Bewegung (seit 2026-09-23) ═══════════════════
@@ -5729,7 +5775,6 @@ body.no-ui-anim #navSidebar .np-sub-wrap{transition:none}
    klein" - vorher 78 %). */
 .ai-gezeichnet .ai-rim{stroke:#9DB8DE;stroke-width:1.5px}
 .ai-gezeichnet .ai-flag{filter:none}
-.ai-gezeichnet .ai-sheen{opacity:.5}
 /* ══ ENDE BILD-DESIGN ══ */
 /* ── FX-LOGO: Ladebildschirm + leere Karten (Nutzer 2026-09-24) ─────────
    "ich will das du dieses Bild eine Animation hinzufuegst ... wenn man die
@@ -6030,11 +6075,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-586 - Asset-Stapel klappt nicht mehr ueber die Leiste hinaus; nichts springt nach dem Cloud-Abgleich zurueck (Drei-Wege-Abgleich, Push und Pull nacheinander)."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-587 - Performance: asset icons as GPU filmstrips (no idle load), Trends without 3292 separate animations, one build per asset switch, lighter globe; ✕ next to asset filters."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-586</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-587</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6077,6 +6122,7 @@ window.fxLogoSvg=function(art){
     <div><div class="pg-titel">Score Trends</div><div class="pg-sub">Score history per asset, up to 3 years &middot; one point per day &middot; Total Score + Inflation / Labour Market / Economic Growth &middot; or compare a custom currency pair</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <select class="btn" id="trendsCcySel" onchange="setTrendsFilter(this.value)" title="Filter by asset" style="cursor:pointer"></select>
+      <button class="btn flt-x" id="trendsCcyX" hidden onclick="setTrendsFilter('ALL')" title="Reset filter — back to All assets" aria-label="Reset filter — back to All assets">✕</button>
       <button class="btn" id="trendsPairBtn" onclick="toggleTrendsPairMode()" title="Compare a custom currency pair"><svg class="ic" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg> Pair</button>
       <span id="trendsPairWrap" style="display:none;align-items:center;gap:6px">
         <select class="btn" id="trendsPairSel" onchange="setTrendsPair(this.value)" title="Choose pair" style="cursor:pointer"></select>
@@ -6198,6 +6244,7 @@ window.fxLogoSvg=function(art){
       <span id="ffLastUpd" style="font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num)"></span>
       <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
+      <button class="btn flt-x" id="calCcyX" hidden onclick="setCalCcyFilter('ALL')" title="Reset filter — back to All currencies" aria-label="Reset filter — back to All currencies">✕</button>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
       <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
       <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>

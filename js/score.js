@@ -515,14 +515,21 @@ function indDecayWeight(ind,rub){
 // Cache-Treffer aufzurufen, nur um an ihre Laenge zu kommen, waere genau
 // die Rechnung, die der Cache einsparen soll. Die Identitaet des ROHEN
 // Feeds ist gratis zu haben.
-function indMarketWeight(ind,symId){
-  const key=symId+'|'+ind.name;
-  const h=Array.isArray(ind.chartHist)?ind.chartHist:null;
-  const c=_mktWeightCache[key];
-  if(c&&c.h===h&&c.feed===PRICE_DATA_FEED)return c.val;
-  let out=1;
-  const ser=priceSeriesFor(macroCcyFor(symId))||priceSeriesFor(symId);
-  if(ser&&ser.length>=60&&h&&h.length>=NORM_MIN_OBS){
+// Tagesbewegungen der Kursreihe EINES Assets - fuer alle seine Indikatoren
+// dieselben. Bis 2026-10-03 baute indMarketWeight sie fuer jeden Indikator
+// neu (Reihe -> Datums-Map -> sortieren -> Bewegungen): gemessen 105-124 ms
+// pro Preis-Feed-Takt (alle 10 min) und bei jedem recordScoreHist, fast
+// alles Wiederholung. Schluessel = Asset + aufgeloeste Makro-Waehrung (ein
+// geaenderter linkCcy ergibt einen neuen Eintrag), gueltig solange
+// PRICE_DATA_FEED dasselbe Objekt ist (gleiche Begruendung wie unten).
+let _mktMovesCache={feed:undefined,m:{}};
+function mktMovesFor(symId){
+  if(_mktMovesCache.feed!==PRICE_DATA_FEED)_mktMovesCache={feed:PRICE_DATA_FEED,m:{}};
+  const sid=macroCcyFor(symId),key=sid+'|'+symId;
+  if(key in _mktMovesCache.m)return _mktMovesCache.m[key];
+  let r=null;
+  const ser=priceSeriesFor(sid)||priceSeriesFor(symId);
+  if(ser&&ser.length>=60){
     const px={};ser.forEach(e=>{if(e&&e[0]!=null&&e[1]!=null)px[e[0]]=Number(e[1]);});
     const dates=Object.keys(px).sort();
     const moves={};
@@ -531,8 +538,21 @@ function indMarketWeight(ind,symId){
       if(p0>0&&isFinite(p1))moves[dates[i]]=Math.abs(p1/p0-1);
     }
     const all=Object.values(moves);
-    if(all.length>=40){
-      const baseline=all.reduce((a,b)=>a+b,0)/all.length;
+    if(all.length>=40)r={moves,baseline:all.reduce((a,b)=>a+b,0)/all.length};
+  }
+  _mktMovesCache.m[key]=r;
+  return r;
+}
+function indMarketWeight(ind,symId){
+  const key=symId+'|'+ind.name;
+  const h=Array.isArray(ind.chartHist)?ind.chartHist:null;
+  const c=_mktWeightCache[key];
+  if(c&&c.h===h&&c.feed===PRICE_DATA_FEED)return c.val;
+  let out=1;
+  if(h&&h.length>=NORM_MIN_OBS){
+    const mm=mktMovesFor(symId);
+    if(mm){
+      const{moves,baseline}=mm;
       const hits=[];
       h.forEach(e=>{const d=e&&e[0];if(d&&moves[d]!=null)hits.push(moves[d]);});
       if(hits.length>=NORM_MIN_OBS&&baseline>0){
@@ -547,7 +567,7 @@ function indMarketWeight(ind,symId){
   return out;
 }
 let _mktWeightCache={};
-function invalidateNormCache(){_mktWeightCache={};}
+function invalidateNormCache(){_mktWeightCache={};_mktMovesCache={feed:undefined,m:{}};}
 // Gesamtfaktor, um 1,0 zentriert und geklemmt (siehe Kommentar oben).
 function indNormFactor(ind,symId,rub){
   const f=indSurpriseMag(ind)*indDecayWeight(ind,rub)*indMarketWeight(ind,symId);
