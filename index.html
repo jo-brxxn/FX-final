@@ -6103,6 +6103,16 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 /* Kalenderzeile: Glocke 13x13 -> 35x36, × 9x15 -> 24x36 (rechts endet die Zeile) */
 .cal-alert-btn::after{inset:-11.5px -2px -11.5px -20px}
 .cal-row-del::after{inset:-10.5px -13px -10.5px -2px}
+/* Mit Schlagzeilen-Knopf (.cal-news-btn, nur an Tagen mit passenden
+   Schlagzeilen) passt der Inhalt nicht in die Aktionsspalte (24/34/30 px fuer
+   bis zu 59 px) und laeuft zentriert nach beiden Seiten ueber - gemessen
+   2026-10-05 bei 1180 px: Knopf ab x 1101,6 statt 1119, × bis 1160,5 bei
+   Tabellenrand 1158 (auch in 587; die Spaltenbreite ist eine offene
+   Layout-Entscheidung). Darum greift die Glocke dann nur bis zur halben
+   Luecke (5 px) nach links und das × nicht nach rechts ueber den Rand.
+   Geprueft: check/designregeln.js F (baut die Zeile selbst nach). */
+.cal-news-btn+.cal-alert-btn::after{left:-2.5px}
+.cal-news-btn~.cal-row-del::after{right:0}
 /* Set-ups/Watchlist-Zeilen: Stern, Score-Pille, Zinsdifferenz */
 .dw-mark::after{inset:-10.5px -6.5px -10.5px -2px}
 .row-score::after{inset:-8.5px -2px}
@@ -6283,11 +6293,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-588 - Design audit: no emojis (line icons + built-in symbol font), one typeface, Trends and other charts drawn at real size, page titles everywhere, 11 px minimum text, three control heights (28/34/40 px), larger tap targets, labelled Summaries switch, active state navy, red only for bearish and warnings."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-589 - Design audit: no emojis (line icons + built-in symbol font), one typeface, Trends and other charts drawn at real size, page titles everywhere, 11 px minimum text, three control heights (28/34/40 px), larger tap targets, labelled Summaries switch, active state navy, red only for bearish and warnings; calendar tap areas beside the headline button corrected."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-588</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-589</span>
     </span>
   </div>
   <div class="hdr-r">

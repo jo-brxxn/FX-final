@@ -1483,6 +1483,12 @@ für den Rahmen). Wo der Platz fehlt, bleibt die Fläche kleiner (Kalender-×
 Flächenkante und jedes Bedienelement an und meldet jeden „gestohlenen“ Tap.
 Text-Überlauf wird seitdem über die Textbreite gemessen, nicht über
 `scrollWidth` (das zählt das `::after` mit, `check/dashboard.js`).
+⚠ **Auch Nachbarn mitdenken, die nur bei bestimmten Daten erscheinen**
+(VERSION-CHECK-589): Der Schlagzeilen-Knopf der Kalenderzeile kommt nur an
+Tagen mit passenden Schlagzeilen — mit ihm lag die Glocken-Fläche über ihm.
+Solche Fälle baut der Wächter selbst nach, statt auf den Datenstand zu
+hoffen; teilweise weggescrollte Elemente prüft er nicht (Scrollstand ist
+keine Überdeckung).
 
 **G — Aktiv = Navy.** „Gewählt/aktiv“ ist `--ui-act` (#172A46, mit Weiß
 14:1) — nie mehr das Bias-Blau (#0B6BEA lag praktisch auf bullish #0B5FCC).

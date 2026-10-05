@@ -69,7 +69,7 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
 
   // ════ 1180 px: alle Stufen ═════════════════════════════════════════════
   let p = await neueSeite(1180);
-  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0 };
+  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0, kalNews: 0 };
   for (const z of SEITEN) {
     await oeffne(p, z); await p.waitForTimeout(1300);
     if (GEGENPROBE && z === 'trends') await p.evaluate(() => { const t = document.querySelector('#pgTrends .pg-titel'); if (t) t.textContent += ' 📈'; });
@@ -206,6 +206,16 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     nav.forEach(([t, hh, lh]) => { if (hh > lh * 1.5) fail(`D LEISTE ${vw}`, `"${t}" bricht um (${hh.toFixed(0)} px hoch)`); });
     for (const z of SEITEN) {
       await oeffne(p, z); await p.waitForTimeout(1200);
+      // Datenunabhaengig: eine Kalenderzeile mit Schlagzeilen-Knopf + Glocke + ×.
+      // Den Knopf gibt es nur an Tagen mit passenden Schlagzeilen - die
+      // Glocken-Flaeche lag ueber ihm, gefunden erst mit den Daten vom
+      // 2026-10-05 (Volllauf 2). Ohne kommenden Termin (Wochenende) entfaellt sie.
+      if (z === 'cal') n.kalNews += await p.evaluate(() => {
+        if (document.querySelector('.cal-row-actions .cal-news-btn+.cal-alert-btn')) return 1;
+        const a = [...document.querySelectorAll('.cal-row-actions')].find(x => x.offsetParent && x.querySelector('.cal-alert-btn') && x.querySelector('.cal-row-del'));
+        if (!a) return 0;
+        a.insertAdjacentHTML('afterbegin', '<button class="cal-news-btn" title="test"><svg class="ic" width="11" height="11" viewBox="0 0 24 24"></svg><span>1</span></button>');
+        return 1; });
       const r = await p.evaluate(vw => {
         const out = { svg: [], a: [], b: [], fl: 0, el: 0 };
         if (vw === 820) document.querySelectorAll('svg text').forEach(e => { const r = e.getBoundingClientRect(); if (!r.width || !e.textContent.trim() || e.closest('.fxlogo')) return; const m = e.getScreenCTM(); if (!m) return;
@@ -213,7 +223,20 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
         const pg = [...document.querySelectorAll('.pc')].find(e => e.offsetParent) || document.body;
         const IA = 'button,select,a[href],input:not([type=hidden]),[onclick]:not(div):not(tr):not(td):not(svg):not(g):not(path):not(circle):not(li),[role=button]';
         const sicht = e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width > 2 && r.height > 2 && cs.visibility !== 'hidden' && cs.pointerEvents !== 'none' && +cs.opacity > 0.05 && r.bottom > 0 && r.top < innerHeight - 1; };
-        const alle = [...pg.querySelectorAll(IA)].filter(sicht);
+        // Ganz im sichtbaren Teil jedes SCROLLENDEN Vorfahren? Eine teilweise
+        // weggescrollte Zeile (Schlagzeilen-Liste im Dashboard, 545 px hoch,
+        // 715 px Inhalt) hat an ihren Stichpunkten zwangslaeufig etwas anderes
+        // unter sich - das ist Scrollstand, keine Ueberdeckung (Volllauf
+        // 2026-10-05: 7 Fehlmeldungen "hl-row verliert Flaeche an hl-expand/
+        // rinfo/hl-foot-link", identisch im Stand 587).
+        const imScroll = e => { const r = e.getBoundingClientRect();
+          for (let x = e.parentElement; x && x !== document.body; x = x.parentElement) { const c = getComputedStyle(x);
+            const sy = /auto|scroll/.test(c.overflowY) && x.scrollHeight > x.clientHeight + 1, sx = /auto|scroll/.test(c.overflowX) && x.scrollWidth > x.clientWidth + 1;
+            if (!sy && !sx) continue; const q = x.getBoundingClientRect(), t = q.top + x.clientTop, l = q.left + x.clientLeft;
+            if (sy && (r.top < t - 0.5 || r.bottom > t + x.clientHeight + 0.5)) return false;
+            if (sx && (r.left < l - 0.5 || r.right > l + x.clientWidth + 0.5)) return false; }
+          return true; };
+        const alle = [...pg.querySelectorAll(IA)].filter(e => sicht(e) && imScroll(e));
         const nm = e => e.tagName.toLowerCase() + '.' + String(e.className).trim().split(/\s+/).slice(0, 2).join('.');
         alle.forEach(e => {
           const cs = getComputedStyle(e, '::after'); if (cs.content === 'none' || cs.position !== 'absolute' || (cs.left === 'auto' && cs.right === 'auto')) return;
@@ -221,7 +244,12 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
           const L = r.left + px(b0.borderLeftWidth), T = r.top + px(b0.borderTopWidth), R = r.right - px(b0.borderRightWidth), B = r.bottom - px(b0.borderBottomWidth);
           const hl = L + px(cs.left), ht = T + px(cs.top), hr = R - px(cs.right), hb = B - px(cs.bottom);
           out.fl++; const cx = (hl + hr) / 2, cy = (ht + hb) / 2;
-          [[hl + 1.5, cy], [hr - 1.5, cy], [cx, ht + 1.5], [cx, hb - 1.5]].forEach(([x, y]) => {
+          // Nur Richtungen, in die die Flaeche wirklich ueber den Knopf ragt -
+          // ohne Vergroesserung ist der Stichpunkt der Knopf selbst (dessen
+          // Lage pruefen layout/cards, nicht diese Stufe).
+          const ragt = { L: L - hl, R: hr - R, T: T - ht, B: hb - B };
+          [['L', hl + 1.5, cy], ['R', hr - 1.5, cy], ['T', cx, ht + 1.5], ['B', cx, hb - 1.5]].forEach(([k, x, y]) => {
+            if (ragt[k] < 0.5) return;
             if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return;
             const h = document.elementFromPoint(x, y); if (h && (h === e || e.contains(h))) return;
             const i = h && h.closest(IA); out.a.push(`${nm(e)} ${i && i !== e ? 'ragt in ' + nm(i) : 'wirkt nicht (verdeckt/abgeschnitten)'}`);
@@ -258,5 +286,5 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     console.log(`designregeln --gegenprobe: ok (alle 9 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
   }
   if (F.length) { console.log(`designregeln: ${F.length} Befund(e)`); [...new Set(F)].slice(0, 60).forEach(x => console.log('  ' + x)); process.exit(1); }
-  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440, aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet)`);
+  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet)`);
 })().catch(e => { console.log('designregeln: ABBRUCH ' + e.message); process.exit(1); });

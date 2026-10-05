@@ -19106,3 +19106,43 @@ Sitzungen bei Rate Probabilities, rote Zurück-Pille im Archiv.
 - Das rote „!“ an „Today“ (`--live`) → `--due`.
 
 Nicht in WebKit gemessen (Download gesperrt) — iPad-Prüfung beim Nutzer.
+
+## VERSION-CHECK-589 (2026-10-05) — Kalender: Trefferflächen neben dem Schlagzeilen-Knopf
+
+Gefunden im zweiten Volllauf vor dem Push von 588, nach dem Merge von `main`
+(nur Daten-Commits). `check/designregeln.js` F war mit den neuen Daten rot
+(11 Befunde), im ersten Lauf mit den alten Daten grün. Reproduziert und
+gemessen (Playwright, 820/1180/1440 px, jeweils auch gegen 587 mit denselben
+Daten):
+
+- **Echter Fehler aus 588:** In Kalenderzeilen mit Schlagzeilen-Knopf
+  (`.cal-news-btn`, nur an Tagen mit passenden Schlagzeilen) lag die nach
+  links vergrößerte Glocken-Fläche (20 px) über dem Knopf: ein Tipp auf
+  dessen rechten Teil öffnete den Telegram-Alarm statt der News.
+- **Wurzel, älter als 588:** Die Aktionsspalte ist 24 px (Desktop) / 34 px
+  (Tablet) / 30 px breit, Schlagzeilen-Knopf 27 + Glocke 13 + × 9 px mit
+  zwei 5-px-Lücken brauchen 59 px. Der Inhalt läuft zentriert nach beiden
+  Seiten über — bei 1180 px Knopf ab x 1101,6 statt 1119, × bis 1160,5 bei
+  Tabellenrand 1158: **das sichtbare × ist 2,2–2,5 px abgeschnitten**, in 587
+  identisch (1151,4–1160,2). Die Spaltenbreite ist eine Layout-Entscheidung
+  (breitere Spalte oder Knopf an den Termin-Namen) → offen für Runde 2.
+- **Fix (unsichtbar):** Mit Schlagzeilen-Knopf greift die Glocke nur bis zur
+  halben Lücke (2,5 px) nach links, das × nicht nach rechts über den Rand.
+- **Wächter-Fehlmeldungen (7 von 11):** Schlagzeilen-Zeilen im Dashboard
+  lagen teilweise unterhalb des sichtbaren Teils ihrer scrollenden Liste
+  (Liste 545 px, Inhalt 715 px) — an den Stichpunkten lag zwangsläufig
+  anderes (hl-expand, ⓘ, Fußzeile). Identisch in 587, also Messfehler.
+  F prüft teilweise weggescrollte Elemente nicht mehr und sticht `::after`
+  nur in Richtungen an, in die die Fläche wirklich übersteht.
+- **Fehlerklasse:** datenabhängige Nachbarn. F baut eine Kalenderzeile mit
+  Schlagzeilen-Knopf + Glocke + × jetzt selbst nach (unabhängig vom
+  Datenstand). Gegenprobe: mit den echten Daten ohne Fix 6 Befunde
+  (820/1180/1440), mit Fix grün; an der nachgebauten Zeile (echte Knöpfe
+  entfernt) trifft ohne Fix ein Tipp auf Mitte und rechten Rand des Knopfs
+  die Glocke, mit Fix den Knopf — bei allen drei Breiten.
+
+Nebenbefund: Der Wächter-Workflow auf GitHub (`checks.yml`) bricht seit dem
+2026-09-20 (letzter grüner Lauf Nr. 395) jeden Lauf nach dem Job-Limit von
+25 Minuten ab — 97 der letzten 100 Läufe „cancelled“, die Suite braucht
+lokal ~27 Minuten. Fehler fallen dort niemandem mehr auf. Nicht geändert,
+Nutzer-Entscheidung offen.
