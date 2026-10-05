@@ -19214,3 +19214,45 @@ Gegenprobe alle 10 Stufen rot. `check/theme.js` 5 (drei Textstufen) und 6
 (Aktiv-Ton ≠ Bias-Blau, `-rgb` passt, Text lesbar) — gegen 589 rot (20 + 4
 Befunde). Der Trends-Fokus (Paket C) wird ein reiner Ansichtszustand wie
 `abCalSicht` — bewusst nicht synchronisiert.
+
+## VERSION-CHECK-591 (2026-10-05) — Design-Audit Runde 2, Paket B
+
+Vorher vier Rückfragen beantwortet (alle Empfehlungen): Majors-Titel (hebt
+2026-07-27 auf), Watchlist-× nur im Bearbeitungsmodus, Price-Karte „Kompakt,
+max. 2 Zeilen“, Trends-Fokus stärkste 3 + schwächste 3 (Paket C).
+
+**Währungsstärke mit Richtung (Dashboard + Matrix).** Balken wuchsen von
+links und zeigten nur |Score|. Jetzt ab der Mittellinie, positiv rechts,
+negativ links; Farbe bleibt die Bias-Einstufung. Gemessen 8/8 Balken je
+Ansicht auf der richtigen Seite (±0,8 px), Einblenden von der Mitte aus.
+
+**Leisere Flächen.** COT- und Retail-Balken 26 → 12 px, 70 % Deckkraft, 2 px
+Kartenfarbe zwischen Long/Short, Verlauf weg; Zahlen behalten die volle
+Farbe. Retail-Balken auf Klassen statt Inline-Farben (`BC` war fest, jetzt
+folgen sie der Vorlage). Data-Säulen höchstens 14 px (vorher ~25 px bei 12
+Werten), 80 % Deckkraft; die Wertzahlen hängen an der Spaltenbreite, nicht
+an der Säule — sonst wären sie mit der schmaleren Säule verschwunden.
+
+**Dashboard.** Majors mit Kartentitel + ⓘ (17 px/700). Watchlist bei 1440 px
+(Karte 249 px): gemessen 5/5 Zeilen 58 px, Platz 211 px, Bedarf 244 px →
+Entfernen-× nur im Bearbeitungsmodus, Flaggen 14 statt 17 px, Änderung 48,
+Score 32, Lücken 4 (mit 5 px gingen 211/211 px auf, Rundung brach um) →
+34 px bei 820/1180/1440. Bearbeitungsmodus: die Knopfleiste lag bei allen 13
+Karten über dem ⓘ (Klick traf den Knopf) → ⓘ dort ausgeblendet (gemessen
+nach dem 0,12-s-Übergang; sofort gemessen zeigt `visibility` noch „visible“).
+
+**Price-Karte.** Gemessen vorher: Candles|Line 126 px, Zeitfilter 323 px,
+EMA-Schalter 198 px; Leiste 309/489/619 px → 820 px 4 Bedienzeilen + „MAX“
+allein, 1180 px 3. Jetzt Candles|Line als Symbolknöpfe (neues Symbol
+`line`, Name im aria-label — gilt für alle Preis-Charts, sonst wäre derselbe
+Schalter an drei Stellen verschieden), EMA „EMA 1D/EMA 4H“ links in der
+Werkzeugzeile, Zeitfilter der Asset-Seite 7 px Polster und nur als Ganzes
+umbrechend: 820 px 2 Zeilen, 1180/1440 px 1 Zeile; Abstand Kopf → Chart
+187 → 135 px (820). „USD Basket“ schwebte zwischen zwei `margin-left:auto`
+→ Untertitel unter dem Titeltext. Klicktest: Line/Candles schalten.
+
+**Wächter.** `check/designregeln.js` K (alle Punkte bei 820/1180/1440;
+gegen 590 rot in jedem Unterpunkt; die Balkenhöhe lief zuerst ins Leere,
+weil sie auf dem Dashboard gesucht wurde — jetzt auf COT/Retail),
+Gegenprobe 11/11 Stufen. `check/einheit.js` liest den Schalter über
+aria-label.

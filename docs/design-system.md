@@ -1323,9 +1323,11 @@ die Beschriftung"*.
 Jede Karte mit Titelzeile hat ein ⓘ mit Erklärtext (`abInfoBtn`). Ergänzt:
 Trends (4), COT (2), Matrix (3), Seasonality „All assets", Data (Kopf +
 Panels), Regime (Kopf + 7 Szenarien), Asset-Seite Price/Pinned notes/
-Context/Headlines. Ausnahme: Dashboard „Majors" — die Karte hat außerhalb
-des Bearbeitungsmodus bewusst keine Titelzeile. Geprüft von
-`check/hierarchie.js` (Regel 4 dort).
+Context/Headlines. Seit VERSION-CHECK-591 ohne Ausnahme: auch die
+Dashboard-Karte „Majors" trägt Titel + ⓘ (Nutzerwahl 2026-10-05; bis dahin
+hatte sie außerhalb des Bearbeitungsmodus bewusst keine Titelzeile, Wunsch
+vom 2026-07-27). Geprüft von `check/hierarchie.js` (Regel 4 dort) und
+`check/designregeln.js` K.
 
 ## COT-Verlauf: vs Price und 10-Jahres-Historie (seit 2026-09-27)
 
@@ -1423,8 +1425,9 @@ und Dashboards … Was sollte geändert werden? … Ich will am Ende ein Webseit
 Design ohne Schwächen haben"*, danach *„Funktionalität steht an oberster
 Stelle"*. Per Rückfrage gewählt (Runde 1, 2026-10-04; Runde 2, 2026-10-05).
 Messwerte vorher/nachher: `docs/CHANGELOG.md`. Die Regeln prüft
-`check/designregeln.js` (A–J, mit Gegenprobe); D1 zusätzlich
+`check/designregeln.js` (A–K, mit Gegenprobe); D1 zusätzlich
 `check/symbole.js` C, D4 `check/hierarchie.js`, G/K `check/theme.js` (5/6).
+Runde 2: J (Touch), K (Paket B, Regeln M–P) in `check/designregeln.js`.
 
 **A — Keine Emojis in der Oberfläche.** Titel, Knöpfe, Fenster, Beschriftungen
 tragen Linien-Symbole aus `ICONS` (`icn(name,size)`); in statischem HTML als
@@ -1542,6 +1545,40 @@ genau in der Mitte: geometrisches Mittel der Kontraste von t1 und t3,
 gleicher Farbton, nur die Helligkeit verschoben. Bis 589 lagen t2 und t3 in
 allen Vorlagen praktisch gleich (Standard 6,40/6,41:1, Swiss vertauscht).
 Neue Vorlage → t2 so ausrechnen, nicht schätzen. Geprüft: `check/theme.js` 5.
+
+**M — Plus/Minus-Balken von der Mitte (Runde 2).** Werte mit Vorzeichen
+(Währungsstärke im Dashboard und in der Matrix; der Surprise-Index schon
+vorher) stehen als Balken an einer Mittellinie: positiv nach rechts,
+negativ nach links. Die Farbe bleibt die Bias-Einstufung (neutral = grau
+auch bei Vorzeichen — sonst widerspräche der Balken der grauen Zahl); die
+Richtung trägt die Lage. Beim Einblenden wachsen linke Balken von der
+Mitte aus (`transform-origin:right`). Geprüft: `designregeln` K.
+
+**N — Flächen leise, Farbe am Wert (Runde 2).** Teil-vom-Ganzen-Balken
+(COT long/short, Retail long/short) sind 12 px hoch, 70 % Deckkraft, mit
+2 px Kartenfarbe zwischen den Segmenten; die Zahlen daneben tragen die volle
+Bias-Farbe. Säulen in Indikator-Charts höchstens 14 px breit, 80 %
+Deckkraft; ob die Wertzahl darüber Platz hat, entscheidet die
+Spaltenbreite (Spalte × 0,56 ≥ 22 px), nicht die Säulenbreite.
+
+**O — Kompakte Werkzeugzeile (Runde 2).** Candles|Line sind zwei
+Symbolknöpfe (`candles`/`line`, Name im `aria-label` und Tooltip —
+`check/einheit.js` prüft die aria-labels), überall gleich. Die
+EMA-Schalter heißen „EMA 1D“/„EMA 4H“ und stehen links in der
+Werkzeugzeile (Regel 2026-09-26). Zeitfilter der Asset-Seite: 7 px Polster,
+4 px Abstand, brechen nur als Ganzes um (`flex-wrap:nowrap`) — höchstens 2
+Zeilen über dem Chart, ab 1180 px eine, nie ein einzelnes „MAX“. Ein
+Kartenzusatz wie „USD Basket“ ist ein Untertitel unter der Kopfzeile
+(`.ab-tile-sub`), nie ein zweites `margin-left:auto`-Element in ihr — zwei
+auto-Ränder teilen den Platz, das Element „schwebt“. Geprüft:
+`designregeln` K.
+
+**P — Dashboard (Runde 2).** Jede Karte hat einen Kartentitel, auch Majors.
+Bearbeitungsfunktionen erscheinen nur im Bearbeitungsmodus — auch das
+Entfernen-× der Watchlist (Regel 2026-07-25); im Bearbeitungsmodus ist das
+ⓘ im Kartenkopf ausgeblendet, weil die Knopfleiste an seiner Stelle liegt.
+Watchlist-Zeilen bleiben bis 249 px Kartenbreite einzeilig (Flaggen
+14 px, Änderung 48 px, Score 32 px, Lücken 4 px). Geprüft: `designregeln` K.
 
 **L — Kalenderzeile (Runde 2).** Actual/Forecast/Previous und ihre Köpfe
 rechtsbündig (≤ 560 px weiter links mit „A:/F:/P:“). Der Schlagzeilen-Knopf

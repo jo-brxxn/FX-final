@@ -91,7 +91,9 @@ const ZIELE = ['over', 'regime', 'news', 'dash', 'cur', 'mx', 'trends', 'cot', '
         if (!k.querySelector('svg.ab-chart,#pxChart svg')) return; out.n.c++;
         const c = k.querySelector('.chart-leiste .chart-leiste-l .ctyp');
         if (!c || !vis(c)) out.c.push(`${name(k)}: kein Candles|Line-Umschalter links in der Werkzeugzeile`);
-        else if ([...c.querySelectorAll('button')].map(x => x.textContent.trim()).join('|') !== 'Candles|Line') out.c.push(`${name(k)}: Umschalter "${c.textContent.trim()}"`);
+        // Seit VERSION-CHECK-591 Symbolknoepfe (Nutzerwahl "Kompakt, max. 2
+        // Zeilen") - der Name steht im aria-label, Text waere Fehlerfall.
+        else if ([...c.querySelectorAll('button')].map(x => x.getAttribute('aria-label') || x.textContent.trim()).join('|') !== 'Candles|Line') out.c.push(`${name(k)}: Umschalter "${[...c.querySelectorAll('button')].map(x => x.getAttribute('aria-label') || x.textContent.trim()).join('|')}"`);
       });
       // I) ⓘ hinter rechtsbuendigem Element
       [...document.querySelectorAll('.ii-nach')].filter(vis).forEach(i => { out.n.i++; const m = parseFloat(getComputedStyle(i).marginLeft); if (m > 8) out.i.push(`${name(i.closest(KARTE))}: ⓘ margin-left ${Math.round(m)}px (auto statt 6)`); });

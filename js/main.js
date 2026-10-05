@@ -773,6 +773,9 @@ const ICONS={
   barsUp:'<line x1="5" y1="20" x2="5" y2="16"/><line x1="10" y1="20" x2="10" y2="12"/><line x1="15" y1="20" x2="15" y2="8"/><line x1="20" y1="20" x2="20" y2="4"/>',
   chartUp:'<line x1="4" y1="21" x2="4" y2="17"/><line x1="9" y1="21" x2="9" y2="14"/><line x1="14" y1="21" x2="14" y2="15"/><line x1="19" y1="21" x2="19" y2="11"/><polyline points="3 11 9 6 13 9 20 3"/><polyline points="16 3 20 3 20 7"/>',
   candles:'<path d="M9 4v5M9 15v5M15 2v5M15 13v5"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="7" width="4" height="6" rx="1"/>',
+  // Gegenstueck zu "candles" im Candles|Line-Schalter (Runde 2, 2026-10-05):
+  // reine Kurslinie ohne Pfeil (trendUp/chartUp sagen "steigt").
+  line:'<polyline points="3 16 8 11 12 14 17 7 21 9"/>',
   // Emoji-Ersatz (Nutzer 2026-10-04: "Emojis + Doppel-Icons raus") - fuer
   // Fenstertitel und Knoepfe, die bisher 🗑 ⬆ 💾 ✏️ 📉 🛟 ↗ trugen.
   trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
@@ -8966,8 +8969,12 @@ function pxTypNeuZeichnen(){
   try{if(document.querySelector('#detail .ab-ptile,#detail .ab-ktile'))renderDetail();}catch(e){}
   try{const m=document.getElementById('mPrice');if(m&&m.style.display==='flex')renderPriceChart();}catch(e){}
 }
+// Symbolknoepfe statt Text (Nutzerwahl 2026-10-05 "Kompakt, max. 2 Zeilen"):
+// "Candles"/"Line" kosteten 126 px der Werkzeugzeile, die Symbole ~60 px.
+// Der Name bleibt fuer Screenreader (aria-label) und im Tooltip; der Waechter
+// check/einheit.js prueft die aria-labels. Ein Baustein fuer alle Preis-Charts.
 function chartTypSchalterHtml(){
-  return`<span class="ctyp" role="group" aria-label="Chart type">${CHART_TYPEN.map(([t,l])=>`<button class="ind-hist-range-btn ctyp-b${pxChartTyp===t?' on':''}" onclick="setPxChartTyp('${t}')" title="${t==='candle'?'One candle per trading day - applies to every price chart':'Line through the daily closes - applies to every price chart'}">${l}</button>`).join('')}</span>`;
+  return`<span class="ctyp" role="group" aria-label="Chart type">${CHART_TYPEN.map(([t,l])=>`<button class="ind-hist-range-btn ctyp-b ctyp-ic${pxChartTyp===t?' on':''}" onclick="setPxChartTyp('${t}')" aria-label="${l}" title="${l} - ${t==='candle'?'one candle per trading day, applies to every price chart':'line through the daily closes, applies to every price chart'}">${icn(t==='candle'?'candles':'line',16)}</button>`).join('')}</span>`;
 }
 // ── Werkzeugzeile ueber einem Chart (Dauerregel 2026-09-26) ─────────────
 // Links: Ansicht (Candles|Line, Chart-Varianten, Schalter), rechts: der
@@ -10725,13 +10732,16 @@ function assetPreisKarteHtml(c){
   const linien=abTrendLinien.split(',').filter(Boolean);
   const ch=warten?{leer:true,html:ladeLogoHtml('Loading long price history…')}:abKerzenBlock(reihe,FX.includes(c.id)?KORB_NAME[c.id]:YIELD_CCY[c.id]?(c.full||c.name||c.id):(c.name||c.id),YIELD_CCY[c.id]?'%':'',c.id,null,YIELD_CCY[c.id]?'bond':'price',{trend:linien});
   const w=trendWerte(c.id);
-  const schalter=[['d','1D EMA20'],['h','4H EMA'+TREND_EMA_H]].map(([k,l])=>{
+  // Kurz "EMA 1D"/"EMA 4H" (Nutzerwahl 2026-10-05 "Kompakt, max. 2 Zeilen"):
+  // "1D EMA20"/"4H EMA38" kosteten 198 px der Werkzeugzeile. Die Perioden
+  // stehen im Tooltip und hinter dem ⓘ.
+  const schalter=[['d','EMA 1D'],['h','EMA 4H']].map(([k,l])=>{
     const da=k==='d'?!!w.d:!!(TREND_DATA&&TREND_DATA.assets&&TREND_DATA.assets[c.id]);
     return`<button class="ab-rg tr-sw tr-sw-${k}${linien.includes(k)?' on':''}" onclick="toggleAbTrendLinie('${k}')" title="${escH(da?`Show or hide the ${k==='d'?'daily EMA20':'4-hour EMA'+TREND_EMA_H} with its neutral band (±${TREND_NEUTRAL_ATR} × ATR14)`:`No ${k==='d'?'daily':'4-hour'} trend data for this asset yet`)}"><span class="tr-sw-dot"></span>${l}</button>`;
   }).join('');
   const regler=abRegler(c.id,'Show % of daily candles in every chart on this page');
   const kopf=`<div class="ab-tile-hd">
-    ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>${FX.includes(c.id)?`<span class="ab-tile-s ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</span>`:''}
+    ${abTileIcon('Price')}<span class="ab-tile-t">Price</span>
     ${ch.leer?'':YIELD_CCY[c.id]?(()=>{
       // Rendite: Aenderung im Fenster in Basispunkten (letzter Schluss minus
       // Vortagesschluss vor dem Fenster, aus ch.pct zurueckgerechnet).
@@ -10744,8 +10754,8 @@ function assetPreisKarteHtml(c){
       '<b>1D EMA20</b> and <b>4H EMA'+TREND_EMA_H+'</b> with their neutral band (±'+TREND_NEUTRAL_ATR+' × ATR14) are the trend driver. Shading marks where price sits outside the band — blue above, red below. The trend score adds up to ±'+TREND_PKT+' (1D) and ±'+TREND_PKT_H+' (4H) to the asset\'s score.',
       'The strip below shows the change over 1D, 1W, 1M and year to date.'])}
     </div>
-    ${chartLeisteHtml(chartTypSchalterHtml(),`<span class="ab-rgs">${regler}</span>`)}
-    ${YIELD_CCY[c.id]?'':`<div class="tr-sws">${schalter}</div>`}`;
+    ${FX.includes(c.id)?`<div class="ab-tile-sub ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</div>`:''}
+    ${chartLeisteHtml(chartTypSchalterHtml()+(YIELD_CCY[c.id]?'':`<span class="tr-sws">${schalter}</span>`),`<span class="ab-rgs">${regler}</span>`)}`;
   const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
   // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
   // der Kopfleiste. Die Leiste ist am selben Tag auf Nutzer-Wunsch wieder
@@ -15551,7 +15561,9 @@ function dashMajorsHtml(){
       <span class="an-flag">${assetIconHtml(c.id,18)}</span><div class="an" data-bv="${c.bias}" style="color:${biasCss(c.bias)}">${escH(c.name)}</div>${miniSparklineSvg(c.id,BC[c.bias])}<div class="sb-score" style="color:${biasCss(c.bias)}">${sc>0?'+':''}${sc}</div><span class="bbadge" style="background:${BC[c.bias]}18;color:${biasCss(c.bias)}">${c.bias==='bull'?'BULL':c.bias==='bear'?'BEAR':'NEUTRAL'}</span>
     </button></div>`;
   }).join('');
-  return`<div class="dash-majors-lbl">Majors</div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
+  // Kartentitel wie jede andere Karte (Nutzerwahl 2026-10-05, hebt die Regel
+  // vom 2026-07-27 auf, das "MAJORS"-Label nur im Bearbeitungsmodus zu zeigen).
+  return`<div class="dw-hdr dash-majors-hd"><div class="dw-t"><span class="dw-t-txt">Majors</span>${abInfoBtn('Majors',['The eight major currencies ranked by their score, strongest first.','Tap a row to open the currency.'],'rinfo')}</div></div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
 }
 // Bearbeitungsmodus per Long-Press (2s, Nutzer-Wunsch 2026-08-22, urspruenglich
 // 5s - Nutzer-Wunsch 2026-07-25): "komm weg
@@ -16149,7 +16161,7 @@ function renderDash(){
       const fxRow=p=>{
         const parts=p.name.split('/');
         return`<div class="wl-row wl-click" onclick="gotoPairOverview('${escJH(p.name)}')" title="Open the full overview for this pair">
-          <span class="wl-icons">${assetIconHtml(parts[0],17)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],17)}</span>
+          <span class="wl-icons">${assetIconHtml(parts[0],14)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],14)}</span>
           <span class="wl-name">${escH(p.name)}</span>
           ${wlChg(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
@@ -16199,7 +16211,7 @@ function renderDash(){
           <div class="wl-table">${sugg.map(s=>{
             const parts=s.name.split('/');
             return`<div class="wl-row wl-click" onclick="toggleWatch('${escJH(s.name)}')" title="Add ${escH(s.name)} to the watchlist">
-              <span class="wl-icons">${assetIconHtml(parts[0],17)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],17)}</span>
+              <span class="wl-icons">${assetIconHtml(parts[0],14)}<span class="wl-flag-sep">|</span>${assetIconHtml(parts[1],14)}</span>
               <span class="wl-name">${escH(s.name)}</span>
               ${wlChg(tickerInfoForItem('pair',s.name))}
               ${rowScore(s.sc,'Paar-Score',null,`openScoreInfoPair('${escJH(s.name)}')`)}
@@ -16261,7 +16273,7 @@ function renderDash(){
       const negIdx=ranked.findIndex(r=>r.sc<0);
       content=`<div class="rank-list">`+ranked.map((r,i)=>(negIdx>0&&i===negIdx?`<div class="rank-sep"></div>`:'')+`<div class="rank-row" data-flip="${r.s.id}" onclick="gotoSym('${r.s.id}')">
         <span class="rank-pos">${i+1}</span><span class="rank-name">${escH(r.s.id)}</span>
-        <div class="rank-track"><div class="rank-bar" style="width:${Math.round(Math.abs(r.sc)/mx*100)}%;background:${BC[r.s.bias]}"></div></div>
+        <div class="rank-track rank-div"><span class="rank-null"></span><div class="rank-bar${r.sc<0?' neg':''}" style="${r.sc<0?'right':'left'}:50%;width:${(Math.abs(r.sc)/mx*50).toFixed(1)}%;background:${BC[r.s.bias]}"></div></div>
         <span class="rank-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${r.s.id}')" style="cursor:pointer;color:${biasCss(r.s.bias)}" title="Score - tap for the breakdown">${r.sc>0?'+':''}${Math.round(r.sc*10)/10}</span>
       </div>`).join('')+`</div>`;
     }else if(w.type==='risk_sentiment'){
@@ -17157,13 +17169,13 @@ function renderMatrixRoh(){
   const ranked=[...FX].sort((a,b)=>scores[b]-scores[a]);
   const maxAbs=Math.max(1,...FX.map(id=>Math.abs(scores[id])));
   const rankRows=ranked.map((id,i)=>{
-    const sc=scores[id],col=scoreColor(sc),w=(Math.abs(sc)/maxAbs*100).toFixed(0);
+    const sc=scores[id],col=scoreColor(sc);
     const sp=surpriseIndex(id);
     const spCol=sp.net>0?'var(--blue)':sp.net<0?'var(--red)':'var(--t3)';
     return`<div class="mx-rank-row list-in" style="animation-delay:${i*45}ms" onclick="gotoSym('${id}')" title="Open ${id}">
       <div class="mx-rank-pos">${i+1}</div>
       <div class="mx-rank-id">${id}</div>
-      <div class="mx-rank-bar-wrap"><div class="mx-rank-bar" style="width:${w}%;background:${col}"></div></div>
+      <div class="mx-rank-bar-wrap rank-div"><span class="rank-null"></span><div class="mx-rank-bar${sc<0?' neg':''}" style="${sc<0?'right':'left'}:50%;width:${(Math.abs(sc)/maxAbs*50).toFixed(1)}%;background:${col}"></div></div>
       <div class="mx-rank-score" style="color:${col}">${sc>0?'+':''}${sc}</div>
       <div class="mx-rank-surp"><span style="color:${spCol}">${sp.net>0?'+':''}${sp.net}</span>${sp.n?`<small>/${sp.n}</small>`:''}</div>
     </div>`;
@@ -19118,9 +19130,14 @@ function indHistChart(ind,symId,opts){
   // Bezugslinie: bei Level-Reihen der erste Punkt des Fensters (dagegen
   // liest man "seitdem gestiegen/gefallen" ab), sonst wie bisher die Null.
   const y0=lineMode?yOf(use[0][1]):yOf(0);
-  const bw=Math.max(1.5,(W-padL-padR)/n*0.56);
+  // Saeulen hoechstens 14 px breit (Nutzerwahl 2026-10-05 "Farbflaechen
+  // leiser": bei 12 Werten in 580 px waren es 25 px breite Bloecke). Ob die
+  // Zahl ueber der Saeule Platz hat, haengt am SPALTEN-Platz, nicht an der
+  // Saeulenbreite - sonst verschwaenden die Werte mit der schmaleren Saeule.
+  const slot=(W-padL-padR)/n;
+  const bw=Math.max(1.5,Math.min(slot*0.56,14));
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
-  const showLbl=!lineMode&&bw>=22;
+  const showLbl=!lineMode&&slot*0.56>=22;
   // Radius des Forecast-Punktes - wird zweimal gebraucht: beim Zeichnen und
   // bei der Frage, wie hoch die Actual-Zahl stehen muss, um NICHT hinter dem
   // Forecast zu verschwinden (Nutzer-Bugreport 2026-09-05).
@@ -19151,7 +19168,7 @@ function indHistChart(ind,symId,opts){
   }else{
     use.forEach((p,i)=>{
       const x=xOf(i),y=yOf(p[1]),top=Math.min(y,y0),h=Math.abs(y-y0);
-      bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)"/>`;
+      bars+=`<rect x="${(x-bw/2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0.6,h).toFixed(1)}" rx="${Math.min(3,bw/4).toFixed(1)}" fill="var(--blue)" fill-opacity=".8"/>`;
       if(showLbl){
         // Die Zahl steht ueber ALLEM, was an dieser Stelle im Chart liegt -
         // ueber dem Balken UND ueber dem Forecast-Punkt (Nutzer-Wunsch
@@ -21138,10 +21155,7 @@ function renderRetailBars(D){
     return`<div class="sent-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSentSym('${escJH(r.sym)}')" title="Open ${escH(r.sym)} history">
       <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:var(--fs-sm);color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:var(--ff-num)" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
       <span style="flex:none;width:30px;text-align:right;font-size:var(--fs-xs);font-weight:700;color:${BC.bull}">${L}%</span>
-      <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
-        <div style="width:${L}%;background:${BC.bull};min-width:0" title="${L}% of retail traders are long"></div>
-        <div style="width:${S}%;background:${BC.bear};min-width:0" title="${S}% of retail traders are short"></div>
-      </div>
+      <div class="sent-bar"><div class="sent-bar-l" style="width:${L}%" title="${L}% of retail traders are long"></div><div class="sent-bar-s" style="width:${S}%" title="${S}% of retail traders are short"></div></div>
       <span style="flex:none;width:30px;text-align:left;font-size:var(--fs-xs);font-weight:700;color:${BC.bear}">${S}%</span>
     </div>`;
   }).join('');

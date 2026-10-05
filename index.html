@@ -6224,6 +6224,60 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
    die er zum Ueberlaufen brachte): laeuft im Text mit, bricht mit dem Namen
    um, bleibt selbst einzeilig. */
 .cal-evname .cal-news-btn{margin-left:6px;vertical-align:1px;white-space:nowrap}
+/* R1 Waehrungsstaerke mit Richtung (Dashboard + Matrix): Balken von der
+   Mittellinie aus, positiv nach rechts, negativ nach links. Vorher wuchs jeder
+   Balken von links und zeigte nur den Betrag - +2,6 und -2,6 sahen gleich aus.
+   Die Farbe bleibt die Bias-Einstufung (neutral = grau, auch bei positivem
+   Wert - sonst widerspraeche der Balken der grauen Zahl daneben); die
+   Richtung traegt jetzt die Lage. Geprueft: check/designregeln.js K. */
+.rank-div{position:relative}
+.rank-div>.rank-bar,.rank-div>.mx-rank-bar{position:absolute;top:0;bottom:0;border-radius:0 5px 5px 0}
+.rank-div>.rank-bar.neg,.rank-div>.mx-rank-bar.neg{border-radius:5px 0 0 5px}
+.rank-null{position:absolute;left:50%;top:0;bottom:0;width:1px;margin-left:-.5px;background:var(--bd2)}
+body.anim-enter:not(.no-data-anim) .rank-div>.rank-bar.neg,body.anim-enter:not(.no-data-anim) .rank-div>.mx-rank-bar.neg{transform-origin:right center}
+/* R10 Farbflaechen leiser: COT- und Retail-Balken liefen 26 px hoch in voller
+   Saettigung (COT mit Verlauf) ueber die ganze Breite - jetzt 12 px, 70 %
+   Deckkraft, 2 px Kartenfarbe zwischen Long und Short; die kraeftige Farbe
+   steht nur noch an den Zahlen daneben. */
+.cot-bar{height:12px;border-radius:4px}
+.cot-bar-long{background:rgba(var(--green-rgb),.7)}
+.cot-bar-short{background:rgba(var(--red-rgb),.7);box-shadow:inset 2px 0 0 var(--card)}
+.sent-bar{flex:1;display:flex;height:12px;border-radius:4px;overflow:hidden;min-width:0;background:var(--bg4)}
+.sent-bar-l{background:rgba(var(--green-rgb),.7);min-width:0}
+.sent-bar-s{background:rgba(var(--red-rgb),.7);min-width:0;box-shadow:inset 2px 0 0 var(--card)}
+/* R8 Dashboard-Karten. Majors: Kartentitel wie jede Karte (Nutzerwahl
+   2026-10-05; hebt die Regel vom 2026-07-27 auf, das Label nur im
+   Bearbeitungsmodus zu zeigen). */
+.dash-majors-hd{margin-bottom:8px}
+/* Watchlist bei 1440 px (Karte 249 px) einzeilig - gemessen vorher 5/5 Zeilen
+   58 statt 34 px: das Entfernen-× erscheint nur im Bearbeitungsmodus wie alle
+   Bearbeitungsfunktionen (Regel 2026-07-25), Flaggen 14 statt 17 px,
+   Aenderung 48 statt 58 px (laengster Wert "-10.25%" = 45 px), Score 32 px,
+   Luecken 4 px (mit 5 px gingen 50+66+48+32+15 = 211 von 211 px auf - die
+   Rundung brach trotzdem um). Das "+" der Vorschlagszeilen bleibt. */
+.wl-row{gap:4px}
+.wl-icons{width:48px;gap:1px}
+.wl-chg{width:48px}
+.wl-row .row-score{width:32px}
+.wl-row button.dw-del{display:none}
+body.dash-edit-mode .wl-row button.dw-del{display:inline-block}
+/* Bearbeitungsmodus: die Knopfleiste (▲▼×) liegt rechts im Kartenkopf, genau
+   ueber dem ⓘ (gemessen: alle 13 Karten, Klick auf das ⓘ traf den Knopf).
+   Beim Anordnen ist das ⓘ entbehrlich -> ausgeblendet statt verdeckt. */
+body.dash-edit-mode .dw-hdr .rinfo{visibility:hidden}
+/* R7 Price-Karte kompakt ("Kompakt, max. 2 Zeilen"): vorher bei 820 px vier
+   Bedienzeilen ueber einem 128 px hohen Chart (Candles|Line 126 px, 7
+   Zeitfilter 323 px, EMA-Schalter 198 px). Jetzt Candles|Line als
+   Symbolknoepfe, EMA-Schalter kurz und links in der Werkzeugzeile (Regel
+   2026-09-26), Zeitfilter der Asset-Seite mit 7 statt 14 px Polster. Passt
+   die Zeile nicht, rutscht der Zeitfilter als GANZES in die zweite Zeile -
+   nie wieder ein einzelnes "MAX". */
+.ctyp-ic{padding:0;width:var(--h-s);display:inline-flex;align-items:center;justify-content:center}
+.ctyp-ic svg{display:block}
+.ab-rgs>.ab-rg,.tr-sws>.ab-rg{padding-left:7px;padding-right:7px}
+.ab-rgs{gap:4px;flex-wrap:nowrap}
+.chart-leiste-l .tr-sws{margin:0;gap:4px;flex-wrap:nowrap}
+.ab-tile-sub{font:600 var(--fs-2xs)/1.2 var(--ff-text);color:var(--t3);margin:-8px 0 10px 28px}  /* 28 px = Symbol + Abstand: unter dem Titeltext */
 </style>
 </head>
 <body>
@@ -6311,11 +6365,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-590 - Design audit round 2, part 1: GitHub guard run gets 45 min and covers the modules, forecast line neutral, back pill in the active tone, own active tone in every light template, three distinct text greys, faint controls fully visible on touch, disabled buttons at 45 %, calendar values right-aligned, headline badge behind the event name."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-591 - Design audit round 2, part 2: currency strength bars from a centre line, quieter COT and retail bars and thinner data columns, Majors card title, single-line watchlist (remove only while editing), info button hidden while editing, price card with icon Candles|Line, short EMA switches and at most two control rows, basket as subtitle."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-590</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-591</span>
     </span>
   </div>
   <div class="hdr-r">
