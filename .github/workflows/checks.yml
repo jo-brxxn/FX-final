@@ -23,11 +23,14 @@ on:
 jobs:
   waechter:
     runs-on: ubuntu-latest
-    # 45 statt 25 Minuten (Nutzer-Wahl 2026-10-05): die Suite braucht lokal
-    # ~27 Minuten, seit dem 2026-09-20 (letzter gruener Lauf Nr. 395) wurde
-    # jeder Lauf am alten Limit abgebrochen - 97 von 100 "cancelled", kein
-    # einziges Ergebnis. Waechst die Suite weiter: Limit mit anheben.
-    timeout-minutes: 45
+    # 90 statt 25 Minuten (Nutzer-Wahl 2026-10-05 "Limit anheben"): seit dem
+    # 2026-09-20 (letzter gruener Lauf Nr. 395) wurde jeder Lauf am alten
+    # Limit abgebrochen - 97 von 100 "cancelled". Der erste Versuch mit 45 min
+    # (Lauf 520) war zu knapp: der Runner ist 2-3x langsamer als lokal
+    # (layout 140 s statt 45, dashboard 195 statt 42, nav 162 statt 47) und
+    # stand nach 44,5 min erst bei filterreset - hochgerechnet ~65 min.
+    # Waechst die Suite weiter: Limit mit anheben (oder in Teile aufteilen).
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:

@@ -19256,3 +19256,24 @@ gegen 590 rot in jedem Unterpunkt; die Balkenhöhe lief zuerst ins Leere,
 weil sie auf dem Dashboard gesucht wurde — jetzt auf COT/Retail),
 Gegenprobe 11/11 Stufen. `check/einheit.js` liest den Schalter über
 aria-label.
+
+**Nachtrag 591 — CI und zwei zeitabhängige Wächter (2026-10-05):**
+- CI-Lauf 520 (erster mit 45 min) brach nach 45:20 ab: der GitHub-Runner ist
+  2–3× langsamer als lokal (`layout` 140 s statt 45, `dashboard` 195 statt
+  42, `nav` 162 statt 47) und stand nach 44,5 min erst bei `filterreset` —
+  hochgerechnet ~65 min. Limit jetzt 90 min (meine 45-min-Schätzung beruhte
+  auf der lokalen Laufzeit, das war falsch).
+- Derselbe Lauf lieferte den ersten echten CI-Befund seit dem 2026-09-20:
+  `zurueck` B rot — der COT-Cache (`fxpro_cot_hist_cache`) wird nach einem
+  Abruf asynchron geschrieben und fiel auf dem langsamen Runner ins
+  80-ms-Fenster nach einem Seasonality-Klick. Kein Nutzer-Zustand (in der App
+  „entbehrlich, baut sich neu auf“, nicht in `snap()`). Reproduziert mit
+  verzögertem Cache-Schreiben (16 Fehlmeldungen auf Seasonality), behoben in
+  der Ausnahmeliste des Wächters, Fehlerklasse mit: `carryRateCache`,
+  `fxpro_rez_purge*`, `fxpro_seedclean` → grün (62 speichernde Klicks, alle
+  markiert).
+- Lokaler Volllauf 591: `performance` E rot („Asset GOLD: 0 von 1 Filmen“).
+  Zeitspur (591 und 590 gleich): Film-Fenster gefüllt nach ~215 ms,
+  eingeschaltet erst im `onload` des Bildes nach ~317 ms; der Wächter wartete
+  nur auf das Füllen. Jetzt wartet er auf „gefüllt und eingeschaltet“
+  (höchstens 4 s). Gegenprobe mit blockiertem Einschalten: weiter rot.

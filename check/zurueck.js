@@ -200,7 +200,13 @@ function flach(o, pre, out) {
     await p.evaluate(s => { document.querySelectorAll('.ov').forEach(o => { o.style.display = 'none'; }); if (s === 'cur') gotoSym('USD'); else showTab(s); }, seite); await p.waitForTimeout(400);
     const r = await p.evaluate(async ([s, WEGQ]) => {
       const WEG = new RegExp(WEGQ), sleep = ms => new Promise(r => setTimeout(r, ms));
-      const VOL = /^(fxpro_updated|fxpro_cloud_seen|fxpro_user_pending|fxpro_backup|fxpro_scorehist|fxpro_scorejournal|fxpro_ff_last|fxpro_saved|fxpro_undo)/;
+      // Kein Nutzer-Zustand: Sync-Marker, Caches und Einmal-Marker, die die App
+      // nach einem Abruf SELBST schreibt. ⚠ Diese Schreibvorgaenge kommen
+      // asynchron - auf dem langsamen GitHub-Runner landete der COT-Cache am
+      // 2026-10-05 im 80-ms-Fenster nach einem Seasonality-Klick und wurde als
+      // "unmarkierte Nutzer-Aenderung" gemeldet (lokal nie). Mitgefunden,
+      // gleiche Klasse: carryRateCache, fxpro_rez_purge*, fxpro_seedclean.
+      const VOL = /^(fxpro_updated|fxpro_cloud_seen|fxpro_user_pending|fxpro_backup|fxpro_scorehist|fxpro_scorejournal|fxpro_ff_last|fxpro_saved|fxpro_undo|fxpro_cot_hist_cache|carryRateCache|fxpro_rez_purge|fxpro_seedclean)/;
       const lsMap = () => { const m = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!VOL.test(k) && k !== SK) m[k] = localStorage.getItem(k); } return m; };
       const wurzel = () => s === 'cur' ? document.getElementById('detail') : document.getElementById(PAGE_IDS[s]);
       const liste = [...wurzel().querySelectorAll('[onclick],select[onchange],input[type=checkbox][onchange]')].filter(e => e.offsetParent)

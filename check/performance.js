@@ -187,8 +187,14 @@ function statisch() {
     const r = await p.evaluate(async ([code, gp]) => {
       if (gp) { const w = document.querySelector('#aiWave path'); if (w && !w.querySelector('animate')) w.insertAdjacentHTML('beforeend', '<animate attributeName="d" dur="1.8s" repeatCount="indefinite" values="' + w.getAttribute('d') + ';' + w.getAttribute('d').replace(/,0\./g, ',0.5') + '"/>'); }
       (0, eval)(code);
-      // Filme werden im Leerlauf nachgezogen
-      for (let i = 0; i < 40 && document.querySelector('.ai-film-win[data-film]:empty'); i++) await new Promise(r => setTimeout(r, 100));
+      // Filme werden im Leerlauf nachgezogen und erst im onload ihres Bildes
+      // eingeschaltet (.ai-film-on). Gewartet wird deshalb, bis jedes sichtbare
+      // Fenster gefuellt UND eingeschaltet ist - nicht nur gefuellt: im
+      // Volllauf 2026-10-05 lagen zwischen Fuellen und onload ~100 ms (Spur:
+      // 215 -> 317 ms), die Messung fiel hinein und meldete "0 von 1" (GOLD).
+      // Kommt ein Film nie, bleibt es nach 4 s rot wie bisher.
+      const offen = () => document.querySelector('.ai-film-win[data-film]:empty') || [...document.querySelectorAll('.ai-wrap')].some(w => w.getClientRects().length && w.querySelector('.ai-film-win') && !w.classList.contains('ai-film-on'));
+      for (let i = 0; i < 40 && offen(); i++) await new Promise(r => setTimeout(r, 100));
       const smil = document.querySelectorAll('animate, animateTransform, animateMotion').length;
       const live = document.getAnimations().filter(a => a.playState === 'running' && /^ai(Sheen|Drip|MetalSheen|Tick|TickDot)$/.test(a.animationName || '')).length;
       const filme = [...document.querySelectorAll('.ai-wrap.ai-film-on .ai-film')].filter(f => f.getClientRects().length);
