@@ -26,9 +26,17 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const SEITEN = ['regime', 'news', 'dash', 'mx', 'trends', 'cot', 'sent', 'seas', 'data', 'rate', 'carry', 'pairs', 'watch', 'cal', 'notes', 'A:EUR', 'A:GOLD'];
-// Seiten mit eigenem Kopf statt Seitentitel: Dashboard (Kartenraster),
-// Data (Kopf = Datenkarte, Nutzerwahl "Kompakt"), Asset-Seiten (.atitle).
-const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
+// Seiten mit eigenem Kopf statt Seitentitel: nur noch die Asset-Seiten
+// (.atitle). Dashboard und Data waren bis 2026-10-04 ausgenommen; seit dem
+// Design-Audit (Nutzerwahl "Seitentitel ueberall gleich") tragen sie
+// Titel + Untertitel wie jede Seite.
+// Ausserdem seit 2026-10-04: jeder Seitentitel steht an DERSELBEN Stelle
+// (Archive sass 4 px rechts/2 px tiefer, Dashboard 8 px hoeher) und hat
+// einen Untertitel (.pg-sub) direkt darunter.
+//   node check/hierarchie.js --gegenprobe-lage  (Archive-Versatz + fehlender
+//   Untertitel wie vorher -> rot)
+const OHNE_SEITENTITEL = ['A:EUR', 'A:GOLD'];
+const GP_LAGE = process.argv.includes('--gegenprobe-lage');
 
 (async () => {
   const b = await chromium.launch();
@@ -38,7 +46,8 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
   await p.goto(URL); await wartenBisDatenDa(p);
   await p.evaluate(() => { ['introOv', 'lockScreen'].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); }); });
   if (GEGENPROBE) await p.addStyleTag({ content: '.pg-titel{font-size:16px!important;font-weight:700!important} .mx-card-title{font-size:15px!important} .tr-card-head>.info-b{display:none!important}' });
-  let n = { seiten: 0, karten: 0 };
+  if (GP_LAGE) await p.addStyleTag({ content: '.rterm-side-title{padding:2px 4px 12px!important} .rterm-side-title .pg-sub{display:none!important}' });
+  let n = { seiten: 0, karten: 0 }; const lage = [];
   for (const z of SEITEN) {
     await p.evaluate(z => { if (z.startsWith('A:')) gotoSym(z.slice(2)); else showTab(z); if (z === 'data') { dataAssets.length = 0; ['USD', 'EUR'].forEach(x => dataAssets.push(x)); if (!dataIndBase) dataIndBase = 'CPI (Headline)'; renderDataTab(); } }, z);
     await p.waitForTimeout(800);
@@ -47,7 +56,8 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
       const fs = e => parseFloat(getComputedStyle(e).fontSize), fw = e => parseInt(getComputedStyle(e).fontWeight, 10);
       const wurzel = [...document.querySelectorAll('#pageArea .pc')].find(e => getComputedStyle(e).display !== 'none' && vis(e)) || document.getElementById('detail');
       const out = { titel: [], karten: [], atitle: null };
-      wurzel.querySelectorAll('.pg-titel').forEach(t => { if (vis(t)) out.titel.push({ fs: fs(t), fw: fw(t), txt: t.textContent.trim().slice(0, 24) }); });
+      wurzel.querySelectorAll('.pg-titel').forEach(t => { if (!vis(t)) return; const q = t.getBoundingClientRect(), nx = t.nextElementSibling;
+        out.titel.push({ fs: fs(t), fw: fw(t), txt: t.textContent.trim().slice(0, 24), x: Math.round(q.left), y: Math.round(q.top), sub: !!(nx && nx.classList.contains('pg-sub') && vis(nx)) }); });
       const at = wurzel.querySelector('.atitle'); if (at && vis(at)) out.atitle = fs(at);
       // Karten an der FORM erkennen: Schatten + Rundung, mind. 160px breit,
       // keine Knoepfe/Eingaben, nicht in einer anderen Karte.
@@ -78,7 +88,9 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
     n.seiten++;
     if (!OHNE_SEITENTITEL.includes(z)) {
       if (r.titel.length !== 1) fail(z, `${r.titel.length} Seitentitel (.pg-titel) statt genau einem`);
-      r.titel.forEach(t => { if (Math.abs(t.fs - 24) > .5 || t.fw < 800) fail(z + ' SEITENTITEL', `"${t.txt}" ${t.fs}px/${t.fw} statt 24px/800`); });
+      r.titel.forEach(t => { if (Math.abs(t.fs - 24) > .5 || t.fw < 800) fail(z + ' SEITENTITEL', `"${t.txt}" ${t.fs}px/${t.fw} statt 24px/800`);
+        if (!t.sub) fail(z + ' UNTERTITEL', `"${t.txt}" ohne .pg-sub direkt darunter`);
+        lage.push({ z, x: t.x, y: t.y }); });
     }
     r.karten.forEach(k => {
       n.karten++;
@@ -89,9 +101,14 @@ const OHNE_SEITENTITEL = ['dash', 'data', 'A:EUR', 'A:GOLD'];
     });
     if (r.atitle != null && r.karten.some(k => k.fs >= r.atitle)) fail(z, `Asset-Name ${r.atitle}px nicht groesser als die Kartentitel`);
   }
+  // Alle Seitentitel an derselben Stelle (Median als Soll, +-1 px)
+  const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
+  const mx = med(lage.map(l => l.x)), my = med(lage.map(l => l.y));
+  lage.forEach(l => { if (Math.abs(l.x - mx) > 1 || Math.abs(l.y - my) > 1) fail(l.z + ' LAGE', `Seitentitel bei x=${l.x} y=${l.y}, alle anderen bei x=${mx} y=${my}`); });
   perr.forEach(x => fail('JS-FEHLER', x));
   await b.close();
+  if (GP_LAGE) { const ok = F.some(f => f.includes('notes LAGE')) && F.some(f => f.includes('notes UNTERTITEL')); console.log(ok ? 'hierarchie --gegenprobe-lage: ok (Versatz und fehlender Untertitel werden gemeldet)' : 'hierarchie --gegenprobe-lage: FEHLER - nicht gemeldet: ' + F.join(' | ')); process.exit(ok ? 0 : 1); }
   if (GEGENPROBE) { if (F.some(f => f.includes('SEITENTITEL')) && F.some(f => f.includes('KARTENTITEL')) && F.some(f => f.includes('OHNE ⓘ'))) { console.log(`hierarchie --gegenprobe: ok (rot wie erwartet, ${F.length} Befund(e))`); process.exit(0); } console.log('hierarchie --gegenprobe: FEHLER - Waechter bleibt gruen'); process.exit(1); }
   if (F.length) { console.log(`hierarchie: ${F.length} Befund(e)`); F.slice(0, 50).forEach(f => console.log('  ' + f)); process.exit(1); }
-  console.log(`hierarchie: ok (${n.seiten} Seiten, ${n.karten} Karten: Seitentitel 24px/800 > Kartentitel 17px > Text)`);
+  console.log(`hierarchie: ok (${n.seiten} Seiten, ${n.karten} Karten: Seitentitel 24px/800 mit Untertitel an derselben Stelle (x=${mx} y=${my}) > Kartentitel 17px > Text)`);
 })().catch(e => { console.log('hierarchie: ABBRUCH ' + e.message); process.exit(1); });

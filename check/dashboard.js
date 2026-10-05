@@ -6,6 +6,7 @@ const URL=process.env.CHECK_URL||'http://127.0.0.1:8935/index.html';
 // Exit 1 bei Kollision -> gehoert vor jeden Push.
 const {chromium}=require(PW);
 const PORT=process.env.PORT||8935;
+const GEGENPROBE=process.argv.includes('--gegenprobe');
 (async()=>{
   const b=await chromium.launch(); let fehler=[];
   for(const [w,h] of [[1920,1080],[1600,900],[1440,900],[1280,800],[1180,820],[1100,800],[900,900],[390,844]]){
@@ -16,6 +17,7 @@ const PORT=process.env.PORT||8935;
     await p.waitForTimeout(1700);
     await p.evaluate(()=>{document.querySelectorAll('.mov,.mov2').forEach(m=>m.style.display='none');showTab('dash');});
     await p.waitForTimeout(800);
+    if(GEGENPROBE)await p.addStyleTag({content:'#dashWidgets .dw-t-txt{display:inline-block!important;width:7px!important;white-space:nowrap!important;overflow:visible!important}'});
     const r=await p.evaluate(()=>{
       const out=[];
       const alle=[...document.querySelectorAll('#dashWidgets .dw')].filter(c=>c.getBoundingClientRect().height>0);
@@ -89,13 +91,22 @@ const PORT=process.env.PORT||8935;
       // klein, nur der Text ragt heraus. So war .wl-name auf 7px gequetscht,
       // waehrend "CAD/CHF" quer ueber die Prozentspalte lief - im Screenshot
       // sofort sichtbar, in jeder Kollisionsmessung unsichtbar.
+      // Gemessen wird die TEXTBREITE selbst (Range-Rechtecke), nicht
+      // scrollWidth: seit 2026-10-04 (Design-Audit D7) tragen kleine Knoepfe
+      // (ⓘ, Glocke, Chips) eine unsichtbare ::after-Trefferflaeche, die in
+      // scrollWidth mitzaehlt - mit scrollWidth meldete der Waechter jedes ⓘ
+      // als "laeuft 8px ueber", obwohl kein Buchstabe uebersteht. Gegenprobe:
+      // node check/dashboard.js --gegenprobe (Widget-Titel auf 7 px gequetscht).
       document.querySelectorAll('#dashWidgets .dw *').forEach(e=>{
         if(e.children.length)return;
         const t=(e.textContent||'').trim();if(!t)return;
         const cs=getComputedStyle(e);
         if(cs.overflow!=='visible'||cs.display==='none'||cs.visibility==='hidden'||cs.opacity==='0')return;
-        const ue=e.scrollWidth-e.clientWidth;
-        if(ue>2&&e.clientWidth>0)
+        const rg=document.createRange();rg.selectNodeContents(e);
+        const tr=[...rg.getClientRects()].filter(q=>q.width>0);if(!tr.length||!e.clientWidth)return;
+        const er=e.getBoundingClientRect(),li=er.left+(parseFloat(cs.borderLeftWidth)||0),re=er.right-(parseFloat(cs.borderRightWidth)||0);
+        const ue=Math.round(Math.max(0,...tr.map(q=>q.right-re),...tr.map(q=>li-q.left)));
+        if(ue>2)
           out.push('"'+t.slice(0,18)+'" laeuft '+ue+'px ueber sein Element (nur '+e.clientWidth+'px breit)');
       });
       return out;
@@ -104,6 +115,7 @@ const PORT=process.env.PORT||8935;
     await p.close();
   }
   await b.close();
+  if(GEGENPROBE){const ok=fehler.some(f=>/laeuft \d+px ueber sein Element/.test(f));console.log(ok?'dashboard --gegenprobe: ok (gequetschter Titel wird als Textueberlauf gemeldet)':'dashboard --gegenprobe: FEHLER - nicht gemeldet');process.exit(ok?0:1);}
   if(fehler.length){console.log('DASHBOARD-KOLLISIONEN:\n  '+fehler.join('\n  '));process.exit(1);}
   console.log('Dashboard ok: keine ueberlappenden Karten, kein ueberlappender Text, kein Zonen-Ueberlauf (8 Breiten)');
 })();

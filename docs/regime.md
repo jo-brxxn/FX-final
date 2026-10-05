@@ -99,6 +99,14 @@ eigene Meldung („MONATSRATE STATT JAHRESRATE").
 | **Soft Landing** | bewusst ein **eigenes** Szenario, nicht „keines der anderen" — sonst liest das Radar einen völlig normalen Markt als Informationsmangel |
 | **Productivity Upswing** | strukturell, über Quartale. ⚠ Kernbedingung (BLS) fehlt, die Näherung ist gekennzeichnet |
 
+**Farbe (seit 2026-10-04, Design-Audit „Rot nur bearish/Warnung"):** Rot nur
+für ein STRESS-Szenario ab 75 % (das ist eine Warnung) — Risk-Off, Funding,
+Inflation, Slowdown tragen dafür `stress:true` in `js/regime.js`. Ruhige
+Szenarien (Divergence, Soft Landing, Productivity) ab 75 % in Navy
+(`--ui-act`); 50–74 % Amber (`--due`), darunter grau. Dasselbe für die Haken
+erfüllter Bedingungen (`.rg-card.rg-stress`). Vorher stand „Soft Landing ·
+80 %" als Leit-Regime rot da, mit roten Haken. Wächter `check/designregeln.js` H.
+
 **Warum `rate_probabilities.json` bewusst NICHT benutzt wird:** die Bedeutung
 der Prozentzahl je Sitzung wäre erst zu verifizieren. Eine schmalere, aber
 sicher verstandene Größe (der 2Y-Spread) ist besser als eine breitere, die

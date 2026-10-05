@@ -18986,3 +18986,123 @@ hingen am Datum bzw. Datenstand, keiner an einem App-Fehler:
   75 % Schrift nicht einpassen — es gab keine Platzhalterbreite „umgebrochen UND einpassbar".
   Jetzt Suche über 1000/1180/1280 px und Platzhalter bis 8 em (gefunden bei 1180 px: USD 4 em,
   GOLD 2,5 em). Alle Gegenproben weiter rot.
+
+---
+
+## VERSION-CHECK-588 (2026-10-04/05) — Design-Audit: Runde 1 umgesetzt
+
+Nutzer: *„Recherchier im Internet und mach dich schlau über Webseiten Designs
+und Dashboards und Tabellen Grafiken usw was zu meiner Webseite passt. Ich will
+mein helleres Design beibehalten aber es können einzelne Farben verändert
+werden. Was sollte geändert werden? … Stell mir dann mehrere Fragen …
+/goal Ich will am Ende ein Webseiten Design ohne Schwächen haben"*. Nach der
+Recherche (Few, NN/g, Refactoring UI, WCAG 2.2, Apple HIG) und einer
+Vermessung aller Seiten per Rückfrage gewählt: Emojis + Doppel-Icons raus,
+eine Schrift, Trends-Achsen lesbar, Seitentitel überall gleich, Tippflächen,
+3 Höhen, Mindestschrift 11 px, Kompakt-Schalter beschriften, Aktiv = dunkles
+Navy, Rot nur bearish/Warnung. Danach: *„Setz das so um wie besprochen aber
+… [Funktionalität] steht an oberster Stelle deswegen überdenk nochmal die
+Änderungen"* (Spracheingabe: „Kriminalität"). Jede Änderung ist deshalb gegen
+Überlauf, Umbruch, verdeckte Klicks und die bestehenden Wächter gemessen.
+Regeln: `docs/design-system.md` „Design-Audit 2026-10-04“; Wächter
+`check/designregeln.js` (A–I).
+
+**D1 Emojis.** Gemessen vorher: Farb-Emojis in Titeln/Knöpfen/Fenstern
+(🪙🌪️📈🔗📋🔥🅵🅵🔍ℹ️⏳ …), die COT-Karte mit ZWEI Kopfsymbolen. Jetzt
+Linien-Symbole (`icn`, statisch `.h-ic[data-ic]`), neue Symbole trash, upload,
+cloud, help, save, edit, trendDown, lifebuoy, external, info. Zusätzlich
+gefunden: ⚠ ↗ ↔ sind Unicode-Emojis mit Textdarstellung — Safari auf dem
+iPad holt sie aus der Farb-Emoji-Schrift; `font-variant-emoji` ist dort
+abgeschaltet (caniuse, Stand 2026) und hätte global auch Emojis in Notizen
+entfärbt (verworfen). Lösung: eingebettete Mini-Schrift 'FX Sym' (Teilmenge
+von DejaVu Sans, 13 Zeichen, `unicode-range`, 3,8 KB inkl. des von der
+Bitstream-Vera-Lizenz verlangten Copyright-/Lizenzhinweises, umbenannt). `check/symbole.js` C zählte nur direkte
+Kopfsymbole und sah das COT-Doppelsymbol nicht — erweitert, gegen 587 rot.
+Mitbehoben (Englisch-Regel): zwei deutsche Tooltips („Pearson r der
+taeglichen Returns …", „Positiv = Risikovermeidung …") und „Aktuelle
+Uhrzeit" an der Jetzt-Linie; AAII-Perzentil „24." (deutsche Ordinalzahl) und
+„{n}th" auch bei 21/22/23 → `ordEn()`.
+
+**D2 Monospace.** 52 Elemente in SF Mono (Retail-Kürzel 32, Seasonality 15,
+Globus-Beschriftung 5) plus Historie-Chips, Backups, Put/Call-Zahl → normale
+Schrift. Feste Spalten (74/64 px) gemessen: kein Überlauf bei 820/1440 px.
+
+**D3 Trends.** Gemessen: 322 von 322 Achsen-/Datumsbeschriftungen kamen mit
+2,7–3,0 px an, das Diagramm war ~90 px hoch — jeder Tag bekam fest 48 px und
+das fertige SVG wurde per viewBox auf die Kartenbreite gestaucht (80 Tage →
+~25 %). Jetzt in der gemessenen Breite gebaut (`trBreiteAus`), Datumslabel
+ausgedünnt, Punkte nur bei Abstand ≥ 7 px, Höhe 260/200 px, Neubau bei
+Größenänderung. Hover geprüft: Cursorlinie trifft den Tag (7/24 @212 =
+Label @212). Paar-Fenster mitgemessen (Abzug 58 px → viewBox = gerendert).
+Fehlerklasse: fünf weitere Diagramme mit fester Breite (Put/Call, Call/Put
+Balance, AAII, Correlation regime, Rate differential) schrumpften bei 820 px
+auf 8,1–9,7 px → `chBreite(fest, chPlatz())`; AAII war zusätzlich mit
+`preserveAspectRatio="none"` und SVG-Text verzerrt (Verstoß gegen die
+Y-Achsen-Regel) → echte Breite.
+
+**D4 Seitentitel.** Dashboard und Data ohne Titel (bewusste Entscheidungen
+2026-07-25 bzw. 2026-09-26 — durch die neue Wahl für den Titel aufgehoben),
+Archive 4 px rechts/2 px tiefer ohne Untertitel. Jetzt überall x 98 / y 70
+mit `.pg-sub`; Data als Seitenkopf ohne Kartenrahmen (Charts 581/255 statt
+579/254 px — kein Platzverlust); Dashboard holt seine flachere Polsterung
+nach. `check/hierarchie.js`: Lage + Untertitel, `--gegenprobe-lage`;
+`check/datalayout.js` prüft den Filter auf Höhe des Titelblocks.
+
+**D5 Mindestschrift.** `--fs-2xs` 10 → 11 px (auch in der Asset-Karten-Skala),
+`.si-tag` 8,5 → 11 px, Globus-Beschriftung 9,5 → 11 px. Folgen gemessen
+(alt/neu-Vergleich aller Seiten bei 820/1180 px): „Dashboard" brach in der
+76-px-Leiste in „Dashboar/d" → Leisten-Polster 7 → 5 px (Breite bleibt);
+„+1.69pp" in 344-px-Karten abgeschnitten (43 in 41 px) → Wertspalten 15 %;
+GOLD-Score-Hinweis abgeschnitten (215 in 205 px) → bricht um; Data-Panelkopf
+41 px → Polster 5 px. Die vier Gradzahlen am Globusrand (6,5 px, laut Code
+reine Kompass-Optik) wären bei 11 px an „TRACKING"/„SIGNAL" gestoßen →
+entfernt, Teilstriche bleiben.
+
+**D6 Höhen.** Vorher 26 verschiedene Höhen, Bedienelemente 21–38 px. Jetzt
+S 28 / M 34 / L 40 (`--h-s/m/l`), gemessen auf allen Seiten und in allen
+Fenstern (nach der Öffnungsanimation — vorher gemessen 32–39 px = Skalierung
+mitten in der Animation).
+
+**D7 Trefferflächen.** Freier Platz je Ziel und Umfeld bei 820/1180/1440 px
+gemessen (halber Abstand zum Nachbarn, clippender Behälter). Die ⓘ-Notiz vom
+2026-09-24 („NICHT per überstehendem ::after") galt einem Wächter-Artefakt:
+`check/dashboard.js` zählte `scrollWidth`, das das unsichtbare `::after`
+mitzählt — jetzt misst er die Textbreite (Gegenprobe ergänzt). Klick-Probe:
+0 Überdeckungen bei 820/1180/1440; zwei Fälle beim Bau rot und korrigiert
+(Preis-Kachel 6 px Zeilenabstand, Headline-Tabs zweizeilig). Altbefund:
+im Dashboard-Bearbeitungsmodus liegt das × über dem ⓘ (auch in 587) — offen.
+
+**D8 Schalter.** „SUMMARIES" über dem Regler (absolut, `label for`).
+Daneben in 17 px hätte das Wort DEYIELD in zwei Zeilen geschoben, als eigene
+Zeile darüber stand der Regler 7,6 px neben der Mittellinie
+(`check/kopfleiste.js`). Gefunden: der Tooltip stand verkehrt herum (bei AN
+= 3/3 Zusammenfassungen sichtbar sagte er „hidden") — korrigiert,
+`aria-checked`. Kritik am eigenen Vorschlag: „Compact" wäre falsch herum
+gewesen (AN = mehr Inhalt).
+
+**D9 Aktiv = Navy.** `--ui-act` #0B6BEA (≈ Bullish-Blau #0B5FCC) → #172A46;
+12 Auswahl-Zustände mit direktem `--blue` umgestellt; Unterpunkte der dunklen
+Leiste auf `--rail-on`. Vorlagen unverändert.
+
+**D10 Rot.** „Heute"-Kopf/-Zeile und Jetzt-Linie → Navy, Impact HIGH
+(Kalender, Dashboard-Widget, Asset-Kalender-Punkte) → `--due`, aktiver
+Filter (`.btn.active`, rot getönt) → Navy. Regime: `regimeFarbe` färbte JEDES
+Szenario ab 75 % rot („Soft Landing · 80 %", rote Haken) → Rot nur mit
+`stress:true`. Bleibt rot: bearish, Löschen, Warnungen, LIVE-Punkt,
+Stress-Szenarien. Offen für Runde 2: rote Forecast-Linie, rote Zukunfts-
+Sitzungen bei Rate Probabilities, rote Zurück-Pille im Archiv.
+
+**Nachträge aus dem Volllauf und dem Durchklick (2026-10-05):**
+- `check/infoi.js` rot: das ⓘ der COT-Kachel rutschte bei 1180 px in eine
+  zweite Zeile — „as of Tue, Sep 29“ wurde mit 11 px 9 px breiter, und im
+  Kachelkopf addierten sich `gap` 10 px + ⓘ-Abstand 6 px zu 16 px statt der
+  dokumentierten 6 px → `.ab-tile-hd>.ii-nach{margin-left:-4px}` (= 6 px).
+- `check/chartsync.js` rot: „Compare“ in der Legendenzeile wurde 34 px hoch —
+  bleibt per Nutzerwunsch 2026-09-27 klein (≤ 24 px), Ausnahme von D6.
+- Durchklick bei 820 px: „SUMMARIES“ war sichtbar, aber nicht anklickbar
+  (lag außerhalb des waagerecht scrollenden `.dmeta`, Klick landete auf
+  `.ahead`) → ≤ 900 px links neben dem Regler; `check/designregeln.js` I
+  klickt das Wort jetzt bei 820/1180/1440.
+- Das rote „!“ an „Today“ (`--live`) → `--due`.
+
+Nicht in WebKit gemessen (Download gesperrt) — iPad-Prüfung beim Nutzer.

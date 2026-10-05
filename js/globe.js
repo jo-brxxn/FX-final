@@ -389,7 +389,7 @@ function globeSkeleton(size,uid){
   // Ortungssignale.
   let markers='';let _mi=0;Object.keys(GLOBE_GEO).forEach(id=>{
     const delay=(_mi++%4)*0.55;
-    markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle class="globe-ping" r="5" fill="none" stroke-width="1.3" style="animation-delay:${delay}s"></circle><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="9.5" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:'SF Mono',Consolas,monospace"></text></g>`;
+    markers+=`<g data-id="${id}" style="cursor:pointer;display:none" onclick="globeMarkerClick(event,'${id}')"><circle class="globe-ping" r="5" fill="none" stroke-width="1.3" style="animation-delay:${delay}s"></circle><circle r="4.5" stroke="#04101c" stroke-width="1"></circle><text text-anchor="middle" font-size="11" font-weight="800" style="paint-order:stroke;stroke:#04101c;stroke-width:2.5px;font-family:var(--ff-num)"></text></g>`;
   });
   const SQ=4.2,SI=0.55,SW=SQ-2*SI; // Rasterweite / Innenabstand / Kantenlaenge
   // Radar-Sweep-Keil (Global-Market-Surveillance-Umbau 2026-07-27, Nutzer-
@@ -415,10 +415,10 @@ function globeSkeleton(size,uid){
     const x0=(cx+r0*Math.cos(rad)).toFixed(2),y0=(cy+r0*Math.sin(rad)).toFixed(2);
     const x1=(cx+r1*Math.cos(rad)).toFixed(2),y1=(cy+r1*Math.sin(rad)).toFixed(2);
     bezel+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="rgba(126,196,255,${card?.6:.32})" stroke-width="${card?1.3:.8}"/>`;
-    if(card){
-      const lr=R+15,lx=(cx+lr*Math.cos(rad)).toFixed(1),ly=(cy+lr*Math.sin(rad)).toFixed(1);
-      bezel+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="6.5" fill="rgba(126,196,255,.5)" font-family="'SF Mono',Consolas,monospace">${String(a).padStart(3,'0')}</text>`;
-    }
+    // Die Grad-Zahlen (000/090/180/270, 6,5 px) an den Kardinalpunkten sind
+    // seit 2026-10-04 weg (Design-Audit, Mindestschrift 11 px): sie waren
+    // reine Kompass-Optik ohne Messwert, und in 11 px stiessen sie oben und
+    // unten an "TRACKING"/"SIGNAL". Die laengeren Kardinal-Striche bleiben.
   }
   // Fadenkreuz-Reticle mit Luecke in der Mitte (klassische Zieloptik) - vier
   // kurze Segmente statt zwei durchgehender Linien, damit die Marker/Labels

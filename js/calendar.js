@@ -240,7 +240,7 @@ function evtImpact(ev){if(evtIsCNY(ev))return'medium';if(isScoreDrivingEvent(ev)
 // hat dafuer ein eigenes Select, der Asset-Kalender ist ohnehin schon auf sein
 // Asset (inkl. verknuepfter Waehrung) gefiltert.
 function calToolbarHtml(){
-  const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>`;
+  const ff=`<a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none">${icn('external')} Forex Factory</a>`;
   const high=`<button class="btn${calHighOnly?' active':''}" onclick="toggleCalHighOnly()" title="${calHighOnly?'Show all impacts':'Hides medium-/low-impact events and shows only high-impact news'}"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> ${calHighOnly?'High-impact only':'All impacts'}</button>`;
   const alertBtn=`<button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>`;
   const refresh=`<button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days from Forex Factory and checks the live feed for new actual values"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>`;
@@ -315,7 +315,7 @@ function calTableHtml(evts,opts){
   const rows=ev=>calRowHtml(ev,{delAction:opts.delAction?opts.delAction(ev):null,compact:opts.compact,symId:opts.symId});
   // Dünne rote "Jetzt"-Linie mit aktueller Uhrzeit (linksbündig). Wird in der
   // heutigen Tagesgruppe zwischen vergangenen und anstehenden Events eingefügt.
-  const nowMarker=`<div class="cal-now-line" title="Aktuelle Uhrzeit"><span class="cal-now-time">${nowHM()}</span><span class="cal-now-rule"></span></div>`;
+  const nowMarker=`<div class="cal-now-line" title="Current time"><span class="cal-now-time">${nowHM()}</span><span class="cal-now-rule"></span></div>`;
   const renderToday=dayEvts=>{
     const now=nowHM();let out='',done=false;
     dayEvts.forEach(ev=>{
@@ -341,9 +341,10 @@ function calTableHtml(evts,opts){
       html+=`</div>`;
     }else{
       // Bewusst countdownLbl statt countdownHtml: der Tages-Header traegt bei
-      // heute schon "🔥 TODAY" als auffaellige Markierung, ein zweites
-      // Ausrufezeichen daneben waere doppelt gemoppelt.
-      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · 🔥 TODAY':''}</span><span class="cal-day-cd">${opts.datesDesc&&daysUntil(date)<-30?'':countdownLbl(date)}</span></div>`;
+      // heute schon "TODAY" als auffaellige Markierung, ein zweites
+      // Ausrufezeichen daneben waere doppelt gemoppelt. (Das 🔥 davor ist seit
+      // 2026-10-04 weg - keine Emojis in Titeln, Design-Audit.)
+      html+=`<div class="cal-day-hdr${isToday?' today':''}"><span>${fmtDayHdr(date)}${isToday?' · TODAY':''}</span><span class="cal-day-cd">${opts.datesDesc&&daysUntil(date)<-30?'':countdownLbl(date)}</span></div>`;
       html+=n?(nowHere?renderToday(dayEvts):dayEvts.map(rows).join('')):(nowHere?nowMarker+`<div class="cal-empty-day">No events</div>`:`<div class="cal-empty-day">No events</div>`);
     }
   });
@@ -403,9 +404,13 @@ function normCompactLevel(v){
 // inkl. der Rubrik-Zusammenfassungen, Stufe 2 blendet nur die Zusammenfassungen
 // aus (die Stichpunkte-Funktion, die vorher bei Stufe 1 mitausgeblendet wurde,
 // ist komplett entfernt - siehe removeAllPts-Merksatz weiter unten).
+// ⚠ Index = compactView: 0 = AUS = Zusammenfassungen VERSTECKT, 1 = AN =
+// sichtbar (body.compact-view zeigt .rub-summary/.ov2-summary). Bis
+// 2026-10-04 standen die beiden Texte genau verkehrt herum (gemessen: bei
+// AN 3/3 Zusammenfassungen sichtbar, Tooltip sagte "hidden").
 const COMPACT_TITLES=[
-  'Summaries visible (stage 1 of 2) - tap to hide the rubric summaries',
-  'Summaries hidden (stage 2 of 2) - tap to show them again'
+  'Summaries hidden - tap to show the card summaries',
+  'Summaries shown - tap to hide them'
 ];
 function applyCompactView(){
   document.body.classList.toggle('compact-view',compactView>=1);
@@ -415,6 +420,7 @@ function updCompactSw(){
   if(!b)return;
   b.classList.toggle('on',compactView===1);
   b.title=COMPACT_TITLES[compactView]||COMPACT_TITLES[0];
+  b.setAttribute('aria-checked',compactView===1?'true':'false');
 }
 function toggleCompactView(){
   setCompactViewVal((compactView+1)%2);

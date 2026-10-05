@@ -772,7 +772,19 @@ const ICONS={
   // Economic Growth = Balken mit Pfeil nach oben.
   barsUp:'<line x1="5" y1="20" x2="5" y2="16"/><line x1="10" y1="20" x2="10" y2="12"/><line x1="15" y1="20" x2="15" y2="8"/><line x1="20" y1="20" x2="20" y2="4"/>',
   chartUp:'<line x1="4" y1="21" x2="4" y2="17"/><line x1="9" y1="21" x2="9" y2="14"/><line x1="14" y1="21" x2="14" y2="15"/><line x1="19" y1="21" x2="19" y2="11"/><polyline points="3 11 9 6 13 9 20 3"/><polyline points="16 3 20 3 20 7"/>',
-  candles:'<path d="M9 4v5M9 15v5M15 2v5M15 13v5"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="7" width="4" height="6" rx="1"/>'
+  candles:'<path d="M9 4v5M9 15v5M15 2v5M15 13v5"/><rect x="7" y="9" width="4" height="6" rx="1"/><rect x="13" y="7" width="4" height="6" rx="1"/>',
+  // Emoji-Ersatz (Nutzer 2026-10-04: "Emojis + Doppel-Icons raus") - fuer
+  // Fenstertitel und Knoepfe, die bisher 🗑 ⬆ 💾 ✏️ 📉 🛟 ↗ trugen.
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  cloud:'<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>',
+  help:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+  trendDown:'<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>',
+  lifebuoy:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/>',
+  external:'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  info:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'
 };
 // Titel -> Symbol. Die ERSTE passende Regel gewinnt; spezifische Begriffe
 // stehen deshalb vor allgemeinen ("rate probabilit" vor "rate").
@@ -781,7 +793,7 @@ const KARTEN_ICONS=[
   [/inflation/,'barsUp'],[/labou?r|employment|jobs/,'briefcase'],[/growth|gdp/,'chartUp'],
   [/rate probabilit|rate expectation|interest|policy rate|central bank/,'percent'],
   [/cot|commitment|net long|positioning/,'landmark'],[/retail/,'users'],[/put.?call/,'scale'],
-  [/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
+  [/crypto fear/,'coins'],[/stock fear/,'trendUp'],[/details|weekly change/,'clipboard'],[/fear|greed|market sentiment/,'smile'],[/aaii|survey/,'clipboard'],[/risk/,'gauge'],
   [/headline|news/,'news'],[/currency strength|strength/,'dollar'],[/carry/,'coins'],[/performance|ranking/,'trophy'],
   [/volatil/,'pulse'],[/watchlist/,'eye'],[/correlation/,'link'],[/surprise/,'zap'],
   [/season/,'sun'],[/edge|signal|hit rate|which indicator/,'target'],[/matrix|heatmap/,'grid'],[/trend/,'trendUp'],
@@ -800,6 +812,15 @@ function icn(name,size){
   // Aufrufstelle anzufassen.
   return`<svg class="ic ic-${name}" width="${size||15}" height="${size||15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 }
+// Platzhalter <span class="h-ic" data-ic="bell"> in festen Fenstertiteln und
+// Knoepfen von index.html einmal mit dem Linien-Symbol fuellen (2026-10-04,
+// Design-Audit: "Emojis + Doppel-Icons raus" - dort standen 🔔 ⚙ 🗑 ☁ ❓ …).
+// Platzhalter statt fest eingetragener SVGs: dieselben Pfade stuenden sonst
+// mehrfach woertlich im HTML (check/structure.js meldet wiederholte Bloecke).
+function icPlatzhalterFuellen(root){
+  (root||document).querySelectorAll('[data-ic]:empty').forEach(e=>{e.innerHTML=icn(e.dataset.ic,+(e.dataset.s||15));});
+}
+try{icPlatzhalterFuellen();}catch(e){}
 // +2px Puffer auf den gemessenen scrollHeight: ohne ihn sass die Boxhoehe
 // teils exakt auf der Kante der Zeilenhoehe - je nach Browser/Font-Rendering
 // (v.a. iOS Safari) wurden Unterlaengen (g/j/p/q/y) dadurch am unteren Rand
@@ -1026,7 +1047,7 @@ function openRateWatchFor(id){
   const c=macroCcyFor(id);
   if(!url){
     const t=document.getElementById('mRwNoneTxt');
-    if(t)t.innerHTML=`There is no rate-expectations page for <b>${escH(c)}</b>. rateprobability.com does not carry one for the ${escH(RATE_WATCH_BANK[c]||c)}, and the CME FedWatch Tool covers the Fed only.<br><br>Nothing is linked here rather than sending you to a page that has no data for ${escH(c)}. If you know a source, long-press the 📈 icon in this asset's Interest Rates card to store your own link — it is kept across your devices.`;
+    if(t)t.innerHTML=`There is no rate-expectations page for <b>${escH(c)}</b>. rateprobability.com does not carry one for the ${escH(RATE_WATCH_BANK[c]||c)}, and the CME FedWatch Tool covers the Fed only.<br><br>Nothing is linked here rather than sending you to a page that has no data for ${escH(c)}. If you know a source, long-press the trend icon in this asset's Interest Rates card to store your own link — it is kept across your devices.`;
     openM('mRwNone');
     return;
   }
@@ -2131,7 +2152,7 @@ function renderSymHistoryPanelRoh(id){
       return`<div class="histp-evt" style="background:rgba(var(--purple-rgb),.06)">
         <span class="histp-time">${escH(tm)}</span>
         <span class="histp-arrow" style="color:${col}">${arr}</span>
-        <span class="histp-name" title="${m.kind==='auto'?'Automatic update recorded when it happened':'Manual change (you)'}">${m.kind==='auto'?icn('refresh',12):'✏️'} ${desc}</span>
+        <span class="histp-name" title="${m.kind==='auto'?'Automatic update recorded when it happened':'Manual change (you)'}">${m.kind==='auto'?icn('refresh',12):icn('edit',12)} ${desc}</span>
         <span class="histp-val"><span class="histp-fc">${m.kind==='auto'?'auto':'you'}</span></span>
         <span class="histp-eff" style="color:${col};border-color:${col}">${(dl>0?'+':'')+(Math.round(dl*10)/10)}</span>
       </div>`;
@@ -2939,7 +2960,7 @@ function openTrendInfo(ri,ii){
   const lowerBetter=LOWER_IS_BETTER_RE.test(ind.name||'');
   const mag=indTrendAdjMag(ind,rub);
   const magS=mag===1?'1':'0.5';
-  document.getElementById('trendInfoTitle').textContent='📈 Trend – '+(indName(ind));
+  document.getElementById('trendInfoTitle').innerHTML='<span class="h-ic">'+icn('trendUp',15)+'</span>Trend – '+escH(indName(ind));
   let html='';
   const row=(l,v,sub)=>`<div style="display:flex;justify-content:space-between;gap:10px;padding:5px 8px;border:1px solid var(--bd2);border-radius:7px;margin-bottom:5px"><span style="color:var(--t3)">${l}</span><span style="font-weight:700">${v}${sub?` <span style="color:var(--t3);font-weight:600">${sub}</span>`:''}</span></div>`;
   if(isBond){
@@ -5993,7 +6014,7 @@ function openBackupM(){
     const el=document.getElementById('mBackupList');
     if(bs.length===0){el.innerHTML='<div style="color:var(--t3);font-size:var(--fs-base);padding:8px 0">No backups yet. Backups are created automatically before every cloud download and every 10 minutes.</div>';}
     else{el.innerHTML=bs.map((b,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)">
-      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:var(--fs-base)">${escH(b.label)}</div><div style="color:var(--t3);font-size:var(--fs-xs);font-family:'SF Mono',monospace">${fmtStamp(b.ts)}</div></div>
+      <div style="flex:1"><div style="font-weight:700;color:var(--t0);font-size:var(--fs-base)">${escH(b.label)}</div><div style="color:var(--t3);font-size:var(--fs-xs);font-family:var(--ff-num)">${fmtStamp(b.ts)}</div></div>
       <button class="btn g" onclick="restoreLocalBackup(${i})" style="font-size:var(--fs-xs);flex-shrink:0">↩ Wiederherstellen</button>
     </div>`).join('');}
   }catch(e){}
@@ -7683,7 +7704,12 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openBacktester('${c.id}')" title="Backtester: every rate hike and cut on file, and the inflation, labour and growth readings the central bank had in front of it — three releases each, so the trend into the decision is visible">Backtester</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',17)}</button></div>`:''}
-    <div class="dmeta-ctrl"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
+    ${/* Sichtbare Beschriftung (Design-Audit 2026-10-04, Nutzerwahl "Kompakt-
+       Schalter beschriften"): der Schalter blendet die Karten-Zusammenfassungen
+       ein (AN) bzw. aus - "Compact" waere falsch herum, deshalb "Summaries".
+       <label for> auf den Knopf: ein Tipp aufs Wort schaltet mit (groessere
+       Trefferflaeche). */''}
+    <div class="dmeta-ctrl dmeta-ctrl-sw"><label class="sw-lbl" for="compactSw">Summaries</label><button class="compact-sw${compactView===1?' on':''}" id="compactSw" role="switch" aria-checked="${compactView===1?'true':'false'}" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   // ⚠ Scrollstand halten (Nutzer 2026-09-23, iPad: "wenn ich in einer
   // Kategorie etwas anklicke und aender, bugge ich weiter oben auf der
@@ -7705,7 +7731,7 @@ function renderDetail(){
          die Karte darueber ohnehin schon zeigt. */''}
     ${!evtOpen?'':`<div class="evt-section">
       <div class="evt-toggle open" onclick="toggleEvtSection('${c.id}')">
-        <span>📅 ECONOMIC EVENTS</span>
+        <span>${icn('calendar',13)} ECONOMIC EVENTS</span>
         <span class="evt-tog-arrow">▶</span>
       </div>
       ${evtOpen?`<div class="evt-body">${calToolbarHtml()}${(()=>{
@@ -10477,7 +10503,7 @@ function abPinnedHtml(c){
       <span class="ab-nt-mv">
         <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',-1)" ${i===0?'disabled':''} title="Move up">▲</button>
         <button onclick="abNoteMove('${escJH(n.id)}','${escJH(c.id)}',1)" ${i===list.length-1?'disabled':''} title="Move down">▼</button>
-        <button onclick="togResPin('${escJH(n.id)}')" title="Unpin">📌</button>
+        <button onclick="togResPin('${escJH(n.id)}')" title="Unpin">${icn('pin',13)}</button>
       </span>
     </div>`).join('')||`<div class="ab-nt-empty">Nothing pinned for ${escH(c.name)} yet. New notes from here are pinned straight away.</div>`;
   // Nutzer 2026-09-30: "Wenn man bei den pinned Notes eine neue Notiz
@@ -10488,7 +10514,7 @@ function abPinnedHtml(c){
   // Favorit, Pin) - vorbelegt mit diesem Asset und angepinnt.
   return`<div class="ab-ntile">
     <div class="ab-tile-hd">${abTileIcon('Pinned notes')}<span class="ab-tile-t">Pinned notes</span><span class="ab-tile-s">${list.length}</span>${abInfoBtn('Pinned notes',['Your pinned notes for this asset. "New pinned note" opens the full note window — title, text, folders, tags, bias and the related event, all in one place. The note is pinned straight away; you can untick that in the window.','The colour of each note follows the bias you gave it. Notes sync across your devices.'])}
-      <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">⚡</button></div>
+      <button class="ab-nt-qc" onclick="openQuickNote('','${escJH(c.id)}')" title="Paste a text — direction and topics are picked out for you">${icn('zap',14)}</button></div>
     <div class="ab-nt-add">
       <button type="button" class="finp ab-nt-neu" onclick="newResNoteForAsset('${escJH(c.id)}')" title="Opens the note window with everything to set — pinned to ${escH(c.name)}">＋ New pinned note on ${escH(c.name)}…</button>
     </div>
@@ -10751,11 +10777,11 @@ function renderRub(rub,ri,total){
           // Faellen erhalten.
           const _u=rateWatchUrl(getSym().id),_press=`onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false"`;
           return _u
-            ?`<a class="rate-watch" href="${safeUrl(_u)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" ${_press} onclick="return rwClick(event,'${getSym().id}')">📈</a>`
-            :`<button class="rate-watch" title="No rate-expectations source for ${escH(macroCcyFor(getSym().id))} · long-press to store your own link" ${_press} onclick="event.stopPropagation();if(!rwClick(event,'${getSym().id}'))return false;openRateWatchFor('${getSym().id}')">📈</button>`;
+            ?`<a class="rate-watch" href="${safeUrl(_u)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" ${_press} onclick="return rwClick(event,'${getSym().id}')">${icn('trendUp',14)}</a>`
+            :`<button class="rate-watch" title="No rate-expectations source for ${escH(macroCcyFor(getSym().id))} · long-press to store your own link" ${_press} onclick="event.stopPropagation();if(!rwClick(event,'${getSym().id}'))return false;openRateWatchFor('${getSym().id}')">${icn('trendUp',14)}</button>`;
         })():''}
         ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
-        <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">⭐</button>
+        <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">${icn('star',14)}</button>
         <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
         <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
         <button class="rdel" onclick="delRub(${ri})">×</button>
@@ -11398,7 +11424,7 @@ function openInfoM(ri,ii){
   _infoRi=ri;_infoIi=(ii===undefined?-1:ii);
   const obj=_infoIi>=0?getInd(ri,ii):getRub(ri);
   if(!obj)return;
-  document.getElementById('mInfoTitle').textContent='ℹ️ '+(indName(obj)||'Info');
+  document.getElementById('mInfoTitle').innerHTML='<span class="h-ic">'+icn('info',15)+'</span>'+escH(indName(obj)||'Info');
   // Wenn ein länderspezifischer Anzeigename gesetzt ist, zusätzlich den
   // allgemeinen (kanonischen) Indikatornamen einblenden, damit klar ist,
   // welche Kennzahl gemeint ist (z.B. "Claimant Count Change" → "allg.:
@@ -11578,7 +11604,7 @@ function renderAssetCfgBody(){
   const el=document.getElementById('assetCfgBody');if(!el)return;
   const t=document.getElementById('mAssetCfgTitle');if(t)t.textContent=c.name+' – Settings';
   const lc=effLinkCcy(c);
-  let h=`<div class="acfg-sec">🔗 Linked Currency</div>
+  let h=`<div class="acfg-sec">${icn('link',14)} Linked Currency</div>
     <div class="acfg-hint">This asset's indicators and news are linked to this currency (one-way – the asset inherits the values but does not affect the currency). "No link" = fully manual, no automatic values.</div>
     <select class="m-inp" onchange="setAssetLinkCcy(this.value)">
       <option value="__none__"${lc===null?' selected':''}>No link</option>
@@ -11586,14 +11612,14 @@ function renderAssetCfgBody(){
     </select>`;
   const myG=symSyncGroup(c.id);
   const others=syms.filter(s=>s.id!==c.id&&isNonFx(s.id));
-  h+=`<div class="acfg-sec">🔁 Link with other assets</div>
+  h+=`<div class="acfg-sec">${icn('shuffle',14)} Link with other assets</div>
     <div class="acfg-hint">Linked assets always update together – bias, cards, notes, linked currency and auto-bias rules are mirrored between them.</div>
     <div class="acfg-syncgrid">
       ${others.length?others.map(s=>{const on=!!myG&&symSyncGroup(s.id)===myG;return`<button class="acfg-syncbtn${on?' on':''}" onclick="toggleAssetSync('${escJs(s.id)}')"><span>${on?'✓':'＋'}</span><span>${escH(s.name)}</span></button>`;}).join(''):`<div class="acfg-hint">No other assets available.</div>`}
     </div>`;
   if(lc){
     const rules=effDeriveRules(c);
-    h+=`<div class="acfg-sec">⚙️ Automatic bias (from ${escH(lc)})</div>
+    h+=`<div class="acfg-sec">${icn('gear',14)} Automatic bias (from ${escH(lc)})</div>
       <div class="acfg-hint">For each category, decide whether strong data is treated as bullish or bearish – or exclude the category, in which case its bias stays manual. The score is calculated from this automatically.</div>`;
     const srcSym=syms.find(s=>s.id===lc);
     const arrow=b=>b==='bull'?'▲':b==='bear'?'▼':'◆';
@@ -13000,7 +13026,7 @@ function carryZeilenHtml(c){
 function openCarryDetail(pairName){
   const c=carryDetails(pairName);
   const body=document.getElementById('carryDetailBody');
-  document.getElementById('carryDetailTitle').textContent='Carry: '+pairName;
+  document.getElementById('carryDetailTitle').innerHTML='<span class="h-ic">'+icn('coins',15)+'</span>Carry: '+escH(pairName);
   const col=c.adj>0?BC.bull:c.adj<0?BC.bear:'var(--t3)';
   body.innerHTML=`<div class="cd-box">${carryZeilenHtml(c)}</div>
     <div class="cd-res"><span>Score effect on ${escH(pairName)}</span><b style="color:${col}">${c.adj>0?'+':''}${c.adj}</b></div>
@@ -13309,6 +13335,7 @@ function povTrendHtml(name){
 // ── Zusammenbau ──────────────────────────────────────────────────────────
 function renderPairOverview(el,name){
   const l=pairLegs(name);
+  trBreiteAus(el,58); // breite Karte im Raster: Innenabstaende + Rahmen (gemessen: Diagramm = Fensterbreite - 58)
   const sc=pairScore(name);
   const rec=pairs.find(p=>p.name===name);
   const bias=rec?rec.bias:scoreBias(sc);
@@ -13575,7 +13602,7 @@ function watchAssetNotesHtml(name){
       <div class="wt-pinhd">
         <span class="wt-pinid" onclick="event.stopPropagation();gotoSym('${escJH(id)}')" title="Open ${escH(sym?sym.name:id)}">${escH(sym?sym.name:id)}</span>
         <span class="wt-pincnt">${pins.length} pinned${total?' · '+total+' total':''}</span>
-        <button class="wt-pinadd" onclick="event.stopPropagation();quickNoteForAsset('${escJH(id)}')" title="Paste a text for ${escH(sym?sym.name:id)} — direction and topics are picked out for you">⚡ Quick</button>
+        <button class="wt-pinadd" onclick="event.stopPropagation();quickNoteForAsset('${escJH(id)}')" title="Paste a text for ${escH(sym?sym.name:id)} — direction and topics are picked out for you">${icn('zap',13)} Quick</button>
         <button class="wt-pinadd" onclick="event.stopPropagation();newResNoteForAsset('${escJH(id)}')" title="Add a note for ${escH(sym?sym.name:id)} — it is stored on the asset itself">＋ Note</button>
       </div>${rows}
     </div>`;
@@ -13828,7 +13855,7 @@ function renderEvtAlertList(){
   const customAlerts=eventAlerts.filter(a=>!a.evKey).sort(byTime);
   if(!calAlerts.length&&!customAlerts.length){wrap.innerHTML='<div class="evt-alert-empty">No alerts yet.</div>';return;}
   const section=(title,list)=>list.length?`<div style="font-size:var(--fs-xs);color:var(--t3);margin:10px 0 3px;font-weight:600;font-family:var(--ff-num)">${title}</div>${evtAlertRowsHtml(list)}`:'';
-  wrap.innerHTML=section('📅 CALENDAR ALERTS',calAlerts)+section('✏️ CUSTOM ALERTS',customAlerts);
+  wrap.innerHTML=section(icn('calendar',13)+' CALENDAR ALERTS',calAlerts)+section(icn('edit',13)+' CUSTOM ALERTS',customAlerts);
 }
 function deleteEvtAlertById(id){
   pushU();
@@ -14140,7 +14167,7 @@ async function fetchFF(silent,btnEl){
   // btnEl wird vom Refresh-Button per this übergeben - kein Rückgriff mehr auf
   // das globale event (unter 'use strict' unzuverlässig -> "Button tut nichts").
   const btn=silent?null:(btnEl||null);
-  if(btn){btn.textContent='⏳ Refreshing...';btn.disabled=true;}
+  if(btn){btn.innerHTML=icn('refresh')+' Refreshing…';btn.disabled=true;}
   try{
     const baseEvts=await fetchFFJson();
     // Zusätzlich IMMER beide Wochen live versuchen und über die Basis legen:
@@ -14735,6 +14762,7 @@ function researchSideTitleHtml(){
   })():'';
   return`<div class="rterm-side-title">
     <div class="rterm-title-big pg-titel">Archive</div>
+    <div class="pg-sub">Your notes by asset and topic</div>
     ${assetLine}
   </div>`;
 }
@@ -15070,7 +15098,7 @@ function researchNotesPanelHtml(assetId,fid){
     <div class="rterm-noterow">
       <input class="finp rterm-notesearch" id="rtermNoteSearch" placeholder="Search in ${scopeName} and its subfolders…" value="${escH(researchNoteQuery)}" oninput="researchSetNoteQuery(this.value)">
       ${resSearchFieldPickerHtml()}
-      <button class="btn" onclick="openQuickNote('','${escJH(assetId)}')" title="Paste a text — direction and topics are picked out for you">⚡ Quick capture</button>
+      <button class="btn" onclick="openQuickNote('','${escJH(assetId)}')" title="Paste a text — direction and topics are picked out for you">${icn('zap',13)} Quick capture</button>
       <button class="btn g" onclick="newResNoteIn('${escJH(assetId)}','${fid?escJH(fid):''}')">${icn('note',13)} + New note</button>
     </div>
     <div class="res-list" style="margin-top:10px">${rows}</div>
@@ -15356,7 +15384,7 @@ function dataFeedStaleNotifyHtml(){
 function cotNotifyHtml(){
   if(!cotWarningActive())return'';
   return`<div class="cot-notify-card" onclick="showTab('cot')">
-    <span class="cot-notify-ic">📊</span>
+    <span class="cot-notify-ic">${icn('landmark',15)}</span>
     <span class="cot-notify-txt">NEW COT DATA!</span>
     <span class="cot-notify-sub">New CFTC report available — tap to view</span>
   </div>`;
@@ -16259,9 +16287,9 @@ function renderDash(){
       // Die Zeilen liegen in einer eigenen Huelle (.mv-list), damit die
       // Deckelung langer Karten (.dw-cap) nur sie scrollen laesst und die
       // Aktualisierungs-Zeile darueber stehen bleibt.
-      content=`<div class="movers-upd">🕐 ${updTxt} · refreshes every 10 min</div>`+((gainers.length||losers.length)?
-        `<div class="mv-list"><div class="mover-group-hdr">📈 Gainers</div>${gainers.length?gainers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
-        `<div class="mover-group-hdr">📉 Losers</div>${losers.length?losers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}</div>`
+      content=`<div class="movers-upd">${icn('clock',12)} ${updTxt} · refreshes every 10 min</div>`+((gainers.length||losers.length)?
+        `<div class="mv-list"><div class="mover-group-hdr">${icn('trendUp',13)} Gainers</div>${gainers.length?gainers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}`+
+        `<div class="mover-group-hdr">${icn('trendDown',13)} Losers</div>${losers.length?losers.map(moverRow).join(''):'<div class="dw-empty">None right now.</div>'}</div>`
         :`<div class="dw-empty">No price history yet - fills in once price_data.json has at least 2 days of data for these pairs.</div>`);
     }else if(w.type==='asset_heatmap'){
       // Sortiert nach symScoreCmp statt roh, damit die Reihenfolge zum
@@ -16830,7 +16858,7 @@ function riskSentimentWidgetHtml(gaugeKey){
   const ridComps=rid&&Array.isArray(rid.components)&&rid.components.length?rid.components.join(' · '):'';
   const gaugeHtml=rid?`<div class="risk-gauge-arc">${sentGauge(rid.percentile,0,100,'',100,gaugeKey||'dashRisk')}</div>
     <div class="risk-lbl" style="color:${ridCol}">${rid.label}</div>
-    <div class="risk-sub" title="${escH((rid.method||'Composite risk index')+'. Positiv = Risikovermeidung, negativ = Risikofreude. Die Zahl im Zifferblatt ist das Perzentil des heutigen Werts in der eigenen Historie, keine feste 0-100-Skala.'+(ridComps?' Aktuell einbezogen: '+ridComps+'.':''))}">Risk index ${rid.value>0?'+':''}${rid.value.toFixed(2)} &nbsp;·&nbsp; ${rid.percentile}th pct &nbsp;·&nbsp; ${escH(rid.date)}</div>`
+    <div class="risk-sub" title="${escH((rid.method||'Composite risk index')+'. Positive = risk aversion, negative = risk appetite. The number on the dial is today\'s percentile within its own history, not a fixed 0-100 scale.'+(ridComps?' Currently included: '+ridComps+'.':''))}">Risk index ${rid.value>0?'+':''}${rid.value.toFixed(2)} &nbsp;·&nbsp; ${ordEn(rid.percentile)} pct &nbsp;·&nbsp; ${escH(rid.date)}</div>`
     :`<div class="risk-lbl" style="color:var(--t3)">NO LIVE READ</div>
     <div class="risk-sub">Risk index noch nicht berechnet - wird stuendlich aus VIX/Gold/AUD-USD/USD-JPY erzeugt.</div>`;
   return`<div class="risk-gauge">
@@ -17053,13 +17081,13 @@ function corrRegimeCardHtml(){
   // Filter rechtsbuendig in der Titelzeile, ⓘ als letztes (Dauerregel
   // 2026-09-26) - vorher standen die Auswahlfelder direkt hinter dem Titel
   // und das ⓘ mitten in der Zeile.
-  const kopf=`<div class="mx-card-title"><span>Correlation regime</span>
+  const kopf=`<div class="mx-card-title"><span>${icn('compass',15)} Correlation regime</span>
     <small style="margin-left:auto">${sel(corrA,'setCorrA')} vs ${sel(corrB,'setCorrB')} ${win}</small>${iBtn('corrregime')}</div>`;
   const serie=corrRegimeSeries(corrA,corrB,corrWin);
   if(serie.length<20)return`<div class="mx-card" style="margin-top:12px">${kopf}
     <div class="dw-empty" style="text-align:left">Only ${serie.length} rolling windows available for ${escH(corrA)} and ${escH(corrB)} — the price series need at least ${corrWin+25} common trading days.</div></div>`;
   const zeige=serie.slice(-260);
-  const W=780,H=190,padL=34,padR=14,padT=14,padB=22;
+  const W=chBreite(780,chPlatz('mxBody',2)),H=190,padL=34,padR=14,padT=14,padB=22;
   const x=i=>padL+i*(W-padL-padR)/Math.max(1,zeige.length-1);
   const y=v=>padT+(1-v)/2*(H-padT-padB);
   const pts=zeige.map((e,i)=>`${x(i).toFixed(1)},${y(e[1]).toFixed(1)}`).join(' ');
@@ -17067,12 +17095,12 @@ function corrRegimeCardHtml(){
   const werte=zeige.map(e=>e[1]);
   const spanne=Math.max(...werte)-Math.min(...werte);
   const linien=[1,0.5,0,-0.5,-1].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="${v===0?'var(--bd2)':'var(--bd)'}"${v===0?'':' stroke-dasharray="2,4"'}/>
-    <text x="2" y="${(y(v)+3).toFixed(1)}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${v>0?'+':''}${v.toFixed(1)}</text>`).join('');
+    <text x="2" y="${(y(v)+3).toFixed(1)}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${v>0?'+':''}${v.toFixed(1)}</text>`).join('');
   const col=jetzt>0.3?'var(--blue)':jetzt<-0.3?'var(--red)':'var(--t2)';
   return`<div class="mx-card" style="margin-top:12px">${kopf}
     <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:340px;height:auto">
       ${linien}<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.9"/>
-      <text x="${W-padR}" y="${(y(jetzt)-5).toFixed(1)}" font-size="10" font-weight="700" fill="${col}" text-anchor="end" font-family="var(--ff-num)">${jetzt>0?'+':''}${jetzt.toFixed(2)}</text>
+      <text x="${W-padR}" y="${(y(jetzt)-5).toFixed(1)}" font-size="11" font-weight="700" fill="${col}" text-anchor="end" font-family="var(--ff-num)">${jetzt>0?'+':''}${jetzt.toFixed(2)}</text>
     </svg></div>
     <div class="edge-note">Rolling ${corrWin}-day Pearson r of daily log returns, ${zeige.length} windows shown (${escH(zeige[0][0])} to ${escH(zeige[zeige.length-1][0])}). The range over this period is ${spanne.toFixed(2)} — a wide range means the relationship between these two is not stable, and a hedge or a correlated pair of positions built on the current number can stop working without either market doing anything unusual.</div>
   </div>`;
@@ -17101,7 +17129,7 @@ function renderCorrCard(){
     if(days.length<depthMin)depthMin=days.length;
     return pearsonR(days.map(d=>maps[a][d]),days.map(d=>maps[b][d]));
   };
-  const head=`<tr><th class="mx-hm-corner" title="Pearson r der taeglichen Returns (letzte 60 gemeinsame Handelstage)">r</th>${ids.map(q=>`<th>${q}</th>`).join('')}</tr>`;
+  const head=`<tr><th class="mx-hm-corner" title="Pearson r of daily returns (last 60 shared trading days)">r</th>${ids.map(q=>`<th>${q}</th>`).join('')}</tr>`;
   const body=ids.map(a=>{
     const cells=ids.map(b=>{
       if(a===b){const v=volOf[a];return`<td class="mx-hm-diag" title="${a}: 20-day realized volatility, annualized">${v!=null?v.toFixed(0)+'%':'·'}</td>`;}
@@ -17112,7 +17140,7 @@ function renderCorrCard(){
   }).join('');
   const depthNote=isFinite(depthMin)?(depthMin<60?` · currently based on ${depthMin}+ shared trading days — firms up daily toward the full 60-day window`:''):'';
   return`<div class="mx-card">
-    <div class="mx-card-title"><span>🔗 Correlation &amp; Volatility (60d)</span><small>Pearson r of daily returns — blue = move together (one risk, not two trades), red = move opposite (hedge) · currencies measured vs. USD · diagonal = 20-day realized volatility (annualized)${depthNote} · display-only</small>${abInfoBtn('Correlation & Volatility',['<b>Pearson correlation</b> of daily returns over the last 60 trading days; currencies are measured against the US dollar.','Close to <b>+1</b>: the two move together — two positions in them are effectively one risk, not two trades. Close to <b>−1</b>: they move opposite and hedge each other.','The diagonal shows each asset\'s own 20-day realised volatility, annualised. Display only — nothing here enters a score.'])}</div>
+    <div class="mx-card-title"><span>${icn('link',15)} Correlation &amp; Volatility (60d)</span><small>Pearson r of daily returns — blue = move together (one risk, not two trades), red = move opposite (hedge) · currencies measured vs. USD · diagonal = 20-day realized volatility (annualized)${depthNote} · display-only</small>${abInfoBtn('Correlation & Volatility',['<b>Pearson correlation</b> of daily returns over the last 60 trading days; currencies are measured against the US dollar.','Close to <b>+1</b>: the two move together — two positions in them are effectively one risk, not two trades. Close to <b>−1</b>: they move opposite and hedge each other.','The diagonal shows each asset\'s own 20-day realised volatility, annualised. Display only — nothing here enters a score.'])}</div>
     <div class="mx-hm-scroll"><table class="mx-hm">${head}${body}</table></div>
   </div>`;
 }
@@ -17364,6 +17392,40 @@ function trendLegend(ids,colorOverride){
 // set, replaces the per-currency TREND_COLORS - used once a single asset or
 // pair is filtered, so the line reflects that asset's/pair's current bias
 // instead of a fixed identity color (only makes sense for a single line).
+// ── Zielbreite der Score-Verlaufs-Diagramme (Design-Audit 2026-10-04, D3) ──
+// Vorher bekam jeder Tag fest 48 px und das fertige SVG wurde per viewBox auf
+// die Kartenbreite GESTAUCHT: bei 80 Tagen auf ~25 %, die Achsen-Schrift kam
+// mit 2,7-3,0 px an (gemessen: 322 von 322 Beschriftungen), das Diagramm war
+// ~90 px hoch. Jetzt wird das SVG in der ECHTEN Breite des Platzes gebaut, in
+// dem es landet (der Aufrufer misst ihn vor dem Bauen: trBreiteAus), die
+// Tage teilen sich diese Breite - Schrift und Hoehe kommen 1:1 an.
+// Datumsbeschriftung nur jede k-te (>= 44 px Abstand, der juengste Tag immer),
+// Punkte nur, solange sie sich nicht beruehren. Geprueft:
+// check/designregeln.js C (gerenderte Schriftgroesse jedes Diagrammtexts).
+let _trW=0;
+function trBreiteAus(el,abzug){const w=el&&el.clientWidth;_trW=w>0?Math.max(300,w-abzug):0;}
+function trZielBreite(){return _trW>0?_trW:1000;}
+function trTagAbstand(n,leftPad,rightPad){return Math.max(1,(trZielBreite()-leftPad-rightPad)/Math.max(1,n));}
+function trPunktR(PD){return PD>=14?3.2:PD>=7?2.2:0;}
+function trDatumZeigen(i,n,PD){const k=Math.max(1,Math.ceil(44/PD));return(n-1-i)%k===0;}
+// Englische Ordinalzahl (1st 2nd 3rd 4th ... 11th 12th 13th ... 21st). Vorher
+// stand "24." (deutsche Schreibweise) bzw. "{n}th" auch fuer 21/22/23.
+function ordEn(n){n=Math.round(+n);if(!isFinite(n))return'–';const m=Math.abs(n)%100;return n+(m>=11&&m<=13?'th':(['th','st','nd','rd'][Math.abs(n)%10]||'th'));}
+// Diagramme mit FESTER Zeichenbreite (760/780 Einheiten, auf die Karte
+// skaliert): auf dem iPad hochkant ist die Karte nur 670-698 px breit, die
+// Schrift schrumpfte auf 8,1-9,7 px (gemessen 2026-10-04, Put/Call, Call/Put
+// Balance, AAII, Correlation regime, Rate differential). Jetzt: ist der Platz
+// schmaler als die feste Breite, wird in SEINER Breite gebaut (Schrift 1:1);
+// ist er breiter, bleibt es wie bisher. chPlatz misst den Seitenkoerper vor
+// dem Bauen, abzug = Rahmen/Innenabstand der Karte. Geprueft:
+// check/designregeln.js C (bei 820 und 1180 px).
+function chPlatz(id,abzug){const el=document.getElementById(id);const w=el&&el.clientWidth;return w>0?Math.max(300,w-abzug):0;}
+function chBreite(fest,platz){return platz>0?Math.min(fest,platz):fest;}
+// Breite geaendert (iPad drehen) -> die Seiten mit solchen Diagrammen neu
+// bauen, sonst stuende das Diagramm in der alten Breite skaliert da.
+try{let _chRz,_chW=window.innerWidth;window.addEventListener('resize',()=>{clearTimeout(_chRz);_chRz=setTimeout(()=>{
+  if(Math.abs(window.innerWidth-_chW)<=8)return;_chW=window.innerWidth;
+  if(curPage==='sent'||curPage==='mx'||curPage==='carry')rerender();},150);});}catch(e){}
 function scoreTrendChart(ids,dates,vi,base,colorOverride){
   const n=dates.length;
   const valOf={},biasOf={};let maxAbs=base;
@@ -17388,7 +17450,8 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     valOf[id]=m;biasOf[id]=bm;
   });
   const scale=Math.ceil(maxAbs);
-  const leftPad=42,rightPad=20,topPad=18,chartH=320,bottomPad=36,PD=48;
+  const leftPad=42,rightPad=20,topPad=18,chartH=vi===1?260:200,bottomPad=36;
+  const PD=trTagAbstand(n,leftPad,rightPad),dotR=trPunktR(PD);
   const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
   const yMid=topPad+chartH/2;
   const xOf=i=>leftPad+i*PD+PD/2;
@@ -17412,13 +17475,14 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
     if(useBiasColor){
       svg+=biasLineSegments(pts);
-      svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${BC[biasGroup(p.bias)]||col}"/>`).join('')+'</g>';
+      if(dotR)svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${dotR}" fill="${BC[biasGroup(p.bias)]||col}"/>`).join('')+'</g>';
     }else{
       if(pts.length>1)svg+=`<polyline class="tr-line-in" pathLength="1" points="${pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.92"/>`;
-      svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${col}"/>`).join('')+'</g>';
+      if(dotR)svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${dotR}" fill="${col}"/>`).join('')+'</g>';
     }
   });
   dates.forEach((d,i)=>{
+    if(!trDatumZeigen(i,n,PD))return;
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(lbl)}</text>`;
   });
@@ -17477,7 +17541,8 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   const scale=Math.ceil(maxAbs);
   const priceMap={};(priceSeries||[]).forEach(e=>{if(e[1]!=null&&isFinite(e[1]))priceMap[e[0]]=e[1];});
   const priceVals=dates.map(d=>priceMap[d]).filter(v=>v!=null);
-  const leftPad=42,rightPad=56,topPad=18,chartH=320,bottomPad=36,PD=48;
+  const leftPad=42,rightPad=56,topPad=18,chartH=260,bottomPad=36;
+  const PD=trTagAbstand(n,leftPad,rightPad),dotR=trPunktR(PD);
   const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
   const yMid=topPad+chartH/2;
   const xOf=i=>leftPad+i*PD+PD/2;
@@ -17517,16 +17582,17 @@ function scoreVsPriceChart(dates,scoreMap,base,colorOverride,priceSeries,biasMap
   const scorePts=[];dates.forEach((d,i)=>{const v=scoreMap[d];if(v!=null&&isFinite(v))scorePts.push({x:xOf(i),y:yOfScore(v),bias:biasMap&&biasMap[d]});});
   if(useBiasColor){
     svg+=biasLineSegments(scorePts,true);
-    svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${BC[biasGroup(p.bias)]||col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
+    if(dotR)svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${dotR+.2}" fill="${BC[biasGroup(p.bias)]||col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
   }else{
     if(scorePts.length>1){
       const ptsStr=scorePts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
       svg+=`<polyline points="${ptsStr}" fill="none" stroke="var(--bg0)" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>`;
       svg+=`<polyline class="tr-line-in" pathLength="1" points="${ptsStr}" fill="none" stroke="${col}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
     }
-    svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.4" fill="${col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
+    if(dotR)svg+='<g class="tr-dots-in">'+scorePts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${dotR+.2}" fill="${col}" stroke="var(--bg1)" stroke-width="1.2"/>`).join('')+'</g>';
   }
   dates.forEach((d,i)=>{
+    if(!trDatumZeigen(i,n,PD))return;
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=(dt.getMonth()+1)+'/'+dt.getDate();}catch(e){lbl=d;}
     svg+=`<text x="${xOf(i).toFixed(1)}" y="${(topPad+chartH+18).toFixed(1)}" text-anchor="middle" style="font-size:var(--fs-2xs);fill:var(--t3)">${escH(lbl)}</text>`;
   });
@@ -17558,8 +17624,15 @@ function renderTrends(){
   const zurueck=scrollHalten(document.getElementById('pgTrends'));
   try{return renderTrendsRoh.apply(this,arguments);}finally{zurueck();}
 }
+// Die Diagramme sind fuer die Breite gebaut, in der sie stehen (trBreiteAus) -
+// aendert sie sich (iPad drehen, Fenster ziehen), wird neu gebaut, sonst
+// wuerde die Schrift mitwachsen/-schrumpfen. Nur bei echter Aenderung.
+try{let _trRz;window.addEventListener('resize',()=>{clearTimeout(_trRz);_trRz=setTimeout(()=>{
+  if(curPage!=='trends')return;const el=document.getElementById('trendsBody');
+  if(el&&el.offsetParent&&Math.abs(Math.max(300,el.clientWidth-30)-_trW)>8)renderTrends();},150);});}catch(e){}
 function renderTrendsRoh(){
   const el=document.getElementById('trendsBody');if(!el)return;
+  trBreiteAus(el,30); // Karte: 2 x 14 px Innenabstand + Rahmen
   const assets=trendAssets();
   // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
   const sel=document.getElementById('trendsCcySel');
@@ -18357,7 +18430,7 @@ function sentEval(key,d){
     // Ohne genug Historie gibt es KEINE Extrem-Aussage (Regel 4: nie
     // schaetzen). Der Wert wird trotzdem angezeigt, er zaehlt nur nicht.
     const suffix=th.basis!=='pctl'?' (building history)':rd.stale?` (${rd.ageDays}d old)`:
-      rd.pctl!=null?` (${rd.pctl}th pct)`:'';
+      rd.pctl!=null?` (${ordEn(rd.pctl)} pct)`:'';
     return{bias:rd.bias,actual:rd.smooth.toFixed(2)+suffix,
       extreme:rd.bias!=='neu',raw:rd.raw,pctl:rd.pctl,stale:rd.stale};
   }
@@ -20150,13 +20223,14 @@ function renderDataTabRoh(){
     const inner=ind?'':`<div class="ind-hist-empty">${escH(sym.name||sym.id)} does not track “${escH(base)}”. Pick a different one above, or remove this panel.</div>`;
     return`<div class="cot-card data-panel"><div class="data-ph"><span class="data-pt">${title}</span>${legend}${ind?indAsOfNextHtml(sym.id,ind):''}<span class="px-panel-ctrls">${ctrls||''}</span>${abInfoBtn((sym.name||sym.id)+' — '+base,[ind?`<b>${escH(indName(ind))}</b> of ${escH(sym.name||sym.id)}${rub?' ('+escH(rub.name)+')':''}.`:`${escH(sym.name||sym.id)} does not track this indicator.`,'Bars = the released actual, red line = the consensus forecast. "As of" is the latest release, "Next" the next expected one.','If other panels show the same indicator, all of them use the same y-axis scale.'])}</div><div class="data-pc" data-k="${k}">${inner}</div></div>`;
   };
-  // Kopf = EINE Zeile. Die Chip-Reihe (je Auswahl ein "✕") ist 2026-09-26
+  // Seitenkopf wie auf jeder Seite (seit 2026-10-04: .pg-titel + .pg-sub,
+  // kein Kartenrahmen). Die Chip-Reihe (je Auswahl ein "✕") ist 2026-09-26
   // entfallen: jedes Panel traegt sein ✕ selbst, die Zaehlung steht am
   // Auswahlknopf - bei 8 Chips kostete die Reihe eine eigene Zeile.
   // Dauerregel 2026-09-26: Filter (Asset-/Indikator-Auswahl) rechtsbuendig
   // in der Titelzeile; darunter die Werkzeugzeile - Ansicht (By asset / By
   // indicator) links, Zeitfilter rechts.
-  const kopf=(sub,filter,knopf,zeit)=>`<div class="cot-card data-head"><div class="data-row"><span class="data-h" title="${escH(sub)}">Data</span><span class="data-row-r">${filter}${knopf}</span>${abInfoBtn('Data',['Compare up to '+N+' panels. <b>By asset</b> shows one indicator for several assets, <b>By indicator</b> several indicators of one asset. The time range applies to all panels.','Panels showing the <b>same indicator share one y-axis</b>, so their levels can be compared directly. Different indicators keep their own scale.','Bars = the released actual, red line = the consensus forecast; level series such as bond yields are drawn as a line.'])}</div><div class="data-row2">${chartLeisteHtml(modeBar,zeit)}</div></div>`;
+  const kopf=(sub,filter,knopf,zeit)=>`<div class="data-head"><div class="data-row"><div class="data-tt"><div class="data-h pg-titel">Data</div><div class="pg-sub">${escH(sub)}</div></div><span class="data-row-r">${filter}${knopf}</span>${abInfoBtn('Data',['Compare up to '+N+' panels. <b>By asset</b> shows one indicator for several assets, <b>By indicator</b> several indicators of one asset. The time range applies to all panels.','Panels showing the <b>same indicator share one y-axis</b>, so their levels can be compared directly. Different indicators keep their own scale.','Bars = the released actual, red line = the consensus forecast; level series such as bond yields are drawn as a line.'])}</div><div class="data-row2">${chartLeisteHtml(modeBar,zeit)}</div></div>`;
   let head,body,n=0;
   if(dataMode==='inds'){
     // ── EIN Asset, bis zu N Indikatoren ──
@@ -20291,7 +20365,7 @@ const SENT_INFO={
        <dt>Spread</dt><dd><b>Bullish % minus bearish %</b>, in percentage points (pp). The standard one-number summary: the individual shares jump around a lot and the neutral camp distorts them, the spread does not. <b>+15pp</b> means fifteen percentage points more bulls than bears.</dd>
        <dt>pp (percentage points)</dt><dd>The unit of a difference between two percentages. From 30% to 35% is <b>+5pp</b>, not "+5%".</dd>
        <dt>${'8'}-week average</dt><dd>The spread smoothed over the last ${'8'} surveys. Filters out the weekly noise from the varying, self-selected turnout.</dd>
-       <dt>Percentile of own history</dt><dd>Where today's spread sits within every week recorded here. <b>90.</b> means only 10% of all recorded weeks were more optimistic.</dd>
+       <dt>Percentile of own history</dt><dd>Where today's spread sits within every week recorded here. <b>90th</b> means only 10% of all recorded weeks were more optimistic.</dd>
        <dt>Since last extreme</dt><dd>How many weeks ago the spread last left the ±20pp band.</dd>
        <dt>Capitulation / complacency</dt><dd>The names of the two extremes. <b>Capitulation</b> = the bears have taken over, the selling has largely happened. <b>Complacency</b> = the bulls have taken over, the buying has largely happened.</dd>
      </dl>
@@ -21059,7 +21133,7 @@ function renderRetailBars(D){
     // lesbar, egal wie schmal ein Segment wird. Klick auf die Zeile waehlt das
     // Symbol im Filter (setSentSym), genau wie die Dropdown-Auswahl.
     return`<div class="sent-bar-row" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSentSym('${escJH(r.sym)}')" title="Open ${escH(r.sym)} history">
-      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:var(--fs-sm);color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:'SF Mono',SFMono-Regular,Consolas,monospace" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
+      <div style="flex:none;width:74px;text-align:center;font-weight:800;font-size:var(--fs-sm);color:${tag};background:${tag}14;border:1px solid ${tag}44;border-radius:5px;padding:4px 4px;font-family:var(--ff-num)" title="${cb==='bear'?'Crowd heavily long → contrarian bearish':cb==='bull'?'Crowd heavily short → contrarian bullish':'Balanced positioning'}">${escH(r.sym)}</div>
       <span style="flex:none;width:30px;text-align:right;font-size:var(--fs-xs);font-weight:700;color:${BC.bull}">${L}%</span>
       <div style="flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0">
         <div style="width:${L}%;background:${BC.bull};min-width:0" title="${L}% of retail traders are long"></div>
@@ -21569,7 +21643,7 @@ function renderPutCallChart(D){
   const smooth=smoothAll.filter(e=>filteredDates.has(e[0]));
   const th=pcThresholds(pcId,D);
   const HI=th.HI,LO=th.LO,hasZones=th.basis==='pctl';
-  const W=760,H=360,padL=44,padR=54,padT=24,padB=46;
+  const W=chBreite(760,chPlatz('sentBody',30)),H=360,padL=44,padR=54,padT=24,padB=46;
   const vals=series.map(e=>+e[1]);          // Rohwerte (duenne Linie)
   const sVals=smooth.map(e=>+e[1]);         // geglaettet (Hauptlinie)
   // Achse erweitert sich adaptiv nach oben UND unten: ~15% ueber dem hoechsten
@@ -21667,7 +21741,7 @@ function renderPutCallChart(D){
   if(series.length===1){
     const v=vals[0],b=hasZones?pcClassify(v,th):'neu';
     chart=`<div style="text-align:center;padding:10px 6px 4px">
-        <div style="font-size:34px;font-weight:800;font-family:'SF Mono',SFMono-Regular,Consolas,monospace;color:${b==='neu'?'var(--t1)':BC[b]}">${v.toFixed(2)}</div>
+        <div style="font-size:34px;font-weight:800;font-family:var(--ff-num);color:${b==='neu'?'var(--t1)':BC[b]}">${v.toFixed(2)}</div>
         <div style="font-size:var(--fs-base);color:var(--t2);margin-top:2px">${escH(zoneTxt(b).replace(/^./,c=>c.toUpperCase()))}</div>
         <div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.6;margin-top:12px">Chart builds up one point per trading day — check back tomorrow for a trend line.</div>
       </div>`;
@@ -21803,7 +21877,7 @@ function renderNetFlowChart(D){
   if(net.length<2){
     return`<div class="cot-card">${hdr}<div style="padding:16px 6px;color:var(--t3);font-size:var(--fs-sm);line-height:1.6">Not enough put/call history yet — the net flow builds up one point per trading day as the underlying put/call series fills in. Tap the <b>i</b> to learn what this shows.</div></div>`;
   }
-  const W=760,H=360,padL=48,padR=48,padT=22,padB=48;
+  const W=chBreite(760,chPlatz('sentBody',30)),H=360,padL=48,padR=48,padT=22,padB=48;
   // ══ ACHSE: RUNDE ZAHLEN, KEIN VERSCHENKTER PLATZ ═══════════════════════
   // ⚠ Nutzer-Bildvergleich 2026-09-19 ("das aktuelle ist irgendwie schlecht
   // und falsch"): die Achse stand auf [maxA, maxA/2, 0, -maxA/2, -maxA] mit
@@ -21913,7 +21987,7 @@ function renderAaiiCard(D){
   const spAll=hist.map(e=>(+e[1])-(+e[3]));            // Spread ueber die GANZE Reihe
   const sp=reihe.map(e=>(+e[1])-(+e[3]));             // ... und im gewaehlten Zeitraum
   const gl=aaiiSmooth(sp,AAII_SMOOTH_W);
-  const W=760,H=absAaiiH(),padL=40,padR=14,padT=40,padB=26;
+  const W=chPlatz('sentBody',30)||760,H=absAaiiH(),padL=40,padR=14,padT=40,padB=26;
   const xOf=(i,n)=>padL+(n<2?0:i*(W-padL-padR)/(n-1));
   const ticks=n=>pcXTickIdx(n,6);
   // Erstes und letztes Label buendig ausrichten - mittig verankert ragt das
@@ -21921,7 +21995,7 @@ function renderAaiiCard(D){
   // (Projekt-Grundsatz: nichts darf unlesbar ueberlappen oder wegfallen).
   const achse=(n)=>ticks(n).map(i=>{
     const anker=i===0?'start':i===n-1?'end':'middle';
-    return`<text x="${xOf(i,n).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="${anker}">${pcXLabel(reihe[i][0])}</text>`;
+    return`<text x="${xOf(i,n).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="11" text-anchor="${anker}">${pcXLabel(reihe[i][0])}</text>`;
   }).join('');
   const zuWenig=`<div style="color:var(--t3);font-size:var(--fs-sm);padding:14px 0">Not enough weeks in this range yet — the survey publishes once a week.</div>`;
 
@@ -21938,10 +22012,10 @@ function renderAaiiCard(D){
       <line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
       <line x1="${padL}" y1="${y(20).toFixed(1)}" x2="${W-padR}" y2="${y(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
       <line x1="${padL}" y1="${y(-20).toFixed(1)}" x2="${W-padR}" y2="${y(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".6"/>
-      ${achsenTicks(lo,hi,5).map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
+      ${achsenTicks(lo,hi,5).map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
       ${pl(sp,'var(--t3)',1.3)}${pl(gl,'var(--t0)',2.6)}
-      <text x="${padL+3}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="10">+20 complacency</text>
-      <text x="${padL+3}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="10">−20 capitulation</text>
+      <text x="${padL+3}" y="${(y(20)-4).toFixed(1)}" fill="${BC.bear}" font-size="11">+20 complacency</text>
+      <text x="${padL+3}" y="${(y(-20)+12).toFixed(1)}" fill="${BC.bull}" font-size="11">−20 capitulation</text>
       ${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(sp[i])/H,
       tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
@@ -21955,7 +22029,7 @@ function renderAaiiCard(D){
     if(reihe.length<2)return zuWenig;
     const y=v=>padT+(100-v)*(H-padT-padB)/100;
     const pl=(idx,col)=>`<polyline points="${reihe.map((e,i)=>xOf(i,reihe.length).toFixed(1)+','+y(+e[idx]).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/>`;
-    const gr=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".5"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('');
+    const gr=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".5"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${v}%</text>`).join('');
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
       ${gr}${pl(1,BC.bull)}${pl(2,'var(--t3)')}${pl(3,BC.bear)}${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(+e[1])/H,
@@ -21979,7 +22053,7 @@ function renderAaiiCard(D){
       ${flaeche(e=>+e[1],e=>(+e[1])+(+e[2]),'var(--t3)')}
       ${flaeche(e=>(+e[1])+(+e[2]),()=>100,BC.bear)}
       <line x1="${padL}" y1="${y(50).toFixed(1)}" x2="${W-padR}" y2="${y(50).toFixed(1)}" stroke="#fff" stroke-width="1" opacity=".45" stroke-dasharray="5,4"/>
-      ${[0,25,50,75,100].map(v=>`<text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('')}
+      ${[0,25,50,75,100].map(v=>`<text class="y-lbl" x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${v}%</text>`).join('')}
       ${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:y(+e[1]/2)/H,
       tip:`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
@@ -22020,7 +22094,7 @@ function renderAaiiCard(D){
       return rect(0,bu,BC.bull)+rect(bu,bu+ne,'var(--t3)')+rect(bu+ne,100,BC.bear)
         +txt(bu,bu/2,'#FFFFFF')+txt(be,bu+ne+be/2,'#FFFFFF');
     }).join('');
-    const gitter=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".45"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${v}%</text>`).join('');
+    const gitter=[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W-padR}" y2="${y(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".45"/><text x="${padL-6}" y="${(y(v)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${v}%</text>`).join('');
     // ⚠ Fehlende Wochen MUESSEN in der Zeichnung stehen, nicht nur im Text
     // darueber. Die Saeulen sitzen in gleichem Abstand nebeneinander - ohne
     // Markierung liest man aus der Achse einen lueckenlosen Verlauf, den es
@@ -22034,7 +22108,7 @@ function renderAaiiCard(D){
     const bruch=luecken.map(g=>{
       const x=padL+spalte*g.i;
       return`<line x1="${x.toFixed(1)}" y1="${bPadT-8}" x2="${x.toFixed(1)}" y2="${(HB-bPadB).toFixed(1)}" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,4"/>`
-        +`<text x="${x.toFixed(1)}" y="${bPadT-13}" fill="var(--purple)" font-size="10" font-weight="700" text-anchor="middle">${g.fehlt} missing</text>`;
+        +`<text x="${x.toFixed(1)}" y="${bPadT-13}" fill="var(--purple)" font-size="11" font-weight="700" text-anchor="middle">${g.fehlt} missing</text>`;
     }).join('');
     // Datumsachse: schraeg gestellt wie im Referenzbild, damit auch bei
     // vielen Wochen jede zweite/dritte Beschriftung lesbar bleibt.
@@ -22043,7 +22117,7 @@ function renderAaiiCard(D){
     // egal wo der regelmaessige Schritt gerade steht - sonst ist der Sprung
     // aus der Achse nicht ablesbar.
     const pflicht=new Set();luecken.forEach(g=>{pflicht.add(g.i-1);pflicht.add(g.i);});
-    const achseS=reihe.map((e,i)=>(i%schritt&&!pflicht.has(i))?'':`<text x="${xM(i).toFixed(1)}" y="${HB-bPadB+18}" fill="${pflicht.has(i)?'var(--purple)':'var(--t3)'}" font-size="10" font-weight="${pflicht.has(i)?'700':'400'}" text-anchor="end" transform="rotate(-38 ${xM(i).toFixed(1)} ${HB-bPadB+18})">${pcXLabel(e[0])}</text>`).join('');
+    const achseS=reihe.map((e,i)=>(i%schritt&&!pflicht.has(i))?'':`<text x="${xM(i).toFixed(1)}" y="${HB-bPadB+18}" fill="${pflicht.has(i)?'var(--purple)':'var(--t3)'}" font-size="11" font-weight="${pflicht.has(i)?'700':'400'}" text-anchor="end" transform="rotate(-38 ${xM(i).toFixed(1)} ${HB-bPadB+18})">${pcXLabel(e[0])}</text>`).join('');
     const svgS=`<svg viewBox="0 0 ${W} ${HB}" width="100%" preserveAspectRatio="none" style="display:block;height:${HB}px">${gitter}${saeulen}${bruch}${achseS}</svg>`;
     const tip=(e,i)=>`<b>${pcXLabel(e[0])}</b><br><span style="color:${BC.bull}">Bullish</span> ${(+e[1]).toFixed(1)}%`
       +`<br><span style="color:var(--t3)">Neutral</span> ${(+e[2]).toFixed(1)}%`
@@ -22064,8 +22138,8 @@ function renderAaiiCard(D){
     const pfad=stuecke.map(st=>`<polyline points="${st.join(' ')}" fill="none" stroke="${BC.bull}" stroke-width="2.2" stroke-linejoin="round"/>`).join('')
       +luecken.map(g=>{const x=padL+spalte*g.i;return`<line x1="${x.toFixed(1)}" y1="12" x2="${x.toFixed(1)}" y2="${HL-24}" stroke="var(--purple)" stroke-width="2" stroke-dasharray="4,4"/>`;}).join('');
     const punkte=bu.map((v,i)=>`<circle cx="${xM(i).toFixed(1)}" cy="${yL(v).toFixed(1)}" r="2.6" fill="${BC.bull}"/>`
-      +(i%schritt?'':`<text x="${xM(i).toFixed(1)}" y="${(yL(v)-7).toFixed(1)}" fill="${BC.bull}" font-size="10" font-weight="700" text-anchor="middle">${v.toFixed(1)}%</text>`)).join('');
-    const achseL=achsenTicks(lo,hi,3).map(v=>`<line x1="${padL}" y1="${yL(v).toFixed(1)}" x2="${W-padR}" y2="${yL(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(yL(v)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${+v.toFixed(1)}%</text>`).join('');
+      +(i%schritt?'':`<text x="${xM(i).toFixed(1)}" y="${(yL(v)-7).toFixed(1)}" fill="${BC.bull}" font-size="11" font-weight="700" text-anchor="middle">${v.toFixed(1)}%</text>`)).join('');
+    const achseL=achsenTicks(lo,hi,3).map(v=>`<line x1="${padL}" y1="${yL(v).toFixed(1)}" x2="${W-padR}" y2="${yL(v).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(yL(v)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${+v.toFixed(1)}%</text>`).join('');
     const svgL=`<svg viewBox="0 0 ${W} ${HL}" width="100%" preserveAspectRatio="none" style="display:block;height:${HL}px">${achseL}${pfad}${punkte}</svg>`;
     const ptsL=bu.map((v,i)=>({fx:xM(i)/W,fy:yL(v)/HL,tip:tip(reihe[i],i)}));
     // ⚠ Luecken NICHT verschweigen. Die Saeulen stehen in gleichem Abstand
@@ -22100,11 +22174,11 @@ function renderAaiiCard(D){
     const xJetzt=padL+Math.max(0,Math.min(1,(spread-lo)/((hi-lo)||1)))*(W-padL-padR);
     const rang=spAll.filter(v=>v<=spread).length/spAll.length*100;
     const svg=`<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="display:block;height:${H}px">
-      ${achsenTicks(0,max,4).map(c=>`<line x1="${padL}" y1="${y(c).toFixed(1)}" x2="${W-padR}" y2="${y(c).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(c)+3).toFixed(1)}" fill="var(--t3)" font-size="10" text-anchor="end">${c}w</text>`).join('')}
+      ${achsenTicks(0,max,4).map(c=>`<line x1="${padL}" y1="${y(c).toFixed(1)}" x2="${W-padR}" y2="${y(c).toFixed(1)}" stroke="var(--bd)" stroke-width="1" opacity=".35"/><text class="y-lbl" x="${padL-6}" y="${(y(c)+3).toFixed(1)}" fill="var(--t3)" font-size="11" text-anchor="end">${c}w</text>`).join('')}
       ${balken}
       <line x1="${xJetzt.toFixed(1)}" y1="${padT-14}" x2="${xJetzt.toFixed(1)}" y2="${H-padB}" stroke="var(--t0)" stroke-width="2"/>
       <text x="${xJetzt.toFixed(1)}" y="${padT-18}" fill="var(--t0)" font-size="11" font-weight="700" text-anchor="middle">now ${(spread>0?'+':'')+spread.toFixed(1)}</text>
-      ${[0,1,2,3,4].map(k=>{const v=lo+(hi-lo)*k/4;return`<text x="${(padL+(W-padL-padR)*k/4).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="10" text-anchor="middle">${v>0?'+':''}${v.toFixed(0)}</text>`;}).join('')}
+      ${[0,1,2,3,4].map(k=>{const v=lo+(hi-lo)*k/4;return`<text x="${(padL+(W-padL-padR)*k/4).toFixed(1)}" y="${H-8}" fill="var(--t3)" font-size="11" text-anchor="middle">${v>0?'+':''}${v.toFixed(0)}</text>`;}).join('')}
     </svg>`;
     const pts=eimer.map((c,k)=>({fx:(padL+k*bw+bw/2)/W,fy:y(c)/H,
       tip:`<b>${(lo+breite*k>0?'+':'')+(lo+breite*k).toFixed(0)} to ${(lo+breite*(k+1)>0?'+':'')+(lo+breite*(k+1)).toFixed(0)}pp</b><br>${c} of ${spAll.length} weeks (${(c/spAll.length*100).toFixed(1)}%)`}));
@@ -22135,8 +22209,8 @@ function renderAaiiCard(D){
       <line x1="${padL}" y1="${yS(0).toFixed(1)}" x2="${W-padR}" y2="${yS(0).toFixed(1)}" stroke="var(--bd2)" stroke-width="1"/>
       <line x1="${padL}" y1="${yS(20).toFixed(1)}" x2="${W-padR}" y2="${yS(20).toFixed(1)}" stroke="${BC.bear}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
       <line x1="${padL}" y1="${yS(-20).toFixed(1)}" x2="${W-padR}" y2="${yS(-20).toFixed(1)}" stroke="${BC.bull}" stroke-width="1" stroke-dasharray="4,4" opacity=".5"/>
-      ${achsenTicks(sLo,sHi,4).map(v=>`<text class="y-lbl" x="${padL-6}" y="${(yS(v)+3).toFixed(1)}" fill="${BC.bull}" font-size="10" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
-      ${achsenTicks(pLo,pHi,3).map(v=>`<text class="y-lbl" x="${W-padR-2}" y="${(yP(v)+3).toFixed(1)}" fill="var(--t2)" font-size="10" text-anchor="end" style="paint-order:stroke;stroke:var(--card);stroke-width:3px">${String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</text>`).join('')}
+      ${achsenTicks(sLo,sHi,4).map(v=>`<text class="y-lbl" x="${padL-6}" y="${(yS(v)+3).toFixed(1)}" fill="${BC.bull}" font-size="11" text-anchor="end">${v>0?'+':''}${v}pp</text>`).join('')}
+      ${achsenTicks(pLo,pHi,3).map(v=>`<text class="y-lbl" x="${W-padR-2}" y="${(yP(v)+3).toFixed(1)}" fill="var(--t2)" font-size="11" text-anchor="end" style="paint-order:stroke;stroke:var(--card);stroke-width:3px">${String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</text>`).join('')}
       ${linieP}${linieS}${achse(reihe.length)}</svg>`;
     const pts=reihe.map((e,i)=>({fx:xOf(i,reihe.length)/W,fy:yS(sp[i])/H,
       tip:`<b>${pcXLabel(e[0])}</b><br>Spread <b>${(sp[i]>0?'+':'')+sp[i].toFixed(1)}pp</b>`
@@ -22170,7 +22244,7 @@ function renderAaiiCard(D){
   const kpis=`<div class="aaii-kpis">
     ${kachel((spread>0?'+':'')+spread.toFixed(1)+'pp','Bull − bear spread',spread>=20?BC.bear:spread<=-20?BC.bull:'var(--t0)')}
     ${kachel(glJetzt!=null?(glJetzt>0?'+':'')+glJetzt.toFixed(1)+'pp':'–',AAII_SMOOTH_W+'-week average')}
-    ${kachel(rang!=null?rang.toFixed(0)+'.':'–','Percentile of own history')}
+    ${kachel(rang!=null?ordEn(rang):'–','Percentile of own history')}
     ${kachel(bull.toFixed(1)+'%','Bullish',BC.bull)}
     ${kachel(bear.toFixed(1)+'%','Bearish',BC.bear)}
     ${kachel(seitExtrem==null?'never':seitExtrem===0?'now':seitExtrem+'w','Since last extreme')}
@@ -22230,7 +22304,7 @@ function renderFearGreedCards(D){
   const cfFiltered=cf&&cf.series?filterDatesByRange(cf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
   const cfFilteredSet=new Set(cfFiltered);
   const cfFilteredSeries=cf&&cf.series?cf.series.filter(e=>cfFilteredSet.has(e[0])):null;
-  html+=card('🪙 Crypto Fear &amp; Greed','feargreed',cf?escH(cf.label||''):'',
+  html+=card('Crypto Fear &amp; Greed','feargreed',cf?escH(cf.label||''):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:180px">${cf?sentGauge(Math.round(cf.value),0,100,'','','sentCryptoFG'):'<div style=\"color:var(--t3);font-size:var(--fs-sm)\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(cfEv)}<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Applies to: BTC${syms.find(s=>s.id==='ETH')?', ETH':''}. Source: <a href="https://alternative.me/crypto/fear-and-greed-index/" target="_blank" rel="noopener" style="color:var(--blue)">alternative.me ↗</a></div></div>
@@ -22239,7 +22313,7 @@ function renderFearGreedCards(D){
   const vxFiltered=vx&&vx.series?filterDatesByRange(vx.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
   const vxFilteredSet=new Set(vxFiltered);
   const vxFilteredSeries=vx&&vx.series?vx.series.filter(e=>vxFilteredSet.has(e[0])):null;
-  html+=card('🌪️ VIX (Volatility)','feargreed',vx?('now '+(+vx.value).toFixed(1)):'',
+  html+=card('VIX (Volatility)','feargreed',vx?('now '+(+vx.value).toFixed(1)):'',
     `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
       <div style="flex:1;min-width:180px">${vx?sentGauge((+vx.value).toFixed(1),8,45,'','','sentVix'):'<div style=\"color:var(--t3);font-size:var(--fs-sm)\">no data</div>'}</div>
       <div style="flex:1;min-width:150px">${sentReadBadge(vxEv)}<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">≥28 = panic (bullish), ≤13 = complacency (bearish). S&amp;P 500, Nasdaq. Source: <a href="https://www.tradingview.com/symbols/CBOE-VIX/" target="_blank" rel="noopener" style="color:var(--blue)">TradingView ↗</a></div></div>
@@ -22248,7 +22322,7 @@ function renderFearGreedCards(D){
   const sfFiltered=sf&&sf.series?filterDatesByRange(sf.series.map(e=>e[0]),fearGreedRange,fearGreedCustomFrom,fearGreedCustomTo):[];
   const sfFilteredSet=new Set(sfFiltered);
   const sfFilteredSeries=sf&&sf.series?sf.series.filter(e=>sfFilteredSet.has(e[0])):null;
-  html+=card('📈 Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
+  html+=card('Stock Fear &amp; Greed','feargreed',sf?escH(sf.label||''):'chart only',
     sf?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:180px">${sentGauge(Math.round(sf.value),0,100,'','','sentStockFG')}</div><div style="flex:1;min-width:150px"><span style="color:var(--t3);font-size:var(--fs-sm)">Context only — VIX already scores index sentiment.</span><div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div></div></div><div style="margin-top:8px">${sentSpark(sfFilteredSeries,0,100,25,75)}</div>`
     :`<div style="color:var(--t3);font-size:var(--fs-sm);line-height:1.5">CNN blocks datacenter IPs (HTTP 418) from the hourly job, so this is usually empty here. VIX covers index sentiment for the score. Source: <a href="${SENT_SOURCE.stockFng}" target="_blank" rel="noopener" style="color:var(--blue)">CNN ↗</a></div>`);
   html+=`</div>`;
@@ -22377,11 +22451,11 @@ function renderCotRoh(){
     const p3=cotPct3yOf(cotFilter);
     const p3Note=p3?`<div class="cot-meta">3-year percentile: today&#39;s net positioning is at the <b>${Math.round(p3.pct)}th percentile</b> of its own last ~3 years (${p3.n} weekly reports)${p3.pct>=90?` · <span style="color:var(--amber)">⚠ historically extreme long — crowded trade, contrarian caution</span>`:p3.pct<=10?` · <span style="color:var(--amber)">⚠ historically extreme short — crowded trade, contrarian caution</span>`:''} · display-only</div>`:'';
     histCard=`<div class="cot-card">
-      <div class="cot-card-title"><span>📈 Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span>${fCrowded}<small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)${cotVsPrice&&pxReihe?' · dashed = price (far right scale)':''} · hover/tap a bar for details</small></div>
+      <div class="cot-card-title"><span>Positioning History — ${escH(COT_NAME[cotFilter]||cotFilter)}</span>${fCrowded}<small>1 bar = 1 COT report · blue = Long contracts · red = Short contracts (right scale) · black line = Long % (left scale)${cotVsPrice&&pxReihe?' · dashed = price (far right scale)':''} · hover/tap a bar for details</small></div>
       <div style="padding:10px 14px 0">${chartLeisteHtml(vsBtn,zeitBar)}</div>${ladeHinweis}
       ${chartSvg?`<div class="cot-hist-wrap" id="cotHistWrap"><div class="cot-tip" id="cotHoverTip" style="display:none"></div>${chartSvg}</div>`:`<div class="cot-empty">Not enough report history yet — it builds up automatically as the hourly data job runs.</div>`}
     </div>`+p3Note;
-    tblTitle=`<span>📋 Report-by-report history — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>newest first · Δ = change vs. the previous report</small>`;
+    tblTitle=`<span>Report-by-report history — ${escH(COT_NAME[cotFilter]||cotFilter)}</span><small>newest first · Δ = change vs. the previous report</small>`;
     head=`<tr><th class="cot-corner">Date</th><th>Long %</th><th>Short %</th><th>Net %</th><th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
     const rowsDesc=histArr.map(e=>({e,m:cotHistRowMetrics(e,vorher.get(e.date))})).reverse();
     body=rowsDesc.map(({e,m})=>{if(!m)return'';return`<tr>
@@ -22401,7 +22475,7 @@ function renderCotRoh(){
     cotChartMeta=null;
     const tblRows=rows.slice().sort((a,b)=>b.m.dNetPct-a.m.dNetPct);
     const hasP3=tblRows.some(r=>cotPct3yOf(r.id));
-    tblTitle=`<span>📋 Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>${abInfoBtn('Details & weekly change',['The same speculative positioning as a table, sorted by the <b>change in net %</b> versus the previous week — the biggest shifts come first.','Net % = long % − short %. Δ columns compare with the previous weekly report.',hasP3?'<b>3y %ile</b> places today\'s net positioning within its own last ~3 years: 100 = most net-long in that period, 0 = most net-short.':'','Click a row to filter this tab to that symbol.'].filter(Boolean))}`;
+    tblTitle=`<span>Details &amp; weekly change</span><small>sorted by Δ Net % (wk) · Δ = change vs. previous week${hasP3?' · 3y %ile = where today&#39;s net positioning sits in its own 3-year history':''}</small>${abInfoBtn('Details & weekly change',['The same speculative positioning as a table, sorted by the <b>change in net %</b> versus the previous week — the biggest shifts come first.','Net % = long % − short %. Δ columns compare with the previous weekly report.',hasP3?'<b>3y %ile</b> places today\'s net positioning within its own last ~3 years: 100 = most net-long in that period, 0 = most net-short.':'','Click a row to filter this tab to that symbol.'].filter(Boolean))}`;
     head=`<tr><th class="cot-corner">Symbol</th><th>Long %</th><th>Short %</th><th>Net %</th>${hasP3?'<th title="Percentile of the current net positioning within the last ~3 years of weekly reports — 100 = most net-long in 3 years, 0 = most net-short. ⚠ at ≥90 / ≤10 (historically extreme, contrarian caution). Display-only, no score effect.">3y %ile</th>':''}<th class="cot-c-hl" title="Week-over-week change of net positioning — the key value">Δ Net % (wk)</th><th>Long</th><th>Short</th><th>Δ Long</th><th>Δ Short</th><th>Net Pos</th><th>OI</th><th>Δ OI</th></tr>`;
     body=tblRows.map(r=>{const m=r.m;return`<tr onclick="pickCotFilter('${r.id}')" title="Show ${escH(r.name)} positioning detail — stays on this COT tab">
       <th class="cot-rowh">${escH(r.name)}</th>
@@ -22597,10 +22671,14 @@ function setRegimeCcy(v){
   cloudAutoSync();
   renderRegime();
 }
-/** Farbe eines Erfuellungsgrads: viel erfuellt = auffaellig, wenig = leise. */
-function regimeFarbe(grad){
+/** Farbe eines Erfuellungsgrads: viel erfuellt = auffaellig, wenig = leise.
+ *  Rot nur fuer ein stark erfuelltes STRESS-Szenario (das ist eine Warnung).
+ *  Bis 2026-10-04 wurde JEDES Szenario ab 75 % rot - auch "Soft Landing
+ *  80 %" stand als Warnung da (Design-Audit, Nutzerwahl "Rot nur bearish/
+ *  Warnung"). Ruhige Szenarien bekommen die Hervorhebungsfarbe (Navy). */
+function regimeFarbe(grad,stress){
   if(grad==null)return'var(--t3)';
-  if(grad>=75)return BC.bear;      // ein stark erfuelltes Stress-Szenario ist eine Warnung
+  if(grad>=75)return stress?BC.bear:'var(--ui-act)';
   if(grad>=50)return'var(--due)';
   return'var(--t2)';
 }
@@ -22618,9 +22696,9 @@ function regimeZeileHtml(z){
     ${rechts}</div>`;
 }
 function regimeKarteHtml(s){
-  const f=regimeFarbe(s.grad);
+  const f=regimeFarbe(s.grad,s.stress);
   const bal=s.grad==null?'':`<span class="rg-bar"><span class="rg-bar-in" style="width:${s.grad}%;background:${f}"></span></span>`;
-  return`<div class="rg-card">
+  return`<div class="rg-card${s.stress?' rg-stress':''}">
     <div class="rg-hd">
       <div class="rg-hd-l">
         <div class="rg-name">${escH(s.name)}</div>
@@ -22667,7 +22745,7 @@ function renderRegimeRoh(){
       ${abInfoBtn('Leading regime',['The scenario with the highest share of met conditions among those that have enough measurable conditions.','The currency buttons choose whose yield curve, real yield, CPI and labour market are checked.','Context only — the regime radar never changes a score.'])}
       <div class="rg-top-l">
         <div class="rg-top-lbl">Leading regime</div>
-        <div class="rg-top-v" style="color:${fuehrend?regimeFarbe(fuehrend.grad):'var(--t3)'}">${fuehrend?escH(fuehrend.name)+' · '+fuehrend.grad+'%':'None fully covered'}</div>
+        <div class="rg-top-v" style="color:${fuehrend?regimeFarbe(fuehrend.grad,fuehrend.stress):'var(--t3)'}">${fuehrend?escH(fuehrend.name)+' · '+fuehrend.grad+'%':'None fully covered'}</div>
         <div class="rg-top-n">${fuehrend
           ?`${fuehrend.erfuellt} of ${fuehrend.messbar} measurable conditions are met right now. This is context for reading the scores — it never changes one.`
           :'Every scenario is missing one of its decisive conditions, so none of them can be named as the leading regime. The cards below still show what IS measurable.'}</div>
@@ -22722,7 +22800,7 @@ function renderSeasonalityRoh(){
   const ovRows=rows.map(r=>{
     const col=r.avg>=0?BC.bull:BC.bear,w=(Math.abs(r.avg)/maxA*100).toFixed(0);
     return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer" onclick="setSeasAsset('${r.id}')" title="Show the full 12-month profile of ${escH(COT_NAME[r.id]||r.id)}">
-      <div style="flex:none;width:64px;font-weight:700;font-size:var(--fs-sm);color:var(--t1);font-family:'SF Mono',SFMono-Regular,Consolas,monospace">${escH(r.id)}</div>
+      <div style="flex:none;width:64px;font-weight:700;font-size:var(--fs-sm);color:var(--t1);font-family:var(--ff-num)">${escH(r.id)}</div>
       <div style="flex:1;height:16px;border-radius:4px;background:var(--bg3);overflow:hidden"><div style="width:${w}%;height:100%;background:${col};opacity:.85"></div></div>
       <div style="flex:none;width:64px;text-align:right;font-size:var(--fs-sm);font-weight:700;color:${col}">${r.avg>0?'+':''}${r.avg.toFixed(2)}%</div>
       <div style="flex:none;width:56px;text-align:right;font-size:var(--fs-xs);color:${r.hit>=60?BC.bull:r.hit<=40?BC.bear:'var(--t3)'}">${r.hit}% up</div>
@@ -23616,8 +23694,8 @@ function openTabMenu(kind,id,x,y){
   const items=[];
   if(kind==='tab'){
     const cur=stackOf(id);
-    tabStacks.forEach(s=>{if(!s.members.includes(id))items.push({lbl:'➕ '+s.name,fn:()=>addTabToStack(id,s.id)});});
-    items.push({lbl:'✨ New Stack…',fn:()=>{const name=prompt('Name of the new stack:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
+    tabStacks.forEach(s=>{if(!s.members.includes(id))items.push({lbl:'+ '+s.name,fn:()=>addTabToStack(id,s.id)});});
+    items.push({lbl:'+ New Stack…',fn:()=>{const name=prompt('Name of the new stack:');if(name&&name.trim()){const sid=createStack(name.trim());addTabToStack(id,sid);}}});
     if(cur)items.push({lbl:'✖ Remove from "'+cur.name+'"',fn:()=>removeTabFromStack(id)});
   }else{
     const s=tabStacks.find(x=>x.id===id);if(!s)return;
@@ -23934,7 +24012,7 @@ function spreadCardHtml(){
   </div>`;
 }
 function spreadChart(serie,px,b,q){
-  const W=760,H=210,padL=42,padR=52,padT=16,padB=22;
+  const W=chBreite(760,chPlatz('carryBody',2)),H=210,padL=42,padR=52,padT=16,padB=22;
   const vals=serie.map(e=>e[1]);
   const lo=Math.min(...vals),hi=Math.max(...vals),sp=(hi-lo)||1;
   const x=i=>padL+i*(W-padL-padR)/Math.max(1,serie.length-1);
@@ -23951,18 +24029,18 @@ function spreadChart(serie,px,b,q){
       const py=v=>padT+(phi-v)/psp*(H-padT-padB);
       const pts=[];pv.forEach((v,i)=>{if(v!=null)pts.push(`${x(i).toFixed(1)},${py(v).toFixed(1)}`);});
       preis=`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--t0)" stroke-width="1.6" stroke-dasharray="6,4" opacity=".75"/>`
-        +`<text x="${W-padR+4}" y="${padT+8}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${phi.toFixed(4)}</text>`
-        +`<text x="${W-padR+4}" y="${H-padB}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${plo.toFixed(4)}</text>`;
+        +`<text x="${W-padR+4}" y="${padT+8}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${phi.toFixed(4)}</text>`
+        +`<text x="${W-padR+4}" y="${H-padB}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${plo.toFixed(4)}</text>`;
     }
   }
   const null0=(lo<0&&hi>0)?`<line x1="${padL}" y1="${y(0).toFixed(1)}" x2="${W-padR}" y2="${y(0).toFixed(1)}" stroke="var(--bd2)" stroke-dasharray="3,3"/>`:'';
   return`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:340px;height:auto">
     ${null0}${preis}
     <polyline points="${line}" fill="none" stroke="var(--blue)" stroke-width="2"/>
-    <text x="2" y="${padT+8}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${hi.toFixed(2)}</text>
-    <text x="2" y="${H-padB}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${lo.toFixed(2)}</text>
-    <text x="${padL}" y="${H-4}" font-size="9" fill="var(--t3)" font-family="var(--ff-num)">${escH(serie[0][0])}</text>
-    <text x="${W-padR}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="end" font-family="var(--ff-num)">${escH(serie[serie.length-1][0])}</text>
+    <text x="2" y="${padT+8}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${hi.toFixed(2)}</text>
+    <text x="2" y="${H-padB}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${lo.toFixed(2)}</text>
+    <text x="${padL}" y="${H-4}" font-size="11" fill="var(--t3)" font-family="var(--ff-num)">${escH(serie[0][0])}</text>
+    <text x="${W-padR}" y="${H-4}" font-size="11" fill="var(--t3)" text-anchor="end" font-family="var(--ff-num)">${escH(serie[serie.length-1][0])}</text>
   </svg></div>`;
 }
 // Scrollstand halten - WebKit kuerzt ihn beim innerHTML-Austausch (siehe
@@ -24605,7 +24683,7 @@ window.addEventListener('online',()=>{
   const tryPush=()=>{
     attempt++;
     cloudPush(false).then(ok=>{
-      if(ok){const b=document.getElementById('saveBadge');if(b)b.textContent='☁ Synced '+new Date().toLocaleTimeString();}
+      if(ok){const b=document.getElementById('saveBadge');if(b)b.textContent='✓ Synced '+new Date().toLocaleTimeString();}
       else if(attempt<4)setTimeout(tryPush,attempt*3000);
     });
   };
@@ -24789,7 +24867,10 @@ function kartenIconsNachtragen(root){
     h.setAttribute('data-kic','1');
     // Kopf traegt schon ein eigenes Symbol (z.B. "Net Long / Short %") -
     // dann keins dazu, zwei Symbole nebeneinander waeren Laerm.
-    if(h.querySelector(':scope > svg.ic, :scope > .k-ic, :scope > .ab-tile-ic'))return;
+    // ⚠ Auch eines IM Titel-Span zaehlt (`<span>${icn(..)} Titel</span>`):
+    // bis 2026-10-04 sah die Pruefung nur direkte Kinder, und "Net Long /
+    // Short %" trug zwei Symbole nebeneinander (gemessen im Design-Audit).
+    if(h.querySelector(':scope > svg.ic, :scope > .k-ic, :scope > .ab-tile-ic, :scope > span:not(.k-ic) > svg.ic:first-child'))return;
     let titel='';
     if(h.classList.contains('rub-hdr')){const i=h.querySelector('.rub-inp');titel=i?i.value:'';}
     else if(h.classList.contains('dw-t')){const t=h.querySelector('.dw-t-txt');titel=t?t.textContent:'';}

@@ -268,7 +268,7 @@ function rgCpiTrend(ccy){
 // fuer "Not measured". `warum` erklaert bei null, WAS fehlt.
 const REGIME_SZENARIEN=[
   {
-    id:'riskoff', name:'Risk-Off Shock',
+    id:'riskoff', name:'Risk-Off Shock', stress:true,
     kurz:'Volatility spikes and everything moves the same way at once.',
     lang:'A crash is not "equities fall" — equities fall all the time. It is correlations collapsing into one direction: volatility jumps, havens bid, cyclicals sold, and the move is fast rather than deep. The condition that would separate a correction from systemic stress is credit, and that is the one this app cannot see.',
     bed:[
@@ -296,7 +296,7 @@ const REGIME_SZENARIEN=[
     ],
   },
   {
-    id:'funding', name:'Funding Squeeze',
+    id:'funding', name:'Funding Squeeze', stress:true,
     kurz:'Dollar shortage — the dollar rises against everything, havens included.',
     lang:'The rare and most expensive variant, and the one FX reacts to hardest. What tells it apart from ordinary risk-off: the dollar gains even against the yen and the franc, and gold falls WITH equities because positions are being liquidated rather than rotated. Two of the cleanest tells sit behind sources this app does not carry.',
     bed:[
@@ -319,7 +319,7 @@ const REGIME_SZENARIEN=[
     ],
   },
   {
-    id:'inflation', name:'Inflation Shock',
+    id:'inflation', name:'Inflation Shock', stress:true,
     kurz:'Prices surprise upward and real yields go negative.',
     lang:'Not the level of inflation but its direction and its surprises. The decisive number is the real yield: as long as nominal yields stay below inflation, holding the currency costs purchasing power every day, and central banks are behind the curve rather than ahead of it.',
     bed:[
@@ -341,7 +341,7 @@ const REGIME_SZENARIEN=[
     ],
   },
   {
-    id:'slowdown', name:'Growth Slowdown',
+    id:'slowdown', name:'Growth Slowdown', stress:true,
     kurz:'The curve, the labour market and the surveys turn together.',
     lang:'⚠ The recession signal is not the inversion itself but the RE-STEEPENING out of it: historically the curve has already turned back up by the time a downturn starts, because the market is pricing cuts. Watching only "is it inverted" means watching the warning after it has been given.',
     bed:[

@@ -37,7 +37,7 @@ Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn automatisch.
 
 Sieben feste Stufen als CSS-Variablen statt frei gewaehlter Werte:
 `--fs-hero` 30 · `--fs-xl` **24** · `--fs-lg` 17 · `--fs-md` 15 ·
-`--fs-base` 13 · `--fs-sm` 12 · `--fs-xs` 11 · `--fs-2xs` 10.
+`--fs-base` 13 · `--fs-sm` 12 · `--fs-xs` 11 · `--fs-2xs` 11 (seit 2026-10-04 Boden, vorher 10).
 
 ⚠ **Korrigiert am 2026-09-16:** hier stand `--fs-xl` 22 — im Code ist der
 Token aber `24px`. Die Doku nannte damit eine Stufe, die es nicht gibt. 22px
@@ -587,8 +587,9 @@ deshalb NICHT als Live-Animation gebaut, sondern als Keyframes auf
 `.ai-probe` (werden abgetastet) plus Einbau in `aiFilm`. Details/Messung:
 `docs/performance.md`.
 Nie wieder zerschneiden: Streifen, die einzeln bewegt werden, reißen Lücken
-auf. Bewegt werden nur der gemeinsame Umriss `#aiWave` (SMIL) und der
-Faltenverlauf `#aiFoldG`; Glanz/Falten liegen IN der Welle; `.ai-rim` als Rand;
+auf. Bewegt werden nur der gemeinsame Umriss `#aiWave` und der
+Faltenverlauf `#aiFoldG` — seit 2026-10-03 im Filmstreifen, nicht mehr per
+SMIL; Glanz/Falten liegen IN der Welle; `.ai-rim` als Rand;
 Weiß in Flaggen = `AI_FLAG_WHITE`. Geprüft von `check/symbole.js`.
 
 ### Wisch-Übergang und Kartensymbole (seit 2026-09-23)
@@ -715,7 +716,7 @@ Es gibt **eine** Skala, sie steht als Token in `index.html`:
 | `--fs-base` | 13px | Fließtext |
 | `--fs-sm` | 12px | Buttons, dichte Tabellenzeilen |
 | `--fs-xs` | 11px | Sekundärtext in Karten |
-| `--fs-2xs` | 10px | Label, Meta, Achsenbeschriftung |
+| `--fs-2xs` | 11px | Label, Meta, Achsenbeschriftung — seit 2026-10-04 11 statt 10 px: **11 px ist der Boden** (Nutzerwahl „Mindestschrift 11 px“, Abschnitt „Design-Audit 2026-10-04“) |
 
 **Fünf Rollen, jede mit fester Kombination** — daran hängt die Hierarchie, nicht
 an der Größe allein:
@@ -1134,7 +1135,14 @@ Knöpfe Price chart / History / Backtester / Data quality: `700 var(--fs-lg)`
 (17 px), Schein in Kartenfarbe (`text-shadow`), Gruppe vertikal mittig auf
 der Karte und rechtsbündig zum Karteninhalt (letztes Element ohne rechten
 Innenabstand). Zahnrad (Nicht-FX) so hoch wie die Schrift (Icon 17 px);
-Schrift, Zahnrad und Kompakt-Regler auf einer Mittellinie. Flaggen-/
+Schrift, Zahnrad und Kompakt-Regler auf einer Mittellinie. Der Regler ist
+seit 2026-10-04 sichtbar beschriftet: „SUMMARIES“ klein in Versalien ÜBER
+ihm (Muster „NEXT EVENT“, `label for`, absolut — nimmt keinen Platz in der
+Leiste, sonst rutschte DEYIELD in zwei Zeilen und der Regler 7,6 px von der
+Mittellinie). ≤ 900 px steht das Wort links neben dem Regler: dort scrollt
+`.dmeta` waagerecht und schneidet Überstehendes ab — das Wort war sichtbar,
+aber nicht anklickbar (Durchklick 2026-10-05). AN = Karten-Zusammenfassungen sichtbar; der Tooltip stand bis
+dahin genau verkehrt herum („hidden“ bei AN). Flaggen-/
 Motivband `opacity:.6`. Unter ~900 px Breite bricht die Gruppe in eine eigene
 Zeile unter den Titel (kein Platz nebeneinander) — dort rechtsbündig, nicht
 kartenmittig. Wächter `check/kopfleiste.js`.
@@ -1220,8 +1228,12 @@ Paar-Kursen. Wächter `check/korb.js`.
   Panels je Bildschirmhöhe, Rest scrollt). Chart nie unter 150 px.
 - Charts werden in **echten Pixeln** der Zelle gezeichnet (`indHistChart`
   mit `opts.W/opts.H`) — Schrift bleibt gleich groß, der Chart füllt exakt.
-- Kompakt: kein Seitentitel, Kopf = eine Zeile (Modus, Indikator/Asset,
-  Zeitraum, Auswahlknopf), keine Chip-Reihe — jedes Panel trägt sein ✕.
+- Kompakt: Kopf = Seitenkopf wie überall (seit 2026-10-04, Nutzerwahl
+  „Seitentitel überall gleich“; davor 2026-09-26 bewusst ohne Seitentitel):
+  `.pg-titel` „Data“ + `.pg-sub` links, Filter rechts daneben, darunter die
+  Werkzeugzeile (Modus | Zeitraum) — OHNE Kartenrahmen, Kopf ≤ 100 px, die
+  Charts sind dadurch nicht kleiner geworden (gemessen 581/255 statt
+  579/254 px). Keine Chip-Reihe — jedes Panel trägt sein ✕.
   Panel-Kopf = eine Zeile (Name, Legende, As of/Next, Auswahl, ✕); zu schmal
   → erst Legende, dann As of ausgeblendet (Container-Abfrage).
 - Wächter: `check/datalayout.js`.
@@ -1275,8 +1287,15 @@ als die Kartentitel (17px) darunter; Trends 22px, Archive 26px; Matrix-
 Kartentitel 15px, Trends-Kartentitel 18px/800, Data-Panels 15px.
 `check/kartentitel.js` sah Matrix/Data nicht, weil er eine feste Liste von
 Klassennamen prüft. `check/hierarchie.js` erkennt Karten an der Form
-(Schatten + Rundung) und prüft jede Seite. Ausnahmen mit eigenem Kopf:
-Dashboard, Data (Kopf = Datenkarte), Asset-Seiten (`.atitle`).
+(Schatten + Rundung) und prüft jede Seite. Ausnahme mit eigenem Kopf: nur
+noch die Asset-Seiten (`.atitle`). **Seit 2026-10-04** tragen auch Dashboard
+und Data Titel + Untertitel (Nutzerwahl „Seitentitel überall gleich“ — hebt
+die Entscheidungen vom 2026-07-25 „Mach unnötige Überschriften weg“ und
+2026-09-26 „Kompakt“ für den Titel auf), jeder Seitentitel steht an
+DERSELBEN Stelle (x 98 / y 70 bei 1180 px; Dashboard holt seine flachere
+Polsterung per `margin-top` nach, Archive ohne 4/2-px-Versatz) und hat
+einen `.pg-sub` direkt darunter. Geprüft in `check/hierarchie.js`
+(`--gegenprobe-lage`).
 Regel in `CLAUDE.md` Nr. 9 (gilt immer).
 
 ## Y-Achse an jedem Daten-Chart (Dauerregel seit 2026-09-26)
@@ -1396,3 +1415,93 @@ Frage ob man es speichern will … bearish nein und in bullish Farbe ja speicher
 - **Neue Notizen aus einer Karte** öffnen den vollständigen Editor (kein Einzeilen-Feld in der
   Karte); Vorbelegungen wie der Pin stehen sichtbar als Haken im Editor, nie still im Hintergrund.
 - Wächter: `check/eingaben.js`.
+
+## Design-Audit 2026-10-04 — Dauerregeln (VERSION-CHECK-588)
+
+Nutzer: *„Recherchier im Internet und mach dich schlau über Webseiten Designs
+und Dashboards … Was sollte geändert werden? … Ich will am Ende ein Webseiten
+Design ohne Schwächen haben"*, danach *„Funktionalität steht an oberster
+Stelle"*. Per Rückfrage gewählt (Runde 1). Messwerte vorher/nachher:
+`docs/CHANGELOG.md`. Alle Regeln prüft `check/designregeln.js` (A–I, mit
+Gegenprobe); D1 zusätzlich `check/symbole.js` C, D4 `check/hierarchie.js`.
+
+**A — Keine Emojis in der Oberfläche.** Titel, Knöpfe, Fenster, Beschriftungen
+tragen Linien-Symbole aus `ICONS` (`icn(name,size)`); in statischem HTML als
+Platzhalter `<span class="h-ic" data-ic="name"></span>` (füllt
+`icPlatzhalterFuellen`). Je Kartenkopf genau EIN Symbol — auch wenn der Titel
+sein Symbol im Titel-Span trägt (die COT-Karte hatte so zwei).
+Schriftzeichen, die Unicode zugleich als Emoji führt (⚠ ↗ ↔ ↖–↙ ↩ ↪ ▶ ◀ ✔ ✖),
+kommen aus der eingebetteten Mini-Schrift **'FX Sym'** (Teilmenge von DejaVu
+Sans, nur diese Zeichen, `unicode-range`, erste Stelle in `--ff-text`; die
+Bitstream-Vera-Lizenz verlangt Umbenennung + Copyright-/Lizenzhinweis in der
+Datei — beides ist drin, Name-IDs 0/13/14) — sonst zeichnet Safari
+auf iPad/Mac sie als bunte Emojis. ⚠ NICHT `font-variant-emoji:text`: in
+Safari abgeschaltet (Stand 2026), und global gesetzt entfärbt es Emojis in
+Notizen/News. Telegram-Nachrichtentexte dürfen Emojis tragen (keine
+Oberfläche).
+
+**B — Eine Schrift.** Kein Monospace, nirgends (auch nicht in SVG-Text,
+Globus, Retail-/Seasonality-Kürzeln). Ziffern bleiben über `tabular-nums`
+bündig.
+
+**C — Diagramme in echter Größe.** Ein SVG mit Text wird nie unter 1
+skaliert. Trends: Breite des Platzes vor dem Bauen messen (`trBreiteAus` →
+`trZielBreite`), die Tage teilen sich diese Breite, Datumslabel nur jedes
+k-te (≥ 44 px, der jüngste Tag immer), Punkte nur, solange sie sich nicht
+berühren; Größenänderung → Neubau. Diagramme mit fester Zeichenbreite
+(760/780): `W = chBreite(fest, chPlatz(seitenkörper, rahmen))` = min(fest,
+Platz) — auf breiten Schirmen wie bisher, auf schmalen 1:1. Gestreckte SVGs
+(`preserveAspectRatio="none"`) tragen KEINEN Text (AAII lief bis dahin mit
+verzerrter Schrift) — oder werden in echter Breite gebaut.
+
+**D — Mindestschrift 11 px.** `--fs-2xs` ist 11 px (vorher 10), auch in der
+verkleinerten Skala der Asset-Karten. Ausgenommen nur das „i“ im ⓘ-Kreis
+(Symbol) und das FX-Logo (Bild). Wo 11 px nicht passt, wird umverteilt, nie
+abgeschnitten: Leisten-Beschriftung (Rail-Polster 5 px, sonst „Dashboar/d“),
+Indikator-Tabelle ≤ 430 px (Wertspalten 15 %), Score-Hinweis bricht um statt
+„…“. Englische Ordinalzahlen über `ordEn()` (nie „24.“ oder „21th“).
+
+**E — Drei Höhen für Bedienelemente.** `--h-s` 28 (Chips, Zeitfilter,
+Segment-Knöpfe, kleine Auswahlen in Karten), `--h-m` 34 (Knöpfe, Dropdowns,
+Eingabefelder auf Seiten und im Kopf), `--h-l` 40 (Eingabefelder und
+Bestätigungsknöpfe in Fenstern, Schnellsuche). Feste Höhe statt min-height
+(einzeilig per Bauart). Schalter und reine Symbol-Knöpfe behalten ihre Optik.
+Ausnahme mit Absicht: „Compare" in der Legendenzeile der Indikator-Charts
+bleibt klein (≤ 24 px, Nutzer 2026-09-27, `check/chartsync.js`).
+Neue Bedienelemente bekommen eine dieser Stufen — die Klassenlisten stehen im
+Block „D6“ am Ende des Haupt-`<style>`.
+
+**F — Trefferflächen.** Kleine Ziele (Kalender-Glocke/×, ⓘ, Chips,
+Zeitfilter, Stern/Score/Zinsdifferenz in Set-ups, Quellen-Links) tragen ein
+unsichtbares `::after`, das die Trefferfläche Richtung 36 px vergrößert.
+⚠ Jede Richtung ist auf den GEMESSENEN freien Platz begrenzt — höchstens der
+halbe Abstand zum nächsten Bedienelement und nie über den clippenden
+Behälter (bei 820/1180/1440 px; Werte im Block „D7“; ab Innenrand, also +1 px
+für den Rahmen). Wo der Platz fehlt, bleibt die Fläche kleiner (Kalender-×
+24 px breit, Set-ups-Stern 26 px, Preis-Kachel-Zeitfilter 34 px hoch).
+Überlappung ist schlimmer als ein kleines Ziel: der Wächter (F) klickt jede
+Flächenkante und jedes Bedienelement an und meldet jeden „gestohlenen“ Tap.
+Text-Überlauf wird seitdem über die Textbreite gemessen, nicht über
+`scrollWidth` (das zählt das `::after` mit, `check/dashboard.js`).
+
+**G — Aktiv = Navy.** „Gewählt/aktiv“ ist `--ui-act` (#172A46, mit Weiß
+14:1) — nie mehr das Bias-Blau (#0B6BEA lag praktisch auf bullish #0B5FCC).
+Blau ist exklusiv bullish. In der dunklen Seitenleiste gilt `--rail-on`
+(Navy auf Navy wäre unsichtbar). Die Design-Vorlagen (Linear, Stripe, …)
+behalten ihren eigenen Aktiv-Ton.
+
+**H — Rot nur bearish/Warnung.** Rot bleibt: bearish, Löschen/Entfernen,
+Warnungen/Fehler, der LIVE-Punkt, stark erfüllte STRESS-Szenarien im Regime
+(Flag `stress:true` in `js/regime.js`). Nicht mehr rot: „heute“ und die
+Jetzt-Linie im Kalender (Navy), das auffällige „!“ an „Today“ (Amber `--due`
+= „Termin steht bevor“, pulsiert weiter), Impact HIGH (Amber `--due`,
+MEDIUM/LOW grau), aktive Filter (Navy), ein ruhiges Leit-Regime und seine
+Haken (Navy).
+Offen (nicht Teil der Wahl, Runde 2): rote Forecast-Linie in Indikator-
+Charts, rote Zukunfts-Sitzungen bei Rate Probabilities, rote Zurück-Pille im
+Archiv (Nutzerwunsch 2026-08-04).
+
+**I — Seitentitel und Schalter.** Seitentitel siehe „Schrifthierarchie“
+(überall gleiche Stelle + Untertitel). Bedienelemente ohne Text tragen eine
+sichtbare Beschriftung, wenn ihre Bedeutung nicht aus dem Symbol folgt
+(Schalter „SUMMARIES“).

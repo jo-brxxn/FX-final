@@ -336,10 +336,13 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
   --a-grow:#BE6320;--a-cot:#1F7F9E;
   --r:14px;--rs:10px;--rss:8px;
   /* Bild-Design 2026-09-22: Bedienelemente (Zeitraum, Filter, kleine
-     Knoepfe) hellblaugrau, der AKTIVE Zustand kraeftig blau mit weisser
-     Schrift. #0C75FD aus dem Bild hielte mit Weiss nur 4,2:1 - #0B6BEA
-     sieht gleich aus und haelt 4,8:1. */
-  --ctl-bg:#EAF0F9;--ctl-bd:#DCE5F2;--ui-act:#0B6BEA;--ui-act-rgb:11,107,234;--ui-act-fg:#FFFFFF;
+     Knoepfe) hellblaugrau, der AKTIVE Zustand mit weisser Schrift.
+     Seit 2026-10-04 (Design-Audit, Nutzerwahl "Dunkles Navy"): aktiv = Navy
+     aus der Familie der Seitenleiste statt #0B6BEA - das war praktisch das
+     Bullish-Blau (#0B5FCC), "gewaehlt" und "bullish" sahen gleich aus.
+     #172A46: mit Weiss 14:1, zum Bias-Blau 24 Helligkeitspunkte Abstand.
+     Blau bleibt damit exklusiv fuer bullish. Geprueft: check/designregeln.js G. */
+  --ctl-bg:#EAF0F9;--ctl-bd:#DCE5F2;--ui-act:#172A46;--ui-act-rgb:23,42,70;--ui-act-fg:#FFFFFF;
   --rail-bg:#0D1A2F;--rail-edge:#122B49;--rail-on:#0B3C74;
   /* ── DER ABHEBE-EFFEKT (Nutzer 2026-09-14: "mach so einen Effekt das es
      so aussieht als ob sich die Karten vom Hintergrund abheben ... guck im
@@ -706,12 +709,13 @@ svg.ic{vertical-align:-2px;flex:none}
    Tabellenstufe griff aber nicht (11px statt 10px). */
 /* Und die ganze Skala eine Stufe tiefer - aber als STUFE, nicht als freier
    Wert: die acht Tokens werden im Karten-Band auf den jeweils naechsten
-   Skalenwert gesetzt (30-24-17-15-13-12-11-10 → 24-17-15-13-12-11-10-10).
+   Skalenwert gesetzt (30-24-17-15-13-12-11-11 → 24-17-15-13-12-11-11-11).
    Damit schrumpft alles in den Karten gleichmaessig, ohne dass irgendwo
-   eine Groesse neben der Skala entsteht. 10px ist der Boden - darunter ist
-   Text nicht mehr lesbar, also bleibt --fs-2xs, wo es ist. */
+   eine Groesse neben der Skala entsteht. 11px ist der Boden (seit
+   2026-10-04, vorher 10px) - darunter ist Text auf dem iPad nicht mehr
+   sicher lesbar. */
 .ab-cards{--fs-hero:24px;--fs-xl:17px;--fs-lg:15px;--fs-md:13px;
-  --fs-base:12px;--fs-sm:11px;--fs-xs:10px;--fs-2xs:10px}
+  --fs-base:12px;--fs-sm:11px;--fs-xs:11px;--fs-2xs:11px}
 /* ⚠ Karte UND ihre Grafik stehen in derselben Spalte. Als zwei getrennte
    Rasterreihen war die Karten-Reihe so hoch wie die HOECHSTE Karte (526px
    gemessen), unter den beiden anderen (407/381px) standen 145px tote
@@ -2747,6 +2751,15 @@ body.res-return-active #resBackBar{display:flex}
 @container (max-width:430px){
   .ind-table{font-size:var(--fs-2xs)}
   .ind-table td{padding:4px 1px}
+  /* Seit 2026-10-04 ist --fs-2xs 11 statt 10 px (Mindestschrift): bei
+     344-px-Karten bekam "+1.69pp" (43 px) nur 41 px Spalte und wurde
+     abgeschnitten. Zahlen duerfen nicht abgeschnitten werden, Namen
+     brechen ohnehin um - also 5 % vom Namen an die drei Wertspalten,
+     2 % von der Sparkline (die schrumpft mit, max. 36 px). */
+  .ind-table col:nth-child(1){width:35%!important}
+  .ind-table col:nth-child(2),.ind-table col:nth-child(3),.ind-table col:nth-child(4){width:15%!important}
+  .ind-table col:nth-child(5){width:11%!important}
+  .ind-table col:nth-child(6){width:9%!important}
 }
 /* .ind-table td.ir-name statt nur .ir-name: braucht die hoehere Spezifitaet
    (Klasse+Element vs. nur Klasse), um die generische .ind-table-td-Regel
@@ -2928,9 +2941,9 @@ body.res-return-active #resBackBar{display:flex}
    Ausrufezeichen dahin." Kommt aus countdownHtml() und haengt sich an JEDE
    Restzeit-Angabe, die "Today" heisst - Indikator-Tabelle, Kalender-Kachel,
    Asset-Kopf, Paar-Ansicht, Watchlist-Zeile.
-   ⚠ --live (Rot) ist hier bewusst KEIN Regelbruch der Bedeutungsfarben: es
-   markiert keinen Datenwert und keine Richtung, sondern "passiert jetzt" -
-   dieselbe Rolle wie der Live-Punkt. --red waere bearish gewesen.
+   Farbe seit 2026-10-04 --due (Amber, "Termin steht bevor") statt --live:
+   Nutzerwahl "Rot nur bearish/Warnung" - "heute" ist keine Warnung, rot
+   bleibt nur der LIVE-Punkt (Ueberschreibung im Block "D10" am Ende).
    aria-hidden im Markup, weil der Text daneben ("Today") die Information
    schon vollstaendig traegt; ein vorgelesenes "Ausrufezeichen" waere nur
    Laerm. */
@@ -2954,13 +2967,16 @@ body.res-return-active #resBackBar{display:flex}
 @media (hover:hover){.px-panel-sel:hover{border-color:var(--blue);color:var(--t0)}}
 .px-panel-chip{background:rgba(var(--blue-rgb),.14);border:1px solid var(--blue);color:var(--blue);border-radius:999px;padding:3px 8px;font:700 var(--fs-2xs)/1.2 var(--ff-num);cursor:pointer;white-space:nowrap;flex-shrink:0}
 @media(max-width:520px){.px-panel-sel{max-width:120px}}
-/* Data kompakt (2026-09-26): Kopf EINE Zeile, Panels = schmale Kopfzeile +
-   Chart, der die gemessene Zelle exakt fuellt (dataRasterFuellen). */
+/* Data kompakt (2026-09-26): Panels = schmale Kopfzeile + Chart, der die
+   gemessene Zelle exakt fuellt (dataRasterFuellen). Seit 2026-10-04 ist der
+   Kopf der Seitenkopf wie ueberall (.pg-titel + .pg-sub links, Filter rechts,
+   Werkzeugzeile darunter) statt einer Karte mit 17-px-Titel. */
 .data-head{margin-bottom:10px}
-.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px 4px}
-.data-row2{padding:0 12px 0}
-.data-row2 .chart-leiste{margin-bottom:8px}
-.data-h{font:700 var(--fs-kt)/1.2 var(--ff-text);color:var(--t0);margin-right:2px}
+.data-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:0 0 8px}
+.data-row2{padding:0}
+.data-row2 .chart-leiste{margin-bottom:0}
+.data-tt{min-width:0}
+.data-h{margin-right:2px}
 .data-row .cot-filterbar,.data-row .cmp-filter-grp{margin:0}
 .data-row .data-range{margin:0;flex:0 1 auto}
 .data-row-r{margin-left:auto;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;align-items:center;min-width:0;max-width:100%}
@@ -3061,7 +3077,7 @@ body.res-return-active #resBackBar{display:flex}
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
 .rateprob-ccybar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
-.rateprob-ccy-btn{flex:none;display:flex;align-items:center;gap:4px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all .12s;font-family:'SF Mono',SFMono-Regular,Consolas,monospace}
+.rateprob-ccy-btn{flex:none;display:flex;align-items:center;gap:4px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--bd2);background:var(--bg2);color:var(--t2);font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all .12s;font-family:var(--ff-num)}
 @media (hover:hover){.rateprob-ccy-btn:hover{border-color:rgba(var(--blue-rgb),.4);color:var(--t0)}}
 .rateprob-ccy-btn.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
 .rateprob-approx-tag{font-size:var(--fs-2xs);font-weight:800;color:var(--amber);opacity:.85}
@@ -3317,7 +3333,10 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
   --fs-base:13px;   /* Fliesstext, Zeilenname */
   --fs-sm:12px;     /* Sekundaertext */
   --fs-xs:11px;     /* Beschriftung, Grossbuchstaben */
-  --fs-2xs:10px;    /* Mikro-Beschriftung, Fussnote */
+  --fs-2xs:11px;    /* Mikro-Beschriftung, Fussnote - seit 2026-10-04 11 px
+                       (Design-Audit, Nutzerwahl "Mindestschrift 11 px";
+                       vorher 10 px auf 1139 Textstellen). Damit fallen
+                       --fs-xs und --fs-2xs zusammen: 11 px ist der Boden. */
 }
 /* ══ SCHRIFT ═══════════════════════════════════════════════════════════
    Nutzer-Wunsch 2026-08-08: "fuehr die Bloomberg Schriftart ein."
@@ -3340,8 +3359,19 @@ body.dash-edit-mode .dash-majors-lbl{display:block}
    - etwas fetterer Schnitt: Bloomberg hat seine Schrift 2007 bewusst dicker
      rendern lassen, um die Lesbarkeit bei kleinen Groessen zu verbessern.
    Die Stapel selbst bevorzugen Schriften, die diese Merkmale mitbringen. */
+/* D1 Design-Audit 2026-10-04: 13 Zeichen, die als Emoji gelten, aber als
+   Schriftzeichen gemeint sind (⚠ ↗ ↔ ↩ ▶ ✖ …), kommen aus einer eingebetteten
+   Mini-Schrift (Teilmenge von DejaVu Sans, Bitstream-Vera-Lizenz: umbenannt,
+   Copyright- und Lizenzhinweis stecken in der Datei; nur diese Zeichen,
+   3,8 KB) - sonst
+   holt Safari auf iPad/Mac sie aus der FARB-Emoji-Schrift (gelbes Warndreieck,
+   blaue Pfeil-Kachel). `font-variant-emoji:text` taugt dafuer nicht: in
+   Safari abgeschaltet (Stand 2026), und global gesetzt wuerde es auch Emojis
+   in Notizen/News entfaerben. unicode-range => fuer jedes andere Zeichen
+   bleibt alles wie es war. Geprueft: check/designregeln.js A. */
+@font-face{font-family:'FX Sym';src:url(data:font/woff2;base64,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) format('woff2');unicode-range:U+2194-2199,U+21A9-21AA,U+25B6,U+25C0,U+26A0,U+2714,U+2716;font-weight:100 900;font-display:swap}
 :root{
-  --ff-text:'Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --ff-text:'FX Sym','Inter','Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
   /* ⚠ 2026-09-22 (Nutzerbild): Zahlen in DERSELBEN Sans wie der Text, nicht
      mehr Monospace. Gleich breite Ziffern kommen weiter aus tabular-nums
      (body), Spalten bleiben buendig. Vorher: 'SF Mono',...,monospace. */
@@ -4025,14 +4055,14 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .histp-dayhdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
 .histp-date{font-size:var(--fs-xs);font-weight:700;color:var(--t1);text-transform:uppercase;letter-spacing:.3px}
 .histp-day.histp-today .histp-date{color:var(--blue)}
-.histp-net{font-size:var(--fs-2xs);font-weight:800;padding:1px 7px;border-radius:20px;border:1px solid var(--bd2);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace}
+.histp-net{font-size:var(--fs-2xs);font-weight:800;padding:1px 7px;border-radius:20px;border:1px solid var(--bd2);font-family:var(--ff-num)}
 .histp-net-none{color:var(--t3);border-color:var(--bd)}
 /* Grid statt Flex, damit die Uhrzeit links in einer festen Spalte steht und
    ALLE Zeilen (Events wie manuelle Aenderungen) ihren Text an derselben
    x-Position beginnen (Nutzer-Wunsch 2026-07-11). Spalten:
    Zeit | Pfeil | Text | Werte | Effekt. */
 .histp-evt{display:grid;grid-template-columns:44px 13px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:3px 2px;font-size:var(--fs-sm)}
-.histp-time{color:var(--t3);font-family:'SF Mono',SFMono-Regular,Consolas,Menlo,monospace;font-size:var(--fs-2xs);text-align:right;white-space:nowrap}
+.histp-time{color:var(--t3);font-family:var(--ff-num);font-size:var(--fs-2xs);text-align:right;white-space:nowrap}
 .histp-arrow{font-size:var(--fs-sm);font-weight:800;text-align:center}
 .histp-name{color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .histp-val{color:var(--t2);font-family:var(--ff-num);font-size:var(--fs-xs);white-space:nowrap;text-align:right}
@@ -5369,7 +5399,7 @@ button.rate-watch{background:none;border:none;padding:0;cursor:pointer;font:inhe
 .si-card.bear{border-left-color:var(--red)}
 .si-top{display:flex;align-items:flex-start;gap:10px;padding:9px 11px 8px}
 .si-name{font-size:var(--fs-base);font-weight:700;color:var(--t0);font-family:var(--ff-text)}
-.si-tag{font:800 8.5px var(--ff-num);letter-spacing:.4px;color:var(--red);background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:1px;white-space:nowrap}
+.si-tag{font:800 var(--fs-2xs) var(--ff-num);letter-spacing:.4px;color:var(--red);background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:1px;white-space:nowrap}
 .si-meta{color:var(--t3);font-size:var(--fs-xs);font-family:var(--ff-num);margin-top:1px}
 .si-meta b{color:var(--t1);font-weight:700}
 .si-delta{flex-shrink:0;text-align:right;white-space:nowrap}
@@ -5619,7 +5649,7 @@ body.no-ui-anim #navSidebar .np-sub-wrap{transition:none}
 .dw-t-txt{font:700 var(--fs-lg)/1.2 var(--ff-text);color:var(--t0)}
 /* Asset-Kopfreihe: die globale Schriftskala statt der verkleinerten der
    .ab-cards (die Karten sind 2x2 doppelt so breit wie vorher). */
-.ab-cards>.ab-orow{--fs-hero:30px;--fs-xl:24px;--fs-lg:17px;--fs-md:15px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:10px;
+.ab-cards>.ab-orow{--fs-hero:30px;--fs-xl:24px;--fs-lg:17px;--fs-md:15px;--fs-base:13px;--fs-sm:12px;--fs-xs:11px;--fs-2xs:11px;
   grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 @media(max-width:640px){.ab-cards>.ab-orow{grid-template-columns:minmax(0,1fr)}}
 .ab-cards{gap:14px}
@@ -5869,10 +5899,12 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
    Kreis neben dem 17px-Titel; die Trefferflaeche ist 21px gross, damit man sie auf dem Telefon trifft. */
 .info-b,.rinfo{color:var(--blue);border:1.3px solid var(--blue);background:transparent;opacity:1}
 /* Knopf selbst 21px (Trefferflaeche), den sichtbaren 15px-Kreis zeichnet
-   ::before. ⚠ NICHT per ueberstehendem ::after vergroessern - das zaehlt in
-   scrollWidth und meldet sich als Ueberlauf (check/dashboard.js) - und NICHT
-   per negativem Rand: der verschiebt das Kind in der zentrierten Flex-Zeile
-   (check/layout.js, beides 2026-09-24). */
+   ::before. NICHT per negativem Rand vergroessern: der verschiebt das Kind
+   in der zentrierten Flex-Zeile (check/layout.js, 2026-09-24). Seit
+   2026-10-04 vergroessert ein unsichtbares ::after die Trefferflaeche (Block
+   "D7" am Ende, je Umfeld auf den gemessenen Platz begrenzt) - die fruehere
+   Warnung "::after meldet sich als Ueberlauf" kam von check/dashboard.js, der
+   scrollWidth mass; er misst jetzt die Textbreite. */
 .info-b,.rub-hdr .rinfo,.cot-card-title .rinfo,.dw-t .rinfo{width:21px;height:21px;margin:0;border:none;border-radius:50%;
   font:800 11px/1 Georgia,'Times New Roman',serif;font-style:italic;position:relative}
 .info-b::before,.rub-hdr .rinfo::before,.cot-card-title .rinfo::before,.dw-t .rinfo::before{content:'';position:absolute;inset:3px;
@@ -5988,6 +6020,182 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 /* Leuchten als einmal gemalter Hintergrund statt filter:drop-shadow (der
    wurde in jedem Bild neu gerechnet). */
 #ladeOv .lade-logo{width:min(62vw,380px);background:radial-gradient(closest-side,rgba(47,111,240,.28),transparent 75%)}
+/* ═══ DESIGN-AUDIT 2026-10-04 ══════════════════════════════════════════════
+   Nutzer: "Ich will am Ende ein Webseiten Design ohne Schwaechen haben" - per
+   Rueckfrage gewaehlt: Emojis/Doppel-Symbole raus, eine Schrift, lesbare
+   Trends-Achsen, Seitentitel ueberall, iPad-Bedienung (Tippflaechen, drei
+   Hoehen, Mindestschrift 11 px, beschrifteter Kompakt-Schalter), Aktiv =
+   Navy statt Bias-Blau, Rot nur fuer bearish/Warnung. Messwerte und
+   Begruendung: docs/CHANGELOG.md (VERSION-CHECK-588), Regeln:
+   docs/design-system.md "Design-Audit 2026-10-04". */
+/* D1 Linien-Symbole statt Emojis (Platzhalter .h-ic -> icPlatzhalterFuellen) */
+.h-ic{display:inline-flex;vertical-align:-2px;margin-right:7px;line-height:0}
+.h-ic:empty{display:none}
+.btn .h-ic,.res-chk .h-ic{margin-right:4px}
+/* D4 Seitentitel ueberall an derselben Stelle (x/y wie alle Seiten) */
+.dash-kopf{margin-bottom:11px}
+/* #pgDash ist ab 760 px oben nur 8 px gepolstert (mehr Platz fuer Karten,
+   2026-07-25/27) - der Titel holt die 8 px nach, damit er auf derselben Hoehe
+   steht wie auf jeder anderen Seite (y = Kopfleiste + 16 px). */
+@media(min-width:760px){#pgDash .dash-kopf{margin-top:8px}}
+.rterm-side-title{padding:0 0 12px}
+.rterm-side-title .pg-sub{max-width:300px}
+/* D5 Mindestschrift 11 px: die Leisten-Beschriftung (--fs-2xs) ist jetzt
+   11 statt 10 px - "Dashboard" brach damit in der 76-px-Leiste in
+   "Dashboar/d" um (gemessen: 58 px Platz, Wort ~63 px). Die Leiste bleibt
+   76 px breit (sonst verschiebt sich jede Seite), sie gibt nur 2+2 px
+   Innenabstand ab: 66 px Platz. Geprueft: check/designregeln.js D. */
+#navSidebar{padding-left:5px;padding-right:5px}
+#navSidebar>.np{padding-left:0;padding-right:0}
+/* D5: bei 11 px brach "SCORE EFFECT" um und der Hinweis daneben wurde
+   abgeschnitten (GOLD, 310-px-Kachel: 215 px Text in 205 px). Beschriftung
+   bleibt einzeilig, der Hinweis bricht um statt Text zu verlieren. */
+.ab-scoreline-l{white-space:nowrap;flex:none}
+/* D5: Im Kachelkopf addierten sich gap (10 px) und der ⓘ-Abstand (6 px) zu
+   16 px - dokumentiert sind 6 px ("ⓘ hinter einem rechtsbuendigen Element").
+   Mit 11 px wurde "as of Tue, Sep 29" 9 px breiter, und das ⓘ der COT-Kachel
+   rutschte bei 1180 px in eine zweite Zeile (check/infoi.js). */
+.ab-tile-hd>.ii-nach{margin-left:-4px!important}
+.ab-scoreline-n{white-space:normal;overflow:visible;text-overflow:clip}
+/* D6 Drei Hoehen fuer Bedienelemente (Nutzerwahl "3 einheitliche Groessen"
+   statt 17 verschiedener - gemessen vorher 21-38 px). S 28 = Chips, Zeit-
+   filter, Segment-Knoepfe, kleine Auswahlen in Karten; M 34 = Knoepfe,
+   Dropdowns, Eingabefelder auf den Seiten (und im Kopf); L 40 = Eingabe-
+   felder und Bestaetigungsknoepfe in Fenstern. Schalter (.compact-sw) und
+   reine Symbol-Knoepfe (ⓘ, Glocke, ×, Stern) behalten ihre Optik - deren
+   Trefferflaeche regelt D7. Einzeilig per Bauart (nowrap), deshalb feste
+   Hoehe statt min-height; Inhalt bleibt mittig (button/select/input
+   zentrieren selbst, a.btn per Flex). Geprueft: check/designregeln.js E. */
+:root{--h-s:28px;--h-m:34px;--h-l:40px}
+.btn,:where(select:not([size]):not([multiple])),.finp,.fsel,input.news-q,.st,.dmeta-hist-btn,.cot-refresh{height:var(--h-m);padding-top:0;padding-bottom:0}
+a.btn{display:inline-flex;align-items:center}
+.abc-nav,.ab-nt-qc{width:var(--h-m);height:var(--h-m)}
+.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,
+select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h-s);padding-top:0;padding-bottom:0}
+.rterm-side-toggle{width:var(--h-s);height:var(--h-s)}
+/* Ausnahme mit Absicht: "Compare" in der Legendenzeile bleibt klein
+   (Nutzer 2026-09-27: "Compare Button muss kleiner in gleiche Zeile wie
+   actual und forecast", check/chartsync.js: <= 24 px). */
+.ind-hist-legend.mit-cmp .ind-cmp-btn{height:auto;padding-top:3px;padding-bottom:3px}
+.m-inp:not(textarea),select.m-sel:not([size]),select.m-sel[size="1"],.uc-btn{height:var(--h-l);padding-top:0;padding-bottom:0}
+/* Schnellsuche: das sichtbare Feld ist der Rahmen um das Eingabefeld */
+.search-inp-wrap{height:var(--h-l);padding-top:0;padding-bottom:0}
+.search-inp-wrap input{padding-top:0;padding-bottom:0;height:100%}
+/* Data-Panelkopf: mit 28-px-Bedienelementen sonst 41 px (Regel "eine Zeile
+   <= 40", check/datalayout.js) - 1 px weniger Innenabstand oben/unten. */
+.data-ph{padding-top:5px;padding-bottom:5px}
+/* D7 Unsichtbar groessere Trefferflaechen (Nutzerwahl "Tippflaechen
+   vergroessern": mind. 36 px, Optik bleibt gleich). Ein ::after ohne Farbe
+   ragt ueber den sichtbaren Knopf hinaus; Klicks darauf gehoeren dem Knopf.
+   ⚠ Jede Richtung ist auf den GEMESSENEN freien Platz begrenzt (halber
+   Abstand zum naechsten Bedienelement, Rand des clippenden Behaelters;
+   gemessen 2026-10-04 bei 820/1180/1440 px) - sonst stiehlt die Flaeche
+   dem Nachbarn Taps bzw. meldet sich als Ueberlauf (siehe ⓘ-Notiz
+   2026-09-24 weiter oben). Wo der Platz nicht reicht, ist die Flaeche so
+   gross wie moeglich (Kalender-× 24 px breit, Stern in Set-ups 25 px).
+   Geprueft: check/designregeln.js F (Klick-Stichproben: jede Flaeche trifft
+   ihren Knopf, kein Knopf verliert seine sichtbare Flaeche). */
+.cal-alert-btn,.cal-row-del,.dw-mark,.row-score,.rate-diff,.hl-att,.cct-src,.aaii-src,.cmp-chip,.cmp-quick,.rg-ccy,
+.ind-hist-range-btn,.ab-rg,.histp-rbtn,.histp-agebtn,.perf-win,.px-panel-chip,.hl-tabs .hl-tab,.dw-hdr>.rinfo,.mx-card-title>.rinfo{position:relative}
+:is(.cal-alert-btn,.cal-row-del,.dw-mark,.row-score,.rate-diff,.hl-att,.cct-src,.aaii-src,.cmp-chip,.cmp-quick,.rg-ccy,
+.ind-hist-range-btn,.ab-rg,.histp-rbtn,.histp-agebtn,.perf-win,.px-panel-chip,.hl-tabs .hl-tab,.info-b,.rub-hdr .rinfo,
+.cot-card-title .rinfo,.dw-t .rinfo,.dw-hdr>.rinfo,.mx-card-title>.rinfo)::after{content:'';position:absolute;background:transparent}
+/* Kalenderzeile: Glocke 13x13 -> 35x36, × 9x15 -> 24x36 (rechts endet die Zeile) */
+.cal-alert-btn::after{inset:-11.5px -2px -11.5px -20px}
+.cal-row-del::after{inset:-10.5px -13px -10.5px -2px}
+/* Set-ups/Watchlist-Zeilen: Stern, Score-Pille, Zinsdifferenz */
+.dw-mark::after{inset:-10.5px -6.5px -10.5px -2px}
+.row-score::after{inset:-8.5px -2px}
+.rate-diff::after{inset:-9px 0}
+.hl-att::after{inset:-10px -1.5px -1px}
+.cct-src::after{inset:-12px -4px}
+.aaii-src::after{inset:-11px 0}
+/* Chips, Zeitfilter, Segment-Knoepfe (28 px) -> 36 px hoch */
+/* Werte ab Innenrand: +1 px fuer den Rahmen -> aussen 4 px = 36 px hoch */
+:is(.cmp-chip,.cmp-quick,.rg-ccy,.ind-hist-range-btn)::after{inset:-5px -1px}
+/* Preis-Kachel: Candles/Line und Zeitfilter stehen mit 6 px Zeilenabstand
+   uebereinander (bei 820 px auch zwei Zeitfilter-Zeilen) -> je 3 px */
+.ab-rg::after{inset:-4px -1px}
+.ind-hist-range-btn.ctyp-b::after{inset:-5px -1px -4px}
+.histp-rbtn::after{inset:-1px -1px -9px}
+.histp-agebtn::after{inset:-1px -1px -5.5px}
+.perf-win::after{inset:-4.5px -1px -5px}
+.px-panel-chip::after{inset:-5px -5.5px -5px -3.5px}
+/* Headline-Tabs brechen im Dashboard-Widget zweizeilig um (5 px Abstand) */
+.hl-tabs .hl-tab::after{inset:-3px -1px -3.5px}
+/* ⓘ: Knopf 21 px -> 36 px, je Umfeld begrenzt */
+:is(.info-b,.rub-hdr .rinfo,.cot-card-title .rinfo,.dw-t .rinfo)::after{inset:-7.5px}
+.dw-t .rinfo::after{left:-4px}
+.rub-hdr .rinfo::after{left:-2px}
+.abc-hd .info-b::after{left:-3px}
+.rg-top>.info-b::after{left:-7px}
+.ab-tile-hd>.info-b.ii-nach::after,.data-ph>.info-b::after{right:-5px}
+.data-row>.info-b::after{bottom:-7px}
+/* kleine ⓘ (13 px) */
+.dw-hdr>.rinfo::after{inset:-11.5px -11.5px -11.5px -6.5px}
+.mx-card-title>.rinfo::after{inset:-9px -9px -11.5px -11.5px}
+/* D8 Beschrifteter Schalter im Asset-Kopf: "SUMMARIES" klein in Versalien
+   UEBER dem Schalter - dasselbe Muster wie "NEXT EVENT" ueber dem Datum
+   (.dmeta-l). Daneben in 17 px haette das Wort ~98 px gekostet und den Kopf
+   bei langen Namen (DEYIELD, 1180 px) in zwei Zeilen geschoben
+   (check/kopfleiste.js). Das Wort gehoert zum Schalter (label for). */
+/* ⚠ Die Beschriftung nimmt KEINEN Platz in der Leiste ein (absolut ueber
+   dem Schalter, rechtsbuendig): der Schalter bleibt auf der Mittellinie der
+   Knopftexte und buendig am rechten Rand (Nutzer-Regeln 2026-09-25,
+   check/kopfleiste.js) - als eigene Zeile darueber stand er 7,6 px tiefer. */
+.dmeta-ctrl-sw{position:relative}
+.sw-lbl{position:absolute;right:10px;bottom:calc(50% + 15px);font:600 var(--fs-2xs)/1.2 var(--ff-text);letter-spacing:1px;text-transform:uppercase;color:var(--t2);white-space:nowrap;cursor:pointer;
+  -webkit-user-select:none;user-select:none}
+.dmeta-ctrl-sw:last-child .sw-lbl{right:0}
+/* <= 900 px scrollt .dmeta waagerecht (overflow-x:auto -> auch senkrecht
+   abgeschnitten): ein ueberstehendes Wort waere dort nicht anklickbar
+   (Durchklick 2026-10-05, 820 px: Klick landete auf .ahead). Dort hat die
+   Leiste eine eigene Zeile -> Wort links neben dem Schalter. */
+@media(max-width:900px){.sw-lbl{position:static;margin-right:8px}}
+/* D9 Gewaehlt/aktiv = --ui-act (Navy) statt --blue (bullish). Diese
+   Auswahl-Zustaende griffen bisher direkt auf --blue zu. Ausgenommen mit
+   Absicht: .acfg-seg .on-bull (dort IST die Auswahl "bullish"). */
+.cfg-gear.on,.acfg-syncbtn.on{border-color:var(--ui-act);background:rgba(var(--ui-act-rgb),.12);color:var(--ui-act)}
+.dmeta-controls .cfg-gear.on,.dmeta-icon-btn.on{color:var(--ui-act)}
+.res-libitem.on,.resf-asset-row.on,.rtree-row.on{background:rgba(var(--ui-act-rgb),.10);border-left-color:var(--ui-act);color:var(--ui-act)}
+.rtree-row.on .rtree-ic{color:var(--ui-act)}
+.px-card.on{border-color:var(--ui-act);box-shadow:0 0 0 2px rgba(var(--ui-act-rgb),.30)}
+.rateprob-pill.on,.rateprob-pill.realized.on{border-color:var(--ui-act);background:rgba(var(--ui-act-rgb),.12);color:var(--ui-act)}
+.hl-topic.on{border-left-color:var(--ui-act)}
+.hl-att.on,.hl-att.on span{border-color:var(--ui-act);color:var(--ui-act)}
+.cax-p.on{box-shadow:0 0 0 2px rgba(var(--ui-act-rgb),.35)}
+.search-row.sel{outline-color:rgba(var(--ui-act-rgb),.45)}
+/* In der DUNKLEN Seitenleiste waere Navy auf Navy unsichtbar - dort gilt
+   die Aktiv-Farbe der Leiste selbst (wie bei den Hauptpunkten). */
+#navSidebar .np-sub-wrap:not(.np-assets) .np.np-sub.on{background:var(--rail-on)}
+/* D10 Rot nur fuer bearish/Warnung (Nutzerwahl 2026-10-04; LIVE-Punkt,
+   Loeschen und Warnungen bleiben rot). "Heute" und die Jetzt-Linie sind
+   eine Ortsangabe, keine Warnung -> Navy wie jeder Aktiv-Zustand; die
+   Wichtigkeit HIGH ist Aufmerksamkeit -> Amber (--due), MEDIUM/LOW bleiben
+   grau; ein aktiver Filter ("High-impact only", Paar-Modus) ist ein
+   Aktiv-Zustand -> Navy statt roter Toenung. Geprueft: check/designregeln.js H. */
+.cal-day-hdr.today,.cal-day-hdr.today .cal-day-cd{color:var(--ui-act)}
+.cal-row.today{background:rgba(var(--ui-act-rgb),.05)}
+.cal-now-time{background:var(--ui-act);color:var(--ui-act-fg)}
+.cal-now-rule{background:var(--ui-act);box-shadow:0 0 4px rgba(var(--ui-act-rgb),.35)}
+.cal-imp.ih,.hie-imp{color:var(--due)}
+.cal-row.compact.ih,.abc-u.ih,.abc-e.ih{border-left-color:var(--due)}
+.abc-dot.ih{background:var(--due)}
+.abc-e-i.ih{color:var(--due)}
+/* Das "!" an "Today" (Nutzer 2026-09-14: "auffaelliges Ausrufezeichen")
+   bleibt auffaellig und pulsiert, aber in --due ("Termin steht bevor")
+   statt --live-Rot - "heute" ist keine Warnung (Nutzerwahl 2026-10-04). */
+.cd-heute{color:var(--due)}
+.btn.active,.btn.active:hover:not(:disabled){background:var(--ui-act);border-color:var(--ui-act);color:var(--ui-act-fg)}
+/* Regime: erfuellte Bedingung (✓) rot nur in Stress-Szenarien (dort ist sie
+   eine Warnung), sonst Navy - "Soft Landing" stand mit roten Haken da. */
+.rg-ja .rg-ic{color:var(--ui-act)}
+.rg-card.rg-stress .rg-ja .rg-ic{color:var(--red)}
+@media (hover:hover){.sw-lbl:hover{color:var(--ui-act)}}
+.mover-group-hdr .ic,.movers-upd .ic,.acfg-sec .ic,.cot-notify-ic .ic{vertical-align:-2px}
+.rstar svg{display:block}
+.rstar.on svg{fill:currentColor}
+#carrySearch{padding-left:34px;background:var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23505C77' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px 50%/15px 15px}
 </style>
 </head>
 <body>
@@ -6042,7 +6250,7 @@ window.fxLogoSvg=function(art){
 <!-- LOCK SCREEN -->
 <div class="lock-ov" id="lockScreen">
   <div class="lock-box" id="lockBox">
-    <div class="lock-logo">📊 FX Analyst Pro</div>
+    <div class="lock-logo"><span class="h-ic" data-ic="bars"></span>FX Analyst Pro</div>
     <div class="lock-sub">Enter code</div>
     <div class="lock-dots" id="lockDots">
       <div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div><div class="lock-dot"></div>
@@ -6075,11 +6283,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-587 - Performance: asset icons as GPU filmstrips (no idle load), Trends without 3292 separate animations, one build per asset switch, lighter globe; ✕ next to asset filters."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-588 - Design audit: no emojis (line icons + built-in symbol font), one typeface, Trends and other charts drawn at real size, page titles everywhere, 11 px minimum text, three control heights (28/34/40 px), larger tap targets, labelled Summaries switch, active state navy, red only for bearish and warnings."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-587</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-588</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6173,8 +6381,11 @@ window.fxLogoSvg=function(art){
 </div>
 <!-- PAGE: DATA (Nutzer-Wunsch 2026-07-14: Indikator-Verlaufschart-Browser) -->
 <div class="pc" id="pgData" style="display:none">
-  <!-- Seitentitel entfallen 2026-09-26 (Nutzerwahl "Kompakt"): der Kopf der
-       Datenkarte traegt "Data" schon, die Flaeche gehoert den Charts. -->
+  <!-- Seitentitel: 2026-09-26 entfallen (Nutzerwahl "Kompakt"), seit
+       2026-10-04 wieder im Standardmuster (Nutzerwahl "Seitentitel ueberall
+       gleich") - gebaut in renderDataTab (kopf), OHNE Kartenrahmen und ohne
+       zusaetzliche Zeile: Titel+Untertitel links, Filter rechts daneben,
+       darunter die Werkzeugzeile. Kopf <= 100 px (check/datalayout.js). -->
   <div id="dataBody"></div>
 </div>
 <!-- PAGE: RATE PROBABILITIES (Nutzer-Wunsch 2026-07-20: CME-FedWatch-artige Anzeige) -->
@@ -6192,7 +6403,7 @@ window.fxLogoSvg=function(art){
     <div class="pg-sub">All FX pairs ranked by interest-rate differential (carry / swap proxy) · biggest positive swap on top · live central-bank policy rates from the calendar</div>
   </div>
   <!-- Suche = seitenweiter Filter -> oben rechts (Dauerregel 2026-09-26) -->
-  <div style="margin-bottom:10px;display:flex;justify-content:flex-end"><input id="carrySearch" class="finp" placeholder="🔍 Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:360px"></div>
+  <div style="margin-bottom:10px;display:flex;justify-content:flex-end"><input id="carrySearch" class="finp" placeholder="Type a pair, e.g. EUR/USD or just a currency..." oninput="renderCarry()" style="max-width:360px"></div>
   <div id="carryLookup"></div>
   <div id="carryBody"></div>
 </div>
@@ -6242,7 +6453,7 @@ window.fxLogoSvg=function(art){
     <div><div class="pg-titel">Economic Calendar</div><div class="pg-sub">Upcoming events · sorted by date</div></div>
     <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
       <span id="ffLastUpd" style="font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num)"></span>
-      <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none;display:inline-flex;align-items:center">🅵🅵 Forex Factory</a>
+      <a class="btn" href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener" title="Open the calendar on Forex Factory" style="text-decoration:none"><span class="h-ic" data-ic="external"></span>Forex Factory</a>
       <select class="btn" id="calCcySel" onchange="setCalCcyFilter(this.value)" title="Filter the calendar by a single currency" style="cursor:pointer"><option value="ALL">All currencies</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="CHF">CHF</option><option value="JPY">JPY</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option></select>
       <button class="btn flt-x" id="calCcyX" hidden onclick="setCalCcyFilter('ALL')" title="Reset filter — back to All currencies" aria-label="Reset filter — back to All currencies">✕</button>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
@@ -6260,7 +6471,7 @@ window.fxLogoSvg=function(art){
     <div class="fg3">
       <div><div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">TIME</div><input class="finp" id="evTime" type="time"></div>
       <div><div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">CURRENCIES</div><input class="finp" id="evCcy" placeholder="USD, EUR..."></div>
-      <div><div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">⚪ Low</option></select></div>
+      <div><div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">IMPACT</div><select class="fsel" id="evImpact"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
     </div>
     <div class="fg3">
       <div><div style="font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:3px;letter-spacing:1px">FORECAST</div><input class="finp" id="evForecast" placeholder="e.g. 0.7%"></div>
@@ -6315,7 +6526,7 @@ window.fxLogoSvg=function(art){
      Hauptkalender, kein zweiter Zustand. -->
 <div class="ov" id="mAssetCal" style="display:none">
   <div class="modal acm-modal">
-    <h3>📅 Economic events</h3>
+    <h3><span class="h-ic" data-ic="calendar"></span>Economic events</h3>
     <div id="assetCalBody"></div>
     <div class="m-btns" style="margin-top:12px">
       <button class="btn" onclick="closeAssetCal()">Close</button>
@@ -6324,7 +6535,7 @@ window.fxLogoSvg=function(art){
 </div>
 <div class="ov" id="mQuickNote" style="display:none">
   <div class="modal" style="max-width:680px">
-    <h3>⚡ Quick capture</h3>
+    <h3><span class="h-ic" data-ic="zap"></span>Quick capture</h3>
     <div class="qc-hint">Paste anything — a headline, a chat answer, your own thought. The asset, direction and topics are picked out for you.</div>
     <!-- Von der Watchlist/Asset-Seite aus ist das Asset schon bekannt. Das
          muss SICHTBAR sein, bevor Text da ist: sonst waere die Vorauswahl eine
@@ -6357,7 +6568,7 @@ window.fxLogoSvg=function(art){
 </div>
 <div class="ov" id="mResNote" style="display:none">
   <div class="modal res-note-modal">
-    <h3>📓 Archive note</h3>
+    <h3><span class="h-ic" data-ic="note"></span>Archive note</h3>
     <div id="resNMeta" style="font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <input class="finp" id="resNTitle" placeholder="Title — e.g. Core CPI surprised to the downside" style="margin-bottom:8px">
     <textarea class="nbox res-nbody" id="resNBody" rows="9" placeholder="What happened, what you concluded, what to watch next…"></textarea>
@@ -6394,8 +6605,8 @@ window.fxLogoSvg=function(art){
          den 📌-Knopf in den Listen erreichbar und fuer neue Notizen eine
          stille Entscheidung. -->
     <div class="res-chk-row">
-      <label class="res-chk"><input type="checkbox" id="resNFav"> ⭐ Mark as favorite</label>
-      <label class="res-chk"><input type="checkbox" id="resNPin"> 📌 Pinned — shows on the asset page and the watchlist</label>
+      <label class="res-chk"><input type="checkbox" id="resNFav"> <span class="h-ic" data-ic="star"></span>Mark as favorite</label>
+      <label class="res-chk"><input type="checkbox" id="resNPin"> <span class="h-ic" data-ic="pin"></span>Pinned — shows on the asset page and the watchlist</label>
     </div>
     <div class="m-btns"><button class="btn" id="resNDel" onclick="delResNote()" style="margin-right:auto">Delete</button><button class="btn" onclick="closeMGuarded('mResNote')">Cancel</button><button class="btn g" onclick="saveResNote()">Save</button></div>
   </div>
@@ -6424,15 +6635,18 @@ window.fxLogoSvg=function(art){
   </div>
 </div>
 <div class="pc" id="pgDash" onpointerdown="dashEditPressStart(event)" onpointermove="dashEditPressMove(event)" onpointerup="dashEditPressEnd()" onpointercancel="dashEditPressEnd()" onpointerleave="dashEditPressEnd()">
-  <!-- Keine eigene "Dashboard / Live overview"-Ueberschrift (Referenz-Foto,
-       Nutzer-Wunsch 2026-07-25: "Mach unnoetige Ueberschriften weg") - der
-       Tab selbst sagt schon, wo man ist. Die Verwaltungsleiste (Widget
+  <!-- Seitentitel seit 2026-10-04 wieder da (Design-Audit, Nutzerwahl
+       "Seitentitel ueberall gleich": Dashboard und Data bekommen Titel +
+       Untertitel wie alle anderen Seiten). Das hebt die Entscheidung vom
+       2026-07-25 ("Mach unnoetige Ueberschriften weg") fuer DIESEN Titel auf.
+       Die Verwaltungsleiste (Widget
        hinzufuegen + Hinweistext) ist Teil des Bearbeitungsmodus und nur
        sichtbar, solange body.dash-edit-mode gesetzt ist - siehe
        dashEditPressStart() weiter unten (Nutzer-Wunsch 2026-07-25: "komm
        weg von diesem Karten Design... ich will einen Bearbeitungsmodus der
        aktiviert wird wenn man laenger 5 Sekunden auf den Bildschirm
        drueckt"; Halte-Zeit 2026-08-22 auf 2 Sekunden verkuerzt). -->
+  <div class="dash-kopf"><div class="pg-titel">Dashboard</div><div class="pg-sub">Your markets at a glance &middot; press and hold anywhere for 2 seconds to add, move or remove cards</div></div>
   <div class="dash-edit-bar">
     <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
     <button class="btn g" onclick="addWidget()" style="font-size:var(--fs-xs);padding:4px 10px">＋ Widget</button>
@@ -6533,7 +6747,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Info -->
 <div class="ov" id="mInfo" style="display:none">
   <div class="modal">
-    <h3 id="mInfoTitle">ℹ️ Info</h3>
+    <h3 id="mInfoTitle"><span class="h-ic" data-ic="info"></span>Info</h3>
     <div id="mInfoGeneric" style="display:none;font-size:var(--fs-sm);color:var(--t2);margin:-4px 0 8px"></div>
     <div id="mInfoStd" style="display:none;font-size:var(--fs-sm);color:var(--t1);line-height:1.55;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 12px;margin:0 0 10px"></div>
     <div id="mInfoNotesLbl" style="display:none;font-size:var(--fs-xs);color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">YOUR NOTES</div>
@@ -6544,7 +6758,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Carry-Detail (Klick auf das Δ%-Badge bei den Set-ups) -->
 <div class="ov" id="mCarryDetail" style="display:none">
   <div class="modal" style="max-width:380px">
-    <h3 id="carryDetailTitle">📈 Carry</h3>
+    <h3 id="carryDetailTitle">Carry</h3>
     <div id="carryDetailBody"></div>
     <div class="m-btns"><button class="btn" onclick="closeM('mCarryDetail')">Close</button></div>
   </div>
@@ -6572,7 +6786,7 @@ window.fxLogoSvg=function(art){
      berechnet wird (bzw. bei Bonds den 25-Tage-Vergleich) -->
 <div class="ov" id="mTrendInfo" style="display:none">
   <div class="modal" style="max-width:400px">
-    <h3 id="trendInfoTitle">📈 Trend</h3>
+    <h3 id="trendInfoTitle">Trend</h3>
     <div id="trendInfoBody" style="font-size:var(--fs-sm);line-height:1.6"></div>
     <div class="m-btns"><button class="btn" onclick="closeM('mTrendInfo')">Close</button></div>
   </div>
@@ -6580,12 +6794,12 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Neuen Alarm anlegen (Toolbar-Button "🔔 New Alert", kurzer Tap) -->
 <div class="ov" id="mEvtAlertPicker" style="display:none">
   <div class="modal">
-    <h3>🔔 New Telegram Alert</h3>
+    <h3><span class="h-ic" data-ic="bell"></span>New Telegram Alert</h3>
     <div style="font-size:var(--fs-xs);color:var(--t3);margin:-4px 0 5px;font-weight:600;font-family:var(--ff-num)">FROM AN UPCOMING EVENT</div>
     <select class="m-inp" id="evtAlertPickerSel"></select>
     <div class="m-btns">
       <button class="btn" onclick="closeM('mEvtAlertPicker')">Cancel</button>
-      <button class="btn" onclick="openEvtAlertCustom()">✏️ Custom Alert</button>
+      <button class="btn" onclick="openEvtAlertCustom()"><span class="h-ic" data-ic="edit"></span>Custom Alert</button>
       <button class="btn g" onclick="confirmEvtAlertPicker()">Next</button>
     </div>
   </div>
@@ -6593,7 +6807,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Alle bestehenden Alarme, unterteilt Kalender/Custom (Toolbar-Button, Press-and-Hold) -->
 <div class="ov" id="mEvtAlertList" style="display:none">
   <div class="modal">
-    <h3>🔔 Your Telegram Alerts</h3>
+    <h3><span class="h-ic" data-ic="bell"></span>Your Telegram Alerts</h3>
     <div id="evtAlertListWrap"></div>
     <div class="m-btns"><button class="btn" onclick="closeM('mEvtAlertList')">Close</button><button class="btn g" onclick="closeM('mEvtAlertList');openEvtAlertPicker()">＋ New Alert</button></div>
   </div>
@@ -6601,7 +6815,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Event-Alarm (Telegram) fuer ein Kalender-Event anlegen/bearbeiten -->
 <div class="ov" id="mEvtAlert" style="display:none">
   <div class="modal">
-    <h3>🔔 Telegram Alert</h3>
+    <h3><span class="h-ic" data-ic="bell"></span>Telegram Alert</h3>
     <div id="evtAlertInfo" style="font-size:var(--fs-sm);color:var(--t2);margin:-4px 0 10px"></div>
     <div style="font-size:var(--fs-xs);color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">MESSAGE</div>
     <textarea class="nbox" id="evtAlertTxt" style="min-height:110px"></textarea>
@@ -6613,7 +6827,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Custom-Alarm (frei waehlbarer Name/Datum/Uhrzeit/Nachricht, kein Kalender-Event) -->
 <div class="ov" id="mEvtAlertCustom" style="display:none">
   <div class="modal">
-    <h3>🔔 Custom Telegram Alert</h3>
+    <h3><span class="h-ic" data-ic="bell"></span>Custom Telegram Alert</h3>
     <div style="font-size:var(--fs-xs);color:var(--t3);margin:0 0 5px;font-weight:600;font-family:var(--ff-num)">ALERT NAME</div>
     <input class="m-inp" id="evtAlertCustomName" placeholder="e.g. Check open trades" maxlength="80">
     <div style="display:flex;gap:8px;margin-top:8px">
@@ -6635,7 +6849,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Rate-Watch-Link bearbeiten -->
 <div class="ov" id="mRateWatch" style="display:none">
   <div class="modal">
-    <h3>📈 Rate Expectations Link (<span id="mRateWatchSym"></span>)</h3>
+    <h3><span class="h-ic" data-ic="trendUp"></span>Rate Expectations Link (<span id="mRateWatchSym"></span>)</h3>
     <p style="font-size:var(--fs-base);color:var(--t1);margin-bottom:10px;line-height:1.5">This link opens via the icon in the "Interest Rates" card. You can change it here.</p>
     <input class="m-inp" id="mRateWatchInp" placeholder="https://..." inputmode="url">
     <div class="m-btns"><button class="btn" onclick="closeMGuarded('mRateWatch')">Cancel</button><button class="btn" onclick="resetRateWatch()">Default</button><button class="btn g" onclick="saveRateWatch()">Save</button></div>
@@ -6644,7 +6858,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Indikator-Quellen-Link bearbeiten -->
 <div class="ov" id="mIndLink" style="display:none">
   <div class="modal">
-    <h3>🔗 Edit Source Link</h3>
+    <h3><span class="h-ic" data-ic="link"></span>Edit Source Link</h3>
     <p style="font-size:var(--fs-base);color:var(--t1);margin-bottom:10px;line-height:1.5">Long-pressing the source link in the expanded indicator opens this field. You can change the link here.</p>
     <input class="m-inp" id="mIndLinkInp" placeholder="https://..." inputmode="url">
     <div class="m-btns"><button class="btn" onclick="closeMGuarded('mIndLink')">Cancel</button><button class="btn" onclick="resetIndLink()">Default</button><button class="btn g" onclick="saveIndLink()">Save</button></div>
@@ -6653,7 +6867,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Cloud Sync -->
 <div class="ov" id="mCloud" style="display:none">
   <div class="modal">
-    <h3>⚙ Settings</h3>
+    <h3><span class="h-ic" data-ic="gear"></span>Settings</h3>
     <!-- Export/Import/Backups: bis 2026-08-21 ein eigenes Header-Dropdown
          ("Data"), Nutzer-Wunsch per /goal ("pack data in die
          Einstellungen") - jetzt hier als erste Zeile, gleiches .set-row-
@@ -6665,7 +6879,7 @@ window.fxLogoSvg=function(art){
         <button class="btn" onclick="exportData()">Export</button>
         <button class="btn" onclick="document.getElementById('impFile').click()">Import</button>
         <button class="btn" onclick="openBackupM()">Backups</button>
-        <button class="btn" onclick="openTrashM()">🗑 Trash</button>
+        <button class="btn" onclick="openTrashM()"><span class="h-ic" data-ic="trash"></span>Trash</button>
       </div>
     </div>
     <div class="set-sec">Security</div>
@@ -6715,7 +6929,7 @@ window.fxLogoSvg=function(art){
       <span class="set-row-txt">Telegram messages<span class="set-row-sub">event &amp; price alerts, score flips, morning and weekly report</span></span>
       <label class="tgl"><input type="checkbox" id="telegramToggleBtn" onchange="toggleTelegramEnabled()"><span class="tgl-track"></span></label>
     </div>
-    <h3 style="font-size:var(--fs-base);margin:14px 0 10px">☁ Cloud Sync</h3>
+    <h3 style="font-size:var(--fs-base);margin:14px 0 10px"><span class="h-ic" data-ic="cloud"></span>Cloud Sync</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.6;margin-bottom:10px">Connect a free <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--blue)">Supabase</a> project to automatically sync your data across all your devices (iPad, iPhone, PC). The credentials are stored only locally on this device.</div>
     <label class="dm-lbl">Username (shown on your profile)</label>
     <input class="m-inp" id="cloudUsername" placeholder="e.g. Jonathan">
@@ -6728,8 +6942,8 @@ window.fxLogoSvg=function(art){
     <div id="cloudStatus" style="font-size:var(--fs-sm);color:var(--t3);font-family:var(--ff-num);margin-bottom:10px"></div>
     <div class="m-btns">
       <button class="btn" onclick="closeMGuarded('mCloud')">Close</button>
-      <button class="btn" onclick="cloudPull(true)">⬇ Download</button>
-      <button class="btn" onclick="cloudPush(true)">⬆ Upload</button>
+      <button class="btn" onclick="cloudPull(true)"><span class="h-ic" data-ic="download"></span>Download</button>
+      <button class="btn" onclick="cloudPush(true)"><span class="h-ic" data-ic="upload"></span>Upload</button>
       <button class="btn g" onclick="saveCloudCfg()">Save</button>
     </div>
   </div>
@@ -6748,9 +6962,9 @@ window.fxLogoSvg=function(art){
 </div>
 <div class="ov" id="mHelp" style="display:none">
   <div class="modal" style="max-width:560px">
-    <h3>❓ How FX Analyst Pro works</h3>
+    <h3><span class="h-ic" data-ic="help"></span>How FX Analyst Pro works</h3>
     <div class="help-sec">The score</div>
-    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>, from the release beating or missing its forecast. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted; the same half weight applies to bond yields, COT net positioning and CB Tone. Most biases update automatically from calendar releases; manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the direction against the <b>previous</b> value sets the bias instead, counted at <b>±0.5</b> — half strength, because it is a weaker signal. A release that is more than <b>2 of its own cycles overdue</b> counts <b>0</b> and is marked <b>OUT OF DATE</b> — measured against its own release rhythm, so quarterly reporters are not penalised. The <b>2Y/10Y spread</b> is display-only and always counts 0.</div><div class="help-p"><b>What is shown but deliberately NOT scored:</b> the <b>📈 2-step momentum trend</b> and <b>revisions of the previous value</b>. Both were part of the score until August 2026 and were taken out: the trend had grown into an equal-ranked driver rather than the intended bonus (it accounted for 47% of the USD score and 100% of AUD's), and Citi's CESI leaves a trend term out for the same reason — surprise and momentum act on different horizons. Revisions arrived unreliably (the source carries them for about three days only) and their effect depended on reporting frequency rather than on content. Both still appear on the card, with their colour, because they tell you something — they just no longer move the number.</div><div class="help-p">The <b>weighting switch</b> in the header changes how the points are combined. <b>Classic</b> is the plain sum described above, recomputable in your head. <b>Normalised</b> multiplies each indicator by three <i>measured</i> factors: how big the surprise is against that indicator's own average forecast miss (this is what makes NFP, which misses by tens of thousands, comparable to CPI, which misses by hundredths of a percent — the average miss is used rather than the standard deviation, because squaring lets one outlier inflate the yardstick and make every normal miss afterwards look small), how old the release is (half-life 1.5 of its own cycles), and how much the price actually moved on that indicator's release days in the past. The product is clamped to 0.4–1.8 and centred on 1.0 so the ±2/±3 thresholds keep their meaning. Nothing is assigned by hand; "Data quality" in the asset header shows every number behind it.</div>
+    <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>, from the release beating or missing its forecast. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted; the same half weight applies to bond yields, COT net positioning and CB Tone. Most biases update automatically from calendar releases; manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the direction against the <b>previous</b> value sets the bias instead, counted at <b>±0.5</b> — half strength, because it is a weaker signal. A release that is more than <b>2 of its own cycles overdue</b> counts <b>0</b> and is marked <b>OUT OF DATE</b> — measured against its own release rhythm, so quarterly reporters are not penalised. The <b>2Y/10Y spread</b> is display-only and always counts 0.</div><div class="help-p"><b>What is shown but deliberately NOT scored:</b> the <b>2-step momentum trend</b> (trend chip) and <b>revisions of the previous value</b>. Both were part of the score until August 2026 and were taken out: the trend had grown into an equal-ranked driver rather than the intended bonus (it accounted for 47% of the USD score and 100% of AUD's), and Citi's CESI leaves a trend term out for the same reason — surprise and momentum act on different horizons. Revisions arrived unreliably (the source carries them for about three days only) and their effect depended on reporting frequency rather than on content. Both still appear on the card, with their colour, because they tell you something — they just no longer move the number.</div><div class="help-p">The <b>weighting switch</b> in the header changes how the points are combined. <b>Classic</b> is the plain sum described above, recomputable in your head. <b>Normalised</b> multiplies each indicator by three <i>measured</i> factors: how big the surprise is against that indicator's own average forecast miss (this is what makes NFP, which misses by tens of thousands, comparable to CPI, which misses by hundredths of a percent — the average miss is used rather than the standard deviation, because squaring lets one outlier inflate the yardstick and make every normal miss afterwards look small), how old the release is (half-life 1.5 of its own cycles), and how much the price actually moved on that indicator's release days in the past. The product is clamped to 0.4–1.8 and centred on 1.0 so the ±2/±3 thresholds keep their meaning. Nothing is assigned by hand; "Data quality" in the asset header shows every number behind it.</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
     <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
@@ -6759,7 +6973,7 @@ window.fxLogoSvg=function(art){
     <div class="help-sec">Data</div>
     <div class="help-p">Calendar & indicator values refresh automatically (Forex Factory / TradingView / CFTC / bond closes, hourly via GitHub).</div>
     <div class="help-sec">Sync</div>
-    <div class="help-p">Everything is saved locally and automatically. Connect a free Supabase project via the 👤 button to sync across devices.</div>
+    <div class="help-p">Everything is saved locally and automatically. Connect a free Supabase project via the profile button (top right) to sync across devices.</div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mHelp')">Got it</button></div>
   </div>
 </div>
@@ -6772,7 +6986,7 @@ window.fxLogoSvg=function(art){
      Arbeit an allem anderen aufgeben. -->
 <div class="ov" id="mRecover" style="display:none">
   <div class="modal" style="max-width:720px">
-    <h3>🛟 Recover notes</h3>
+    <h3><span class="h-ic" data-ic="lifebuoy"></span>Recover notes</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.55;margin-bottom:11px">
       Compares your notes against the local backups. Nothing is overwritten — only missing text and missing folders are added back.
     </div>
@@ -6782,19 +6996,19 @@ window.fxLogoSvg=function(art){
 </div>
 <div class="ov" id="mBackup" style="display:none">
   <div class="modal">
-    <h3>🕐 Local Backups</h3>
+    <h3><span class="h-ic" data-ic="clock"></span>Local Backups</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.6;margin-bottom:12px">Up to <strong>5 snapshots</strong> of your data are stored locally on this device — automatically before every cloud download and every 10 minutes. Independent of cloud and undo. No network required.</div>
     <div id="mBackupList"></div>
     <div class="m-btns" style="margin-top:12px">
       <button class="btn" onclick="closeM('mBackup')">Close</button>
-      <button class="btn g" onclick="saveLocalBackup('Manual');openBackupM()" title="Create a backup snapshot now">💾 Back up now</button>
+      <button class="btn g" onclick="saveLocalBackup('Manual');openBackupM()" title="Create a backup snapshot now"><span class="h-ic" data-ic="save"></span>Back up now</button>
     </div>
   </div>
 </div>
 <!-- MODAL: Papierkorb (Nutzer-Wunsch 2026-09-01) -->
 <div class="ov" id="mTrash" style="display:none">
   <div class="modal">
-    <h3>🗑 Trash</h3>
+    <h3><span class="h-ic" data-ic="trash"></span>Trash</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.6;margin-bottom:12px">Deleted notes and folders (including ones a folder deletion left with nowhere to go) land here — restore them individually, or they're removed automatically after <strong>30 days</strong>.</div>
     <div id="mTrashList"></div>
     <div class="m-btns" style="margin-top:12px">
@@ -6841,7 +7055,7 @@ window.fxLogoSvg=function(art){
 <!-- MODAL: Asset-Strength-Karte, Asset-Auswahl (Nutzer-Wunsch 2026-07-27) -->
 <div class="ov" id="mCcyCfg" style="display:none">
   <div class="modal">
-    <h3>⚙️ Asset Strength assets</h3>
+    <h3><span class="h-ic" data-ic="gear"></span>Asset Strength assets</h3>
     <div style="font-size:var(--fs-sm);color:var(--t2);line-height:1.6;margin-bottom:12px">Choose up to 9 assets to rank by score, strongest to weakest.</div>
     <div id="ccyCfgBody"></div>
     <div class="m-btns" style="margin-top:12px"><button class="btn g" onclick="closeM('mCcyCfg')">Done</button></div>

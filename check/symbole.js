@@ -38,6 +38,7 @@
 //   node check/symbole.js [--gegenprobe]          (Glanz ohne Clip)
 //   node check/symbole.js [--gegenprobe-sterne]   (Punkte + Riesenflagge)
 //   node check/symbole.js [--gegenprobe-band]     (Band mit Filter)
+//   node check/symbole.js [--gegenprobe-doppelt]  (Symbol im Titel-Span + nachgetragenes)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -45,6 +46,7 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_STERNE = process.argv.includes('--gegenprobe-sterne');
 const GP_BAND = process.argv.includes('--gegenprobe-band');
+const GP_DOPPELT = process.argv.includes('--gegenprobe-doppelt');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 (async () => {
@@ -162,11 +164,21 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   for (const s of SEITEN) {
     await p.evaluate(s => s.startsWith('sym:') ? gotoSym(s.slice(4)) : showTab(s), s);
     await p.waitForTimeout(500);
+    // Gegenprobe: den alten COT-Fehler nachbauen - ein Kopf, der sein Symbol
+    // im Titel-Span traegt UND ein nachgetragenes .k-ic hat.
+    if (GP_DOPPELT && s === 'cot') await p.evaluate(() => { const h = [...document.querySelectorAll('.cot-card-title')].find(x => x.offsetParent && x.querySelector(':scope > .k-ic'));
+      if (h) { const sp = document.createElement('span'); sp.innerHTML = icn('bars', 15) + 'Doppelt'; h.appendChild(sp); } });
     const r = await p.evaluate(() => {
       const out = [];
       document.querySelectorAll('.rub-hdr,.dw-t,.cot-card-title,.ab-tile-hd').forEach(h => {
         if (!h.offsetParent) return;
-        const n = h.querySelectorAll(':scope > .k-ic, :scope > .ab-tile-ic, :scope > svg.ic').length;
+        // Titelsymbol = direkt im Kopf ODER als erstes Kind des Titel-Spans
+        // (so setzt es z.B. die COT-Karte selbst) - dieselbe Definition wie
+        // in kartenIconsNachtragen. Bis 2026-10-04 zaehlte hier nur "direkt":
+        // die COT-Karte trug ihr eigenes Symbol im Span PLUS ein
+        // nachgetragenes - zwei Symbole, gezaehlt wurde eins. Status-Symbole
+        // (.auto-lock-ic) und Knoepfe (ⓘ, Stern) sind keine Titelsymbole.
+        const n = h.querySelectorAll(':scope > .k-ic, :scope > .ab-tile-ic, :scope > svg.ic, :scope > span:not(.k-ic):not(.ab-tile-ic):not(.auto-lock-ic) > svg.ic:first-child').length;
         const t = (h.querySelector('.rub-inp') || {}).value || h.textContent.trim().slice(0, 30);
         out.push([t, n]);
       });
@@ -198,6 +210,10 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
   if (GP_STERNE) {
     const ok = ['PUNKTE STATT STERNE', 'KOPF-FLAGGE ABGESCHNITTEN'].every(t => F.some(x => x.startsWith(t)));
     console.log(ok ? 'symbole --gegenprobe-sterne: ok (Punkte und ueberstehende Kopf-Flagge werden gemeldet)' : 'symbole --gegenprobe-sterne: FEHLER - nicht gemeldet: ' + F.join(' | ')); process.exit(ok ? 0 : 1);
+  }
+  if (GP_DOPPELT) {
+    const ok = F.some(x => x.startsWith('KARTENSYMBOL') && x.includes('2 Symbole'));
+    console.log(ok ? 'symbole --gegenprobe-doppelt: ok (Symbol im Titel-Span + nachgetragenes wird als 2 gemeldet)' : 'symbole --gegenprobe-doppelt: FEHLER - nicht gemeldet: ' + F.join(' | ')); process.exit(ok ? 0 : 1);
   }
   if (GP_BAND) {
     const ok = F.some(x => x.startsWith('KOPF-BAND MIT FILTER'));

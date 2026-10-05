@@ -14,7 +14,10 @@
 //   - jeder Chart passt in seine Zelle (kein Ueberlauf), fuellt sie (>= 90 %)
 //   - Kopf = Titelzeile + Werkzeugzeile (<= 100 px), Panel-Kopf eine Zeile
 //     (<= 40 px); Filter rechtsbuendig in der Titelzeile, Zeitfilter
-//     rechtsbuendig in der Werkzeugzeile (Dauerregel 2026-09-26)
+//     rechtsbuendig in der Werkzeugzeile (Dauerregel 2026-09-26). Seit
+//     2026-10-04 ist die Titelzeile der Seitenkopf wie ueberall (.pg-titel +
+//     .pg-sub als Block .data-tt): der Filter steht auf der Hoehe DIESES
+//     Blocks (wie Trends/COT/Kalender), nicht auf der Hoehe des Worts "Data".
 //   - Datumsbeschriftung bleibt im Chart (nicht abgeschnitten)
 //   node check/datalayout.js [--gegenprobe]  (festes 2-Spalten-Raster mit
 //   200-px-Zeilen wie frueher -> rot)
@@ -46,7 +49,7 @@ const ALLE = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'NZD', 'GOLD'];
         ph: Math.max(0, ...[...document.querySelectorAll('#dataBody .data-ph')].map(e => e.offsetHeight)),
         panels: document.querySelectorAll('#dataBody .data-panel').length,
         pr: [...document.querySelectorAll('#dataBody .data-panel')].map(e => { const r = e.getBoundingClientRect(); return [r.left, r.width]; }),
-        filt: (() => { const k = document.querySelector('#dataBody .data-head'), f = k && k.querySelector('.data-row select'), z = k && k.querySelector('.chart-leiste-r'); if (!k || !f) return null; const kr = k.getBoundingClientRect(), fr = f.getBoundingClientRect(), t = k.querySelector('.data-h').getBoundingClientRect();
+        filt: (() => { const k = document.querySelector('#dataBody .data-head'), f = k && k.querySelector('.data-row select'), z = k && k.querySelector('.chart-leiste-r'); if (!k || !f) return null; const kr = k.getBoundingClientRect(), fr = f.getBoundingClientRect(), t = (k.querySelector('.data-tt') || k.querySelector('.data-h')).getBoundingClientRect();
           const zb = z && z.querySelector('button') ? z.getBoundingClientRect() : null;
           return { rechts: kr.right - fr.right, zeile: Math.abs((fr.top + fr.bottom) / 2 - (t.top + t.bottom) / 2), zeitRechts: zb ? kr.right - zb.right : null }; })(),
         boxen: boxen.map(bx => { const sv = bx.querySelector('.ind-hist-wrap svg'); const br = bx.getBoundingClientRect();

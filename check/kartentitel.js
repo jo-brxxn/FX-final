@@ -18,7 +18,9 @@ const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
-const TITEL = '.rub-inp,.nc-inp,.pcc-name,.rub-name-static,.ab-tile-t,.cot-card-title,.dw-t-txt,.abc-mon,.wt-name,.rg-name,.mx-card-title,.data-h,.data-pt';
+// .data-h ist seit 2026-10-04 der SEITENtitel der Data-Seite (.pg-titel, 24 px,
+// geprueft von check/hierarchie.js) - kein Kartentitel mehr.
+const TITEL = '.rub-inp,.nc-inp,.pcc-name,.rub-name-static,.ab-tile-t,.cot-card-title,.dw-t-txt,.abc-mon,.wt-name,.rg-name,.mx-card-title,.data-pt';
 const KOPF = '.ab-tile-hd,.rub-hdr,.cot-card-title,.dw-t,.abc-hd';
 
 (async () => {
