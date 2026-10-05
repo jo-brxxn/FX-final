@@ -19351,3 +19351,20 @@ alten Kennfarben: 117 Befunde.
   Leitzins-Differenz, öffnet aber die 2Y-Rechnung — beide Zahlen sind jetzt
   korrekt beschriftet, aber verschieden. Die Carry-Seite selbst bleibt bei
   den Leitzinsen (Swap-Näherung, so beschriftet).
+
+**Nachtrag 592 — erster vollständiger CI-Lauf (2026-10-05):** Lauf 522
+(Stand 591) lief mit dem 90-min-Limit zum ersten Mal seit dem 2026-09-20
+komplett durch (51 min) — rot nur in `zurueck` B: „sent: setSentSub('retail')
+‚Retail Sentiment‘ speichert ohne Markierung“, ohne localStorage-Schlüssel,
+also im synchronisierten Zustand. Lokal (auch mit 4- und 6-fach gedrosselter
+CPU) grün. Ursache im Wächter: die App holt beim Start zusätzlich den
+Forex-Factory-Kalender live (direkt + drei Proxys); der Wächter verlängert für
+seinen Cloud-Test JEDE Netz-Frist auf 180 s. Auf dem Runner mit Internet hing
+dieser Abruf über das 30-s-Datensignal hinaus, die Antwort baute `calEvts`
+mitten in Stufe B neu und wurde dem gerade geklickten Knopf zugeschrieben (in
+der Sandbox lehnt der Proxy sofort ab). Nachgestellt mit 40 s verzögerter
+Live-Antwort: „setSentSub('retail') <calEvts>“; mit abgebrochenen
+Internet-Datenabrufen kein Befund. Fix: `zurueck` bricht Daten-Abrufe
+(fetch/xhr) ins Internet ab (hermetisch, Skripte/Schriften laden weiter) und
+nennt bei einem Befund künftig den geänderten Zustandsteil (`<calEvts>`,
+`<syms>` …). Gegenprobe `--gegenprobe-markierung`: weiter rot (9 Klicks).

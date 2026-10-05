@@ -81,6 +81,17 @@ function flach(o, pre, out) {
   // Test verlaengert, sonst misst A einen abgebrochenen statt eines
   // verspaeteten Abgleichs.
   await p.addInitScript(() => { const o = AbortSignal.timeout.bind(AbortSignal); AbortSignal.timeout = ms => o(Math.max(ms, 180000)); });
+  // ⚠ Hermetisch: Daten-Abrufe ins Internet werden abgebrochen (Skripte/
+  // Schriften laden weiter). Die App holt beim Start zusaetzlich den Forex-
+  // Factory-Kalender LIVE (direkt + drei Proxys). Auf dem GitHub-Runner mit
+  // Internet hing dieser Abruf - die 180-s-Frist oben gilt fuer JEDE Anfrage -
+  // ueber das 30-s-Datensignal hinaus; seine Antwort baute calEvts mitten in
+  // Stufe B neu und wurde dem gerade geklickten Knopf zugeschrieben (CI-Lauf
+  // 522: "sent: setSentSub('retail')", lokal nie, weil die Sandbox die
+  // Proxys sofort ablehnt). Nachgestellt mit 40 s verzoegerter Live-Antwort:
+  // ohne diese Zeile rot (<calEvts>), mit ihr gruen.
+  const HIER = new globalThis.URL(URL).origin;
+  await ctx.route(u => u.origin !== HIER && !u.href.startsWith(FAKE), route => ['fetch', 'xhr'].includes(route.request().resourceType()) ? route.abort() : route.fallback());
   await p.goto(URL); await wartenBisDatenDa(p);
   const weg = () => p.evaluate(() => { ['introOv', 'lockScreen'].forEach(x => { const e = document.getElementById(x); if (e) e.remove(); }); document.querySelectorAll('.ov').forEach(o => { o.style.display = 'none'; }); });
   await weg();
@@ -230,7 +241,10 @@ function flach(o, pre, out) {
         const lsAnders = Object.keys(Object.assign({}, l0, l1)).filter(x => l0[x] !== l1[x]);
         if (snap() !== s0 || lsAnders.length) {
           n++;
-          if (!(_userEditedSinceSync || localStorage.getItem('fxpro_user_pending') === '1')) aus.push(`${s}: ${k.h.slice(0, 70)} "${k.t}"${lsAnders.length ? ' [' + lsAnders.join(',') + ']' : ''}`);
+          // Welcher Teil des Zustands sich geaendert hat (<calEvts>, <syms> ...) -
+          // ohne diese Angabe war der CI-Befund vom 2026-10-05 nicht zuzuordnen.
+          if (!(_userEditedSinceSync || localStorage.getItem('fxpro_user_pending') === '1')) { let teile = ''; try { const A = JSON.parse(s0), B = JSON.parse(snap()); teile = Object.keys(Object.assign({}, A, B)).filter(x => JSON.stringify(A[x]) !== JSON.stringify(B[x])).join(','); } catch (x) {}
+            aus.push(`${s}: ${k.h.slice(0, 70)} "${k.t}"${lsAnders.length ? ' [' + lsAnders.join(',') + ']' : ''}${teile ? ' <' + teile + '>' : ''}`); }
         }
         if ((s === 'cur' && (curPage !== 'cur' || getSym().id !== 'USD')) || (s !== 'cur' && curPage !== s)) { if (s === 'cur') gotoSym('USD'); else showTab(s); await sleep(250); }
       }
