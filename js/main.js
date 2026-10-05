@@ -19174,7 +19174,10 @@ function indHistChart(ind,symId,opts){
     const x=xOf(i),y=yOf(p[2]);
     fcPath+=(started?' L':'M')+x.toFixed(1)+' '+y.toFixed(1);
     started=true;
-    fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${fcR}" fill="var(--red)"/>`;
+    // Forecast = neutrale Referenz, keine Bias-Aussage -> Textfarbe --t1 statt
+    // Rot (Nutzerwahl 2026-10-05 "Rest-Rot neutral"; gegen die blauen
+    // Actual-Balken geprueft: OKLab-ΔE 19,0 normal / 18,7 Deutan, Ziel >= 15)
+    fcDots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${fcR}" fill="var(--t1)"/>`;
   });
   // Bei einem Fenster unter ~13 Monaten Tag+Monat statt Monat+Jahr: eine
   // Tages-/Wochenreihe zeigte sonst "Mar 26, Mar 26, Apr 26 ..." - dieselbe
@@ -19229,7 +19232,7 @@ function indHistChart(ind,symId,opts){
     ${yAchse}
     <line x1="${padL}" y1="${y0.toFixed(1)}" x2="${W-padR}" y2="${y0.toFixed(1)}" stroke="var(--bd)" stroke-width="1"/>
     ${bars}
-    ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--red)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>`:''}
+    ${fcPath?`<path d="${fcPath}" fill="none" stroke="var(--t1)" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>`:''}
     ${fcDots}
     ${xlab}
   </svg>`;

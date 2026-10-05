@@ -1,17 +1,21 @@
 name: Waechter
 
-# Laeuft bei jedem Push und jedem Pull Request auf index.html, die Workflows
-# oder die Waechter selbst. Die stuendlichen Daten-Commits (nur *.json)
-# loesen ihn NICHT aus - sie aendern keinen Code.
+# Laeuft bei jedem Push und jedem Pull Request auf index.html, die Module
+# (js/), die Workflows oder die Waechter selbst. Die stuendlichen
+# Daten-Commits (nur *.json) loesen ihn NICHT aus - sie aendern keinen Code.
+# ⚠ js/** fehlte bis 2026-10-05: seit der Modul-Aufteilung (2026-08-25) liefen
+# reine Modul-Aenderungen ungeprueft durch.
 on:
   push:
     paths:
       - 'index.html'
+      - 'js/**'
       - 'check/**'
       - '.github/workflows/**'
   pull_request:
     paths:
       - 'index.html'
+      - 'js/**'
       - 'check/**'
       - '.github/workflows/**'
   workflow_dispatch:
@@ -19,7 +23,11 @@ on:
 jobs:
   waechter:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # 45 statt 25 Minuten (Nutzer-Wahl 2026-10-05): die Suite braucht lokal
+    # ~27 Minuten, seit dem 2026-09-20 (letzter gruener Lauf Nr. 395) wurde
+    # jeder Lauf am alten Limit abgebrochen - 97 von 100 "cancelled", kein
+    # einziges Ergebnis. Waechst die Suite weiter: Limit mit anheben.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:

@@ -19146,3 +19146,71 @@ Nebenbefund: Der Wächter-Workflow auf GitHub (`checks.yml`) bricht seit dem
 25 Minuten ab — 97 der letzten 100 Läufe „cancelled“, die Suite braucht
 lokal ~27 Minuten. Fehler fallen dort niemandem mehr auf. Nicht geändert,
 Nutzer-Entscheidung offen.
+
+## VERSION-CHECK-590 (2026-10-05) — Design-Audit Runde 2, Paket A
+
+Runde-2-Wahl des Nutzers (alle zwölf Punkte + „Limit auf 45 min“), geliefert
+in drei geprüften Paketen. Paket A:
+
+**CI.** Der Wächter-Workflow (`checks.yml`) lief seit dem 2026-09-20 (letzter
+grüner Lauf Nr. 395) in jedem Lauf ins Job-Limit von 25 Minuten — 97 der
+letzten 100 Läufe „cancelled“, die Suite braucht lokal ~27 Minuten. Limit
+45 Minuten. Mitbehoben (gefunden beim Lesen): `js/**` fehlte in den
+Auslöse-Pfaden — seit der Modul-Aufteilung (2026-08-25) lösten reine
+Modul-Änderungen gar keinen Lauf aus.
+
+**Rest-Rot.** Alle 22 Seiten nach rotem Text/Füllung/Linie/Rahmen
+abgesucht und jede Fundstelle eingeordnet. Echt falsch: Forecast-Linie,
+-Punkte und -Legende der Indikator-Charts (Data: 11 Punkte, 1 Linie,
+Legende) → `--t1`; gegen die blauen Actual-Balken mit dem
+Paletten-Validator geprüft: OKLab-ΔE 19,0 normal / 18,7 Deutan (Ziel ≥ 15;
+`--t2` fiel mit 14,2 durch). Zurück-Pille im Archiv → Aktiv-Ton. Die roten
+„künftigen Sitzungen“ bei Rate Probabilities erzeugt seit langem kein Code
+mehr (`.rateprob-pill` nur noch CSS) — Regeln entfernt. Bewusst rot
+geblieben: Korrelations-Warnung (`dw-corr_warn`, Warnung), „▸ SUMMARY“ einer
+bearishen Karte (Bias-Farbe), COT-Short-Anteil, Short-Richtung im Carry,
+Saisonalität < 50 % „up“.
+
+**Aktiv-Ton in allen hellen Vorlagen.** Linear, Stripe, Swiss und Notion
+setzten `--ui-act:var(--blue)` — aktiv war dort exakt bullish. Jetzt ihr
+eigener Kopf-/Leistenton (#1C1D21 / #0A2540 / #111111 / #37352F, `-rgb` aus
+der Farbe gerechnet). Gemessen: 135 aktive Elemente in 5 hellen Designs auf
+10 Seiten, vorher und nachher 0 unsichtbar/unlesbar; Gegenprobe (Aktiv-Ton =
+Kartenfarbe) meldet 55.
+
+**Drei Textstufen.** ⚠ Die Zahlen in der Rückfrage (4,88/4,89:1) stammten aus
+einem alten Eintrag; gemessen gegen die heutige Kartenfläche lagen t2/t3 bei
+6,40/6,41:1 (Standard), in Swiss sogar vertauscht (6,85/7,30). Ein „t2 ~7:1“
+wäre unsichtbar gewesen. Umgesetzt deshalb das Prinzip der Wahl: t3 bleibt
+(kein Kontrast wird schlechter), t2 = geometrisches Mittel von t1 und t3
+(gleicher Farbton): Standard t2 #505C77 → #444E65 (9,90 / 7,96 / 6,41:1),
+Linear #3B3F47, Stripe #3A495C, Swiss #383838, Notion #423E3A, Carbon
+#C6CBD0, Midnight #BCC8DA, Graphite #C0C4CB, Nordic #CFD6E1, Solarized
+#BEC7C4; Kopf/Leiste Standard #AEBAD0, helle Vorlagen #C8CCD3. Jede Stufe
+≥ 1,166-fach von der nächsten (vorher bis 0,94).
+
+**iPad.** Mit Touch-Emulation (`hover:none`) gemessen: Kalender-× 0,20,
+Glocke 0,22, Set-ups-Stern 0,40; im Bearbeitungsmodus Karten-▲▼ 0,05–0,20,
+Karten-× 0,15, Karten-Stern 0,18, Indikator-▲▼ 0,10–0,35, Indikator-× 0,35 —
+alle antippbar, aber kaum zu sehen (die Hover-Regeln stehen in
+`@media (hover:hover)`, es gab keine einzige Touch-Regel). Jetzt 1,0
+(deaktivierte ▲▼ 0,3); deaktivierte Knöpfe überall 0,22 → 0,45 (Undo/Redo).
+`.idel`, `.mv`, `.nc-del` erzeugt kein Code mehr (toter CSS, unverändert).
+
+**Kalender.** Actual/Forecast/Previous samt Köpfen rechtsbündig. Der
+Schlagzeilen-Knopf steht hinter dem Termin-Namen statt in der Aktionsspalte
+(die mit ihm 17,5 px nach beiden Seiten überlief und das × abschnitt, 589).
+Zeilenhöhe: 1180 px unverändert (0 von 12 Zeilen), 820 px 4 von 12 eine
+Zeile höher (38 → 59 px), 600 px fast alle (Namensspalte schmal). Die
+Glocken-Fläche reichte 20 px nach links und hätte nun über der letzten
+Ziffer der rechtsbündigen Previous-Zahl gelegen → begrenzt bis zur
+Spaltenkante je Breakpoint (−7,5 / −13,5 / −12,5 px; gemessen 0,1 px Abstand
+bei 600/820/1180/1440, Fläche 22–28 px breit statt 35).
+
+**Wächter.** `check/designregeln.js` J (Touch-Sichtbarkeit) und F SPALTE
+(Aktionsspalte läuft nicht über; Gegenprobe Knopf zurück in die Spalte:
+12,5–17,5 px gemeldet), nachgebaute Kalenderzeile auf den neuen Platz;
+Gegenprobe alle 10 Stufen rot. `check/theme.js` 5 (drei Textstufen) und 6
+(Aktiv-Ton ≠ Bias-Blau, `-rgb` passt, Text lesbar) — gegen 589 rot (20 + 4
+Befunde). Der Trends-Fokus (Paket C) wird ein reiner Ansichtszustand wie
+`abCalSicht` — bewusst nicht synchronisiert.

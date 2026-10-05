@@ -268,11 +268,20 @@ function calRowHtml(ev,opts){
       ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
     </div>`;
   }
+  // Schlagzeilen zu diesem Termin: gleiche Waehrung, gleicher Tag. Reine
+  // Koinzidenz-Anzeige - der Knopf oeffnet den News-Tab auf dieses Asset
+  // und diesen Tag, es wird kein inhaltlicher Zusammenhang behauptet.
+  // Er steht HINTER dem Termin-Namen, nicht in der Aktionsspalte (Nutzerwahl
+  // 2026-10-05): Knopf 27 + Glocke 13 + × 9 px passten nicht in deren
+  // 24/34/30 px, die Spalte lief nach beiden Seiten ueber und das × wurde am
+  // Tabellenrand 2,5 px abgeschnitten (gemessen 2026-10-05, auch in 587).
+  const nH=evtNewsCount(ev);
+  const newsBtn=nH?`<button class="cal-news-btn" onclick="gotoNewsFor('${escJH(evtNewsIds(ev)[0]||'')}','${escJH(ev.date||'')}')" title="${escH(nH+' headline(s) on this day mentioning '+evtNewsIds(ev).join('/'))}">${icn('note',11)}<span>${nH}</span></button>`:'';
   return`<div class="cal-row${isToday?' today':''}${past}">
     <div class="cal-time">${ev.time||'—'}</div>
     <div class="cal-ccy">${escH(ev.currencies||'')}</div>
     <div class="cal-imp ${ic}">${impLbl}</div>
-    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}</div>
+    <div class="cal-evname" title="${escH(ev.name)}">${escH(ev.name)}${newsBtn}</div>
     ${val(ev.actual,ac)}
     ${val(ev.forecast)}
     ${val(ev.previous)}
@@ -282,12 +291,7 @@ function calRowHtml(ev,opts){
       const canAlert=!isPast&&evtTimeValid(ev.time);
       const alertBtn=canAlert?`<button class="cal-alert-btn${hasAlert?' on':''}" data-ekey="${escH(ekey)}" onclick="openEvtAlertM(this.dataset.ekey)" title="${hasAlert?'Telegram alert set — tap to edit or remove':'Set a Telegram alert for this event'}">${icn('bell',13)}</button>`:'';
       const other=opts.delAction?`<button class="cal-row-del" onclick="${opts.delAction}" title="Delete">×</button>`:'';
-      // Schlagzeilen zu diesem Termin: gleiche Waehrung, gleicher Tag. Reine
-      // Koinzidenz-Anzeige - der Knopf oeffnet den News-Tab auf dieses Asset
-      // und diesen Tag, es wird kein inhaltlicher Zusammenhang behauptet.
-      const nH=evtNewsCount(ev);
-      const newsBtn=nH?`<button class="cal-news-btn" onclick="gotoNewsFor('${escJH(evtNewsIds(ev)[0]||'')}','${escJH(ev.date||'')}')" title="${escH(nH+' headline(s) on this day mentioning '+evtNewsIds(ev).join('/'))}">${icn('note',11)}<span>${nH}</span></button>`:'';
-      return(alertBtn||other||newsBtn)?`<div class="cal-row-actions">${newsBtn}${alertBtn}${other}</div>`:'<div></div>';
+      return(alertBtn||other)?`<div class="cal-row-actions">${alertBtn}${other}</div>`:'<div></div>';
     })()}
     ${sub?`<div class="cal-evsub">${escH(sub)}</div>`:''}
   </div>`;

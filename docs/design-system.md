@@ -1416,14 +1416,15 @@ Frage ob man es speichern will … bearish nein und in bullish Farbe ja speicher
   Karte); Vorbelegungen wie der Pin stehen sichtbar als Haken im Editor, nie still im Hintergrund.
 - Wächter: `check/eingaben.js`.
 
-## Design-Audit 2026-10-04 — Dauerregeln (VERSION-CHECK-588)
+## Design-Audit 2026-10-04 — Dauerregeln (VERSION-CHECK-588, Runde 2 ab 590)
 
 Nutzer: *„Recherchier im Internet und mach dich schlau über Webseiten Designs
 und Dashboards … Was sollte geändert werden? … Ich will am Ende ein Webseiten
 Design ohne Schwächen haben"*, danach *„Funktionalität steht an oberster
-Stelle"*. Per Rückfrage gewählt (Runde 1). Messwerte vorher/nachher:
-`docs/CHANGELOG.md`. Alle Regeln prüft `check/designregeln.js` (A–I, mit
-Gegenprobe); D1 zusätzlich `check/symbole.js` C, D4 `check/hierarchie.js`.
+Stelle"*. Per Rückfrage gewählt (Runde 1, 2026-10-04; Runde 2, 2026-10-05).
+Messwerte vorher/nachher: `docs/CHANGELOG.md`. Die Regeln prüft
+`check/designregeln.js` (A–J, mit Gegenprobe); D1 zusätzlich
+`check/symbole.js` C, D4 `check/hierarchie.js`, G/K `check/theme.js` (5/6).
 
 **A — Keine Emojis in der Oberfläche.** Titel, Knöpfe, Fenster, Beschriftungen
 tragen Linien-Symbole aus `ICONS` (`icn(name,size)`); in statischem HTML als
@@ -1493,8 +1494,14 @@ keine Überdeckung).
 **G — Aktiv = Navy.** „Gewählt/aktiv“ ist `--ui-act` (#172A46, mit Weiß
 14:1) — nie mehr das Bias-Blau (#0B6BEA lag praktisch auf bullish #0B5FCC).
 Blau ist exklusiv bullish. In der dunklen Seitenleiste gilt `--rail-on`
-(Navy auf Navy wäre unsichtbar). Die Design-Vorlagen (Linear, Stripe, …)
-behalten ihren eigenen Aktiv-Ton.
+(Navy auf Navy wäre unsichtbar). **Jede helle Design-Vorlage** nimmt ihren
+eigenen dunklen Kopf-/Leistenton (`--chrome-bg`: Linear #1C1D21, Stripe
+#0A2540, Swiss #111111, Notion #37352F; seit VERSION-CHECK-590 — bis dahin
+stand dort `var(--blue)`, also exakt das Bias-Blau), die dunklen ihr
+`--accent`. `--ui-act-rgb` immer als Zahlen zur Farbe passend. Geprüft:
+`check/theme.js` 6 (ΔE ≥ 15 zum Bias-Blau, `-rgb` passt, Text ≥ 4,5:1);
+kein Aktiv-Zustand verschwindet im Kopf/in der Leiste (gemessen: 135
+aktive Elemente in 5 hellen Designs, 0 unsichtbar).
 
 **H — Rot nur bearish/Warnung.** Rot bleibt: bearish, Löschen/Entfernen,
 Warnungen/Fehler, der LIVE-Punkt, stark erfüllte STRESS-Szenarien im Regime
@@ -1502,12 +1509,44 @@ Warnungen/Fehler, der LIVE-Punkt, stark erfüllte STRESS-Szenarien im Regime
 Jetzt-Linie im Kalender (Navy), das auffällige „!“ an „Today“ (Amber `--due`
 = „Termin steht bevor“, pulsiert weiter), Impact HIGH (Amber `--due`,
 MEDIUM/LOW grau), aktive Filter (Navy), ein ruhiges Leit-Regime und seine
-Haken (Navy).
-Offen (nicht Teil der Wahl, Runde 2): rote Forecast-Linie in Indikator-
-Charts, rote Zukunfts-Sitzungen bei Rate Probabilities, rote Zurück-Pille im
-Archiv (Nutzerwunsch 2026-08-04).
+Haken (Navy). Seit Runde 2 (590) auch nicht mehr: Forecast-Linie/-Punkte/
+-Legende der Indikator-Charts (`--t1` — neutrale Referenz; OKLab-ΔE 19 zu
+den blauen Actual-Balken, Ziel ≥ 15), die Zurück-Pille im Archiv
+(Aktiv-Ton). Die roten „künftigen Sitzungen“ bei Rate Probabilities waren
+nur noch toter CSS (kein Code erzeugt die Pillen) — entfernt. Bewusst rot
+(alle Seiten nachgemessen): Korrelations-Warnung, „▸ SUMMARY“ einer
+bearishen Karte (Bias-Farbe der Karte), Short-Anteil/-Richtung,
+Saisonalität unter 50 % „up“.
 
 **I — Seitentitel und Schalter.** Seitentitel siehe „Schrifthierarchie“
 (überall gleiche Stelle + Untertitel). Bedienelemente ohne Text tragen eine
 sichtbare Beschriftung, wenn ihre Bedeutung nicht aus dem Symbol folgt
 (Schalter „SUMMARIES“).
+
+**J — Auf Touch voll sichtbar (Runde 2).** Bedienelemente, die am Desktop
+erst per Hover kräftig werden (Kalender-Glocke/×, Set-ups-Stern, Notiz-Stern,
+im Bearbeitungsmodus ▲▼/×/Stern), stehen unter `@media (hover:none)` auf
+voller Deckkraft (deaktivierte ▲▼ 0,3) — vorher auf dem iPad dauerhaft
+0,05–0,40. Deaktivierte Knöpfe überall 0,45 (vorher 0,22: Undo/Redo wirkten
+wie ein Darstellungsfehler). Neue Hover-Bedienelemente bekommen ihre
+Touch-Zeile im Block „R6“ am Ende des Haupt-`<style>`. Ausnahme mit Absicht:
+der Ordner-Löschknopf im Archiv (`.anf-del`) erscheint am gewählten Ordner —
+überall eingeblendet hieße versehentliches Löschen. Geprüft:
+`check/designregeln.js` J (Touch-Emulation, `hover:none`).
+
+**K — Drei Textstufen (Runde 2).** `--t1` > `--t2` > `--t3`, je mindestens
+1,12-facher Kontrast gegen die Kartenfläche (im Kopf gegen `--chrome-bg`).
+`--t3` ist die leiseste Stufe und wird nie heller gemacht (AA, und der
+Nutzer-Wunsch „die Webseite ist zu weiß“ vom 2026-08-21); `--t2` liegt
+genau in der Mitte: geometrisches Mittel der Kontraste von t1 und t3,
+gleicher Farbton, nur die Helligkeit verschoben. Bis 589 lagen t2 und t3 in
+allen Vorlagen praktisch gleich (Standard 6,40/6,41:1, Swiss vertauscht).
+Neue Vorlage → t2 so ausrechnen, nicht schätzen. Geprüft: `check/theme.js` 5.
+
+**L — Kalenderzeile (Runde 2).** Actual/Forecast/Previous und ihre Köpfe
+rechtsbündig (≤ 560 px weiter links mit „A:/F:/P:“). Der Schlagzeilen-Knopf
+steht hinter dem Termin-Namen und läuft im Text mit (bei schmaler
+Namensspalte bricht er mit um — 820 px: 4 von 12 Zeilen eine Zeile höher);
+die Aktionsspalte trägt nur Glocke + × und bleibt in ihren 24/34/30 px
+(`designregeln` F SPALTE). Die Glocken-Fläche reicht nach links bis zur
+Kante der Previous-Spalte, nie über die Zahl.

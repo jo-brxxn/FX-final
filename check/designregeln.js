@@ -27,6 +27,9 @@
 //   I) der Schalter im Asset-Kopf ist sichtbar beschriftet ("Summaries"),
 //      das Wort schaltet mit, und der Tooltip sagt den WIRKLICHEN Zustand
 //      (bis 2026-10-04 stand er verkehrt herum)
+//   J) Touch (kein Hover, wie iPad): Bedienelemente, die erst per Hover
+//      kraeftig werden, sind dort voll sichtbar (>= 0,6), deaktivierte
+//      Knoepfe erkennbar (>= 0,4) - vorher Kalender-× 0,20, Undo/Redo 0,22
 //   node check/designregeln.js [--gegenprobe]
 //   (Gegenprobe: je Stufe ein eingebauter Fehler -> JEDE Stufe muss rot sein)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
@@ -49,6 +52,7 @@ const GP_CSS = [
   ':root{--ui-act:#0B5FCC!important;--ui-act-rgb:11,95,204!important}', // G
   '.cal-imp.ih{color:var(--red)!important}',                            // H
   '.sw-lbl{display:none!important}',                                    // I
+  '@media (hover:none){.cal-row-del{opacity:.2!important}}',             // J (Kalender-× auf Touch blass wie vor 590)
   'body,body *{font-family:Arial,sans-serif!important}',                // A (Symbolschrift fehlt)
 ].join('\n');
 
@@ -69,7 +73,7 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
 
   // ════ 1180 px: alle Stufen ═════════════════════════════════════════════
   let p = await neueSeite(1180);
-  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0, kalNews: 0 };
+  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0, kalNews: 0, touch: 0 };
   for (const z of SEITEN) {
     await oeffne(p, z); await p.waitForTimeout(1300);
     if (GEGENPROBE && z === 'trends') await p.evaluate(() => { const t = document.querySelector('#pgTrends .pg-titel'); if (t) t.textContent += ' 📈'; });
@@ -207,15 +211,18 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     for (const z of SEITEN) {
       await oeffne(p, z); await p.waitForTimeout(1200);
       // Datenunabhaengig: eine Kalenderzeile mit Schlagzeilen-Knopf + Glocke + ×.
-      // Den Knopf gibt es nur an Tagen mit passenden Schlagzeilen - die
-      // Glocken-Flaeche lag ueber ihm, gefunden erst mit den Daten vom
-      // 2026-10-05 (Volllauf 2). Ohne kommenden Termin (Wochenende) entfaellt sie.
-      if (z === 'cal') n.kalNews += await p.evaluate(() => {
-        if (document.querySelector('.cal-row-actions .cal-news-btn+.cal-alert-btn')) return 1;
-        const a = [...document.querySelectorAll('.cal-row-actions')].find(x => x.offsetParent && x.querySelector('.cal-alert-btn') && x.querySelector('.cal-row-del'));
-        if (!a) return 0;
-        a.insertAdjacentHTML('afterbegin', '<button class="cal-news-btn" title="test"><svg class="ic" width="11" height="11" viewBox="0 0 24 24"></svg><span>1</span></button>');
-        return 1; });
+      // Den Knopf gibt es nur an Tagen mit passenden Schlagzeilen - in der
+      // Aktionsspalte lag die Glocken-Flaeche ueber ihm und die Spalte lief
+      // ueber (gefunden erst mit den Daten vom 2026-10-05). Seit 590 steht er
+      // hinter dem Termin-Namen; die Gegenprobe setzt ihn an den alten Platz.
+      // Ohne kommenden Termin (Wochenende) entfaellt die Zeile.
+      if (z === 'cal') n.kalNews += await p.evaluate(gp => {
+        const knopf = '<button class="cal-news-btn" title="test"><svg class="ic" width="11" height="11" viewBox="0 0 24 24"></svg><span>1</span></button>';
+        const zeile = [...document.querySelectorAll('.cal-row:not(.compact)')].find(x => x.offsetParent && x.querySelector('.cal-alert-btn') && x.querySelector('.cal-row-del'));
+        if (!zeile) return 0;
+        if (gp) zeile.querySelector('.cal-row-actions').insertAdjacentHTML('afterbegin', knopf);
+        else if (!zeile.querySelector('.cal-evname .cal-news-btn')) zeile.querySelector('.cal-evname').insertAdjacentHTML('beforeend', knopf);
+        return 1; }, GEGENPROBE);
       const r = await p.evaluate(vw => {
         const out = { svg: [], a: [], b: [], fl: 0, el: 0 };
         if (vw === 820) document.querySelectorAll('svg text').forEach(e => { const r = e.getBoundingClientRect(); if (!r.width || !e.textContent.trim() || e.closest('.fxlogo')) return; const m = e.getScreenCTM(); if (!m) return;
@@ -262,8 +269,19 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
             const i = h.closest(IA); if (i && i !== e && !i.contains(e) && !e.contains(i)) out.b.push(`${nm(e)} verliert Flaeche an ${nm(i)}`);
           });
         });
+        // Aktionsspalte der Kalenderzeile: ihr Inhalt bleibt in der Spalte. Bis
+        // 590 lief sie mit Schlagzeilen-Knopf zentriert ~17 px nach beiden Seiten
+        // ueber, das × wurde am Tabellenrand 2,5 px abgeschnitten (Glocke + ×
+        // allein: 26,8 px in 24 px = 1,4 px je Seite, deshalb 3 px Toleranz).
+        out.spalte = [];
+        pg.querySelectorAll('.cal-row:not(.compact) .cal-row-actions').forEach(a => { if (!a.offsetParent || !a.children.length) return;
+          const q = a.getBoundingClientRect(); let l = Infinity, rr = -Infinity;
+          [...a.children].forEach(c => { const k = c.getBoundingClientRect(); if (k.width) { l = Math.min(l, k.left); rr = Math.max(rr, k.right); } });
+          const ueber = Math.max(q.left - l, rr - q.right);
+          if (ueber > 3) out.spalte.push(`Aktionsspalte laeuft ${ueber.toFixed(1)} px ueber (${[...a.children].map(c => String(c.className).split(' ')[0]).join(' + ')})`); });
         return out;
       }, vw);
+      [...new Set(r.spalte)].forEach(x => fail(`F SPALTE ${vw}`, `${z}: ${x}`));
       // I) das Wort am Schalter ist bei jeder Breite anklickbar (bei 820 px lag es
       // zuerst ausserhalb des scrollenden .dmeta - sichtbar, aber nicht klickbar)
       if (z === 'A:USD') { const lb = await p.evaluate(() => { const l = document.querySelector('label.sw-lbl'); if (!l || !l.offsetParent) return 'fehlt'; l.scrollIntoView({ block: 'center' }); const q = l.getBoundingClientRect(); const h = document.elementFromPoint((q.left + q.right) / 2, (q.top + q.bottom) / 2); return h === l || l.contains(h) ? '' : 'Klick trifft ' + (h ? h.tagName.toLowerCase() + '.' + String(h.className).split(' ')[0] : 'nichts'); });
@@ -275,16 +293,47 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     }
     await p.close();
   }
+
+  // ════ J) Touch (kein Hover, wie iPad): Bedienelemente, die erst per Hover
+  // kraeftig werden, sind dort voll sichtbar; deaktivierte Knoepfe erkennbar.
+  // Vorher gemessen: Kalender-× .20, Glocke .22, Set-ups-Stern .40, im
+  // Bearbeitungsmodus Karten-× .15, Indikator-× .35, Undo/Redo .22. ════
+  {
+    const ctx = await b.newContext({ viewport: { width: 1180, height: 1600 }, hasTouch: true });
+    const t = await ctx.newPage();
+    await t.addInitScript(() => { try { localStorage.setItem('fxpro_help_seen', '1'); localStorage.setItem('fxpro_intro_anim_enabled', '0'); } catch (e) {} });
+    t.on('pageerror', e => perr.push(String(e)));
+    await t.goto(URL); await wartenBisDatenDa(t);
+    await t.evaluate(() => { ['introOv', 'lockScreen'].forEach(x => { const e = document.getElementById(x); if (e) e.remove(); }); });
+    if (GEGENPROBE) await t.addStyleTag({ content: GP_CSS });
+    if (await t.evaluate(() => matchMedia('(hover:hover)').matches)) fail('J TOUCH', 'Touch-Emulation greift nicht ((hover:hover) ist wahr) - Messung ungueltig');
+    for (const [z, bearb] of [['cal', 0], ['pairs', 0], ['A:USD', 1]]) {
+      await t.evaluate(([z, bearb]) => { document.body.classList.toggle('ind-edit-mode', !!bearb); const [a, v] = z.split(':'); if (a === 'A') gotoSym(v); else showTab(a); }, [z, bearb]);
+      await t.waitForTimeout(1200);
+      const j = await t.evaluate(() => {
+        const out = [], zahl = { n: 0 };
+        const pruef = (sel, min) => document.querySelectorAll(sel).forEach(e => { const q = e.getBoundingClientRect(); if (q.width < 2 || q.height < 2) return;
+          const o = +getComputedStyle(e).opacity; zahl.n++; if (o < min) out.push(`${sel} Deckkraft ${o.toFixed(2)} (min ${min})`); });
+        pruef('.cal-row-del,.cal-alert-btn,.dw-mark,.rdel,.idel2,.rstar,.res-note-star', 0.6);
+        pruef('.rmv:not(:disabled),.imv:not(:disabled)', 0.6);
+        pruef('.btn:disabled', 0.4);
+        return { out: [...new Set(out)], n: zahl.n };
+      });
+      n.touch += j.n; j.out.forEach(x => fail('J TOUCH', `${z}: ${x}`));
+    }
+    await t.evaluate(() => document.body.classList.remove('ind-edit-mode'));
+    await ctx.close();
+  }
   await b.close();
   perr.forEach(x => fail('JS-FEHLER', x));
 
-  if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen} - Selektoren veraltet?`);
+  if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200 || n.touch < 50) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen}, Touch ${n.touch} - Selektoren veraltet?`);
   if (GEGENPROBE) {
-    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I '];
+    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J '];
     const fehlt = stufen.filter(s => !F.some(f => f.startsWith(s)));
     if (fehlt.length) { console.log('designregeln --gegenprobe: FEHLER - nicht gemeldet: ' + fehlt.join(',')); process.exit(1); }
-    console.log(`designregeln --gegenprobe: ok (alle 9 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
+    console.log(`designregeln --gegenprobe: ok (alle 10 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
   }
   if (F.length) { console.log(`designregeln: ${F.length} Befund(e)`); [...new Set(F)].slice(0, 60).forEach(x => console.log('  ' + x)); process.exit(1); }
-  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet)`);
+  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet, ${n.touch} Touch-Bedienelemente sichtbar)`);
 })().catch(e => { console.log('designregeln: ABBRUCH ' + e.message); process.exit(1); });

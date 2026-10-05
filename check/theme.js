@@ -9,6 +9,8 @@
 //      kein Geschmacksfall, sondern eine falsche Aussage ueber die Daten
 //   4. jede Vorlage MUSS jedes Pflicht-Token setzen; ein vergessenes Token
 //      erbt still den Wert der vorherigen Vorlage
+//   5. drei unterscheidbare Textstufen t1 > t2 > t3 (Karte und Kopfzeile)
+//   6. hell: Aktiv-Ton != Bias-Blau, -rgb passt zur Farbe, Text darauf lesbar
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -51,6 +53,18 @@ function sat([r, g, b]) {
   if (mx === mn) return 0;
   return l > 0.5 ? (mx - mn) / (2 - mx - mn) : (mx - mn) / (mx + mn);
 }
+
+// Wahrgenommener Farbabstand (OKLab, x100 - dieselbe Skala wie der
+// Paletten-Validator): Helligkeit UND Buntheit zaehlen, nicht nur der Kontrast.
+function oklab([r, g, b]) {
+  const f = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  const R = f(r), G = f(g), B = f(b);
+  const l = Math.cbrt(0.4122214708 * R + 0.5363325363 * G + 0.0514459929 * B);
+  const m = Math.cbrt(0.2119034982 * R + 0.6806995451 * G + 0.1073969566 * B);
+  const s = Math.cbrt(0.0883024619 * R + 0.2817188376 * G + 0.6299787005 * B);
+  return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s, 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s, 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+}
+const deltaE = (a, b) => { const A = oklab(a), B = oklab(b); return 100 * Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]); };
 
 // ⚠ --card ist seit dem 2026-09-14 die Flaeche JEDER Karte und steht nicht
 // mehr als Alias auf --bg1. Ohne Pflichteintrag erbt eine Vorlage, die ihn
@@ -104,7 +118,8 @@ function pruefeTokensStatisch() {
         '--t0','--t1','--t2','--t3','--green','--red','--amber','--due','--blue','--accent',
         '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
         '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
-        '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--success','--live','--purple'];
+        '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--success','--live','--purple',
+        '--card','--ui-act','--ui-act-rgb','--ui-act-fg'];
       const o = {};
       namen.forEach(n => o[n] = g(n));
       // Kopfzeilen-Scope getrennt messen: dort werden die Textstufen gedreht.
@@ -112,7 +127,7 @@ function pruefeTokensStatisch() {
       if (hdr) {
         const hs = getComputedStyle(hdr);
         o.__hdr = { t0: hs.getPropertyValue('--t0').trim(), t1: hs.getPropertyValue('--t1').trim(),
-                    t2: hs.getPropertyValue('--t2').trim(), bg: g('--chrome-bg') };
+                    t2: hs.getPropertyValue('--t2').trim(), t3: hs.getPropertyValue('--t3').trim(), bg: g('--chrome-bg') };
       }
       return o;
     }, th.id);
@@ -176,6 +191,25 @@ function pruefeTokensStatisch() {
       const s = sat(am);
       if (s > 0.28) fail('BEDEUTUNG', `${wo} --amber (neutral) ist mit ${(s*100).toFixed(0)}% Saettigung keine neutrale Farbe mehr`);
     }
+
+    // 5. Drei Textstufen (Nutzerwahl 2026-10-05 "Drei echte Graustufen"): t1 > t2 > t3
+    // gegen die Kartenflaeche bzw. den Kopfzeilen-Grund, je >= 1,12-facher Kontrast.
+    // Bis 589 lagen t2/t3 in JEDER Vorlage praktisch gleich (Standard 6,40/6,41:1,
+    // Swiss sogar vertauscht 6,85/7,30) - die mittlere Stufe gab es gar nicht.
+    const stufen = (bg, ts, wo2) => { if (!bg || ts.some(c => !c)) return; const k = ts.map(c => kontrast(c, bg));
+      if (!(k[0] / k[1] >= 1.12 && k[1] / k[2] >= 1.12)) fail('STUFEN', `${wo2}: t1/t2/t3 ${k.map(x => x.toFixed(2)).join(' / ')}:1 - keine drei unterscheidbaren Stufen (je >= 1,12x)`); };
+    stufen(parse(w['--card']), [parse(w['--t1']), parse(w['--t2']), parse(w['--t3'])], `${wo} auf --card`);
+    if (w.__hdr) stufen(parse(w.__hdr.bg), [parse(w.__hdr.t1), parse(w.__hdr.t2), parse(w.__hdr.t3)], `${wo} Kopfzeile`);
+
+    // 6. Aktiv-Ton (Nutzerwahl 2026-10-04/05): in jeder HELLEN Vorlage ein eigener
+    // Ton, nicht das Bias-Blau - bis 589 war --ui-act in Linear/Stripe/Swiss/Notion
+    // exakt --blue (= bullish). Die -rgb-Variante muss zur Farbe passen (eine
+    // falsch abgetippte faerbt alle Toenungen still falsch), Text darauf lesbar.
+    const ua = parse(w['--ui-act']), bl = parse(w['--blue']), b0 = parse(w['--bg0']);
+    if (ua && bl && b0 && lum(b0) > 0.5 && deltaE(ua, bl) < 15) fail('AKTIV', `${wo} --ui-act ${w['--ui-act']} liegt am Bias-Blau ${w['--blue']} (ΔE ${deltaE(ua, bl).toFixed(1)} < 15) - aktiv sieht aus wie bullish`);
+    const uaRgb = (w['--ui-act-rgb'] || '').split(',').map(x => parseFloat(x));
+    if (ua && (uaRgb.length !== 3 || uaRgb.some((v, i) => !(Math.abs(v - ua[i]) <= 1)))) fail('AKTIV', `${wo} --ui-act-rgb "${w['--ui-act-rgb']}" passt nicht zu --ui-act ${w['--ui-act']}`);
+    const uf = parse(w['--ui-act-fg']); if (ua && uf && kontrast(uf, ua) < 4.5) fail('AKTIV', `${wo} Text auf der Aktiv-Flaeche nur ${kontrast(uf, ua).toFixed(2)}:1`);
   }
 
   await browser.close();
@@ -183,5 +217,5 @@ function pruefeTokensStatisch() {
     console.error('VORLAGEN NICHT BESTANDEN:\n' + F.map(x => '  - ' + x).join('\n'));
     process.exit(1);
   }
-  console.log(`[theme] ok (${themen.length} Vorlagen: Kontrast, Bedeutung, Pflicht-Tokens)`);
+  console.log(`[theme] ok (${themen.length} Vorlagen: Kontrast, Bedeutung, Pflicht-Tokens, drei Textstufen, Aktiv-Ton)`);
 })().catch(e => { console.error('VORLAGEN-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

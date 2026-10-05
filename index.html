@@ -297,7 +297,7 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
      beide unter AA. Mit #505C77/#515C74 sind es 4,88 und 4,89, also BESSER
      als die 4,91/4,93 von vorher auf der helleren Karte. Der Abstand zu
      --t1 (#33405C) bleibt erhalten, die Hierarchie also auch. */
-  --t0:#141B2E;--t1:#33405C;--t2:#505C77;--t3:#515C74;
+  --t0:#141B2E;--t1:#33405C;--t2:#444E65;--t3:#515C74;
   --green:#0B5FCC;--red:#DC2430;--amber:#55617A;--due:#B45309;--due-rgb:180,83,9;--star:#55617A;--blue:#0B5FCC;--purple:#6B5FA8;--success:#137036;--live:#D93A34;
   --green-rgb:11,95,204;--red-rgb:220,36,48;--amber-rgb:85,97,122;
   --star-rgb:85,97,122;--blue-rgb:11,95,204;--purple-rgb:107,95,168;--success-rgb:19,112,54;--t3-rgb:87,99,123;
@@ -513,7 +513,9 @@ svg.ic{vertical-align:-2px;flex:none}
   .dw:hover{box-shadow:var(--shadow-pop)}
 }
 @media (prefers-reduced-motion:reduce){.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:none}}
-.btn:disabled{opacity:.22;cursor:default}
+/* .45 statt .22 (Nutzerwahl 2026-10-05): Undo/Redo wirkten bei 22 % wie ein
+   Darstellungsfehler - deaktiviert soll erkennbar sein, nicht verschwinden. */
+.btn:disabled{opacity:.45;cursor:default}
 .btn.g{background:rgba(var(--green-rgb),.08);border-color:rgba(var(--green-rgb),.27);color:var(--green)}@media (hover:hover){.btn.g:hover{background:rgba(var(--green-rgb),.15)}}
 .btn.r{background:rgba(var(--red-rgb),.07);border-color:rgba(var(--red-rgb),.2);color:var(--red)}
 .btn.active{background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.45);color:var(--red)}@media (hover:hover){.btn.active:hover:not(:disabled){background:rgba(var(--red-rgb),.18);border-color:rgba(var(--red-rgb),.55);color:var(--red)}}
@@ -1153,7 +1155,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#1C1D21;--chrome-bd:#101114;--chrome-line:#33353C;--chrome-quick:#2A2C33;
   --bg0:#FFFFFF;--bg1:#FAFAFB;--bg2:#F5F6F9;--bg3:#EEF0F4;--bg4:#E5E7EE;--bg5:#E4E7EE;--bg6:#D3D8E2;
   --bd:rgba(28,29,33,.12);--bd2:rgba(28,29,33,.22);
-  --t0:#16171A;--t1:#2C2F36;--t2:#4C515B;--t3:#4A4F59;--t3-rgb:74,79,89;
+  --t0:#16171A;--t1:#2C2F36;--t2:#3B3F47;--t3:#4A4F59;--t3-rgb:74,79,89;
   --green:#2C51C7;--red:#B02B26;--amber:#535966;--due:#B45309;--due-rgb:180,83,9;--star:#535966;--blue:#2C51C7;--purple:#6B4CC4;--success:#0F6B3C;--live:#C4302B;
   --green-rgb:44,81,199;--red-rgb:176,43,38;--amber-rgb:83,89,102;--star-rgb:83,89,102;--blue-rgb:44,81,199;--purple-rgb:107,76,196;--success-rgb:15,107,60;
   --accent:#4B55B8;--accent-rgb:75,85,184;
@@ -1161,11 +1163,11 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#2C51C7;--red-dk:#B02B26;
   --card:#E5E7EE;
-  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--blue);--ui-act-rgb:var(--blue-rgb);--ui-act-fg:var(--on-accent);
+  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:#1C1D21;--ui-act-rgb:28,29,33;--ui-act-fg:var(--on-accent);
   --bias-bear:var(--red);
 }
 [data-fx-theme="linear"] .hdr,[data-fx-theme="linear"] #navSidebar{
-  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#C8CCD3;--t3:#B0B6BF;
   --bg2:#2A2C33;--bg3:#33353C;--bg4:#33353C;--bg5:#33353C;
   --bd:#33353C;--bd2:#33353C;
 }
@@ -1174,7 +1176,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#0A2540;--chrome-bd:#04162A;--chrome-line:#264260;--chrome-quick:#153454;
   --bg0:#FFFFFF;--bg1:#F6F9FC;--bg2:#F4F7FB;--bg3:#EBF1F8;--bg4:#E2EAF3;--bg5:#DDE6F1;--bg6:#C9D5E5;
   --bd:rgba(10,37,64,.13);--bd2:rgba(10,37,64,.24);
-  --t0:#0A2540;--t1:#243851;--t2:#495D75;--t3:#465A73;--t3-rgb:70,90,115;
+  --t0:#0A2540;--t1:#243851;--t2:#3A495C;--t3:#465A73;--t3-rgb:70,90,115;
   --green:#0B57B8;--red:#B0322A;--amber:#4E5F74;--due:#B45309;--due-rgb:180,83,9;--star:#4E5F74;--blue:#0B57B8;--purple:#6A4BDD;--success:#0C6B41;--live:#C93326;
   --green-rgb:11,87,184;--red-rgb:176,50,42;--amber-rgb:78,95,116;--star-rgb:78,95,116;--blue-rgb:11,87,184;--purple-rgb:106,75,221;--success-rgb:12,107,65;
   --accent:#4F46D6;--accent-rgb:79,70,214;
@@ -1182,11 +1184,11 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#0B57B8;--red-dk:#B0322A;
   --card:#E2EAF3;
-  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--blue);--ui-act-rgb:var(--blue-rgb);--ui-act-fg:var(--on-accent);
+  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:#0A2540;--ui-act-rgb:10,37,64;--ui-act-fg:var(--on-accent);
   --bias-bear:var(--red);
 }
 [data-fx-theme="stripe"] .hdr,[data-fx-theme="stripe"] #navSidebar{
-  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#C8CCD3;--t3:#B0B6BF;
   --bg2:#153454;--bg3:#264260;--bg4:#264260;--bg5:#264260;
   --bd:#264260;--bd2:#264260;
 }
@@ -1195,7 +1197,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#111111;--chrome-bd:#000000;--chrome-line:#333333;--chrome-quick:#242424;
   --bg0:#FFFFFF;--bg1:#FAFAFA;--bg2:#F6F6F6;--bg3:#F0F0F0;--bg4:#E9E9E9;--bg5:#E4E4E4;--bg6:#D0D0D0;
   --bd:rgba(0,0,0,.14);--bd2:rgba(0,0,0,.26);
-  --t0:#000000;--t1:#242424;--t2:#4E4E4E;--t3:#4A4A4A;--t3-rgb:74,74,74;
+  --t0:#000000;--t1:#242424;--t2:#383838;--t3:#4A4A4A;--t3-rgb:74,74,74;
   --green:#0B4BA8;--red:#A81F17;--amber:#4A4A4A;--due:#B45309;--due-rgb:180,83,9;--star:#4A4A4A;--blue:#0B4BA8;--purple:#4E3F8C;--success:#0F5C33;--live:#B32B26;
   --green-rgb:11,75,168;--red-rgb:168,31,23;--amber-rgb:74,74,74;--star-rgb:74,74,74;--blue-rgb:11,75,168;--purple-rgb:78,63,140;--success-rgb:15,92,51;
   --accent:#1F1F1F;--accent-rgb:31,31,31;
@@ -1203,11 +1205,11 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#0B4BA8;--red-dk:#A81F17;
   --card:#E9E9E9;
-  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--blue);--ui-act-rgb:var(--blue-rgb);--ui-act-fg:var(--on-accent);
+  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:#111111;--ui-act-rgb:17,17,17;--ui-act-fg:var(--on-accent);
   --bias-bear:var(--red);
 }
 [data-fx-theme="swiss"] .hdr,[data-fx-theme="swiss"] #navSidebar{
-  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#C8CCD3;--t3:#B0B6BF;
   --bg2:#242424;--bg3:#333333;--bg4:#333333;--bg5:#333333;
   --bd:#333333;--bd2:#333333;
 }
@@ -1216,7 +1218,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#37352F;--chrome-bd:#211F1B;--chrome-line:#4E4B43;--chrome-quick:#45423A;
   --bg0:#FFFFFF;--bg1:#FBFBFA;--bg2:#F7F6F3;--bg3:#F1F0EC;--bg4:#EBEAE5;--bg5:#E5E3DE;--bg6:#D5D2CB;
   --bd:rgba(55,53,47,.14);--bd2:rgba(55,53,47,.25);
-  --t0:#191817;--t1:#302E28;--t2:#54504A;--t3:#524E48;--t3-rgb:82,78,72;
+  --t0:#191817;--t1:#302E28;--t2:#423E3A;--t3:#524E48;--t3-rgb:82,78,72;
   --green:#1461B0;--red:#A93125;--amber:#55514A;--due:#B45309;--due-rgb:180,83,9;--star:#55514A;--blue:#1461B0;--purple:#6B44AD;--success:#0F6039;--live:#BE3826;
   --green-rgb:20,97,176;--red-rgb:169,49,37;--amber-rgb:85,81,74;--star-rgb:85,81,74;--blue-rgb:20,97,176;--purple-rgb:107,68,173;--success-rgb:15,96,57;
   --accent:#1B6FC4;--accent-rgb:27,111,196;
@@ -1224,11 +1226,11 @@ svg.ic{vertical-align:-2px;flex:none}
   --on-accent:#FFFFFF;
   --green-lt:#1461B0;--red-dk:#A93125;
   --card:#EBEAE5;
-  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--blue);--ui-act-rgb:var(--blue-rgb);--ui-act-fg:var(--on-accent);
+  --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-line);--rail-on:var(--chrome-quick);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:#37352F;--ui-act-rgb:55,53,47;--ui-act-fg:var(--on-accent);
   --bias-bear:var(--red);
 }
 [data-fx-theme="notion"] .hdr,[data-fx-theme="notion"] #navSidebar{
-  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#B6BCC5;--t3:#B0B6BF;
+  --t0:#F7F8FA;--t1:#E2E5EA;--t2:#C8CCD3;--t3:#B0B6BF;
   --bg2:#45423A;--bg3:#4E4B43;--bg4:#4E4B43;--bg5:#4E4B43;
   --bd:#4E4B43;--bd2:#4E4B43;
 }
@@ -1251,7 +1253,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#000000;--chrome-bd:#2A2A2A;--chrome-line:#393939;--chrome-quick:#1F1F1F;
   --bg0:#161616;--bg1:#1C1C1C;--bg2:#262626;--bg3:#212121;--bg4:#2C2C2C;--bg5:#333333;--bg6:#474747;
   --bd:rgba(255,255,255,.16);--bd2:rgba(255,255,255,.30);
-  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#B4BAC1;--t3:#AEB4BB;--t3-rgb:174,180,187;
+  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#C6CBD0;--t3:#AEB4BB;--t3-rgb:174,180,187;
   --green:#78A9FF;--red:#FF8389;--amber:#A8B0B8;--due:#F0913A;--due-rgb:240,145,58;--star:#A8B0B8;--blue:#78A9FF;--purple:#BE95FF;--success:#5CD17E;--live:#FF9DA2;
   --green-rgb:120,169,255;--red-rgb:255,131,137;--amber-rgb:168,176,184;--star-rgb:168,176,184;--blue-rgb:120,169,255;--purple-rgb:190,149,255;--success-rgb:92,209,126;
   --accent:#78C7FF;--accent-rgb:120,199,255;
@@ -1262,7 +1264,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-bd);--rail-on:var(--chrome-line);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--accent);--ui-act-rgb:var(--accent-rgb);--ui-act-fg:var(--on-accent);
 }
 [data-fx-theme="carbon"] .hdr,[data-fx-theme="carbon"] #navSidebar{
-  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#B4BAC1;--t3:#AEB4BB;
+  --t0:#F4F4F4;--t1:#E0E4E9;--t2:#C6CBD0;--t3:#AEB4BB;
   --bg2:#212121;--bg3:#2C2C2C;--bg4:#333333;--bg5:#474747;
   --bd:#393939;--bd2:#393939;
 }
@@ -1285,7 +1287,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#060B16;--chrome-bd:#1B2740;--chrome-line:#2A3A5C;--chrome-quick:#122036;
   --bg0:#0A101C;--bg1:#111A2B;--bg2:#16223A;--bg3:#131D31;--bg4:#1B2740;--bg5:#22304C;--bg6:#2C3D5E;
   --bd:rgba(150,180,225,.18);--bd2:rgba(150,180,225,.32);
-  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#A9B8D0;--t3:#A3B2CB;--t3-rgb:163,178,203;
+  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#BCC8DA;--t3:#A3B2CB;--t3-rgb:163,178,203;
   --green:#7DBBFF;--red:#FF8C87;--amber:#A2B0C6;--due:#F0913A;--due-rgb:240,145,58;--star:#A2B0C6;--blue:#7DBBFF;--purple:#BCA2FF;--success:#5ACF92;--live:#FF9A93;
   --green-rgb:125,187,255;--red-rgb:255,140,135;--amber-rgb:162,176,198;--star-rgb:162,176,198;--blue-rgb:125,187,255;--purple-rgb:188,162,255;--success-rgb:90,207,146;
   --accent:#6FCBE8;--accent-rgb:111,203,232;
@@ -1296,7 +1298,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-bd);--rail-on:var(--chrome-line);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--accent);--ui-act-rgb:var(--accent-rgb);--ui-act-fg:var(--on-accent);
 }
 [data-fx-theme="midnight"] .hdr,[data-fx-theme="midnight"] #navSidebar{
-  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#A9B8D0;--t3:#A3B2CB;
+  --t0:#EEF3FB;--t1:#D5DFEF;--t2:#BCC8DA;--t3:#A3B2CB;
   --bg2:#131D31;--bg3:#1B2740;--bg4:#22304C;--bg5:#2C3D5E;
   --bd:#2A3A5C;--bd2:#2A3A5C;
 }
@@ -1319,7 +1321,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#0F1113;--chrome-bd:#2A2D33;--chrome-line:#3A3E46;--chrome-quick:#1A1D21;
   --bg0:#17181B;--bg1:#1D1F23;--bg2:#232529;--bg3:#1F2126;--bg4:#282B31;--bg5:#31353C;--bg6:#41454E;
   --bd:rgba(255,255,255,.15);--bd2:rgba(255,255,255,.28);
-  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#ADB3BC;--t3:#A7ADB6;--t3-rgb:167,173,182;
+  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#C0C4CB;--t3:#A7ADB6;--t3-rgb:167,173,182;
   --green:#82B8F5;--red:#F58A86;--amber:#A6ADB8;--due:#F0913A;--due-rgb:240,145,58;--star:#A6ADB8;--blue:#82B8F5;--purple:#BBA4E8;--success:#63C68C;--live:#FA9691;
   --green-rgb:130,184,245;--red-rgb:245,138,134;--amber-rgb:166,173,184;--star-rgb:166,173,184;--blue-rgb:130,184,245;--purple-rgb:187,164,232;--success-rgb:99,198,140;
   --accent:#A8CBDC;--accent-rgb:168,203,220;
@@ -1330,7 +1332,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-bd);--rail-on:var(--chrome-line);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--accent);--ui-act-rgb:var(--accent-rgb);--ui-act-fg:var(--on-accent);
 }
 [data-fx-theme="graphite"] .hdr,[data-fx-theme="graphite"] #navSidebar{
-  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#ADB3BC;--t3:#A7ADB6;
+  --t0:#F2F3F5;--t1:#DBDEE3;--t2:#C0C4CB;--t3:#A7ADB6;
   --bg2:#1F2126;--bg3:#282B31;--bg4:#31353C;--bg5:#41454E;
   --bd:#3A3E46;--bd2:#3A3E46;
 }
@@ -1353,7 +1355,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#242933;--chrome-bd:#3B4252;--chrome-line:#4C566A;--chrome-quick:#2B323E;
   --bg0:#2E3440;--bg1:#333B48;--bg2:#3B4252;--bg3:#374050;--bg4:#3E4756;--bg5:#454F60;--bg6:#4F5A6E;
   --bd:rgba(216,222,233,.20);--bd2:rgba(216,222,233,.34);
-  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#C3CCDA;--t3:#BDC7D6;--t3-rgb:189,199,214;
+  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#CFD6E1;--t3:#BDC7D6;--t3-rgb:189,199,214;
   --green:#9EC1DE;--red:#EE9AA0;--amber:#B4BFCE;--due:#F0913A;--due-rgb:240,145,58;--star:#B4BFCE;--blue:#9EC1DE;--purple:#D2AECB;--success:#8FD4A8;--live:#F2A8AC;
   --green-rgb:158,193,222;--red-rgb:238,154,160;--amber-rgb:180,191,206;--star-rgb:180,191,206;--blue-rgb:158,193,222;--purple-rgb:210,174,203;--success-rgb:143,212,168;
   --accent:#A6D3E0;--accent-rgb:166,211,224;
@@ -1364,7 +1366,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-bd);--rail-on:var(--chrome-line);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--accent);--ui-act-rgb:var(--accent-rgb);--ui-act-fg:var(--on-accent);
 }
 [data-fx-theme="nord"] .hdr,[data-fx-theme="nord"] #navSidebar{
-  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#C3CCDA;--t3:#BDC7D6;
+  --t0:#ECEFF4;--t1:#E0E6EF;--t2:#CFD6E1;--t3:#BDC7D6;
   --bg2:#374050;--bg3:#3E4756;--bg4:#454F60;--bg5:#4F5A6E;
   --bd:#4C566A;--bd2:#4C566A;
 }
@@ -1387,7 +1389,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --chrome-bg:#001F27;--chrome-bd:#073642;--chrome-line:#0F4A57;--chrome-quick:#01303B;
   --bg0:#002B36;--bg1:#03313D;--bg2:#073642;--bg3:#053742;--bg4:#0A3E4A;--bg5:#0F4753;--bg6:#175665;
   --bd:rgba(147,161,161,.24);--bd2:rgba(147,161,161,.40);
-  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#B3BDBA;--t3:#ADB7B4;--t3-rgb:173,183,180;
+  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#BEC7C4;--t3:#ADB7B4;--t3-rgb:173,183,180;
   --green:#7CBCEC;--red:#F58C86;--amber:#A6B2B0;--due:#F0913A;--due-rgb:240,145,58;--star:#A6B2B0;--blue:#7CBCEC;--purple:#CBA6E4;--success:#78CE8A;--live:#FA968E;
   --green-rgb:124,188,236;--red-rgb:245,140,134;--amber-rgb:166,178,176;--star-rgb:166,178,176;--blue-rgb:124,188,236;--purple-rgb:203,166,228;--success-rgb:120,206,138;
   --accent:#6FC7D4;--accent-rgb:111,199,212;
@@ -1398,7 +1400,7 @@ svg.ic{vertical-align:-2px;flex:none}
   --rail-bg:var(--chrome-bg);--rail-edge:var(--chrome-bd);--rail-on:var(--chrome-line);--ctl-bg:var(--bg4);--ctl-bd:var(--bd);--ui-act:var(--accent);--ui-act-rgb:var(--accent-rgb);--ui-act-fg:var(--on-accent);
 }
 [data-fx-theme="solar"] .hdr,[data-fx-theme="solar"] #navSidebar{
-  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#B3BDBA;--t3:#ADB7B4;
+  --t0:#EEE8D5;--t1:#DCD6C4;--t2:#BEC7C4;--t3:#ADB7B4;
   --bg2:#053742;--bg3:#0A3E4A;--bg4:#0F4753;--bg5:#175665;
   --bd:#0F4A57;--bd2:#0F4A57;
 }
@@ -2484,7 +2486,9 @@ body.res-edit-mode .rtree-edit-ctrls{display:inline-flex}
    position:fixed-Pille unten links ueber allem. */
 #resBackBar{display:none;justify-content:flex-end;margin:0 0 10px}
 body.res-return-active #resBackBar{display:flex}
-.rterm-back-pill{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font:700 var(--fs-sm)/1.3 var(--ff-text);cursor:pointer;background:rgba(var(--red-rgb),.08);border:1px solid rgba(var(--red-rgb),.3);color:var(--red);transition:all .15s}@media (hover:hover){.rterm-back-pill:hover{background:rgba(var(--red-rgb),.16);border-color:var(--red)}}
+/* Zurueck ist Navigation, keine Warnung -> Aktiv-Ton statt Rot (Nutzerwahl
+   2026-10-05 "Rest-Rot neutral"). */
+.rterm-back-pill{display:flex;align-items:center;gap:6px;padding:7px 13px 7px 10px;border-radius:999px;font:700 var(--fs-sm)/1.3 var(--ff-text);cursor:pointer;background:rgba(var(--ui-act-rgb),.08);border:1px solid rgba(var(--ui-act-rgb),.3);color:var(--ui-act);transition:all .15s}@media (hover:hover){.rterm-back-pill:hover{background:rgba(var(--ui-act-rgb),.16);border-color:var(--ui-act)}}
 /* ── ANALYSIS/NOTIZEN-RECHTSPANEL (Nutzer-Wunsch 2026-08-04) ── */
 /* ── Sektions-Navigation der Assets-Seite ──
    Schmale Leiste statt einer weiteren Karte: der aktive Eintrag bekommt nur
@@ -2505,7 +2509,7 @@ body.res-return-active #resBackBar{display:flex}
    ist (Nutzer-Entscheid 2026-08-23). Die Textstufen und Flaechen werden
    darin umgedreht; color explizit, siehe Kommentar im Aenderungsskript. */
 .hdr,#navSidebar{
-  --t0:#F2F5FC;--t1:#CBD5E8;--t2:#94A3C0;--t3:#93A1BE;
+  --t0:#F2F5FC;--t1:#CBD5E8;--t2:#AEBAD0;--t3:#93A1BE;
   --bg1:#2A3757;--bg2:#2A3757;--bg3:#2E3C5E;--bg4:#35456B;
   --bd:rgba(160,190,235,.16);--bd2:rgba(160,190,235,.26);
   /* War Cyan (#3FA9CC), extra bewusst NICHT Blau gewaehlt (siehe alte
@@ -3061,19 +3065,14 @@ body.res-return-active #resBackBar{display:flex}
    dann, wenn ein Element wegfaellt; die Farbe haengt jetzt an der
    Bedeutung, nicht am Platz. */
 .ind-hist-legend .lg-act,.data-lg .lg-act{color:var(--blue)}
-.ind-hist-legend .lg-fc,.data-lg .lg-fc{color:var(--red)}
+/* Forecast = neutrale Referenz (Textfarbe wie Linie/Punkte im Chart), kein
+   Rot mehr - Rot heisst bearish (Nutzerwahl 2026-10-05 "Rest-Rot neutral"). */
+.ind-hist-legend .lg-fc,.data-lg .lg-fc{color:var(--t1)}
 .time-range-custom{display:flex;align-items:center;gap:5px;color:var(--t3);font-size:var(--fs-2xs);white-space:nowrap}
-/* Rate Probabilities: CME-FedWatch-artige Meeting-Pillen + Timeline-Chart
-   (Nutzer-Wunsch 2026-07-20). Pillen navigieren per scrollRateProbTo() eine
-   CSS-Transform-Verschiebung des Charts - kein natives Scrollen/Wischen. */
-.rateprob-pillbar{display:flex;gap:7px;overflow-x:auto;padding:0 14px 12px;-webkit-overflow-scrolling:touch}
-.rateprob-pill{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 12px;border-radius:16px;border:1px solid var(--bd2);background:var(--bg3);color:var(--t2);font-size:var(--fs-sm);font-weight:700;cursor:pointer;transition:all .12s}
-.rateprob-pill small{font-size:var(--fs-2xs);font-weight:600;opacity:.75}
-.rateprob-pill.on{border-color:var(--blue);background:rgba(var(--blue-rgb),.16);color:var(--blue)}
-.rateprob-pill.realized{color:var(--t3);background:var(--bg2)}
-.rateprob-pill.realized.on{border-color:var(--blue);color:var(--blue)}
-.rateprob-pill.future{color:var(--red)}
-.rateprob-pill.future.on{border-color:var(--red);background:rgba(var(--red-rgb),.18);color:var(--red)}
+/* Rate Probabilities: Timeline-Chart (Nutzer-Wunsch 2026-07-20), per
+   scrollRateProbTo() als CSS-Transform verschoben - kein natives Scrollen.
+   Die Meeting-Pillen darueber (.rateprob-pill, kuenftige Sitzungen in Rot)
+   erzeugt kein Code mehr - ihre Regeln sind 2026-10-05 entfernt worden. */
 .rateprob-chart-viewport{overflow:hidden;padding:4px 14px 14px}
 .rateprob-chart-track{display:inline-block}
 .rateprob-ccybar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
@@ -3909,6 +3908,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .cal-col-hdr{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 30px;gap:6px;align-items:center;padding:5px 9px;font-size:var(--fs-2xs);font-weight:800;letter-spacing:.5px;color:var(--t3);font-family:var(--ff-num);text-transform:uppercase;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-col-hdr span{text-align:center}
 .cal-col-hdr span:nth-child(1),.cal-col-hdr span:nth-child(2),.cal-col-hdr span:nth-child(4){text-align:left}
+/* Actual/Forecast/Previous rechtsbuendig wie ihre Werte (Nutzerwahl
+   2026-10-05: Zahlen untereinander vergleichbar, Einer unter Einern). */
+.cal-col-hdr span:nth-child(5),.cal-col-hdr span:nth-child(6),.cal-col-hdr span:nth-child(7){text-align:right}
 .cal-row{display:grid;grid-template-columns:40px 42px 54px 1fr 52px 52px 52px 30px;gap:6px;align-items:center;padding:7px 9px;border-bottom:1px solid var(--bd);min-width:390px}
 .cal-row:last-child{border-bottom:none}@media (hover:hover){.cal-row:hover{background:var(--bg3)}}
 .cal-row.today{background:rgba(var(--red-rgb),.05)}
@@ -3928,7 +3930,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    "Michigan Consumer Sentiment Final" wurden sonst abgeschnitten. */
 .cal-evname{font-size:var(--fs-xs);font-weight:600;color:var(--t0);min-width:0;overflow-wrap:anywhere}
 .cal-evsub{grid-column:4/8;font-size:var(--fs-2xs);color:var(--t2);margin-top:2px}
-.cal-val{font-size:var(--fs-2xs);font-family:var(--ff-num);font-weight:700;color:var(--t1);text-align:center}
+.cal-val{font-size:var(--fs-2xs);font-family:var(--ff-num);font-weight:700;color:var(--t1);text-align:right}
 .cal-val.ph{color:var(--t3);font-weight:400}
 .cal-val.act-good{color:var(--green)}
 .cal-val.act-bad{color:var(--red)}
@@ -3999,7 +4001,7 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
    + farbiger Rahmen für Impact, damit nichts im schmalen Dashboard-Widget abgeschnitten wird. */
 .cal-col-hdr.compact,.cal-row.compact{grid-template-columns:32px 26px 1fr 38px 38px 38px;gap:4px;padding:6px 8px;min-width:0}
 .cal-col-hdr.compact span:nth-child(1),.cal-col-hdr.compact span:nth-child(2),.cal-col-hdr.compact span:nth-child(3){text-align:left}
-.cal-col-hdr.compact span:nth-child(4),.cal-col-hdr.compact span:nth-child(5),.cal-col-hdr.compact span:nth-child(6){text-align:center}
+.cal-col-hdr.compact span:nth-child(4),.cal-col-hdr.compact span:nth-child(5),.cal-col-hdr.compact span:nth-child(6){text-align:right}
 .cal-row.compact{border-left:3px solid transparent}
 .cal-row.compact.ih{border-left-color:var(--red)}
 .cal-row.compact.im{border-left-color:var(--amber)}
@@ -6100,19 +6102,18 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 :is(.cal-alert-btn,.cal-row-del,.dw-mark,.row-score,.rate-diff,.hl-att,.cct-src,.aaii-src,.cmp-chip,.cmp-quick,.rg-ccy,
 .ind-hist-range-btn,.ab-rg,.histp-rbtn,.histp-agebtn,.perf-win,.px-panel-chip,.hl-tabs .hl-tab,.info-b,.rub-hdr .rinfo,
 .cot-card-title .rinfo,.dw-t .rinfo,.dw-hdr>.rinfo,.mx-card-title>.rinfo)::after{content:'';position:absolute;background:transparent}
-/* Kalenderzeile: Glocke 13x13 -> 35x36, × 9x15 -> 24x36 (rechts endet die Zeile) */
-.cal-alert-btn::after{inset:-11.5px -2px -11.5px -20px}
+/* Kalenderzeile: Glocke 13x13 -> bis 28x36, × 9x15 -> 24x36 (rechts endet die Zeile).
+   ⚠ Die Glocke reicht nach links nur bis zur Kante der Previous-Spalte, je
+   Breakpoint (Spalte 30/34/24 px, Luecke 6/10/14 px, Glocke+× 26,8 px
+   zentriert): seit die Werte rechtsbuendig stehen (VERSION-CHECK-590) endet
+   die Zahl genau an dieser Kante - die fruehere Flaeche (20 px) lag ueber
+   ihrer letzten Ziffer, ein Tipp auf die Zahl haette den Alarm geoeffnet.
+   Den Schlagzeilen-Knopf gibt es in der Aktionsspalte nicht mehr (steht
+   hinter dem Termin-Namen) - die Sonderregeln aus 589 sind entfallen. */
+.cal-alert-btn::after{inset:-11.5px -2px -11.5px -7.5px}
+@media(min-width:760px){.cal-alert-btn::after{left:-13.5px}}
+@media(min-width:1100px){.cal-alert-btn::after{left:-12.5px}}
 .cal-row-del::after{inset:-10.5px -13px -10.5px -2px}
-/* Mit Schlagzeilen-Knopf (.cal-news-btn, nur an Tagen mit passenden
-   Schlagzeilen) passt der Inhalt nicht in die Aktionsspalte (24/34/30 px fuer
-   bis zu 59 px) und laeuft zentriert nach beiden Seiten ueber - gemessen
-   2026-10-05 bei 1180 px: Knopf ab x 1101,6 statt 1119, × bis 1160,5 bei
-   Tabellenrand 1158 (auch in 587; die Spaltenbreite ist eine offene
-   Layout-Entscheidung). Darum greift die Glocke dann nur bis zur halben
-   Luecke (5 px) nach links und das × nicht nach rechts ueber den Rand.
-   Geprueft: check/designregeln.js F (baut die Zeile selbst nach). */
-.cal-news-btn+.cal-alert-btn::after{left:-2.5px}
-.cal-news-btn~.cal-row-del::after{right:0}
 /* Set-ups/Watchlist-Zeilen: Stern, Score-Pille, Zinsdifferenz */
 .dw-mark::after{inset:-10.5px -6.5px -10.5px -2px}
 .row-score::after{inset:-8.5px -2px}
@@ -6170,7 +6171,6 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 .res-libitem.on,.resf-asset-row.on,.rtree-row.on{background:rgba(var(--ui-act-rgb),.10);border-left-color:var(--ui-act);color:var(--ui-act)}
 .rtree-row.on .rtree-ic{color:var(--ui-act)}
 .px-card.on{border-color:var(--ui-act);box-shadow:0 0 0 2px rgba(var(--ui-act-rgb),.30)}
-.rateprob-pill.on,.rateprob-pill.realized.on{border-color:var(--ui-act);background:rgba(var(--ui-act-rgb),.12);color:var(--ui-act)}
 .hl-topic.on{border-left-color:var(--ui-act)}
 .hl-att.on,.hl-att.on span{border-color:var(--ui-act);color:var(--ui-act)}
 .cax-p.on{box-shadow:0 0 0 2px rgba(var(--ui-act-rgb),.35)}
@@ -6205,7 +6205,25 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 .mover-group-hdr .ic,.movers-upd .ic,.acfg-sec .ic,.cot-notify-ic .ic{vertical-align:-2px}
 .rstar svg{display:block}
 .rstar.on svg{fill:currentColor}
-#carrySearch{padding-left:34px;background:var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23505C77' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px 50%/15px 15px}
+#carrySearch{padding-left:34px;background:var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23444E65' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px 50%/15px 15px}
+/* ══ DESIGN-AUDIT RUNDE 2 (Nutzerwahl 2026-10-05, VERSION-CHECK-590 ff.) ══
+   Regeln: docs/design-system.md "Design-Audit 2026-10-04" (J ff.). */
+/* R6 Auf dem iPad sichtbar: diese Bedienelemente werden erst per Hover
+   kraeftig - Touch-Geraete haben kein Hover, dort blieben sie dauerhaft
+   blass. Gemessen mit Touch-Emulation (hover:none): Kalender-× .20,
+   Glocke .22, Set-ups-Stern .40; im Bearbeitungsmodus Karten-▲▼ .05-.20,
+   Karten-× .15, Karten-Stern .18, Indikator-▲▼ .10-.35, Indikator-× .35.
+   Deaktivierte ▲▼ bleiben erkennbar blasser. Bewusst NICHT: .anf-del (der
+   Ordner-Loeschknopf erscheint am gewaehlten Ordner schon voll - ueberall
+   eingeblendet hiesse versehentliches Loeschen). Geprueft: designregeln J. */
+@media (hover:none){
+  .rmv,.rdel,.imv,.idel2,.rstar,.cal-row-del,.cal-alert-btn,.dw-mark,.res-note-star{opacity:1}
+  .rmv:disabled,.imv:disabled{opacity:.3}
+}
+/* R5 Schlagzeilen-Knopf hinter dem Termin-Namen (statt in der Aktionsspalte,
+   die er zum Ueberlaufen brachte): laeuft im Text mit, bricht mit dem Namen
+   um, bleibt selbst einzeilig. */
+.cal-evname .cal-news-btn{margin-left:6px;vertical-align:1px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -6293,11 +6311,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-589 - Design audit: no emojis (line icons + built-in symbol font), one typeface, Trends and other charts drawn at real size, page titles everywhere, 11 px minimum text, three control heights (28/34/40 px), larger tap targets, labelled Summaries switch, active state navy, red only for bearish and warnings; calendar tap areas beside the headline button corrected."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-590 - Design audit round 2, part 1: GitHub guard run gets 45 min and covers the modules, forecast line neutral, back pill in the active tone, own active tone in every light template, three distinct text greys, faint controls fully visible on touch, disabled buttons at 45 %, calendar values right-aligned, headline badge behind the event name."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-589</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-590</span>
     </span>
   </div>
   <div class="hdr-r">
