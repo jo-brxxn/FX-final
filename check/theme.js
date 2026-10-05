@@ -11,6 +11,9 @@
 //      erbt still den Wert der vorherigen Vorlage
 //   5. drei unterscheidbare Textstufen t1 > t2 > t3 (Karte und Kopfzeile)
 //   6. hell: Aktiv-Ton != Bias-Blau, -rgb passt zur Farbe, Text darauf lesbar
+//   7. Trends-Fokus-Palette --tf1..--tf6 (Runde 2, Paket C): paarweise
+//      unterscheidbar (OKLab-dE >= 14, die ersten drei >= 17), als Linie
+//      >= 3:1 gegen die Kartenflaeche, dE >= 9 zu bullish/bearish/neutral
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const { chromium } = require(PW);
@@ -119,7 +122,7 @@ function pruefeTokensStatisch() {
         '--chrome-bg','--chrome-bd','--chrome-line','--chrome-quick','--on-accent',
         '--green-rgb','--red-rgb','--amber-rgb','--blue-rgb','--accent-rgb',
         '--a-infl','--a-rate','--a-lab','--a-grow','--a-cot','--success','--live','--purple',
-        '--card','--ui-act','--ui-act-rgb','--ui-act-fg'];
+        '--card','--ui-act','--ui-act-rgb','--ui-act-fg','--tf1','--tf2','--tf3','--tf4','--tf5','--tf6'];
       const o = {};
       namen.forEach(n => o[n] = g(n));
       // Kopfzeilen-Scope getrennt messen: dort werden die Textstufen gedreht.
@@ -210,6 +213,23 @@ function pruefeTokensStatisch() {
     const uaRgb = (w['--ui-act-rgb'] || '').split(',').map(x => parseFloat(x));
     if (ua && (uaRgb.length !== 3 || uaRgb.some((v, i) => !(Math.abs(v - ua[i]) <= 1)))) fail('AKTIV', `${wo} --ui-act-rgb "${w['--ui-act-rgb']}" passt nicht zu --ui-act ${w['--ui-act']}`);
     const uf = parse(w['--ui-act-fg']); if (ua && uf && kontrast(uf, ua) < 4.5) fail('AKTIV', `${wo} Text auf der Aktiv-Flaeche nur ${kontrast(uf, ua).toFixed(2)}:1`);
+
+    // 7. Trends-Fokus-Palette (Nutzerwahl 2026-10-05 "Staerkste 3 + schwaechste 3"):
+    // sechs farbige Linien vor grauen. Die alten Kennfarben lagen bis dE 1,9
+    // aufeinander (EUR/GOLD) - farbig waere dann nicht unterscheidbar. Die
+    // ersten drei Plaetze werden bei eigener Wahl zuerst vergeben -> strenger.
+    const tf = [1, 2, 3, 4, 5, 6].map(i => [`--tf${i}`, parse(w[`--tf${i}`])]);
+    if (tf.some(([, c]) => !c)) fail('FOKUS', `${wo} --tf1..--tf6 nicht vollstaendig gesetzt`);
+    else {
+      for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) {
+        const d = deltaE(tf[i][1], tf[j][1]), soll = j < 3 ? 17 : 14;
+        if (d < soll) fail('FOKUS', `${wo} ${tf[i][0]}/${tf[j][0]} nur dE ${d.toFixed(1)} (< ${soll}) - zwei Fokus-Linien kaum zu unterscheiden`);
+      }
+      for (const [n, c] of tf) {
+        for (const fn of ['--card', '--bg1', '--bg2']) { const fc = parse(w[fn]); if (fc && kontrast(c, fc) < 3) fail('FOKUS', `${wo} ${n} auf ${fn} nur ${kontrast(c, fc).toFixed(2)}:1 (Linie braucht >= 3:1)`); }
+        for (const bn of ['--green', '--red', '--amber']) { const bc = parse(w[bn]); if (bc && deltaE(c, bc) < 9) fail('FOKUS', `${wo} ${n} liegt an ${bn} (dE ${deltaE(c, bc).toFixed(1)} < 9) - liest sich als Bias-Farbe`); }
+      }
+    }
   }
 
   await browser.close();
@@ -217,5 +237,5 @@ function pruefeTokensStatisch() {
     console.error('VORLAGEN NICHT BESTANDEN:\n' + F.map(x => '  - ' + x).join('\n'));
     process.exit(1);
   }
-  console.log(`[theme] ok (${themen.length} Vorlagen: Kontrast, Bedeutung, Pflicht-Tokens, drei Textstufen, Aktiv-Ton)`);
+  console.log(`[theme] ok (${themen.length} Vorlagen: Kontrast, Bedeutung, Pflicht-Tokens, drei Textstufen, Aktiv-Ton, Fokus-Palette)`);
 })().catch(e => { console.error('VORLAGEN-WAECHTER abgestuerzt:', e && e.message || e); process.exit(1); });

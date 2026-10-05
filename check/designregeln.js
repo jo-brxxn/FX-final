@@ -34,6 +34,12 @@
 //      Watchlist einzeilig + × nur beim Bearbeiten, Price-Karte max. 2
 //      Bedienzeilen ohne Einzelknopf, Majors-Titel, ⓘ nie unter der
 //      Knopfleiste, COT-/Retail-Balken <= 14 px
+//   L) Runde 2/Paket C: Trends ohne eigene Wahl = 6 farbige Linien (die 3
+//      staerksten + 3 schwaechsten am Linienende), Rest grau, Endlabels ohne
+//      Ueberlappung im Diagramm, Legenden-/Linien-Tipp + Zuruecksetzen wirken;
+//      Carry eine Zeile je Paar ohne Ueberbreite. Dazu C und D auch bei 390 px
+//      (Handy: Diagramme mit 300 px Mindestbreite gestaucht, "Dashboar/d")
+//      und: kein Inline-CSS, das der Browser verwirft ("var(--green)14")
 //   node check/designregeln.js [--gegenprobe]
 //   (Gegenprobe: je Stufe ein eingebauter Fehler -> JEDE Stufe muss rot sein)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
@@ -58,6 +64,7 @@ const GP_CSS = [
   '.sw-lbl{display:none!important}',                                    // I
   '@media (hover:none){.cal-row-del{opacity:.2!important}}',             // J (Kalender-× auf Touch blass wie vor 590)
   '.rank-div>.rank-bar.neg,.rank-div>.mx-rank-bar.neg{left:50%!important;right:auto!important}', // K (negativ nach rechts)
+  '.tr-endlbl{transform:translate(160px,0)}.carry-tbl td{height:58px!important}', // L (Labels aus dem Diagramm, Carry-Zeilen wie vorher Karten)
   'body,body *{font-family:Arial,sans-serif!important}',                // A (Symbolschrift fehlt)
 ].join('\n');
 
@@ -78,7 +85,7 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
 
   // ════ 1180 px: alle Stufen ═════════════════════════════════════════════
   let p = await neueSeite(1180);
-  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0, kalNews: 0, touch: 0, k: 0 };
+  const n = { emoji: 0, mono: 0, svg: 0, html: 0, hoehe: 0, flaechen: 0, elem: 0, kalNews: 0, touch: 0, k: 0, svg390: 0, l: 0, ltipp: 0, inline: 0 };
   for (const z of SEITEN) {
     await oeffne(p, z); await p.waitForTimeout(1300);
     if (GEGENPROBE && z === 'trends') await p.evaluate(() => { const t = document.querySelector('#pgTrends .pg-titel'); if (t) t.textContent += ' 📈'; });
@@ -113,7 +120,7 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
         if (eff < 10.8) { let s = e.ownerSVGElement; while (s.ownerSVGElement) s = s.ownerSVGElement; out.svg.push(`${eff.toFixed(1)}px "${e.textContent.trim().slice(0, 12)}" in ${(s.getAttribute('class') || (s.parentElement && s.parentElement.className) || '?').toString().split(' ')[0]}`); }
       });
       // E) drei Hoehen
-      const STUFE = [[28, '.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel,.rterm-side-toggle'],
+      const STUFE = [[28, '.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,.tr-leg-btn,select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel,.rterm-side-toggle'],
         [34, '.btn:not(.dw-nav):not(.ind-cmp-btn),select.btn,select.finp,select.fsel,input.finp,input.news-q,.st,.dmeta-hist-btn,.cot-refresh,.abc-nav,.ab-nt-qc'],
         [40, '.m-inp:not(textarea),.uc-btn,.search-inp-wrap']];
       STUFE.forEach(([h, sel]) => document.querySelectorAll(sel).forEach(e => { if (!sicht(e)) return; out.n.hoehe++; const ist = e.getBoundingClientRect().height; if (Math.abs(ist - h) > 0.6) out.hoehe.push(`${pfad(e)} ${ist.toFixed(1)}px statt ${h}`); }));
@@ -391,16 +398,112 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     n.k += k1.n.rank + k1.n.wl;
     await p.close();
   }
+
+  // ════ L) Runde 2, Paket C (VERSION-CHECK-592) + Handy-Durchgang fuer C/D ═══
+  //  Vorher: Trends "Total Score" 23 Linien in gedaempften Kennfarben (EUR/GOLD
+  //  OKLab-dE 1,9) - ein Knaeuel; Carry 75 px je Paar (9 Paare je Bildschirm);
+  //  bei 390 px 127 Diagrammtexte mit 9,8 px und "Dashboar/d" in der Leiste.
+  for (const vw of [390, 820, 1440]) {
+    p = await neueSeite(vw);
+    if (vw === 390) {
+      const nav = await p.evaluate(() => [...document.querySelectorAll('#navSidebar>.np .np-lbl')].filter(e => e.offsetParent).map(e => { const lh = parseFloat(getComputedStyle(e).lineHeight) || parseFloat(getComputedStyle(e).fontSize) * 1.2; return [e.textContent.trim(), e.getBoundingClientRect().height, lh]; }));
+      nav.forEach(([t, hh, lh]) => { if (hh > lh * 1.5) fail('D LEISTE 390', `"${t}" bricht um (${hh.toFixed(0)} px hoch)`); });
+      for (const z of SEITEN) {
+        await oeffne(p, z); await p.waitForTimeout(900);
+        const r = await p.evaluate(() => { const out = []; let k = 0; document.querySelectorAll('svg text').forEach(e => { const q = e.getBoundingClientRect(); if (!q.width || !e.textContent.trim() || e.closest('.fxlogo')) return; const m = e.getScreenCTM(); if (!m) return; k++;
+          const eff = parseFloat(getComputedStyle(e).fontSize) * Math.hypot(m.a, m.b); if (eff < 10.8) out.push(`${eff.toFixed(1)}px "${e.textContent.trim().slice(0, 12)}"`); }); return { out: [...new Set(out)], k }; });
+        n.svg390 += r.k; r.out.forEach(x => fail('C DIAGRAMMSCHRIFT 390', `${z}: ${x}`));
+        // Inline-CSS, das der Browser verwirft (Fehlerklasse 592): Farbe + Hex-
+        // Alpha an einem var() ("var(--green)14") oder an undefined
+        // ("undefined1c") - die Flaeche fiel still weg (Carry-Plakette seit
+        // jeher, Heatmap-Kacheln). Gemessen: jede Deklaration im style-
+        // Attribut muss im geparsten el.style ankommen.
+        if (GEGENPROBE && z === 'carry') await p.evaluate(() => { const pg = document.getElementById('pgCarry'); if (pg) pg.insertAdjacentHTML('beforeend', '<span class="gp-inline" style="background:var(--green)14">x</span>'); });
+        const ic = await p.evaluate(() => { const out = []; let k = 0; const pg = [...document.querySelectorAll('.pc')].find(e => e.offsetParent) || document.body;
+          pg.querySelectorAll('[style]').forEach(e => { (e.getAttribute('style') || '').split(';').forEach(d => { const i = d.indexOf(':'); if (i < 1) return;
+            const prop = d.slice(0, i).trim().toLowerCase(), wert = d.slice(i + 1).trim(); if (!wert || !/^-{0,2}[a-z][a-z0-9-]*$/.test(prop)) return; k++;
+            // ⚠ Ein Wert mit var() gilt beim PARSEN immer als gueltig und faellt erst
+            // beim Berechnen weg - getPropertyValue allein sieht "var(--green)14"
+            // nicht (erster Entwurf dieser Pruefung: 0 Befunde gegen 591).
+            const grund = !e.style.getPropertyValue(prop) ? 'verworfen' : /var\([^)]*\)[0-9a-f]{2}(?![0-9a-z(])/i.test(wert) ? 'var() + Hex-Alpha' : /(^|[^a-z-])(undefined|NaN|null)([^a-z-]|$)/.test(wert) ? 'undefined/NaN/null' : '';
+            if (grund) out.push(`${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0] || '-'} "${prop}: ${wert.slice(0, 40)}" (${grund})`); }); });
+          return { out: [...new Set(out)].slice(0, 8), k }; });
+        n.inline += ic.k; ic.out.forEach(x => fail('L INLINE-CSS 390', `${z}: ${x}`));
+      }
+    }
+    await oeffne(p, 'trends'); await p.waitForTimeout(1300);
+    const zustand = () => p.evaluate(() => { const c = document.querySelector('#trendsBody .tr-card'); if (!c) return null;
+      const svg = c.querySelector('svg.tr-svg'), sq = svg.getBoundingClientRect();
+      const ende = pl => { const pts = pl.getAttribute('points').trim().split(/\s+/); return +pts[pts.length - 1].split(',')[1]; };
+      const fok = [...c.querySelectorAll('polyline.tr-fokus')].map(e => [e.dataset.trid, ende(e)]), grau = [...c.querySelectorAll('polyline.tr-grau')].map(e => [e.dataset.trid, ende(e)]);
+      const lbl = [...c.querySelectorAll('.tr-endlbl-t')].map(e => e.getBoundingClientRect());
+      let ueber = 0; for (let i = 0; i < lbl.length; i++) for (let j = i + 1; j < lbl.length; j++) if (lbl[i].top < lbl[j].bottom - 1 && lbl[j].top < lbl[i].bottom - 1) ueber++;
+      const raus = lbl.filter(q => q.right > sq.right + 0.5 || q.left < sq.left - 0.5 || q.top < sq.top - 0.5 || q.bottom > sq.bottom + 0.5).length;
+      const auto = c.querySelector('.tr-auto'); return { fok, grau, nLbl: lbl.length, ueber, raus, auto: auto ? auto.getAttribute('aria-pressed') : null,
+        pressed: [...c.querySelectorAll('.tr-leg-btn[aria-pressed="true"]')].map(e => e.textContent.trim()), karten: [...document.querySelectorAll('#trendsBody .tr-card')].map(k => [...k.querySelectorAll('polyline.tr-fokus')].map(e => e.dataset.trid).join(',')) }; });
+    const t0 = await zustand(), L = [];
+    if (!t0) L.push('Trends: keine Karte');
+    else {
+      n.l += t0.fok.length + t0.grau.length;
+      if (t0.fok.length + t0.grau.length > 6 && t0.fok.length !== 6) L.push(`Trends: ${t0.fok.length} farbige Linien statt 6 (3 staerkste + 3 schwaechste)`);
+      if (t0.auto !== 'true') L.push('Trends: "Top 3 + bottom 3" ist ohne eigene Wahl nicht aktiv');
+      // die farbigen sind die Extreme: kleinstes y = hoechster Wert (SVG)
+      const ys = t0.fok.map(x => x[1]).sort((a, b) => a - b), oben = ys[2], unten = ys[ys.length - 3];
+      t0.grau.forEach(([id, y]) => { if (ys.length === 6 && (y < oben - 0.05 || y > unten + 0.05)) L.push(`Trends: ${id} liegt am Linienende ausserhalb der farbigen Extreme, ist aber grau`); });
+      if (t0.nLbl !== t0.fok.length) L.push(`Trends: ${t0.nLbl} Endlabels fuer ${t0.fok.length} farbige Linien`);
+      if (t0.ueber) L.push(`Trends: ${t0.ueber} Endlabel-Paare ueberlappen`);
+      if (t0.raus) L.push(`Trends: ${t0.raus} Endlabels ausserhalb des Diagramms`);
+      // Legenden-Tipp auf eine graue Linie -> nur sie farbig, in allen Karten, die sie haben
+      const gid = t0.grau.length ? t0.grau[0][0] : null;
+      if (gid) {
+        await p.click(`#trendsBody .tr-card .tr-leg-btn[onclick="trendsFokusTipp('${gid}')"]`); await p.waitForTimeout(400);
+        const t1 = await zustand();
+        if (t1.fok.map(x => x[0]).join(',') !== gid) L.push(`Trends: Tipp auf "${gid}" in der Legende -> farbig ${t1.fok.map(x => x[0]).join(',') || 'nichts'} statt nur ${gid}`);
+        if (t1.auto !== 'false' || t1.pressed.join(',') !== gid) L.push(`Trends: nach dem Tipp auf "${gid}" Knopfzustand falsch (Top 3 ${t1.auto}, gewaehlt ${t1.pressed.join(',')})`);
+        // Linien-Tipp: eine graue Linie dort antippen, wo keine andere naeher als 14 px liegt
+        const ziel = await p.evaluate(() => { const c = document.querySelector('#trendsBody .tr-card'), svg = c.querySelector('svg.tr-svg'), q = svg.getBoundingClientRect(), sc = q.width / +svg.getAttribute('width');
+          const linien = [...c.querySelectorAll('polyline.tr-grau,polyline.tr-fokus')].map(e => ({ id: e.dataset.trid, grau: e.classList.contains('tr-grau'), pts: e.getAttribute('points').trim().split(/\s+/).map(s => s.split(',').map(Number)) }));
+          const yAn = (l, x) => { const a = l.pts; for (let i = 0; i < a.length - 1; i++) if (a[i][0] <= x && a[i + 1][0] >= x) { const t = (x - a[i][0]) / ((a[i + 1][0] - a[i][0]) || 1); return a[i][1] + t * (a[i + 1][1] - a[i][1]); } return null; };
+          let best = null;
+          linien.filter(l => l.grau).forEach(l => l.pts.forEach(([x, y], i) => { if (i === 0 || i === l.pts.length - 1) return; let d = Infinity;
+            linien.forEach(o => { if (o === l) return; const yo = yAn(o, x); if (yo != null) d = Math.min(d, Math.abs(yo - y)); });
+            if (!best || d > best.d) best = { id: l.id, d: d * sc, x: q.left + x * sc, y: q.top + y * sc }; }));
+          return best; });
+        if (ziel && ziel.d >= 14) {
+          await p.mouse.click(ziel.x, ziel.y); await p.waitForTimeout(400); n.ltipp++;
+          const t2 = await zustand();
+          if (!t2.fok.some(x => x[0] === ziel.id)) L.push(`Trends: Tipp auf die Linie "${ziel.id}" waehlt sie nicht (farbig: ${t2.fok.map(x => x[0]).join(',')})`);
+        }
+        await p.click('#trendsBody .tr-card .tr-auto'); await p.waitForTimeout(400);
+        const t3 = await zustand();
+        if (t3.fok.map(x => x[0]).join(',') !== t0.fok.map(x => x[0]).join(',') || t3.auto !== 'true') L.push('Trends: "Top 3 + bottom 3" stellt die automatische Wahl nicht wieder her');
+      } else L.push('Trends: keine graue Linie - Fokus wirkt nicht');
+    }
+    // Carry: eine Zeile je Paar, keine Ueberbreite
+    await oeffne(p, 'carry'); await p.waitForTimeout(1100);
+    const ca = await p.evaluate(vw => { const out = [], card = document.querySelector('.carry-card'), tbl = card && card.querySelector('.carry-tbl'); if (!tbl) return { out: ['Carry: keine Tabelle (.carry-card .carry-tbl)'], n: 0 };
+      const rows = [...tbl.querySelectorAll('tbody tr.carry-tr')], max = vw < 500 ? 46 : 36;
+      rows.forEach(r => { const h = r.getBoundingClientRect().height; const pair = r.querySelector('.carry-pair').textContent.trim();
+        if (h > max) out.push(`Carry ${pair}: Zeile ${Math.round(h)} px hoch (max ${max})`);
+        ['.carry-rank', '.carry-pair', 'td.carry-val'].forEach(sel => { const e = r.querySelector(sel); if (!e || !e.getBoundingClientRect().width || !e.textContent.trim()) out.push(`Carry ${pair}: ${sel} fehlt/leer`); }); });
+      const cq = card.getBoundingClientRect(), tq = tbl.getBoundingClientRect();
+      if (tq.right > cq.right + 0.5 || tbl.scrollWidth > tbl.clientWidth + 1) out.push(`Carry: Tabelle ${Math.round(tq.width)} px in ${Math.round(cq.width)} px Karte - laeuft ueber`);
+      if (rows.length < 10) out.push(`Carry: nur ${rows.length} Zeilen`);
+      return { out: [...new Set(out)].slice(0, 6), n: rows.length }; }, vw);
+    n.l += ca.n;
+    [...L, ...ca.out].forEach(x => fail(`L RUNDE2 ${vw}`, x));
+    await p.close();
+  }
   await b.close();
   perr.forEach(x => fail('JS-FEHLER', x));
 
-  if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200 || n.touch < 50 || n.k < 30) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen}, Touch ${n.touch}, Runde-2-Zeilen ${n.k} - Selektoren veraltet?`);
+  if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200 || n.touch < 50 || n.k < 30 || n.svg390 < 120 || n.l < 100 || n.inline < 500 || (!GEGENPROBE && n.ltipp < 1)) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen}, Touch ${n.touch}, Runde-2-Zeilen ${n.k}, SVG 390 ${n.svg390}, Paket C ${n.l}, Linien-Tipps ${n.ltipp}, Inline-CSS ${n.inline} - Selektoren veraltet?`);
   if (GEGENPROBE) {
-    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K '];
+    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K ', 'L '];
     const fehlt = stufen.filter(s => !F.some(f => f.startsWith(s)));
     if (fehlt.length) { console.log('designregeln --gegenprobe: FEHLER - nicht gemeldet: ' + fehlt.join(',')); process.exit(1); }
-    console.log(`designregeln --gegenprobe: ok (alle 11 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
+    console.log(`designregeln --gegenprobe: ok (alle 12 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
   }
   if (F.length) { console.log(`designregeln: ${F.length} Befund(e)`); [...new Set(F)].slice(0, 60).forEach(x => console.log('  ' + x)); process.exit(1); }
-  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet, ${n.touch} Touch-Bedienelemente sichtbar, Runde 2: Staerke ab Mitte, Watchlist einzeilig, Price-Karte max. 2 Bedienzeilen)`);
+  console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet, ${n.touch} Touch-Bedienelemente sichtbar, Runde 2: Staerke ab Mitte, Watchlist einzeilig, Price-Karte max. 2 Bedienzeilen; Paket C: Trends-Fokus 3+3 mit Endlabels und Tipps, Carry einzeilig, ${n.svg390} Diagrammtexte bei 390 px, ${n.inline} Inline-CSS-Angaben gueltig)`);
 })().catch(e => { console.log('designregeln: ABBRUCH ' + e.message); process.exit(1); });

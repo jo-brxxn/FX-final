@@ -49,7 +49,10 @@ Fundgeschichte einzelner Felder ggf. in `docs/CHANGELOG.md` nachschlagen.
 
 **Bewusst NICHT synchronisiert (nur Sitzung):** `abCalSicht` (Kalender-Karte
 Month | Past) und `calpRange` (Zeitfilter der Past-Liste) - die Karte startet
-immer im Monat, die Liste immer bei 2W, wie `cotHistRange`. Wird daraus je
+immer im Monat, die Liste immer bei 2W, wie `cotHistRange`. Ebenso
+`trendsFokus` (eigene Linienwahl im Trends-Fokus, seit 592): per Rueckfrage
+festgelegt "die Auswahl gilt bis zum Neuladen, wie andere Ansichtswahlen" -
+nach dem Neuladen wieder die 3 staerksten + 3 schwaechsten. Wird daraus je
 eine Praeferenz, die bleiben soll, gilt das Vier-Ecken-Muster oben.
 
 ## Sonderfall `scoreHist`: Merge statt Overwrite

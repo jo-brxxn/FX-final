@@ -1425,9 +1425,10 @@ und Dashboards … Was sollte geändert werden? … Ich will am Ende ein Webseit
 Design ohne Schwächen haben"*, danach *„Funktionalität steht an oberster
 Stelle"*. Per Rückfrage gewählt (Runde 1, 2026-10-04; Runde 2, 2026-10-05).
 Messwerte vorher/nachher: `docs/CHANGELOG.md`. Die Regeln prüft
-`check/designregeln.js` (A–K, mit Gegenprobe); D1 zusätzlich
-`check/symbole.js` C, D4 `check/hierarchie.js`, G/K `check/theme.js` (5/6).
-Runde 2: J (Touch), K (Paket B, Regeln M–P) in `check/designregeln.js`.
+`check/designregeln.js` (A–L, mit Gegenprobe); D1 zusätzlich
+`check/symbole.js` C, D4 `check/hierarchie.js`, G/K/Q `check/theme.js` (5/6/7).
+Runde 2: J (Touch), K (Paket B, Regeln M–P), L (Paket C, Regeln Q–S) in
+`check/designregeln.js`; C und D dort seit 592 auch bei 390 px (Handy).
 
 **A — Keine Emojis in der Oberfläche.** Titel, Knöpfe, Fenster, Beschriftungen
 tragen Linien-Symbole aus `ICONS` (`icn(name,size)`); in statischem HTML als
@@ -1587,3 +1588,43 @@ Namensspalte bricht er mit um — 820 px: 4 von 12 Zeilen eine Zeile höher);
 die Aktionsspalte trägt nur Glocke + × und bleibt in ihren 24/34/30 px
 (`designregeln` F SPALTE). Die Glocken-Fläche reicht nach links bis zur
 Kante der Previous-Spalte, nie über die Zahl.
+
+**Q — Viele Linien: Fokus statt Knäuel (Runde 2, Paket C).** Ein Diagramm
+mit mehr als sechs Linien zeigt nur die Fokus-Linien farbig, alle anderen
+blassgrau dahinter (`--t3`, 1,3 px, 30 %, ohne Punkte). Ohne eigene Wahl:
+die 3 stärksten + 3 schwächsten nach dem LETZTEN Wert im Zeitraum (Nutzerwahl
+„Stärkste 3 + schwächste 3“). Der letzte Wert steht als Endlabel rechts
+neben der Linie (Farbpunkt + Name + Wert in `--t1`, senkrecht entzerrt,
+≥ 14 px; unter 560 px nur der Wert). Die Legende ist die Auswahl: jeder Name
+ein 28-px-Knopf (`.tr-leg-btn`, `aria-pressed` = eigene Wahl, Rand in
+Aktiv-Navy — KEIN gefüllter Navy-Knopf, der Farbpunkt ist der Schlüssel),
+davor „Top 3 + bottom 3“ (`.hl-tab`, aktiv = automatische Wahl). Tipp auf
+Name, Linie (≤ 12 px daneben) oder Endlabel wählt eigene Linien — für alle
+Trends-Karten zugleich, nur für die Sitzung (`docs/state-sync.md`). Farben
+kommen aus der Fokus-Palette `--tf1..--tf6` (je hell/dunkel), NIE aus den
+Kennfarben `TREND_COLORS` (EUR/GOLD lagen dort bei OKLab-dE 1,9). Ein
+abgewählter Farbplatz wird beim nächsten Tipp wieder belegt — keine Linie
+wechselt die Farbe, weil eine andere abgewählt wurde. Neue Vorlage → Palette
+nachrechnen (theme.js 7: paarweise dE ≥ 14, die ersten drei ≥ 17, Linie
+≥ 3:1 auf Karte/Flächen, dE ≥ 9 zu bullish/bearish/neutral).
+
+**R — Ranglisten als Tabelle (Runde 2, Paket C).** Eine Rangliste mit vielen
+gleichartigen Zeilen ist eine Tabelle, keine Karte je Zeile: Carry 34 px je
+Paar (vorher 75), Zahlen rechtsbündig in `tabular-nums`, Balken 6 px mit
+70 % Deckkraft, Zeilen-Hover statt Anheben. Schmale Karten (gemessen über
+`@container`, nicht das Fenster) blenden Spalten aus statt umzubrechen:
+≤ 640 px ohne Kurs/Balken/Zinsen (Zinsen klein unter dem Paar), ≤ 400 px
+auch ohne Richtungs-Spalte (Pfeil vor dem Carry-Wert). Farbe mit Alpha
+immer über die `-rgb`-Tokens — `${'var(--green)'}14` ist ungültiges CSS und
+fällt still weg (so fehlte die Fläche der LONG/SHORT-Plakette, ebenso Rand
+und Fläche der Heatmap-Kacheln). Geprüft: `designregeln` L INLINE-CSS (jede
+Inline-Angabe auf allen Seiten: verworfen, `var()`+Hex oder
+undefined/NaN/null).
+
+**S — Auch auf dem Handy in echter Größe (Runde 2, Paket C).** Diagramme
+werden mit Untergrenze 200 px gebaut, nicht 300 (`trBreiteAus`, `chPlatz`)
+— bei 390 px ist der Platz 268 px, mit 300 kam die Schrift auf 0,89
+gestaucht an. Wer ein Diagramm in einen Behälter mit eigenem Polster legt,
+zieht das Polster vor dem Bauen ab (Data: `.ind-hist-wrap` 2 × 4 px). Die
+64-px-Leiste (≤ 760 px) hat 2 + 2 px Polster, sonst bricht „Dashboard“ um.
+Geprüft: `designregeln` C und D zusätzlich bei 390 px.

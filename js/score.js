@@ -1277,7 +1277,7 @@ function openScoreInfoPair(pairName){
   if(bSym)html+=row(bSym.id+' (base)',symScoreCmp(bSym),sideSub(bSym,false));
   if(qSym)html+=row(qSym.id+' (quote, subtracted)',-symScoreCmp(qSym),sideSub(qSym,true));
   const carry=typeof pairCarryAdj==='function'?pairCarryAdj(pairName):0;
-  if(carry)html+=row('Carry adjustment',carry,'policy-rate differential: ±0.5 from 0.5%, ±1 from 1.5%');
+  if(carry)html+=row('Carry adjustment',carry,carryRegelText());
   html+=scoreInfoTotalRow('Pair score',pairScore(pairName));
   html+=`<div style="color:var(--t3);font-size:var(--fs-xs);margin-top:6px">Both sides are scaled to a common indicator base before subtracting, so a symbol that simply tracks more releases (e.g. USD) does not dominate the pair score structurally.</div>`;
   document.getElementById('scoreInfoTitle').textContent='Score – '+pairName;

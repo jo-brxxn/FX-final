@@ -13172,7 +13172,7 @@ function povScoreHtml(name){
   };
   return line(l.bc+' (base)',b,`raw ${fmtScNum(symScore(bS))} scaled to the common indicator base`)+
     line(l.qc+' (quote, subtracted)',-q,`raw ${fmtScNum(symScore(qS))} scaled to the common indicator base`)+
-    (FX.includes(l.bId)&&FX.includes(l.qId)?line('Carry',c,'policy-rate differential, staged ±0.5 / ±1'):'')+
+    (FX.includes(l.bId)&&FX.includes(l.qId)?line('Carry',c,carryRegelText()):'')+
     `<div class="pov-stot"><span>Pair score</span><span style="color:${biasCss(scoreBias(tot))}">${tot>0?'+':''}${tot}</span></div>
      <div class="pov-note">Both sides are scaled to a common indicator base before subtracting, so a currency that simply tracks more releases does not dominate structurally. <button class="pov-link" onclick="openScoreInfoPair('${escJH(name)}')">Full breakdown</button></div>`;
 }
@@ -13732,12 +13732,13 @@ function renderPairsRoh(){
   if(setupFxOnly)shown=shown.filter(it=>it.kind==='pair'&&isPureFxPair(it.name));
   if(setupNonFxOnly)shown=shown.filter(it=>it.kind==='asset'||(it.kind==='pair'&&!isPureFxPair(it.name)));
   if(setupYieldsOnly)shown=shown.filter(it=>it.kind==='asset'&&assetCls(it.id)==='yield');
-  // Zins-Differenz (Carry) je FX-Paar: Leitzins Basis minus Kurswaehrung.
-  // Positiv = Carry beguenstigt die Long-Seite des Paars. Zaehlt ueber
-  // pairCarryAdj() direkt in den Paar-Score (nur auf Set-ups-/Paar-Ebene,
-  // nicht als Indikator pro Waehrung - siehe pairCarryAdj-Kommentar).
-  // Klickbar: oeffnet ein Detail-Fenster mit beiden Leitzinsen, der
-  // Differenz und dem konkreten Score-Effekt (openCarryDetail).
+  // Zins-Differenz je FX-Paar: Leitzins Basis minus Kurswaehrung (Anzeige).
+  // Positiv = Carry beguenstigt die Long-Seite des Paars.
+  // ⚠ Der Carry IM Score (pairCarryAdj) rechnet seit 2026-09-24 mit den
+  // 2-jaehrigen Renditen im Verhaeltnis zur Schwankung (carryDetails) - der
+  // Knopf oeffnet genau diese Rechnung (openCarryDetail). Die Zahl auf dem
+  // Knopf ist also NICHT die Score-Grundlage (AUD/JPY 2026-10-05: Leitzinsen
+  // +3,35, 2Y +3,01). Welche Zahl hier stehen soll, ist beim Nutzer offen.
   const rateDiff=name=>{
     const parts=name.split('/');
     if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return'';
@@ -15324,7 +15325,7 @@ const W_TYPES=[
   {type:'pairs_editor',label:'Pairs Editor',sub:'Manage all pairs across categories'},
   {type:'headlines',label:'Headlines',sub:'Economic news from free RSS feeds — central banks, market media and bank research. Day/week/month, ranked by importance. Display-only, no score impact'},
   {type:'perf_ranking',label:'Performance Ranking',sub:'Actual price performance over 1D/1W/1M/YTD — what the market did, next to what the score says'},
-  {type:'carry_ranking',label:'Carry Ranking',sub:'Policy-rate differential per FX pair — which pairs pay to hold long, which cost'},
+  {type:'carry_ranking',label:'Carry Ranking',sub:'2-year yield differential per FX pair, the basis of the carry in the pair score — which pairs pay to hold long, which cost'},
   {type:'corr_warn',label:'Correlation Check',sub:'How correlated your watchlist pairs really are — spots positions that are secretly one'},
   {type:'surprise_index',label:'Surprise Index',sub:'Economic data vs. forecast per currency, in own standard deviations, age-weighted (Citi CESI style)'},
 ];
@@ -16307,7 +16308,7 @@ function renderDash(){
       // Sortiert nach symScoreCmp statt roh, damit die Reihenfolge zum
       // angezeigten Wert jeder Kachel passt (die schon symScoreCmp zeigt).
       const assets=syms.filter(s=>isNonFx(s.id)).sort((a,b)=>symScoreCmp(b)-symScoreCmp(a));
-      content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:${biasCss(s.bias)}66;background:${BC[s.bias]}1c" onclick="gotoSym('${s.id}')">
+      content=assets.length?`<div class="heat-grid">`+assets.map(s=>`<div class="heat-tile" style="border-color:color-mix(in srgb,${biasCss(biasGroup(s.bias))} 40%,transparent);background:${BC[biasGroup(s.bias)]}1c" onclick="gotoSym('${s.id}')">
         <div class="heat-name">${escH(s.name)}</div>
         <div class="heat-sc" role="button" onclick="event.stopPropagation();openScoreInfoSym('${s.id}')" style="cursor:pointer;color:${biasCss(s.bias)}" title="Score - tap for the breakdown">${symScoreCmp(s)>0?'+':''}${symScoreCmp(s)}</div>
         <div class="heat-bias" style="color:${biasCss(s.bias)}">${BL[s.bias]}</div>
@@ -17395,8 +17396,73 @@ function clearTrendsCcyFilter(){trendsCcyFilter=[];trendsScope='';renderTrends()
 function setTrendsFilter(v){trendsFilter=v||'ALL';renderTrends();}
 function toggleTrendsPairMode(){setTrendsFilter(trendsFilter==='PAIR'?'ALL':'PAIR');}
 function setTrendsPair(v){trendsPairSel=v;renderTrends();}
-function trendLegend(ids,colorOverride){
-  return`<div class="tr-legend">`+ids.map(id=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||TREND_COLORS[id]||'#888'}"></span>${id}</span>`).join('')+`</div>`;
+// ── Fokus statt Knaeuel (Design-Audit Runde 2, Nutzer 2026-10-05) ───────
+// 23 Linien in einem Chart waren nicht lesbar. Farbig sind nur die Fokus-
+// Linien, der Rest steht blassgrau dahinter. Ohne eigene Wahl: die 3
+// staerksten + 3 schwaechsten nach dem letzten Wert im Zeitraum (Nutzerwahl
+// "Staerkste 3 + schwaechste 3"). Ein Tipp auf einen Legenden-Namen, eine
+// Linie oder ein Endlabel waehlt eigene Linien - fuer alle Trends-Karten
+// zugleich und bis zum Neuladen (bewusst nur Sitzung wie die anderen
+// Ansichtswahlen, docs/state-sync.md).
+// trendsFokus: null = automatisch; sonst ein Array, dessen Index der
+// Farbplatz ist. Ein abgewaehlter Platz wird null und beim naechsten Tipp
+// wieder belegt - so wechselt keine Linie die Farbe, nur weil eine andere
+// abgewaehlt wurde.
+const TR_FOKUS_N=3;
+// Eigene Fokus-Palette statt TREND_COLORS: die gedaempften Kennfarben liegen
+// teils praktisch aufeinander (OKLab-dE EUR/GOLD 1,9, AUD/GOLD 2,4) - bei 23
+// Linien egal, bei sechs hervorgehobenen nicht. --tf1..--tf6 je helle/
+// dunkle Vorlage (index.html), paarweise dE >= 14, als Linie >= 3:1 gegen
+// die Kartenflaeche, kein Bias-Blau/-Rot. Die Reihenfolge macht schon zwei
+// oder drei Linien maximal verschieden. Geprueft: check/theme.js 7.
+const TR_FOKUS_FARBEN=['var(--tf1)','var(--tf2)','var(--tf3)','var(--tf4)','var(--tf5)','var(--tf6)'];
+let trendsFokus=null;
+function trendsFokusTipp(id){
+  if(!trendsFokus)trendsFokus=[];
+  const i=trendsFokus.indexOf(id);
+  if(i>=0)trendsFokus[i]=null;
+  else{const frei=trendsFokus.indexOf(null);if(frei>=0)trendsFokus[frei]=id;else trendsFokus.push(id);}
+  if(!trendsFokus.some(Boolean))trendsFokus=null;
+  renderTrends();
+}
+function trendsFokusAuto(){trendsFokus=null;renderTrends();}
+// Letzter Wert je Linie im gewaehlten Zeitraum (= Wert am Linienende).
+function trEndWerte(ids,dates,vi){
+  const ds=new Set(dates),out={};
+  ids.forEach(id=>{let best=null;
+    (scoreHist[id]||trendsEphemeral[id]||[]).forEach(e=>{const v=e[vi];if(ds.has(e[0])&&v!=null&&isFinite(v)&&(!best||e[0]>best[0]))best=[e[0],v];});
+    if(best)out[id]=best[1];});
+  return out;
+}
+// Welche Linien einer Karte farbig sind und in welcher Farbe. Liegt keine
+// der eigenen Linien in dieser Karte (z.B. nur GOLD gewaehlt, Karte nur FX),
+// gilt fuer sie die automatische Wahl statt einer ganz grauen Karte.
+function trFokus(ids,endWert){
+  const farbe={};
+  if(trendsFokus){
+    const eig=trendsFokus.map((id,i)=>[id,i]).filter(([id])=>id&&ids.includes(id)&&endWert[id]!=null);
+    if(eig.length){eig.forEach(([id,i])=>{farbe[id]=TR_FOKUS_FARBEN[i%TR_FOKUS_FARBEN.length];});return{farbe,auto:false};}
+  }
+  let wahl=ids.filter(id=>endWert[id]!=null);
+  if(wahl.length>2*TR_FOKUS_N){
+    const s=wahl.slice().sort((a,b)=>endWert[b]-endWert[a]||ids.indexOf(a)-ids.indexOf(b));
+    const f=new Set(s.slice(0,TR_FOKUS_N).concat(s.slice(-TR_FOKUS_N)));
+    wahl=ids.filter(id=>f.has(id));
+  }
+  wahl.forEach((id,i)=>{farbe[id]=TR_FOKUS_FARBEN[i%TR_FOKUS_FARBEN.length];});
+  return{farbe,auto:true};
+}
+function trendLegend(ids,colorOverride,fok){
+  if(!fok)return`<div class="tr-legend">`+ids.map(id=>`<span class="tr-leg-item"><span class="tr-leg-dot" style="background:${colorOverride||TREND_COLORS[id]||'#888'}"></span>${id}</span>`).join('')+`</div>`;
+  // Jeder Name ist ein Knopf: farbiger Punkt = farbige Linie, aria-pressed =
+  // in der eigenen Wahl. "Top 3 + bottom 3" zeigt/holt die automatische
+  // Wahl (nur noetig, solange es graue Linien oder eine eigene Wahl gibt).
+  const grau=ids.some(id=>!fok.farbe[id]);
+  const auto=(trendsFokus||grau)?`<button class="hl-tab tr-auto${trendsFokus?'':' on'}" aria-pressed="${trendsFokus?'false':'true'}" onclick="trendsFokusAuto()" title="Colour the three strongest and the three weakest lines">Top 3 + bottom 3</button>`:'';
+  return`<div class="tr-legend tr-legend-fokus">${auto}`+ids.map(id=>{
+    const c=fok.farbe[id],gew=!!(trendsFokus&&trendsFokus.includes(id));
+    return`<button class="tr-leg-btn${c?'':' tr-leg-grau'}" aria-pressed="${gew}" onclick="trendsFokusTipp('${escH(id)}')" title="${gew?'Remove '+escH(id)+' from your selection':'Highlight '+escH(id)}"><span class="tr-leg-dot" style="background:${c||'var(--t3)'}"></span>${escH(id)}</button>`;
+  }).join('')+`</div>`;
 }
 // A line chart: x = days (one point/day, horizontal scrollbar), y = symmetric
 // score scale (+/-base, grows if values get bigger). vi = index into the
@@ -17415,7 +17481,10 @@ function trendLegend(ids,colorOverride){
 // Punkte nur, solange sie sich nicht beruehren. Geprueft:
 // check/designregeln.js C (gerenderte Schriftgroesse jedes Diagrammtexts).
 let _trW=0;
-function trBreiteAus(el,abzug){const w=el&&el.clientWidth;_trW=w>0?Math.max(300,w-abzug):0;}
+// ⚠ Untergrenze 200, nicht 300: auf dem Handy (390 px) ist der Platz nur
+// 268 px - mit 300 gebaut kam die Schrift auf 0,89 gestaucht an (9,8 px,
+// gemessen 2026-10-05: 127 Beschriftungen auf Trends/Put-Call/Netflow/AAII).
+function trBreiteAus(el,abzug){const w=el&&el.clientWidth;_trW=w>0?Math.max(200,w-abzug):0;}
 function trZielBreite(){return _trW>0?_trW:1000;}
 function trTagAbstand(n,leftPad,rightPad){return Math.max(1,(trZielBreite()-leftPad-rightPad)/Math.max(1,n));}
 function trPunktR(PD){return PD>=14?3.2:PD>=7?2.2:0;}
@@ -17431,14 +17500,14 @@ function ordEn(n){n=Math.round(+n);if(!isFinite(n))return'–';const m=Math.abs(
 // ist er breiter, bleibt es wie bisher. chPlatz misst den Seitenkoerper vor
 // dem Bauen, abzug = Rahmen/Innenabstand der Karte. Geprueft:
 // check/designregeln.js C (bei 820 und 1180 px).
-function chPlatz(id,abzug){const el=document.getElementById(id);const w=el&&el.clientWidth;return w>0?Math.max(300,w-abzug):0;}
+function chPlatz(id,abzug){const el=document.getElementById(id);const w=el&&el.clientWidth;return w>0?Math.max(200,w-abzug):0;}
 function chBreite(fest,platz){return platz>0?Math.min(fest,platz):fest;}
 // Breite geaendert (iPad drehen) -> die Seiten mit solchen Diagrammen neu
 // bauen, sonst stuende das Diagramm in der alten Breite skaliert da.
 try{let _chRz,_chW=window.innerWidth;window.addEventListener('resize',()=>{clearTimeout(_chRz);_chRz=setTimeout(()=>{
   if(Math.abs(window.innerWidth-_chW)<=8)return;_chW=window.innerWidth;
   if(curPage==='sent'||curPage==='mx'||curPage==='carry')rerender();},150);});}catch(e){}
-function scoreTrendChart(ids,dates,vi,base,colorOverride){
+function scoreTrendChart(ids,dates,vi,base,colorOverride,fok){
   const n=dates.length;
   const valOf={},biasOf={};let maxAbs=base;
   ids.forEach(id=>{
@@ -17462,7 +17531,15 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
     valOf[id]=m;biasOf[id]=bm;
   });
   const scale=Math.ceil(maxAbs);
-  const leftPad=42,rightPad=20,topPad=18,chartH=vi===1?260:200,bottomPad=36;
+  // Endlabels der Fokus-Linien ("letzter Wert direkt am Linienende") brauchen
+  // rechts Platz: so breit wie das laengste Label (11 px fett, ~6,9 px je
+  // Zeichen). Unter 560 px nur der Wert - der Name steht in der Legende.
+  const lblBreit=trZielBreite()>=560;
+  const endLbl={};
+  if(fok)ids.forEach(id=>{if(!fok.farbe[id])return;
+    for(let i=n-1;i>=0;i--){const v=valOf[id][dates[i]];if(v!=null&&isFinite(v)){const z=(v>0?'+':'')+(Math.round(v*10)/10);endLbl[id]=lblBreit?id+' '+z:z;break;}}});
+  const lblMax=Math.max(0,...Object.values(endLbl).map(t=>t.length));
+  const leftPad=42,rightPad=lblMax?Math.ceil(lblMax*6.9+24):20,topPad=18,chartH=vi===1?260:200,bottomPad=36;
   const PD=trTagAbstand(n,leftPad,rightPad),dotR=trPunktR(PD);
   const w=leftPad+n*PD+rightPad,h=topPad+chartH+bottomPad;
   const yMid=topPad+chartH/2;
@@ -17482,7 +17559,21 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   // Nutzer-Wunsch 2026-07-19: die reine Score-Linie bleibt ohne Marker, nur
   // die Bias-Farbsegmente selbst zeigen den Verlauf.
   const useBiasColor=!!colorOverride&&ids.length===1&&vi===1;
-  ids.forEach(id=>{
+  if(fok){
+    // Graue Linien zuerst (dahinter, ohne Punkte), dann die Fokus-Linien mit
+    // einem Saum in Kartenfarbe - so bleiben sie auch an Kreuzungen lesbar.
+    const zeile=id=>{const pts=[];dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v)});});return pts;};
+    const ps=pts=>pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+    ids.filter(id=>!fok.farbe[id]).forEach(id=>{const pts=zeile(id);
+      if(pts.length>1)svg+=`<polyline class="tr-line-in tr-grau" data-trid="${escH(id)}" pathLength="1" points="${ps(pts)}" fill="none" stroke="var(--t3)" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity=".3"/>`;});
+    const enden=[];
+    ids.filter(id=>fok.farbe[id]).forEach(id=>{const col=fok.farbe[id],pts=zeile(id);
+      if(pts.length>1)svg+=`<polyline points="${ps(pts)}" fill="none" stroke="var(--bg2)" stroke-width="5.5" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/><polyline class="tr-line-in tr-fokus" data-trid="${escH(id)}" pathLength="1" points="${ps(pts)}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+      if(dotR)svg+='<g class="tr-dots-in">'+pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${dotR}" fill="${col}"/>`).join('')+'</g>';
+      const l=pts[pts.length-1];if(l&&endLbl[id])enden.push({id,col,x:l.x,y:l.y,t:endLbl[id]});
+    });
+    svg+=trEndLabels(enden,w-rightPad+6,topPad+6,topPad+chartH);
+  }else ids.forEach(id=>{
     const col=colorOverride||TREND_COLORS[id]||'#888';const pts=[];
     dates.forEach((d,i)=>{const v=valOf[id][d];if(v!=null&&isFinite(v))pts.push({x:xOf(i),y:yOf(v),bias:biasOf[id][d]});});
     if(useBiasColor){
@@ -17505,26 +17596,74 @@ function scoreTrendChart(ids,dates,vi,base,colorOverride){
   const hpts=dates.map((d,i)=>{
     let lbl;try{const dt=new Date(d+'T00:00:00');lbl=dt.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});}catch(e){lbl=d;}
     let dotY=yMid,dotCol='var(--t3)',hasDot=false;
-    const rows=ids.map(id=>{
-      const v=valOf[id][d];const c=useBiasColor?(BC[biasGroup(biasOf[id][d])]||colorOverride):(colorOverride||TREND_COLORS[id]||'#888');
+    // Mit Fokus: erst die farbigen Linien, dann die grauen, je nach Wert
+    // absteigend; Name in Textfarbe hinter einem Farbpunkt (die Linienfarben
+    // erreichen als Schrift keine 4,5:1).
+    const reihe=fok?ids.filter(id=>{const v=valOf[id][d];return v!=null&&isFinite(v);})
+      .sort((a,b)=>(!!fok.farbe[b]-!!fok.farbe[a])||(valOf[b][d]-valOf[a][d])):ids;
+    const rows=reihe.map(id=>{
+      const v=valOf[id][d];const c=fok?(fok.farbe[id]||'var(--t3)'):useBiasColor?(BC[biasGroup(biasOf[id][d])]||colorOverride):(colorOverride||TREND_COLORS[id]||'#888');
       if(v!=null&&isFinite(v)&&!hasDot){dotY=yOf(v);dotCol=c;hasDot=true;}
-      return v==null||!isFinite(v)?'':`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${c}">${escH(id)}</span><b>${v>0?'+':''}${v}</b></div>`;
+      if(v==null||!isFinite(v))return'';
+      if(fok)return`<div style="display:flex;justify-content:space-between;gap:12px${fok.farbe[id]?'':';color:var(--t3)'}"><span><span class="tr-tip-dot" style="background:${c}"></span>${escH(id)}</span>${fok.farbe[id]?'<b>':'<span>'}${v>0?'+':''}${v}${fok.farbe[id]?'</b>':'</span>'}</div>`;
+      return`<div style="display:flex;justify-content:space-between;gap:12px"><span style="color:${c}">${escH(id)}</span><b>${v>0?'+':''}${v}</b></div>`;
     }).filter(Boolean).join('');
     return{fx:xOf(i)/w,fy:dotY/h,col:dotCol,tip:`<div class="chv-tip-d">${escH(lbl)}</div>${rows||'<span style="color:var(--t3)">no data</span>'}`};
   });
-  return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
+  if(!fok)return chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`);
+  const gid='trg'+(_trGeoSeq++),ys={};
+  ids.forEach(id=>{ys[id]=dates.map(d=>{const v=valOf[id][d];return v!=null&&isFinite(v)?yOf(v):null;});});
+  _trGeo[gid]={w,h,n,x0:xOf(0),pd:PD,ys};
+  return`<div class="tr-tap" onclick="trendsLinieTipp(event,'${gid}')">${chartHoverWrap(fitSvg,hpts,`max-width:${w}px;margin:0 auto`)}</div>`;
 }
 // ⓘ-Texte der Trends-Karten (Nutzer 2026-09-26: fehlende ⓘ ergaenzen).
-function trendsErkl(title,mitPreis){
+function trendsErkl(title,mitPreis,fokus){
   return[`<b>What it shows:</b> the recorded daily score for <b>${escH(title)}</b> — one point per day from the app's own history. Nothing is back-filled or estimated; a day the app was not opened has no point.`,
     'Total Score is the sum of every driver. Inflation, Labour Market and Economic Growth are the parts of that sum coming from each macro group, so you can see which group moved the total.',
     mitPreis?'The dashed line is the price over the same days — it shows whether price followed the score or went its own way.':'Above 0 = bullish, below 0 = bearish. The y-axis is the score itself.',
-    'A step marked as a model change comes from a new version of the score formula, not from the market.'];
+    'A step marked as a model change comes from a new version of the score formula, not from the market.']
+    .concat(fokus?['<b>Coloured lines:</b> the three strongest and the three weakest at the end of the range, with their last value at the line end; the others stay grey behind them. Tap a name, a line or a label to follow your own selection — it applies to all Trends charts until the page is reloaded. <b>Top 3 + bottom 3</b> returns to the default.']:[]);
+}
+// Endlabels der Fokus-Linien rechts neben dem Diagramm: Farbpunkt + Name +
+// letzter Wert, senkrecht entzerrt (>= 14 px Abstand), eine duenne Linie
+// fuehrt vom Linienende zum Label. Text in --t1 (Lesbarkeit), die Farbe
+// traegt der Punkt.
+function trEndLabels(enden,xLbl,yMin,yMax){
+  if(!enden.length)return'';
+  const H=14,s=enden.slice().sort((a,b)=>a.y-b.y);
+  s.forEach((e,i)=>{e.ly=Math.max(e.y,yMin);if(i&&e.ly<s[i-1].ly+H)e.ly=s[i-1].ly+H;});
+  for(let i=s.length-1;i>=0;i--){const max=i===s.length-1?yMax:s[i+1].ly-H;if(s[i].ly>max)s[i].ly=max;}
+  return'<g class="tr-endlbl">'+s.map(e=>
+    `<line x1="${(e.x+2).toFixed(1)}" y1="${e.y.toFixed(1)}" x2="${(xLbl-1).toFixed(1)}" y2="${e.ly.toFixed(1)}" stroke="${e.col}" stroke-width="1" opacity=".6"/>`+
+    `<circle cx="${(xLbl+3.5).toFixed(1)}" cy="${e.ly.toFixed(1)}" r="3.5" fill="${e.col}"/>`+
+    `<text class="tr-endlbl-t" data-trid="${escH(e.id)}" x="${(xLbl+11).toFixed(1)}" y="${(e.ly+4).toFixed(1)}" style="font-size:var(--fs-2xs);font-weight:700;fill:var(--t1)">${escH(e.t)}</text>`).join('')+'</g>';
+}
+// Tipp auf eine Linie (oder ihr Endlabel) waehlt sie wie der Legenden-Knopf.
+// Getroffen ist die Linie, die an der getippten Stelle senkrecht am naechsten
+// liegt (zwischen zwei Tagen interpoliert), hoechstens 12 px daneben - die
+// Linien selbst sind 1,3-2,4 px duenn, das waere kein Ziel fuer einen Finger.
+const _trGeo={};let _trGeoSeq=0;
+function trendsLinieTipp(ev,gid){
+  try{
+    const g=_trGeo[gid];if(!g)return;
+    const lbl=ev.target&&ev.target.closest&&ev.target.closest('[data-trid]');
+    if(lbl&&lbl.classList.contains('tr-endlbl-t')){trendsFokusTipp(lbl.getAttribute('data-trid'));return;}
+    const svg=ev.currentTarget.querySelector('svg.tr-svg');if(!svg)return;
+    const r=svg.getBoundingClientRect();if(!r.width||!r.height)return;
+    const sx=g.w/r.width,sy=g.h/r.height,x=(ev.clientX-r.left)*sx,y=(ev.clientY-r.top)*sy;
+    const f=Math.max(0,Math.min(g.n-1,(x-g.x0)/g.pd)),i0=Math.floor(f),i1=Math.min(g.n-1,i0+1),t=f-i0;
+    let best=null,bd=Infinity;
+    Object.keys(g.ys).forEach(id=>{const a=g.ys[id][i0],b=g.ys[id][i1];
+      const yy=a!=null&&b!=null?a+(b-a)*t:a!=null?a:b;if(yy==null)return;
+      const d=Math.abs(yy-y);if(d<bd){bd=d;best=id;}});
+    if(best&&bd/sy<=12)trendsFokusTipp(best);
+  }catch(e){console.warn('trendsLinieTipp',e);}
 }
 function scoreTrendCard(ids,dates,vi,base,title,colorOverride){
+  const fok=!colorOverride&&ids.length>1?trFokus(ids,trEndWerte(ids,dates,vi)):null;
   return`<div class="tr-card">
-    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride)}${abInfoBtn(title,trendsErkl(title,false))}</div>
-    ${scoreTrendChart(ids,dates,vi,base,colorOverride)}
+    <div class="tr-card-head"><span class="tr-card-title">${escH(title)}</span>${trendLegend(ids,colorOverride,fok)}${abInfoBtn(title,trendsErkl(title,false,!!fok))}</div>
+    ${scoreTrendChart(ids,dates,vi,base,colorOverride,fok)}
   </div>`;
 }
 // ── SCORE VS PRICE (Ueberlagerung) ──────────────────────────────────
@@ -17641,9 +17780,11 @@ function renderTrends(){
 // wuerde die Schrift mitwachsen/-schrumpfen. Nur bei echter Aenderung.
 try{let _trRz;window.addEventListener('resize',()=>{clearTimeout(_trRz);_trRz=setTimeout(()=>{
   if(curPage!=='trends')return;const el=document.getElementById('trendsBody');
-  if(el&&el.offsetParent&&Math.abs(Math.max(300,el.clientWidth-30)-_trW)>8)renderTrends();},150);});}catch(e){}
+  if(el&&el.offsetParent&&Math.abs(Math.max(200,el.clientWidth-30)-_trW)>8)renderTrends();},150);});}catch(e){}
 function renderTrendsRoh(){
   const el=document.getElementById('trendsBody');if(!el)return;
+  // Geometrie der Linien-Tipps gehoert zum Aufbau davor - alte Eintraege weg.
+  for(const k in _trGeo)delete _trGeo[k];
   trBreiteAus(el,30); // Karte: 2 x 14 px Innenabstand + Rahmen
   const assets=trendAssets();
   // Populate the filter dropdown dynamically: assets grouped by class (optgroup).
@@ -17763,13 +17904,17 @@ function renderTrendsPair(el){
   // Was der Carry an diesem Paar GERADE beitraegt, offen ausweisen - sonst
   // ist der Unterschied zwischen "Basis minus Kurswaehrung" und der
   // gezeichneten Linie nicht nachvollziehbar.
+  // ⚠ Bis 592 nannte der Hinweis die LEITZINSEN ("EUR 2.65% − USD 4.00%"),
+  // waehrend der Score seit 2026-09-24 mit den 2-jaehrigen Renditen im
+  // Verhaeltnis zur Schwankung rechnet (carryDetails) - Zahlen und "score
+  // effect" passten nicht zusammen. Jetzt zeigt er genau die Rechnung, die
+  // in der Linie steckt.
   if(FX.includes(base)&&FX.includes(quote)){
-    const rb=rateAtDate(base,todayStr()),rq=rateAtDate(quote,todayStr());
-    const jetzt=pairCarryAdjAt(base,quote,todayStr());
-    if(rb!=null&&rq!=null){
-      const d=Math.round((rb-rq)*100)/100;
-      html+=`<div class="tr-carrynote">Carry is part of this line, exactly as in Set-ups and the pair score: <b>${escH(parts[0])} ${rb}%</b> − <b>${escH(parts[1])} ${rq}%</b> = <b>${(d>0?'+':'')+d} pp</b> → score effect <b>${(jetzt>0?'+':'')+jetzt}</b>. Each past day uses the policy rate that was in force <i>on that day</i>, not today's.${ohneCarry?` <b>${ohneCarry} of ${ohneCarry+mitCarry} days</b> lie before the oldest recorded rate decision — those carry no adjustment rather than a guessed one.`:''}</div>`;
-    }
+    const c=carryDetails(base+'/'+quote,todayStr());
+    const sz=v=>(v>0?'+':'')+v;
+    const fehlt=ohneCarry?` <b>${ohneCarry} of ${ohneCarry+mitCarry} days</b> have no 2-year yield for one side or not enough price history for the volatility on that day — those carry no adjustment rather than a guessed one.`:'';
+    if(c.ok)html+=`<div class="tr-carrynote">Carry is part of this line, exactly as in Set-ups and the pair score: 2-year yields <b>${escH(parts[0])} ${c.yb.toFixed(2)}%</b> − <b>${escH(parts[1])} ${c.yq.toFixed(2)}%</b> = <b>${sz(c.diff.toFixed(2))} pp</b>, divided by the pair's volatility (${c.vol.toFixed(1)}% a year) = carry-to-risk <b>${c.ratio.toFixed(2)}</b> → score effect <b>${sz(c.adj)}</b>${c.vixAus?' (switched off: the VIX jumped)':''}. Each past day uses the yields and volatility of that day, not today's.${fehlt}</div>`;
+    else html+=`<div class="tr-carrynote">Carry is part of this line, exactly as in Set-ups and the pair score — today it cannot be computed: ${escH(c.grund||'data missing')}${fehlt}</div>`;
   }
   {
     const scoreMap={},biasMap={};diffArr.forEach(e=>{scoreMap[e[0]]=e[1];biasMap[e[0]]=scoreBias(e[1]);});
@@ -20348,7 +20493,10 @@ function dataRasterFuellen(el,n,jobs){
     // window.__dataEigeneSkala: nur fuer die Gegenprobe von check/yachse.js
     const yRange=sp&&sp.n>1&&!window.__dataEigeneSkala?{min:sp.min,max:sp.max}:null;
     const bs=getComputedStyle(box),px=k=>parseFloat(bs[k])||0;
-    const w=box.clientWidth-px('paddingLeft')-px('paddingRight');
+    // - 8: indHistChart legt das Diagramm in .ind-hist-wrap (4 px Polster je
+    // Seite). Ohne Abzug kam es um 8 px gestaucht an (bei 390 px 10,7 statt
+    // 11 px Schrift, gemessen 2026-10-05; bei 820 px knapp ueber der Grenze).
+    const w=box.clientWidth-px('paddingLeft')-px('paddingRight')-8;
     const zeichne=h=>{box.innerHTML=indHistChart(job.ind,job.sym.id,{noToolbar:true,noLegend:true,group:'data',range:dataRange,from:dataCustomFrom,to:dataCustomTo,W:w,H:h,yRange});};
     const h0=box.clientHeight-px('paddingTop')-px('paddingBottom');
     zeichne(h0);
@@ -22841,6 +22989,10 @@ SENT_INFO.corrregime=['Correlation regime',
    <p><b>Why it matters more than the level:</b> a correlation of +0.8 that has held for a year and a correlation of +0.8 that was −0.2 six weeks ago are completely different situations. A hedge or a pair of correlated positions built on the current number stops working when the regime shifts — and the shift is visible here before it shows up in the single number.</p>
    <p><b>How to read it:</b> the stated range is the difference between the highest and lowest reading in the window shown. A wide range means the relationship is unstable. Flat stretches near zero mean the two markets are simply not related right now.</p>
    <p><b>Limits:</b> a shorter window reacts faster but is noisier; 20 days of returns can produce a large correlation by chance alone. Nothing here is scored.</p>`];
+SENT_INFO.carry=['Carry ranking',
+  `<p><b>What it is:</b> every FX pair ranked by the gap between the two central-bank policy rates — the carry, a proxy for the swap you earn or pay for holding the pair overnight. Biggest gap on top.</p>
+   <p><b>How to read a row:</b> <b>LONG</b> means the base currency pays the higher rate, so holding the pair long earns the gap; <b>SHORT</b> means the quote currency pays more and the positive swap is on the short side. The bar compares each gap with the largest one. Hover the policy rates to see since when each rate applies.</p>
+   <p><b>Limits:</b> the swap a broker actually pays also depends on its own spread and on money-market rates — the policy-rate gap is the driver, not the exact amount. The pair score (Set-ups, Trends) measures carry differently: the 2-year yield gap divided by the pair's volatility, as in the Carry Ranking card on the dashboard.</p>`];
 SENT_INFO.realrate=['Real policy rate',
   `<p><b>What it is:</b> the policy rate minus headline CPI. Both numbers are the ones already shown on the asset pages — nothing is recomputed here, and no inflation figure is estimated to fill a gap.</p>
    <p><b>Why it matters:</b> the Carry tab above ranks pairs by the NOMINAL gap. But two currencies paying 4% are not equally attractive if one has 2% inflation and the other 6% — the first pays you 2% in real terms, the second takes 2% away. Real rates are what long-horizon capital actually chases.</p>
@@ -23961,24 +24113,31 @@ function carryRows(){
     return{pair:p,base:b,quote:q,rb:ib.rate,rq:iq.rate,db:ib.date,dq:iq.date,diff,carry:Math.abs(diff),long:diff>=0};
   }).filter(Boolean).sort((a,b)=>b.carry-a.carry);
 }
+// Kompakte Tabelle statt einer Karte je Paar (Design-Audit Runde 2, Nutzer-
+// wahl "Carry als kompakte Tabelle": eine Zeile je Paar, ~20 statt ~9 Paare
+// je Bildschirm). Spalten: Rang, Paar, Kurs, Richtung, Carry, Balken,
+// Leitzinsen; schmale Karten blenden Kurs/Balken aus und ziehen die Zinsen
+// unter das Paar (@container carry). "long X / short Y" steht im Tooltip der
+// Zeile - die Richtung + das Paar sagen dasselbe.
+// ⚠ Vorher stand hier background:${col}14 mit col='var(--green)' - das
+// ergibt "var(--green)14", ungueltiges CSS, die Flaeche fiel still weg.
+// Farbe mit Alpha deshalb ueber die -rgb-Tokens.
 function carryRowHTML(r,rank,max){
-  const _rowDelay=`animation-delay:${Math.min((rank-1)*28,700)}ms`;
-  const col=r.long?'var(--green)':'var(--red)';
+  const _rowDelay=`animation-delay:${Math.min((rank-1)*18,500)}ms`;
+  const col=r.long?'var(--green)':'var(--red)',rgb=r.long?'var(--green-rgb)':'var(--red-rgb)';
   const pct=max>0?Math.max(2,r.carry/max*100):0;
-  const dir=r.long?'▲ LONG':'▼ SHORT';
-  return`<div class="carry-row list-in" style="${_rowDelay}">
-    <div class="carry-rank">${rank}</div>
-    <div class="carry-main">
-      <div class="carry-top">
-        <span class="carry-pair">${r.pair}</span>
-        ${tickerChipHtml(pairTickerInfo(r.base,r.quote))}
-        <span class="carry-dir" style="color:${col};border-color:${col};background:${col}14">${dir}</span>
-        <span class="carry-val" style="color:${col}">+${r.carry.toFixed(2)}% p.a.</span>
-      </div>
-      <div class="carry-bar-wrap"><div class="carry-bar" style="width:${pct}%;background:${col}"></div></div>
-      <div class="carry-rates">${r.base} ${r.rb.toFixed(2)}%  ·  ${r.quote} ${r.rq.toFixed(2)}%  →  ${r.long?('long '+r.base+' / short '+r.quote):('long '+r.quote+' / short '+r.base)}</div>
-    </div>
-  </div>`;
+  const lang=r.long?r.base:r.quote,kurz=r.long?r.quote:r.base;
+  const zinsen=`${r.base} ${r.rb.toFixed(2)}% · ${r.quote} ${r.rq.toFixed(2)}%`;
+  const stand=`${r.base} ${r.rb.toFixed(2)}%${r.db?' since '+fmtDayShort(r.db):''} · ${r.quote} ${r.rq.toFixed(2)}%${r.dq?' since '+fmtDayShort(r.dq):''}`;
+  return`<tr class="carry-tr list-in" style="${_rowDelay}" title="Long ${lang} / short ${kurz}: +${r.carry.toFixed(2)}% p.a. rate differential">
+    <td class="carry-rank">${rank}</td>
+    <td class="carry-pc"><span class="carry-pair">${r.pair}</span><span class="carry-rates-sub">${zinsen}</span></td>
+    <td class="carry-px">${tickerChipHtml(pairTickerInfo(r.base,r.quote))}</td>
+    <td class="carry-dc"><span class="carry-dir" style="color:${col};border-color:rgba(${rgb},.45);background:rgba(${rgb},.08)">${r.long?'▲ LONG':'▼ SHORT'}</span></td>
+    <td class="carry-val" style="color:${col}"><span class="carry-dir-mini">${r.long?'▲':'▼'} </span>+${r.carry.toFixed(2)}%</td>
+    <td class="carry-barc"><div class="carry-bar-wrap"><div class="carry-bar" style="width:${pct.toFixed(1)}%;background:${col}"></div></div></td>
+    <td class="carry-rates" title="${escH(stand)}">${zinsen}</td>
+  </tr>`;
 }
 // Realzins-Tabelle: nominal, Inflation, real - je Waehrung, nach Realzins
 // sortiert. Waehrungen ohne aktuellen CPI-Wert erscheinen nicht, statt mit
@@ -24100,7 +24259,9 @@ function renderCarryRoh(){
   const list=all.map((r,i)=>({r,rank:i+1}))
     .filter(({r})=>!term||r.pair.toUpperCase().includes(term)||r.pair.toUpperCase().replace('/','').includes(term.replace('/',''))||r.base===term||r.quote===term)
     .map(({r,rank})=>carryRowHTML(r,rank,max)).join('');
-  el.innerHTML=(list?`<div class="carry-list">${list}</div>`:'<div style="font-size:var(--fs-base);color:var(--t3);padding:10px">No matching pair.</div>')
+  el.innerHTML=(list?`<div class="cot-card carry-card"><div class="cot-card-title">Carry ranking${iBtn('carry')}</div>
+      <table class="carry-tbl"><thead><tr><th class="carry-rank">#</th><th class="carry-pc">Pair</th><th class="carry-px">Price</th><th class="carry-dc">Direction</th><th class="carry-val">Carry p.a.</th><th class="carry-barc"></th><th class="carry-rates">Policy rates</th></tr></thead>
+      <tbody>${list}</tbody></table></div>`:'<div style="font-size:var(--fs-base);color:var(--t3);padding:10px">No matching pair.</div>')
     +realRateTableHtml()+spreadCardHtml();
 }
 
@@ -25337,6 +25498,7 @@ Object.assign(window,{
   biasGroup,biasLineSegments,groupedAssetOptions,TIME_RANGES,TIME_RANGES_TIEF,NEWS_RANGES,IND_HIST_MAX_FROM,indHistStartNote,timeRangeBarHtml,timeRangeCustomHtml,
   indName,kanonIndName,feedEntryFor,newsNoteAnnehmen,newsNoteHinweis,
   filterDatesByRange,setTrendsRange,setTrendsRangeCustom,toggleTrendsCcy,setTrendsScope,clearTrendsCcyFilter,
+  trendsFokusTipp,trendsFokusAuto,trendsLinieTipp,
   setTrendsFilter,toggleTrendsPairMode,setTrendsPair,trendLegend,scoreTrendChart,scoreTrendCard,
   resolvePairPriceSeries,scoreVsPriceChart,scoreVsPriceCard,renderTrends,renderTrendsPair,toggleCotCcy,setCotScope,
   clearCotCcyFilter,COT_SYMS,COT_NAME,COT_CACHE_KEY,cotLoadCache,cotSaveCache,cotMergeHistory,fetchCotData,

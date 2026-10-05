@@ -19277,3 +19277,77 @@ aria-label.
   eingeschaltet erst im `onload` des Bildes nach ~317 ms; der Wächter wartete
   nur auf das Füllen. Jetzt wartet er auf „gefüllt und eingeschaltet“
   (höchstens 4 s). Gegenprobe mit blockiertem Einschalten: weiter rot.
+
+## VERSION-CHECK-592 (2026-10-05) — Design-Audit Runde 2, Paket C
+
+Nutzerwahl Runde 2: „Trends: Fokus statt Knäuel“ und „Carry als kompakte
+Tabelle“; Rückfrage zum Fokus: „Stärkste 3 + schwächste 3“ (die Auswahl gilt
+bis zum Neuladen).
+
+**Trends-Fokus.** Vorher „Total Score“ mit 23 Linien in den gedämpften
+Kennfarben `TREND_COLORS` — gemessen OKLab-ΔE EUR/GOLD 1,9, AUD/GOLD 2,4,
+CAD/BTC 3,0, EUR/AUD 3,0 (Ziel ≥ 15): selbst sechs hervorgehobene Linien
+wären darin nicht unterscheidbar gewesen. Jetzt: 6 farbige Linien (3 höchste
++ 3 tiefste am Linienende), 17 graue; in Inflation/Labour/Growth (8 Linien)
+6 + 2. Eigene Fokus-Palette `--tf1..--tf6` (hell/dunkel), im OKLCH-Raster
+optimiert und nachgerechnet: hell paarweise ΔE ≥ 15,0, dunkel ≥ 15,0, die
+ersten drei 18,0/22,7, Linie ≥ 3,15:1 auf jeder Kartenfläche, ΔE ≥ 9,7 zu
+den Bias-Farben jeder Vorlage. Zwei Zwischenstände fielen dabei durch: ein
+Braun lag in Notion/Swiss am warmgrauen „neutral“ (ΔE 5,9/7,3), Petrol/Rosa
+in Nord/Solar am blassen bullish/bearish (6,1/5,1). Endlabels „Name +Wert“
+(unter 560 px nur der Wert) rechts, entzerrt; Legende als Knöpfe; Tipp auf
+Name/Linie/Label wählt eigene Linien für alle vier Karten, „Top 3 + bottom
+3“ zurück. Gemessen bei 1440/820/390: 0 Label-Überlappungen, 0 Labels
+außerhalb, alle Tipps wirken, keine JS-Fehler. Preis dafür: die Legende ist
+mit 28-px-Knöpfen höher (1440: 15 → 60 px, 820: 40 → 92, 390: 137 → 220).
+
+**Carry-Tabelle.** Vorher eine Karte je Paar, 75 px hoch (390 px: 101–117
+px). Sichtbar ohne Scrollen: 1440×900 9 → 18 Paare, 820×1180 12 → 26,
+390×844 6 → 13. Schmale Karten blenden Spalten aus (`@container`): ≤ 640 px
+ohne Kurs/Balken/Zinsen (Zinsen unter dem Paar), ≤ 400 px auch ohne
+Richtungs-Spalte — die Tabelle war bei 390 px zuerst 343 px breit in einer
+298-px-Karte. Nebenbei gefunden: die LONG/SHORT-Plakette hatte nie eine
+Fläche — `background:${col}14` mit `col='var(--green)'` ergibt ungültiges
+CSS. Jetzt über `--green-rgb`/`--red-rgb`.
+
+**Handy-Durchgang (Fehlerklasse von D3/D5, nur bei 820/1180 geprüft).** Bei
+390 px kamen 127 Diagrammtexte mit 9,8 px an (Trends 58, Netflow 27,
+Put/Call 21, AAII 13) und 8 in Data mit 10,7 px. Ursache 1: `trBreiteAus`/
+`chPlatz` bauten mit mindestens 300 px, der Platz war 268 → gestaucht auf
+0,89. Untergrenze jetzt 200. Ursache 2 (Data): das Diagramm wurde in der
+Breite des Panels gebaut, landete aber in `.ind-hist-wrap` mit 2 × 4 px
+Polster. Danach 0 bei 390/820/1180. Und: „Dashboard“ brach in der 64-px-
+Leiste (≤ 760 px) bei JEDER Handybreite um (gemessen 320–760 px; 53 px Platz
+für 57 px Wort) — seit D5 (588), nur nie bei 390 gemessen. Leisten-Polster
+dort 2 + 2 px → 59 px.
+
+**Wächter.** `check/designregeln.js` L (Trends-Fokus, Tipps, Carry-Zeilen)
+bei 390/820/1440 und C/D zusätzlich bei 390 px; gegen 591 rot, Gegenprobe
+12/12. `check/theme.js` 7 (Fokus-Palette je Vorlage); Gegenprobe mit den
+alten Kennfarben: 117 Befunde.
+
+**Nebenbefunde (Fehlerklassen, beim Bau gefunden):**
+- *Farbe + Hex-Alpha an einem `var()`:* außer der Carry-Plakette auch die
+  Kacheln der Asset-Heatmap (Dashboard-Karte, über die Kartenauswahl
+  erreichbar): `border-color:${biasCss(...)}66` → `var(--bias-bull)66`.
+  Gemessen: Rand = Textfarbe statt Bias-Farbe; bei „strong“-Bias
+  (`sbull`/`sbear`, die `BC` nicht kennt) grauer Rand und `undefined1c` als
+  Fläche (durchsichtig). Jetzt `biasGroup()` + `color-mix(… 40%,
+  transparent)`. Wächter: `designregeln` L INLINE-CSS prüft auf allen 23
+  Seiten jede Inline-Angabe (9261) — verworfen, `var()`+Hex oder
+  undefined/NaN/null; gegen 591: 2 Befunde (die Plakette).
+- *Carry-Grundlage in Texten veraltet:* der Carry im Paar-Score rechnet seit
+  2026-09-24 mit den 2-jährigen Renditen im Verhältnis zur Schwankung. Der
+  Hinweis über der Trends-Paarlinie nannte weiter die Leitzinsen — gemessen
+  EUR/USD „EUR 2.65% − USD 4% = −1.35 pp → −0.5“, gerechnet wird 3,01 − 4,80
+  = −1,79 pp, Carry-to-Risk −0,34 → −0,5 (AUD/JPY +3,35 statt +3,01, USD/CHF
+  +4 statt +4,63). Dieselbe falsche Grundlage in der Score-Zeile des
+  Paar-Fensters („±0.5 from 0.5%, ±1 from 1.5%“), in der Paar-Übersicht, in
+  der Hilfe (Δ%-Plakette „adds ±0.5 from ±0.5%“, Aufschlüsselung „both
+  policy rates“) und im Untertitel der Dashboard-Karte „Carry Ranking“ (die
+  Karte zeigt 2Y-Renditen). Alle Texte zeigen jetzt die wirkliche Rechnung
+  (`carryRegelText()` bzw. die Werte aus `carryDetails`).
+  **Offen (Nutzer-Entscheidung):** die Δ%-Plakette in Set-ups zeigt die
+  Leitzins-Differenz, öffnet aber die 2Y-Rechnung — beide Zahlen sind jetzt
+  korrekt beschriftet, aber verschieden. Die Carry-Seite selbst bleibt bei
+  den Leitzinsen (Swap-Näherung, so beschriftet).

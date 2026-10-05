@@ -506,13 +506,13 @@ svg.ic{vertical-align:-2px;flex:none}
 /* Micro-interactions: Buttons federn beim Druecken leicht ein, wichtige
    Karten heben sich beim Hover minimal an - macht die Oberflaeche insgesamt
    "fester"/hochwertiger, ohne die Bedienung zu veraendern. */
-.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:transform .12s ease,box-shadow .12s ease,background .15s,border-color .15s,color .15s}
+.btn,.ab,.mover-row,.ind-card,.rub-card,.dw{transition:transform .12s ease,box-shadow .12s ease,background .15s,border-color .15s,color .15s}
 .btn:active:not(:disabled),.ab:active,.cal-alert-btn:active,.evt-alert-lp:active{transform:scale(.96)}
 @media (hover:hover){
-  .mover-row:hover,.carry-row:hover{transform:translateY(-1.5px);box-shadow:var(--shadow-card)}
+  .mover-row:hover{transform:translateY(-1.5px);box-shadow:var(--shadow-card)}
   .dw:hover{box-shadow:var(--shadow-pop)}
 }
-@media (prefers-reduced-motion:reduce){.btn,.ab,.mover-row,.carry-row,.ind-card,.rub-card,.dw{transition:none}}
+@media (prefers-reduced-motion:reduce){.btn,.ab,.mover-row,.ind-card,.rub-card,.dw{transition:none}}
 /* .45 statt .22 (Nutzerwahl 2026-10-05): Undo/Redo wirkten bei 22 % wie ein
    Darstellungsfehler - deaktiviert soll erkennbar sein, nicht verschwinden. */
 .btn:disabled{opacity:.45;cursor:default}
@@ -2345,28 +2345,43 @@ body.compact-view .rub-summary{display:block}
 .resf-rub-sc{font-size:var(--fs-sm);font-weight:800;font-family:var(--ff-num);border:1px solid;border-radius:999px;padding:1px 8px}
 .resf-rub-body{padding:0 13px 12px}
 /* ── CARRY TRADE SCANNER ── */
-.carry-list{display:flex;flex-direction:column;gap:5px}
-.carry-row{display:flex;gap:11px;align-items:flex-start;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rs);padding:9px 12px}
-.carry-rank{font-size:16px;font-weight:800;color:var(--t3);min-width:26px;padding-top:1px;text-align:center}
-.carry-main{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0}
-.carry-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
-.carry-pair{font-size:16px;font-weight:700;color:var(--t0);font-family:var(--ff-num);min-width:0;overflow:hidden;text-overflow:ellipsis}
-.carry-dir{font-size:var(--fs-xs);font-weight:700;border:1px solid;border-radius:4px;padding:2px 7px;white-space:nowrap}
-.carry-val{margin-left:auto;font-size:16px;font-weight:800;font-family:var(--ff-num);white-space:nowrap}
-.carry-bar-wrap{height:7px;background:var(--bg2);border-radius:4px;overflow:hidden}
-.carry-bar{height:100%;border-radius:4px}
-.carry-rates{font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num)}
-/* Bugfund 2026-08-07 (Audit): auf 390px lief die Carry-Zeile 27px ueber den
-   Bildschirmrand hinaus - Paarname (16px Mono), Richtungs-Badge und der
-   nowrap-Zinswert passten nebeneinander nicht mehr in die Zeile, und
-   .carry-top hatte weder Umbruch noch min-width:0, konnte also nicht
-   nachgeben. Auf schmalen Screens darf die Zeile jetzt umbrechen und die
-   Schrift ist etwas kleiner. */
-@media(max-width:520px){
-  .carry-row{gap:8px;padding:8px 10px}
-  .carry-rank{min-width:20px;font-size:14px}
-  .carry-pair,.carry-val{font-size:14px}
-  .carry-dir{font-size:var(--fs-2xs);padding:2px 5px}
+/* Kompakte Tabelle statt einer Karte je Paar (Design-Audit Runde 2, Nutzer-
+   wahl 2026-10-05 "Carry als kompakte Tabelle"). Vorher 75 px je Paar (bei
+   390 px 101-117 px) - 9 Paare je Bildschirm bei 1440x900. Jetzt 34 px je
+   Zeile, Zahlen rechtsbuendig in tabular-nums, Balken mit 70 % Deckkraft
+   (Regel N). Unter 640 px Kartenbreite fallen Kurs, Balken und die Zins-
+   Spalte weg; die Zinsen stehen dann klein unter dem Paar (44 px Zeile).
+   Gemessen ueber die KARTENbreite (@container), nicht das Fenster. */
+.carry-card{container:carry/inline-size}
+.carry-tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
+.carry-tbl th{font:700 var(--fs-2xs)/1.2 var(--ff-text);color:var(--t2);text-align:left;padding:9px 8px 7px;border-bottom:1px solid var(--bd2);white-space:nowrap}
+.carry-tbl td{padding:0 8px;height:34px;border-bottom:1px solid var(--bd);vertical-align:middle;white-space:nowrap}
+.carry-tbl tbody tr:last-child td{border-bottom:none}
+@media (hover:hover){.carry-tbl tbody tr:hover td{background:var(--bg3)}}
+.carry-tbl .carry-rank{width:1%;text-align:right;color:var(--t3);font-weight:700;padding-left:15px}
+.carry-pair{font-size:var(--fs-base);font-weight:700;color:var(--t0)}
+.carry-rates-sub{display:none}
+.carry-dir{font-size:var(--fs-2xs);font-weight:700;border:1px solid;border-radius:4px;padding:2px 6px;white-space:nowrap}
+.carry-tbl .carry-val{text-align:right}
+.carry-tbl td.carry-val{font-size:var(--fs-base);font-weight:800}
+.carry-dir-mini{display:none}
+.carry-tbl .carry-barc{width:30%;min-width:80px}
+.carry-bar-wrap{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.carry-bar{height:100%;border-radius:3px;opacity:.7}
+.carry-tbl .carry-rates{color:var(--t3);font-size:var(--fs-xs);padding-right:15px}
+@container carry (max-width:640px){
+  .carry-tbl .carry-px,.carry-tbl .carry-barc,.carry-tbl .carry-rates{display:none}
+  .carry-tbl .carry-val{padding-right:15px}
+  .carry-rates-sub{display:block;margin-top:2px;color:var(--t3);font-size:var(--fs-2xs);font-weight:500}
+  .carry-tbl td{height:44px}
+}
+/* Handy (Karte <= 400 px, gemessen 298 px bei 390 px Fenster): auch die
+   Richtungs-Spalte faellt weg, der Pfeil steht dann vor dem Carry-Wert -
+   sonst 343 px Tabelle in 298 px Karte. */
+@container carry (max-width:400px){
+  .carry-tbl .carry-dc{display:none}
+  .carry-dir-mini{display:inline}
+  .carry-tbl .carry-rank{padding-left:10px}
 }
 .carry-lookup{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px}
 .carry-lk-pair{font-size:18px;font-weight:800;color:var(--t0);font-family:var(--ff-num);margin-bottom:8px}
@@ -6049,6 +6064,11 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
    Innenabstand ab: 66 px Platz. Geprueft: check/designregeln.js D. */
 #navSidebar{padding-left:5px;padding-right:5px}
 #navSidebar>.np{padding-left:0;padding-right:0}
+/* Bis 760 px (Handy) ist die Leiste nur 64 px breit: mit 5+5 px Polster
+   blieben 53 px fuer "Dashboard" (57 px) - es brach um, unbemerkt, weil D
+   nur bei 820/1180 px gemessen hat (gefunden 2026-10-05 bei 390 px). 2+2 px
+   Polster -> 59 px. Geprueft: check/designregeln.js D LEISTE 390. */
+@media(max-width:760px){#navSidebar{padding-left:2px;padding-right:2px}}
 /* D5: bei 11 px brach "SCORE EFFECT" um und der Hinweis daneben wurde
    abgeschnitten (GOLD, 310-px-Kachel: 215 px Text in 205 px). Beschriftung
    bleibt einzeilig, der Hinweis bricht um statt Text zu verlieren. */
@@ -6072,7 +6092,7 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 .btn,:where(select:not([size]):not([multiple])),.finp,.fsel,input.news-q,.st,.dmeta-hist-btn,.cot-refresh{height:var(--h-m);padding-top:0;padding-bottom:0}
 a.btn{display:inline-flex;align-items:center}
 .abc-nav,.ab-nt-qc{width:var(--h-m);height:var(--h-m)}
-.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,
+.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,.tr-leg-btn,
 select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h-s);padding-top:0;padding-bottom:0}
 .rterm-side-toggle{width:var(--h-s);height:var(--h-s)}
 /* Ausnahme mit Absicht: "Compare" in der Legendenzeile bleibt klein
@@ -6278,6 +6298,36 @@ body.dash-edit-mode .dw-hdr .rinfo{visibility:hidden}
 .ab-rgs{gap:4px;flex-wrap:nowrap}
 .chart-leiste-l .tr-sws{margin:0;gap:4px;flex-wrap:nowrap}
 .ab-tile-sub{font:600 var(--fs-2xs)/1.2 var(--ff-text);color:var(--t3);margin:-8px 0 10px 28px}  /* 28 px = Symbol + Abstand: unter dem Titeltext */
+/* R11 Trends: Fokus statt Knaeuel (Paket C, Nutzerwahl "Staerkste 3 +
+   schwaechste 3"). Fokus-Palette: eigene sechs Farben statt der gedaempften
+   Kennfarben (die lagen bis OKLab-dE 1,9 aufeinander: EUR/GOLD). Berechnet,
+   nicht geschaetzt (Optimierung im OKLCH-Raster), Bedingungen je Vorlage:
+   paarweise dE >= 15 (die ersten drei, die eine eigene Wahl zuerst bekommt,
+   >= 18 hell / 22,7 dunkel; Waechter-Grenze 17), als Linie >= 3:1 gegen Karte/Flaechen, dE >= 9 zu bullish/bearish/
+   neutral der Vorlage (Notion/Swiss haben warmgraues "neutral" - ein Braun
+   lag dort bei 5,9). Hell: Petrol, Rost, Violett, Olivgruen, Pflaume, Ocker;
+   dunkel: Mint, Bernstein, Violett, Gruen, Orchidee, Sand (Nord/Solar haben
+   blasses Blau/Rosa als bullish/bearish). Geprueft: check/theme.js 7.
+   ⚠ Der Dunkel-Block steht bewusst OHNE ":root" davor - sonst haelt ihn die
+   statische Pflicht-Token-Pruefung (theme.js 4) fuer ein Vorlagen-Regelwerk. */
+:root{--tf1:#228a8f;--tf2:#7b3702;--tf3:#8f63b6;--tf4:#446401;--tf5:#802c6d;--tf6:#997c3c}
+[data-fx-theme="carbon"],[data-fx-theme="midnight"],[data-fx-theme="graphite"],[data-fx-theme="nord"],[data-fx-theme="solar"]{
+  --tf1:#6ddcc0;--tf2:#df9134;--tf3:#a37fd6;--tf4:#5fae63;--tf5:#f4adfa;--tf6:#efe2c6}
+/* Legende = Auswahl: jeder Name ein Knopf in S-Hoehe (28 px), farbiger Punkt
+   = farbige Linie, Rand in Aktiv-Navy = in der eigenen Wahl. Kein gefuellter
+   Navy-Knopf: die Linienfarbe im Punkt ist der Schluessel und muss sichtbar
+   bleiben. "Top 3 + bottom 3" ist ein normaler .hl-tab (aktiv = Navy). */
+.tr-legend-fokus{gap:4px;align-items:center}
+.tr-leg-btn{display:inline-flex;align-items:center;gap:5px;height:var(--h-s);padding:0 8px;border:1px solid transparent;border-radius:var(--rss);
+  background:transparent;color:var(--t1);font:600 var(--fs-xs)/1 var(--ff-text);cursor:pointer;white-space:nowrap}
+.tr-leg-btn .tr-leg-dot{width:9px;height:9px}
+.tr-leg-btn.tr-leg-grau{color:var(--t3);font-weight:500}
+.tr-leg-btn.tr-leg-grau .tr-leg-dot{opacity:.45}
+.tr-leg-btn[aria-pressed="true"]{border-color:var(--ui-act);color:var(--t0)}
+@media (hover:hover){.tr-leg-btn:hover{background:var(--bg4);color:var(--t0)}}
+.tr-auto{margin-right:6px}
+.tr-tip-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.tr-endlbl-t{cursor:pointer}
 </style>
 </head>
 <body>
@@ -6365,11 +6415,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-591 - Design audit round 2, part 2: currency strength bars from a centre line, quieter COT and retail bars and thinner data columns, Majors card title, single-line watchlist (remove only while editing), info button hidden while editing, price card with icon Candles|Line, short EMA switches and at most two control rows, basket as subtitle."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-592 - Design audit round 2, part 3: Trends shows the three strongest and three weakest lines in colour with their last value at the line end, the rest grey; tap a name or line to follow your own selection. Carry is a compact table, one row per pair. On phones charts keep their real font size and the sidebar labels stay on one line."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-591</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-592</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -7049,7 +7099,7 @@ window.fxLogoSvg=function(art){
     <div class="help-p">Every indicator (CPI, NFP, PMI …) carries a bias: <b>▲ Bullish +1</b>, <b>◆ Neutral 0</b>, <b>▼ Bearish −1</b>, from the release beating or missing its forecast. Indicators with a Core twin (e.g. CPI + Core CPI) count ±0.5 each so the theme isn't double-weighted; the same half weight applies to bond yields, COT net positioning and CB Tone. Most biases update automatically from calendar releases; manual clicks stick only until the next release. If a release has <b>no forecast</b> to compare against, the direction against the <b>previous</b> value sets the bias instead, counted at <b>±0.5</b> — half strength, because it is a weaker signal. A release that is more than <b>2 of its own cycles overdue</b> counts <b>0</b> and is marked <b>OUT OF DATE</b> — measured against its own release rhythm, so quarterly reporters are not penalised. The <b>2Y/10Y spread</b> is display-only and always counts 0.</div><div class="help-p"><b>What is shown but deliberately NOT scored:</b> the <b>2-step momentum trend</b> (trend chip) and <b>revisions of the previous value</b>. Both were part of the score until August 2026 and were taken out: the trend had grown into an equal-ranked driver rather than the intended bonus (it accounted for 47% of the USD score and 100% of AUD's), and Citi's CESI leaves a trend term out for the same reason — surprise and momentum act on different horizons. Revisions arrived unreliably (the source carries them for about three days only) and their effect depended on reporting frequency rather than on content. Both still appear on the card, with their colour, because they tell you something — they just no longer move the number.</div><div class="help-p">The <b>weighting switch</b> in the header changes how the points are combined. <b>Classic</b> is the plain sum described above, recomputable in your head. <b>Normalised</b> multiplies each indicator by three <i>measured</i> factors: how big the surprise is against that indicator's own average forecast miss (this is what makes NFP, which misses by tens of thousands, comparable to CPI, which misses by hundredths of a percent — the average miss is used rather than the standard deviation, because squaring lets one outlier inflate the yardstick and make every normal miss afterwards look small), how old the release is (half-life 1.5 of its own cycles), and how much the price actually moved on that indicator's release days in the past. The product is clamped to 0.4–1.8 and centred on 1.0 so the ±2/±3 thresholds keep their meaning. Nothing is assigned by hand; "Data quality" in the asset header shows every number behind it.</div>
     <div class="help-p">Card score = sum of its indicators. A card turns <b>bullish at ≥ +2</b> and <b>bearish at ≤ −2</b>. Symbol score = sum of all cards; the symbol turns <b>bullish at ≥ +3</b> / <b>bearish at ≤ −3</b>.</div>
     <div class="help-sec">Pairs & set-ups</div>
-    <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> is the policy-rate differential: it adds <b>±0.5</b> to the pair score from ±0.5% and <b>±1</b> from ±1.5% — positive carry favours being long the pair. Tap/click the badge for a breakdown (both policy rates, the differential and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
+    <div class="help-p"><b>Pair score = base score − quote score + carry</b> (e.g. EUR −5, USD +5 → EUR/USD −10). The <b>Δ%-badge</b> shows the policy-rate differential; tap it for the carry that counts in the score: the <b>2-year yield</b> gap relative to the pair's volatility (carry-to-risk), <b>±0.5</b> from 0.2 and <b>±1</b> from 0.4, switched off after a VIX jump — positive carry favours being long the pair. Tap/click the badge for a breakdown (both 2-year yields, the differential, the pair's volatility, carry-to-risk, the VIX check and the exact score effect). The Set-ups tab sorts all pairs into Bullish / Neutral / Bearish columns from that.</div>
     <div class="help-sec">Central bank & COT</div>
     <div class="help-p">The Interest Rates card has two extra indicators. <b>CB Tone</b>: your own read of the central bank's rhetoric — set it ▲ Bullish for hawkish, ▼ Bearish for dovish (counts at half weight, like a bond yield). <b>Next CB Move</b>: your expected next decision — ▲ Bullish for hike, ▼ Bearish for cut, ◆ Neutral for hold (full weight). Both are manual and stick until you change them. <b>COT net positioning</b> counts ±0.5 once one side holds ≥60% of speculative positions; the week-over-week change counts ±1 only when the shift is at least 3 percentage points away from 0 — smaller moves count ±0.5. The <b>2Y/10Y Spread</b> is display-only and counts 0 — a 10Y move would otherwise be double-counted, and curve steepening isn't a clean bullish/bearish signal on its own.</div>
     <div class="help-sec">Data</div>
