@@ -445,7 +445,10 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     if (!t0) L.push('Trends: keine Karte');
     else {
       n.l += t0.fok.length + t0.grau.length;
-      if (t0.fok.length + t0.grau.length > 6 && t0.fok.length !== 6) L.push(`Trends: ${t0.fok.length} farbige Linien statt 6 (3 staerkste + 3 schwaechste)`);
+      // "Total Score" traegt alle Assets (23) - weniger als 7 gezeichnete Linien
+      // heisst: der Fokus-Aufbau ist kaputt (591: 0 farbig + 0 grau gezaehlt).
+      if (t0.fok.length + t0.grau.length < 7) L.push(`Trends: nur ${t0.fok.length + t0.grau.length} Linien als Fokus/grau gezeichnet (Total Score hat alle Assets)`);
+      else if (t0.fok.length !== 6) L.push(`Trends: ${t0.fok.length} farbige Linien statt 6 (3 staerkste + 3 schwaechste)`);
       if (t0.auto !== 'true') L.push('Trends: "Top 3 + bottom 3" ist ohne eigene Wahl nicht aktiv');
       // die farbigen sind die Extreme: kleinstes y = hoechster Wert (SVG)
       const ys = t0.fok.map(x => x[1]).sort((a, b) => a - b), oben = ys[2], unten = ys[ys.length - 3];
