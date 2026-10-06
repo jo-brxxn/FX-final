@@ -1,10 +1,13 @@
-# Reicht der TradingView-Wirtschaftskalender 3 Monate in die Zukunft, und wie
-# gross wird die Datei? Nutzer 2026-10-06: "ich will das immer der Kalender
-# schon fuer die kommenden 3 Monate geladen wird" (per Rueckfrage: High/Medium
-# + jeder Termin eines Score-Indikators). update-ff-calendar.yml holt heute
-# nur heute-3d .. heute+11d. Aus der Sandbox ist TradingView gesperrt
-# (Proxy 403), deshalb wird hier auf dem Runner gemessen.
-# Schreibt NICHTS in die Daten.
+# Welche Quelle liefert den Wirtschaftskalender 3 Monate in die Zukunft?
+# Nutzer 2026-10-06: "ich will das immer der Kalender schon fuer die kommenden
+# 3 Monate geladen wird" (per Rueckfrage: High/Medium + jeder Termin eines
+# Score-Indikators).
+# Lauf 1 (37516316431): TradingView liefert nur bis ~heute+30 Tage (letzte
+# Zeit 2026-11-05, Slices +60..+92 leer) - reicht nicht.
+# Lauf 2 (diese Fassung): FF-Webseite (Monatsansicht), FXStreet-API,
+# Investing.com-AJAX und Trading Economics fuer heute+25 .. heute+95 Tage.
+# Aus der Sandbox sind diese Quellen gesperrt (Proxy 403), deshalb wird auf
+# dem Runner gemessen. Schreibt NICHTS in die Daten.
 name: Probe calendar horizon (TradingView 3 months)
 
 on:
@@ -17,43 +20,123 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Fetch TradingView calendar in 30-day slices up to +92 days
+      - name: Probe sources for today+25 .. today+95 days
         run: |
-          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-          for i in 0 1 2 3; do
-            FROM=$(node -e "console.log(new Date(Date.now()+($i*30-3)*86400e3).toISOString())")
-            TO=$(node -e "console.log(new Date(Date.now()+Math.min(($i+1)*30,93)*86400e3).toISOString())")
-            curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" --max-time 40 \
-              "https://economic-calendar.tradingview.com/events?from=${FROM}&to=${TO}&countries=US,EU,DE,FR,IT,ES,GB,JP,CA,AU,NZ,CH,CN" \
-              -o "tv_$i.json" -w "slice $i: HTTP %{http_code}, %{size_download} bytes\n" || true
-          done
-      - name: Evaluate
-        run: |
-          node -e '
-            const fs=require("fs");
+          cat > probe.js <<'EOF'
+          const {execFileSync}=require("child_process");
+          const fs=require("fs");
+          const UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+          const now=Date.now(),D=86400e3;
+          const lo=now+25*D,hi=now+95*D;
+          const iso=t=>new Date(t).toISOString();
+          const day=t=>iso(t).slice(0,10);
+          const mon=t=>iso(t).slice(0,7);
+          function curl(args,out){
+            try{execFileSync("curl",["-sL","-A",UA,"--max-time","60","-o",out,...args],{stdio:"inherit"});}catch(e){console.log("curl failed: "+e.message);}
+            try{return fs.readFileSync(out,"utf8");}catch(e){return "";}
+          }
+          const cf=s=>/just a moment|challenge-platform|cf-browser|attention required/i.test(s);
+          function count(arr,f){const m={};arr.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+1;});return JSON.stringify(m);}
+          function titles(label,arr){
+            const ti={};
+            arr.forEach(e=>{const k=e.ccy+" | "+e.name;const x=ti[k]||(ti[k]={n:0,imp:e.imp,first:e.t});x.n++;if(e.t<x.first)x.first=e.t;});
+            console.log("=== "+label+" TITLES (ccy | name | impact | count | first) ===");
+            Object.keys(ti).sort().forEach(k=>console.log(label+" "+k+" | "+ti[k].imp+" | "+ti[k].n+" | "+day(ti[k].first)));
+          }
+          function report(label,arr){
+            const fut=arr.filter(e=>e.t>=lo&&e.t<=hi);
+            if(!arr.length){console.log(label+": 0 events");return fut;}
+            const ts=arr.map(e=>e.t).sort((a,b)=>a-b);
+            console.log(label+": "+arr.length+" events, "+iso(ts[0])+" .. "+iso(ts[ts.length-1]));
+            console.log(label+" in +25..+95d: "+fut.length+", by month: "+count(fut,e=>mon(e.t))+", by impact: "+count(fut,e=>e.imp));
+            console.log(label+" in +25..+95d with forecast: "+fut.filter(e=>e.fc).length);
+            return fut;
+          }
+
+          // ── A) Forex-Factory-Webseite, Monatsansicht ──────────────────
+          // Die Seite bettet window.calendarComponentStates[n] = { days: [...] }
+          // ein (JS-Objekt, "days" ist ein JSON-Array mit events[]).
+          (function(){
+            const M=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
             let all=[];
             for(let i=0;i<4;i++){
-              let d=null;try{d=JSON.parse(fs.readFileSync("tv_"+i+".json","utf8"));}catch(e){console.log("slice "+i+": no JSON");continue;}
-              const ev=Array.isArray(d)?d:(d&&Array.isArray(d.result)?d.result:[]);
-              console.log("slice "+i+": "+ev.length+" events"+(d&&d.status?" status="+d.status:""));
-              all=all.concat(ev);
+              const d=new Date(now);d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+i);
+              const tag=M[d.getUTCMonth()]+"."+d.getUTCFullYear();
+              const html=curl(["https://www.forexfactory.com/calendar?month="+tag],"ff_"+tag+".html");
+              const rows=(html.match(/calendar__row/g)||[]).length;
+              const imp={};["red","ora","yel","gra"].forEach(c=>imp[c]=(html.match(new RegExp("icon--ff-impact-"+c,"g"))||[]).length);
+              console.log("FF month "+tag+": "+html.length+" bytes, rows="+rows+" impact icons="+JSON.stringify(imp)+(cf(html)?" CLOUDFLARE-BLOCK":"")+", has states="+/calendarComponentStates/.test(html));
+              const k=html.indexOf("days: [");
+              if(k<0)continue;
+              let j=k+6,dep=0,inStr=false,esc=false;
+              for(;j<html.length;j++){
+                const c=html[j];
+                if(inStr){if(esc)esc=false;else if(c==="\\")esc=true;else if(c==="\"")inStr=false;continue;}
+                if(c==="\"")inStr=true;else if(c==="[")dep++;else if(c==="]"){dep--;if(!dep){j++;break;}}
+              }
+              let days=null;try{days=JSON.parse(html.slice(k+6,j));}catch(e){console.log("FF month "+tag+": days JSON parse failed: "+e.message);}
+              if(!days)continue;
+              if(i===0&&days[0]&&days[0].events&&days[0].events[0])console.log("FF sample event keys: "+Object.keys(days[0].events[0]).join(","));
+              days.forEach(dd=>(dd.events||[]).forEach(e=>all.push({ccy:e.currency,name:e.name||e.prefixedName,imp:e.impactName,t:(e.dateline||dd.dateline)*1000,fc:e.forecast,id:e.id})));
             }
-            const seen=new Set();all=all.filter(e=>{const k=e.id||(e.country+"|"+e.title+"|"+e.date);if(seen.has(k))return false;seen.add(k);return true;});
-            if(!all.length){console.log("NO EVENTS");process.exit(0);}
-            console.log("sample keys: "+Object.keys(all[0]).join(","));
-            const t=all.map(e=>e.date).sort();
-            console.log("total "+all.length+" unique events, "+t[0]+" .. "+t[t.length-1]);
-            const by=(f)=>{const m={};all.forEach(e=>{const k=f(e);m[k]=(m[k]||0)+1;});return JSON.stringify(m);};
-            console.log("by importance: "+by(e=>e.importance));
-            console.log("by country: "+by(e=>e.country));
-            const now=Date.now();
-            console.log("by month ahead (High/Medium): "+by(e=>(e.importance>=0)?Math.floor((new Date(e.date)-now)/(30*86400e3)):"low"));
-            const kb=a=>(JSON.stringify(a.map(e=>({title:e.title,country:e.country,date:e.date,importance:e.importance,forecast:e.forecast,previous:e.previous,actual:e.actual}))).length/1024).toFixed(0);
-            console.log("size all ~"+kb(all)+" KB, high+medium ~"+kb(all.filter(e=>e.importance>=0))+" KB");
-            const far=all.filter(e=>new Date(e.date)-now>60*86400e3);
-            console.log("events 60-92 days ahead: "+far.length+", with forecast: "+far.filter(e=>e.forecast!=null).length);
-            // Distinkte Titel je Land (fuer die Zuordnung zu den Score-Indikatoren der App)
-            const ti={};all.forEach(e=>{const k=e.country+" | "+e.title;const x=ti[k]||(ti[k]={n:0,imp:e.importance,first:e.date});x.n++;if(e.date<x.first)x.first=e.date;x.imp=Math.max(x.imp,e.importance);});
-            console.log("=== TITLES (country | title | max importance | count | first date) ===");
-            Object.keys(ti).sort().forEach(k=>console.log("T "+k+" | "+ti[k].imp+" | "+ti[k].n+" | "+String(ti[k].first).slice(0,10)));
-          '
+            const seen=new Set();all=all.filter(e=>{const k=e.id||(e.ccy+e.name+e.t);if(seen.has(k))return false;seen.add(k);return true;});
+            const fut=report("FF",all);
+            titles("FF",fut.filter(e=>e.imp==="high"||e.imp==="medium"));
+          })();
+
+          // ── B) FXStreet-API ────────────────────────────────────────────
+          (function(){
+            const raw=curl(["-H","Referer: https://www.fxstreet.com/economic-calendar","https://calendar-api.fxstreet.com/en/api/v1/eventDates/"+iso(lo)+"/"+iso(hi)+"?volatilities=NONE,LOW,MEDIUM,HIGH&countries=&categories="],"fxs.json");
+            let d=null;try{d=JSON.parse(raw);}catch(e){}
+            console.log("FXStreet: "+raw.length+" bytes"+(cf(raw)?" CLOUDFLARE-BLOCK":"")+(Array.isArray(d)?"":" (no array) head="+raw.slice(0,200)));
+            if(!Array.isArray(d))return;
+            if(d[0])console.log("FXStreet sample keys: "+Object.keys(d[0]).join(","));
+            const all=d.map(e=>({ccy:e.currencyCode,name:e.name,imp:e.volatility,t:Date.parse(e.dateUtc),fc:e.consensus}));
+            const fut=report("FXS",all);
+            titles("FXS",fut.filter(e=>e.imp==="HIGH"||e.imp==="MEDIUM"));
+          })();
+
+          // ── C) Investing.com-AJAX (Importance 2+3, mit Nachladen) ──────
+          (function(){
+            const C2={"united states":"USD","euro zone":"EUR","germany":"EUR","france":"EUR","italy":"EUR","spain":"EUR","united kingdom":"GBP","japan":"JPY","canada":"CAD","australia":"AUD","new zealand":"NZD","switzerland":"CHF","china":"CNY"};
+            let all=[],page=0,last="";
+            for(;page<12;page++){
+              const args=["-H","X-Requested-With: XMLHttpRequest","-H","Referer: https://www.investing.com/economic-calendar/","-H","Accept: application/json"];
+              ["5","72","17","22","10","26","4","35","6","25","43","12","37"].forEach(c=>args.push("--data-urlencode","country[]="+c));
+              ["2","3"].forEach(c=>args.push("--data-urlencode","importance[]="+c));
+              args.push("--data-urlencode","dateFrom="+day(lo),"--data-urlencode","dateTo="+day(hi),"--data-urlencode","timeZone=8",
+                "--data-urlencode","timeFilter=timeOnly","--data-urlencode","currentTab=custom","--data-urlencode","submitFilters="+(page?0:1),
+                "--data-urlencode","limit_from="+page);
+              if(last)args.push("--data-urlencode","last_time_scope="+last);
+              args.push("https://www.investing.com/economic-calendar/Service/getCalendarFilteredData");
+              const raw=curl(args,"inv_"+page+".json");
+              let p=null;try{p=JSON.parse(raw);}catch(e){}
+              if(!p||typeof p.data!=="string"){console.log("Investing page "+page+": unusable, "+raw.length+" bytes"+(cf(raw)?" CLOUDFLARE-BLOCK":""));break;}
+              const rowRe=/<tr([^>]*\bid="eventRowId_\d+"[^>]*)>([\s\S]*?)<\/tr>/g;let rm,n=0;
+              while((rm=rowRe.exec(p.data))){
+                const a=rm[1],b=rm[2];
+                const fl=b.match(/flagCur[^>]*>[\s\S]*?title="([^"]*)"/);
+                const nm=b.match(/class="left event"[^>]*>([\s\S]*?)<\/td>/);
+                const dt=a.match(/data-event-datetime="(\d{4})\/(\d{2})\/(\d{2}) (\d{2}:\d{2}:\d{2})"/);
+                const bulls=(b.match(/grayFullBullishIcon/g)||[]).length;
+                const id=(a.match(/eventRowId_(\d+)/)||[])[1];
+                all.push({ccy:fl?(C2[fl[1].trim().toLowerCase()]||fl[1]):"?",name:nm?nm[1].replace(/<[^>]*>/g,"").replace(/\s+/g," ").trim():"?",imp:bulls,t:dt?Date.parse(dt[1]+"-"+dt[2]+"-"+dt[3]+"T"+dt[4]+"Z"):NaN,fc:(b.match(new RegExp("id=\"eventForecast_"+id+"\"[^>]*>([^<]*)<"))||[])[1],id});
+                n++;
+              }
+              console.log("Investing page "+page+": "+n+" rows, bind_scroll_handler="+p.bind_scroll_handler+", last_time_scope="+p.last_time_scope);
+              if(!p.bind_scroll_handler||!n)break;
+              last=String(p.last_time_scope||"");
+            }
+            const seen=new Set();all=all.filter(e=>{if(seen.has(e.id))return false;seen.add(e.id);return true;});
+            const fut=report("INV",all.filter(e=>!isNaN(e.t)));
+            titles("INV",fut);
+          })();
+
+          // ── D) Trading Economics (Gast-Zugang) ─────────────────────────
+          (function(){
+            const raw=curl(["https://api.tradingeconomics.com/calendar/country/all/"+day(lo)+"/"+day(hi)+"?c=guest:guest&f=json"],"te.json");
+            let d=null;try{d=JSON.parse(raw);}catch(e){}
+            console.log("TE: "+raw.length+" bytes"+(Array.isArray(d)?", "+d.length+" events, countries="+count(d,e=>e.Country):" head="+raw.slice(0,200)));
+          })();
+          EOF
+          node probe.js
