@@ -19513,4 +19513,4 @@ ragte aber 7,5 px nach links und deckte 2 px des ⚡ ab. Auf Nutzer-Wunsch war
 prüfen und korrigieren“*). Fix: hinter einem Knopf ragt die ⓘ-Fläche nur 5 px
 nach links (`.ab-tile-hd>:is(button,a)+.info-b.ii-nach::after`), gilt für
 die ganze Klasse. `designregeln` danach grün (466 Trefferflächen ohne
-Überdeckung).
+Überdeckung). Als **VERSION-CHECK-594** ausgeliefert (Regel 3).
