@@ -19502,4 +19502,15 @@ auch Folgemonat) und F (Termin-Regeln) mit `--gegenprobe-zukunft` und
 `--gegenprobe-termin`; `tabellenfest.js` Scroll-Linie (`--gegenprobe-linie`);
 `designregeln.js` I umgedreht (kein Wort, aber aria-label), neu M (kein
 Ketten-Symbol, erkannt am Pfad); `archiv.js`, `infoi.js`, `symbole.js`
-angepasst. Alle Gegenproben rot, alle Wächter grün.
+angepasst. Alle Gegenproben rot.
+
+**Nachtrag 593 — Volllauf (65 grün, 1 rot):** `designregeln` F meldete bei
+820/1180/1440 auf USD, GOLD und EUR/USD „button.ab-nt-qc verliert Fläche an
+button.info-b.ii-nach“ — eine Folge des ⓘ-Fixes: das ⓘ steht jetzt direkt
+hinter dem ⚡ der Pinned notes (gemessen 5,5 px Abstand), seine Trefferfläche
+ragte aber 7,5 px nach links und deckte 2 px des ⚡ ab. Auf Nutzer-Wunsch war
+593 da schon live (*„Kannst du jetzt schon pushen … danach kannst du alles
+prüfen und korrigieren“*). Fix: hinter einem Knopf ragt die ⓘ-Fläche nur 5 px
+nach links (`.ab-tile-hd>:is(button,a)+.info-b.ii-nach::after`), gilt für
+die ganze Klasse. `designregeln` danach grün (466 Trefferflächen ohne
+Überdeckung).

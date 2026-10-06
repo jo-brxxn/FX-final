@@ -234,7 +234,8 @@ jobs:
             // unter dem FF-/TV-Namen; FXStreet nennt sie anders ("Fed Interest
             // Rate Decision" statt "Federal Funds Rate"), das gaebe Dopplungen.
             // Einzige Ausnahme davor: Lueckenfueller fuer Score-Releases, die
-            // TradingView nur als Low fuehrt (fuelltLuecke, z.B. US Core PPI).
+            // TradingView nur als Low fuehrt (fuelltLuecke, gemessen: GBP
+            // Claimant Count Change).
             let fx=null;
             try{fx=JSON.parse(fs.readFileSync("fxs_ahead.json","utf8"));}catch(e){fx=null;}
             const fxOk=Array.isArray(fx)&&fx.length>0;

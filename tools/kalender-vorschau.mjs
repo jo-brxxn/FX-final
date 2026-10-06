@@ -92,13 +92,14 @@ export function indikatorTreffer(titel, ccy){
   return Object.keys(IND_EVENT_MATCHERS).filter(k => IND_EVENT_MATCHERS[k](titel, ccy));
 }
 
-// Lueckenfueller INNERHALB des TradingView-Fensters (Fund beim Messen am
-// 2026-10-06): TradingView fuehrt manche Score-Releases nur als "Low" - US-PPI
-// und Core PPI zum Beispiel -, und Low-Termine nimmt der Workflow bewusst nicht
-// auf. FXStreet fuehrt denselben Release als High. Ohne Lueckenfueller fand
-// die Next-Spalte fuer USD Core PPI erst den FXStreet-Termin HINTER dem
-// TV-Ende ("38d") - der Oktober-Termin in 9 Tagen fehlte, die Anzeige war
-// also falscher als die vorherige Schaetzung.
+// Lueckenfueller INNERHALB des TradingView-Fensters (2026-10-06): TradingView
+// fuehrt manche Score-Releases nur als "Low", und Low-Termine nimmt der
+// Workflow bewusst nicht auf. FXStreet fuehrt denselben Release als High.
+// Gemessen: GBP Claimant Count Change (TV Low, kein High-/Medium-Termin
+// desselben Releases) - ohne Lueckenfueller fand die Next-Spalte erst den
+// FXStreet-Termin hinter dem TV-Ende, einen Monat zu spaet. (Der andere Fall,
+// US Core PPI y/y mit "Core PPI MoM" als Medium am selben Tag, wird in der
+// App geloest: findIndNextEvent zaehlt m/m und y/y als denselben Termin.)
 // Aufgenommen wird ein FXStreet-Termin im TV-Fenster deshalb nur, wenn er
 // einen Score-Indikator seiner Waehrung trifft UND kein vorhandener Termin
 // derselben Waehrung im Abstand von hoechstens 36 Stunden denselben Indikator

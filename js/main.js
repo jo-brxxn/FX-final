@@ -7921,9 +7921,9 @@ function assetNotesFoldersHtml(c){
 //
 // ⚠ WICHTIG UND BEWUSST: der Kalender-Feed reichte bis 2026-10-06 nur rund eine
 // Woche voraus, seitdem rund 3 Monate (jenseits von ~30 Tagen nur High). Ein leerer Tag im Raster heisst also fast nie "da ist nichts",
-// sondern "das weiss noch niemand". Genau diesen Unterschied macht die
-// Karte sichtbar (abgedeckte Tage normal, Rest sichtbar gedaempft plus eine
-// Zeile, die den abgedeckten Zeitraum nennt). Ohne das waere die Karte eine
+// sondern "das weiss noch niemand". Diesen Unterschied sagen der title des
+// Tages, das ⓘ und die Zeile mit dem abgedeckten Zeitraum - die Zahl selbst
+// ist seit 2026-10-06 NICHT mehr gedaempft (Nutzer: kommende Tage kraeftig). Ohne das waere die Karte eine
 // huebsche Luege - dieselbe Klasse wie geschaetzte Werte, siehe Regel 4.
 let abCalMonat=0;           // 0 = aktueller Monat, -1 = voriger, ...
 let abCalTag=null;          // gewaehlter Tag als 'YYYY-MM-DD'

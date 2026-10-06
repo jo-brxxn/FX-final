@@ -2045,7 +2045,8 @@ body.compact-view .rub-summary{display:block}
    Zeilen dadurch nicht mehr hoeher werden als Zeilen ohne Warnung
    (Nutzer-Wunsch 2026-07-17). */
 .cot-crowded{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:50%;margin-left:4px;vertical-align:middle}
-/* Auto-abgeleitete/gesperrte Bias (Non-FX Regel same/inverse, Risk Correlation): Kettensymbol statt Buttons */
+/* Auto-abgeleitete/gesperrte Bias (Non-FX Regel same/inverse, Risk Correlation): das Kettensymbol
+   (.auto-lock-ic) ist seit 2026-10-06 auf Nutzer-Wunsch weg, siehe renderRubCard. */
 /* Spiegel-Vorschau im Asset-Einstellungs-Modal */
 .acfg-mirror{margin-left:auto;font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num);white-space:nowrap}
 /* Hilfe-Modal */
@@ -6183,6 +6184,10 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 .abc-hd .info-b::after{left:-3px}
 .rg-top>.info-b::after{left:-7px}
 .ab-tile-hd>.info-b.ii-nach::after,.data-ph>.info-b::after{right:-5px}
+/* Seit 2026-10-06 steht das nach hinten versetzte ⓘ auch direkt HINTER einem
+   Knopf (Pinned notes: ⚡ Schnellnotiz, 5,5px Abstand) - die 7,5px nach links
+   deckten 2px des ⚡ ab (designregeln F, 820/1180/1440). Dort nur 5px. */
+.ab-tile-hd>:is(button,a)+.info-b.ii-nach::after{left:-5px}
 .data-row>.info-b::after{bottom:-7px}
 /* kleine ⓘ (13 px) */
 .dw-hdr>.rinfo::after{inset:-11.5px -11.5px -11.5px -6.5px}
