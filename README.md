@@ -1,4 +1,4 @@
-# FX Analyst Pro
+# test12
 
 Single-file web app (`index.html`) for discretionary FX / macro analysis: per-currency
 indicator scoring, COT, sentiment, seasonality, rate probabilities and more. Data JSONs
