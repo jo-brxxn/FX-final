@@ -162,7 +162,30 @@ if (indexGeaendert) {
 const flaeche = require('./scoreSurface.js').ableiten('index.html');
 const SCORE_FN = flaeche.funktionen.map(n => 'function ' + n)
   .concat(flaeche.konstanten.map(n => n + '='));
-const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s));
+// ⚠ VERSCHOBEN ist nicht GEAENDERT (2026-10-06): periodLabel und die
+// Kalender-Muster zogen unveraendert nach js/event-matchers.js um - im Diff
+// stand "function periodLabel" zweimal (geloescht + neu), und die CI, die mit
+// --static OHNE scorediff startet, brach nach 15 s ab (Laeufe 532/533).
+// Steht der Funktionskoerper in Basis und Arbeitsstand Zeichen fuer Zeichen
+// gleich da (egal in welcher Datei), ist das keine Formelaenderung. Jede
+// echte Aenderung - auch eine einzelne Leerstelle - bleibt ein Verdacht.
+// Koerper = ab "function name(" bis zur schliessenden Klammer in Spalte 0
+// (Stil des Codes); Einzeiler bis Zeilenende.
+function fnText(code, name) {
+  const i = code.indexOf('function ' + name + '(');
+  if (i < 0) return null;
+  const ze = code.indexOf('\n', i);
+  const zeile = code.slice(i, ze < 0 ? undefined : ze);
+  if (/\}\s*;?\s*$/.test(zeile) && (zeile.match(/\{/g) || []).length === (zeile.match(/\}/g) || []).length) return zeile;
+  const e = code.indexOf('\n}', i);
+  return e < 0 ? null : code.slice(i, e + 2);
+}
+const nurVerschoben = SCORE_FN.filter(s => diffText.includes(s) && s.startsWith('function ') && (() => {
+  const n = s.slice('function '.length), a = fnText(aktuellerCode(), n), b = fnText(basisCode(), n);
+  return a != null && b != null && a === b;
+})());
+if (nurVerschoben.length) console.log('[rules] Score-Flaeche: ' + nurVerschoben.length + ' Funktion(en) nur verschoben, Koerper unveraendert (' + nurVerschoben.map(s => s.slice(9)).join(', ') + ')');
+const formelBeruehrt = SCORE_FN.filter(s => diffText.includes(s) && !nurVerschoben.includes(s));
 // Das Beruehren einer Funktion der Score-Flaeche ist ein VERDACHT, kein
 // Beweis. Ob sich die Rechnung wirklich geaendert hat, weiss nur, wer
 // nachrechnet - genau das tut check/scorediff.js (rendert Basis und

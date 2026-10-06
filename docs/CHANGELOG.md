@@ -19514,3 +19514,13 @@ prüfen und korrigieren“*). Fix: hinter einem Knopf ragt die ⓘ-Fläche nur 5
 nach links (`.ab-tile-hd>:is(button,a)+.info-b.ii-nach::after`), gilt für
 die ganze Klasse. `designregeln` danach grün (466 Trefferflächen ohne
 Überdeckung). Als **VERSION-CHECK-594** ausgeliefert (Regel 3).
+
+**Nachtrag 593 — CI nach 15 s rot (Läufe 532/533):** die CI startet mit
+`node check/all.js --static --base "HEAD^"`, also OHNE `scorediff`; `rules`
+sah „function periodLabel“ im Diff (gelöscht in `js/main.js`, neu in
+`js/event-matchers.js`) und verlangte einen SCORE_MODEL_VERSION-Bump. Lokal
+war `rules` im Volllauf grün, weil `scorediff` 0 Unterschiede nachgerechnet
+hatte. Lücke im Wächter, keine im Code: verschoben ≠ geändert. `rules.js`
+vergleicht jetzt den Funktionskörper in Basis und Arbeitsstand (egal welche
+Datei); identisch → kein Verdacht. Gegenprobe: ein zusätzliches `|mth` im
+verschobenen `periodLabel` → weiter rot.
