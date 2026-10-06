@@ -70,6 +70,36 @@ Sales/Consumer Confidence — NICHT COT/Yields/Put-Call/Risk-Sentiment):**
   meist blockiert. Live-Daten-Checks daher über die GitHub-Action-Logs bzw. den
   committed Stand auf `origin/main`, nicht über direkte Fetches.
 
+## Kalender-Horizont: 3 Monate (seit 2026-10-06, VERSION-CHECK-593)
+
+Nutzer: *„ich will das immer der Kalender schon für die kommenden 3 Monate
+geladen wird“* (Rückfrage: High/Medium + Score-Indikatoren). Gemessen mit
+`probe-calendar-horizon.yml`: **TradingView** reicht nur ~30 Tage (alle
+Stufen); **FXStreet** liefert öffentlich **nur High**, das aber über +95 Tage;
+FF-Monatsansicht Cloudflare-gesperrt, Investing.com leer, Trading-Economics-
+Gastzugang eingestellt. Daraus, im Schritt „Add upcoming events …“ von
+`update-ff-calendar.yml`:
+
+- TradingView High + Medium bis zu seinem Ende (ist für seine Zukunft
+  maßgeblich, alte TV-Termine werden je Lauf ersetzt).
+- **Keine TradingView-Low-Termine** — auch nicht die, die ein Score-Muster
+  trifft (133 in 33 Tagen, u. a. Landes-CPIs und „Jobless Claims 4-week
+  Average“; dieselben Muster speisen die Score-Werte).
+- FXStreet High **hinter** dem TV-Ende bis heute+92; davor nur Lückenfüller
+  für Score-Releases, die TradingView nur als Low führt. Namen auf
+  FF-Schreibweise (`tools/kalender-vorschau.mjs`), nur Name/Datum/Zeit
+  (kein Forecast/Previous so weit voraus).
+- Medium-Termine für Monat 2–3 gibt es aus keiner erreichbaren Quelle — das
+  ⓘ der Kalender-Karte sagt es.
+- **Eine Wahrheit für die Muster:** `js/event-matchers.js` (Score-Indikator ↔
+  Kalendertitel, `periodLabel`, `EU_LAND_RE`) lädt die App UND der Workflow.
+- App: `FF_WINDOW_DAYS = 92`. Next-Countdown (`findIndNextEvent`): m/m und
+  y/y desselben Indikators zählen als derselbe Termin (q/q nicht); bei EUR
+  zählen nationale Vorab-Zahlen nicht (Ifo ausgenommen). Ohne Kalendertermin
+  bleibt die ~Schätzung aus dem eigenen Rhythmus (Nutzerwahl 2026-10-06).
+- Wächter: `check/kalendervorschau.js` (statisch, führt den Workflow-Schritt
+  gegen nachgebaute Quellen aus), `check/kalender.js` F.
+
 ## ⚠️ PMI-FEED: TradingView liefert fuer S&P Global/HCOB/Jibun KEINE Actuals
 
 Belegt am 2026-08-08 durch die Titel-Diagnose im Workflow (`ind_data TITLE

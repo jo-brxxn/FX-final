@@ -50,13 +50,17 @@ saetze.forEach(l => fail('WARTE-SATZ OHNE LOGO', l.trim().slice(0, 120)));
   if (abrufe) fail('BEIM START GELADEN', `price_hist.json ${abrufe}x abgerufen, ohne dass ein langer Zeitraum gewaehlt war`);
   const regler = await p.evaluate(() => [...document.querySelectorAll('#detail .ab-ptile .ab-rgs .ab-rg')].map(x => x.textContent.trim()));
   if (!regler.includes('10Y') || !regler.includes('6Y')) fail('STUFEN', `6Y/10Y fehlen trotz Archiv: ${regler.join(' ')}`);
-  const vorher = await p.evaluate(() => { const o = {}; syms.forEach(s => { o[s.id] = symScoreCmp(s); }); return { o, k: +((document.querySelector('#detail .ab-ptile .ab-pk-s') || {}).textContent || '0').match(/\d+/)[0] }; });
+  const vorher = await p.evaluate(() => { const o = {}; syms.forEach(s => { o[s.id] = symScoreCmp(s); }); const pl = document.querySelector('#detail .ab-ptile .ab-plot'); return { o, k: +((pl && pl.dataset.kerzen) || 0), text: (document.querySelector('#detail .ab-ptile') || {}).textContent || '' }; });
   await p.evaluate(() => setAbChartRange('10Y')); await p.waitForTimeout(300);
   const logo = await p.evaluate(() => !!document.querySelector('#detail .ab-ptile .lade-platz .fxlogo.lg-loop'));
   if (!logo && !GEGENPROBE) fail('KEIN LADE-LOGO', 'waehrend das Archiv laedt, steht kein animiertes Logo in der Price-Karte');
   await p.waitForTimeout(2600);
-  const nach = await p.evaluate(() => { const o = {}; syms.forEach(s => { o[s.id] = symScoreCmp(s); }); const t = (document.querySelector('#detail .ab-ptile .ab-pk-s') || {}).textContent || ''; return { o, k: +(t.match(/\d+/) || [0])[0], logo: !!document.querySelector('#detail .ab-ptile .lade-platz') }; });
+  const nach = await p.evaluate(() => { const o = {}; syms.forEach(s => { o[s.id] = symScoreCmp(s); }); const pl = document.querySelector('#detail .ab-ptile .ab-plot'); return { o, k: +((pl && pl.dataset.kerzen) || 0), text: (document.querySelector('#detail .ab-ptile') || {}).textContent || '', logo: !!document.querySelector('#detail .ab-ptile .lade-platz') }; });
   if (nach.logo) fail('LOGO BLEIBT', 'nach dem Laden steht noch der Platzhalter');
+  // Nutzer 2026-10-06: "die Anzeige beim Preis wie viele Kerzen angezeigt
+  // werden weg" - die Zahl misst der Waechter jetzt am data-kerzen-Attribut,
+  // sichtbar darf sie nicht mehr in der Karte stehen.
+  [vorher, nach].forEach((x, i) => { const m = x.text.match(/\d[\d,.]* (?:daily )?candles|with a measured high\/low/i); if (m) fail('KERZENZAHL SICHTBAR', `${i ? 'nach' : 'vor'} dem Archiv: "${m[0]}" in der Price-Karte`); });
   if (!(nach.k > vorher.k + 500)) fail('ARCHIV NICHT GEZEICHNET', `${vorher.k} -> ${nach.k} Kerzen`);
   if (abrufe > 1) fail('MEHRFACH GELADEN', `${abrufe} Abrufe`);
   Object.keys(vorher.o).forEach(id => { if (vorher.o[id] !== nach.o[id]) fail('SCORE VERAENDERT', `${id}: ${vorher.o[id]} -> ${nach.o[id]}`); });

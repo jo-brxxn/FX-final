@@ -34,8 +34,12 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       document.querySelectorAll('.info-b, .dw-t .rinfo, .cot-card-title .rinfo, .rub-hdr .rinfo, .mx-card-title .rinfo').forEach(bt => {
         const br = bt.getBoundingClientRect(); if (!br.width || bt.closest('.modal')) return;
         const hd = bt.parentElement;
-        const card = bt.closest('.ab-tile,.ab-ptile,.ab-htile,.rub-card,.cot-card,.dw,.abc-cal,.mx-card');
-        if (!card) return;
+        // ⚠ .ab-ntile (Pinned notes) und .ab-ktile fehlten bis 2026-10-06 -
+        // ein ⓘ ohne erkannte Karte wurde STILL uebergangen, deshalb sah der
+        // Waechter den Schnellnotiz-Knopf rechts neben dem ⓘ nie. Jetzt wird
+        // ein solches ⓘ gemeldet, statt es zu ueberspringen.
+        const card = bt.closest('.ab-tile,.ab-ptile,.ab-htile,.ab-ntile,.ab-ktile,.rub-card,.cot-card,.dw,.abc-cal,.mx-card');
+        if (!card) { o.push({ tab, ohneKarte: (bt.parentElement.textContent || '').trim().slice(0, 24) }); return; }
         const titel = hd.querySelector('.ab-tile-t,.dw-t-txt,.rub-inp,.abc-mon,.mx-card-title-t') || [...hd.childNodes].find(x => x.nodeType === 3 && x.textContent.trim());
         let tr;
         if (titel && titel.nodeType === 3) { const rg = document.createRange(); rg.selectNodeContents(titel); tr = rg.getBoundingClientRect(); }
@@ -54,6 +58,7 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
       return o;
     }, tab);
     r.forEach(x => {
+      if (x.ohneKarte != null) { fail('KARTE UNBEKANNT', `${x.tab} "${x.ohneKarte}": ⓘ in keiner bekannten Kartenart - Liste in check/infoi.js ergaenzen`); return; }
       n++;
       if (Math.abs(x.kreis - x.fs * 0.6) > 1) fail('GROESSE', `${x.tab} "${x.name}": Kreis ${x.kreis.toFixed(1)}px bei ${x.fs}px Schrift (soll ${(x.fs * 0.6).toFixed(1)})`);
       if (x.rechter) fail('NICHT GANZ RECHTS', `${x.tab} "${x.name}": ein Element steht rechts daneben`);

@@ -77,23 +77,45 @@ jobs:
       # erreichbar und liefert title/country/date/importance/forecast/previous/
       # actual fuer ein frei waehlbares Fenster - er dient daher als Quelle
       # sowohl fuer ZUKUENFTIGE Events als auch fuer Actual-Werte.
-      - name: Fetch TradingView economic calendar (today-3d .. today+11d)
+      #
+      # 3-Monats-Kalender (Nutzer 2026-10-06: "ich will das immer der Kalender
+      # schon fuer die kommenden 3 Monate geladen wird", per Rueckfrage:
+      # High/Medium + Score-Indikatoren). Gemessen mit probe-calendar-horizon.yml:
+      # TradingView reicht nur rund 30 Tage weit (Anfrage bis +92, letzte Zeit
+      # 2026-11-05), FXStreet liefert nur High-Termine, die aber ueber +95 Tage.
+      # Deshalb hier beide - Details und die Namens-Angleichung stehen in
+      # tools/kalender-vorschau.mjs.
+      - name: Fetch TradingView (today-3d .. today+35d) and FXStreet (until today+93d)
         run: |
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
           TV_FROM=$(node -e 'console.log(new Date(Date.now()-3*86400e3).toISOString())')
-          TV_TO=$(node -e 'console.log(new Date(Date.now()+11*86400e3).toISOString())')
-          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" \
+          TV_TO=$(node -e 'console.log(new Date(Date.now()+35*86400e3).toISOString())')
+          curl -sL -A "$UA" -H "Origin: https://www.tradingview.com" --max-time 60 \
             "https://economic-calendar.tradingview.com/events?from=${TV_FROM}&to=${TV_TO}&countries=US,EU,DE,FR,IT,ES,GB,JP,CA,AU,NZ,CH,CN" -o tv.json || true
+          FX_FROM=$(node -e 'console.log(new Date().toISOString())')
+          FX_TO=$(node -e 'console.log(new Date(Date.now()+93*86400e3).toISOString())')
+          curl -sL -A "$UA" -H "Referer: https://www.fxstreet.com/economic-calendar" --max-time 60 \
+            "https://calendar-api.fxstreet.com/en/api/v1/eventDates/${FX_FROM}/${FX_TO}?volatilities=HIGH&countries=&categories=" -o fxs_ahead.json || true
 
-      # Zukuenftige High/Medium-Events (naechste 10 Tage) aus TradingView in
-      # ff_calendar.json ergaenzen, falls der FF-Feed sie nicht (mehr) enthaelt.
-      # Deduplizierung gegen vorhandene FF-Events ueber Waehrung + kanonischen
+      # Zukuenftige High/Medium-Events aus TradingView (bis zu dessen Ende,
+      # rund heute+30 Tage) in ff_calendar.json ergaenzen, falls der FF-Feed
+      # sie nicht (mehr) enthaelt; dahinter die High-Termine von FXStreet bis
+      # heute+92 Tage (3-Monats-Kalender, Nutzer 2026-10-06).
+      # Deduplizierung gegen vorhandene Events ueber Waehrung + kanonischen
       # Event-Namen + ET-Kalendertag, damit KEINE Dopplungen entstehen. FF-Namen
-      # haben Vorrang (TV fuellt nur Luecken).
-      - name: Add upcoming events from TradingView
+      # haben Vorrang (TV fuellt nur Luecken, FXStreet nur hinter TV).
+      #
+      # ⚠ Bewusst KEINE Low-Termine aus TradingView, auch nicht die, die ein
+      # Score-Indikator-Muster trifft. Gemessen 2026-10-06: 133 solcher Low-
+      # Termine in 33 Tagen, darunter die Landes-CPIs von Bayern/Hessen/NRW
+      # und "Jobless Claims 4-week Average" - die Muster in
+      # js/event-matchers.js speisen aber die Score-Werte (EUR-CPI, USD-
+      # Claims). Diese Zeilen haetten falsche Zahlen in den Score gezogen.
+      - name: Add upcoming events from TradingView (High/Medium) and FXStreet (High, beyond TradingView)
         run: |
-          node -e '
-            const fs=require("fs");
+          node --input-type=module -e '
+            import fs from "fs";
+            import {fxsTitel,fxsAufnehmen,indikatorTreffer,fuelltLuecke} from "./tools/kalender-vorschau.mjs";
             const TV2CCY={US:"USD",EU:"EUR",DE:"EUR",FR:"EUR",IT:"EUR",ES:"EUR",GB:"GBP",JP:"JPY",CA:"CAD",AU:"AUD",NZ:"NZD",CH:"CHF",CN:"CNY"};
             function fmtVal(v,unit,scale){
               if(v==null||v==="")return "";
@@ -152,7 +174,21 @@ jobs:
             let tv;
             try{tv=JSON.parse(fs.readFileSync("tv.json","utf8"));}catch(e){tv=null;}
             const evts=Array.isArray(tv)?tv:(tv&&Array.isArray(tv.result)?tv.result:null);
-            if(!evts){console.log("TradingView future events unavailable, keeping ff_calendar.json as is");process.exit(0);}
+            const tvOk=!!(evts&&evts.length);
+            const now=Date.now();
+            const zeit=ev=>new Date(ev.date).getTime();
+            if(!tvOk){
+              console.log("TradingView future events unavailable, keeping its events from the previous file");
+            }else{
+              // TradingView ist fuer SEINE Zukunft massgeblich: die aus dem
+              // letzten Lauf uebernommenen TV-Termine fliegen raus und kommen
+              // frisch wieder rein - sonst bliebe ein verschobener Termin
+              // doppelt stehen (alter + neuer Tag). Bei 10 Tagen Fenster kam das
+              // kaum vor, bei 30 Tagen schon.
+              const vor=combined.length;
+              combined=combined.filter(ev=>!(ev.src==="tv"&&zeit(ev)>now));
+              console.log("TradingView: "+(vor-combined.length)+" future event(s) of the previous run replaced by the fresh list");
+            }
 
             // Vorhandene Events indexieren (Waehrung|canonKey|ET-Tag) -> Dedup.
             const have=new Set();
@@ -160,10 +196,9 @@ jobs:
               have.add((ev.country||"")+"|"+canonKey(ev.title)+"|"+String(ev.date).slice(0,10));
             });
 
-            const now=Date.now();
-            const lo=now-2*86400e3, hi=now+10*86400e3;
+            const lo=now-2*86400e3, hi=now+92*86400e3;
             let added=0;
-            evts.forEach(ev=>{
+            (evts||[]).forEach(ev=>{
               const ccy=TV2CCY[ev.country]||ev.currency;
               if(!ccy||!TV2CCY[ev.country])return;
               const imp=ev.importance;
@@ -190,11 +225,61 @@ jobs:
               });
               added++;
             });
-            if(added){
-              combined.sort((x,y)=>new Date(x.date)-new Date(y.date));
-              fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
-            }
             console.log("TradingView upcoming: added "+added+" future High/Medium event(s)");
+
+            // ── FXStreet: High-Termine HINTER dem Ende von TradingView ──────
+            // Ende = letzter Termin, den TradingView in diesem Lauf geliefert
+            // hat (sonst der letzte uebernommene TV-Termin), mindestens aber
+            // das Ende des FF-Feeds. Davor stehen dieselben Releases schon
+            // unter dem FF-/TV-Namen; FXStreet nennt sie anders ("Fed Interest
+            // Rate Decision" statt "Federal Funds Rate"), das gaebe Dopplungen.
+            // Einzige Ausnahme davor: Lueckenfueller fuer Score-Releases, die
+            // TradingView nur als Low fuehrt (fuelltLuecke, z.B. US Core PPI).
+            let fx=null;
+            try{fx=JSON.parse(fs.readFileSync("fxs_ahead.json","utf8"));}catch(e){fx=null;}
+            const fxOk=Array.isArray(fx)&&fx.length>0;
+            const spaetester=arr=>arr.reduce((m,ev)=>{const t=zeit(ev);return isNaN(t)?m:Math.max(m,t);},-Infinity);
+            let ende=tvOk?spaetester(evts):spaetester(combined.filter(ev=>ev.src==="tv"));
+            ende=Math.max(ende,spaetester(combined.filter(ev=>!ev.src)),now);
+            // Zukuenftige FXStreet-Termine des letzten Laufs werden immer neu
+            // entschieden: bei erfolgreichem Abruf aus der frischen Liste (ein
+            // verschobener Termin bleibt nicht doppelt stehen), sonst aus den
+            // alten - mit denselben Regeln, denn inzwischen kann TV/FF den
+            // Release unter eigenem Namen fuehren.
+            const alteFx=combined.filter(ev=>ev.src==="fxs"&&zeit(ev)>now);
+            combined=combined.filter(ev=>!(ev.src==="fxs"&&zeit(ev)>now));
+            if(!fxOk)console.log("FXStreet ahead: unavailable, re-checking "+alteFx.length+" event(s) from the previous file");
+            const kandidaten=fxOk
+              ?fx.filter(fxsAufnehmen).map(e=>({title:fxsTitel(e),country:e.currencyCode,date:new Date(Date.parse(e.dateUtc)).toISOString()}))
+              :alteFx.map(ev=>({title:ev.title,country:ev.country,date:ev.date}));
+            const andere=combined.filter(ev=>ev.src!=="fxs");
+            // ⚠ Eigene Dedup-Menge NACH dem Entfernen: "have" oben kennt noch
+            // die alten FXStreet-Termine - damit galt beim zweiten Lauf jeder
+            // FXStreet-Termin als "schon da", wurde entfernt und nie wieder
+            // eingetragen (vom Waechter check/kalendervorschau.js gefunden).
+            const haveFx=new Set(combined.map(ev=>(ev.country||"")+"|"+canonKey(ev.title)+"|"+etDay(ev.date)));
+            const hiFx=now+92*86400e3;
+            let fxAdded=0,fxLuecke=0,fxScore=0,fxErst=null,fxLetzt=null;
+            kandidaten.forEach(k=>{
+              const t=Date.parse(k.date);
+              if(isNaN(t)||t<=now||t>hiFx)return;
+              const imFenster=t<=ende;
+              if(imFenster&&!fuelltLuecke(k,andere))return;
+              const key=k.country+"|"+canonKey(k.title)+"|"+etDay(k.date);
+              if(haveFx.has(key))return;
+              haveFx.add(key);
+              // Nur Name, Datum, Zeit: einen Forecast fuehrt FXStreet so weit
+              // voraus nie, "previous" nur bei 36 von 215 Terminen und mit
+              // unklarem Bezug - die Werte kommen, sobald TradingView/FF den
+              // Termin fuehren (CLAUDE.md Regel 4: nichts schaetzen).
+              combined.push({title:k.title,country:k.country,date:k.date,impact:"High",forecast:"",previous:"",actual:"",src:"fxs"});
+              if(imFenster)fxLuecke++;else fxAdded++;
+              if(indikatorTreffer(k.title,k.country).length)fxScore++;
+              if(!imFenster){if(!fxErst||k.date<fxErst)fxErst=k.date;if(!fxLetzt||k.date>fxLetzt)fxLetzt=k.date;}
+            });
+            console.log("FXStreet ahead: TradingView/FF reach "+new Date(ende).toISOString()+"; added "+fxAdded+" High event(s) beyond"+(fxAdded?" ("+fxErst+" .. "+fxLetzt+")":"")+" + "+fxLuecke+" gap filler(s) inside the window; "+fxScore+" are score-indicator releases");
+            combined.sort((x,y)=>new Date(x.date)-new Date(y.date));
+            fs.writeFileSync("ff_calendar.json", JSON.stringify(combined));
           '
 
       # FXStreet's economic calendar API (calendar-api.fxstreet.com) returns

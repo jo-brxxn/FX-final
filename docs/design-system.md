@@ -1049,8 +1049,17 @@ Grafik, die das alte Muster kopiert, fällt dort auf.
   `ind_data.json` historyFull) — per Rückfrage „Aus Indikator-Historie".
   Nur Indikatoren mit Kalender-Zuordnung (`CAL_RESEARCH_MATCHERS`, in der
   App „high"); keine geratene Wichtigkeit, keine erfundene Uhrzeit.
-- „Not published yet" gilt nur für die Zukunft jenseits des Feeds.
-Geprüft in `check/kalender.js`.
+- „Not published yet" gilt nur für die Zukunft jenseits des Feeds — als
+  `title`, ⓘ-Text und „Covers …“-Zeile, **nicht** als blasse Zahl.
+- **Seit 2026-10-06 (Dauerregel, Nutzer: *„sobald etwas alt ist … blasser und
+  was kommt ist stark kräftig … alle zukünftigen Datum Zahlen … nicht
+  blass“*):** NUR Vergangenes ist blass. Jeder kommende Tag — auch Wochenende
+  und Tage hinter dem Feed — steht in voller Deckkraft und einheitlicher
+  Farbe (`--t1`). Tageszahl 15 px/600 (`--fs-md`, eine Stufe unter dem
+  Kartentitel), Kreis 33 px (2,2 em, nur Karte).
+- Der Kalender reicht rund 3 Monate voraus (High + Medium bis ~30 Tage,
+  dahinter nur High — `docs/data-sources.md` „Kalender-Horizont“).
+Geprüft in `check/kalender.js` (A, E, F).
 
 ## FX-Logo: Ladebildschirm und leere Kartenfläche (Nutzer 2026-09-24)
 
@@ -1112,6 +1121,14 @@ Grenzen nach oben und unten"*). Umgesetzt an der Wurzel:
 Seiten-Scroller `.pc`/`.detail`. Kein `overscroll-behavior:contain` benutzen
 (contain lässt das Element selbst weiter federn). Wächter:
 `check/tabellenfest.js`.
+
+**Klebende Zeilen lassen die Scroll-Linie frei (seit 2026-10-06).** In einem
+senkrecht scrollenden Bereich endet jedes `position:sticky`-Element mindestens
+6 px vor dem inneren rechten Rand — iOS zeichnet die Scroll-Linie dort, und
+klebende Ebenen liegen auf dem iPad darüber (Nutzer: *„beim Scrollen im
+Kalender bei past verschwindet der Strich“*; gemessen 1 px Abstand). Mittel:
+8 px `padding-right` am Scrollbereich (`.calp`, `.histp`). Ausnahme: Bereiche,
+die auch waagerecht scrollen (breite Tabellen). Wächter: `check/tabellenfest.js`.
 
 ## Zeitfilter (Dauerregel seit 2026-09-25)
 
@@ -1523,9 +1540,23 @@ bearishen Karte (Bias-Farbe der Karte), Short-Anteil/-Richtung,
 Saisonalität unter 50 % „up“.
 
 **I — Seitentitel und Schalter.** Seitentitel siehe „Schrifthierarchie“
-(überall gleiche Stelle + Untertitel). Bedienelemente ohne Text tragen eine
-sichtbare Beschriftung, wenn ihre Bedeutung nicht aus dem Symbol folgt
-(Schalter „SUMMARIES“).
+(überall gleiche Stelle + Untertitel). ~~Bedienelemente ohne Text tragen eine
+sichtbare Beschriftung (Schalter „SUMMARIES“)~~ — für den Zusammenfassungs-
+Schalter im Asset-Kopf am 2026-10-06 auf Nutzer-Wunsch zurückgenommen
+(*„entfern die Beschriftung Summary bei dem Umschalter oben“*): kein
+sichtbares Wort, aber `aria-label="Summaries"` und ein Tooltip mit dem
+echten Zustand. Geprüft: `designregeln` I.
+
+**Kein Verknüpft-Zeichen (seit 2026-10-06).** Gespiegelte Rubriken eines
+Nicht-FX-Assets und ihre Indikatoren tragen kein Ketten-Symbol mehr (Nutzer:
+*„dieses verknüpft Zeichen bei den Indikatoren und sonst wo weglässt“*); die
+Regel steht im Zahnrad-Menü. Geprüft: `designregeln` M (am Pfad des Symbols).
+
+**Keine Kerzenzahl unter Kurs-Charts (seit 2026-10-06).** „N daily candles ·
+M with a measured high/low“ entfällt unter Price- und Kontext-Charts (Nutzer:
+*„die Anzeige beim Preis wie viele Kerzen angezeigt werden weg“*); stehen
+bleibt nur „Feed starts …“, wenn die Reihe spürbar später anfängt. Geprüft:
+`check/archiv.js`.
 
 **J — Auf Touch voll sichtbar (Runde 2).** Bedienelemente, die am Desktop
 erst per Hover kräftig werden (Kalender-Glocke/×, Set-ups-Stern, Notiz-Stern,
@@ -1558,9 +1589,11 @@ Mitte aus (`transform-origin:right`). Geprüft: `designregeln` K.
 **N — Flächen leise, Farbe am Wert (Runde 2).** Teil-vom-Ganzen-Balken
 (COT long/short, Retail long/short) sind 12 px hoch, 70 % Deckkraft, mit
 2 px Kartenfarbe zwischen den Segmenten; die Zahlen daneben tragen die volle
-Bias-Farbe. Säulen in Indikator-Charts höchstens 14 px breit, 80 %
-Deckkraft; ob die Wertzahl darüber Platz hat, entscheidet die
-Spaltenbreite (Spalte × 0,56 ≥ 22 px), nicht die Säulenbreite.
+Bias-Farbe. Säulen in Indikator-Charts 56 % des Spaltenplatzes **ohne
+Deckel** (der 14-px-Deckel aus 591 ist seit 2026-10-06 auf Nutzer-Wunsch
+wieder weg: *„die Balken so schmal … macht das wie vorher überall also nur
+das"*), 80 % Deckkraft bleibt; die Wertzahl darüber steht ab Spalte × 0,56
+≥ 22 px.
 
 **O — Kompakte Werkzeugzeile (Runde 2).** Candles|Line sind zwei
 Symbolknöpfe (`candles`/`line`, Name im `aria-label` und Tooltip —

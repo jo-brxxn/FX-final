@@ -14,13 +14,24 @@
 //      ind_data.json hat einen Punkt und im Fenster Eintraege, deren Actual/
 //      Forecast/Previous exakt der historyFull entsprechen, blass (.vorbei);
 //   C) nur Indikatoren mit Kalender-Zuordnung (keine geratene Wichtigkeit).
-//   node check/kalender.js [--gegenprobe]   (Blass-Regel per CSS ausgehebelt)
+//   E) Nutzer 2026-10-06: "alle zukuenftigen Datum Zahlen so geschrieben sind
+//      nicht blass" + "mach die Zahlen im Kalender groesser": jeder kommende
+//      Tag (laufender UND Folgemonat, Wochenende eingeschlossen) in voller
+//      Deckkraft, einheitlicher Farbe, 15px und mindestens 600.
+//   F) Next-Countdown sucht den richtigen Termin (2026-10-06 gemessen falsch):
+//      EUR ohne nationale Vorab-Zahlen (Ifo ausgenommen), m/m und y/y als
+//      derselbe Termin, q/q nicht.
+//   node check/kalender.js [--gegenprobe | --gegenprobe-zukunft | --gegenprobe-termin]
+//   (Blass-Regel per CSS ausgehebelt | alte CSS der Zukunftstage | alte
+//    Termin-Suche ohne die beiden Regeln)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const fs = require('fs'), path = require('path');
 const { chromium } = require(PW);
 const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
+const GP_ZUKUNFT = process.argv.includes('--gegenprobe-zukunft');
+const GP_TERMIN = process.argv.includes('--gegenprobe-termin');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json'), 'utf8'));
 
@@ -58,7 +69,26 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
       else if (t.op > 0.5) fail('VERGANGENER TAG NICHT BLASS', `${r.monat}${String(t.n).padStart(2, '0')}: Zahl Deckkraft ${t.op} (verlangt <= .5)`);
       if (t.dotOp !== null && t.dotOp < 0.99) fail('PUNKT NICHT VOLL', `${r.monat}${String(t.n).padStart(2, '0')}: Punkt Deckkraft ${t.dotOp} - der Punkt soll bleiben`);
     } else if (t.vorbei) fail('ZUKUNFT ALS VORBEI', `Tag ${t.n} ist nicht vergangen`);
+    else if (t.n > tagHeute && t.op < 0.99) fail('ZUKUNFT BLASS', `${r.monat}${String(t.n).padStart(2, '0')}: Zahl Deckkraft ${t.op} (kommende Tage voll)`);
   });
+  // E) Folgemonat: lauter kommende Tage - Wochenende und "noch nicht im Feed"
+  //    eingeschlossen (am Monatsende hat der laufende Monat kaum noch welche).
+  const folge = await p.evaluate(gp => {
+    if (gp) { const st = document.createElement('style'); st.textContent = '.abc-d.unbekannt .abc-n{opacity:.38}.abc-d.we .abc-n{color:var(--t3)}'; document.head.appendChild(st); }
+    abCalShift(1);
+    const tage = [...document.querySelectorAll('#detail .abc-cal .abc-d:not(.leer)')].map(d => { const z = d.querySelector('.abc-n'), cs = getComputedStyle(z);
+      return { n: +z.textContent, we: d.classList.contains('we'), vorbei: d.classList.contains('vorbei'), op: +cs.opacity, col: cs.color, fs: cs.fontSize, fw: +cs.fontWeight }; });
+    abCalShift(-1);
+    return tage;
+  }, GP_ZUKUNFT);
+  if (!folge.length) fail('FOLGEMONAT', 'kein Tag im Raster nach ›');
+  const farben = [...new Set(folge.map(t => t.col))];
+  folge.forEach(t => {
+    if (t.vorbei) fail('ZUKUNFT ALS VORBEI', `Folgemonat Tag ${t.n}`);
+    if (t.op < 0.99) fail('ZUKUNFT BLASS', `Folgemonat Tag ${t.n}${t.we ? ' (Wochenende)' : ''}: Deckkraft ${t.op}`);
+    if (t.fs !== '15px' || t.fw < 600) fail('ZAHL ZU KLEIN', `Folgemonat Tag ${t.n}: ${t.fs}/${t.fw} (verlangt 15px, >= 600)`);
+  });
+  if (farben.length > 1) fail('ZUKUNFT UNGLEICH', `kommende Tage in ${farben.length} Farben (${farben.join(' / ')}) - Wochenende grau?`);
   // B) + C): Soll aus ind_data.json - letzter Release-Tag vor dem Feed-Beginn
   //    (monatsunabhaengig, sonst waere der Waechter am Monatsanfang grundlos rot)
   const matcher = await p.evaluate(() => Object.keys(CAL_RESEARCH_MATCHERS));
@@ -96,12 +126,35 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
     const fremd = ist.filter(e => !soll[tagSoll].some(s => s.base === e.name));
     if (fremd.length) fail('UNBELEGTER EINTRAG', `${tagSoll}: ${fremd.map(e => e.name).join(', ')} - nicht aus der Historie mit Kalender-Zuordnung (Regel 4)`);
   }
+  // F) Termin-Suche gegen nachgebaute Kalender-Termine (eigene, kurzzeitige
+  //    calEvts - der echte Feed bleibt unberuehrt und wird danach zurueckgesetzt).
+  const termin = await p.evaluate(gp => {
+    const tag = n => { const x = new Date(); x.setDate(x.getDate() + n); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+    // Vorzustand der Suche (bis 2026-10-06): strenge Periode, nationale Zahlen mit drin.
+    const alt = (symId, indName) => { const { base, period } = stripPeriodSuffix(indName || ''); const m = IND_EVENT_MATCHERS[base]; const ccy = macroCcyFor(symId); let best = null;
+      calEvts.forEach(ev => { if (ev.actual || ev.date < todayStr() || !String(ev.currencies || '').toUpperCase().split(/[,/&\s]+/).includes(ccy) || !m(ev.name, ccy)) return; if (period) { const evp = periodLabel(ev.name); if (evp && evp !== period) return; } if (!best || ev.date < best.date) best = ev; }); return best; };
+    const such = gp ? alt : window.findIndNextEvent;
+    const e = (name, n, ccy) => ({ id: 'kt' + name + n, name, date: tag(n), time: '10:00', currencies: ccy, impact: 'high', actual: '', forecast: '', previous: '', notes: '' });
+    const vorher = calEvts;
+    calEvts = [e('French Inflation Rate YoY Prel', 3, 'EUR'), e('Inflation Rate YoY Flash', 7, 'EUR'), e('Core PPI MoM', 4, 'USD'), e('Core PPI y/y', 30, 'USD'),
+      e('CPI q/q', 2, 'AUD'), e('CPI y/y', 10, 'AUD'), e('German Ifo Business Climate', 5, 'EUR')];
+    const f = (s, i) => { const x = such(s, i); return x ? x.date : null; };
+    const out = [['EUR', 'CPI (Headline) y/y', tag(7), 'Eurozonen-Flash statt franzoesischer Vorab-Zahl'], ['USD', 'Core PPI y/y', tag(4), 'm/m-Zeile desselben Releases'],
+      ['AUD', 'CPI (Headline) y/y', tag(10), 'Quartals-CPI (q/q) ist ein anderer Termin'], ['EUR', 'Ifo Business Climate', tag(5), 'Ifo gibt es nur deutsch']].map(([s, i, soll, warum]) => ({ s, i, soll, ist: f(s, i), warum }));
+    calEvts = vorher;
+    return out;
+  }, GP_TERMIN);
+  termin.forEach(t => { if (t.ist !== t.soll) fail('TERMIN FALSCH', `${t.s} ${t.i}: ${t.ist} statt ${t.soll} (${t.warum})`); });
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_ZUKUNFT || GP_TERMIN) {
+    const ok = F.some(x => x.startsWith(GP_ZUKUNFT ? 'ZUKUNFT' : 'TERMIN FALSCH'));
+    console.log(ok ? `kalender ${GP_ZUKUNFT ? '--gegenprobe-zukunft: ok (blasse/graue kommende Tage werden gemeldet)' : '--gegenprobe-termin: ok (alte Termin-Suche wird gemeldet)'}` : 'kalender Gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
+  }
   if (GEGENPROBE) {
     const ok = F.some(x => x.startsWith('VERGANGENER TAG NICHT BLASS'));
     console.log(ok ? 'kalender --gegenprobe: ok (nicht blasse vergangene Tage werden gemeldet)' : 'kalender --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
   }
   if (F.length) { console.log(`kalender: ${F.length} Befund(e)\n  ` + F.slice(0, 30).join('\n  ')); process.exit(1); }
-  console.log(`kalender: ok (vergangene Tage blass mit Punkt; ${tagSoll}: ${soll[tagSoll].length} Release(s) aus ind_data.json mit Actual/Forecast/Previous im Tagesfenster)`);
+  console.log(`kalender: ok (vergangene Tage blass mit Punkt, kommende voll in 15px; ${tagSoll}: ${soll[tagSoll].length} Release(s) aus ind_data.json mit Actual/Forecast/Previous im Tagesfenster; ${termin.length} Termin-Regeln)`);
 })();

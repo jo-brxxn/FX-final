@@ -12,6 +12,9 @@ import {RG_CCYS,REGIME_MIN_BED,regimeStand,rgKurve,rgRealzins,rgVix,rgVol,rgSpre
 // wie bei regime.js - journal.js liest syms/trendAssets/scoreLog von hier.
 import {scoreJournal,loadScoreJournal,jrErfassen,jrBootFertig,jrSperren,jrFreigeben,jrAnlassMerken,jrUebernehmen,
   jrTagesBlock,jrKopfHtml,jrBeginn,jrSeit,jrTagVon,jrUhr,jrModellText,JR_TAGE,JOURNAL_KEY} from './journal.js';
+// Kalender-Event ↔ Score-Indikator-Muster: eigene Datei ohne Browser-Bezug,
+// damit der Kalender-Workflow dieselben Muster laden kann (2026-10-06).
+import {mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,periodLabel,EU_LAND_RE,EU_NUR_NATIONAL} from './event-matchers.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -2472,132 +2475,9 @@ function openHistModal(id){
 // Rates"/"Inflation"/"Labour Market" automatisch mit dem jüngsten
 // passenden Kalender-Event (Actual/Forecast/Previous) und aktualisiert
 // daraus das Bias des Indikators (▲/▼/◆ je nach Überraschung ggü. Forecast).
-function mkIndMatcher(include,exclude){
-  return name=>{
-    const n=(name||'').toLowerCase();
-    if(exclude&&exclude.some(re=>re.test(n)))return false;
-    return include.some(re=>re.test(n));
-  };
-}
-// Manche Indikatoren werden unter EINER Währung (v.a. EUR) von mehreren,
-// methodisch verschiedenen nationalen Umfragen gemeldet (z.B. EU-Kommission
-// "Consumer Confidence (Flash)" vs. deutsches "GfK Consumer Confidence" -
-// beide unter "EUR" getaggt). Ein generisches Muster würde da leicht das
-// falsche Barometer ziehen. "overrides" liefert pro Währung ein striktes,
-// eindeutiges Muster; alle anderen Währungen (nur 1 Land je Währung, daher
-// unkritisch) nutzen weiterhin das breite "fallback"-Muster. Wird matcher()
-// ohne ccy aufgerufen (z.B. für die generelle High-Impact-Einstufung), wird
-// breit über alle Muster geprüft.
-function mkCcyIndMatcher(overrides,fallback){
-  const fb=Array.isArray(fallback)?fallback:[fallback];
-  return (name,ccy)=>{
-    const n=(name||'').toLowerCase();
-    if(ccy)return overrides[ccy]?overrides[ccy].test(n):fb.some(re=>re.test(n));
-    return fb.some(re=>re.test(n))||Object.values(overrides).some(re=>re.test(n));
-  };
-}
-// Retail Sales: ueberall den m/m-Release matchen, y/y ausschliessen - ausser
-// bei CHF, wo die Schweiz (BFS) den Detailhandelsumsatz nur als y/y meldet
-// (keine m/m-Reihe existiert). Gemeinsam von IND_EVENT_MATCHERS (Live-Bias-
-// Sync) und CAL_RESEARCH_MATCHERS (Seed-Daten-Matching) genutzt.
-function RETAIL_SALES_MATCHER(name,ccy){
-  const n=(name||'').toLowerCase();
-  if(!/retail sales/.test(n))return false;
-  if(/core|inventories|ex auto/.test(n))return false;
-  if(ccy==='CHF')return true;
-  return !/y\/y|yoy/.test(n);
-}
-const IND_EVENT_MATCHERS={
-  'Central Bank Rate':mkIndMatcher([/rate decision/,/interest rate decision/,/\bcash rate\b/,/bank rate/,/refinancing rate/,/overnight rate/,/policy rate/,/deposit facility/,/official cash rate/,/fed funds/]),
-  // Der Headline-CPI heisst je nach Datenquelle "CPI" (Forex Factory) ODER
-  // "Inflation Rate" (TradingView, z.B. bei CAD/EUR/CHF). Kern- und Teilmasse
-  // (Core/Common/Median/Trimmed/Super, PPI/PCE, Inflationserwartungen, BoJ/
-  // Tokyo, Services) werden ausgeschlossen, damit wirklich der Headline-Wert
-  // gezogen wird und nicht versehentlich ein Kernmass.
-  'CPI (Headline)':mkIndMatcher([/\bcpi\b/,/inflation rate/],[/core/,/common/,/median/,/trimmed/,/super/,/\bppi\b/,/\bpce\b/,/expectation/,/\bboj\b/,/tokyo/,/services/,/\bsppi\b/,/wage/,/rent/]),
-  // Kern-/Core-Inflation: "Core CPI", "Core Inflation Rate", BoJ/Tokyo Core CPI.
-  // CAD: bewusst die BoC-Kennzahl "CPI-Median" statt der StatCan "Core
-  // Inflation Rate" (CPIX) - nur die BoC-Masse liefern im Kalender einen
-  // vollstaendigen Datensatz inkl. Forecast, sodass Actual/Forecast/Previous
-  // alle drei aus dem Kalender kommen (CPIX hat dort keinen Forecast).
-  'Core CPI':mkCcyIndMatcher(
-    {CAD:/median cpi/},
-    [/core cpi/,/core inflation rate/,/super core/,/\bboj core cpi\b/,/tokyo core cpi/]
-  ),
-  'PPI':mkIndMatcher([/\bppi\b/,/producer price/],[/core/,/services/,/import/,/export/]),
-  'Core PPI':mkIndMatcher([/core ppi/,/core producer price/]),
-  'PCE':mkIndMatcher([/\bpce\b/],[/core/]),
-  'Core PCE':mkIndMatcher([/core pce/]),
-  // Services-Inflation = Dienstleistungs-ERZEUGERPREISE (JPY: SPPI / Corporate
-  // Services Price Index) - bewusst NICHT der Services-PMI.
-  'Services Inflation':mkIndMatcher([/\bsppi\b/,/corporate services price/,/services producer price/]),
-  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/,/claimant count/]),
-  // NFP / Beschaeftigungsaenderung: "Non Farm" MIT Leerzeichen korrekt erfassen
-  // ("non-?farm" verfehlte das); Unemployment-/ADP-/Teilzeit-Varianten raus.
-  'NFP / Employment Change':mkIndMatcher([/non[\s-]?farm/,/\bnfp\b/,/\bemployment change\b/,/payrolls/,/net employment/,/employment level/],[/adp/,/unemployment/,/full[\s-]?time/,/part[\s-]?time/,/change in/]),
-  'Unemployment Rate':mkIndMatcher([/unemployment rate/]),
-  'ADP Employment':mkIndMatcher([/\badp\b/],[/weekly/]),
-  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/,/job vacanc/]),
-  // Lohnwachstum heisst in JEDEM Land anders - das Muster kannte bisher aber
-  // faktisch nur die US-Reihe. Ergebnis (2026-08-08 an den echten
-  // Kalendertiteln geprueft): GBP "Average Earnings incl. Bonus (3Mo/Yr)" und
-  // JPY "Average Cash Earnings y/y" liefen ins Leere, obwohl beide Zeilen im
-  // Kalender stehen - genau die zwei, die die App als veraltet meldet. Die
-  // waehrungsspezifischen Muster spiegeln jetzt IND_DISPLAY_NAMES: GBP nimmt
-  // ausdruecklich die Reihe INKLUSIVE Bonus (Forex Factory fuehrt beide, die
-  // Headline ist incl.), CHF den Lohnindex, EUR die EZB-Tarifloehne, CAD die
-  // Durchschnittsloehne aus der LFS. AUD (Wage Price Index) und NZD (Labour
-  // Cost Index) waren ueber die generische Liste schon abgedeckt.
-  'Avg Hourly Earnings':mkCcyIndMatcher(
-    {GBP:/average earnings.*incl/,JPY:/average cash earnings/,CHF:/^wage index/,EUR:/negotiated wage/},
-    [/average hourly earnings/,/avg hourly earnings/,/average hourly wages/,/wage price index/,/labou?r cost index/]
-  ),
-  // Economic Growth: GDP-Wachstum, Retail Sales, Manufacturing-/Services-PMI und
-  // Consumer Confidence ziehen jetzt ebenfalls LIVE-Werte aus dem Kalender -
-  // mit PRAEZISEN, ggf. waehrungsspezifischen Mustern, damit nicht ein falscher
-  // Sub-Indikator erwischt wird (z.B. "GDP Price Index" statt GDP-Wachstum oder
-  // eine nationale Teil-PMI statt der Eurozone-Aggregat-PMI).
-  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/,/\bmom\b/,/m\/m/]),
-  // Retail Sales: ueberall der m/m-Wert (monatliche Aenderung), NICHT y/y -
-  // sonst wuerde bei Waehrungen, die im Kalender BEIDE Varianten melden, die
-  // falsche (y/y) gezogen. Einzige Ausnahme: Schweiz (BFS) veroeffentlicht
-  // Detailhandelsumsatz nur als y/y - dort gibt es gar keine m/m-Reihe, daher
-  // bleibt y/y dort bewusst zugelassen.
-  'Retail Sales':RETAIL_SALES_MATCHER,
-  // PMI: USA = ISM (Headline) statt S&P-Global-Flash; Eurozone = das Aggregat
-  // (kein deutsches/franzoesisches Flash, das ebenfalls als "EUR" getaggt ist).
-  //
-  // ⚠ Bugfix 2026-08-08 (Nutzer: die veralteten Indikatoren werden an der
-  // Quelle sehr wohl aktualisiert): das EUR-Muster war so eng verankert, dass
-  // es die Eurozone-Reihe selbst nicht mehr traf. Forex Factory nennt sie
-  // "Final Manufacturing PMI" bzw. "Final Services PMI" - "final " stand
-  // aber nicht in der Praefix-Liste, also matchte NICHTS: weder das Aggregat
-  // (versehentlich) noch die nationalen Varianten (korrekt). Per Test gegen
-  // die echten Kalendertitel bestaetigt - EUR war die EINZIGE Waehrung mit
-  // null Treffern, alle anderen liefen ueber das generische Muster.
-  // Die Verankerung bleibt, sie ist der eigentliche Zweck: "German Final
-  // Manufacturing PMI" und die spanische/italienische/franzoesische Reihe
-  // tragen alle ebenfalls die Kennung EUR und muessen draussen bleiben.
-  'Manufacturing PMI':mkCcyIndMatcher(
-    {USD:/ism manufacturing pmi/,EUR:/^(flash |final |s&p global |hcob )*manufacturing pmi( flash| final)?$/},
-    [/manufacturing pmi/]
-  ),
-  'Services PMI':mkCcyIndMatcher(
-    {USD:/ism (services|non-?manufacturing) pmi/,EUR:/^(flash |final |s&p global |hcob )*services pmi( flash| final)?$/,CAD:/ivey/},
-    [/services pmi/,/non-?manufacturing pmi/]
-  ),
-  'Consumer Confidence':mkCcyIndMatcher(
-    {EUR:/^consumer confidence(\s+flash)?$/},
-    [/consumer confidence/,/consumer sentiment/,/consumer climate/]
-  ),
-  // Umfragen (2026-08-20). ZEW fuehrt der Kalender doppelt - als Eurozone-
-  // Aggregat und als "German ZEW ..."; nach der bestehenden Regel gewinnt
-  // das Aggregat, das German-Praefix bleibt draussen. Ifo gibt es nur
-  // deutsch, das ist die Natur der Reihe.
-  'ZEW Economic Sentiment':(n,c)=>c==='EUR'&&/zew economic sentiment/.test((n||'').toLowerCase())&&!/^german|current conditions/.test((n||'').toLowerCase()),
-  'Ifo Business Climate':(n,c)=>c==='EUR'&&/ifo business climate/.test((n||'').toLowerCase()),
-  'Inflation Expectations':(n,c)=>c==='USD'&&/inflation expectation/.test((n||'').toLowerCase())&&!/5|long/.test((n||'').toLowerCase()),
-};
+// mkIndMatcher, mkCcyIndMatcher, RETAIL_SALES_MATCHER und IND_EVENT_MATCHERS
+// stehen seit 2026-10-06 in js/event-matchers.js - der Kalender-Workflow
+// braucht dieselben Muster (Import oben in dieser Datei).
 // "Economic Growth" gehoerte hier bisher NICHT dazu, obwohl GDP Growth QoQ /
 // Manufacturing PMI / Services PMI / Retail Sales / Consumer Confidence
 // genauso echte Kalender-Matcher haben (siehe IND_EVENT_MATCHERS oben) - d.h.
@@ -2651,11 +2531,15 @@ function findIndEvent(symId,indName){
 // Spiegelbild von findIndEventHistory: das FRUEHESTE noch nicht
 // veroeffentlichte Kalender-Event, das zu diesem Indikator passt.
 //
-// ⚠ Das Kalender-Fenster reicht nur rund eine Woche voraus (ff_calendar.json
+// ⚠ Seit 2026-10-06 reicht das Kalender-Fenster rund 3 Monate voraus (High +
+// Medium bis rund +30 Tage aus TradingView, dahinter nur High aus FXStreet,
+// siehe tools/kalender-vorschau.mjs). Vorher: nur rund eine Woche (ff_calendar.json
 // deckt ~2 Wochen um heute ab). Fuer die meisten Indikatoren ist an den
 // meisten Tagen also KEIN Termin bekannt - dann steht hier "–" und sonst
 // nichts. Aus dem Release-Rhythmus einen Termin hochzurechnen waere geraten
 // und ist damit ausgeschlossen (CLAUDE.md Regel 4).
+const MONAT_JAHR=new Set(['M/M','Y/Y']);
+// EU_LAND_RE + EU_NUR_NATIONAL: js/event-matchers.js (auch der Kalender-Workflow nutzt sie).
 function findIndNextEvent(symId,indName){
   const{base,period}=stripPeriodSuffix(indName||'');
   const matcher=IND_EVENT_MATCHERS[base];
@@ -2668,7 +2552,21 @@ function findIndNextEvent(symId,indName){
     if(!ev||!ev.date||ev.actual)return;          // schon veroeffentlicht
     if(ev.date<today)return;
     if(!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return;
-    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period)return;}
+    // EUR-Indikatoren sind Eurozonen-Aggregate. Die Muster treffen aber auch
+    // die nationalen Vorab-Zahlen, die ebenfalls unter EUR laufen - gemessen
+    // 2026-10-06: "CPI (Headline)" zeigte 24d (French/Spanish/Italian/German
+    // "Inflation Rate … Prel" am 30.10.) statt 29d (Eurozonen-Flash am 04.11.).
+    // Fuer den TERMIN deshalb ohne Landes-Praefix; Ifo gibt es nur deutsch.
+    if(ccy==='EUR'&&EU_LAND_RE.test(ev.name||'')&&!EU_NUR_NATIONAL.has(base))return;
+    // m/m und y/y desselben Indikators kommen in EINER Veroeffentlichung
+    // (gemessen 2026-10-06: US-PPI am 15.10. - TradingView fuehrt "PPI MoM"
+    // als High und "PPI YoY" nur als Low, Low-Termine nimmt der Kalender
+    // nicht auf; die Zeile "Core PPI y/y" fand deshalb erst den
+    // FXStreet-Termin im November: "38d" statt 9). Fuer den TERMIN zaehlen
+    // sie deshalb als dasselbe Datum. q/q bleibt getrennt (AUD: monatlicher
+    // CPI-Indikator und Quartals-CPI sind verschiedene Termine). Beim WERT
+    // (findIndEventHistory) gilt weiter die strenge Periode.
+    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period&&!(MONAT_JAHR.has(evp)&&MONAT_JAHR.has(period)))return;}
     if(!best||ev.date<best.date||(ev.date===best.date&&(ev.time||'').localeCompare(best.time||'')<0))best=ev;
   });
   return best;
@@ -2684,7 +2582,8 @@ const IND_NEXT_SOON_D=7;
 //
 // ⚠ Nutzer-Vorgabe 2026-09-06: "Mach die ersten Tage nur den median und 10
 // Tage davor weis man ja den Wert also ab dann soll es genau sein." Genau so:
-// steht der Termin im Kalender (dessen Fenster rund 10 Tage voraus reicht),
+// steht der Termin im Kalender (dessen Fenster seit 2026-10-06 rund 3 Monate
+// voraus reicht, jenseits von rund 30 Tagen nur High-Termine),
 // gilt das exakte Datum; davor die Erwartung aus dem gemessenen Turnus.
 //
 // Anlass: die Spalte war fast leer. Gemessen ueber alle Assets hatten nur
@@ -2740,7 +2639,7 @@ function indNextReleaseCell(symId,ind){
   // bestaetigter Termin. Die Schreibweise der Restzeit folgt trotzdem
   // derselben Regel: "~1d" statt "~tomorrow".
   const lbl=d<=0?'due':'~'+d+'d';
-  return`<span class="ir-next ir-next-est${soon?' soon':''}" title="Expected around ${escH(fmtDayHdr(exp))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps) counted from its last release on ${escH(fmtDayHdr((ind.research||{}).date||''))}. The calendar only carries about ten days ahead; once the release enters that window, the exact date replaces this.">${escH(lbl)}</span>`;
+  return`<span class="ir-next ir-next-est${soon?' soon':''}" title="Expected around ${escH(fmtDayHdr(exp))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps) counted from its last release on ${escH(fmtDayHdr((ind.research||{}).date||''))}. The calendar carries high- and medium-impact releases about a month ahead and high-impact releases up to three months ahead; as soon as this release is in it, the exact date replaces this.">${escH(lbl)}</span>`;
 }
 // Lange Form fuer den Vergleich: von wann der Wert ist UND wann der naechste
 // kommt (Nutzer-Wunsch 2026-09-05).
@@ -2762,7 +2661,7 @@ function indAsOfNextHtml(symId,ind){
   // der Restzeit ("~1d", nicht "~tomorrow").
   const nxHtml=datum==null?null:nx?countdownHtml(datum):escH(d<=0?'due':'~'+d+'d');
   const nxTitle=nx?`${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''} (confirmed date from the calendar)`
-    :`Expected around ${escH(fmtDayHdr(exp||''))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps). Once the release enters the calendar window, roughly ten days ahead, the exact date replaces this.`;
+    :`Expected around ${escH(fmtDayHdr(exp||''))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps). As soon as the calendar carries the release (high and medium about a month ahead, high-impact up to three months), the exact date replaces this.`;
   return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${datum?`<b class="px-next${nx?'':' px-next-est'}${soon?' soon':''}" title="${nxTitle}">${nxHtml}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window, and no measured release rhythm to expect one from — so nothing is claimed here.">not scheduled yet</b>`}</div>`;
 }
 // Eigene, rollierende Werte-Historie je Indikator (unabhaengig vom kurzen
@@ -3146,22 +3045,8 @@ function indBiasFromEvent(ev){
 // Actual fehlt, werden die recherchierten Werte aus IND_RESEARCH_DATA
 // übernommen - dieselbe Quelle wie bei den Indikator-Karten. Match über
 // Währung + exaktes Veröffentlichungsdatum + Indikator-Namensmuster.
-const CAL_RESEARCH_MATCHERS={
-  ...IND_EVENT_MATCHERS,
-  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/]),
-  'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
-  'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
-  // Retail Sales: bewusst KEIN eigener, loserer Override hier - die geerbte
-  // RETAIL_SALES_MATCHER-Regel (m/m bevorzugen, y/y ausschliessen ausser CHF)
-  // aus IND_EVENT_MATCHERS soll auch beim Seed-Daten-Matching gelten.
-};
-// Ein Event "treibt den Score", wenn sein Name zu einem der getrackten
-// Indikatoren passt (Zins/Inflation/Arbeitsmarkt/Wachstum). Solche Events
-// werden ueberall als High-Impact behandelt - egal was die Quelle (FF) sagt.
-function isScoreDrivingEvent(ev){
-  if(!ev||!ev.name)return false;
-  return Object.values(CAL_RESEARCH_MATCHERS).some(m=>m(ev.name));
-}
+// CAL_RESEARCH_MATCHERS + isScoreDrivingEvent stehen seit 2026-10-06 in
+// js/event-matchers.js (der Kalender-Workflow laedt sie von dort).
 function applyResearchToCal(){
   let changed=false;
   Object.entries(IND_RESEARCH_DATA).forEach(([ccy,data])=>{
@@ -3554,13 +3439,8 @@ function srcLabel(url){
 // Erkennt Zeitraum-Kürzel (y/y, m/m, q/q in jeder Schreibweise) und liefert
 // die normalisierte Anzeigeform ("Y/Y"/"M/M"/"Q/Q").
 const PERIOD_TAG_RE=/Y\/Y|YoY|y\/y|M\/M|MoM|m\/m|Q\/Q|QoQ|q\/q/;
-function periodLabel(tag){
-  const t=(tag||'').toLowerCase();
-  if(/y\/y|yoy/.test(t))return'Y/Y';
-  if(/m\/m|mom/.test(t))return'M/M';
-  if(/q\/q|qoq/.test(t))return'Q/Q';
-  return null;
-}
+// periodLabel steht seit 2026-10-06 in js/event-matchers.js (der Kalender-
+// Workflow braucht es fuer die m/m-/y/y-Geschwister eines Releases).
 // Entfernt ein von applyIndResearch angehängtes Zeitraum-Kürzel
 // (" y/y"/" m/m"/" q/q") vom Indikator-Namen, damit Kalender-Matching und
 // Migration weiterhin auf dem Basisnamen arbeiten. Liefert zusätzlich das
@@ -7707,12 +7587,12 @@ function renderDetail(){
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openBacktester('${c.id}')" title="Backtester: every rate hike and cut on file, and the inflation, labour and growth readings the central bank had in front of it — three releases each, so the trend into the decision is visible">Backtester</button></div>
     <div class="dmeta-ctrl"><button class="dmeta-hist-btn" onclick="openDataQuality('${c.id}')" title="Data quality &amp; weighting: spread, median surprise, half-life and measured market impact of every indicator of this asset">Data quality</button></div>
     ${isNonFx(c.id)?`<div class="dmeta-ctrl"><button class="cfg-gear" onclick="openAssetCfg()" title="Asset settings: linked currency, connection with other assets & automatic bias">${icn('gear',17)}</button></div>`:''}
-    ${/* Sichtbare Beschriftung (Design-Audit 2026-10-04, Nutzerwahl "Kompakt-
-       Schalter beschriften"): der Schalter blendet die Karten-Zusammenfassungen
-       ein (AN) bzw. aus - "Compact" waere falsch herum, deshalb "Summaries".
-       <label for> auf den Knopf: ein Tipp aufs Wort schaltet mit (groessere
-       Trefferflaeche). */''}
-    <div class="dmeta-ctrl dmeta-ctrl-sw"><label class="sw-lbl" for="compactSw">Summaries</label><button class="compact-sw${compactView===1?' on':''}" id="compactSw" role="switch" aria-checked="${compactView===1?'true':'false'}" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
+    ${/* Der Schalter blendet die Karten-Zusammenfassungen ein (AN) bzw. aus.
+       Die sichtbare Beschriftung "SUMMARIES" vom 2026-10-04 (Design-Audit D8)
+       ist am 2026-10-06 auf Nutzer-Wunsch wieder weg ("entfern die
+       Beschriftung Summary bei dem Umschalter oben"). Der Name bleibt fuer
+       Screenreader (aria-label) und im Tooltip, der den echten Zustand sagt. */''}
+    <div class="dmeta-ctrl dmeta-ctrl-sw"><button class="compact-sw${compactView===1?' on':''}" id="compactSw" role="switch" aria-label="Summaries" aria-checked="${compactView===1?'true':'false'}" onclick="toggleCompactView()" title="${escH(COMPACT_TITLES[compactView]||COMPACT_TITLES[0])}"><span class="knob"></span></button></div>
   </div>`;
   // ⚠ Scrollstand halten (Nutzer 2026-09-23, iPad: "wenn ich in einer
   // Kategorie etwas anklicke und aender, bugge ich weiter oben auf der
@@ -7752,7 +7632,7 @@ function renderDetail(){
         // Ein leerer Zustand darf keine Information verschlucken, die
         // vorliegt - jetzt steht die Sektion immer da und sagt, was Sache
         // ist.
-        if(!symEvts.length)return`<div class="cal-empty-day">Nothing scheduled in the next 7 days${nextHighDate?` — the next high-impact release for this asset is on <b>${escH(fmtDayHdr(nextHighDate))}</b>, just outside this window.`:'. The calendar feed looks about a week ahead; nothing beyond it is estimated.'}</div>`;
+        if(!symEvts.length)return`<div class="cal-empty-day">Nothing scheduled in the next 7 days${nextHighDate?` — the next high-impact release for this asset is on <b>${escH(fmtDayHdr(nextHighDate))}</b>.`:'. The calendar reaches about three months ahead (beyond the first month high-impact releases only); nothing beyond it is estimated.'}</div>`;
         const me=calHighOnly?symEvts.filter(ev=>evtImpact(ev)==='high'):symEvts;
         return me.length?calTableHtml(me,{collapsePast:true,allDates:calWindowDatesFor(me),idPrefix:'mini-',showNowLine:true,symId:getSym().id}):`<div class="cal-empty-day">No high-impact events</div>`;
       })()}</div>`:''}
@@ -8039,8 +7919,8 @@ function assetNotesFoldersHtml(c){
 // ansteht, rechts die Termine des GEWAEHLTEN Tages. Das Raster allein waere
 // huebsch, aber nutzlos - man sieht, DASS etwas ist, und nicht WAS.
 //
-// ⚠ WICHTIG UND BEWUSST: der Kalender-Feed reicht nur rund eine Woche
-// voraus. Ein leerer Tag im Raster heisst also fast nie "da ist nichts",
+// ⚠ WICHTIG UND BEWUSST: der Kalender-Feed reichte bis 2026-10-06 nur rund eine
+// Woche voraus, seitdem rund 3 Monate (jenseits von ~30 Tagen nur High). Ein leerer Tag im Raster heisst also fast nie "da ist nichts",
 // sondern "das weiss noch niemand". Genau diesen Unterschied macht die
 // Karte sichtbar (abgedeckte Tage normal, Rest sichtbar gedaempft plus eine
 // Zeile, die den abgedeckten Zeitraum nennt). Ohne das waere die Karte eine
@@ -8129,7 +8009,7 @@ function assetMonthCalHtml(c,gross){
   // genannt") - ohne ihn sieht ein leerer Tag aus wie "nichts los", statt wie
   // "weiss noch niemand".
   const calErkl=[von&&bis
-      ?`Past days are dimmed but keep their dot: before the feed window they show the recorded releases of this asset's indicators with their actual values. Future days beyond the window are dimmed because they are <b>not published yet</b>, which is not the same as "nothing scheduled".`
+      ?`Past days are dimmed but keep their dot: before the feed window they show the recorded releases of this asset's indicators with their actual values. The calendar reaches about three months ahead — high- and medium-impact releases for roughly the next month, beyond that <b>high-impact releases only</b> (no reachable source publishes medium ones that far ahead). A day past the window is <b>not published yet</b>, which is not the same as "nothing scheduled".`
       :'No calendar data has loaded for this asset yet.',
     'A dot marks the highest impact level on that day — red high, amber medium, grey low. Click a day to open it.',
     '<b>Past</b> lists every high- and medium-impact release of this asset with its actual value, newest day first — up to 10 years back with the time filter. Actual in green or red: better or worse than the forecast for this asset.']
@@ -8179,9 +8059,9 @@ function assetMonthCalHtml(c,gross){
         ${zellen}
       </div>`;
   if(gross)return raster;
-  // ⚠ Der Hinweis MUSS erreichbar bleiben: der Feed reicht nur rund eine
-  // Woche voraus, ein leerer Tag heisst also fast nie "nichts los", sondern
-  // "weiss noch niemand". Ohne ihn waere die Karte eine huebsche Luege.
+  // ⚠ Der Hinweis MUSS erreichbar bleiben: der Feed reicht rund 3 Monate
+  // voraus, jenseits von ~30 Tagen aber nur mit High-Terminen - ein Tag ohne
+  // Punkt heisst dort nicht "nichts los", sondern "kein High-Termin bekannt". Ohne ihn waere die Karte eine huebsche Luege.
   // Seit 2026-09-18 steht er aber nicht mehr als Fusszeile im Kartenkoerper
   // (gemessen 36px), sondern hinter dem ⓘ neben dem Kartennamen - Dauerregel,
   // siehe abInfoBtn. Der gedaempfte Tag traegt seine Begruendung ausserdem
@@ -9318,7 +9198,10 @@ function abKerzenBlock(reihe,titel,einheit,assetId,achse,feed,opt){
   // jedem Chart und war reines Rauschen - gemessen bei allen drei Kacheln.
   const spaeter=!f.max&&(Date.parse(k[0].d)-Date.parse(f.von))/86400000>7;
   return{pct,tage:k.length,dochte:k.filter(c=>c.ohlc).length,von:k[0].d,bis:k[k.length-1].d,spaeter,
-    html:`<div class="ab-plot">
+    // data-kerzen: die Zahl steht seit 2026-10-06 nicht mehr sichtbar unter
+    // dem Chart (Nutzer-Wunsch), check/archiv.js misst daran aber weiter, ob
+    // das Archiv wirklich gezeichnet wurde.
+    html:`<div class="ab-plot" data-kerzen="${k.length}">
       <div class="ab-plot-main">${chartHoverWrap(svg,pts,'height:100%')}<div class="ab-xax">${achsTxt}</div></div>
       <div class="ab-yax">${skala}</div>
     </div>`};
@@ -9389,7 +9272,7 @@ function abKontextHtml(c){
     return`<div class="ab-k">
       <div class="ab-k-t ab-k-go"${klick}>${escH(d.titel)}${abBiasWort(b)}</div>
       ${ch.html}
-      <div class="ab-k-s" style="color:${biasCss(roh)}"${ch.dochte<ch.tage?` title="${escH(abDochtGrund(feed))}"`:''}>${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n"> · ${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:' · no measured high/low'}${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
+      <div class="ab-k-s" style="color:${biasCss(roh)}"${ch.dochte<ch.tage?` title="${escH(abDochtGrund(feed))}"`:''}>${ch.pct>0?'+':''}${ch.pct.toFixed(2)}%<span class="ab-k-n">${ch.spaeter?' · feed starts '+escH(ch.von):''}${dreht?' · inverse for this asset':''}</span></div>
     </div>`;
   }).join('');
   const rate=arten.includes('cb')?(()=>{
@@ -10756,7 +10639,11 @@ function assetPreisKarteHtml(c){
     </div>
     ${FX.includes(c.id)?`<div class="ab-tile-sub ab-korb" title="${escH(KORB_NAME[c.id]+': '+c.id+' against the other seven major currencies, equal weight (geometric mean). Not the rate against the US dollar - a dollar move alone does not move it. Closes only, so the candles have no wicks.')}">${escH(KORB_NAME[c.id])}</div>`:''}
     ${chartLeisteHtml(chartTypSchalterHtml()+(YIELD_CCY[c.id]?'':`<span class="tr-sws">${schalter}</span>`),`<span class="ab-rgs">${regler}</span>`)}`;
-  const fuss=ch.leer?'':`<div class="ab-k-s ab-pk-s">${ch.tage} daily candles${ch.dochte?` · ${ch.dochte} with a measured high/low`:''}${ch.spaeter?' · feed starts '+escH(ch.von):''}</div>`;
+  // Kerzen-Zaehler ("N daily candles · M with a measured high/low") am
+  // 2026-10-06 auf Nutzer-Wunsch entfernt ("die Anzeige beim Preis wie viele
+  // Kerzen angezeigt werden weg") - hier und in den Kontext-Charts. Bleibt nur
+  // der Hinweis, dass die Reihe spuerbar spaeter als das Fenster anfaengt.
+  const fuss=ch.leer||!ch.spaeter?'':`<div class="ab-k-s ab-pk-s">Feed starts ${escH(ch.von)}</div>`;
   // ⚠ Der PRICE-Streifen (1D/1W/1M/YTD) war am 2026-09-14 kurzzeitig OBEN in
   // der Kopfleiste. Die Leiste ist am selben Tag auf Nutzer-Wunsch wieder
   // abgeschafft worden ("mach die leiste oben wieder weg und mach das wie
@@ -10790,7 +10677,11 @@ function renderRub(rub,ri,total){
             ?`<a class="rate-watch" href="${safeUrl(_u)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" ${_press} onclick="return rwClick(event,'${getSym().id}')">${icn('trendUp',14)}</a>`
             :`<button class="rate-watch" title="No rate-expectations source for ${escH(macroCcyFor(getSym().id))} · long-press to store your own link" ${_press} onclick="event.stopPropagation();if(!rwClick(event,'${getSym().id}'))return false;openRateWatchFor('${getSym().id}')">${icn('trendUp',14)}</button>`;
         })():''}
-        ${rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',12)}</span>`:''}
+        ${/* Verknuepft-Zeichen (Kette) bei gespiegelten Rubriken am 2026-10-06 auf
+           Nutzer-Wunsch entfernt: "bei Assets die verknuepft sind will ich das
+           du dieses verknuepft Zeichen bei den Indikatoren und sonst wo
+           weglaesst" - hier im Rubrik-Kopf und in jeder Indikatorzeile. Die
+           Regel steht weiter im Zahnrad-Menue (Linked Currency). */''}
         <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">${icn('star',14)}</button>
         <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
         <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
@@ -10873,7 +10764,7 @@ function renderIndsTable(rub,ri){
   // renderIndRow fuer sehr lange Indikator-Namen).
   return`<table class="ind-table">
     <colgroup><col style="width:26%"><col style="width:16%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:15%"></colgroup>
-    <thead><tr><th class="iht-name">Indicator</th><th title="Actual — the released value">Act</th><th title="Forecast — what the market expected">Fc</th><th title="Previous — the value before this release">Prev</th><th class="iht-next" title="Next — days until the next scheduled release of this indicator. Red at 7 days or less. A dash means the calendar feed - which only looks about a week ahead - has no date for it yet; nothing beyond that is estimated.">Next</th><th class="iht-trend" title="Trend — the last few readings as a sparkline">Trd</th></tr></thead>
+    <thead><tr><th class="iht-name">Indicator</th><th title="Actual — the released value">Act</th><th title="Forecast — what the market expected">Fc</th><th title="Previous — the value before this release">Prev</th><th class="iht-next" title="Next — days until the next release of this indicator. Red at 7 days or less. A plain number is the confirmed date from the calendar (high and medium releases about a month ahead, high-impact up to three months). ~N is an expectation from the indicator's own release rhythm until the calendar carries the date. A dash: neither is available.">Next</th><th class="iht-trend" title="Trend — the last few readings as a sparkline">Trd</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="add-row ind-edit-ctrls" style="margin-top:8px">
@@ -10946,7 +10837,6 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     detailBody=`<div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>${revNote}`;
   }
   const spark=indSparklineSvg(ind,bco);
-  const lockIc=rubAutoDerived(getSym(),rub)?`<span class="auto-lock-ic" title="Mirrored automatically from ${macroCcyFor(getSym().id)} - change the rule via the gear settings">${icn('link',11)}</span>`:'';
   const isOpen=!!indDetailsOpen[ind.id];
   const stale=indIsStale(ind);
   const staleBadge=stale?`<span class="ir-stale" title="Last release ${escH((ind.research&&ind.research.date)||'?')} — more than ${IND_STALE_CYCLES} of its own release cycles overdue, so it no longer counts toward the score. The value stays visible.">OUT OF DATE</span>`:'';
@@ -10957,7 +10847,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
   const awaitBadge=awEv?`<span class="ir-await" title="${escH(awEv.name)} was due on ${escH(awEv.date)}, but no source has delivered a value yet. Nothing is estimated - the figures shown are still the last confirmed ones${(ind.research&&ind.research.date)?` from ${escH(ind.research.date)}`:''}.">AWAITING VALUE</span>`:'';
   const pairCls=pairPos?` ind-pair-row ind-pair-${pairPos}`:'';
   const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}${pairCls}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
-    <td class="ir-name"><span class="ir-name-txt" title="${escH(indName(ind))}">${escH(indName(ind))}</span>${lockIc}${staleBadge}${awaitBadge}
+    <td class="ir-name"><span class="ir-name-txt" title="${escH(indName(ind))}">${escH(indName(ind))}</span>${staleBadge}${awaitBadge}
       <span class="ind-edit-ctrls">
         <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
         <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
@@ -14094,11 +13984,17 @@ function checkPriceAlerts(){
   if(changed)save();
   return changed;
 }
-// Holt Events von FF (this+next week) für ein 10-Tage-Fenster.
+// Holt Events von FF (this+next week) und aus ff_calendar.json (die GitHub
+// Action legt TradingView bis ~+30 Tage und FXStreet-High bis +92 Tage dazu)
+// fuer ein Fenster von FF_WINDOW_DAYS Tagen.
 // Forex Factory bietet keine offizielle API/keinen API-Key an - der Feed unter
 // faireconomy.media wird daher direkt UND über mehrere CORS-Proxys versucht,
 // damit ein einzelner blockierter/ausgefallener Weg nicht das ganze Update killt.
-const FF_WINDOW_DAYS=10;
+// 3-Monats-Kalender (Nutzer 2026-10-06: "ich will das immer der Kalender schon
+// fuer die kommenden 3 Monate geladen wird"). Vorher 10 - damit fand auch der
+// Next-Countdown der Indikator-Tabellen fast nie einen echten Termin und
+// zeigte die ~Schaetzung ("das ist oft falsch").
+const FF_WINDOW_DAYS=92;
 const FF_PAST_DAYS=10;
 async function fetchFFPeriod(period){
   const target='https://nfs.faireconomy.media/ff_calendar_'+period+'.json';
@@ -14243,7 +14139,7 @@ async function fetchFF(silent,btnEl){
         }
       }
     });
-    // Bestehende Events (auch außerhalb des 10-Tage-Fensters, bereits
+    // Bestehende Events (auch außerhalb des Import-Fensters, bereits
     // vergangene) auf neu verfügbare "Actual"-Werte prüfen und nachtragen,
     // ohne das Event selbst neu anzulegen (Notizen/Edits bleiben erhalten).
     // Als Abgleich-Pool dient das bereits mit den Live-Daten
@@ -19275,12 +19171,14 @@ function indHistChart(ind,symId,opts){
   // Bezugslinie: bei Level-Reihen der erste Punkt des Fensters (dagegen
   // liest man "seitdem gestiegen/gefallen" ab), sonst wie bisher die Null.
   const y0=lineMode?yOf(use[0][1]):yOf(0);
-  // Saeulen hoechstens 14 px breit (Nutzerwahl 2026-10-05 "Farbflaechen
-  // leiser": bei 12 Werten in 580 px waren es 25 px breite Bloecke). Ob die
-  // Zahl ueber der Saeule Platz hat, haengt am SPALTEN-Platz, nicht an der
-  // Saeulenbreite - sonst verschwaenden die Werte mit der schmaleren Saeule.
+  // Saeulenbreite wieder wie vor VERSION-CHECK-591: 56 % des Spaltenplatzes,
+  // ohne Deckel. 591 hatte sie auf hoechstens 14 px gekappt ("Farbflaechen
+  // leiser"); Nutzer 2026-10-06 zum CPI-Chart: "hier bei der Grafik hast du
+  // die Balken so schmal geaendert macht das wie vorher ueberall also nur
+  // das" - also NUR die Breite zurueck, die 80 % Deckkraft aus 591 bleibt.
+  // Ob die Zahl ueber der Saeule Platz hat, haengt am Spalten-Platz.
   const slot=(W-padL-padR)/n;
-  const bw=Math.max(1.5,Math.min(slot*0.56,14));
+  const bw=Math.max(1.5,slot*0.56);
   const xOf=i=>padL+(i+0.5)/n*(W-padL-padR);
   const showLbl=!lineMode&&slot*0.56>=22;
   // Radius des Forecast-Punktes - wird zweimal gebraucht: beim Zeichnen und
@@ -24029,7 +23927,7 @@ function parsePolicyRate(str){
 }
 // Persistenter Cache des zuletzt gesehenen Leitzinses je Waehrung. Sorgt
 // dafuer, dass eine Zinsaenderung erhalten bleibt, auch wenn das Kalender-
-// Event spaeter aus dem 10-Tage-Fenster rollt.
+// Event spaeter aus dem Kalender-Fenster rollt.
 const CARRY_CACHE_KEY='carryRateCache';
 function loadRateCache(){try{return JSON.parse(localStorage.getItem(CARRY_CACHE_KEY))||{};}catch(e){return{};}}
 function saveRateCache(c){try{localStorage.setItem(CARRY_CACHE_KEY,JSON.stringify(c));}catch(e){}}
@@ -25157,7 +25055,22 @@ function infoKnoepfeEinordnen(root){
     if(!i||i.classList.contains('ii-nach'))return;
     const anker=[...h.children].filter(c=>c!==i&&!c.classList.contains('dw-btns')&&(c.style.marginLeft==='auto'||c.classList.contains('dw-hdlink')||c.classList.contains('ab-tile-s')||c.classList.contains('ab-rgs')||c.classList.contains('data-row-r')||c.classList.contains('px-panel-ctrls')||c.classList.contains('tr-legend')||c.tagName==='SMALL'&&getComputedStyle(c).marginLeft!=='0px')).pop();
     if(!anker)return;
-    anker.after(i);i.classList.add('ii-nach');
+    // Das ⓘ steht hinter dem LETZTEN Element IN DER ZEILE des Ankers, nicht
+    // direkt hinter dem Anker: in "Pinned notes" folgte dem Zaehler (Anker)
+    // noch der Schnellnotiz-Knopf, das ⓘ landete dazwischen (Nutzer-Foto
+    // 2026-10-06, auf allen Asset-Seiten). ⚠ Nur dieselbe Zeile zaehlt - ein
+    // Untertitel ueber die volle Breite (Retail, Seasonality, Real policy
+    // rate) steht darunter; hinter ihm rutschte das ⓘ in die zweite Zeile
+    // (erster Entwurf, von check/infoi.js gemeldet: 1004 px vom Rand). Die
+    // Bearbeiten-Knoepfe (.dw-btns) zaehlen nicht - im Bearbeitungsmodus ist
+    // das ⓘ ausgeblendet.
+    let ziel=anker;const ar=anker.getBoundingClientRect();
+    for(let n=anker.nextElementSibling;n;n=n.nextElementSibling){
+      if(n===i||n.classList.contains('dw-btns'))continue;
+      const r=n.getBoundingClientRect();
+      if(r.width&&r.top<ar.bottom-1&&r.bottom>ar.top+1)ziel=n;
+    }
+    ziel.after(i);i.classList.add('ii-nach');
   });
 }
 // ── Asset-Titel passt sich an, statt die Leiste umzubrechen ─────────────

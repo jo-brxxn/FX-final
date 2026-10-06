@@ -24,9 +24,15 @@
 //   G) "gewaehlt/aktiv" = --ui-act (Navy), nie das Bias-Blau
 //   H) Rot nur bearish/Warnung: "heute", Jetzt-Linie, Impact HIGH, aktiver
 //      Filter, ruhiges Leit-Regime und dessen Haken sind nicht rot
-//   I) der Schalter im Asset-Kopf ist sichtbar beschriftet ("Summaries"),
-//      das Wort schaltet mit, und der Tooltip sagt den WIRKLICHEN Zustand
-//      (bis 2026-10-04 stand er verkehrt herum)
+//   I) der Schalter im Asset-Kopf traegt KEINE sichtbare Beschriftung mehr
+//      (Nutzer 2026-10-06: "entfern die Beschriftung Summary bei dem
+//      Umschalter oben" - nimmt D8 vom 2026-10-04 zurueck), heisst fuer
+//      Screenreader aber weiter "Summaries" (aria-label), schaltet, und der
+//      Tooltip sagt den WIRKLICHEN Zustand (bis 2026-10-04 verkehrt herum)
+//   M) kein Verknuepft-Zeichen (Kette) an gespiegelten Rubriken und ihren
+//      Indikatoren eines Nicht-FX-Assets (Nutzer 2026-10-06: "bei Assets die
+//      verknuepft sind will ich das du dieses verknuepft Zeichen bei den
+//      Indikatoren und sonst wo weglaesst")
 //   J) Touch (kein Hover, wie iPad): Bedienelemente, die erst per Hover
 //      kraeftig werden, sind dort voll sichtbar (>= 0,6), deaktivierte
 //      Knoepfe erkennbar (>= 0,4) - vorher Kalender-× 0,20, Undo/Redo 0,22
@@ -61,7 +67,7 @@ const GP_CSS = [
   '.cmp-chip::after{inset:-30px!important}',                            // F
   ':root{--ui-act:#0B5FCC!important;--ui-act-rgb:11,95,204!important}', // G
   '.cal-imp.ih{color:var(--red)!important}',                            // H
-  '.sw-lbl{display:none!important}',                                    // I
+  '.dmeta-ctrl-sw::before{content:"Summaries"}',                        // I (Wort wieder sichtbar)
   '@media (hover:none){.cal-row-del{opacity:.2!important}}',             // J (Kalender-× auf Touch blass wie vor 590)
   '.rank-div>.rank-bar.neg,.rank-div>.mx-rank-bar.neg{left:50%!important;right:auto!important}', // K (negativ nach rechts)
   '.tr-endlbl{transform:translate(160px,0)}.carry-tbl td{height:58px!important}', // L (Labels aus dem Diagramm, Carry-Zeilen wie vorher Karten)
@@ -197,22 +203,41 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
   hr.out.forEach(x => fail('H ROT', 'Regime: ' + x));
   if (!hr.karten) fail('H ROT', 'Regime: keine ruhigen Szenario-Karten gefunden - rg-stress fehlt?');
 
-  // I) Schalter "Summaries"
+  // I) Schalter "Summaries" - ohne sichtbares Wort (auch nicht per ::before/::after)
   await oeffne(p, 'A:USD'); await p.waitForTimeout(1200);
-  const zustand = () => p.evaluate(() => { const sw = document.getElementById('compactSw'), l = document.querySelector('label.sw-lbl[for="compactSw"]');
+  const zustand = () => p.evaluate(() => { const sw = document.getElementById('compactSw');
+    const leiste = sw && sw.closest('.dmeta-controls');
+    const wort = leiste ? [leiste, ...leiste.querySelectorAll('*')].some(x => x.offsetParent !== null && (
+      [...x.childNodes].some(n => n.nodeType === 3 && /summar/i.test(n.textContent)) ||
+      ['::before', '::after'].some(ps => /summar/i.test(getComputedStyle(x, ps).content || '')))) : false;
     const s = [...document.querySelectorAll('.rub-summary')];
-    return { lbl: !!l && !!l.offsetParent && /summar/i.test(l.textContent), an: compactView === 1, title: sw && sw.title, sichtbar: s.filter(x => x.offsetParent).length, alle: s.length }; });
+    return { wort, aria: sw && sw.getAttribute('aria-label'), an: compactView === 1, title: sw && sw.title, sichtbar: s.filter(x => x.offsetParent).length, alle: s.length }; });
   const i0 = await zustand();
-  if (!i0.lbl) fail('I SCHALTER', 'keine sichtbare Beschriftung "Summaries" am Schalter (label for=compactSw)');
-  else {
-    await p.click('label.sw-lbl'); await p.waitForTimeout(350);
-    const i1 = await zustand();
-    if (i1.an === i0.an) fail('I SCHALTER', 'Tipp auf die Beschriftung schaltet nicht');
-    [i0, i1].forEach(s => { const sagtAn = /shown/i.test(s.title || ''), sagtAus = /hidden/i.test(s.title || '');
-      if (s.an && !sagtAn || !s.an && !sagtAus) fail('I TOOLTIP', `Zustand ${s.an ? 'AN' : 'AUS'}, Tooltip "${s.title}"`);
-      if (s.alle && (s.an ? s.sichtbar === 0 : s.sichtbar > 0)) fail('I SCHALTER', `Zustand ${s.an ? 'AN' : 'AUS'}, aber ${s.sichtbar}/${s.alle} Zusammenfassungen sichtbar`); });
-    await p.click('label.sw-lbl'); await p.waitForTimeout(300);   // Ausgangslage wiederherstellen
-  }
+  if (i0.wort) fail('I SCHALTER', 'sichtbare Beschriftung "Summaries" am Schalter - Nutzer 2026-10-06: entfernen');
+  if (!/summar/i.test(i0.aria || '')) fail('I SCHALTER', `Schalter ohne Namen fuer Screenreader (aria-label "${i0.aria}")`);
+  await p.click('#compactSw'); await p.waitForTimeout(350);
+  const i1 = await zustand();
+  if (i1.an === i0.an) fail('I SCHALTER', 'Tipp auf den Schalter schaltet nicht');
+  [i0, i1].forEach(s => { const sagtAn = /shown/i.test(s.title || ''), sagtAus = /hidden/i.test(s.title || '');
+    if (s.an && !sagtAn || !s.an && !sagtAus) fail('I TOOLTIP', `Zustand ${s.an ? 'AN' : 'AUS'}, Tooltip "${s.title}"`);
+    if (s.alle && (s.an ? s.sichtbar === 0 : s.sichtbar > 0)) fail('I SCHALTER', `Zustand ${s.an ? 'AN' : 'AUS'}, aber ${s.sichtbar}/${s.alle} Zusammenfassungen sichtbar`); });
+  await p.click('#compactSw'); await p.waitForTimeout(300);   // Ausgangslage wiederherstellen
+
+  // M) Kein Ketten-Symbol an gespiegelten Rubriken/Indikatoren (GOLD haengt
+  //    standardmaessig an USD). Erkannt am Pfad des 'link'-Symbols selbst,
+  //    nicht an einem Klassennamen - ein neuer Name fiele sonst durch.
+  await oeffne(p, 'A:GOLD'); await p.waitForTimeout(1200);
+  const m = await p.evaluate(gp => {
+    const kette = (icn('link', 11).match(/<svg[^>]*>([\s\S]*)<\/svg>/) || [])[1] || '';
+    const sym = getSym();
+    const gespiegelt = (sym.rubrics || []).filter(r => rubAutoDerived(sym, r)).length;
+    if (gp) { const z = document.querySelector('#detail .ir-name'); if (z) z.insertAdjacentHTML('beforeend', `<span class="auto-lock-ic">${icn('link', 11)}</span>`); }
+    const treffer = [...document.querySelectorAll('#detail .rub-card svg, #detail .ind-row svg')].filter(x => kette && x.innerHTML === kette).length;
+    return { gespiegelt, treffer, sym: sym.id, kette: !!kette };
+  }, GEGENPROBE);
+  if (!m.kette) fail('M KETTE', "icn('link') liefert kein Symbol - Pruefung waere leer");
+  if (!m.gespiegelt) fail('M KETTE', `${m.sym}: keine gespiegelte Rubrik - Pruefung waere leer`);
+  if (m.treffer) fail('M KETTE', `${m.sym}: ${m.treffer} Ketten-Symbol(e) an Rubriken/Indikatoren - Nutzer 2026-10-06: weglassen`);
   await p.close();
 
   // ════ 820 / 1180 / 1440: Diagrammschrift (820), Leiste einzeilig, Trefferflaechen ════
@@ -294,10 +319,10 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
         return out;
       }, vw);
       [...new Set(r.spalte)].forEach(x => fail(`F SPALTE ${vw}`, `${z}: ${x}`));
-      // I) das Wort am Schalter ist bei jeder Breite anklickbar (bei 820 px lag es
-      // zuerst ausserhalb des scrollenden .dmeta - sichtbar, aber nicht klickbar)
-      if (z === 'A:USD') { const lb = await p.evaluate(() => { const l = document.querySelector('label.sw-lbl'); if (!l || !l.offsetParent) return 'fehlt'; l.scrollIntoView({ block: 'center' }); const q = l.getBoundingClientRect(); const h = document.elementFromPoint((q.left + q.right) / 2, (q.top + q.bottom) / 2); return h === l || l.contains(h) ? '' : 'Klick trifft ' + (h ? h.tagName.toLowerCase() + '.' + String(h.className).split(' ')[0] : 'nichts'); });
-        if (lb) fail(`I SCHALTER ${vw}`, `Beschriftung "Summaries" nicht anklickbar: ${lb}`); }
+      // I) der Schalter ist bei jeder Breite anklickbar (bei 820 px lag das
+      // fruehere Wort zuerst ausserhalb des scrollenden .dmeta)
+      if (z === 'A:USD') { const lb = await p.evaluate(() => { const l = document.getElementById('compactSw'); if (!l || !l.offsetParent) return 'fehlt'; l.scrollIntoView({ block: 'center' }); const q = l.getBoundingClientRect(); const h = document.elementFromPoint((q.left + q.right) / 2, (q.top + q.bottom) / 2); return h === l || l.contains(h) ? '' : 'Klick trifft ' + (h ? h.tagName.toLowerCase() + '.' + String(h.className).split(' ')[0] : 'nichts'); });
+        if (lb) fail(`I SCHALTER ${vw}`, `Schalter "Summaries" nicht anklickbar: ${lb}`); }
       [...new Set(r.svg)].forEach(x => fail('C DIAGRAMMSCHRIFT 820', `${z}: ${x}`));
       [...new Set(r.a)].forEach(x => fail(`F TREFFERFLAECHE ${vw}`, `${z}: ${x}`));
       [...new Set(r.b)].forEach(x => fail(`F UEBERDECKT ${vw}`, `${z}: ${x}`));
@@ -502,10 +527,10 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
 
   if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200 || n.touch < 50 || n.k < 30 || n.svg390 < 120 || n.l < 100 || n.inline < 500 || (!GEGENPROBE && n.ltipp < 1)) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen}, Touch ${n.touch}, Runde-2-Zeilen ${n.k}, SVG 390 ${n.svg390}, Paket C ${n.l}, Linien-Tipps ${n.ltipp}, Inline-CSS ${n.inline} - Selektoren veraltet?`);
   if (GEGENPROBE) {
-    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K ', 'L '];
+    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K ', 'L ', 'M '];
     const fehlt = stufen.filter(s => !F.some(f => f.startsWith(s)));
     if (fehlt.length) { console.log('designregeln --gegenprobe: FEHLER - nicht gemeldet: ' + fehlt.join(',')); process.exit(1); }
-    console.log(`designregeln --gegenprobe: ok (alle 12 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
+    console.log(`designregeln --gegenprobe: ok (alle 13 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
   }
   if (F.length) { console.log(`designregeln: ${F.length} Befund(e)`); [...new Set(F)].slice(0, 60).forEach(x => console.log('  ' + x)); process.exit(1); }
   console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Schalter beschriftet, ${n.touch} Touch-Bedienelemente sichtbar, Runde 2: Staerke ab Mitte, Watchlist einzeilig, Price-Karte max. 2 Bedienzeilen; Paket C: Trends-Fokus 3+3 mit Endlabels und Tipps, Carry einzeilig, ${n.svg390} Diagrammtexte bei 390 px, ${n.inline} Inline-CSS-Angaben gueltig)`);

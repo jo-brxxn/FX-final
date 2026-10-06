@@ -76,6 +76,7 @@ const PRUEFUNGEN = [
   { n: 'kerzen',    d: 'Kerzen: ein Tag, kein Wochenende, eigene Farben, keine erfundenen Dochte', f: 'check/kerzen.js', args: [], browser: true },
   { n: 'seasretail',d: 'Saisonalitaet/Retail: Schwellen, Deckel, Monats-Markierung', f: 'check/seasretail.js', args: [], browser: true },
   { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
+  { n: 'kalendervorschau', d: '3-Monats-Kalender: Workflow-Schritt gegen nachgebaute Quellen, FXStreet-Namen, keine TV-Low-Termine', f: 'check/kalendervorschau.js', args: [], browser: false },
   // Beide 2026-09-19 neu, beide aus einem Fehler DIESER Sitzung: ein
   // CSS-Kommentar, der Regeln verschluckt hat, und ein Inline-style, der eine
   // Zustandsregel wirkungslos machte. Statisch, deshalb im schnellen Teil.

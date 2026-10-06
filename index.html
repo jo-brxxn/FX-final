@@ -637,12 +637,17 @@ svg.ic{vertical-align:-2px;flex:none}
 .abc-n{font:600 var(--fs-lg)/1 var(--ff-num);color:var(--t1);
   min-width:1.9em;height:1.9em;display:flex;align-items:center;justify-content:center;
   border-radius:50%}
-.abc-d.we .abc-n{color:var(--t3)}
-/* "Noch nicht veroeffentlicht" ist NICHT dasselbe wie "nichts los" - dieser
-   Unterschied muss sichtbar sein, sonst ist die Karte eine huebsche Luege. */
-.abc-d.unbekannt .abc-n{opacity:.38}
-/* Vergangene Tage (Nutzer 2026-09-23): grau und blass wie "unbekannt", aber
-   der Punkt bleibt in voller Farbe - er sitzt ausserhalb von .abc-n. */
+/* Nutzer 2026-10-06: "sobald etwas alt ist dann ist es ein wenig blasser und
+   was kommt ist stark kraeftig also normal geschrieben. Ich will das also alle
+   zukuenftigen Datum Zahlen so geschrieben sind nicht blass". Gemessen vorher
+   (1180x820, USD): Tage hinter dem Feed-Ende mit Deckkraft 0,38 - genau wie
+   die vergangenen -, Wochenenden in --t3. Jetzt ist NUR die Vergangenheit
+   blass; jeder kommende Tag steht in voller Schrift, Wochenende eingeschlossen.
+   Dass ein Tag hinter dem Feed "noch nicht veroeffentlicht" ist und nicht
+   "nichts los", sagen weiter sein title, das ⓘ und die Zeile "Covers …". */
+.abc-d.we.vorbei .abc-n{color:var(--t3)}
+/* Vergangene Tage (Nutzer 2026-09-23): grau und blass, aber der Punkt bleibt
+   in voller Farbe - er sitzt ausserhalb von .abc-n. */
 .abc-d.vorbei:not(.heute) .abc-n{opacity:.38}
 .abc-d.gew .abc-n{background:var(--bg4)}
 .abc-d.heute .abc-n{background:var(--accent);color:#fff;font-weight:800}
@@ -1762,6 +1767,13 @@ body.no-ui-anim #navSidebar{transition:none}
 .calp.gross{max-height:62vh;overflow:auto;overscroll-behavior:none;border:1px solid var(--bd);border-radius:10px}
 .calp .cal-row.cal-past,.calp .cal-row.cal-past:hover{opacity:1}
 .calp .cal-day-hdr{position:sticky;top:0;z-index:1}
+/* Rechter Rand fuer die Scroll-Linie (Nutzer 2026-10-06, iPad: "beim
+   Scrollen im Kalender bei past verschwindet der Strich"). Gemessen: die
+   klebenden Tageszeilen endeten 1px vor dem inneren rechten Rand - iOS
+   zeichnet seine Scroll-Linie genau dort, und klebende Ebenen liegen auf dem
+   iPad DARUEBER, die Linie war an jeder Tageszeile unterbrochen. Mit 8px
+   Rand reicht keine Zeile mehr darunter. Gleiche Klasse: .histp (unten). */
+.calp-karte .calp,.calp.gross{padding-right:8px}
 .calp-mehr{display:block;margin:8px auto}
 .abc-cal .chart-leiste{margin-bottom:6px}
 .abc-hd .calp-high{margin-left:auto;flex:none}
@@ -2034,7 +2046,6 @@ body.compact-view .rub-summary{display:block}
    (Nutzer-Wunsch 2026-07-17). */
 .cot-crowded{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex-shrink:0;font-size:var(--fs-2xs);font-weight:800;color:var(--amber);border:1px solid rgba(var(--amber-rgb),.5);background:rgba(var(--amber-rgb),.12);border-radius:50%;margin-left:4px;vertical-align:middle}
 /* Auto-abgeleitete/gesperrte Bias (Non-FX Regel same/inverse, Risk Correlation): Kettensymbol statt Buttons */
-.auto-lock-ic{font-size:var(--fs-2xs);margin-left:2px;opacity:.7}
 /* Spiegel-Vorschau im Asset-Einstellungs-Modal */
 .acfg-mirror{margin-left:auto;font-size:var(--fs-xs);color:var(--t3);font-family:var(--ff-num);white-space:nowrap}
 /* Hilfe-Modal */
@@ -4066,6 +4077,9 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .m-gross .bt-scroll{flex:1 1 auto;min-height:0;overflow:auto}
 .m-gross .bt-table thead th{position:sticky;top:0;z-index:2}
 .ab-htile .histp{border:none;background:transparent;padding:0}
+/* Wie .calp (2026-10-06): Spaltenkopf .hw-cols und Tageszeilen .hw-hd kleben
+   und reichten bis 0/1px an den rechten Innenrand - unter die Scroll-Linie. */
+.histp,.ab-htile .histp{padding-right:8px}
 .histp-day{padding:7px 8px;border-bottom:1px solid var(--bd)}
 .histp-day:last-child{border-bottom:none}
 .histp-day.histp-today{background:rgba(var(--blue-rgb),.06)}
@@ -5759,7 +5773,15 @@ body.no-ui-anim #navSidebar .np-sub-wrap{transition:none}
   background:var(--ctl-bg);border:1px solid var(--ctl-bd);border-radius:var(--rss);color:var(--t0);font-size:var(--fs-lg)}
 .abc-grid{row-gap:4px}
 .abc-w{font:600 var(--fs-xs)/1.6 var(--ff-text);color:var(--t1);padding-bottom:8px;border-bottom:1px solid var(--bd);margin-bottom:6px}
-.abc-n{font:500 var(--fs-base)/1 var(--ff-text)}
+/* Nutzer 2026-10-06: "mach die Zahlen im Kalender groesser da sind so grosse
+   Loecher zwischen" - gemessen 13px/500 in 68x40-px-Zellen, die Zahl belegte
+   25x25. Jetzt --fs-md (15px in der Kopfreihe) und 600 - die groesste Stufe
+   UNTER dem Kartentitel (.abc-mon = --fs-kt 17px, Schrifthierarchie). */
+.abc-n{font:600 var(--fs-md)/1 var(--ff-text)}
+/* Kreis (heute/gewaehlt/Hover) mitgewachsen: 2,2em = 33px statt 25px - so in
+   der Rueckfrage zugesagt. Nur in der Karte; das Fenster-Raster (.acm-cal,
+   28px-Zellen) behaelt 1,9em. */
+.abc-cal .abc-n{min-width:2.2em;height:2.2em}
 .abc-foot.abc-range{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rs);
   padding:9px 12px;margin-top:10px;font:500 var(--fs-sm)/1.3 var(--ff-text);color:var(--t2)}
 
@@ -6165,24 +6187,9 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 /* kleine ⓘ (13 px) */
 .dw-hdr>.rinfo::after{inset:-11.5px -11.5px -11.5px -6.5px}
 .mx-card-title>.rinfo::after{inset:-9px -9px -11.5px -11.5px}
-/* D8 Beschrifteter Schalter im Asset-Kopf: "SUMMARIES" klein in Versalien
-   UEBER dem Schalter - dasselbe Muster wie "NEXT EVENT" ueber dem Datum
-   (.dmeta-l). Daneben in 17 px haette das Wort ~98 px gekostet und den Kopf
-   bei langen Namen (DEYIELD, 1180 px) in zwei Zeilen geschoben
-   (check/kopfleiste.js). Das Wort gehoert zum Schalter (label for). */
-/* ⚠ Die Beschriftung nimmt KEINEN Platz in der Leiste ein (absolut ueber
-   dem Schalter, rechtsbuendig): der Schalter bleibt auf der Mittellinie der
-   Knopftexte und buendig am rechten Rand (Nutzer-Regeln 2026-09-25,
-   check/kopfleiste.js) - als eigene Zeile darueber stand er 7,6 px tiefer. */
-.dmeta-ctrl-sw{position:relative}
-.sw-lbl{position:absolute;right:10px;bottom:calc(50% + 15px);font:600 var(--fs-2xs)/1.2 var(--ff-text);letter-spacing:1px;text-transform:uppercase;color:var(--t2);white-space:nowrap;cursor:pointer;
-  -webkit-user-select:none;user-select:none}
-.dmeta-ctrl-sw:last-child .sw-lbl{right:0}
-/* <= 900 px scrollt .dmeta waagerecht (overflow-x:auto -> auch senkrecht
-   abgeschnitten): ein ueberstehendes Wort waere dort nicht anklickbar
-   (Durchklick 2026-10-05, 820 px: Klick landete auf .ahead). Dort hat die
-   Leiste eine eigene Zeile -> Wort links neben dem Schalter. */
-@media(max-width:900px){.sw-lbl{position:static;margin-right:8px}}
+/* D8 (sichtbares "SUMMARIES" ueber dem Schalter, 2026-10-04) am 2026-10-06
+   auf Nutzer-Wunsch wieder entfernt - der Schalter traegt seinen Namen nur
+   noch als aria-label und im Tooltip (check/designregeln.js I). */
 /* D9 Gewaehlt/aktiv = --ui-act (Navy) statt --blue (bullish). Diese
    Auswahl-Zustaende griffen bisher direkt auf --blue zu. Ausgenommen mit
    Absicht: .acfg-seg .on-bull (dort IST die Auswahl "bullish"). */
@@ -6221,7 +6228,6 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
    eine Warnung), sonst Navy - "Soft Landing" stand mit roten Haken da. */
 .rg-ja .rg-ic{color:var(--ui-act)}
 .rg-card.rg-stress .rg-ja .rg-ic{color:var(--red)}
-@media (hover:hover){.sw-lbl:hover{color:var(--ui-act)}}
 .mover-group-hdr .ic,.movers-upd .ic,.acfg-sec .ic,.cot-notify-ic .ic{vertical-align:-2px}
 .rstar svg{display:block}
 .rstar.on svg{fill:currentColor}
@@ -6415,11 +6421,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-592 - Design audit round 2, part 3: Trends shows the three strongest and three weakest lines in colour with their last value at the line end, the rest grey; tap a name or line to follow your own selection. Carry is a compact table, one row per pair. On phones charts keep their real font size and the sidebar labels stay on one line."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-593 - The calendar now reaches about three months ahead (high and medium releases for roughly a month, high-impact releases beyond), and the Next countdown in the indicator tables uses those exact dates. Upcoming calendar days are no longer dimmed and the day numbers are larger. Smaller fixes: the info button of Pinned notes sits in the corner again, the candle count under the price chart and the link mark on mirrored indicators are gone, the Summaries switch is unlabelled, indicator chart bars are as wide as before and the Past list leaves room for the scroll line."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-592</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-593</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6590,7 +6596,7 @@ window.fxLogoSvg=function(art){
       <button class="btn flt-x" id="calCcyX" hidden onclick="setCalCcyFilter('ALL')" title="Reset filter — back to All currencies" aria-label="Reset filter — back to All currencies">✕</button>
       <button class="btn" id="calHighBtn" onclick="toggleCalHighOnly()" title="Hides medium-/low-impact events and shows only high-impact news"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg> All Impacts</button>
       <button class="btn evt-alert-lp" onmousedown="evtAlertPressStart()" onmouseup="evtAlertPressEnd()" onmouseleave="evtAlertPressEnd()" ontouchstart="evtAlertPressStart()" ontouchend="evtAlertPressEnd()" ontouchcancel="evtAlertPressEnd()" onclick="onEvtAlertBtnClick()" oncontextmenu="return false" title="Tap: create a new Telegram alert · Press and hold: see all your alerts"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> New Alert</button>
-      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads high/medium-impact news for the next 10 days (+ last 2 days) from Forex Factory and checks the live feed for new actual values for today (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
+      <button class="btn" style="border-color:rgba(var(--amber-rgb),.27);color:var(--amber)" onclick="fetchFF(false,this)" title="Reloads the calendar (high- and medium-impact releases about a month ahead, high-impact up to three months ahead, plus the last days) and checks the live feed for new actual values (including deleted events)"><svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Refresh</button>
     </div>
   </div>
   <div id="calEvents"></div>

@@ -177,8 +177,9 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
         // in kartenIconsNachtragen. Bis 2026-10-04 zaehlte hier nur "direkt":
         // die COT-Karte trug ihr eigenes Symbol im Span PLUS ein
         // nachgetragenes - zwei Symbole, gezaehlt wurde eins. Status-Symbole
-        // (.auto-lock-ic) und Knoepfe (ⓘ, Stern) sind keine Titelsymbole.
-        const n = h.querySelectorAll(':scope > .k-ic, :scope > .ab-tile-ic, :scope > svg.ic, :scope > span:not(.k-ic):not(.ab-tile-ic):not(.auto-lock-ic) > svg.ic:first-child').length;
+        // und Knoepfe (ⓘ, Stern) sind keine Titelsymbole (das Ketten-Zeichen
+        // .auto-lock-ic gibt es seit 2026-10-06 nicht mehr).
+        const n = h.querySelectorAll(':scope > .k-ic, :scope > .ab-tile-ic, :scope > svg.ic, :scope > span:not(.k-ic):not(.ab-tile-ic) > svg.ic:first-child').length;
         const t = (h.querySelector('.rub-inp') || {}).value || h.textContent.trim().slice(0, 30);
         out.push([t, n]);
       });

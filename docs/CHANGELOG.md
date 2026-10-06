@@ -19368,3 +19368,138 @@ Internet-Datenabrufen kein Befund. Fix: `zurueck` bricht Daten-Abrufe
 (fetch/xhr) ins Internet ab (hermetisch, Skripte/Schriften laden weiter) und
 nennt bei einem Befund künftig den geänderten Zustandsteil (`<calEvts>`,
 `<syms>` …). Gegenprobe `--gegenprobe-markierung`: weiter rot (9 Klicks).
+
+## VERSION-CHECK-593 (2026-10-06) — 3-Monats-Kalender, Countdown aus dem Kalender, iPad-Liste
+
+Nutzerliste vom iPad (3 Bildschirmfotos, 1180×820) plus Nachtrag zum CPI-Chart.
+Rückfragen (AskUserQuestion): Kalender „High/Medium + Score-Indikatoren“,
+Countdown ohne Kalendertermin „Schätzung mit ~ behalten“ (*„man kennt ja das
+Intervall ca“*), Tageszahlen „15 px, halbfett“, Strich = „graue Scroll-Linie
+rechts“.
+
+### 1. Kalender 3 Monate voraus + Countdown aus dem Kalender
+
+Nutzer: *„ich will das immer der Kalender schon für die kommenden 3 Monate
+geladen wird“* und *„bei den Tabellen der Indikatoren wird ja ein Countdown …
+angezeigt … das ist oft falsch und es wird immer mit den ungefähr Zeichen
+angezeigt … verbinde das mit dem Kalender“*.
+
+**Gemessen vorher:** `ff_calendar.json` 175 Termine bis heute+10 (Workflow
+holte TradingView bis +11, App importierte bis `FF_WINDOW_DAYS=10`). Next-
+Spalte der acht Währungen: **13 exakt / 95 „~“ / 30 „–“**. Die Schätzungen
+lagen deutlich daneben (USD NFP „~24d“ → echt 30d, USD GDP „~48d“ → 23d,
+EUR PMI „~25d“ → 17d, EUR ZEW „~7d“ → 14d).
+
+**Quellen (probe-calendar-horizon.yml, Läufe 37516316431 / 37517307720 /
+37518060066):** TradingView liefert nur bis ~heute+30 (Anfrage bis +92, letzte
+Zeit 2026-11-05 23:30 UTC, Abschnitte +60..+92 leer). FXStreets öffentliche
+API liefert **nur High** (295/295, auch mit `volatilities=NONE,LOW,MEDIUM,HIGH`),
+die aber bis über +95 Tage (Nov 86, Dez 101, bis 09.01. 28). FF-Monatsansicht
+Cloudflare-gesperrt (5751 B Challenge), Investing.com 3 Bytes, Trading-
+Economics-Gastzugang eingestellt. **Medium-Termine für Monat 2–3 gibt es aus
+keiner erreichbaren Quelle.**
+
+**⚠ Bewusst KEINE TradingView-Low-Termine** (auch nicht die, die ein
+Score-Muster trifft): 133 solcher Low-Termine in 33 Tagen, darunter Landes-CPIs
+(Bayern, Hessen, NRW …) und „Jobless Claims 4-week Average“ — dieselben Muster
+speisen die Score-Werte (EUR-CPI, USD-Claims). Weicht damit vom gewählten
+„+ Score-Indikatoren“ ab; Lücken füllt FXStreet (unten).
+
+**Umbau:** Workflow holt TradingView bis +35 und FXStreet (High) bis +93.
+TradingView ist für seine Zukunft maßgeblich (alte TV-Termine werden je Lauf
+ersetzt — bei 30 statt 10 Tagen blieben verschobene Termine sonst doppelt).
+FXStreet füllt **hinter** dem TV-Ende bis +92; davor nur **Lückenfüller** für
+Score-Releases, die TradingView nur als Low führt (gemessen: GBP Claimant
+Count). Namen auf FF-Schreibweise (`tools/kalender-vorschau.mjs`: „Consumer
+Price Index (YoY)“ → „CPI y/y“, „Nonfarm Payrolls“ → „Non-Farm Employment
+Change“, EMU-HICP → „CPI“, DE → „German …“, FOMC-Projektions-Unterzeilen und
+vorläufige Reden raus, BoJ-Entscheid trotz vorläufiger Uhrzeit drin). Nur
+Name/Datum/Zeit — FXStreet führt so weit voraus keinen Forecast, „previous“
+nur bei 36 von 215 Terminen mit unklarem Bezug (Regel 4).
+Die Muster liegen dafür in **`js/event-matchers.js`** (unverändert aus
+`js/main.js` verschoben, plus `periodLabel`, `EU_LAND_RE`): Workflow und App
+entscheiden mit DENSELBEN Mustern. App: `FF_WINDOW_DAYS` 10 → 92.
+
+**Beim Messen gefunden und behoben (Termin-Suche `findIndNextEvent`, nur
+Datum — kein Einfluss auf Werte/Score):**
+- USD „Core PPI y/y“ zeigte **38d** (FXStreet-Termin im November): am 15.10.
+  stehen „PPI MoM“ (TV High) und „Core PPI MoM“ (TV Medium), die y/y-Zeilen
+  desselben Releases führt TV nur als Low. m/m und y/y zählen für den
+  **Termin** jetzt als dieselbe Veröffentlichung (q/q nicht — AUD-Monats- und
+  Quartals-CPI sind verschiedene Termine). → 9d. Ebenso Core PCE 52d → 23d.
+- EUR „CPI (Headline)“ zeigte **24d** = französische/spanische/italienische/
+  deutsche Vorab-Inflation am 30.10. statt des Eurozonen-Flash am 04.11.
+  (29d). Für den Termin zählen bei EUR keine nationalen Releases mehr (Ifo
+  ausgenommen, das gibt es nur deutsch).
+
+**Nachher (gleiche App, 3-Monats-Feed aus dem lokal ausgeführten
+Workflow-Schritt): 74 exakt / 34 „~“ / 30 „–“**, 573 Termine, 85 KB,
+lückenlos bis 06.01.2027. **Scores: 23 Assets, 0 Unterschiede** zwischen
+altem und 3-Monats-Feed. Synchron-Stand +~75 KB (`calEvts` 123 → 521 à 185 B,
+Snapshot vorher 458 KB).
+
+**Fehler im eigenen Umbau, vom neuen Wächter gefunden:** die Dedup-Menge der
+FXStreet-Termine kannte noch die alten eigenen Termine — beim zweiten
+stündlichen Lauf wären alle FXStreet-Termine als „schon da“ entfernt und nie
+wieder eingetragen worden. Eigene Menge nach dem Entfernen.
+
+**Nebenbefund (nicht geändert, Score):** beim WERT (`findIndEvent`) treffen
+die EUR-Muster die nationalen Vorab-Zahlen ebenfalls — nachgestellt lieferte
+`findIndEvent('EUR','CPI (Headline) y/y')` den deutschen Vorab-Wert 2,6 %
+statt des Eurozonen-Flash. Heute ohne Wirkung: 14 von 15 EUR-Indikatoren
+kommen aus `ind_data.json` (`research.feed`), dann fasst der Kalender-Pfad sie
+nicht an; greift nur, wenn eine Feed-Abdeckung ausfällt.
+
+### 2. Kalender-Karte: Zukunft kräftig, Zahlen größer
+
+Nutzer: *„sobald etwas alt ist dann ist es ein wenig blasser und was kommt ist
+stark kräftig … alle zukünftigen Datum Zahlen so geschrieben sind nicht blass“*,
+*„mach die Zahlen im Kalender größer da sind so große Löcher zwischen“*.
+Gemessen (1180×820, USD): Tage hinter dem Feed-Ende Deckkraft **0,38** (wie
+vergangene), Wochenenden `--t3`; Zahl **13 px/500** in 68×40-px-Zellen, Kreis
+25 px. Jetzt: nur Vergangenes blass; kommende Tage voll und einheitlich
+(`--t1`), Zahl **15 px/600** (`--fs-md`, eine Stufe unter dem Kartentitel
+17 px), Kreis **33 px** (2,2 em, nur Karte; 820/390 gemessen, kein Überlauf,
+Kartenhöhe unverändert). Die ~-Schätzung in der Next-Spalte bleibt grau —
+sie markiert „nicht bestätigt“, nicht „Zukunft“.
+
+### 3. Past-Liste: Scroll-Linie unterbrochen
+
+Nutzer: *„beim Scrollen im Kalender bei past verschwindet der Strich“*.
+Gemessen (1180/820/390, Karte + Fenster): die klebenden Tageszeilen endeten
+**1 px** vor dem inneren rechten Rand — iOS zeichnet die Scroll-Linie dort,
+klebende Ebenen liegen auf dem iPad darüber. Fix: 8 px rechter Rand
+(`.calp`). **Fehlerklasse:** alle klebenden Elemente in senkrechten
+Scrollbereichen gescannt — gleiche Lage in der History (`.histp`: `.hw-cols`
+0 px, `.hw-hd` 1 px) → mitbehoben (danach 8–9 px). Ausgenommen die
+Backtester-Tabelle (scrollt auch waagerecht, da hilft kein Rand).
+
+### 4. Kleinere Punkte
+
+- **ⓘ bei Pinned notes** stand nicht oben rechts: `infoKnoepfeEinordnen`
+  setzte es hinter den letzten Nachbarn in DERSELBEN Zeile (Notes trägt ⚡
+  im Kopf); ein erster Versuch hängte es hinter volle Untertitel (Retail,
+  Seasonality: 1004 px vom Rand). Wächter-Lücke: `infoi.js` kannte
+  `.ab-ntile/.ab-ktile` nicht und meldet unbekannte Karten jetzt rot.
+- **Kerzen-Zähler** unter Preis- und Kontext-Charts entfernt („N daily candles
+  · M with a measured high/low“); bleibt „Feed starts …“. `archiv.js` misst
+  die Kerzen jetzt am `data-kerzen`-Attribut und meldet eine sichtbare Zahl.
+- **„Summaries“** über dem Schalter entfernt (nimmt D8 vom 2026-10-04 zurück);
+  der Schalter heißt weiter `aria-label="Summaries"`, Tooltip mit Zustand.
+- **Ketten-Zeichen** an gespiegelten Rubriken und ihren Indikatoren entfernt
+  (2 Stellen); die übrigen Ketten-Symbole sind keine Verknüpft-Markierung
+  (Einstellungsüberschrift, COT-Sprung „Asset“, Korrelationskarte).
+- **Säulen der Indikator-Charts** wieder 56 % des Spaltenplatzes ohne den
+  14-px-Deckel aus 591 (*„macht das wie vorher überall also nur das“*), 80 %
+  Deckkraft bleibt. Die in 591 ebenfalls dünner gemachten COT-/Retail-Balken
+  (26 → 12 px Höhe) sind unverändert.
+
+**Wächter:** neu `check/kalendervorschau.js` (statisch: Workflow-Schritt aus
+der YAML gegen nachgebaute Quellen, 25 echte FXStreet-Namen, Fenster;
+Gegenproben `--gegenprobe` TV-Low durchgelassen, `--gegenprobe-dedup` der
+gefundene Dedup-Fehler). `kalender.js` E (kommende Tage voll/15 px/einheitlich,
+auch Folgemonat) und F (Termin-Regeln) mit `--gegenprobe-zukunft` und
+`--gegenprobe-termin`; `tabellenfest.js` Scroll-Linie (`--gegenprobe-linie`);
+`designregeln.js` I umgedreht (kein Wort, aber aria-label), neu M (kein
+Ketten-Symbol, erkannt am Pfad); `archiv.js`, `infoi.js`, `symbole.js`
+angepasst. Alle Gegenproben rot, alle Wächter grün.
