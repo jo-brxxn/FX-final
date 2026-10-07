@@ -19653,3 +19653,14 @@ Ketten-SVG als Text mit dem `icn()`-String, der Browser serialisiert
 derselben DOM-Serialisierung; im Normalbetrieb 0 Ketten-Symbole auf allen
 Nicht-FX-Seiten, Gegenprobe rot. `kalendervorschau` erwartete für FXStreets
 „Michigan Consumer Sentiment Index“ fälschlich den CB-Indikator — korrigiert.
+
+**Nachtrag 595 — Volllauf:** 71 von 73 grün. `erklaerung` lief erst, nachdem
+der lokale Test-Server am Zeitlimit beendet war (`ERR_CONNECTION_REFUSED`) —
+mit Server danach grün (39 ⓘ geöffnet). `zurueck` A meldete „nur 8 Klicks
+haben während des Abgleichs etwas gespeichert“: die Dashboard-▲▼ waren nur per
+`opacity:0` versteckt und zählten als Klickziele mit, mit dem Bearbeitungsmodus
+sind sie weg. Gemessen auf allen 13 Seiten der Runde: speichernde Klicks gibt
+es nur noch in Set-ups (8 Sterne). Die Kernaussage war grün (8 Klicks, 96
+Felder bleiben, alle 14 fremden Felder kommen an); die Plausibilitäts-
+Untergrenze steht jetzt bei 6 statt 10. Gegenproben `--gegenprobe-abgleich`,
+`-markierung`, `-push` weiter rot.

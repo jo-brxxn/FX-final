@@ -179,7 +179,13 @@ function flach(o, pre, out) {
   const lokal = JSON.parse(await p.evaluate(() => snap()));
   const fb = flach(vorKlicks), fl = flach(lokal);
   const lokalPfade = Object.keys(Object.assign({}, fb, fl)).filter(k => fb[k] !== fl[k]);
-  if (klicksA < 10) rot(`nur ${klicksA} Klicks haben waehrend des Abgleichs etwas gespeichert - Selektoren veraltet?`);
+  // Untergrenze = Plausibilitaet der Selektoren, nicht die Aussage selbst.
+  // Seit 2026-10-07 (Bearbeitungsmodus fuer Dashboard/Indikatoren entfernt)
+  // fallen die Karten-Knoepfe ▲▼ als Klickziele weg - sie waren nur per
+  // opacity:0 versteckt und zaehlten mit. Uebrig bleiben die 8 Sterne in
+  // Set-ups (gemessen auf allen Seiten der Runde: sonst keine speichernden
+  // Klicks). Deshalb 6 statt 10.
+  if (klicksA < 6) rot(`nur ${klicksA} Klicks haben waehrend des Abgleichs etwas gespeichert - Selektoren veraltet?`);
   // Cloud antwortet
   if (pullFrei) pullFrei();
   pullWartet = false;
