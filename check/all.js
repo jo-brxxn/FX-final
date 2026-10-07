@@ -62,7 +62,8 @@ const PRUEFUNGEN = [
   { n: 'tabellenfest', d: 'Innere Scrollbereiche federn nicht ueber ihre Raender (overscroll none)', f: 'check/tabellenfest.js', args: [], browser: true },
   { n: 'regeln',    d: 'COT, Rendite-Trends, 2Y-Zinsdifferenz, Carry, Rohstoffe, Score-Fenster, Momentum weg', f: 'check/regeln.js', args: [], browser: true },
   { n: 'kartentitel', d: 'Kartentitel einheitlich, Info-i blau und kleiner, Notizen in Bias-Farbe', f: 'check/kartentitel.js', args: [], browser: true },
-  { n: 'kalender',  d: 'Kalender-Karte: vergangene Tage blass mit Punkt, Releases aus der Historie', f: 'check/kalender.js', args: [], browser: true },
+  { n: 'kalender',  d: 'Kalender-Karte: vergangene Tage blass mit Punkt, Releases aus der Historie; Next-Termine inkl. gleicher Veroeffentlichung', f: 'check/kalender.js', args: [], browser: true },
+  { n: 'namen',     d: 'Asset-/Paarnamen nie gekuerzt (auch mit breiter Schrift wie auf dem iPad), Set-ups-Chip bleibt in seiner Zelle', f: 'check/namen.js', args: [], browser: true },
   { n: 'scrollhalt', d: 'Asset-Seite neu gezeichnet: Scrollstand bleibt (WebKit nachgestellt)', f: 'check/scrollhalt.js', args: [], browser: true },
   { n: 'rahmen',    d: 'dunkle Koepfe/Bedienelemente: jeder Text lesbar (5 helle Vorlagen)', f: 'check/rahmen.js', args: [], browser: true },
   { n: 'cards',     d: 'Text/Elemente verlassen nie den Kartenrand (alle Tabs)', f: 'check/cards.js',     args: [],           browser: true },
@@ -76,7 +77,8 @@ const PRUEFUNGEN = [
   { n: 'kerzen',    d: 'Kerzen: ein Tag, kein Wochenende, eigene Farben, keine erfundenen Dochte', f: 'check/kerzen.js', args: [], browser: true },
   { n: 'seasretail',d: 'Saisonalitaet/Retail: Schwellen, Deckel, Monats-Markierung', f: 'check/seasretail.js', args: [], browser: true },
   { n: 'feedgroesse',d: 'Live-Feeds: Groessendeckel, keine Einrueckung, eine Frist', f: 'check/feedgroesse.js', args: [], browser: false },
-  { n: 'kalendervorschau', d: '3-Monats-Kalender: Workflow-Schritt gegen nachgebaute Quellen, FXStreet-Namen, keine TV-Low-Termine', f: 'check/kalendervorschau.js', args: [], browser: false },
+  { n: 'kalendervorschau', d: '3-Monats-Kalender: Workflow-Schritt gegen nachgebaute Quellen, FXStreet-Namen, keine TV-Low-Termine, ins TV-Fenster gerueckte Releases', f: 'check/kalendervorschau.js', args: [], browser: false },
+  { n: 'feedregeln', d: 'Indikator-Feed: NFP ohne Benchmark-Revision, US-PMI nur ISM, Bereinigung eingeschleppter Historienpunkte', f: 'check/feedregeln.js', args: [], browser: false },
   // Beide 2026-09-19 neu, beide aus einem Fehler DIESER Sitzung: ein
   // CSS-Kommentar, der Regeln verschluckt hat, und ein Inline-style, der eine
   // Zustandsregel wirkungslos machte. Statisch, deshalb im schnellen Teil.

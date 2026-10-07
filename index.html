@@ -145,7 +145,7 @@ body{font-family:var(--ff-text);background-image:linear-gradient(180deg,rgba(27,
    Sternen hat Spezifitaet 0, jede Klassenregel schlaegt ihn also
    automatisch, ohne dass irgendwo ein Gegen-!important noetig waere. */
 *,*::before,*::after{font-family:var(--ff-text)}
-.rinfo,.rate-watch,.ind-data-sep{opacity:1!important}
+.rinfo,.ind-data-sep{opacity:1!important}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:4px}
 :root{
   /* "Grey Tech Terminal"-Design (Nutzer-Korrektur 2026-08-03): das vorherige
@@ -2106,17 +2106,10 @@ body.compact-view .rub-summary{display:block}
 .rub-hdr{display:flex;align-items:center;gap:5px;padding:10px 12px;background:var(--bg3);border-radius:0 var(--r) 0 0;border-bottom:1px solid var(--bd)}
 .rub-inp{flex:1;background:transparent;border:none;color:var(--t0);font-size:var(--fs-lg);font-weight:650;letter-spacing:.2px;outline:none;font-family:var(--ff-text);min-width:40px}
 .rub-inp::placeholder{color:var(--t3)}
-.rmv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:var(--fs-sm);padding:0 1px;flex-shrink:0;opacity:.2;line-height:1;transition:all .12s}@media (hover:hover){.rmv:hover{opacity:1;color:var(--blue)}}.rmv:disabled{opacity:.05;cursor:default}
-.rstar{background:none;border:none;cursor:pointer;font-size:var(--fs-base);padding:0 1px;flex-shrink:0;opacity:.18;transition:all .12s;line-height:1}
-.rstar.on{opacity:1;color:var(--star)}@media (hover:hover){.rub-card:hover .rstar{opacity:.4}}.rub-card .rstar.on{opacity:1;color:var(--star)}
-.rdel{background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;flex-shrink:0;opacity:.15;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.rub-card:hover .rdel{opacity:.4}}@media (hover:hover){.rdel:hover{opacity:1!important;color:var(--red)}}
 .rub-body{padding:10px 12px}
-.rub-tog{color:var(--t3);font-size:var(--fs-sm);flex-shrink:0;transition:transform .2s;cursor:pointer;background:none;border:none;padding:0;line-height:1}@media (hover:hover){.rub-tog:hover{color:var(--blue)}}
-.rub-card.collapsed .rub-tog{transform:rotate(-90deg)}
 .rub-card.collapsed .rub-body{display:none}
 /* ── INFO BUTTON ── */
 .rinfo{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;border:1.3px solid var(--blue);color:var(--blue);font-size:var(--fs-xs);font-weight:800;font-style:italic;font-family:Georgia,'Times New Roman',serif;cursor:pointer;background:transparent;flex-shrink:0;line-height:1;padding:0;opacity:.65;transition:all .12s}@media (hover:hover){.rinfo:hover{opacity:1;background:rgba(var(--blue-rgb),.08)}}
-.rate-watch{display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;text-decoration:none;flex-shrink:0;opacity:.7;transition:opacity .12s;cursor:pointer;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}@media (hover:hover){.rate-watch:hover{opacity:1}}
 /* ── RUBRIC SUMMARY ── */
 .rub-summary{background:var(--bg5);border:1px solid var(--bd2);border-radius:var(--rs);padding:7px 10px;margin-bottom:8px}
 .rub-summary-lbl{font-size:var(--fs-2xs);letter-spacing:2px;color:var(--t3);font-weight:700;font-family:var(--ff-num);text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;justify-content:space-between}
@@ -2417,21 +2410,12 @@ body.compact-view .rub-summary{display:block}
 .tr-leg-dash{width:14px;height:0;border-top:2px dashed var(--t0);display:inline-block;flex:none;opacity:.85}
 .tr-svg{display:block}
 .rub-card.rub-flash{animation:indFlash 1.8s ease-out}
-.imv{background:none;border:none;color:var(--t3);cursor:pointer;font-size:var(--fs-xs);padding:0 1px;flex-shrink:0;opacity:.35;transition:all .12s;line-height:1}@media (hover:hover){.imv:hover{opacity:1!important;color:var(--blue)}}.imv:disabled{opacity:.1;cursor:default}
-.idel2{background:none;border:none;color:var(--t3);cursor:pointer;font-size:var(--fs-md);flex-shrink:0;opacity:.35;padding:0 1px;line-height:1;transition:all .12s}@media (hover:hover){.idel2:hover{opacity:1!important;color:var(--red)}}
-/* Bearbeitungsmodus fuer Indikator-Zeilen (tech-design-Skill 2026-07-28,
-   Nutzer-Wunsch): Verschieben/Loeschen nur sichtbar, wenn der Bearbeitungs-
-   modus aktiv ist (5s-Long-Press auf der Indikator-Liste, gleiches Muster
-   wie der bereits bestehende Dashboard-Bearbeitungsmodus) - im Normalzustand
-   liest sich die Karte dadurch aufgeraeumter/tabellenartiger. Der (i)-Info-
-   Button und der Bias-Long-Press bleiben davon unberuehrt, immer verfuegbar. */
-.ind-edit-ctrls{display:none;align-items:center;gap:0}
-body.ind-edit-mode .ind-edit-ctrls{display:inline-flex}
-/* Kartennamen (rub-inp) nur im Bearbeitungsmodus umbenennbar (Nutzer-Wunsch
-   2026-09-02: versehentliches Umbenennen beim Antippen/Scrollen verhindern) -
-   dasselbe An/Aus wie .ind-edit-ctrls oben, rein CSS (kein Re-Render noetig,
-   der Wert bleibt jederzeit sichtbar, nur nicht mehr fokussierbar/tippbar). */
-body:not(.ind-edit-mode) .rub-inp{pointer-events:none;cursor:default}
+/* Kartennamen (rub-inp) sind reine Anzeige: der Bearbeitungsmodus fuer
+   Indikatoren und Karten ist seit 2026-10-07 entfernt (Nutzer: "Entfern den
+   Bearbeitungsmodus wenn ich was bearbeiten will frag ich dich"). Vorher nur
+   im Modus umbenennbar (Nutzer-Wunsch 2026-09-02: kein versehentliches
+   Umbenennen beim Antippen/Scrollen). */
+.rub-inp{pointer-events:none;cursor:default}
 /* ── RESEARCH-ORDNERBAUM (Nutzer-Wunsch 2026-08-04) ── Windows-Explorer-
    artiger Klappbaum: Wurzel = 5 feste Kategorien + eigene Ordner, darunter
    Asset-Ordner (auto) + eigene Unterordner, darunter die zwei festen
@@ -3232,6 +3216,11 @@ body.res-return-active #resBackBar{display:flex}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:var(--fs-xs)}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
+/* Erklaerung in der Detail-Zeile ("What it is" / "How it counts", seit
+   2026-10-07 hier statt im ⓘ des entfernten Bearbeitungsmodus): Fliesstext,
+   bricht um - die Tabellenzelle erbt sonst nowrap und schneidet ab. */
+.ind-data-src.ind-data-erkl{display:block;white-space:normal;text-align:left;line-height:1.45;color:var(--t2)}
+.ind-data-erkl .ind-data-lbl{margin-right:4px}
 /* Ueberbrueckt das schlagartige Aufklappen der Indikator-Detail-Zeile:
    Chart+Quelle faden/gleiten beim OEFFNEN kurz ein statt einfach dazustehen -
    siehe toggleIndDetailRow(). */
@@ -3289,26 +3278,11 @@ body.res-return-active #resBackBar{display:flex}
    zurueckhaltend dosiert (4.5% Weiss), damit er nicht als Rahmen wirkt. */
 .dw{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.5)}
 @media (hover:hover){.dw:hover{border-color:var(--bd2);box-shadow:var(--shadow-pop)}}
-/* Verwaltungsleiste (+ Widget / Bearbeitungsmodus-Hinweis) - nur sichtbar,
-   solange body.dash-edit-mode gesetzt ist. Nimmt ausserhalb des Modus
-   KEINEN Platz ein (display:none, nicht nur opacity:0). */
-.dash-edit-bar{display:none;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;padding:8px 12px;background:rgba(79,155,255,.08);border:1px solid rgba(79,155,255,.3);border-radius:8px}
-body.dash-edit-mode .dash-edit-bar{display:flex}
-.dash-edit-lbl{font-size:var(--fs-xs);font-weight:600;color:var(--blue)}
-/* Karten bekommen im Bearbeitungsmodus einen sichtbaren Rand, damit klar
-   ist, dass gerade etwas anders ist als sonst (die Steuerbuttons selbst
-   erscheinen erst beim genauen Hinsehen). */
-body.dash-edit-mode #dashWidgets .dw{border-color:rgba(var(--blue-rgb),.35)}
 /* Majors-Karte ist jetzt das erste Element der 'left'-Zone im Radial-Layout
    (frueher ein eigenstaendiges <aside>, Nutzer-Wunsch 2026-07-27) - selbe
    Bausteine (.ab/.an/.av/miniSparklineSvg), nur unter .dash-majors-card statt
    .dash-majors gescoped. */
 .dash-majors-card{padding-bottom:6px}
-/* "MAJORS"-Label nur im Bearbeitungsmodus (Nutzer-Wunsch 2026-07-27, per
-   Foto markiert) - dieselbe body.dash-edit-mode-Konvention wie .dw-btns/
-   .dash-edit-bar, kein zweiter Mechanismus. */
-.dash-majors-lbl{display:none;font-size:var(--fs-2xs);letter-spacing:1.6px;color:var(--t3);font-weight:700;padding:2px 2px 10px;text-transform:uppercase}
-body.dash-edit-mode .dash-majors-lbl{display:block}
 /* Eigene Mini-Karte pro Symbol wie im Referenz-Foto (Nutzer-Wunsch
    2026-07-25 "1 zu 1"): Name + Bias-Pfeil in der Kopfzeile, Sparkline auf
    voller Breite darunter, Score rechts unten - Bias traegt weiterhin nur
@@ -3435,31 +3409,10 @@ body{font-feature-settings:'tnum' 1,'zero' 1,'ss01' 1;font-variant-numeric:tabul
 .dw-t-txt{font-size:var(--fs-md);font-weight:700;color:var(--t1);letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
 .dw-t .rinfo{width:13px;height:13px;font-size:var(--fs-2xs);opacity:.55;flex-shrink:0}
 .dw-sub{font-size:var(--fs-xs);color:var(--t3);margin-top:3px;font-weight:600;font-family:var(--ff-text)}
-/* Bearbeitungsmodus statt Hover (Nutzer-Wunsch 2026-07-25: "komm weg von
-   diesem Karten Design wo oben rechts immer die hoch runter Pfeile und das
-   x steht" - die Steuerbuttons (Auf/Ab/Umbenennen/Loeschen) sind jetzt
-   IMMER unsichtbar und erscheinen nur, solange body.dash-edit-mode gesetzt
-   ist (5s-Long-Press irgendwo auf dem Dashboard, siehe dashEditPressStart()
-   unten). Einheitlich fuer Maus UND Touch - kein Hover-Sonderfall mehr
-   noetig, dadurch faellt auch die alte @media(hover:hover)-Verzweigung weg. */
-.dw-btns{display:flex;gap:3px;flex-shrink:0;opacity:0;pointer-events:none;transition:opacity .15s}
-body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
-/* Immer absolut positioniert (Bugfix 2026-07-27): vorher nur unter
-   @media(hover:hover) - auf Touch-Geraeten blieb .dw-btns dadurch
-   position:static und nahm trotz opacity:0 weiter Platz in der
-   .dw-hdr-Flexzeile ein (justify-content:space-between), was den Titel
-   (.dw-t-txt) unnoetig in die Ellipsis-Kuerzung zwang ("CURREN...",
-   "RISK SE...", "MINI C..." trotz sichtbarem Platz - Nutzer-Bugreport per
-   Foto). Der eigene Code-Kommentar hier sagte schon vorher, die
-   hover:hover-Verzweigung sollte mit dem Bearbeitungsmodus wegfallen -
-   war nur nie tatsaechlich entfernt worden. */
+/* Bezugsrahmen des Kartenkopfs. Hielt bis 2026-10-07 die absolut
+   positionierte Knopfleiste des Bearbeitungsmodus (.dw-btns, seither
+   entfernt); bleibt als Anker fuer kuenftige Kopf-Elemente. */
 .dw-hdr{position:relative}
-/* Deckt im Bearbeitungsmodus den Titel darunter ab, muss deshalb exakt die
-   KARTENFARBE tragen. Stand frueher als rgba(255,255,255,.96) fest - seit
-   der Karten-Hintergrund kein reines Weiss mehr ist (--bg2 #16233c), waere
-   daraus ein sichtbar hellerer Fleck geworden. Ueber die Variable zieht es
-   automatisch mit, falls die Kartenfarbe erneut wechselt. */
-.dw-hdr .dw-btns{position:absolute;right:0;top:50%;transform:translateY(-50%);background:var(--bg2);padding:2px 0 2px 10px;border-radius:6px}
 /* Nutzer-Bugreport 2026-08-03 (Foto, Watchlist-Karte): Preis-Chip+Score+
    Bias-Badge+Loeschen-× passten in einer schmalen Spalte (right2) nicht
    mehr nebeneinander und rutschten sichtbar ueber den Kartenrand hinaus -
@@ -3520,7 +3473,15 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .perf-row[onclick]{cursor:pointer}
 @media (hover:hover){.perf-row[onclick]:hover{background:var(--bg2)}}
 .perf-rank{width:16px;flex-shrink:0;text-align:right;font-size:var(--fs-2xs);color:var(--t3);font-family:var(--ff-num)}
-.perf-name{flex:0 0 58px;min-width:0;font-size:var(--fs-base);font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Namen nie mit "…" (Nutzer 2026-10-06, Set-ups; gleiche Klasse hier):
+   58px war eine FESTE Breite mit Ellipse - bei breiterer Schrift wurde
+   "EUR/USD ↔ GBP/USD" (Correlation Check) und ein Name im Performance
+   Ranking gekuerzt. Jetzt Mindestbreite (die Spalten bleiben buendig, ein
+   laengerer Name schiebt nur seinen eigenen Balken). */
+.perf-name{flex:0 0 auto;min-width:58px;font-size:var(--fs-base);font-weight:600;color:var(--t1);white-space:nowrap}
+/* Zwei Paare in einer Zeile: Umbruch nur ZWISCHEN den Paaren, nie im Namen. */
+.perf-name.perf-paar{flex:1 1 auto;min-width:0;white-space:normal}
+.perf-paar .nw{white-space:nowrap}
 .perf-barwrap{flex:1;min-width:24px;height:7px;background:var(--bg3);border-radius:4px;position:relative;overflow:hidden}
 .perf-bar{position:absolute;top:0;bottom:0;left:0;border-radius:4px}
 /* Surprise-Index: Nulllinie in der Mitte, Balken nach beiden Seiten. */
@@ -3564,7 +3525,6 @@ body.dash-edit-mode .dw-btns{opacity:1;pointer-events:auto}
 .dw-empty{font-size:var(--fs-sm);color:var(--t3);line-height:1.55}
 .dw-add{font-size:var(--fs-xs);padding:3px 8px;margin-bottom:8px;width:100%}
 .dw-notes-sub{font-size:14px;font-weight:800;color:var(--t0);margin:13px 0 7px;padding-top:11px;border-top:1px solid var(--bd);font-family:var(--ff-num);letter-spacing:.5px;text-transform:uppercase}
-.dw-nav{padding:1px 4px;font-size:var(--fs-2xs);line-height:1.4}
 .dw-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:var(--fs-md);padding:0 2px;opacity:.4;line-height:1;flex-shrink:0}
 .dw-pname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dw-mark{background:none;border:none;cursor:pointer;font-size:var(--fs-md);padding:0 2px;line-height:1;color:var(--t3);opacity:.4;flex-shrink:0;transition:all .12s}@media (hover:hover){.dw-mark:hover{opacity:.8}}
@@ -4490,8 +4450,23 @@ body.dense-mode .hl-row{padding-top:3px;padding-bottom:3px}
    (~71px). Der Ticker-Chip daneben darf dafuer notfalls schrumpfen
    (minmax(0,auto)) - so bleibt der Name auch auf einem Telefon lesbar,
    ohne dass die Zeile ueber den Kartenrand hinauslaeuft. */
-.setups-col-rows{display:grid;grid-template-columns:minmax(72px,1fr) minmax(0,auto) auto auto auto;column-gap:5px}
-.setups-cols .sym-row{grid-column:1/-1;display:grid;grid-template-columns:1fr auto auto auto auto;gap:5px;align-items:center}
+/* ⚠ 2026-10-06 (Nutzer, iPad: "Bei set ups sind teilweise Asset Namen
+   abgekuerzt das darf nicht passieren"): die feste Untergrenze 72px stammte
+   aus der 13-px-Zeit; die Namen stehen seit Langem in 17px und brauchen
+   78-86px. Mit der iPad-Schrift (SF Pro, breiter als die Test-Schrift) fiel
+   die Spalte auf die Untergrenze -> "GBP/...". Nachgestellt mit breiterer
+   Schrift: 1180x820 Namensspalte 68px, 37 von 43 Namen gekuerzt. Jetzt ist
+   die Untergrenze der LAENGSTE Name der Spalte (max-content); den Platz gibt
+   der Preis-Chip ab. */
+.setups-col-rows{display:grid;grid-template-columns:minmax(max-content,1fr) minmax(min-content,auto) auto auto auto;column-gap:5px}
+.setups-cols .sym-row .dw-pname{overflow:visible;text-overflow:clip}
+/* ...und der Chip gibt Platz ab, OHNE etwas zu kuerzen: reicht die Breite
+   nicht, bricht die Tagesveraenderung im Chip in eine zweite Zeile um
+   (gemessen mit breiter Schrift: Chip bis 14px zu schmal, lief vorher in die
+   Δ-Plakette). Die Spalte schrumpft nur bis zur breitesten Zeile im Chip. */
+.setups-cols .ticker-chip{flex-wrap:wrap;justify-content:center;row-gap:0;max-width:100%;min-width:0;white-space:normal}
+.setups-cols .ticker-chip-pct{white-space:nowrap}
+.setups-cols .sym-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(max-content,1fr) minmax(min-content,auto) auto auto auto;gap:5px;align-items:center}
 @supports (grid-template-columns:subgrid){
   .setups-cols .sym-row{grid-template-columns:subgrid}
 }
@@ -4679,7 +4654,6 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .dw-empty,.dw-chip,.dw-meta{font-size:14px}
   .dw-add,.dw-sel{font-size:var(--fs-base)}
   .dw-chip-x,.dw-del{font-size:16px}
-  .dw-nav{font-size:var(--fs-sm);padding:3px 6px}
   .modal{max-width:min(720px,94vw);--m-px:20px;padding:20px var(--m-px)}
   .modal h3{font-size:var(--fs-lg)}
     .lock-logo{font-size:28px}
@@ -5301,7 +5275,6 @@ a.rpl-card:hover{background:var(--bg3)}
 .rw-none-txt{font-size:var(--fs-sm);line-height:1.65;color:var(--t1)}
 .rw-none-txt b{color:var(--t0)}
 .rw-none-txt a{color:var(--blue);word-break:break-all}
-button.rate-watch{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 @media(max-width:520px){.rpl-bank{display:none}.rpl-site{max-width:52vw}}
 /* ⚠ .modal-wide wurde seit 2026-08-08 im Markup vergeben (Datenqualitaet,
    jetzt auch Backtester), eine CSS-Regel dazu gab es aber NIE - die Fenster
@@ -6115,7 +6088,7 @@ body.no-ui-anim .fxlogo.lg-einmal>.lg-k,body.no-ui-anim .fxlogo.lg-einmal>.lg-b{
 .btn,:where(select:not([size]):not([multiple])),.finp,.fsel,input.news-q,.st,.dmeta-hist-btn,.cot-refresh{height:var(--h-m);padding-top:0;padding-bottom:0}
 a.btn{display:inline-flex;align-items:center}
 .abc-nav,.ab-nt-qc{width:var(--h-m);height:var(--h-m)}
-.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.btn.dw-nav,.note-dirbtn,.tr-leg-btn,
+.ind-hist-range-btn,.cmp-chip,.cmp-quick,.ab-rg,.hl-tab,.perf-win,.histp-rbtn,.histp-agebtn,.rg-ccy,.px-panel-chip,.note-dirbtn,.tr-leg-btn,
 select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h-s);padding-top:0;padding-bottom:0}
 .rterm-side-toggle{width:var(--h-s);height:var(--h-s)}
 /* Ausnahme mit Absicht: "Compare" in der Legendenzeile bleibt klein
@@ -6234,8 +6207,6 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 .rg-ja .rg-ic{color:var(--ui-act)}
 .rg-card.rg-stress .rg-ja .rg-ic{color:var(--red)}
 .mover-group-hdr .ic,.movers-upd .ic,.acfg-sec .ic,.cot-notify-ic .ic{vertical-align:-2px}
-.rstar svg{display:block}
-.rstar.on svg{fill:currentColor}
 #carrySearch{padding-left:34px;background:var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23444E65' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 11px 50%/15px 15px}
 /* ══ DESIGN-AUDIT RUNDE 2 (Nutzerwahl 2026-10-05, VERSION-CHECK-590 ff.) ══
    Regeln: docs/design-system.md "Design-Audit 2026-10-04" (J ff.). */
@@ -6248,8 +6219,7 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
    Ordner-Loeschknopf erscheint am gewaehlten Ordner schon voll - ueberall
    eingeblendet hiesse versehentliches Loeschen). Geprueft: designregeln J. */
 @media (hover:none){
-  .rmv,.rdel,.imv,.idel2,.rstar,.cal-row-del,.cal-alert-btn,.dw-mark,.res-note-star{opacity:1}
-  .rmv:disabled,.imv:disabled{opacity:.3}
+  .cal-row-del,.cal-alert-btn,.dw-mark,.res-note-star{opacity:1}
 }
 /* R5 Schlagzeilen-Knopf hinter dem Termin-Namen (statt in der Aktionsspalte,
    die er zum Ueberlaufen brachte): laeuft im Text mit, bricht mit dem Namen
@@ -6266,16 +6236,16 @@ select.px-panel-sel,select.res-sfield,select.dw-sel,select.bt-sel{height:var(--h
 .rank-div>.rank-bar.neg,.rank-div>.mx-rank-bar.neg{border-radius:5px 0 0 5px}
 .rank-null{position:absolute;left:50%;top:0;bottom:0;width:1px;margin-left:-.5px;background:var(--bd2)}
 body.anim-enter:not(.no-data-anim) .rank-div>.rank-bar.neg,body.anim-enter:not(.no-data-anim) .rank-div>.mx-rank-bar.neg{transform-origin:right center}
-/* R10 Farbflaechen leiser: COT- und Retail-Balken liefen 26 px hoch in voller
-   Saettigung (COT mit Verlauf) ueber die ganze Breite - jetzt 12 px, 70 %
-   Deckkraft, 2 px Kartenfarbe zwischen Long und Short; die kraeftige Farbe
-   steht nur noch an den Zahlen daneben. */
-.cot-bar{height:12px;border-radius:4px}
-.cot-bar-long{background:rgba(var(--green-rgb),.7)}
-.cot-bar-short{background:rgba(var(--red-rgb),.7);box-shadow:inset 2px 0 0 var(--card)}
-.sent-bar{flex:1;display:flex;height:12px;border-radius:4px;overflow:hidden;min-width:0;background:var(--bg4)}
-.sent-bar-l{background:rgba(var(--green-rgb),.7);min-width:0}
-.sent-bar-s{background:rgba(var(--red-rgb),.7);min-width:0;box-shadow:inset 2px 0 0 var(--card)}
+/* R10 (591, "Farbflaechen leiser": COT-/Retail-Balken 12 px, 70 % Deckkraft,
+   2 px Fuge) am 2026-10-06 auf Nutzer-Wunsch KOMPLETT zurueckgenommen ("mach
+   die Balken da wo du sie sonst noch veraendert hast wie davor" - per
+   Rueckfrage "Komplett wie vor 591"). COT: es gelten wieder die Grundregeln
+   (.cot-bar 26 px, Radius 6, Verlauf). Retail wie vor 591: 26 px, Radius 5,
+   volle Bias-Farbe, keine Fuge - als Klasse statt der frueheren Inline-Farbe
+   (im Standard-Theme dieselben Werte wie BC, in anderen Themes deren Farben). */
+.sent-bar{flex:1;display:flex;height:26px;border-radius:5px;overflow:hidden;min-width:0}
+.sent-bar-l{background:var(--green);min-width:0}
+.sent-bar-s{background:var(--red);min-width:0}
 /* R8 Dashboard-Karten. Majors: Kartentitel wie jede Karte (Nutzerwahl
    2026-10-05; hebt die Regel vom 2026-07-27 auf, das Label nur im
    Bearbeitungsmodus zu zeigen). */
@@ -6290,12 +6260,6 @@ body.anim-enter:not(.no-data-anim) .rank-div>.rank-bar.neg,body.anim-enter:not(.
 .wl-icons{width:48px;gap:1px}
 .wl-chg{width:48px}
 .wl-row .row-score{width:32px}
-.wl-row button.dw-del{display:none}
-body.dash-edit-mode .wl-row button.dw-del{display:inline-block}
-/* Bearbeitungsmodus: die Knopfleiste (▲▼×) liegt rechts im Kartenkopf, genau
-   ueber dem ⓘ (gemessen: alle 13 Karten, Klick auf das ⓘ traf den Knopf).
-   Beim Anordnen ist das ⓘ entbehrlich -> ausgeblendet statt verdeckt. */
-body.dash-edit-mode .dw-hdr .rinfo{visibility:hidden}
 /* R7 Price-Karte kompakt ("Kompakt, max. 2 Zeilen"): vorher bei 820 px vier
    Bedienzeilen ueber einem 128 px hohen Chart (Candles|Line 126 px, 7
    Zeitfilter 323 px, EMA-Schalter 198 px). Jetzt Candles|Line als
@@ -6426,11 +6390,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-594 - Fix: the info button in Pinned notes no longer takes taps meant for the quick-note button next to it. Includes everything from 593: the calendar reaches about three months ahead and the Next countdown uses those dates; upcoming calendar days are no longer dimmed and the day numbers are larger."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-595 - Next countdown: indicators no longer take dates from other releases (NFP showed Nonfarm Productivity, CB Consumer Confidence showed Michigan); a series published together with another one (US jobless rate with payrolls, UK PPI with CPI) takes its date from the calendar; Set-ups names are never cut off; the Delta badge in Set-ups shows the 2-year yield differential; COT and retail bars as before 591; the edit mode for the dashboard and the indicator tables is removed."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-594</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-595</span>
     </span>
   </div>
   <div class="hdr-r">
@@ -6457,7 +6421,7 @@ window.fxLogoSvg=function(art){
        dadurch die volle Breite. renderSidebar() fuellt weiterhin ein Element
        mit der id "sidebar" - es wird nur an anderer Stelle erzeugt
        (renderTabBar), damit die ~35 Aufrufer unveraendert bleiben. -->
-  <div class="detail" id="detail" onpointerdown="indEditPressStart(event)" onpointermove="indEditPressMove(event)" onpointerup="indEditPressEnd()" onpointercancel="indEditPressEnd()" onpointerleave="indEditPressEnd()"></div>
+  <div class="detail" id="detail"></div>
 </div>
 <!-- PAGE: MATRIX -->
 <div class="pc" id="pgMx" style="display:none">
@@ -6777,23 +6741,15 @@ window.fxLogoSvg=function(art){
     <div class="globe-host" id="overGlobeHost"></div>
   </div>
 </div>
-<div class="pc" id="pgDash" onpointerdown="dashEditPressStart(event)" onpointermove="dashEditPressMove(event)" onpointerup="dashEditPressEnd()" onpointercancel="dashEditPressEnd()" onpointerleave="dashEditPressEnd()">
+<div class="pc" id="pgDash">
   <!-- Seitentitel seit 2026-10-04 wieder da (Design-Audit, Nutzerwahl
        "Seitentitel ueberall gleich": Dashboard und Data bekommen Titel +
        Untertitel wie alle anderen Seiten). Das hebt die Entscheidung vom
        2026-07-25 ("Mach unnoetige Ueberschriften weg") fuer DIESEN Titel auf.
-       Die Verwaltungsleiste (Widget
-       hinzufuegen + Hinweistext) ist Teil des Bearbeitungsmodus und nur
-       sichtbar, solange body.dash-edit-mode gesetzt ist - siehe
-       dashEditPressStart() weiter unten (Nutzer-Wunsch 2026-07-25: "komm
-       weg von diesem Karten Design... ich will einen Bearbeitungsmodus der
-       aktiviert wird wenn man laenger 5 Sekunden auf den Bildschirm
-       drueckt"; Halte-Zeit 2026-08-22 auf 2 Sekunden verkuerzt). -->
-  <div class="dash-kopf"><div class="pg-titel">Dashboard</div><div class="pg-sub">Your markets at a glance &middot; press and hold anywhere for 2 seconds to add, move or remove cards</div></div>
-  <div class="dash-edit-bar">
-    <span class="dash-edit-lbl">✎ Editing — press &amp; hold to exit</span>
-    <button class="btn g" onclick="addWidget()" style="font-size:var(--fs-xs);padding:4px 10px">＋ Widget</button>
-  </div>
+       Der Bearbeitungsmodus (Long-Press: Karten hinzufuegen, verschieben,
+       umbenennen, entfernen) ist seit 2026-10-07 entfernt - Nutzer: "Entfern
+       den Bearbeitungsmodus wenn ich was bearbeiten will frag ich dich". -->
+  <div class="dash-kopf"><div class="pg-titel">Dashboard</div><div class="pg-sub">Your markets at a glance</div></div>
   <div class="dash-layout" id="dashWidgets"></div>
 </div>
 

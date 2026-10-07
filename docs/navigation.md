@@ -1308,8 +1308,9 @@ Zwei Reihenfolge-Regeln:
 
 ### Bearbeitungsmodus
 
-`sbEditMode` (Boolean, bewusst **nicht** persistiert — temporärer Zustand wie der
-Dashboard-Bearbeitungsmodus, kein Nutzer-Inhalt). Ein langer Druck auf den
+`sbEditMode` (Boolean, bewusst **nicht** persistiert — temporärer Zustand, kein
+Nutzer-Inhalt; der gleich gebaute Dashboard- und Indikator-Bearbeitungsmodus
+ist seit 2026-10-07 entfernt, dieser hier bleibt). Ein langer Druck auf den
 Assets-Kopf **oder** auf ein Asset schaltet ihn ein, „Done" wieder aus. Erst dann
 erscheinen ▲▼ je Asset und je Kategorie, × bei eigenen Symbolen und „Add symbol".
 Ein Klick auf ein Asset navigiert auch im Bearbeitungsmodus ganz normal und

@@ -19524,3 +19524,132 @@ hatte. Lücke im Wächter, keine im Code: verschoben ≠ geändert. `rules.js`
 vergleicht jetzt den Funktionskörper in Basis und Arbeitsstand (egal welche
 Datei); identisch → kein Verdacht. Gegenprobe: ein zusätzliches `|mth` im
 verschobenen `periodLabel` → weiter rot.
+
+---
+
+## 2026-10-07 — VERSION-CHECK-595: Termine aus der Historie, Namen nie gekürzt, Balken wie vor 591, Bearbeitungsmodus entfernt
+
+Nutzer: *„Ja mach die Balken da wo die sie Sonst noch verändert hast wie
+davor. Bei set ups sind teilweise Asset Namen abgekürzt das darf nicht
+passieren. Frag den Rest als Frage ab“*. Antworten auf die Rückfragen:
+Set-ups-Namen endeten mit „…“; Balken „Komplett wie vor 591“; USD-Quote:
+*„Das erscheint doch fast monatlich der Kalender müsste in den 3 Monats
+Fenster das doch haben. Und sonst recherchier doch so Sachen das ist doch
+bekannt das Intervall guck dir die Historie an“*; EUR „Ja, nur Eurozone“;
+Workflow „Minute 17“; Δ-Plakette „2Y-Rendite-Differenz“; Widgets *„Entfern
+den Bearbeitungsmodus wenn ich was bearbeiten will frag ich dich“* →
+„Dashboard + Indikatoren“.
+
+### L1 Set-ups: Namen nie gekürzt
+Lokal nicht reproduzierbar (Chromium rendert mit einer schmalen Arial-
+Ersatzschrift, das iPad mit SF Pro). Nachgestellt mit einer **breiteren**
+Schrift (DejaVu Sans): 1180×820 fiel die Namensspalte auf ihre feste
+Untergrenze 72 px (68 px Inhalt), **37 von 43 Namen gekürzt**. Dieselbe
+Klasse in Performance Ranking und Correlation Check (`.perf-name`, feste
+58 px mit Ellipse). Fix an der Wurzel: Namensspalte `minmax(max-content,1fr)`,
+der Preis-Chip gibt Platz ab (Tagesänderung bricht um); `.perf-name` ohne
+Ellipse, Paarnamen brechen nur am ↔. Wächter **`check/namen.js`**: alle Tabs,
+Asset-Seite, Dashboard mit allen Kartentypen, 4 Breiten mit breiter
+Ersatzschrift + 1180 normal — 6800 Namensstellen, keine gekürzt; Gegenprobe
+(alte 72-px-Spalte) 84 Befunde.
+
+### L2 COT-/Retail-Balken komplett wie vor 591
+26 px, volle Deckkraft, keine Fuge (591: 12 px/70 %/2-px-Fuge).
+`designregeln` K5 prüft genau das.
+
+### L3 Termine aus der Historie — und was die Historie dabei aufdeckte
+Messung der Next-Spalte (138 Zeilen, 8 Währungen) vorher: 76 bestätigt /
+32 geschätzt / 30 ohne. Dabei:
+
+1. **Muster trafen fremde Releases** (bestätigter, aber falscher Termin):
+   USD NFP → „Nonfarm Productivity QoQ Prel“ (05.11. statt 06.11.), USD CB
+   Consumer Confidence → Michigan (2d statt 20d), GBP GDP q/q → „GDP 3-Month
+   Avg“ (8d statt 37d), USD Retail Sales → Control Group. Klassensuche über
+   alle Kalenderstände Juni–Oktober (Git-Historie) gegen die echten
+   Release-Tage aus `ind_data.json`: Michigan-Titel 0 von 12 Terminen auf
+   einem CB-Release-Tag, „GDP 3-Month Avg“ 1/3, JPY „Tokyo/BOJ Core CPI“ 0/6,
+   „Cleveland Fed Inflation Expectations“ 0/1, dazu NFP-Benchmark-Revisionen,
+   Continuing Claims, JOLTS Quits, HMRC Payrolls, ANZ statt Westpac (NZD),
+   „Ex-Food and Energy“ (JPY) usw. Alle in `js/event-matchers.js`
+   ausgeschlossen (Spiegel der Feed-RULES), AUD Core CPI neu als Trimmed
+   Mean. Danach: 0 falsche Treffer, alle richtigen erhalten. **Scores: 0 von
+   23 Symbolen, 0 von 115 Karten verändert** (die Werte kommen aus dem Feed).
+2. **Kalender-Workflow verlor die NFP vom 06.11. ganz:** der TradingView-
+   Schritt prüfte gegen die Dedup-Menge MIT den künftigen FXStreet-Terminen
+   des letzten Laufs → TV-Zeile „Non Farm Payrolls“ als Dopplung verworfen;
+   der FXStreet-Ersatz scheiterte dann am Produktivitäts-Release des Vortags
+   (altes NFP-Muster). Fix: `have` ohne künftige `src:"fxs"`. Wächter
+   `kalendervorschau` E (`--gegenprobe-tvdedup` rot); die alte
+   `--gegenprobe-dedup` baut jetzt den kompletten alten Zustand nach.
+3. **Gleiche Veröffentlichung (Nutzer-Kern):** eine Reihe ohne (oder mit
+   späterem) eigenen Kalendertermin übernimmt den Termin einer Reihe, mit
+   der sie nachweislich am selben Tag erscheint — höchstens 1 der letzten 6
+   eigenen Release-Tage abweichend UND ≥ 80 % der Partner-Tage im selben
+   Zeitraum auch eigene. Gemessen 6/6: USD Arbeitslosenquote = NFP =
+   Stundenlöhne, GBP PPI = CPI, CAD Core CPI = CPI, CAD Löhne = LFS; die
+   Gegenprobe EUR-Beschäftigung/GDP-Flash nur 5/7 → richtig abgelehnt.
+   Tooltip nennt Partner und Belegzahl. **Quartalsreihen** (jüngster Takt
+   ≥ 80 Tage): q/q = y/y (NZD CPI fand vorher keinen Termin); der Takt aus
+   den letzten 6 Abständen, weil der Median seit 2013 AUD CPI fälschlich für
+   quartalsweise hielt (91 statt ~30 Tage). Ergebnis: **82 bestätigt / 26
+   geschätzt / 30 ohne** (NFP 30d, GBP PPI 14d statt ~7d, CAD Core CPI 12d
+   statt ~5d, CAD Löhne 2d statt ~23d, NZD CPI 14d). Wächter `kalender` G
+   (`--gegenprobe-geschwister` rot).
+4. **Indikator-Feed verunreinigt (Werte!):** die Feed-RULES ließen die
+   NFP-Benchmark-Revision (2024-08-21 −818K, 2025-09-09 −911K, 2026-08-28
+   −79K) und S&P Globals Flash-PMI in die USD-ISM-Reihen (16 Punkte, Tag
+   20–27). Belegt im Datenverlauf: am 24.09. 08:02 stand als **Live-Wert**
+   „S&P Global Manufacturing PMI Flash 57 vs. 53,6“ (Services 58,7 vs. 56).
+   Fix: RULES (NFP ohne revision/benchmark, US-PMI nur ISM) + idempotente
+   Bereinigung `keinRelease()` bei jedem Lauf (ISM: alle 321 Punkte Tag 1–7,
+   Grenze Tag 15; NFP: Punkt ohne Prognose < 25 Tage nach dem vorigen).
+   Simuliert: 19 Punkte fallen weg, 0 Symbol-Scores verändert, 8 Karten
+   ±0,01. Wächter **`check/feedregeln.js`** (liest RULES/Bereinigung aus der
+   YAML; Gegenprobe und alter Workflow rot).
+5. **Schätzung:** Backtest auf 2121 echten Releases (89 Reihen): heutiger
+   Median-Abstand 46 % ±1 Tag / 61 % ±3 Tage; Median der letzten 6 Abstände
+   41 %/55 %; Kalendermuster (n-ter Wochentag/Werktag) 46–48 %. Kein
+   messbarer Gewinn → **unverändert**.
+6. **Nicht behoben, gemeldet:** der Trading-Economics-Pfad nimmt als
+   Release-Datum „das jüngste Datum irgendwo auf der Seite“ → wöchentliche
+   Scheinpunkte mit gleichem Wert (JPY GDP, CAD Ivey PMI, CHF Manufacturing
+   PMI) bzw. nur 1 Historienpunkt (CHF Core CPI, JPY Beschäftigung). Das
+   verzerrt den gemessenen Takt (Schätzung, Altersgrenze, Gewichtsverfall).
+
+### L4 EUR nur Eurozone — auch beim Wert
+Die Landes-Ausnahme sitzt jetzt im Muster selbst (`nurEurozone()` in
+`js/event-matchers.js`, Ifo ausgenommen): Wert, Termin, AWAITING,
+`applyResearchToCal` und Lückenfüller sehen dieselbe Regel. Scores
+unverändert (Feed-Pfad).
+
+### L5 Workflow Minute 17, Δ-Plakette = 2Y-Differenz
+Letzte 12 Läufe mit `0 * * * *`: nur 4–6 pro Tag (06.10.: 02:42, 09:34,
+16:22, 21:21 UTC), Startverzug bis 58 min → `17 * * * *`. Set-ups-Plakette:
+2Y-Rendite Basis minus Kurswährung aus `carryDetails` (28 Plaketten, 0
+Abweichungen zur Carry-Rechnung; z. B. EUR/CAD −0,14 statt +0,40 nach
+Leitzins). Die „Carry“-Kennzahl der Watchlist-Karten zeigt weiter die
+Leitzins-Differenz (beschriftet) — offen beim Nutzer.
+
+### L6 Bearbeitungsmodus Dashboard + Indikatoren entfernt
+Weg: Long-Press 2 s (Dashboard) / 5 s (Asset-Seite), Bearbeitungsleiste
+„+ Widget“, Karten-Knopfleiste (Zahnrad/▲▼/✎/×), Watchlist-×, Indikator-
+ⓘ/▲▼/×, „+ Add indicator“, Rubrik-Einklappen/Stern/▲▼/×, Zinserwartungs-
+Link im Rubrik-Kopf, Umbenennen der Kartennamen. Daten unverändert, die
+Funktionen dahinter bleiben (Änderungen auf Zuruf). Bleiben: Notiz-Ordner-
+Modus, Asset-Liste der Seitenleiste (`sbEditMode`). Wächter `designregeln` N
+(2,5 s/5,5 s Druck schalten nichts um, keine Reste; Gegenprobe rot).
+⚠ Das ⓘ jeder Indikatorzeile („What it is“ + „How it counts“, Regel
+2026-09-24) lag NUR in diesen Bearbeitungs-Knöpfen — ohne Ersatz wäre die
+Erklärung unerreichbar geworden. Sie steht jetzt lesend in der aufgeklappten
+Detail-Zeile (Klick auf die Zeile), mit eigenen Notizen, falls vorhanden;
+zugeklappt ändert sich an der Tabelle nichts. Erster Wurf schnitt die Zeilen
+rechts ab (die Zelle erbt `nowrap`) — per Screenshot gefunden, jetzt
+umbrechend und linksbündig.
+
+### Wächter-Befund am Rande
+`designregeln` M war seit seiner Einführung blind: er verglich das
+Ketten-SVG als Text mit dem `icn()`-String, der Browser serialisiert
+`<path …/>` aber als `<path …></path>` (143 gegen 155 Zeichen). Jetzt in
+derselben DOM-Serialisierung; im Normalbetrieb 0 Ketten-Symbole auf allen
+Nicht-FX-Seiten, Gegenprobe rot. `kalendervorschau` erwartete für FXStreets
+„Michigan Consumer Sentiment Index“ fälschlich den CB-Indikator — korrigiert.

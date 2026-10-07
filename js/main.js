@@ -14,7 +14,7 @@ import {scoreJournal,loadScoreJournal,jrErfassen,jrBootFertig,jrSperren,jrFreige
   jrTagesBlock,jrKopfHtml,jrBeginn,jrSeit,jrTagVon,jrUhr,jrModellText,JR_TAGE,JOURNAL_KEY} from './journal.js';
 // Kalender-Event ↔ Score-Indikator-Muster: eigene Datei ohne Browser-Bezug,
 // damit der Kalender-Workflow dieselben Muster laden kann (2026-10-06).
-import {mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,periodLabel,EU_LAND_RE,EU_NUR_NATIONAL} from './event-matchers.js';
+import {mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,periodLabel} from './event-matchers.js';
 // Namen, die js/globe.js (zirkulaerer Import, siehe dort) von hier zurueck
 // braucht - reine Export-Liste, keine erneute Deklaration.
 export {closeM,curPage,escH,getCloudCfg,globeHudLonTxt,gotoSym,icn,openM,symScoreCmp,syms,uid,
@@ -2539,8 +2539,16 @@ function findIndEvent(symId,indName){
 // nichts. Aus dem Release-Rhythmus einen Termin hochzurechnen waere geraten
 // und ist damit ausgeschlossen (CLAUDE.md Regel 4).
 const MONAT_JAHR=new Set(['M/M','Y/Y']);
-// EU_LAND_RE + EU_NUR_NATIONAL: js/event-matchers.js (auch der Kalender-Workflow nutzt sie).
-function findIndNextEvent(symId,indName){
+// Quartalsreihen (2026-10-07): bei ihnen erscheinen q/q und y/y in EINER
+// Veroeffentlichung, eine m/m-Zeile ist dort immer eine andere (Monats-)
+// Reihe. Gemessen: NZD "CPI (Headline) y/y" (Quartals-CPI, Zyklus 91 Tage)
+// fand keinen Termin, obwohl TradingView "Inflation Rate QoQ" am 21.10.
+// fuehrt - FXStreets "CPI y/y" desselben Tages verwirft der Workflow als
+// Dopplung genau dieser Zeile. Welche Reihe quartalsweise erscheint, misst
+// indNextTermin (eigener Zyklus >= 80 Tage) und reicht es hier herein.
+const QUARTAL_JAHR=new Set(['Q/Q','Y/Y']);
+function findIndNextEvent(symId,indName,opt){
+  const quartal=!!(opt&&opt.quartal);
   const{base,period}=stripPeriodSuffix(indName||'');
   const matcher=IND_EVENT_MATCHERS[base];
   if(!matcher)return null;
@@ -2551,13 +2559,10 @@ function findIndNextEvent(symId,indName){
   (calEvts||[]).forEach(ev=>{
     if(!ev||!ev.date||ev.actual)return;          // schon veroeffentlicht
     if(ev.date<today)return;
+    // EUR: nationale Vorab-Zahlen ("French Inflation Rate … Prel") schliesst
+    // seit 2026-10-07 das Muster selbst aus (nurEurozone in
+    // js/event-matchers.js) - fuer Termin UND Wert, vorher nur hier.
     if(!evtMatchesSym(ev,ccy)||!matcher(ev.name,ccy))return;
-    // EUR-Indikatoren sind Eurozonen-Aggregate. Die Muster treffen aber auch
-    // die nationalen Vorab-Zahlen, die ebenfalls unter EUR laufen - gemessen
-    // 2026-10-06: "CPI (Headline)" zeigte 24d (French/Spanish/Italian/German
-    // "Inflation Rate … Prel" am 30.10.) statt 29d (Eurozonen-Flash am 04.11.).
-    // Fuer den TERMIN deshalb ohne Landes-Praefix; Ifo gibt es nur deutsch.
-    if(ccy==='EUR'&&EU_LAND_RE.test(ev.name||'')&&!EU_NUR_NATIONAL.has(base))return;
     // m/m und y/y desselben Indikators kommen in EINER Veroeffentlichung
     // (gemessen 2026-10-06: US-PPI am 15.10. - TradingView fuehrt "PPI MoM"
     // als High und "PPI YoY" nur als Low, Low-Termine nimmt der Kalender
@@ -2566,10 +2571,117 @@ function findIndNextEvent(symId,indName){
     // sie deshalb als dasselbe Datum. q/q bleibt getrennt (AUD: monatlicher
     // CPI-Indikator und Quartals-CPI sind verschiedene Termine). Beim WERT
     // (findIndEventHistory) gilt weiter die strenge Periode.
-    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period&&!(MONAT_JAHR.has(evp)&&MONAT_JAHR.has(period)))return;}
+    if(period){const evp=periodLabel(ev.name);if(evp&&evp!==period&&!(quartal?(QUARTAL_JAHR.has(evp)&&QUARTAL_JAHR.has(period)):(MONAT_JAHR.has(evp)&&MONAT_JAHR.has(period))))return;}
     if(!best||ev.date<best.date||(ev.date===best.date&&(ev.time||'').localeCompare(best.time||'')<0))best=ev;
   });
   return best;
+}
+// ── GLEICHE VEROEFFENTLICHUNG, AUS DER HISTORIE BELEGT (2026-10-07) ─────
+// Nutzer: "Das erscheint doch fast monatlich der Kalender müsste in den 3
+// Monats Fenster das doch haben. Und sonst recherchier doch so Sachen das ist
+// doch bekannt das Intervall guck dir die Historie an" (zur US-
+// Arbeitslosenquote, die "~24d" zeigte statt des NFP-Termins).
+//
+// Viele Reihen erscheinen nicht allein, sondern in EINER Veroeffentlichung
+// mit anderen: US-Arbeitslosenquote, NFP und Stundenloehne (BLS Employment
+// Situation), GBP-PPI zusammen mit der CPI, CAD-Kernrate mit der CPI, CAD-
+// Loehne mit der Arbeitsmarkterhebung. Der Kalender fuehrt davon oft nur EINE
+// Zeile: TradingView die Nebenreihen nur als Low (nimmt der Workflow nicht
+// auf), FXStreet nur High-Termine. Gemessen an den Release-Tagen der eigenen
+// Historie (ind.chartHist, letzte 6 Termine): diese Paare decken sich 6 von
+// 6, die Gegenprobe EUR-Beschaeftigung/GDP nur 5 von 7 (die Beschaeftigung
+// kommt mit der 45-Tage-Schaetzung, nicht mit dem 30-Tage-Flash) - genau das
+// trennt die Regel:
+//   Partner B traegt den Termin von A, wenn
+//   - hoechstens einer der letzten GESCHW_K Release-Tage von A kein Tag von B
+//     ist (ein Ausreisser - etwa eine Revision in der Reihe - kippt sie nicht),
+//   - UND im selben Zeitraum mindestens GESCHW_ANTEIL der Tage von B auch
+//     Tage von A sind (sonst erscheint B haeufiger oder nur zu einem Teil
+//     der Termine - dann waere sein naechster Termin nicht der von A).
+// Es gilt dann der FRUEHESTE Kalendertermin aus A und seinen Partnern, der
+// nach A's letztem Release liegt. Das ist keine Schaetzung (CLAUDE.md Regel
+// 4): das Datum steht im Kalender, und dass A am selben Tag erscheint, belegen
+// die eigenen letzten Termine. Der Tooltip sagt beides.
+const GESCHW_K=6,GESCHW_ANTEIL=0.8;
+const _releaseTage=new WeakMap();
+function indReleaseTage(ind){
+  const h=Array.isArray(ind&&ind.chartHist)?ind.chartHist:null;
+  if(!h)return null;
+  let r=_releaseTage.get(h);
+  if(!r){
+    const arr=[...new Set(h.map(e=>e&&e[0]?String(e[0]).slice(0,10):'').filter(Boolean))].sort();
+    r={arr,set:new Set(arr)};_releaseTage.set(h,r);
+  }
+  return r;
+}
+// Die Indikatoren der WAEHRUNG (bei Gold & Co. die verknuepfte Waehrung):
+// Releases gehoeren zur Waehrung, nicht zum gespiegelten Asset.
+function indWaehrungsInds(symId){
+  const ccy=macroCcyFor(symId);
+  const s=ccy&&(syms||[]).find(x=>x.id===ccy);
+  const out=[];
+  if(s)(s.rubrics||[]).forEach(r=>(r.indicators||[]).forEach(i=>out.push(i)));
+  return out;
+}
+function indGeschwister(symId,ind){
+  const inds=indWaehrungsInds(symId);
+  const a=inds.find(i=>i.name===(ind&&ind.name))||ind;
+  const ta=indReleaseTage(a);
+  if(!ta||ta.arr.length<GESCHW_K)return[];
+  const heute=todayStr();
+  const lastA=ta.arr.filter(d=>d<=heute).slice(-GESCHW_K);
+  if(lastA.length<GESCHW_K)return[];
+  const out=[];
+  inds.forEach(b=>{
+    if(b===a||!b||b.name===a.name)return;
+    const tb=indReleaseTage(b);
+    if(!tb||tb.arr.length<GESCHW_K)return;
+    const inB=lastA.filter(d=>tb.set.has(d)).length;
+    if(inB<GESCHW_K-1)return;
+    const spanB=tb.arr.filter(d=>d>=lastA[0]&&d<=heute);
+    if(spanB.length<GESCHW_K-1)return;
+    const inA=spanB.filter(d=>ta.set.has(d)).length;
+    if(inA/spanB.length<GESCHW_ANTEIL)return;
+    out.push({ind:b,n:inB,von:GESCHW_K});
+  });
+  return out;
+}
+// Naechster Termin einer Indikatorzeile: eigener Kalendertermin oder - wenn
+// frueher - der eines belegten Partners (siehe oben). null = keiner im
+// Kalender; dann bleibt es bei der gekennzeichneten Erwartung
+// (indNextExpected) oder "–".
+// Quartalsreihe? Nach dem JUENGSTEN Takt (Median der letzten GESCHW_K
+// Abstaende), nicht nach indCycleDays: der Median ueber die ganze Historie
+// seit 2013 haelt AUD CPI fuer quartalsweise (91 Tage), dabei erscheint sie
+// seit Ende 2025 monatlich - dort waere die Quartals-CPI faelschlich als
+// derselbe Termin durchgegangen.
+function indQuartalsTakt(ind){
+  const t=indReleaseTage(ind);
+  if(!t)return false;
+  const ds=t.arr.filter(d=>d<=todayStr()).slice(-(GESCHW_K+1));
+  if(ds.length<4)return false;
+  const g=[];for(let i=1;i<ds.length;i++)g.push((Date.parse(ds[i])-Date.parse(ds[i-1]))/864e5);
+  g.sort((x,y)=>x-y);
+  return g[Math.floor(g.length/2)]>=80;
+}
+function indNextTermin(symId,ind){
+  if(!ind)return null;
+  const quelle=indWaehrungsInds(symId).find(i=>i.name===ind.name)||ind;
+  let best=findIndNextEvent(symId,ind.name,{quartal:indQuartalsTakt(quelle)});
+  let via=null;
+  const ta=indReleaseTage(quelle);
+  const letzter=ta&&ta.arr.length?ta.arr.filter(d=>d<=todayStr()).slice(-1)[0]||'':'';
+  indGeschwister(symId,ind).forEach(g=>{
+    const ev=findIndNextEvent(symId,g.ind.name,{quartal:indQuartalsTakt(g.ind)});
+    if(!ev||(letzter&&ev.date<=letzter))return;
+    if(!best||ev.date<best.date){best=ev;via=g;}
+  });
+  return best?{ev:best,via}:null;
+}
+// Tooltip-Satz fuer einen Termin aus der Partner-Reihe.
+function indNextViaText(ind,via){
+  if(!via)return'';
+  return` ${indName(ind)} comes out in the same release as ${indName(via.ind)}: ${via.n} of its last ${via.von} releases were on the same day.`;
 }
 // Ab wie vielen Tagen Restzeit die Angabe rot wird (Nutzer-Wunsch: "wenn das
 // in 7 oder weniger Tagen ist dann soll der Wert in rot stehen").
@@ -2621,7 +2733,10 @@ function indNextExpected(ind){
   return new Date(t).toISOString().slice(0,10);
 }
 function indNextReleaseCell(symId,ind){
-  const ev=findIndNextEvent(symId,ind&&ind.name);
+  // Eigener Kalendertermin ODER der einer Reihe derselben Veroeffentlichung
+  // (indNextTermin, 2026-10-07) - beides ein Datum aus dem Kalender.
+  const nt=indNextTermin(symId,ind);
+  const ev=nt&&nt.ev;
   if(ev){
     const d=daysUntil(ev.date);
     const soon=d<=IND_NEXT_SOON_D;
@@ -2629,7 +2744,7 @@ function indNextReleaseCell(symId,ind){
     // "21d" statt "in 21d". Seit 2026-09-14 kommt die Angabe aus dem
     // gemeinsamen Baustein countdownHtml(), damit "morgen" ueberall "1d"
     // heisst und "heute" ueberall dasselbe Ausrufezeichen traegt.
-    return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar)${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${countdownHtml(ev.date)}</span>`;
+    return`<span class="ir-next${soon?' soon':''}" title="Next release: ${escH(ev.name)} — ${escH(fmtDayHdr(ev.date))}${ev.time?' '+escH(ev.time):''} (confirmed date from the calendar).${escH(indNextViaText(ind,nt.via))}${soon?' · '+d+' day'+(d===1?'':'s')+' or less, therefore highlighted':''}">${countdownHtml(ev.date)}</span>`;
   }
   const exp=indNextExpected(ind);
   if(!exp)return`<span class="ir-dash" title="No scheduled release inside the calendar window, and this indicator has no measured release rhythm to expect one from — so nothing is claimed here.">–</span>`;
@@ -2647,7 +2762,8 @@ function indAsOfNextHtml(symId,ind){
   const r=(ind&&ind.research)||{};
   const ev=findIndEvent(symId,ind&&ind.name);
   const asOf=(ev&&ev.date)||r.date||'';
-  const nx=findIndNextEvent(symId,ind&&ind.name);
+  const nt=indNextTermin(symId,ind);
+  const nx=nt&&nt.ev;
   // Dieselbe Staffelung wie in der Tabelle (indNextReleaseCell): exaktes
   // Datum, sobald es im Kalender steht, davor die Erwartung aus dem
   // gemessenen Turnus - gekennzeichnet, nie als Termin ausgegeben.
@@ -2660,7 +2776,7 @@ function indAsOfNextHtml(symId,ind){
   // Heute-Ausrufezeichen). Schaetzung: Tilde-Form, aber dieselbe Schreibweise
   // der Restzeit ("~1d", nicht "~tomorrow").
   const nxHtml=datum==null?null:nx?countdownHtml(datum):escH(d<=0?'due':'~'+d+'d');
-  const nxTitle=nx?`${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''} (confirmed date from the calendar)`
+  const nxTitle=nx?`${escH(nx.name)} — ${escH(fmtDayHdr(nx.date))}${nx.time?' '+escH(nx.time):''} (confirmed date from the calendar).${escH(indNextViaText(ind,nt.via))}`
     :`Expected around ${escH(fmtDayHdr(exp||''))} — NOT a confirmed date. Derived from this indicator's own measured rhythm (every ~${Math.round(indCycleDays(ind))} days, the median of its actual gaps). As soon as the calendar carries the release (high and medium about a month ahead, high-impact up to three months), the exact date replaces this.`;
   return`<div class="px-asof"><span class="px-asof-lbl">As of</span> <b>${asOf?escH(fmtDayHdr(asOf)):'–'}</b><span class="px-asof-sep">·</span><span class="px-asof-lbl">Next</span> ${datum?`<b class="px-next${nx?'':' px-next-est'}${soon?' soon':''}" title="${nxTitle}">${nxHtml}</b>`:`<b class="px-next-none" title="No scheduled release inside the calendar window, and no measured release rhythm to expect one from — so nothing is claimed here.">not scheduled yet</b>`}</div>`;
 }
@@ -4741,8 +4857,8 @@ function resNoteAssetIds(n){
   return[...out];
 }
 // Transiente UI-Zustaende (Auf-/Zuklapp-Status pro Knoten, aktuell markiertes
-// Blatt) - bewusst NICHT persistiert, gleiches Muster wie indDetailsOpen{}/
-// dashEditMode (App-Grundsatz: reiner Navigations-/Sitzungszustand).
+// Blatt) - bewusst NICHT persistiert, gleiches Muster wie indDetailsOpen{}
+// (App-Grundsatz: reiner Navigations-/Sitzungszustand).
 let researchTreeOpen={},researchTreeSel=null;
 // Research-Terminal (Nutzer-Wunsch 2026-08-04, Referenz-Screenshots):
 // researchFocusAsset = das Asset, das die 5 Top-Karten + die Timeline-Spalte
@@ -4858,9 +4974,10 @@ function researchDelFolder(id){
   if(researchTreeSel&&doomed.has(researchTreeSel.split(':')[0]))researchTreeSel=null;
   save();rerenderNotesHost();
 }
-// 5s-Long-Press -> Bearbeitungsmodus (identisches Muster zu dashEditMode/
-// indEditMode, siehe dort) - erst im Bearbeitungsmodus erscheinen die
-// +/×-Knoepfe zum Hinzufuegen/Loeschen eigener Ordner.
+// 5s-Long-Press -> Bearbeitungsmodus - erst im Bearbeitungsmodus erscheinen
+// die +/×-Knoepfe zum Hinzufuegen/Loeschen eigener Ordner. (Der gleich
+// gebaute Modus fuer Dashboard und Indikatoren ist seit 2026-10-07 entfernt;
+// dieser hier bleibt - Nutzer-Entscheidung "Dashboard + Indikatoren".)
 let resEditMode=false,_resEditTimer=null,_resEditStart=null;
 function resEditPressStart(ev){
   if(ev.button!==undefined&&ev.button!==0)return;
@@ -10664,29 +10781,7 @@ function renderRub(rub,ri,total){
   const imp=rub.imp?' imp':'';
   return`<div class="rub-card${collapsed}${imp} ${glowClass(rub.bias)}" id="rubCard${ri}">
     <div class="rub-hdr" onpointerdown="biasPressStart(event,'rub',${ri})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Long-press to set bias">
-      <span class="ind-edit-ctrls"><button class="rub-tog" onclick="togRubCollapse(${ri})" title="Expand/collapse">▾</button></span>
-      <input class="rub-inp" value="${escH(rub.name)}" oninput="getRub(${ri}).name=this.value;saveSoon()" onchange="markUserEditTs();getRub(${ri}).name=this.value;save()" placeholder="Rubric name...">
-      <span class="ind-edit-ctrls">
-        ${rub.name==='Interest Rates'?(()=>{
-          // Ohne Quelle (CHF/NZD) KEIN Link, der ins Leere zeigt - stattdessen
-          // dasselbe Icon als Knopf, der das Hinweisfenster oeffnet. Der
-          // Langdruck zum Hinterlegen eines eigenen Links bleibt in beiden
-          // Faellen erhalten.
-          const _u=rateWatchUrl(getSym().id),_press=`onpointerdown="rwPressStart('${getSym().id}')" onpointerup="rwPressEnd()" onpointerleave="rwPressEnd()" onpointercancel="rwPressEnd()" oncontextmenu="return false"`;
-          return _u
-            ?`<a class="rate-watch" href="${safeUrl(_u)}" target="_blank" rel="noopener" title="Market rate expectations${macroCcyFor(getSym().id)==='USD'?' (CME FedWatch Tool)':''} · long-press to edit" ${_press} onclick="return rwClick(event,'${getSym().id}')">${icn('trendUp',14)}</a>`
-            :`<button class="rate-watch" title="No rate-expectations source for ${escH(macroCcyFor(getSym().id))} · long-press to store your own link" ${_press} onclick="event.stopPropagation();if(!rwClick(event,'${getSym().id}'))return false;openRateWatchFor('${getSym().id}')">${icn('trendUp',14)}</button>`;
-        })():''}
-        ${/* Verknuepft-Zeichen (Kette) bei gespiegelten Rubriken am 2026-10-06 auf
-           Nutzer-Wunsch entfernt: "bei Assets die verknuepft sind will ich das
-           du dieses verknuepft Zeichen bei den Indikatoren und sonst wo
-           weglaesst" - hier im Rubrik-Kopf und in jeder Indikatorzeile. Die
-           Regel steht weiter im Zahnrad-Menue (Linked Currency). */''}
-        <button class="rstar${rub.imp?' on':''}" onclick="togRubImp(${ri})">${icn('star',14)}</button>
-        <button class="rmv" onclick="mvRub(${ri},-1)" ${ri===0?'disabled':''}>▲</button>
-        <button class="rmv" onclick="mvRub(${ri},1)" ${ri===total-1?'disabled':''}>▼</button>
-        <button class="rdel" onclick="delRub(${ri})">×</button>
-      </span>
+      <input class="rub-inp" value="${escH(rub.name)}" readonly tabindex="-1" aria-label="Card">
       ${(()=>{const sc=rubScore(rub);return`<span class="rub-score" role="button" onclick="openScoreInfoRub('${getSym().id}','${rub.id}')" style="cursor:pointer;color:${biasCss(rub.bias)};border-color:${biasCss(rub.bias)}" title="Card score - tap to see which indicators it is made of">${sc>0?'+':''}${sc}</span>`;})()}
       <button class="rinfo" onclick="openInfoM(${ri})" title="Info">i</button>
     </div>
@@ -10721,9 +10816,9 @@ const IND_PAIR_GROUPS=[...CORE_PAIRS,['Net Bullish Positioning','Net Bearish Pos
 // "änder die Tabellen Darstellung genau wie auf dem Bild") - ersetzt die
 // vorherige Karten-pro-Indikator-Darstellung. Kopfzeile INDICATOR/ACTUAL/
 // FORECAST/PREVIOUS/TREND/SCORE, eine <tr> pro Indikator, TREND als kleine
-// Sparkline statt Text-Chip. Editier-Funktionen (Verschieben/Loeschen/
-// Info-Modal) bleiben erhalten, aber hinter dem bestehenden Bearbeitungsmodus
-// (indEditMode, 5s-Long-Press) versteckt.
+// Sparkline statt Text-Chip. Die Editier-Knoepfe (Info/Verschieben/Loeschen/
+// Hinzufuegen) lagen bis 2026-10-07 hinter einem Bearbeitungsmodus - der ist
+// auf Nutzer-Wunsch entfernt, die Knoepfe mit ihm.
 // SOURCE ist KEINE eigene Spalte mehr (Nutzer-Wunsch 2026-07-29) - stattdessen
 // klappt ein Klick auf die Zeile (toggleIndDetailRow(), nicht der Long-Press
 // fuer den Bias-Picker) eine Detail-Zeile auf: Datum des letzten Updates,
@@ -10766,11 +10861,7 @@ function renderIndsTable(rub,ri){
     <colgroup><col style="width:26%"><col style="width:16%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:15%"></colgroup>
     <thead><tr><th class="iht-name">Indicator</th><th title="Actual — the released value">Act</th><th title="Forecast — what the market expected">Fc</th><th title="Previous — the value before this release">Prev</th><th class="iht-next" title="Next — days until the next release of this indicator. Red at 7 days or less. A plain number is the confirmed date from the calendar (high and medium releases about a month ahead, high-impact up to three months). ~N is an expectation from the indicator's own release rhythm until the calendar carries the date. A dash: neither is available.">Next</th><th class="iht-trend" title="Trend — the last few readings as a sparkline">Trd</th></tr></thead>
     <tbody>${rows}</tbody>
-  </table>
-  <div class="add-row ind-edit-ctrls" style="margin-top:8px">
-    <input class="ai" id="ind-${ri}" placeholder="+ Add indicator (e.g. CPI, NFP, Net Position)..." onkeydown="if(event.key==='Enter'){addInd(${ri});event.preventDefault()}">
-    <button class="add-btn" style="background:rgba(var(--blue-rgb),.08);border-color:rgba(var(--blue-rgb),.27);color:var(--blue);border:1px solid" onclick="addInd(${ri})">＋</button>
-  </div>`;
+  </table>`;
 }
 // Actual/Forecast/Previous/Quelle-Herleitung ist 1:1 aus der vorherigen
 // renderInd() uebernommen (ev-Kalenderpfad vs. ind.research-Feedpfad, inkl.
@@ -10848,12 +10939,6 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
   const pairCls=pairPos?` ind-pair-row ind-pair-${pairPos}`:'';
   const mainRow=`<tr class="ind-row ${glowClass(ind.bias)}${stale?' ind-stale':''}${pairCls}" data-indbase="${escH(stripPeriodSuffix(ind.name).base)}" data-indid="${escH(ind.id)}" onclick="toggleIndDetailRow(event,'${escH(ind.id)}')" onpointerdown="biasPressStart(event,'ind',${ri},${ii})" onpointerup="biasPressEnd()" onpointerleave="biasPressEnd()" onpointercancel="biasPressEnd()" oncontextmenu="return false" title="Tap to expand · long-press to set bias">
     <td class="ir-name"><span class="ir-name-txt" title="${escH(indName(ind))}">${escH(indName(ind))}</span>${staleBadge}${awaitBadge}
-      <span class="ind-edit-ctrls">
-        <button class="rinfo" onclick="event.stopPropagation();openInfoM(${ri},${ii})" title="Info">i</button>
-        <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},-1)" ${ii===0?'disabled':''}>▲</button>
-        <button class="imv" onclick="event.stopPropagation();mvInd(${ri},${ii},1)" ${ii===total-1?'disabled':''}>▼</button>
-        <button class="idel2" onclick="event.stopPropagation();delInd(${ri},${ii})">×</button>
-      </span>
     </td>
     <td class="ir-act${actCls?' '+actCls:''}" title="${escH(actTxt)}">${escH(actTxt)}</td>
     <td class="ir-fc" title="${escH(fcTxt)}">${escH(fcTxt)}</td>
@@ -10861,13 +10946,25 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     <td class="ir-nextc">${indNextReleaseCell(getSym().id,ind)}</td>
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
-  if(!detailBody)return mainRow;
+  // Was der Indikator ist und wie er zaehlt: bis 2026-10-07 nur ueber das ⓘ
+  // der Indikatorzeile - und das lag im Bearbeitungsmodus, der auf Nutzer-
+  // Wunsch entfernt ist. Die Regel vom 2026-09-24 ("ueberall ein kleines i,
+  // in dem ganz genau steht, wie sich das zusammensetzt") gilt weiter: die
+  // Erklaerung steht deshalb lesend in der aufgeklappten Detail-Zeile.
+  const erkl=(()=>{
+    const std=IND_INFO_DEFAULTS[stripPeriodSuffix(ind.name).base];
+    let z=null;try{z=indZaehlText(getSym(),rub,ind);}catch(e){z=null;}
+    return(std?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">What it is:</span> ${escH(std)}</div>`:'')
+      +(z?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">How it counts:</span> ${escH(z)}</div>`:'')
+      +(ind.info?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">Your notes:</span> ${escH(ind.info)}</div>`:'');
+  })();
+  if(!detailBody&&!erkl)return mainRow;
   // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
   // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
   // Seit 2026-09-27 klein in der Legendenzeile des Charts (Nutzer: "Compare
   // Button muss kleiner in gleiche Zeile wie actual und forecast") statt als
   // eigene Zeile darueber - siehe indAssetChartOpts().
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${erkl}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -13622,20 +13719,21 @@ function renderPairsRoh(){
   if(setupFxOnly)shown=shown.filter(it=>it.kind==='pair'&&isPureFxPair(it.name));
   if(setupNonFxOnly)shown=shown.filter(it=>it.kind==='asset'||(it.kind==='pair'&&!isPureFxPair(it.name)));
   if(setupYieldsOnly)shown=shown.filter(it=>it.kind==='asset'&&assetCls(it.id)==='yield');
-  // Zins-Differenz je FX-Paar: Leitzins Basis minus Kurswaehrung (Anzeige).
+  // Zins-Differenz je FX-Paar: 2-jaehrige Rendite Basis minus Kurswaehrung.
   // Positiv = Carry beguenstigt die Long-Seite des Paars.
-  // ⚠ Der Carry IM Score (pairCarryAdj) rechnet seit 2026-09-24 mit den
-  // 2-jaehrigen Renditen im Verhaeltnis zur Schwankung (carryDetails) - der
-  // Knopf oeffnet genau diese Rechnung (openCarryDetail). Die Zahl auf dem
-  // Knopf ist also NICHT die Score-Grundlage (AUD/JPY 2026-10-05: Leitzinsen
-  // +3,35, 2Y +3,01). Welche Zahl hier stehen soll, ist beim Nutzer offen.
+  // ⚠ Bis 2026-10-07 stand hier die LEITZINS-Differenz, waehrend der Carry im
+  // Score (pairCarryAdj) seit 2026-09-24 mit den 2-jaehrigen Renditen rechnet
+  // (carryDetails) - der Knopf oeffnete also eine Rechnung mit einer anderen
+  // Zahl als der auf ihm (AUD/JPY 2026-10-05: Leitzinsen +3,35, 2Y +3,01).
+  // Nutzer-Entscheidung auf Rueckfrage: "2Y-Rendite-Differenz". Fehlt eine der
+  // beiden Renditen, steht kein Knopf da (nichts schaetzen, Regel 4).
   const rateDiff=name=>{
     const parts=name.split('/');
     if(parts.length!==2||!FX.includes(parts[0])||!FX.includes(parts[1]))return'';
-    const rb=rateInfo(parts[0]),rq=rateInfo(parts[1]);
-    if(!rb||!rq)return'';
-    const d=Math.round((rb.rate-rq.rate)*100)/100;
-    return`<button class="rate-diff${d>0?' pos':d<0?' neg':''}" onclick="openCarryDetail('${escH(name)}')" title="Click for the carry breakdown">Δ${d>0?'+':''}${d}%</button>`;
+    const c=carryDetails(name);
+    if(!c||c.diff==null||!isFinite(c.diff))return'';
+    const d=c.diff;
+    return`<button class="rate-diff${d>0?' pos':d<0?' neg':''}" onclick="openCarryDetail('${escH(name)}')" title="2-year yield differential, ${escH(parts[0])} minus ${escH(parts[1])} — the basis of the carry in the score. Click for the carry breakdown">Δ${d>0?'+':''}${d}%</button>`;
   };
   // Jede Zeile hat IMMER exakt 5 Zellen (Name/Chip/Δ/Score/★): das Subgrid
   // ordnet Kinder nach Spalten-INDEX zu - fehlt bei Non-FX-Assets das
@@ -15462,59 +15560,16 @@ function dashMajorsHtml(){
   // vom 2026-07-27 auf, das "MAJORS"-Label nur im Bearbeitungsmodus zu zeigen).
   return`<div class="dw-hdr dash-majors-hd"><div class="dw-t"><span class="dw-t-txt">Majors</span>${abInfoBtn('Majors',['The eight major currencies ranked by their score, strongest first.','Tap a row to open the currency.'],'rinfo')}</div></div>${rows}<div class="dash-majors-viewall" onclick="showTab('cur',null,'fx')"><span>View all pairs</span></div>`;
 }
-// Bearbeitungsmodus per Long-Press (2s, Nutzer-Wunsch 2026-08-22, urspruenglich
-// 5s - Nutzer-Wunsch 2026-07-25): "komm weg
-// von diesem Karten Design wo oben rechts immer die hoch runter Pfeile und
-// das x steht... ich will einen Bearbeitungsmodus der aktiviert wird wenn
-// man laenger 5 Sekunden auf den Bildschirm drueckt. Dann duerfen diese
-// Funktionen erscheinen sonst nicht." Rein CSS-getrieben ueber
-// body.dash-edit-mode (siehe .dw-btns/.dash-edit-bar) - kein renderDash()
-// beim Umschalten noetig, dadurch kein Scroll-Sprung/Flackern. Einheitliche
-// Geste fuer Maus UND Touch (Pointer Events), bricht ab, wenn sich der
-// Zeiger mehr als 14px bewegt (Scroll/Drag) oder losgelassen wird - dieselbe
-// Bewegungs-Toleranz wie die bestehenden Long-Press-Muster im Projekt
-// (rwPressStart/ilPressStart/biasPressStart).
-let dashEditMode=false,_dashEditTimer=null,_dashEditStart=null;
-function dashEditPressStart(ev){
-  if(ev.button!==undefined&&ev.button!==0)return;
-  if(_dashEditTimer)clearTimeout(_dashEditTimer);
-  _dashEditStart={x:ev.clientX,y:ev.clientY};
-  _dashEditTimer=setTimeout(()=>{_dashEditTimer=null;toggleDashEditMode();},2000);
-}
-function dashEditPressMove(ev){
-  if(!_dashEditTimer||!_dashEditStart)return;
-  if(Math.abs(ev.clientX-_dashEditStart.x)>14||Math.abs(ev.clientY-_dashEditStart.y)>14){clearTimeout(_dashEditTimer);_dashEditTimer=null;}
-}
-function dashEditPressEnd(){if(_dashEditTimer){clearTimeout(_dashEditTimer);_dashEditTimer=null;}}
-function toggleDashEditMode(){
-  dashEditMode=!dashEditMode;
-  document.body.classList.toggle('dash-edit-mode',dashEditMode);
-  if(navigator.vibrate)try{navigator.vibrate(dashEditMode?[25,35,25]:20);}catch(e){}
-}
-// Gleiches Long-Press-Muster fuer die Indikator-Tabelle auf FX/Non-FX-
-// Detailseiten (tech-design-Skill 2026-07-28, Nutzer-Wunsch): Verschieben/
-// Loeschen einer Indikator-Zeile ist nur im Bearbeitungsmodus sichtbar,
-// Bias-Long-Press und der (i)-Info-Button bleiben davon unberuehrt. Eigener
-// 5s-Timer, bewusst unveraendert - der 2026-08-22-Wunsch bezog sich nur auf
-// den Dashboard-Bearbeitungsmodus direkt darueber.
-let indEditMode=false,_indEditTimer=null,_indEditStart=null;
-function indEditPressStart(ev){
-  if(ev.button!==undefined&&ev.button!==0)return;
-  if(ev.target.closest('button,input,textarea,select,a,.trend-chip'))return;
-  if(_indEditTimer)clearTimeout(_indEditTimer);
-  _indEditStart={x:ev.clientX,y:ev.clientY};
-  _indEditTimer=setTimeout(()=>{_indEditTimer=null;toggleIndEditMode();},5000);
-}
-function indEditPressMove(ev){
-  if(!_indEditTimer||!_indEditStart)return;
-  if(Math.abs(ev.clientX-_indEditStart.x)>14||Math.abs(ev.clientY-_indEditStart.y)>14){clearTimeout(_indEditTimer);_indEditTimer=null;}
-}
-function indEditPressEnd(){if(_indEditTimer){clearTimeout(_indEditTimer);_indEditTimer=null;}}
-function toggleIndEditMode(){
-  indEditMode=!indEditMode;
-  document.body.classList.toggle('ind-edit-mode',indEditMode);
-  if(navigator.vibrate)try{navigator.vibrate(indEditMode?[25,35,25]:20);}catch(e){}
-}
+// Bearbeitungsmodus fuer Dashboard und Indikatoren: seit 2026-10-07 entfernt
+// (Nutzer: "Entfern den Bearbeitungsmodus wenn ich was bearbeiten will frag
+// ich dich", per Rueckfrage "Dashboard + Indikatoren"). Vorher: Long-Press
+// 2 s auf dem Dashboard (Karten hinzufuegen/verschieben/umbenennen/entfernen,
+// Watchlist-x) und 5 s auf der Asset-Seite (Indikator-Info/Verschieben/
+// Loeschen/Hinzufuegen, Karten-Stern/Verschieben/Loeschen/Einklappen,
+// Kartennamen umbenennen). Die Daten bleiben unveraendert; die Funktionen
+// dahinter (addWidget, mvWidget, renameWidget, delWidget, addInd, mvInd,
+// delInd, mvRub, delRub, togRubImp ...) bleiben bestehen, nur ohne Knopf.
+// Der Bearbeitungsmodus der Notiz-Ordner (resEditMode) bleibt.
 // "Global Market Surveillance"-Radial-Layout (Nutzer-Wunsch 2026-07-27):
 // Globus allein im Zentrum, ringsum Karten in vier Zonen (oben/unten breit,
 // links/rechts hoch). Jeder Widget-TYP hat eine feste Standard-Zone -
@@ -15697,7 +15752,7 @@ function carryRankingHtml(){
   const row=r=>{
     const col=r.diff>0?BC.bull:r.diff<0?BC.bear:'var(--t3)';
     return`<div class="perf-row" title="${escH(r.name)}: 2Y ${r.rb.toFixed(2)}% − ${r.rq.toFixed(2)}%${r.ratio!=null?' · carry-to-risk '+r.ratio.toFixed(2):''} · score effect ${r.adj>0?'+':''}${r.adj}">
-      <span class="perf-name" style="flex:0 0 84px">${escH(r.name)}</span>
+      <span class="perf-name" style="min-width:84px">${escH(r.name)}</span>
       <span class="perf-barwrap"><span class="perf-bar" style="width:${(Math.abs(r.diff)/max*100).toFixed(1)}%;background:${col}"></span></span>
       <span class="perf-pct" style="color:${col}">${r.diff>0?'+':''}${r.diff.toFixed(2)}%</span>
     </div>`;};
@@ -15776,7 +15831,7 @@ function corrWarnHtml(){
   const rows=ps.slice().sort((a,b)=>Math.abs(b.r)-Math.abs(a.r)).slice(0,fallback?7:5).map(p=>{
     const c=Math.abs(p.r)>=0.7?BC.bear:Math.abs(p.r)>=0.45?'var(--amber)':'var(--t2)';
     return`<div class="perf-row" title="${p.n} common days">
-      <span class="perf-name" style="flex:1">${escH(p.a)} <span style="color:var(--t3)">↔</span> ${escH(p.b)}</span>
+      <span class="perf-name perf-paar"><span class="nw">${escH(p.a)}</span> <span style="color:var(--t3)">↔</span> <span class="nw">${escH(p.b)}</span></span>
       <span class="perf-pct" style="color:${c}">${p.r>0?'+':''}${p.r.toFixed(2)}</span>
     </div>`;}).join('');
   // Erklaerung hinter das ⓘ (Dauerregel 2026-09-18). Die Statuszeile `msg`
@@ -15915,7 +15970,7 @@ function esiCardHtml(){
     // tun, als waere die Zahl gleich belastbar).
     const duenn=r.n<ESI_THIN_N;
     return`<div class="perf-row${duenn?' esi-thin':''}" onclick="gotoSym('${escJH(r.c)}')" title="${r.n} indicators with usable forecast history · newest ${escH(r.newest)}${duenn?` · thin basis: fewer than ${ESI_THIN_N} indicators, read with care`:''}">
-      <span class="perf-name" style="flex:0 0 62px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
+      <span class="perf-name" style="min-width:62px">${escH(r.c)}${duenn?`<span class="esi-thin-mark" title="Only ${r.n} indicators with usable forecast history">·${r.n}</span>`:''}</span>
       <span class="perf-barwrap esi-wrap"><span class="esi-zero"></span><span class="perf-bar esi-bar" style="left:${r.val>=0?50:50-Math.abs(r.val)/max*50}%;width:${(Math.abs(r.val)/max*50).toFixed(1)}%;background:${col}"></span></span>
       ${esiSpark(esiSeries(r.c),col)}
       <span class="perf-pct" style="color:${col}">${r.val>0?'+':''}${r.val.toFixed(2)}</span>
@@ -15955,24 +16010,13 @@ function renderDash(){
   // Radial-Layout (Nutzer-Wunsch 2026-07-27): Widgets werden nicht mehr in
   // EINEN 12-Spalten-Grid gemappt, sondern nach ZONE_OF_TYPE in 5 Zonen
   // einsortiert (oben/links/zentrum/rechts/unten) - siehe dash-zone-*-CSS
-  // und dashZoneOf() oben. wi/mates.length fuer die Rauf/Runter-Buttons
-  // sind jetzt zonen-relativ (mvWidget() verschiebt ebenfalls nur innerhalb
-  // der eigenen Zone), nicht mehr global.
-  const zoneMates={};
-  ['top','left','center','right','right2','bottom'].forEach(z=>{zoneMates[z]=sorted.filter(w=>dashZoneOf(w.type)===z);});
+  // und dashZoneOf() oben. (Die zonen-relativen Rauf/Runter-Knoepfe gingen
+  // 2026-10-07 mit dem Bearbeitungsmodus; mvWidget() verschiebt weiterhin
+  // nur innerhalb der eigenen Zone.)
   const zones={left:[],center:[],right:[],right2:[],bottom:[]};
   sorted.forEach((w)=>{
     let content='';_dwErkl=[];
     const zone=dashZoneOf(w.type);
-    const mates=zoneMates[zone];
-    const wi=mates.indexOf(w);
-    const btnsHtml=`<div class="dw-btns">
-      ${w.type==='ccy_ranking'?`<button class="btn dw-nav" onclick="openCcyCfgM('${w.id}')" title="Choose assets (max 9)">${icn('gear',12)}</button>`:''}
-      <button class="btn dw-nav" onclick="mvWidget('${w.id}',-1)" ${wi===0?'disabled':''} title="Move up">▲</button>
-      <button class="btn dw-nav" onclick="mvWidget('${w.id}',1)" ${wi===mates.length-1?'disabled':''} title="Move down">▼</button>
-      <button class="btn dw-nav" onclick="renameWidget('${w.id}')" title="Rename">✎</button>
-      <button class="btn r dw-nav" onclick="delWidget('${w.id}')" title="Remove">×</button>
-    </div>`;
     if(w.type==='vol_leaders'){
       // 20-Tage realisierte Volatilitaet (annualisiert) - dieselbe Formel wie
       // die Matrix-Tab-Diagonale (renderCorrCard), hier als eigenstaendiges
@@ -16062,7 +16106,6 @@ function renderDash(){
           <span class="wl-name">${escH(p.name)}</span>
           ${wlChg(tickerInfoForItem('pair',p.name))}
           ${rowScore(pairScore(p.name),'Paar-Score',null,`openScoreInfoPair('${escJH(p.name)}')`)}
-          <button onclick="event.stopPropagation();delPair('${p.id}');renderDash()" class="dw-del" title="Remove from the watchlist">×</button>
         </div>`;
       };
       // Non-FX-"Paare" in der Watchlist (z.B. "XAU/USD") zeigen sich als das
@@ -16082,7 +16125,6 @@ function renderDash(){
           <span class="wl-name">${escH(nm)}</span>
           ${wlChg(chg)}
           ${rowScore(score,sym?'Symbol-Score':'Paar-Score',null,oc)}
-          <button onclick="event.stopPropagation();delPair('${p.id}');renderDash()" class="dw-del" title="Remove from the watchlist">×</button>
         </div>`;
       };
       // Nach Score absteigend (Nutzer-Wunsch 2026-08-12) - dieselbe Groesse,
@@ -16292,7 +16334,6 @@ function renderDash(){
         <div class="dw-t"><span class="dw-t-txt">${escH(w.title||w.type)}</span>${abInfoBtn(w.title||w.type,(wt&&wt.sub?[escH(wt.sub)]:[]).concat(_dwErkl),'rinfo')}</div>
         ${w.type==='mini_calendar'?`<span class="dw-hdlink" onclick="showTab('cal')">View Calendar</span>`:''}
         ${w.type==='notification'?`<span class="dw-hdlink" onclick="window.open('https://www.forexfactory.com/calendar','_blank','noopener')">View FF</span>`:''}
-        ${btnsHtml}
       </div>`;
     // .dw-body umschliesst den reinen Inhalt (alles ausser dem Kartenkopf) -
     // einheitlicher Ankerpunkt fuer JEDEN Widget-Typ, damit die letzte Karte
@@ -23862,8 +23903,6 @@ function showTab(tab,btn,fxMode){
   // Bearbeitungsmodus ist eine rein temporaere Dashboard-Sitzung - beim
   // Verlassen des Tabs automatisch wieder aus, statt ihn "vergessen"
   // aktiv zu lassen (die Steuerbuttons existieren ohnehin nur dort).
-  if(tab!=='dash'&&dashEditMode){dashEditMode=false;document.body.classList.remove('dash-edit-mode');}
-  if(tab!=='cur'&&indEditMode){indEditMode=false;document.body.classList.remove('ind-edit-mode');}
   if(tab!=='notes'&&resEditMode){resEditMode=false;document.body.classList.remove('res-edit-mode');}
   // Rotes "Back"-Symbol (Research-Terminal-Shortcut, siehe researchShortcutGo)
   // verschwindet automatisch, sobald der Nutzer tatsaechlich zurueck im
@@ -25399,8 +25438,8 @@ Object.assign(window,{
   resRemovePlace,resFillPlaceFolderSelect,resFillNoteModal,saveResNote,delResNote,W_TYPES,staleNotifyHtml,
   awaitingNotifyHtml,dataFeedStaleNotifyHtml,cotNotifyHtml,cloudNotConnectedNoticeHtml,renderCotNotify,
   AURORA_NEU,updateAuroraColors,startLiveClock,startHdrLiveClock,symDataQuality,symSourceLabel,
-  detailMetaHtml,dashMajorsHtml,dashEditPressStart,dashEditPressMove,dashEditPressEnd,toggleDashEditMode,
-  indEditPressStart,indEditPressMove,indEditPressEnd,toggleIndEditMode,ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
+  detailMetaHtml,dashMajorsHtml,
+  ZONE_OF_TYPE,dashZoneOf,mvWidget,PERF_WINDOWS,
   setPerfWindow,perfReturn,perfRankingHtml,carryRankingHtml,CORR_MIN_DAYS,CORR_FALLBACK_PAIRS,watchlistCorrPairs,
   corrWarnHtml,ESI_HALFLIFE_D,ESI_THIN_N,esiForCcy,ESI_SERIE_TAGE,esiSeries,esiSpark,esiCardHtml,renderDash,
   DASH_COL_MIN_H,DASH_SHRINK_MIN_H,equalizeDashColumns,scrollCalsToNow,delWidget,renameWidget,confirmRename,addWidget,
@@ -25424,6 +25463,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
+  indNextTermin,indGeschwister,indReleaseTage,indQuartalsTakt,GESCHW_K,GESCHW_ANTEIL,
   saveQuotaFail,saveQuotaOk,saveQuotaKB,storageRows,openStorageInfo,clearStorageItem,
   schreibeSnapshot,istQuotaFehler,saveQuotaRettung,SNAP_ENTBEHRLICH,
   seedNoteId,setSeedNoteFlag,migrateSeedNotesOut,researchForSnap,applySeedNoteFlags,
@@ -25601,10 +25641,8 @@ Object.defineProperty(window,'_resBias',{get:()=>_resBias,set:v=>{_resBias=v;},c
 Object.defineProperty(window,'_resFids',{get:()=>_resFids,set:v=>{_resFids=v;},configurable:true});
 Object.defineProperty(window,'_liveClockInt',{get:()=>_liveClockInt,set:v=>{_liveClockInt=v;},configurable:true});
 Object.defineProperty(window,'_lastFeedTs',{get:()=>_lastFeedTs,set:v=>{_lastFeedTs=v;},configurable:true});
-Object.defineProperty(window,'dashEditMode',{get:()=>dashEditMode,set:v=>{dashEditMode=v;},configurable:true});
 Object.defineProperty(window,'_dashEditTimer',{get:()=>_dashEditTimer,set:v=>{_dashEditTimer=v;},configurable:true});
 Object.defineProperty(window,'_dashEditStart',{get:()=>_dashEditStart,set:v=>{_dashEditStart=v;},configurable:true});
-Object.defineProperty(window,'indEditMode',{get:()=>indEditMode,set:v=>{indEditMode=v;},configurable:true});
 Object.defineProperty(window,'_indEditTimer',{get:()=>_indEditTimer,set:v=>{_indEditTimer=v;},configurable:true});
 Object.defineProperty(window,'_indEditStart',{get:()=>_indEditStart,set:v=>{_indEditStart=v;},configurable:true});
 Object.defineProperty(window,'perfWindow',{get:()=>perfWindow,set:v=>{perfWindow=v;},configurable:true});

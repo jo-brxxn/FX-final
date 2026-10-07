@@ -44,10 +44,13 @@ function mkCcyIndMatcher(overrides,fallback){
 // bei CHF, wo die Schweiz (BFS) den Detailhandelsumsatz nur als y/y meldet
 // (keine m/m-Reihe existiert). Gemeinsam von IND_EVENT_MATCHERS (Live-Bias-
 // Sync) und CAL_RESEARCH_MATCHERS (Seed-Daten-Matching) genutzt.
+// ⚠ 2026-10-07: "Control Group", "Ex Gas/Autos", "ex Fuel" sind Teilreihen
+// desselben Releases mit eigenem Wert - derselbe Ausschluss wie im
+// Indikator-Feed (update-ff-calendar.yml, RULES "Retail Sales").
 function RETAIL_SALES_MATCHER(name,ccy){
   const n=(name||'').toLowerCase();
   if(!/retail sales/.test(n))return false;
-  if(/core|inventories|ex auto/.test(n))return false;
+  if(/core|inventories|ex auto|control|\bex[\s-]|ex fuel/.test(n))return false;
   if(ccy==='CHF')return true;
   return !/y\/y|yoy/.test(n);
 }
@@ -58,30 +61,47 @@ const IND_EVENT_MATCHERS={
   // (Core/Common/Median/Trimmed/Super, PPI/PCE, Inflationserwartungen, BoJ/
   // Tokyo, Services) werden ausgeschlossen, damit wirklich der Headline-Wert
   // gezogen wird und nicht versehentlich ein Kernmass.
-  'CPI (Headline)':mkIndMatcher([/\bcpi\b/,/inflation rate/],[/core/,/common/,/median/,/trimmed/,/super/,/\bppi\b/,/\bpce\b/,/expectation/,/\bboj\b/,/tokyo/,/services/,/\bsppi\b/,/wage/,/rent/]),
-  // Kern-/Core-Inflation: "Core CPI", "Core Inflation Rate", BoJ/Tokyo Core CPI.
+  // "\bex[\s-]": JPY "Inflation Rate Ex-Food and Energy" ist ein Kernmass,
+  // keine Headline (dieselbe Ausschlussregel wie EXCORE im Indikator-Feed).
+  'CPI (Headline)':mkIndMatcher([/\bcpi\b/,/inflation rate/],[/core/,/common/,/median/,/trimmed/,/super/,/\bppi\b/,/\bpce\b/,/expectation/,/\bboj\b/,/tokyo/,/services/,/\bsppi\b/,/wage/,/rent/,/\bex[\s-]/]),
+  // Kern-/Core-Inflation: "Core CPI", "Core Inflation Rate".
   // CAD: bewusst die BoC-Kennzahl "CPI-Median" statt der StatCan "Core
   // Inflation Rate" (CPIX) - nur die BoC-Masse liefern im Kalender einen
   // vollstaendigen Datensatz inkl. Forecast, sodass Actual/Forecast/Previous
   // alle drei aus dem Kalender kommen (CPIX hat dort keinen Forecast).
+  // ⚠ JPY seit 2026-10-07 nur die LANDESWEITE Kernrate: der Indikator-Feed
+  // fuehrt "National Core CPI" (Termine 21.05./18.06./23.07./20.08./17.09.),
+  // das Muster traf aber auch "Tokyo Core CPI" (Monatsende) und die BoJ-
+  // Kennzahl "BOJ Core CPI" (rund eine Woche spaeter) - an allen 6 gemessenen
+  // Terminen dieser beiden lag kein Release der Reihe. Die Next-Spalte haette
+  // nach jeder Landes-CPI den Tokioter Termin als bestaetigt gezeigt.
+  // AUD: der Feed misst den Trimmed Mean (Trading Economics "Core CPI");
+  // FXStreet fuehrt genau diese Reihe als "Trimmed Mean CPI (YoY)".
   'Core CPI':mkCcyIndMatcher(
-    {CAD:/median cpi/},
-    [/core cpi/,/core inflation rate/,/super core/,/\bboj core cpi\b/,/tokyo core cpi/]
+    {CAD:/median cpi/,JPY:/^(national )?core (cpi|inflation rate)\b/,AUD:/trimmed mean cpi|core inflation rate/},
+    [/core cpi/,/core inflation rate/,/super core/]
   ),
-  'PPI':mkIndMatcher([/\bppi\b/,/producer price/],[/core/,/services/,/import/,/export/]),
+  'PPI':mkIndMatcher([/\bppi\b/,/producer price/],[/core/,/services/,/import/,/export/,/input/,/\bex[\s-]/,/\btrade\b/]),
   'Core PPI':mkIndMatcher([/core ppi/,/core producer price/]),
   'PCE':mkIndMatcher([/\bpce\b/],[/core/]),
   'Core PCE':mkIndMatcher([/core pce/]),
   // Services-Inflation = Dienstleistungs-ERZEUGERPREISE (JPY: SPPI / Corporate
   // Services Price Index) - bewusst NICHT der Services-PMI.
   'Services Inflation':mkIndMatcher([/\bsppi\b/,/corporate services price/,/services producer price/]),
-  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/,/claimant count/]),
+  'Unemployment Claims':mkIndMatcher([/unemployment claims/,/jobless claims/,/claimant count/],[/continuing/,/4-week|average/]),
   // NFP / Beschaeftigungsaenderung: "Non Farm" MIT Leerzeichen korrekt erfassen
   // ("non-?farm" verfehlte das); Unemployment-/ADP-/Teilzeit-Varianten raus.
-  'NFP / Employment Change':mkIndMatcher([/non[\s-]?farm/,/\bnfp\b/,/\bemployment change\b/,/payrolls/,/net employment/,/employment level/],[/adp/,/unemployment/,/full[\s-]?time/,/part[\s-]?time/,/change in/]),
+  // ⚠ 2026-10-07: "non farm" traf auch "Nonfarm Productivity QoQ Prel" - die
+  // Next-Spalte zeigte NFP deshalb als BESTAETIGTEN Termin am 05.11. (der
+  // Produktivitaets-Release) statt am 06.11. Ebenso die jaehrliche Benchmark-
+  // Revision ("Non Farm Payrolls Annual Revision Prel" / "Prelim Benchmark
+  // Payrolls Revision", 28.08.: -911K Vorwert) und Teilreihen desselben
+  // Releases mit eigenem Wert (Private/Manufacturing/Government Payrolls,
+  // GBP "HMRC Payrolls Change").
+  'NFP / Employment Change':mkIndMatcher([/non[\s-]?farm/,/\bnfp\b/,/\bemployment change\b/,/payrolls/,/net employment/,/employment level/],[/adp/,/unemployment/,/full[\s-]?time/,/part[\s-]?time/,/change in/,/productivity/,/revision/,/benchmark/,/private/,/manufacturing payrolls/,/government payrolls/,/hmrc/]),
   'Unemployment Rate':mkIndMatcher([/unemployment rate/]),
   'ADP Employment':mkIndMatcher([/\badp\b/],[/weekly/]),
-  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/,/job vacanc/]),
+  'JOLTS Job Openings':mkIndMatcher([/jolts/,/job openings/,/job vacanc/],[/quits/]),
   // Lohnwachstum heisst in JEDEM Land anders - das Muster kannte bisher aber
   // faktisch nur die US-Reihe. Ergebnis (2026-08-08 an den echten
   // Kalendertiteln geprueft): GBP "Average Earnings incl. Bonus (3Mo/Yr)" und
@@ -101,7 +121,11 @@ const IND_EVENT_MATCHERS={
   // mit PRAEZISEN, ggf. waehrungsspezifischen Mustern, damit nicht ein falscher
   // Sub-Indikator erwischt wird (z.B. "GDP Price Index" statt GDP-Wachstum oder
   // eine nationale Teil-PMI statt der Eurozone-Aggregat-PMI).
-  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/,/\bmom\b/,/m\/m/]),
+  // ⚠ 2026-10-07: GBP "GDP 3-Month Avg" (monatlich, rollierend) ist nicht
+  // die Quartalsreihe - 2 von 3 gemessenen Terminen lagen auf keinem
+  // Release-Tag des Feeds. Ebenso Schaetzer/Teilgroessen (NIESR-Tracker,
+  // US "GDP Sales").
+  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/],[/price index/,/deflator/,/yoy/,/y\/y/,/\bmom\b/,/m\/m/,/3-month/,/niesr/,/tracker/,/sales/]),
   // Retail Sales: ueberall der m/m-Wert (monatliche Aenderung), NICHT y/y -
   // sonst wuerde bei Waehrungen, die im Kalender BEIDE Varianten melden, die
   // falsche (y/y) gezogen. Einzige Ausnahme: Schweiz (BFS) veroeffentlicht
@@ -130,8 +154,19 @@ const IND_EVENT_MATCHERS={
     {USD:/ism (services|non-?manufacturing) pmi/,EUR:/^(flash |final |s&p global |hcob )*services pmi( flash| final)?$/,CAD:/ivey/},
     [/services pmi/,/non-?manufacturing pmi/]
   ),
+  // ⚠ USD seit 2026-10-07 nur die Conference-Board-Reihe: der Indikator-Feed
+  // fuehrt sie ausdruecklich (RULES "Consumer Confidence": nicht Michigan),
+  // das breite Muster traf aber auch die fuenf Michigan-Titel ("Michigan
+  // Consumer Sentiment Prel/Final", "Prelim/Revised UoM Consumer Sentiment",
+  // FXStreet "UoM Consumer Sentiment") - 0 von 12 gemessenen Michigan-
+  // Terminen lagen auf einem Release-Tag der Reihe. Die Next-Spalte zeigte
+  // deshalb "2d" (Michigan am 09.10.) statt des CB-Termins.
+  // AUD/NZD: die Westpac-Reihe wie im Feed (nicht ANZ-Roy Morgan); AUD ohne
+  // die "Change"-Zeile, die TradingView zum selben Termin fuehrt (Prozent-
+  // aenderung statt Indexstand).
   'Consumer Confidence':mkCcyIndMatcher(
-    {EUR:/^consumer confidence(\s+flash)?$/},
+    {EUR:/^consumer confidence(\s+flash)?$/,USD:/^(cb )?consumer confidence$|conference board/,
+     AUD:/^westpac consumer (confidence|sentiment)( index)?$/,NZD:/westpac/},
     [/consumer confidence/,/consumer sentiment/,/consumer climate/]
   ),
   // Umfragen (2026-08-20). ZEW fuehrt der Kalender doppelt - als Eurozone-
@@ -140,16 +175,38 @@ const IND_EVENT_MATCHERS={
   // deutsch, das ist die Natur der Reihe.
   'ZEW Economic Sentiment':(n,c)=>c==='EUR'&&/zew economic sentiment/.test((n||'').toLowerCase())&&!/^german|current conditions/.test((n||'').toLowerCase()),
   'Ifo Business Climate':(n,c)=>c==='EUR'&&/ifo business climate/.test((n||'').toLowerCase()),
-  'Inflation Expectations':(n,c)=>c==='USD'&&/inflation expectation/.test((n||'').toLowerCase())&&!/5|long/.test((n||'').toLowerCase()),
+  // Michigan (FF "UoM"), 1 Jahr - wie im Indikator-Feed. Nicht die Cleveland-
+  // Fed-Schaetzung und nicht die NY-Fed-Umfrage (eigene Reihen, eigene Tage).
+  'Inflation Expectations':(n,c)=>c==='USD'&&/inflation expectation/.test((n||'').toLowerCase())&&/\buom\b|michigan/.test((n||'').toLowerCase())&&!/5|long/.test((n||'').toLowerCase()),
 };
+
+// Nationale Releases unter EUR ("German …", "French …"): die EUR-Indikatoren
+// sind Eurozonen-Aggregate, die Muster treffen die nationalen Vorab-Zahlen
+// aber mit (gemessen 2026-10-06: "CPI (Headline)" zeigte 24d - die Landes-
+// Inflationszahlen am 30.10. - statt 29d, den Eurozonen-Flash am 04.11.). Ifo
+// gibt es nur deutsch - dort IST der nationale Release der Indikator.
+const EU_LAND_RE=/^(german|french|italian|spanish|dutch|belgian|austrian|irish|portuguese|greek|finnish)\b/i;
+const EU_NUR_NATIONAL=new Set(['Ifo Business Climate']);
+// ⚠ Seit 2026-10-07 gilt das fuer TERMIN UND WERT (Nutzer-Entscheidung auf
+// Rueckfrage: "Ja, nur Eurozone"). Bis dahin filterte nur findIndNextEvent
+// (js/main.js) die Landeszahlen heraus; findIndEventHistory (Wert),
+// indAwaitingEvent (js/score.js), applyResearchToCal und die Lueckenfueller
+// des Kalender-Workflows sahen sie weiter. Deshalb sitzt die Regel jetzt
+// HIER, im Muster selbst - jeder Verbraucher bekommt sie, auch kuenftige.
+// Aufgerufen ohne Waehrung (isScoreDrivingEvent) greift sie nicht.
+function nurEurozone(base,m){
+  if(EU_NUR_NATIONAL.has(base))return m;
+  return (name,ccy)=>!(ccy==='EUR'&&EU_LAND_RE.test(name||''))&&m(name,ccy);
+}
+Object.keys(IND_EVENT_MATCHERS).forEach(k=>{IND_EVENT_MATCHERS[k]=nurEurozone(k,IND_EVENT_MATCHERS[k]);});
 
 // Recherche-Daten → Kalender (applyResearchToCal in js/main.js) nutzt
 // dieselben Muster, mit drei bewusst breiteren Ueberschreibungen.
 const CAL_RESEARCH_MATCHERS={
   ...IND_EVENT_MATCHERS,
-  'GDP Growth QoQ':mkIndMatcher([/\bgdp\b/]),
-  'Manufacturing PMI':mkIndMatcher([/manufacturing pmi/]),
-  'Services PMI':mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/]),
+  'GDP Growth QoQ':nurEurozone('GDP Growth QoQ',mkIndMatcher([/\bgdp\b/])),
+  'Manufacturing PMI':nurEurozone('Manufacturing PMI',mkIndMatcher([/manufacturing pmi/])),
+  'Services PMI':nurEurozone('Services PMI',mkIndMatcher([/services pmi/,/non-manufacturing pmi/,/ivey/])),
   // Retail Sales: bewusst KEIN eigener, loserer Override hier - die geerbte
   // RETAIL_SALES_MATCHER-Regel (m/m bevorzugen, y/y ausschliessen ausser CHF)
   // aus IND_EVENT_MATCHERS soll auch beim Seed-Daten-Matching gelten.
@@ -173,12 +230,5 @@ function periodLabel(tag){
   if(/q\/q|qoq/.test(t))return'Q/Q';
   return null;
 }
-
-// Nationale Releases unter EUR ("German …", "French …"): die EUR-Indikatoren
-// sind Eurozonen-Aggregate, die Muster treffen die nationalen Vorab-Zahlen
-// aber mit (gemessen 2026-10-06, siehe findIndNextEvent in js/main.js). Ifo
-// gibt es nur deutsch - dort IST der nationale Release der Indikator.
-const EU_LAND_RE=/^(german|french|italian|spanish|dutch|belgian|austrian|irish|portuguese|greek|finnish)\b/i;
-const EU_NUR_NATIONAL=new Set(['Ifo Business Climate']);
 
 export {mkIndMatcher,mkCcyIndMatcher,RETAIL_SALES_MATCHER,IND_EVENT_MATCHERS,CAL_RESEARCH_MATCHERS,isScoreDrivingEvent,periodLabel,EU_LAND_RE,EU_NUR_NATIONAL};

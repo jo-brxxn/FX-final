@@ -17,7 +17,7 @@
 // Diese Datei laedt der Kalender-Workflow (update-ff-calendar.yml) UND
 // check/kalendervorschau.js - so prueft der Waechter genau den Code, der
 // laeuft. Kein Browser-Bezug.
-import {IND_EVENT_MATCHERS,isScoreDrivingEvent,EU_LAND_RE} from '../js/event-matchers.js';
+import {IND_EVENT_MATCHERS,isScoreDrivingEvent} from '../js/event-matchers.js';
 
 // Waehrungen, die der Kalender fuehrt (wie TV2CCY im Workflow).
 export const FXS_CCY = new Set(['USD','EUR','GBP','JPY','CAD','AUD','NZD','CHF','CNY']);
@@ -110,11 +110,11 @@ export function fuelltLuecke(kandidat, vorhandene){
   if (!treffer.length) return false;
   const t = Date.parse(kandidat.date);
   // Ein nationaler Release ("French Inflation Rate …") deckt den Eurozonen-
-  // Termin nicht ab - dieselbe Regel wie findIndNextEvent in js/main.js.
-  const eurozone = kandidat.country === 'EUR' && !EU_LAND_RE.test(kandidat.title);
+  // Termin nicht ab: seit 2026-10-07 schliesst das Muster selbst die
+  // Landeszahlen unter EUR aus (nurEurozone in js/event-matchers.js), sie
+  // treffen den Indikator also gar nicht erst.
   return !vorhandene.some(ev => {
     if (ev.country !== kandidat.country) return false;
-    if (eurozone && EU_LAND_RE.test(ev.title || '')) return false;
     const d = Math.abs(Date.parse(ev.date) - t);
     if (!(d <= 36 * 3600e3)) return false;
     return treffer.some(k => IND_EVENT_MATCHERS[k](ev.title, kandidat.country));

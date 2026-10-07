@@ -99,6 +99,63 @@ Gastzugang eingestellt. Daraus, im Schritt „Add upcoming events …“ von
   bleibt die ~Schätzung aus dem eigenen Rhythmus (Nutzerwahl 2026-10-06).
 - Wächter: `check/kalendervorschau.js` (statisch, führt den Workflow-Schritt
   gegen nachgebaute Quellen aus), `check/kalender.js` F.
+- Workflow-Takt: **Minute 17** (`17 * * * *`, seit 2026-10-07). Mit Minute 0
+  liefen nur 4–6 von 24 Läufen pro Tag — GitHub verwirft geplante Läufe zur
+  vollen Stunde zuerst.
+- Der TradingView-Schritt dedupliziert **ohne** die künftigen FXStreet-Termine
+  des letzten Laufs (die entscheidet der FXStreet-Schritt neu). Sonst fällt ein
+  Release, der ins TV-Fenster rückt, ganz raus (NFP 06.11., 2026-10-07).
+
+## Indikator-Muster: jede Reihe nur aus IHREM Release (Dauerregel seit 2026-10-07)
+
+Ein Muster in `js/event-matchers.js` darf nur Kalenderzeilen treffen, die auf
+einem Release-Tag der Feed-Reihe liegen. Ein zu breites Muster liefert einen
+**bestätigten, aber falschen** Termin (NFP zeigte „Nonfarm Productivity“) und
+im Ersatzpfad einen falschen Wert. Prüfung bei jeder Muster-Änderung: alle
+Kalenderstände (auch aus der Git-Historie) gegen `ind_data.json`-Release-Tage
+— ein Titel, dessen vergangene Termine nicht auf Release-Tagen liegen, ist
+ein fremder Release. Ausgeschlossen sind u. a. Produktivität/Benchmark-
+Revisionen/Teil-Payrolls (NFP), Michigan (USD = Conference Board), Cleveland/
+NY Fed (Inflationserwartung = Michigan 1 Jahr), „GDP 3-Month Avg“/NIESR
+(GBP GDP q/q), Tokyo-/BoJ-Kernrate (JPY = landesweit), Control Group/ex-
+Reihen (Retail Sales), Continuing/4-Wochen-Schnitt (Claims), ANZ (NZD =
+Westpac). Die Ausschlüsse spiegeln die RULES des Indikator-Feeds.
+
+- **EUR = Eurozone, Termin UND Wert:** nationale Zahlen („German …“,
+  „French …“) schließt `nurEurozone()` im Muster selbst aus, Ifo ausgenommen
+  (Nutzer-Entscheidung 2026-10-07). Kein Verbraucher prüft das separat.
+- **Gleiche Veröffentlichung:** hat eine Reihe keinen (oder einen späteren)
+  eigenen Kalendertermin, gilt der früheste Termin einer Reihe, mit der sie
+  nachweislich am selben Tag erscheint (`indNextTermin`/`indGeschwister` in
+  `js/main.js`: höchstens 1 der letzten 6 eigenen Release-Tage abweichend UND
+  ≥ 80 % der Partner-Tage im Zeitraum auch eigene). Kein Schätzwert: das
+  Datum steht im Kalender, die Kopplung belegen die eigenen Termine; der
+  Tooltip nennt beides. Beispiele: US-Arbeitslosenquote/NFP/Stundenlöhne,
+  GBP PPI/CPI, CAD Core CPI/CPI, CAD Löhne/LFS. Gegenbeispiel (abgelehnt):
+  EUR-Beschäftigung/GDP-Flash (5 von 7).
+- **Quartalsreihen** (jüngster Takt ≥ 80 Tage, Median der letzten 6
+  Abstände): q/q und y/y sind derselbe Termin, eine m/m-Zeile nie. Monatliche
+  Reihen: m/m = y/y, q/q getrennt.
+- Die ~Schätzung (letzter Termin + Median aller Abstände) bleibt: Backtest
+  2026-10-07 auf 2121 Releases — 46 % ±1 Tag; Kalendermuster brachten 46–48 %.
+- Wächter: `check/kalender.js` G, `check/kalendervorschau.js` A/E.
+
+## Indikator-Feed: keine fremden Punkte in der Historie (Dauerregel seit 2026-10-07)
+
+Die RULES in `update-ff-calendar.yml` folgen derselben Regel: USD-PMI nur
+**ISM** (S&P Global ist eine andere Umfrage — ihr Flash stand vom ~23. bis zum
+ISM-Termin als Live-Wert im Score), USD-NFP **ohne** Benchmark-Revision.
+Weil `historyFull` über `prevOut` von Lauf zu Lauf mitgeführt wird, entfernt
+`keinRelease()` bei **jedem** Lauf, was ein altes Muster eingeschleppt hat
+(US-ISM: Punkte ab Tag 15; NFP: Punkt ohne Prognose < 25 Tage nach dem
+vorigen) — auch gegen einen zeitgleichen Lauf mit altem Stand. Wächter:
+`check/feedregeln.js`.
+
+⚠ **Offen:** der Trading-Economics-Pfad (`te_pages.json`) nimmt als
+Release-Datum das jüngste Datum irgendwo auf der Seite. Folge: wöchentliche
+Scheinpunkte mit gleichem Wert (JPY GDP, CAD Ivey PMI, CHF Manufacturing PMI)
+bzw. Historien mit einem Punkt (CHF Core CPI, JPY Beschäftigung) — der
+gemessene Takt dieser Reihen ist falsch.
 
 ## ⚠️ PMI-FEED: TradingView liefert fuer S&P Global/HCOB/Jibun KEINE Actuals
 

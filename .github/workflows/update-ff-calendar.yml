@@ -5,7 +5,12 @@ on:
     # Stuendlich, damit Actual-Werte (z.B. GDP, CPI), die fruehmorgens
     # europaeischer/asiatischer Zeit veroeffentlicht werden, noch am selben
     # Tag in ff_calendar.json landen (nicht erst beim naechsten 12h-Lauf).
-    - cron: '0 * * * *'
+    # ⚠ Minute 17 statt 0 (Nutzer-Entscheidung 2026-10-07). Gemessen an den
+    # letzten 12 Laeufen mit '0 * * * *': nur 4-6 Laeufe pro Tag statt 24
+    # (06.10.: 02:42, 09:34, 16:22, 21:21 UTC), Luecken bis 9 Stunden,
+    # Startverzug bis 58 Minuten. GitHub verzoegert und verwirft geplante
+    # Laeufe bei Last - und die hoechste Last liegt zur vollen Stunde.
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -191,8 +196,15 @@ jobs:
             }
 
             // Vorhandene Events indexieren (Waehrung|canonKey|ET-Tag) -> Dedup.
+            // ⚠ OHNE die kuenftigen FXStreet-Termine des letzten Laufs: die
+            // werden im FXStreet-Schritt unten ohnehin neu entschieden. Sonst
+            // galt ein Release, der seit dem letzten Lauf ins TradingView-
+            // Fenster gerueckt ist, hier als "schon da" - die TV-Zeile flog
+            // raus, und unten verschwand auch der FXStreet-Termin (gemessen
+            // 2026-10-07: US-NFP am 06.11. fehlte im Kalender ganz).
             const have=new Set();
             combined.forEach(ev=>{
+              if(ev.src==="fxs"&&zeit(ev)>now)return;
               have.add((ev.country||"")+"|"+canonKey(ev.title)+"|"+String(ev.date).slice(0,10));
             });
 
@@ -1442,7 +1454,11 @@ jobs:
               {ind:"PCE",period:"y/y",test:(t,c)=>c==="USD"&&/\bpce price index\b/.test(t)&&!EXCORE.test(t)},
               {ind:"Core PCE",period:"y/y",test:(t,c)=>c==="USD"&&/core pce price index/.test(t)},
               {ind:"Unemployment Rate",period:null,test:t=>/unemployment rate/.test(t)&&!/ex|youth|\bu-?\d/.test(t)},
-              {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t)&&!/private/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
+              // ⚠ 2026-10-07: ohne die jaehrliche Benchmark-Revision ("Non Farm
+              // Payrolls Annual Revision Prel") - sie stand dreimal als NFP-Wert
+              // in der Historie (2024-08-21 -818K, 2025-09-09 -911K, 2026-08-28
+              // -79K, jeweils ohne Prognose). Bereinigung: keinRelease() unten.
+              {ind:"NFP / Employment Change",period:null,test:(t,c)=>c==="USD"?/non.?farm payrolls/.test(t)&&!/private|revision|benchmark/.test(t):/employment change/.test(t)&&!/adp/.test(t)},
               {ind:"ADP Employment",period:null,test:(t,c)=>c==="USD"&&/adp employment/.test(t)&&!/weekly/.test(t)},
               {ind:"JOLTS Job Openings",period:null,test:(t,c)=>c==="USD"&&/job openings/.test(t)},
               {ind:"Unemployment Claims",period:null,test:(t,c)=>c==="USD"&&/initial jobless claims/.test(t)},
@@ -1465,8 +1481,14 @@ jobs:
               {ind:"Avg Hourly Earnings",period:"y/y",test:(t,c)=>c==="AUD"&&/wage price index/.test(t)},
               {ind:"Avg Hourly Earnings",period:"q/q",test:(t,c)=>c==="NZD"&&/labou?r cost index/.test(t)},
               {ind:"GDP Growth QoQ",period:"q/q",test:t=>/\bgdp growth rate\b/.test(t)&&!/year/.test(t)},
-              {ind:"Manufacturing PMI",period:null,test:t=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)},
-              {ind:"Services PMI",period:null,test:t=>/services pmi|non.?manufacturing pmi/.test(t)},
+              // ⚠ USD = ISM (wie IND_EVENT_MATCHERS in js/event-matchers.js).
+              // Bis 2026-10-07 traf das Muster auch S&P Globals Flash-/Final-
+              // PMI - eine ANDERE Umfrage. Gemessen: 16 Flash-Punkte (Tag 20-27)
+              // in den ISM-Reihen, u.a. 2026-09-23 57 gegen Prognose 53,6; vom
+              // ~23. bis zum ISM-Termin am Monatsanfang trieb jeweils die
+              // S&P-Zahl den USD-PMI im Score. Bereinigung: keinRelease() unten.
+              {ind:"Manufacturing PMI",period:null,test:(t,c)=>/manufacturing pmi/.test(t)&&!/non.?manufacturing/.test(t)&&(c!=="USD"||/\bism\b/.test(t))},
+              {ind:"Services PMI",period:null,test:(t,c)=>/services pmi|non.?manufacturing pmi/.test(t)&&(c!=="USD"||/\bism\b/.test(t))},
               // CAD: die Ivey-Reihe ist Kanadas Stimmungsindex und heisst bei
               // TradingView "Ivey PMI s.a" - traf also weder "services pmi"
               // noch "non-manufacturing pmi". Die App selbst kennt diese
@@ -1744,6 +1766,31 @@ jobs:
             // Quelle dazu, geht dadurch nichts verloren. Abgerufen wird nur
             // bis zur gemessenen Wand der Quelle (2013, siehe TARGET_CHUNKS).
             const HIST_FULL_FROM="2007-01-01";
+            // ── Punkte, die nachweislich KEIN Release der Reihe sind ─────────
+            // (2026-10-07). Die Historie wird ueber prevOut von Lauf zu Lauf
+            // mitgefuehrt - was ein zu breites Muster einmal hineingeschrieben
+            // hat, bliebe ohne diese Bereinigung fuer immer drin (auch nach der
+            // Korrektur der RULES oben). Sie laeuft bei JEDEM Lauf, damit ein
+            // zeitgleicher Lauf mit altem Stand sie nicht wieder zuruecktraegt.
+            // Kriterien aus den festen Terminen der Quellen, an der Historie
+            // nachgemessen (geprueft von check/feedregeln.js):
+            //   - US-ISM: Manufacturing am 1., Services am 3. Werktag - alle 321
+            //     ISM-Punkte seit 2013 liegen auf Tag 1-7, die 16 eingeschleppten
+            //     S&P-Flash-Werte auf Tag 20-27. Grenze: Tag 15.
+            //   - US-NFP: die drei Benchmark-Revisionen sind die einzigen Punkte
+            //     ohne Prognose, jeweils 4-21 Tage nach dem regulaeren Release
+            //     (der naechste regulaere folgt nach 28-35 Tagen).
+            function keinRelease(key,hist){
+              const tag=h=>+String(h[0]).slice(8,10);
+              if(key==="USD|Manufacturing PMI"||key==="USD|Services PMI")return hist.filter(h=>tag(h)<15);
+              if(key==="USD|NFP / Employment Change")return hist.filter((h,i)=>{
+                if(h[2]!=null||i===0)return true;
+                const abstand=(Date.parse(String(h[0]).slice(0,10))-Date.parse(String(hist[i-1][0]).slice(0,10)))/864e5;
+                return !(abstand<25);
+              });
+              return hist;
+            }
+            // ENDE keinRelease
             const HIST_SOURCE_FROM="2013-01-01";   // gemessen, siehe oben
             Object.keys(out).forEach(ccy=>{
               Object.keys(out[ccy]).forEach(indName=>{
@@ -1754,7 +1801,7 @@ jobs:
                 const byDate={};
                 prevHist.forEach(h=>{if(h&&h[0])byDate[h[0]]=h;});
                 newHist.forEach(h=>{if(h&&h[0])byDate[h[0]]=h;});
-                v.historyFull=Object.values(byDate).filter(h=>String(h[0]).slice(0,10)>=HIST_FULL_FROM).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0);
+                v.historyFull=keinRelease(ccy+"|"+indName,Object.values(byDate).filter(h=>String(h[0]).slice(0,10)>=HIST_FULL_FROM).sort((a,b)=>a[0]<b[0]?-1:a[0]>b[0]?1:0));
                 delete v._newHistFull;
               });
             });

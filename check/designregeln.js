@@ -37,9 +37,16 @@
 //      kraeftig werden, sind dort voll sichtbar (>= 0,6), deaktivierte
 //      Knoepfe erkennbar (>= 0,4) - vorher Kalender-× 0,20, Undo/Redo 0,22
 //   K) Runde 2/Paket B: Waehrungsstaerke ab Mittellinie je Vorzeichen,
-//      Watchlist einzeilig + × nur beim Bearbeiten, Price-Karte max. 2
-//      Bedienzeilen ohne Einzelknopf, Majors-Titel, ⓘ nie unter der
-//      Knopfleiste, COT-/Retail-Balken <= 14 px
+//      Watchlist einzeilig ohne Entfernen-×, Price-Karte max. 2
+//      Bedienzeilen ohne Einzelknopf, Majors-Titel, COT-/Retail-Balken wieder
+//      wie vor 591 (26 px, volle Deckkraft, keine Fuge - Nutzer 2026-10-06
+//      "Komplett wie vor 591")
+//   N) kein Bearbeitungsmodus mehr fuer Dashboard und Indikatoren (Nutzer
+//      2026-10-07: "Entfern den Bearbeitungsmodus wenn ich was bearbeiten
+//      will frag ich dich", per Rueckfrage "Dashboard + Indikatoren"): keine
+//      Karten-Knopfleiste, keine Bearbeitungsleiste, kein Watchlist-×, keine
+//      Karten-/Indikator-Steuerung, Kartennamen nur Anzeige; 2,5 s Druck aufs
+//      Dashboard und 5,5 s auf die Asset-Seite schalten nichts mehr um
 //   L) Runde 2/Paket C: Trends ohne eigene Wahl = 6 farbige Linien (die 3
 //      staerksten + 3 schwaechsten am Linienende), Rest grau, Endlabels ohne
 //      Ueberlappung im Diagramm, Legenden-/Linien-Tipp + Zuruecksetzen wirken;
@@ -228,7 +235,12 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
   //    nicht an einem Klassennamen - ein neuer Name fiele sonst durch.
   await oeffne(p, 'A:GOLD'); await p.waitForTimeout(1200);
   const m = await p.evaluate(gp => {
-    const kette = (icn('link', 11).match(/<svg[^>]*>([\s\S]*)<\/svg>/) || [])[1] || '';
+    // In DERSELBEN Serialisierung vergleichen wie die Seite: der Browser macht
+    // aus <path .../> ein <path ...></path> - ein Textvergleich mit dem
+    // icn()-String traf deshalb nie (2026-10-07 bei der Gegenprobe gefunden:
+    // 143 gegen 155 Zeichen, die Stufe war seit ihrer Einfuehrung blind).
+    const tmp = document.createElement('div'); tmp.innerHTML = icn('link', 11);
+    const kette = (tmp.querySelector('svg') || {}).innerHTML || '';
     const sym = getSym();
     const gespiegelt = (sym.rubrics || []).filter(r => rubAutoDerived(sym, r)).length;
     if (gp) { const z = document.querySelector('#detail .ir-name'); if (z) z.insertAdjacentHTML('beforeend', `<span class="auto-lock-ic">${icn('link', 11)}</span>`); }
@@ -344,21 +356,19 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
     await t.evaluate(() => { ['introOv', 'lockScreen'].forEach(x => { const e = document.getElementById(x); if (e) e.remove(); }); });
     if (GEGENPROBE) await t.addStyleTag({ content: GP_CSS });
     if (await t.evaluate(() => matchMedia('(hover:hover)').matches)) fail('J TOUCH', 'Touch-Emulation greift nicht ((hover:hover) ist wahr) - Messung ungueltig');
-    for (const [z, bearb] of [['cal', 0], ['pairs', 0], ['A:USD', 1]]) {
-      await t.evaluate(([z, bearb]) => { document.body.classList.toggle('ind-edit-mode', !!bearb); const [a, v] = z.split(':'); if (a === 'A') gotoSym(v); else showTab(a); }, [z, bearb]);
+    for (const z of ['cal', 'pairs', 'A:USD']) {
+      await t.evaluate(z => { const [a, v] = z.split(':'); if (a === 'A') gotoSym(v); else showTab(a); }, z);
       await t.waitForTimeout(1200);
       const j = await t.evaluate(() => {
         const out = [], zahl = { n: 0 };
         const pruef = (sel, min) => document.querySelectorAll(sel).forEach(e => { const q = e.getBoundingClientRect(); if (q.width < 2 || q.height < 2) return;
           const o = +getComputedStyle(e).opacity; zahl.n++; if (o < min) out.push(`${sel} Deckkraft ${o.toFixed(2)} (min ${min})`); });
-        pruef('.cal-row-del,.cal-alert-btn,.dw-mark,.rdel,.idel2,.rstar,.res-note-star', 0.6);
-        pruef('.rmv:not(:disabled),.imv:not(:disabled)', 0.6);
+        pruef('.cal-row-del,.cal-alert-btn,.dw-mark,.res-note-star', 0.6);
         pruef('.btn:disabled', 0.4);
         return { out: [...new Set(out)], n: zahl.n };
       });
       n.touch += j.n; j.out.forEach(x => fail('J TOUCH', `${z}: ${x}`));
     }
-    await t.evaluate(() => document.body.classList.remove('ind-edit-mode'));
     await ctx.close();
   }
 
@@ -372,7 +382,9 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
   //    nie ein einzelner Zeitfilter-Knopf in einer Zeile (vorher 820 px: 4
   //    Zeilen, "MAX" allein); Korb als Untertitel
   //  - Majors-Karte mit Kartentitel; Bearbeitungsmodus: kein ⓘ unter der
-  //    Knopfleiste sichtbar; COT-/Retail-Balken <= 14 px hoch (vorher 26)
+  //    Knopfleiste sichtbar; COT-/Retail-Balken 26 px hoch, volle Deckkraft,
+  //    ohne Fuge (591 hatte 12 px/70 %/2-px-Fuge - am 2026-10-06 auf
+  //    Nutzer-Wunsch komplett zurueckgenommen)
   for (const vw of [820, 1180, 1440]) {
     p = await neueSeite(vw);
     await p.evaluate(() => { ['GBP/CAD', 'EUR/USD', 'AUD/NZD', 'XAU/USD', 'SP500/USD'].forEach(x => { try { if (!isWatched(x)) toggleWatch(x); } catch (e) {} }); showTab('dash'); });
@@ -384,18 +396,24 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
       document.querySelectorAll('.rank-row').forEach(r => { const t = r.querySelector('.rank-div'); if (t) seite(r, t.querySelector('.rank-bar'), t, (r.querySelector('.rank-sc') || {}).textContent || ''); });
       if (!n.rank) out.push('Dashboard: keine Waehrungsstaerke-Zeile mit Mittellinie (.rank-div) gefunden');
       document.querySelectorAll('.wl-table .wl-row.wl-click').forEach(r => { n.wl++; const h = r.getBoundingClientRect().height; if (h > 40) out.push(`Watchlist "${r.querySelector('.wl-name').textContent.trim()}" ${Math.round(h)} px hoch (zweizeilig)`);
-        const x = r.querySelector('button.dw-del'); if (x && x.getBoundingClientRect().width > 0) out.push('Watchlist: Entfernen-× ausserhalb des Bearbeitungsmodus sichtbar'); });
+        const x = r.querySelector('button.dw-del'); if (x && x.getBoundingClientRect().width > 0) out.push('Watchlist: Entfernen-× sichtbar (der Bearbeitungsmodus ist seit 2026-10-07 entfernt)'); });
       if (!n.wl) out.push('Watchlist: keine Zeilen (Testpaare nicht angelegt?)');
       const mh = document.querySelector('.dash-majors-card .dw-t-txt'); if (!mh || parseFloat(getComputedStyle(mh).fontSize) < 16) out.push('Majors-Karte ohne Kartentitel');
       return { out: [...new Set(out)], n };
     });
-    // Bearbeitungsmodus (nach dem 0,12-s-Uebergang der Sichtbarkeit messen)
-    await p.evaluate(() => document.body.classList.add('dash-edit-mode')); await p.waitForTimeout(450);
-    const k2 = await p.evaluate(() => { const out = [];
-      document.querySelectorAll('.dw-hdr').forEach(h => { const i = h.querySelector('.rinfo'), bt = h.querySelector('.dw-btns'); if (!i || !bt || getComputedStyle(i).visibility === 'hidden') return;
-        const a = i.getBoundingClientRect(), c = bt.getBoundingClientRect(); if (a.width && c.width && a.right > c.left && a.left < c.right && a.bottom > c.top && a.top < c.bottom) out.push(`Bearbeitungsmodus: ⓘ "${(h.querySelector('.dw-t-txt') || {}).textContent}" liegt unter der Knopfleiste`); });
-      if (![...document.querySelectorAll('.wl-row button.dw-del')].some(e => e.getBoundingClientRect().width > 0)) out.push('Bearbeitungsmodus: Watchlist-Entfernen-× fehlt');
-      document.body.classList.remove('dash-edit-mode'); return [...new Set(out)]; });
+    // N) Bearbeitungsmodus entfernt (2026-10-07): auch 2,5 s Druck aufs
+    //    Dashboard schaltet nichts um, keine Bearbeitungs-Reste im Kartenkopf
+    if (vw === 1180) {
+      if (GEGENPROBE) await p.evaluate(() => { const h = document.querySelector('#dashWidgets .dw-hdr'); if (h) h.insertAdjacentHTML('beforeend', '<div class="dw-btns"><button class="btn dw-nav">×</button></div>'); });
+      const pos = await p.evaluate(() => { const r = document.querySelector('#dashWidgets').getBoundingClientRect(); return { x: r.left + 30, y: r.top + 30 }; });
+      await p.mouse.move(pos.x, pos.y); await p.mouse.down(); await p.waitForTimeout(2500); await p.mouse.up();
+      const nd = await p.evaluate(() => { const out = [];
+        if (document.body.classList.contains('dash-edit-mode')) out.push('Dashboard: 2,5 s Druck schaltet einen Bearbeitungsmodus ein');
+        ['.dw-btns', '.dash-edit-bar', '.wl-row button.dw-del', '.dw-nav'].forEach(sel => { const k = document.querySelectorAll(sel).length; if (k) out.push(`Dashboard: ${k}x ${sel} (Bearbeitungs-Rest)`); });
+        return out; });
+      nd.forEach(x => fail('N BEARBEITEN', x));
+      n.k += 1;
+    }
     await p.evaluate(() => showTab('mx')); await p.waitForTimeout(1100);
     const k3 = await p.evaluate(() => { const out = []; let n = 0;
       document.querySelectorAll('.mx-rank-row').forEach(r => { const t = r.querySelector('.rank-div'); if (!t) { out.push('Matrix-Staerke ohne Mittellinie'); return; } n++; const bar = t.querySelector('.mx-rank-bar'), q = t.getBoundingClientRect(), bq = bar.getBoundingClientRect(), mid = (q.left + q.right) / 2, txt = r.querySelector('.mx-rank-score').textContent, v = parseFloat(txt);
@@ -410,16 +428,36 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
       reihen.forEach(y => { const z = kn.filter(e => Math.round(e.getBoundingClientRect().top) === y); if (z.length === 1 && z[0].matches('.ab-rgs .ab-rg')) out.push(`Price-Karte ${vw}: Zeitfilter "${z[0].textContent.trim()}" allein in einer Zeile`); });
       if (!t.querySelector('.ab-tile-hd + .ab-tile-sub.ab-korb')) out.push('Price-Karte: Korb nicht als Untertitel unter der Kopfzeile');
       return out; }, vw);
+    if (vw === 1180) {
+      if (GEGENPROBE) await p.evaluate(() => { const h = document.querySelector('#detail .rub-hdr'); if (h) h.insertAdjacentHTML('afterbegin', '<span class="ind-edit-ctrls"><button class="rmv">▲</button></span>'); });
+      const pos = await p.evaluate(() => { const r = (document.querySelector('#detail .rub-body') || document.querySelector('#detail')).getBoundingClientRect(); return { x: r.left + 30, y: r.top + 20 }; });
+      await p.mouse.move(pos.x, pos.y); await p.mouse.down(); await p.waitForTimeout(5500); await p.mouse.up();
+      const na = await p.evaluate(() => { const out = [];
+        if (document.body.classList.contains('ind-edit-mode')) out.push('Asset-Seite: 5,5 s Druck schaltet einen Bearbeitungsmodus ein');
+        ['.ind-edit-ctrls', '.rmv', '.imv', '.rdel', '.idel2', '.rstar', '.rub-tog', '.add-row input[id^="ind-"]'].forEach(sel => { const k = document.querySelectorAll('#detail ' + sel).length; if (k) out.push(`Asset-Seite: ${k}x ${sel} (Bearbeitungs-Rest)`); });
+        const frei = [...document.querySelectorAll('#detail .rub-inp')].filter(i => !i.readOnly).length; if (frei) out.push(`Asset-Seite: ${frei} Kartennamen umbenennbar`);
+        if (!document.querySelector('#detail .rub-inp')) out.push('Asset-Seite: keine Karte gefunden - Messung ungueltig');
+        return out; });
+      na.forEach(x => fail('N BEARBEITEN', x));
+    }
     // COT- und Retail-Balken liegen auf ihren eigenen Seiten (auf dem Dashboard
     // gibt es keine - dort gesucht, lief die Pruefung ins Leere)
     const k5 = [];
     for (const [z, sel] of [['cot', '.cot-bar'], ['sent:retail', '.sent-bar']]) {
       await oeffne(p, z); await p.waitForTimeout(1100);
-      const r = await p.evaluate(sel => { const e = [...document.querySelectorAll(sel)].filter(x => x.offsetParent); return { n: e.length, hoch: e.filter(x => x.getBoundingClientRect().height > 14.5).map(x => Math.round(x.getBoundingClientRect().height)) }; }, sel);
-      if (!r.n) k5.push(`${z}: keine ${sel}-Balken gefunden`); else if (r.hoch.length) k5.push(`${z}: ${r.hoch.length} Balken ${r.hoch[0]} px hoch (max 14)`);
+      const r = await p.evaluate(sel => { const e = [...document.querySelectorAll(sel)].filter(x => x.offsetParent);
+        const alpha = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return 1; const t = m[1].split(',').map(Number); return t.length > 3 ? t[3] : 1; };
+        const teile = e.flatMap(x => [...x.children]);
+        return { n: e.length, hoch: e.filter(x => Math.abs(x.getBoundingClientRect().height - 26) > 0.6).map(x => Math.round(x.getBoundingClientRect().height)),
+          blass: teile.filter(t => t.getBoundingClientRect().width > 0 && alpha(getComputedStyle(t).backgroundColor) < 0.99 && getComputedStyle(t).backgroundImage === 'none').length,
+          fuge: teile.filter(t => /inset/.test(getComputedStyle(t).boxShadow)).length }; }, sel);
+      if (!r.n) k5.push(`${z}: keine ${sel}-Balken gefunden`);
+      else { if (r.hoch.length) k5.push(`${z}: ${r.hoch.length} Balken ${r.hoch[0]} px hoch (wie vor 591: 26)`);
+        if (r.blass) k5.push(`${z}: ${r.blass} Balkenteile mit Deckkraft < 1 (wie vor 591: volle Farbe)`);
+        if (r.fuge) k5.push(`${z}: ${r.fuge} Balkenteile mit Fuge (wie vor 591: keine)`); }
       n.k += r.n;
     }
-    [...k1.out, ...k2, ...k3, ...k4, ...k5].forEach(x => fail(`K RUNDE2 ${vw}`, x));
+    [...k1.out, ...k3, ...k4, ...k5].forEach(x => fail(`K RUNDE2 ${vw}`, x));
     n.k += k1.n.rank + k1.n.wl;
     await p.close();
   }
@@ -527,10 +565,10 @@ const oeffne = (p, z) => p.evaluate(z => { const [a, v] = z.split(':'); if (a ==
 
   if (n.html < 1500 || n.svg < 120 || n.hoehe < 200 || n.flaechen < 200 || n.touch < 50 || n.k < 30 || n.svg390 < 120 || n.l < 100 || n.inline < 500 || (!GEGENPROBE && n.ltipp < 1)) fail('ZU WENIG GEMESSEN', `Text ${n.html}, SVG ${n.svg}, Bedienelemente ${n.hoehe}, Flaechen ${n.flaechen}, Touch ${n.touch}, Runde-2-Zeilen ${n.k}, SVG 390 ${n.svg390}, Paket C ${n.l}, Linien-Tipps ${n.ltipp}, Inline-CSS ${n.inline} - Selektoren veraltet?`);
   if (GEGENPROBE) {
-    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K ', 'L ', 'M '];
+    const stufen = ['A ', 'B ', 'C ', 'D ', 'E ', 'F ', 'G ', 'H ', 'I ', 'J ', 'K ', 'L ', 'M ', 'N '];
     const fehlt = stufen.filter(s => !F.some(f => f.startsWith(s)));
     if (fehlt.length) { console.log('designregeln --gegenprobe: FEHLER - nicht gemeldet: ' + fehlt.join(',')); process.exit(1); }
-    console.log(`designregeln --gegenprobe: ok (alle 13 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
+    console.log(`designregeln --gegenprobe: ok (alle 14 Stufen melden den eingebauten Fehler, ${F.length} Befunde)`); process.exit(0);
   }
   if (F.length) { console.log(`designregeln: ${F.length} Befund(e)`); [...new Set(F)].slice(0, 60).forEach(x => console.log('  ' + x)); process.exit(1); }
   console.log(`designregeln: ok (${SEITEN.length} Seiten + ${fenster} Fenster: keine Farb-Emojis, Symbolschrift aktiv, keine Monospace, ${n.svg} Diagrammtexte und ${n.html} Texte >= 11 px, ${n.hoehe} Bedienelemente auf 28/34/40 px, ${n.flaechen} Trefferflaechen ohne Ueberdeckung bei 820/1180/1440 (Kalenderzeile mit Schlagzeilen-Knopf ${n.kalNews ? 'geprueft' : 'entfiel - kein kommender Termin'}), aktiv Navy, Rot nur bearish/Warnung, Summaries-Schalter ohne Wort mit aria-label, kein Ketten-Symbol, ${n.touch} Touch-Bedienelemente sichtbar, Runde 2: Staerke ab Mitte, Watchlist einzeilig, Price-Karte max. 2 Bedienzeilen; Paket C: Trends-Fokus 3+3 mit Endlabels und Tipps, Carry einzeilig, ${n.svg390} Diagrammtexte bei 390 px, ${n.inline} Inline-CSS-Angaben gueltig)`);

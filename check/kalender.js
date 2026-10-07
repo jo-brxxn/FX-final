@@ -21,9 +21,15 @@
 //   F) Next-Countdown sucht den richtigen Termin (2026-10-06 gemessen falsch):
 //      EUR ohne nationale Vorab-Zahlen (Ifo ausgenommen), m/m und y/y als
 //      derselbe Termin, q/q nicht.
-//   node check/kalender.js [--gegenprobe | --gegenprobe-zukunft | --gegenprobe-termin]
+//   G) Nutzer 2026-10-07 ("guck dir die Historie an"): eine Reihe ohne eigene
+//      Kalenderzeile uebernimmt den Termin einer Reihe, mit der sie
+//      nachweislich am selben Tag erscheint (USD NFP = Arbeitslosenquote,
+//      GBP PPI = CPI), aber nicht bei nur teilweiser Deckung (EUR-
+//      Beschaeftigung vs. GDP-Flash); Quartalsreihen zaehlen q/q = y/y,
+//      monatliche nicht (AUD).
+//   node check/kalender.js [--gegenprobe | --gegenprobe-zukunft | --gegenprobe-termin | --gegenprobe-geschwister]
 //   (Blass-Regel per CSS ausgehebelt | alte CSS der Zukunftstage | alte
-//    Termin-Suche ohne die beiden Regeln)
+//    Termin-Suche ohne die beiden Regeln | nur der eigene Termin wie vorher)
 const PW = process.env.PW_PATH || '/opt/node22/lib/node_modules/playwright';
 const URL = process.env.CHECK_URL || 'http://127.0.0.1:8935/index.html';
 const fs = require('fs'), path = require('path');
@@ -32,6 +38,7 @@ const { wartenBisDatenDa } = require('./warten.js');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_ZUKUNFT = process.argv.includes('--gegenprobe-zukunft');
 const GP_TERMIN = process.argv.includes('--gegenprobe-termin');
+const GP_GESCHW = process.argv.includes('--gegenprobe-geschwister');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json'), 'utf8'));
 
@@ -145,8 +152,38 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
     return out;
   }, GP_TERMIN);
   termin.forEach(t => { if (t.ist !== t.soll) fail('TERMIN FALSCH', `${t.s} ${t.i}: ${t.ist} statt ${t.soll} (${t.warum})`); });
+  // G) Gleiche Veroeffentlichung aus der Historie + Quartals-Takt (2026-10-07).
+  //    Echte Indikatoren (ihre Release-Tage aus ind_data.json), nachgebaute
+  //    Kalenderzeilen. Gegenprobe --gegenprobe-geschwister: nur der eigene
+  //    Termin ohne Takt (Stand vorher) -> G muss rot werden.
+  const geschw = await p.evaluate(gp => {
+    const tag = n => { const x = new Date(); x.setDate(x.getDate() + n); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+    const e = (name, n, ccy) => ({ id: 'kg' + name + n, name, date: tag(n), time: '10:00', currencies: ccy, impact: 'high', actual: '', forecast: '', previous: '', notes: '' });
+    const ind = (ccy, re) => { const s = syms.find(x => x.id === ccy); let f = null; (s.rubrics || []).forEach(r => (r.indicators || []).forEach(i => { if (!f && re.test(i.name)) f = i; })); return f; };
+    const such = (ccy, i) => { if (!i) return 'Indikator fehlt'; const x = gp ? findIndNextEvent(ccy, i.name) : (indNextTermin(ccy, i) || {}).ev; return x ? x.date : null; };
+    const vorher = calEvts;
+    calEvts = [e('Unemployment Rate', 30, 'USD'), e('Non-Farm Employment Change', 58, 'USD'),
+      e('GDP Growth Rate QoQ Flash', 5, 'EUR'),
+      e('Inflation Rate QoQ', 14, 'NZD'),
+      e('CPI q/q', 2, 'AUD'), e('CPI y/y', 10, 'AUD'),
+      e('Inflation Rate MoM', 14, 'GBP')];
+    const out = [
+      ['USD', ind('USD', /^NFP/), tag(30), 'NFP erscheint mit der Arbeitslosenquote (gleiche Veroeffentlichung), nicht erst am FXStreet-Termin'],
+      ['EUR', ind('EUR', /^NFP/), null, 'EUR-Beschaeftigung kommt NICHT mit dem 30-Tage-GDP-Flash'],
+      ['NZD', ind('NZD', /^CPI \(Headline\)/), tag(14), 'Quartals-CPI: q/q und y/y sind derselbe Termin'],
+      ['AUD', ind('AUD', /^CPI \(Headline\)/), tag(10), 'monatliche CPI: die Quartals-Zeile q/q ist ein anderer Termin'],
+      ['GBP', ind('GBP', /^PPI/), tag(14), 'GBP-PPI erscheint mit der CPI'],
+    ].map(([c, i, soll, warum]) => ({ c, i: i ? i.name : '?', soll, ist: such(c, i), warum }));
+    calEvts = vorher;
+    return out;
+  }, GP_GESCHW);
+  geschw.forEach(t => { if (t.ist !== t.soll) fail('GESCHWISTER FALSCH', `${t.c} ${t.i}: ${t.ist} statt ${t.soll} (${t.warum})`); });
   perr.forEach(e => fail('PAGEERROR', e));
   await b.close();
+  if (GP_GESCHW) {
+    const ok = F.some(x => x.startsWith('GESCHWISTER FALSCH'));
+    console.log(ok ? 'kalender --gegenprobe-geschwister: ok (Termin nur aus der eigenen Zeile wird gemeldet)' : 'kalender --gegenprobe-geschwister: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
+  }
   if (GP_ZUKUNFT || GP_TERMIN) {
     const ok = F.some(x => x.startsWith(GP_ZUKUNFT ? 'ZUKUNFT' : 'TERMIN FALSCH'));
     console.log(ok ? `kalender ${GP_ZUKUNFT ? '--gegenprobe-zukunft: ok (blasse/graue kommende Tage werden gemeldet)' : '--gegenprobe-termin: ok (alte Termin-Suche wird gemeldet)'}` : 'kalender Gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
@@ -156,5 +193,5 @@ const IND = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'ind_data.json
     console.log(ok ? 'kalender --gegenprobe: ok (nicht blasse vergangene Tage werden gemeldet)' : 'kalender --gegenprobe: FEHLER - nicht gemeldet'); process.exit(ok ? 0 : 1);
   }
   if (F.length) { console.log(`kalender: ${F.length} Befund(e)\n  ` + F.slice(0, 30).join('\n  ')); process.exit(1); }
-  console.log(`kalender: ok (vergangene Tage blass mit Punkt, kommende voll in 15px; ${tagSoll}: ${soll[tagSoll].length} Release(s) aus ind_data.json mit Actual/Forecast/Previous im Tagesfenster; ${termin.length} Termin-Regeln)`);
+  console.log(`kalender: ok (vergangene Tage blass mit Punkt, kommende voll in 15px; ${tagSoll}: ${soll[tagSoll].length} Release(s) aus ind_data.json mit Actual/Forecast/Previous im Tagesfenster; ${termin.length} Termin-Regeln, ${geschw.length} Faelle gleiche Veroeffentlichung/Quartals-Takt)`);
 })();

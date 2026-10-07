@@ -20,17 +20,23 @@
 //      +92 Tagen draussen; alte FXStreet-Termine werden neu entschieden;
 //   D) Fenster: TradingView-Abruf >= 30 Tage, FXStreet >= 92, App-Import
 //      FF_WINDOW_DAYS >= 90.
-//   node check/kalendervorschau.js [--gegenprobe | --gegenprobe-dedup]
+//   E) ein Release, der seit dem letzten Lauf ins TradingView-Fenster
+//      gerueckt ist, kommt genau einmal - als TradingView-Zeile (2026-10-07:
+//      US-NFP am 06.11. fehlte im Live-Kalender ganz).
+//   node check/kalendervorschau.js [--gegenprobe | --gegenprobe-dedup | --gegenprobe-tvdedup]
 //   (--gegenprobe: der TV-Filter laesst Low durch -> B muss rot werden;
 //    --gegenprobe-dedup: der am 2026-10-06 gefundene Fehler - FXStreet prueft
 //    gegen die Dedup-Menge MIT den alten eigenen Terminen -> der zweite Lauf
-//    verliert alles hinter TradingView, C muss rot werden)
+//    verliert alles hinter TradingView, C muss rot werden;
+//    --gegenprobe-tvdedup: der am 2026-10-07 gefundene Fehler - TradingView
+//    prueft gegen die alten FXStreet-Termine -> E muss rot werden)
 const fs = require('fs'), path = require('path'), os = require('os');
 const { spawnSync } = require('child_process');
 const { pathToFileURL } = require('url');
 const ROOT = path.join(__dirname, '..');
 const GEGENPROBE = process.argv.includes('--gegenprobe');
 const GP_DEDUP = process.argv.includes('--gegenprobe-dedup');
+const GP_TVDEDUP = process.argv.includes('--gegenprobe-tvdedup');
 const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
 
 // Echte FXStreet-Zeilen (Lauf 37518060066, 2026-10-06) mit dem, was daraus
@@ -45,7 +51,10 @@ const FALL = [
   ['US','USD','Producer Price Index ex Food & Energy (YoY)','Core PPI y/y','Core PPI'],
   ['US','USD','Gross Domestic Product Annualized','GDP q/q','GDP Growth QoQ'],
   ['US','USD','ISM Manufacturing PMI','ISM Manufacturing PMI','Manufacturing PMI'],
-  ['US','USD','Michigan Consumer Sentiment Index','UoM Consumer Sentiment','Consumer Confidence'],
+  // Michigan ist NICHT der USD-Indikator (Conference Board) - bis 2026-10-07
+  // stand hier 'Consumer Confidence' als Erwartung, das Muster traf die
+  // falsche Umfrage (0 von 12 Michigan-Terminen auf einem CB-Release-Tag).
+  ['US','USD','Michigan Consumer Sentiment Index','UoM Consumer Sentiment',null],
   ['US','USD','ADP Employment Change','ADP Non-Farm Employment Change','ADP Employment'],
   ['EMU','EUR','Harmonized Index of Consumer Prices (YoY)','CPI y/y','CPI (Headline)'],
   ['EMU','EUR','Core Harmonized Index of Consumer Prices (YoY)','Core CPI y/y','Core CPI'],
@@ -120,7 +129,10 @@ function lauf(skript, dateien) {
   if (s.fehlt) fail('SCHRITT', s.fehlt);
   else {
     if (GEGENPROBE) skript = skript.replace('if(!impact)return;', '');
-    if (GP_DEDUP) skript = skript.replace('if(haveFx.has(key))return;', 'if(have.has(key))return;');
+    // Alter Stand vor 2026-10-06: "have" enthielt die alten FXStreet-Termine
+    // (beide Zeilen gehoeren zum nachgebauten Fehler).
+    if (GP_DEDUP) skript = skript.replace('if(haveFx.has(key))return;', 'if(have.has(key))return;').replace('if(ev.src==="fxs"&&zeit(ev)>now)return;', '');
+    if (GP_TVDEDUP) skript = skript.replace('if(ev.src==="fxs"&&zeit(ev)>now)return;', '');
     const T = Date.now(), D = 864e5;
     const at = (tage, h) => { const d = new Date(T + tage * D); d.setUTCHours(h, 30, 0, 0); return d.toISOString(); };
     const tv = { status: 'ok', result: [
@@ -131,11 +143,17 @@ function lauf(skript, dateien) {
       { country: 'US', title: 'Core PPI MoM', date: at(9, 12), importance: 0 },
       { country: 'GB', title: 'Claimant Count Change', date: at(14, 6), importance: -1 },
       { country: 'US', title: 'Building Permits', date: at(30, 12), importance: 0 },
+      // 2026-10-07: NFP rueckt ins TradingView-Fenster, im letzten Lauf stand
+      // es als FXStreet-Termin dahinter (siehe "alt"); am Vortag derselbe
+      // Produktivitaets-Release, den das alte NFP-Muster mittraf.
+      { country: 'US', title: 'Nonfarm Productivity QoQ Prel', date: at(28, 13), importance: 0 },
+      { country: 'US', title: 'Non Farm Payrolls', date: at(29, 13), importance: 1 },
     ] };
     const fx = (cc, ccy, name, tage, h, x) => Object.assign({ countryCode: cc, currencyCode: ccy, name, volatility: 'HIGH', dateUtc: at(tage, h).replace('.000', '') }, x || {});
     const fxs = [
       fx('US', 'USD', 'Producer Price Index ex Food & Energy (YoY)', 9, 12),
       fx('UK', 'GBP', 'Claimant Count Change', 14, 6),
+      fx('US', 'USD', 'Nonfarm Payrolls', 29, 13),
       fx('US', 'USD', 'Nonfarm Payrolls', 40, 12),
       fx('US', 'USD', 'Interest Rate Projections - Current', 45, 18),
       fx('JP', 'JPY', 'BoJ Interest Rate Decision', 50, 3, { isTentative: true }),
@@ -147,6 +165,7 @@ function lauf(skript, dateien) {
     const alt = [
       { title: 'CPI y/y', country: 'USD', date: at(70, 12), impact: 'High', forecast: '', previous: '', actual: '', src: 'fxs' },
       { title: 'GDP q/q', country: 'USD', date: at(10, 12), impact: 'High', forecast: '', previous: '', actual: '', src: 'fxs' },
+      { title: 'Non-Farm Employment Change', country: 'USD', date: at(29, 13), impact: 'High', forecast: '', previous: '', actual: '', src: 'fxs' },
     ];
     const r = lauf(skript, { 'ff_calendar.json': alt, 'tv.json': tv, 'fxs_ahead.json': fxs });
     if (r.code !== 0 || !Array.isArray(r.out)) fail('SCHRITT ABGEBROCHEN', `Exit ${r.code}: ${r.log.slice(0, 400)}`);
@@ -159,6 +178,13 @@ function lauf(skript, dateien) {
       if (hat('Core PPI y/y', 'USD').length) fail('DOPPELT', 'Core PPI y/y aufgenommen, obwohl TV denselben Release (Core PPI MoM) fuehrt');
       const nfp = hat('Non-Farm Employment Change', 'USD');
       if (nfp.length !== 1 || nfp[0].src !== 'fxs') fail('HINTER TV', `NFP +40d ${nfp.length}x`);
+      // E) ins TV-Fenster gerueckt: TradingViews Zeile (mit Forecast/Uhrzeit)
+      //    gewinnt, genau einmal (2026-10-07 im Live-Kalender gemessen: NFP am
+      //    06.11. fehlte ganz - TV-Zeile als Dopplung des alten FXStreet-
+      //    Termins verworfen, der FXStreet-Ersatz am Produktivitaets-Release
+      //    des Vortags gescheitert).
+      const nfpTv = hat('Non Farm Payrolls', 'USD');
+      if (nfpTv.length !== 1 || nfpTv[0].src !== 'tv') fail('INS FENSTER GERUECKT', `NFP +29d: TradingView-Zeile ${nfpTv.length}x (erwartet genau 1x mit src tv) - Zeilen an diesem Tag: ${o.filter(e => e.country === 'USD' && /farm/i.test(e.title)).map(e => e.title + '/' + e.src + '@' + String(e.date).slice(0, 10)).join(', ')}`);
       if (o.some(e => /Interest Rate Projections/.test(e.title))) fail('PROJEKTION', 'FOMC-Unterzeile im Kalender');
       if (!hat('BoJ Interest Rate Decision', 'JPY').length) fail('BOJ', 'BoJ-Entscheid fehlt');
       if (o.some(e => /Breman/.test(e.title))) fail('VORLAEUFIG', 'vorlaeufige Rede im Kalender');
@@ -179,6 +205,11 @@ function lauf(skript, dateien) {
     }
   }
 
+  if (GP_TVDEDUP) {
+    const ok = F.some(x => x.startsWith('INS FENSTER GERUECKT'));
+    console.log(ok ? 'kalendervorschau --gegenprobe-tvdedup: ok (verworfene TradingView-Zeile eines ins Fenster gerueckten Releases wird gemeldet)' : 'kalendervorschau --gegenprobe-tvdedup: FEHLER - nicht gemeldet\n  ' + F.join('\n  '));
+    process.exit(ok ? 0 : 1);
+  }
   if (GP_DEDUP) {
     const ok = F.some(x => x.startsWith('AUSFALL'));
     console.log(ok ? 'kalendervorschau --gegenprobe-dedup: ok (verlorene FXStreet-Termine im zweiten Lauf werden gemeldet)' : 'kalendervorschau --gegenprobe-dedup: FEHLER - nicht gemeldet\n  ' + F.join('\n  '));

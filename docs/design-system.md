@@ -1559,9 +1559,9 @@ bleibt nur „Feed starts …“, wenn die Reihe spürbar später anfängt. Gepr
 `check/archiv.js`.
 
 **J — Auf Touch voll sichtbar (Runde 2).** Bedienelemente, die am Desktop
-erst per Hover kräftig werden (Kalender-Glocke/×, Set-ups-Stern, Notiz-Stern,
-im Bearbeitungsmodus ▲▼/×/Stern), stehen unter `@media (hover:none)` auf
-voller Deckkraft (deaktivierte ▲▼ 0,3) — vorher auf dem iPad dauerhaft
+erst per Hover kräftig werden (Kalender-Glocke/×, Set-ups-Stern, Notiz-Stern;
+bis 2026-10-07 auch die ▲▼/×/Stern des entfernten Bearbeitungsmodus), stehen
+unter `@media (hover:none)` auf voller Deckkraft — vorher auf dem iPad dauerhaft
 0,05–0,40. Deaktivierte Knöpfe überall 0,45 (vorher 0,22: Undo/Redo wirkten
 wie ein Darstellungsfehler). Neue Hover-Bedienelemente bekommen ihre
 Touch-Zeile im Block „R6“ am Ende des Haupt-`<style>`. Ausnahme mit Absicht:
@@ -1608,11 +1608,20 @@ auto-Ränder teilen den Platz, das Element „schwebt“. Geprüft:
 `designregeln` K.
 
 **P — Dashboard (Runde 2).** Jede Karte hat einen Kartentitel, auch Majors.
-Bearbeitungsfunktionen erscheinen nur im Bearbeitungsmodus — auch das
-Entfernen-× der Watchlist (Regel 2026-07-25); im Bearbeitungsmodus ist das
-ⓘ im Kartenkopf ausgeblendet, weil die Knopfleiste an seiner Stelle liegt.
 Watchlist-Zeilen bleiben bis 249 px Kartenbreite einzeilig (Flaggen
 14 px, Änderung 48 px, Score 32 px, Lücken 4 px). Geprüft: `designregeln` K.
+
+**N — Kein Bearbeitungsmodus für Dashboard und Indikatoren (seit
+2026-10-07).** Nutzer: *„Entfern den Bearbeitungsmodus wenn ich was
+bearbeiten will frag ich dich“* (Rückfrage: „Dashboard + Indikatoren“). Kein
+Long-Press, keine „+ Widget“-Leiste, keine Karten-Knopfleiste, kein
+Watchlist-×, keine Indikator-/Rubrik-Steuerung, Kartennamen nur Anzeige.
+Änderungen an Karten, Indikatoren und Rubriken macht Claude auf Zuruf (die
+Funktionen existieren weiter). Es bleiben: Notiz-Ordner-Modus und die
+Asset-Liste der Seitenleiste. Die Erklärung eines Indikators („What it is“,
+„How it counts“, eigene Notizen) steht lesend in seiner aufgeklappten
+Detail-Zeile — vorher nur im ⓘ des Bearbeitungsmodus. Geprüft:
+`designregeln` N.
 
 **L — Kalenderzeile (Runde 2).** Actual/Forecast/Previous und ihre Köpfe
 rechtsbündig (≤ 560 px weiter links mit „A:/F:/P:“). Der Schlagzeilen-Knopf
@@ -1661,3 +1670,22 @@ gestaucht an. Wer ein Diagramm in einen Behälter mit eigenem Polster legt,
 zieht das Polster vor dem Bauen ab (Data: `.ind-hist-wrap` 2 × 4 px). Die
 64-px-Leiste (≤ 760 px) hat 2 + 2 px Polster, sonst bricht „Dashboard“ um.
 Geprüft: `designregeln` C und D zusätzlich bei 390 px.
+
+## Asset- und Paarnamen nie gekürzt (Dauerregel seit 2026-10-07)
+
+Nutzer: *„Bei set ups sind teilweise Asset Namen abgekürzt das darf nicht
+passieren“*. Kein Asset-/Paarname endet je mit „…“ oder wird abgeschnitten —
+weder in Set-ups noch in Ranglisten oder Karten. Set-ups: die Namensspalte ist
+so breit wie der längste Name (`minmax(max-content,1fr)`), der Preis-Chip gibt
+Platz ab (die Tagesänderung bricht um). Ranglisten: `.perf-name` ohne Ellipse,
+Paarnamen brechen nur am ↔. ⚠ Lokal sieht man es nicht: das iPad rendert mit
+SF Pro, breiter als die Test-Ersatzschrift. Geprüft: `check/namen.js` mit einer
+breiteren Ersatzschrift (DejaVu Sans) bei 1180/820/1366/390 px.
+
+## Set-ups: Δ-Plakette = 2Y-Renditedifferenz (seit 2026-10-07)
+
+Die Plakette zeigt die 2-jährige Rendite der Basis minus der Kurswährung —
+dieselbe Zahl, mit der der Carry im Score rechnet (`carryDetails`), und die das
+Carry-Fenster beim Antippen öffnet. Fehlt eine Rendite, steht keine Plakette da
+(Regel 4). Bis 2026-10-07: Leitzins-Differenz (wich ab, z. B. EUR/CAD +0,40
+statt −0,14).
