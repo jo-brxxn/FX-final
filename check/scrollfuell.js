@@ -131,12 +131,18 @@ const F = []; const fail = (t, x) => F.push(`${t}: ${x}`);
     // (bewusste Ausnahme, index.html beim 1160px-Raster).
     const nurSpalten = vw < 1320;
     await p.setViewportSize({ width: vw, height: 1000 });
-    await p.evaluate(() => showTab('dash')); await p.waitForTimeout(1200);
+    // mit ALLEN Kartentypen (die ohne feste Zone landen in 'bottom') - nur im Test
+    await p.evaluate(() => { const da = new Set(widgets.map(x => x.type)); W_TYPES.forEach((t, i) => { if (!da.has(t.type)) widgets.push({ id: 'sftest' + i, type: t.type, title: t.label, order: widgets.length, content: '' }); }); showTab('dash'); renderDash(); }); await p.waitForTimeout(1200);
     const d = await p.evaluate(([gp, nurSpalten]) => {
       if (gp) { const bz = document.querySelector('.dash-zone-bottom'); document.querySelectorAll('.dw-mini_calendar,.dw-movers_fx,.dw-notification').forEach(k => bz.appendChild(k)); }
-      const ks = [...document.querySelectorAll('#dashWidgets .dw')].filter(k => k.offsetParent).map(k => ({ n: (k.querySelector('.dw-title') || k).textContent.trim().slice(0, 18), r: k.getBoundingClientRect(), z: k.parentElement }));
+      const ks = [...document.querySelectorAll('#dashWidgets .dw')].filter(k => k.offsetParent).map(k => ({ n: (k.querySelector('.dw-title') || k).textContent.trim().slice(0, 18), r: k.getBoundingClientRect(), z: k.parentElement, el: k }));
       const out = [];
+      // keine Spalte darf zusammenfallen (fehlender Raster-Bereich -> 0px)
+      document.querySelectorAll('#dashWidgets>[class*=dash-zone]').forEach(z => { if (z.children.length && z.getBoundingClientRect().width < 150) out.push(`${z.className} nur ${Math.round(z.getBoundingClientRect().width)}px breit`); });
       ks.forEach(k => {
+        // Test-Zusatzkarten ohne feste Zone stehen in der Rueckfall-Reihe
+        // 'bottom' - sie dienen nur der Spaltenbreiten-Pruefung oben.
+        if (/^sftest/.test(k.el.dataset.widgetId || '')) return;
         const drueber = ks.filter(o => o !== k && (!nurSpalten || o.z === k.z) && o.r.bottom <= k.r.top + 1 && o.r.right > k.r.left + 4 && o.r.left < k.r.right - 4);
         if (!drueber.length) return;
         const naechst = Math.max(...drueber.map(o => o.r.bottom));

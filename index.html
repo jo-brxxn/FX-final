@@ -4967,8 +4967,12 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
      Karte direkt an, aber die rechte Spalte wird ~2500px lang gegen 1350px
      links/Mitte - gemessen bei 1194px gut 1000px leere Flaeche unten links.
      Rest hier: right2 beginnt unter der HOECHSTEN Spalte der ersten Reihe,
-     unter Volatility Leaders bleibt Luft (Nutzer informiert 2026-10-10). */
-  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 right2 right2"}
+     unter Volatility Leaders bleibt Luft (Nutzer informiert 2026-10-10).
+     ⚠ "bottom" MUSS in der Vorlage bleiben, auch wenn die Reihe meist leer
+     ist (:empty -> display:none): Karten-Typen ohne feste Zone landen dort.
+     Ohne den Bereich legte das Raster implizite Linien an und quetschte die
+     drei Spalten auf 0px (check/namen: risk-asset-name 5/26px). */
+  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 right2 right2" "bottom bottom bottom"}
 }
 @media(min-width:1320px){
   #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom"}

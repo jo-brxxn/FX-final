@@ -19715,3 +19715,9 @@ untersten karten … sollen direkt an den anderen dran hängen“*.
   Vierspalter an (zog sonst die erste Reihe auf die Höhe von right2).
   Verworfen: right2 nur unter der rechten Spalte (~1000 px Leerfläche).
 - Wächter `check/scrollfuell.js` A–D mit Gegenprobe.
+- Nachtrag im vollen Lauf (`namen` rot): im Dreispalter fehlte „bottom“ in
+  der Raster-Vorlage. Kartentypen ohne feste Zone (Rückfall „bottom“)
+  erzeugten implizite Linien, die drei Spalten fielen auf 0 px
+  (risk-asset-name 5/26 px). „bottom bottom bottom“ als dritte Zeile
+  zurück; `scrollfuell` D prüft jetzt mit allen Kartentypen auf
+  Spaltenbreite ≥ 150 px (Gegenprobe: 0 px gemeldet).
