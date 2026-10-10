@@ -10946,25 +10946,19 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     <td class="ir-nextc">${indNextReleaseCell(getSym().id,ind)}</td>
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
-  // Was der Indikator ist und wie er zaehlt: bis 2026-10-07 nur ueber das ⓘ
-  // der Indikatorzeile - und das lag im Bearbeitungsmodus, der auf Nutzer-
-  // Wunsch entfernt ist. Die Regel vom 2026-09-24 ("ueberall ein kleines i,
-  // in dem ganz genau steht, wie sich das zusammensetzt") gilt weiter: die
-  // Erklaerung steht deshalb lesend in der aufgeklappten Detail-Zeile.
-  const erkl=(()=>{
-    const std=IND_INFO_DEFAULTS[stripPeriodSuffix(ind.name).base];
-    let z=null;try{z=indZaehlText(getSym(),rub,ind);}catch(e){z=null;}
-    return(std?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">What it is:</span> ${escH(std)}</div>`:'')
-      +(z?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">How it counts:</span> ${escH(z)}</div>`:'')
-      +(ind.info?`<div class="ind-data-src ind-data-erkl"><span class="ind-data-lbl">Your notes:</span> ${escH(ind.info)}</div>`:'');
-  })();
+  // Was der Indikator ist und wie er zaehlt: als ⓘ oben rechts in der
+  // aufgeklappten Zeile (Nutzer 2026-10-10, per Screenshot markiert: "da
+  // wieder so ein Info i rein und wenn man darauf klickt ist oben dann die
+  // Erklaerung und unten steht wie es den Score beeinflusst"). Bis dahin stand
+  // der Text lesend direkt in der Zeile (2026-10-07) - zu viel Fliesstext.
+  const erkl=indErklVorhanden(rub,ind)?`<button class="info-b ind-erkl-i" onclick="event.stopPropagation();openIndErkl('${escJH(ind.id)}')" title="What this indicator is and how it moves the score" aria-label="Explanation of ${escH(indName(ind))}">i</button>`:'';
   if(!detailBody&&!erkl)return mainRow;
   // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
   // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
   // Seit 2026-09-27 klein in der Legendenzeile des Charts (Nutzer: "Compare
   // Button muss kleiner in gleiche Zeile wie actual und forecast") statt als
   // eigene Zeile darueber - siehe indAssetChartOpts().
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${erkl}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${erkl}${detailBody}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -11406,6 +11400,50 @@ function indZaehlText(sym,rub,ind){
   if(r.sent)return'Contrarian market sentiment, half weight (±0.5), only at extremes.';
   if(b==='Central Bank Rate')return'The rate decision against the forecast, counted like a macro release: '+MAKRO_REGEL+spiegel;
   return MAKRO_REGEL+spiegel;
+}
+// ── Erklaerfenster eines Indikators (2026-10-10) ──────────────────────
+// Oben: was er ist (erster Satz gross und fett, der Rest normal). Unten: wie
+// er den Score bewegt, als kurze Punkte statt eines Textblocks; Zahlen fett,
+// Hinweise (gespiegelt, eigene Notizen) kursiv. Nutzer: "alles muss
+// uebersichtlich sein und nicht zu viel gleicher Text also schoen
+// strukturiert manche Sachen fett oder kursiv oder groesser".
+function indErklVorhanden(rub,ind){
+  if(!ind)return false;
+  if(IND_INFO_DEFAULTS[stripPeriodSuffix(ind.name).base]||ind.info)return true;
+  try{return!!indZaehlText(getSym(),rub,ind);}catch(e){return false;}
+}
+function indErklSaetze(t){
+  return String(t||'').replace(/\s+/g,' ').trim().split(/(?<=[.!?])\s+(?=[A-Z0-9±+−-])/).map(x=>x.trim()).filter(Boolean);
+}
+function indErklZahlen(t){
+  // Erst am Rohtext trennen, dann jeden Teil maskieren - sonst trifft die
+  // Zahlensuche die Ziffern in "&#39;" (gesehen 2026-10-10: "indicator&#39;s").
+  return String(t).split(/([±+−-]?\d+(?:[.,]\d+)?\s?(?:bp|%|pp)?)/).map((x,i)=>i%2?`<b>${escH(x)}</b>`:escH(x)).join('');
+}
+function indErklHtml(sym,rub,ind){
+  const std=IND_INFO_DEFAULTS[stripPeriodSuffix(ind.name).base]||'';
+  let z='';try{z=indZaehlText(sym,rub,ind)||'';}catch(e){z='';}
+  let html='';
+  if(std){
+    const s=indErklSaetze(std);
+    html+=`<div class="ie-sek"><div class="ie-kopf">What it is</div><div class="ie-lead">${escH(s[0]||'')}</div>${s.length>1?`<div class="ie-text">${escH(s.slice(1).join(' '))}</div>`:''}</div>`;
+  }
+  if(z){
+    const s=indErklSaetze(z);
+    const hinweis=s.filter(x=>/^Mirrored from/.test(x));
+    const regeln=s.filter(x=>!/^Mirrored from/.test(x));
+    html+=`<div class="ie-sek"><div class="ie-kopf">How it moves the score</div><ul class="ie-liste">${regeln.map(x=>`<li>${indErklZahlen(x)}</li>`).join('')}</ul>${hinweis.map(x=>`<div class="ie-hinweis">${escH(x)}</div>`).join('')}</div>`;
+  }
+  if(ind.info)html+=`<div class="ie-sek"><div class="ie-kopf">Your notes</div><div class="ie-hinweis">${escH(ind.info)}</div></div>`;
+  return html;
+}
+function openIndErkl(indId){
+  const ind=findIndById(indId);if(!ind)return;
+  const sym=getSym();let rub=null;
+  (sym.rubrics||[]).forEach(r=>{if((r.indicators||[]).includes(ind))rub=r;});
+  const t=document.getElementById('mCardInfoTitle');if(t)t.textContent=indName(ind);
+  const b=document.getElementById('mCardInfoBody');if(b)b.innerHTML=indErklHtml(sym,rub,ind);
+  openM('mCardInfo');
 }
 function rubrikZusammensetzungText(sym,rub){
   if(!rub)return'';
@@ -25463,7 +25501,7 @@ Object.assign(window,{
   chartHoverWrap,attachChartHovers,sentSpark,setIndHistRange,setIndHistRangeCustom,findIndById,indHistChart,
   symIdOfInd,bondSeriesPts,bondSpreadPts,cotHistPts,sentHistPts,valHistPts,indChartSeries,
   findIndNextEvent,IND_NEXT_SOON_D,indNextExpected,NEXT_EST_MAX_CYC,indNextReleaseCell,indAsOfNextHtml,
-  indNextTermin,indGeschwister,indReleaseTage,indQuartalsTakt,GESCHW_K,GESCHW_ANTEIL,
+  indNextTermin,indGeschwister,openIndErkl,indErklHtml,indReleaseTage,indQuartalsTakt,GESCHW_K,GESCHW_ANTEIL,
   saveQuotaFail,saveQuotaOk,saveQuotaKB,storageRows,openStorageInfo,clearStorageItem,
   schreibeSnapshot,istQuotaFehler,saveQuotaRettung,SNAP_ENTBEHRLICH,
   seedNoteId,setSeedNoteFlag,migrateSeedNotesOut,researchForSnap,applySeedNoteFlags,

@@ -1618,10 +1618,13 @@ Long-Press, keine „+ Widget“-Leiste, keine Karten-Knopfleiste, kein
 Watchlist-×, keine Indikator-/Rubrik-Steuerung, Kartennamen nur Anzeige.
 Änderungen an Karten, Indikatoren und Rubriken macht Claude auf Zuruf (die
 Funktionen existieren weiter). Es bleiben: Notiz-Ordner-Modus und die
-Asset-Liste der Seitenleiste. Die Erklärung eines Indikators („What it is“,
-„How it counts“, eigene Notizen) steht lesend in seiner aufgeklappten
-Detail-Zeile — vorher nur im ⓘ des Bearbeitungsmodus. Geprüft:
-`designregeln` N.
+Asset-Liste der Seitenleiste. Die Erklärung eines Indikators liegt hinter
+einem ⓘ **oben rechts in der aufgeklappten Zeile** (Nutzer 2026-10-10, per
+Screenshot markiert). Das Fenster ist gegliedert: oben „What it is“ (erster
+Satz groß und fett, Rest normal), unten „How it moves the score“ als kurze
+Punkte mit fett gesetzten Zahlen, Hinweise (gespiegelt, eigene Notizen)
+kursiv — nie als Fließtextblock in der Zeile selbst. Geprüft:
+`designregeln` N, `erklaerung`.
 
 **L — Kalenderzeile (Runde 2).** Actual/Forecast/Previous und ihre Köpfe
 rechtsbündig (≤ 560 px weiter links mit „A:/F:/P:“). Der Schlagzeilen-Knopf

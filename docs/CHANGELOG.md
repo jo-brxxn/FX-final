@@ -19664,3 +19664,20 @@ es nur noch in Set-ups (8 Sterne). Die Kernaussage war grün (8 Klicks, 96
 Felder bleiben, alle 14 fremden Felder kommen an); die Plausibilitäts-
 Untergrenze steht jetzt bei 6 statt 10. Gegenproben `--gegenprobe-abgleich`,
 `-markierung`, `-push` weiter rot.
+
+---
+
+## 2026-10-10 — VERSION-CHECK-596: Indikator-Erklärung hinter ⓘ statt als Text in der Zeile
+
+Nutzer (Screenshot, gelb markiert oben rechts in der aufgeklappten Zeile):
+*„Da wo die Erklärung steht die soll da weg … mach da wieder so ein Info i
+rein und wenn man darauf klickt ist oben dann die Erklärung und unten steht
+wie es den Score beeinflusst und alles muss übersichtlich sein und nicht zu
+viel gleicher Text also schön strukturiert manche Sachen fett oder kursiv
+oder größer“*. Der Fließtext aus 595 („What it is:“/„How it counts:“ in der
+Zeile) ist raus. Neu: ⓘ absolut oben rechts in `.ind-data-body`
+(`openIndErkl`), Fenster `mCardInfo` mit zwei Abschnitten — Lead-Satz groß/
+fett, Score-Regel als Punkte (Zahlen fett, an Satzgrenzen getrennt), Hinweise
+kursiv. Beim ersten Screenshot gefunden: die Zahlen-Hervorhebung lief über
+den bereits maskierten Text und zerschoss „indicator&#39;s“ — jetzt erst
+trennen, dann maskieren.
