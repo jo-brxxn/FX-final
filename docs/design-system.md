@@ -1619,12 +1619,20 @@ Watchlist-×, keine Indikator-/Rubrik-Steuerung, Kartennamen nur Anzeige.
 Änderungen an Karten, Indikatoren und Rubriken macht Claude auf Zuruf (die
 Funktionen existieren weiter). Es bleiben: Notiz-Ordner-Modus und die
 Asset-Liste der Seitenleiste. Die Erklärung eines Indikators liegt hinter
-einem ⓘ **oben rechts in der aufgeklappten Zeile** (Nutzer 2026-10-10, per
-Screenshot markiert). Das Fenster ist gegliedert: oben „What it is“ (erster
+einem ⓘ **ganz rechts in der obersten Textzeile (Quellenzeile) der
+aufgeklappten Zeile** — nie in einer eigenen Zeile (Nutzer 2026-10-10:
+„das i soll aber auch keine zeile alleine einnehmen“). Das Fenster ist gegliedert: oben „What it is“ (erster
 Satz groß und fett, Rest normal), unten „How it moves the score“ als kurze
 Punkte mit fett gesetzten Zahlen, Hinweise (gespiegelt, eigene Notizen)
 kursiv — nie als Fließtextblock in der Zeile selbst. Geprüft:
-`designregeln` N, `erklaerung`.
+`designregeln` N, `erklaerung`, `scrollfuell` C.
+
+**Mausrad über Karten (2026-10-10).** Am PC scrollt das Mausrad über jeder
+Karte die Seite, solange unter dem Zeiger kein Bereich liegt, der selbst
+senkrecht scrollen kann (Handler in `js/main.js`). Echte innere Listen
+scrollen nativ und stoppen an ihren Rändern (Regel „feste Tabellen“).
+**Karten einer Reihe enden bündig:** die History-Karte der Asset-Kopfreihe
+füllt die Reihe, bestimmt sie aber nicht. Geprüft: `scrollfuell` A/B.
 
 **L — Kalenderzeile (Runde 2).** Actual/Forecast/Previous und ihre Köpfe
 rechtsbündig (≤ 560 px weiter links mit „A:/F:/P:“). Der Schlagzeilen-Knopf

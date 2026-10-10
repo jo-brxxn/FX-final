@@ -19681,3 +19681,37 @@ fett, Score-Regel als Punkte (Zahlen fett, an Satzgrenzen getrennt), Hinweise
 kursiv. Beim ersten Screenshot gefunden: die Zahlen-Hervorhebung lief über
 den bereits maskierten Text und zerschoss „indicator&#39;s“ — jetzt erst
 trennen, dann maskieren.
+
+## 2026-10-10 — VERSION-CHECK-597: ⓘ in der Zeile, History bündig, Mausrad, Dashboard ohne untere Reihe
+
+Nutzer (vier Punkte): *„das i soll aber auch keine zeile alleine einnehmen
+mach so das es mit dem obersten text in einer zeile steht und dann halt ganz
+rechts davon“*, *„die karte history erweitert sich nicht perfekt bis ganz
+nach unten also sie wird nicht so groß wie die notes karte“*, *„am pc wenn
+ich mit meiner maus auf einer karte bin in der man kein inhalt zum scrollen
+hat … geht das nur in den räumen zwischen der karten“*, *„beim dashboard die
+untersten karten … sollen direkt an den anderen dran hängen“*.
+
+- **ⓘ:** gemessen 15 px über der Quellenzeile (absolut in die Ecke des
+  Körpers gesetzt). Jetzt in der Quellenzeile verankert, auf Höhe ihrer
+  ersten Zeile, ganz rechts. Erster Versuch als Flex-Element: in der
+  umbrechenden Bond-Zeile rutschte das ⓘ mit in Zeile 2 (24 px tiefer) —
+  deshalb absolut innerhalb der Zeile mit 36 px Rand rechts.
+- **History:** Pinned notes wächst mit den Notizen (max-height:none), die
+  History stand fest bei 420 px. Jetzt absolut in ihrer Spalte (inset:0,
+  min. 420 px) — füllt die Reihe, zählt aber nicht für ihre Höhe.
+  `contain:size` allein reichte nicht (Flex-Spalte schrumpfte die Karte
+  nicht, gemessen 12629 px). Mit 10 Zusatz-Notizen: beide 816 px.
+- **Mausrad:** in Chromium nicht nachstellbar (0 von 25 Karten blockiert).
+  Ursache: `*{overscroll-behavior:none}` (feste Tabellen, iPad) steht auf
+  jedem Scroll-Container, auch ohne Überlauf (overflow:hidden für runde
+  Ecken, overflow-x:auto) — Safari/Firefox halten das Rad dort fest.
+  Engine-unabhängiger wheel-Handler: kein senkrecht scrollbarer Bereich
+  unter dem Zeiger → die Seite (.pc/.detail) scrollt. Touch unberührt.
+- **Dashboard:** untere Reihe begann unter der höchsten Spalte (1254 px bei
+  1920, Spalten endeten 1157–1231) → 23–97 px Luft. Kalender → right2,
+  Movers → center, Notifications → left; überall 14 px. Dreispalter (1194):
+  right2 volle zweite Reihe; `equalizeDashColumns` gleicht nur noch im
+  Vierspalter an (zog sonst die erste Reihe auf die Höhe von right2).
+  Verworfen: right2 nur unter der rechten Spalte (~1000 px Leerfläche).
+- Wächter `check/scrollfuell.js` A–D mit Gegenprobe.

@@ -779,6 +779,19 @@ svg.ic{vertical-align:-2px;flex:none}
    nichts. 420px ist knapp ueber der natuerlichen Reihenhoehe, damit die
    Reihe stabil bleibt, und die Liste scrollt darin. */
 .ab-htile{max-height:420px;--histl-h:100px}
+/* ⚠ Die History-Karte FUELLT ihre Reihe, bestimmt sie aber nicht (Nutzer
+   2026-10-10: "die karte history erweitert sich nicht perfekt bis ganz nach
+   unten also sie wird nicht so gross wie die notes karte"). Gemessen: die
+   Pinned-notes-Karte waechst mit den angehefteten Notizen (max-height:none,
+   siehe oben), die History blieb bei ihren 420px stehen - darunter Luft.
+   Die 420px-Grenze war nur noetig, damit 4150px Tagesliste die Reihe nicht
+   aufziehen. Absolut in ihrer Spalte zaehlt der Inhalt nicht mehr fuer die
+   Reihenhoehe; inset:0 legt die Karte auf die volle Reihenhoehe (contain:size
+   allein reichte nicht - die Flex-Spalte schrumpfte die Karte nicht, gemessen
+   12629px). 420px bleiben
+   als Mindesthoehe (Handy: eine Spalte, keine Schwester gibt die Hoehe vor). */
+.ab-orow>.ab-col:has(>.ab-htile){position:relative;min-height:420px}
+.ab-orow>.ab-col>.ab-htile{position:absolute;inset:0;max-height:none}
 .ab-htile-bd{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:0 10px 0}
 .ab-htile>.ab-goto{margin-top:0;padding:6px 11px 8px}
 .ab-htile-bd>.histp{flex:1 1 auto;min-height:0}
@@ -3216,10 +3229,15 @@ body.res-return-active #resBackBar{display:flex}
 .ind-data-sep{color:var(--t3);opacity:.4}
 .ind-data-src{padding:0 8px 6px;color:var(--t3);display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:var(--fs-xs)}
 .ind-data-src a{color:var(--blue);text-decoration:none;font-weight:600}@media (hover:hover){.ind-data-src a:hover{text-decoration:underline}}
-/* ⓘ oben rechts in der aufgeklappten Indikatorzeile (2026-10-10) und das
-   gegliederte Erklaerfenster dazu (openIndErkl in js/main.js). */
-.ind-detail-row .ind-data-body{position:relative}
-.ind-erkl-i{position:absolute;top:6px;right:6px;z-index:1}
+/* ⓘ in der aufgeklappten Indikatorzeile und das gegliederte Erklaerfenster
+   dazu (openIndErkl in js/main.js, 2026-10-10). Das ⓘ steht IN der obersten
+   Textzeile ganz rechts (Nutzer 2026-10-10: "das i soll aber auch keine zeile
+   alleine einnehmen") - in der Quellenzeile verankert, auf Hoehe ihrer
+   ERSTEN Zeile (sass vorher gemessen 15px darueber). Absolut statt als
+   Flex-Element, weil die Bond-Zeile umbricht - als Flex-Element rutschte das
+   ⓘ dort mit in die zweite Zeile (gemessen 24px tiefer). */
+.ind-data-src:has(>.ind-erkl-i){position:relative;padding-right:36px}
+.ind-data-src>.ind-erkl-i{position:absolute;right:6px;top:0}
 .ie-sek{margin:0 0 16px}
 .ie-sek:last-child{margin-bottom:0}
 .ie-kopf{font:700 var(--fs-xs)/1.3 var(--ff-text);letter-spacing:.6px;text-transform:uppercase;color:var(--t3);margin:0 0 6px}
@@ -4775,6 +4793,7 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
   .dash-zone-right{grid-area:right}
   .dash-zone-right2{grid-area:right2}
   .dash-zone-bottom{grid-area:bottom;display:flex;flex-wrap:wrap;gap:8px}
+  .dash-zone-bottom:empty{display:none}
   /* min-width:0: Flex-/Grid-Items schrumpfen sonst nicht unter ihre Inhalts-
      Mindestbreite (Default min-width:auto) und schieben das ganze Dashboard
      ueber den Rand -> horizontales Panning. So passt es sich der Breite an. */
@@ -4940,7 +4959,16 @@ body.no-ui-anim .tgl-track,body.no-ui-anim .tgl-track::after{transition:none}
    darin nur 305px braucht, also rund 350px verschenkter Platz. Jede Zone
    belegt jetzt genau eine Zelle. */
 @media(min-width:1160px){
-  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 bottom bottom"}
+  /* Seit 2026-10-10 haengen Kalender/Movers/Notifications in den Spalten
+     (ZONE_OF_TYPE, js/main.js) - die untere Reihe ist leer. right2 nimmt
+     deshalb die ganze zweite Zeile statt einer Zelle neben zwei leeren.
+     ⚠ Ausprobiert und verworfen: right2 nur unter der rechten Spalte
+     ("left center right" / "left center right2"). Dann haengt zwar jede
+     Karte direkt an, aber die rechte Spalte wird ~2500px lang gegen 1350px
+     links/Mitte - gemessen bei 1194px gut 1000px leere Flaeche unten links.
+     Rest hier: right2 beginnt unter der HOECHSTEN Spalte der ersten Reihe,
+     unter Volatility Leaders bleibt Luft (Nutzer informiert 2026-10-10). */
+  #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"left center right" "right2 right2 right2"}
 }
 @media(min-width:1320px){
   #dashWidgets.dash-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,2fr);grid-template-areas:"left center right right2" "bottom bottom bottom bottom"}
@@ -6398,11 +6426,11 @@ window.fxLogoSvg=function(art){
   <div class="hdr-status">
     <span class="saved" id="saveBadge">✓ Auto-saved</span>
     <span class="net-status" id="netStatus" style="display:none">⚠ Offline — changes save locally, sync when back online</span>
-    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-596 - Indicator explanation back behind an info button in the top-right corner of the expanded row: what it is on top, how it moves the score below, as short points."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
+    <span class="hdr-livebanner" id="verBanner" title="VERSION-CHECK-597 - Info button sits in the top text line of the expanded indicator row; History card fills its row; mouse wheel over a card scrolls the page; dashboard bottom cards hang directly in their columns."><span class="hlb-dot-wrap"><span class="hlb-dot"></span></span>
       <span class="hlb-lbl">LIVE</span>
       <span class="hlb-clock" id="hlbClock">--:--:--</span>
       <span class="hlb-sep">·</span>
-      <span class="hlb-name" id="hlbName">VERSION-CHECK-596</span>
+      <span class="hlb-name" id="hlbName">VERSION-CHECK-597</span>
     </span>
   </div>
   <div class="hdr-r">

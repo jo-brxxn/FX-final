@@ -511,6 +511,20 @@ eine Skala. Bei einer neuen Karte/einem neuen Block IMMER `--gap-block`
 verwenden statt einen Wert zu waehlen, der "ungefaehr passt" - genau so
 sind die fuenf verschiedenen Werte entstanden.
 
+## ⚠ KEINE UNTERE KARTENREIHE MEHR (2026-10-10)
+
+Nutzer: *„beim dashboard die untersten karten die haben einen abstand zu den
+oberen das ist falsch sie sollen direkt an den anderen dran hängen“* —
+per Rückfrage gewählt: **in die Spalten einhängen**. Economic Calendar
+hängt unter Headlines/Surprise (right2), Biggest Movers unter Market
+Sentiment (center), Notifications unter Correlation Check (left). Jede
+Dashboard-Karte beginnt höchstens 16 px unter der Karte darüber
+(Wächter `scrollfuell` D, 1920/1440 px). Eine Reihe quer über vier
+ungleich breite Spalten kann nie an alle direkt anschließen — keine neue
+untere Reihe einführen. Dreispalter (iPad 1194 px): right2 ist die volle
+zweite Reihe und beginnt unter der höchsten Spalte (bewusster Rest,
+Alternative maß ~1000 px Leerfläche).
+
 ## ⚠ SCHLANKES TAGES-DASHBOARD
 
 Nutzer-Frage: "Wie wuerden Profis das Dashboard gestalten? Nur zwei Karten

@@ -10870,6 +10870,14 @@ function renderIndsTable(rub,ri){
 function renderIndRow(ind,ri,ii,rub,total,pairPos){
   const bco=bCol(ind.bias);
   const ev=(ind.research&&ind.research.feed)?null:findIndEvent(getSym().id,ind.name);
+  // Was der Indikator ist und wie er zaehlt: als ⓘ ganz rechts in der
+  // Quellenzeile der aufgeklappten Zeile (Nutzer 2026-10-10, per Screenshot markiert: "da
+  // wieder so ein Info i rein und wenn man darauf klickt ist oben dann die
+  // Erklaerung und unten steht wie es den Score beeinflusst"). Bis dahin stand
+  // der Text lesend direkt in der Zeile (2026-10-07) - zu viel Fliesstext.
+  // Seit 2026-10-10 ("das i soll aber auch keine zeile alleine einnehmen")
+  // IN der Quellenzeile statt absolut darueber.
+  const erkl=indErklVorhanden(rub,ind)?`<button class="info-b ind-erkl-i" onclick="event.stopPropagation();openIndErkl('${escJH(ind.id)}')" title="What this indicator is and how it moves the score" aria-label="Explanation of ${escH(indName(ind))}">i</button>`:'';
   let actTxt='–',actCls='',fcTxt='–',prevTxt='–',prevCls='',detailBody='';
   if(ev){
     const ac=actualColor(ev,getSym().id);
@@ -10880,7 +10888,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     const srcLink=`<a href="${safeUrl(fin1)}" target="_blank" rel="noopener" data-ilkey="${escH(ilKey1)}" onpointerdown="ilPressStart(this)" onpointerup="ilPressEnd()" onpointerleave="ilPressEnd()" onpointercancel="ilPressEnd()" oncontextmenu="return false" onclick="return ilClick(event,this)">${escH(srcLabel(fin1))} ↗</a>`;
     const secLink=(ind.research&&ind.research.secondarySource)?` · <a href="${safeUrl(ind.research.secondarySource)}" target="_blank" rel="noopener">${escH(ind.research.secondaryLabel||srcLabel(ind.research.secondarySource))} ↗</a>`:'';
     actTxt=ev.actual;actCls=ac||'';fcTxt=ev.forecast||'–';prevTxt=ev.previous||'–';
-    detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}</div>`;
+    detailBody=`<div class="ind-data-src"><span class="ind-data-lbl">As of:</span> ${fmtDayHdr(ev.date)} · ${srcLink}${secLink}${erkl}</div>`;
   }else if(ind.research){
     const r=ind.research;
     // ⚠ DIE FARBE FOLGT DEM BIAS DER ZEILE, NICHT DER RICHTUNG DER RENDITE.
@@ -10925,7 +10933,7 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     // gemeldete Wert wird jetzt explizit im ausgeklappten Zustand genannt,
     // nicht mehr nur als Farbe/Parenthese im Previous der Hauptzeile.
     const revNote=r.revisedFrom?`<div class="ind-data-src" style="padding-top:0"><span class="ind-data-lbl">Previous revised:</span> originally reported as <b>${escH(r.revisedFrom)}</b>, now restated as <b>${escH(P.val??'–')}</b></div>`:'';
-    detailBody=`<div class="ind-data-src">${bondDates} ${srcLink}${secLink}</div>${revNote}`;
+    detailBody=`<div class="ind-data-src">${bondDates} ${srcLink}${secLink}${erkl}</div>${revNote}`;
   }
   const spark=indSparklineSvg(ind,bco);
   const isOpen=!!indDetailsOpen[ind.id];
@@ -10946,19 +10954,15 @@ function renderIndRow(ind,ri,ii,rub,total,pairPos){
     <td class="ir-nextc">${indNextReleaseCell(getSym().id,ind)}</td>
     <td class="ir-trend"${spark?` onclick="event.stopPropagation();openTrendInfo(${ri},${ii})" style="cursor:pointer"`:''} title="${spark?'Tap for the 0/2 · 1/2 · 2/2 trend breakdown':''}">${spark||'<span class="ir-dash">–</span>'}</td>
   </tr>`;
-  // Was der Indikator ist und wie er zaehlt: als ⓘ oben rechts in der
-  // aufgeklappten Zeile (Nutzer 2026-10-10, per Screenshot markiert: "da
-  // wieder so ein Info i rein und wenn man darauf klickt ist oben dann die
-  // Erklaerung und unten steht wie es den Score beeinflusst"). Bis dahin stand
-  // der Text lesend direkt in der Zeile (2026-10-07) - zu viel Fliesstext.
-  const erkl=indErklVorhanden(rub,ind)?`<button class="info-b ind-erkl-i" onclick="event.stopPropagation();openIndErkl('${escJH(ind.id)}')" title="What this indicator is and how it moves the score" aria-label="Explanation of ${escH(indName(ind))}">i</button>`:'';
   if(!detailBody&&!erkl)return mainRow;
+  // Ohne Quellenzeile bekommt das ⓘ eine eigene - sonst steht es in ihr.
+  if(!detailBody)detailBody=`<div class="ind-data-src">${erkl}</div>`;
   // Sprung in den Vergleich (Insights > Data) mit diesem Asset und genau
   // diesem Indikator schon vorgewaehlt - Nutzer-Wunsch 2026-09-05.
   // Seit 2026-09-27 klein in der Legendenzeile des Charts (Nutzer: "Compare
   // Button muss kleiner in gleiche Zeile wie actual und forecast") statt als
   // eigene Zeile darueber - siehe indAssetChartOpts().
-  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${erkl}${detailBody}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
+  const detailRow=`<tr class="ind-detail-row" id="indDetail-${escH(ind.id)}" style="${isOpen?'':'display:none'}"><td colspan="6"><div class="ind-data-body${isOpen?' ind-data-reveal':''}">${detailBody}${isOpen?indHistChart(ind,undefined,indAssetChartOpts(ind)):`<div class="ind-hist-holder" data-indid="${escH(ind.id)}"></div>`}</div></td></tr>`;
   return mainRow+detailRow;
 }
 // Klick auf eine Indikator-Zeile klappt die Detail-Zeile auf/zu (Datum,
@@ -15660,12 +15664,24 @@ function dashMajorsHtml(){
 // Charakters ("was passiert gerade": naechste Termine, groesste Bewegungen,
 // neue Meldungen) statt zwei plus Fuellsel, und die vierte Spalte verliert
 // ihre 428 Pixel, mit denen sie zuvor die Hoehe aller vier Spalten bestimmte.
+//
+// ⚠ Untere Reihe aufgeloest 2026-10-10 (Nutzer: "beim dashboard die untersten
+// karten die haben einen abstand zu den oberen das ist falsch sie sollen
+// direkt an den anderen dran haengen"; per Rueckfrage gewaehlt: "In Spalten
+// einhaengen"). Gemessen bei 1920px: die Reihe begann fuer alle drei Karten
+// unter der HOECHSTEN Spalte (1254px), die Spalten endeten bei 1157-1231px -
+// 23 bis 97px Luft statt 14. Eine quer ueber vier ungleich breite Spalten
+// laufende Reihe kann nie an alle vier direkt anschliessen. Deshalb haengt
+// jede Karte jetzt unten in einer Spalte: Kalender unter Headlines/Surprise
+// (breite Aussenspalte, aehnlich breit wie vorher), Movers unter Market
+// Sentiment, Notifications unter Correlation Check. 'bottom' bleibt nur
+// noch Rueckfall fuer unbekannte Typen.
 const ZONE_OF_TYPE={
   watchlist:'left',corr_warn:'left',
   risk_sentiment:'center',perf_ranking:'center',
   ccy_ranking:'right',carry_ranking:'right',vol_leaders:'right',
   sentiment_snapshot:'center',surprise_index:'right2',headlines:'right2',
-  mini_calendar:'bottom',movers_fx:'bottom',notification:'bottom'};
+  mini_calendar:'right2',movers_fx:'center',notification:'left'};
 function dashZoneOf(type){
   return ZONE_OF_TYPE[type]||'bottom';
 }
@@ -16477,8 +16493,13 @@ function equalizeDashColumns(){
   const zones=['left','center','right','right2'].map(z=>el.querySelector('.dash-zone-'+z)).filter(Boolean);
   if(zones.length<2)return;
   zones.forEach(z=>{z.style.height='';});                 // vor dem Messen zuruecksetzen
-  // Einspaltig gestapelt (<1100px): dort gibt es keine Spalten anzugleichen.
-  if(zones[1].getBoundingClientRect().top>zones[0].getBoundingClientRect().top+4)return;
+  // Angeglichen wird nur, wenn ALLE Zonen nebeneinander in einer Reihe
+  // stehen (Vierspalter). Einspaltig (<1100px) gibt es nichts anzugleichen,
+  // und im Dreispalter steht right2 in der zweiten Reihe - zog man es mit
+  // auf, wuchs die erste Reihe auf die Hoehe von right2 (Luft gemessen 112px
+  // unter Notifications bei 1194px).
+  const top0=zones[0].getBoundingClientRect().top;
+  if(zones.some(z=>Math.abs(z.getBoundingClientRect().top-top0)>4))return;
   // ⚠ Nutzer-Wunsch 2026-08-19: der KOMPLETTE Inhalt jeder Karte muss
   // sichtbar sein, nichts darf in einem Innen-Scroller verschwinden. Die
   // gemeinsame Hoehe ist deshalb die GROESSTE natuerliche Spaltenhoehe, nicht
@@ -16515,6 +16536,35 @@ function scrollCalsToNow(){
   });
 }
 window.addEventListener('resize',()=>{if(curPage==='dash')requestAnimationFrame(scrollCalsToNow);});
+// ── MAUSRAD UEBER EINER KARTE SCROLLT DIE SEITE ─────────────────────────
+// Nutzer 2026-10-10 (PC): "wenn ich mit meiner maus auf einer karte bin in der
+// man kein inhalt zum scrollen hat und ich dann scrollen will dann geht das
+// nicht ... das geht nur in den raeumen zwischen den karten".
+// Ursache: `*{overscroll-behavior:none}` (index.html, Regel "feste Tabellen"
+// 2026-09-25 fuers iPad) steht auf JEDEM Element, auch auf jedem
+// Scroll-Container ohne Ueberlauf (overflow:hidden fuer runde Ecken,
+// overflow-x:auto bei Listen). Chromium ueberspringt solche Container beim
+// Weiterreichen des Rads, andere Engines (Safari/Firefox) halten das Rad dort
+// fest - in Chromium war es deshalb nicht nachzustellen (0 von 25 Karten).
+// Engine-unabhaengig geloest: liegt unter dem Zeiger bis hoch zum
+// Seiten-Scroller (.pc/.detail) KEIN Bereich, der selbst senkrecht scrollen
+// kann, scrollt dieser Handler die Seite. Echte innere Scrollbereiche bleiben
+// nativ und stoppen weiter an ihren Raendern (die Dauerregel von 2026-09-25).
+// Touch erzeugt kein wheel-Ereignis - das iPad ist davon unberuehrt.
+document.addEventListener('wheel',e=>{
+  if(e.defaultPrevented||e.ctrlKey||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
+  const dy=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?innerHeight:1);
+  if(!dy)return;
+  let seite=null;
+  for(let q=e.target instanceof Element?e.target:null;q;q=q.parentElement){
+    if(q.classList.contains('pc')||q.classList.contains('detail')){seite=q;break;}
+    const oy=getComputedStyle(q).overflowY;
+    if((oy==='auto'||oy==='scroll')&&q.scrollHeight>q.clientHeight+1)return;
+  }
+  if(!seite||seite.scrollHeight<=seite.clientHeight)return;
+  e.preventDefault();
+  seite.scrollTop+=dy;
+},{passive:false});
 
 // Globus + Intro-Boost-Sequenz nach js/globe.js ausgekoppelt (VERSION-CHECK
 // s.docs/module-split.md). Bidirektional verbunden - dieses Modul exportiert
